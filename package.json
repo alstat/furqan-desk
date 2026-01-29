@@ -13,17 +13,37 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@lexical/dragon": "^0.22.0",
+    "@lexical/file": "^0.22.0",
+    "@lexical/hashtag": "^0.22.0",
+    "@lexical/history": "^0.22.0",
+    "@lexical/link": "^0.22.0",
+    "@lexical/list": "^0.22.0",
+    "@lexical/mark": "^0.22.0",
+    "@lexical/markdown": "^0.22.0",
+    "@lexical/plain-text": "^0.22.0",
+    "@lexical/rich-text": "^0.22.0",
+    "@lexical/table": "^0.22.0",
+    "@lexical/text": "^0.22.0",
+    "@lexical/utils": "^0.22.0",
+    "@lexical/yjs": "^0.22.0",
+    "@tailwindcss/vite": "^4.1.18",
     "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-opener": "^2"
+    "@tauri-apps/plugin-opener": "^2",
+    "highlight.js": "^11.11.1",
+    "katex": "^0.16.21",
+    "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
+    "@iconify/svelte": "^5.2.1",
     "@sveltejs/adapter-static": "^3.0.6",
     "@sveltejs/kit": "^2.9.0",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@tauri-apps/cli": "^2",
+    "lucide-svelte": "^0.562.0",
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.0",
     "typescript": "~5.6.2",
-    "vite": "^6.0.3",
-    "@tauri-apps/cli": "^2"
+    "vite": "^6.0.3"
   }
 }
