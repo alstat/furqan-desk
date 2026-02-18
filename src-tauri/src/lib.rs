@@ -10,6 +10,7 @@ pub fn run() {
         .manage(database)
         .invoke_handler(tauri::generate_handler![
             commands::greet,
+            commands::get_surah_labels,
             commands::get_surah,
             commands::get_surah_morphology,
             commands::get_word_morphology
