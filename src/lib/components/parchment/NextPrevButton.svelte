@@ -1,8 +1,12 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { selectedSurahIdx } from '$lib/stores/quran.svelte';
-	import { handleSurahChange } from '$lib/functions/widgets/surahWidget';
+
 	let { position = 'block' } = $props();
+
+	function goToSurah(idx: number) {
+		selectedSurahIdx.set(idx);
+	}
 </script>
 
 <div class={position}>
@@ -16,8 +20,8 @@
 			</button>
 		{:else}
 			<button
-				onclick={(e: Event) => handleSurahChange(e, $selectedSurahIdx + 1, '/rest/load_quran')}
-				title="Previous Surah"
+				onclick={() => goToSurah($selectedSurahIdx + 1)}
+				title="Next Surah"
 				class="shadow-md p-2 text-xs rounded-full text-lime-700 bg-amber-200 hover:bg-amber-300 active:bg-amber-400"
 			>
 				<Icon icon="solar:skip-previous-line-duotone" width="1rem" />
@@ -33,8 +37,8 @@
 			</button>
 		{:else}
 			<button
-				onclick={(e: Event) => handleSurahChange(e, $selectedSurahIdx - 1, '/rest/load_quran')}
-				title="Next Surah"
+				onclick={() => goToSurah($selectedSurahIdx - 1)}
+				title="Previous Surah"
 				class="shadow-md bg-amber-200 p-2 text-xs rounded-full text-lime-700 font-bold hover:bg-amber-300 active:bg-amber-400"
 			>
 				<Icon icon="solar:skip-next-line-duotone" width="1rem" />

@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+    --font-scheherazade: 'Scheherazade New', serif;
+    --font-amiri: 'Amiri', serif;
+    --font-reem: 'Reem Kufi Ink', sans-serif;
+}
+
 .default-scroll {
     /* Firefox */
     scrollbar-width: thin;
@@ -55,7 +61,7 @@
 .vintage-scroll {
     /* Firefox */
     scrollbar-width: thin;
-    scrollbar-color: #f7d66182 #fef3c700;
+    scrollbar-color: #c5cdd482 #FAFAFA00;
     /* direction: rtl; */
 }
 
@@ -78,12 +84,12 @@
 }
 
 .vintage-scroll::-webkit-scrollbar-track {
-    background: #fef3c700;
+    background: #FAFAFA00;
     width: 4px;
 }
 
 .vintage-scroll::-webkit-scrollbar-thumb {
-    background-color: #f7d66182;
+    background-color: #c5cdd482;
     border-radius: 1px;
     width: 4px;
     border: none;
