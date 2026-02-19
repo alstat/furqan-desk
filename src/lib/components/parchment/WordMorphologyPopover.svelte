@@ -6,11 +6,16 @@
 
 	interface Props {
 		word: MorphWord;
-		position: { x: number; y: number };
+		position: { x: number; y: number; placement: 'above' | 'below' };
 		onClose: () => void;
 	}
 
 	let { word, position, onClose }: Props = $props();
+
+	function portal(node: HTMLElement) {
+		document.body.appendChild(node);
+		return { destroy() { node.remove(); } };
+	}
 
 	type TokenStyle = { bg: string; border: string; badge: string; text: string; dot: string };
 
@@ -37,8 +42,11 @@
 </script>
 
 <div
-	class="ayah-tooltip fixed z-50 flex w-[22rem] max-h-[72vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl"
-	style="left: {position.x}px; top: {position.y}px;"
+	use:portal
+	class="ayah-tooltip fixed z-[9999] flex w-[22rem] max-h-[72vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl"
+	style={position.placement === 'below'
+		? `left: ${position.x}px; top: ${position.y + 8}px;`
+		: `left: ${position.x}px; bottom: calc(100vh - ${position.y}px + 8px);`}
 	transition:fly={{ y: 8, duration: 160, opacity: 0 }}
 >
 	<!-- Header -->

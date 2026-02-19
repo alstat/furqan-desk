@@ -401,6 +401,69 @@ pub fn get_surah_morphology(
 }
 
 #[tauri::command]
+pub fn get_basmallah_morphology(db: State<Database>) -> Result<AyahMorphology, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT word, token, form_buckwalter, form_arabic, tag, features
+             FROM morphology
+             WHERE surah = 1 AND ayah = 1
+             ORDER BY word, token",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, i64>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, String>(3)?,
+                row.get::<_, String>(4)?,
+                row.get::<_, String>(5)?,
+            ))
+        })
+        .map_err(|e| e.to_string())?;
+
+    let mut words_map: BTreeMap<i64, Vec<MorphToken>> = BTreeMap::new();
+
+    for row_result in rows {
+        let (word, token, form_bw, form_ar, tag, features) =
+            row_result.map_err(|e| e.to_string())?;
+
+        let parsed = parse_features(&features);
+        let tag_name = get_tag_name(&tag);
+
+        words_map
+            .entry(word)
+            .or_default()
+            .push(MorphToken {
+                token,
+                form_buckwalter: form_bw,
+                form_arabic: form_ar,
+                tag,
+                tag_name,
+                features: parsed,
+            });
+    }
+
+    let words: Vec<MorphWord> = words_map
+        .into_iter()
+        .map(|(word, tokens)| {
+            let combined_arabic: String = tokens.iter().map(|t| t.form_arabic.as_str()).collect();
+            MorphWord {
+                word,
+                tokens,
+                combined_arabic,
+            }
+        })
+        .collect();
+
+    Ok(AyahMorphology { ayah: 1, words })
+}
+
+#[tauri::command]
 pub fn get_word_morphology(
     db: State<Database>,
     surah: i64,

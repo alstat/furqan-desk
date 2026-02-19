@@ -13,6 +13,7 @@ pub fn run() {
             commands::get_surah_labels,
             commands::get_surah,
             commands::get_surah_morphology,
+            commands::get_basmallah_morphology,
             commands::get_word_morphology
         ])
         .run(tauri::generate_context!())

@@ -2,6 +2,7 @@
     import { convertToArabicNumbers } from "$lib/functions/utils/utils";
     import {
         surahMorphology,
+        basmallahMorphology,
         selectedSurahName,
     } from "$lib/stores/quran.svelte";
     import { morphFontFamily } from "$lib/stores/morphology.store";
@@ -11,7 +12,7 @@
     // State for selected word
     let selectedWord: { word: MorphWord; ayahNum: number } | null =
         $state(null);
-    let popoverPosition = $state({ x: 0, y: 0 });
+    let popoverPosition = $state({ x: 0, y: 0, placement: 'below' as 'above' | 'below' });
 
     function getWordColor(word: MorphWord): string {
         // Get primary tag from the stem (non-prefix/suffix token)
@@ -36,6 +37,9 @@
         return colors[tag] || "hover:bg-slate-100";
     }
 
+    const POPOVER_WIDTH = 352;  // w-[22rem]
+    const POPOVER_MIN_HEIGHT = 320; // minimum space needed to comfortably show below
+
     function handleWordClick(
         event: MouseEvent,
         word: MorphWord,
@@ -47,23 +51,22 @@
             return;
         }
 
-        // Calculate position for popover
         const rect = (event.target as HTMLElement).getBoundingClientRect();
         const viewportHeight = window.innerHeight;
         const viewportWidth = window.innerWidth;
 
+        // Horizontal: clamp so popover stays within viewport
         let x = rect.left;
-        let y = rect.bottom + window.scrollY + 5;
+        if (x + POPOVER_WIDTH > viewportWidth) x = viewportWidth - POPOVER_WIDTH - 8;
+        if (x < 8) x = 8;
 
-        // Adjust if popover would go off-screen
-        if (x + 320 > viewportWidth) {
-            x = viewportWidth - 330;
-        }
-        if (rect.bottom + 300 > viewportHeight) {
-            y = rect.top + window.scrollY - 10;
-        }
+        // Vertical: show below when there's enough room, otherwise flip above.
+        // y is the anchor edge — rect.bottom for 'below', rect.top for 'above'.
+        const spaceBelow = viewportHeight - rect.bottom;
+        const placement = spaceBelow >= POPOVER_MIN_HEIGHT ? 'below' : 'above';
+        const y = placement === 'below' ? rect.bottom : rect.top;
 
-        popoverPosition = { x, y };
+        popoverPosition = { x, y, placement };
         selectedWord = { word, ayahNum };
     }
 
@@ -88,6 +91,23 @@
     </div>
 
     {#if $surahMorphology}
+        {#if $surahMorphology.surah !== 1 && $surahMorphology.surah !== 9 && $basmallahMorphology}
+            <div class="mb-4 text-center leading-loose">
+                {#each $basmallahMorphology.words as word}<span
+                        role="button"
+                        tabindex="0"
+                        class="morph-word {$morphFontFamily} cursor-pointer rounded px-0.5 transition-colors {getWordColor(
+                            word,
+                        )} {selectedWord?.word === word &&
+                        selectedWord?.ayahNum === 0
+                            ? 'bg-yellow-200'
+                            : ''}"
+                        onclick={(e) => handleWordClick(e, word, 0)}
+                        onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, 0)}
+                    >{word.combined_arabic}</span>{/each}
+            </div>
+            <hr class="mb-4 border-slate-200" />
+        {/if}
         <div class="leading-loose">
             {#each $surahMorphology.ayahs as ayahData}
                 {#each ayahData.words as word}<span

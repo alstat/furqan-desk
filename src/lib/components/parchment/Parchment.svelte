@@ -6,9 +6,11 @@
 </script>
 
 <div
-    class={`${$hideSurahPage() ? "hidden " : ""} vintage-scroll z-10 flex flex-col items-center overflow-y-auto overflow-x-hidden bg-white px-12 py-10 text-justify sm:w-full md:w-9/12 lg:w-6/12 ${$morphFontSize} leading-loose text-slate-600 ${$isSidebar ? "" : "sm:shadow-xl sm:shadow-slate-200/60 sm:border sm:border-slate-100"}`}
+    class={`${$hideSurahPage() ? "hidden " : ""}relative z-10 flex flex-col items-center bg-white sm:w-full md:w-9/12 lg:w-6/12 ${$isSidebar ? "" : "sm:shadow-xl sm:shadow-slate-200/60 sm:border sm:border-slate-100"}`}
 >
-    <MorphologyView />
+    <div class={`default-scroll w-full flex-1 overflow-y-auto px-12 py-10 text-justify ${$morphFontSize} leading-loose text-slate-600`}>
+        <MorphologyView />
+    </div>
 
-    <NextPrevButton position={"absolute -bottom-12 sm:bottom-2 z-10"} />
+    <NextPrevButton position={"absolute -bottom-12 sm:bottom-2 z-20"} />
 </div>
