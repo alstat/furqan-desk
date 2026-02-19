@@ -1,5 +1,5 @@
 import { writable, type Writable } from "svelte/store";
-import type { SurahMorphology } from "$lib/types/morphology";
+import type { AyahMorphology, SurahMorphology } from "$lib/types/morphology";
 
 export interface SurahLabel {
     en: string;
@@ -16,3 +16,4 @@ export let isSidebar: Writable<boolean> = writable(false);
 
 // Morphology stores
 export let surahMorphology: Writable<SurahMorphology | null> = writable(null);
+export let basmallahMorphology: Writable<AyahMorphology | null> = writable(null);
