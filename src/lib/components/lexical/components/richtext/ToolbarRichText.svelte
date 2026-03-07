@@ -77,18 +77,18 @@
 			<Indent />
 			<Outdent />
 		</div>
-		
-		
+
+
 		<!-- TripleDotsDropdown component with the window width -->
 		{#if windowWidth < 1280}
 			<Divider />
-			<TripleDotsDropDown 
-				{windowWidth} 
-				onInsertImageClick={() => imageDialog?.open()} 
-				onInsertEquationClick={() => equationDialog?.open()} 
+			<TripleDotsDropDown
+				{windowWidth}
+				onInsertImageClick={() => imageDialog?.open()}
+				onInsertEquationClick={() => equationDialog?.open()}
 			/>
 		{/if}
-	
+
 		<!-- action bar -->
 		<ActionBar />
 
