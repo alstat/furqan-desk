@@ -16,7 +16,7 @@
 
 <div class={position}>
     <div
-        class="flex flex-row items-center justify-center gap-3 pt-5 absolute -bottom-6"
+        class="flex flex-row items-center justify-center gap-3"
     >
         {#if $selectedSurahIdx === 114}
             <button title="No next surah" disabled class={btnDisabled}>

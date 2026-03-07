@@ -86,7 +86,7 @@
 					duration: 300,
 					direction: $surahOrientation() == 'flex-row-reverse' ? 'right' : 'left'// or 'left' for left-to-right
 				}}
-				class="space-y-2 overflow-visible bg-white p-4 text-xl"
+				class="space-y-2 overflow-visible bg-white p-4 text-xl border border-stone-200 rounded-md"
 			>
 				{@render children()}
 			</div>
