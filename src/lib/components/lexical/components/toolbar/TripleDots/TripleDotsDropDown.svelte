@@ -28,6 +28,13 @@
 	let portalContent: HTMLElement | null = $state(null);
 	const activeEditor = getActiveEditor();
 
+	$effect(() => {
+		windowWidth; // reactive dependency — runs whenever windowWidth changes
+		if (isOpen && dropdownRef) {
+			buttonRect = dropdownRef.getBoundingClientRect();
+		}
+	});
+
 	// Create a higher z-index for nested portals
 	// This will be injected into the document head
 	let zIndexStyle: HTMLStyleElement | null = $state(null);

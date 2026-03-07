@@ -108,9 +108,9 @@
             </div>
             <hr class="mb-4 border-slate-200" />
         {/if}
-        <div class="leading-loose">
-            {#each $surahMorphology.ayahs as ayahData}
-                {#each ayahData.words as word}<span
+        <div dir="rtl" class="leading-loose w-full text-right wrap-break-word"
+            >{#each $surahMorphology.ayahs as ayahData}{#each ayahData.words as word}<span
+                dir="rtl"
                         role="button"
                         tabindex="0"
                         class="morph-word {$morphFontFamily} cursor-pointer rounded px-0.5 transition-colors {getWordColor(
@@ -121,9 +121,7 @@
                             : ''}"
                         onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                         onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
-                    >{word.combined_arabic}</span>{/each}<span class="px-1 font-scheherazade text-lime-700">﴿{convertToArabicNumbers(ayahData.ayah)}﴾</span>
-            {/each}
-        </div>
+                    >{word.combined_arabic}</span>{/each}<span class="font-scheherazade text-lime-700">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span>{/each}</div>
     {:else}
         <div class="py-8 text-center text-gray-500">
             Loading morphology data...
