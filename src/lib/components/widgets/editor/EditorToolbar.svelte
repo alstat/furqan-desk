@@ -6,7 +6,7 @@
 	import GroupCards from '../cards/GroupCards.svelte';
 	import ActionBar from '$lexical/components/actionbar/ActionBar.svelte';
 	import { hideSurahPage } from '$lib/stores/quran.svelte';
-    
+
     let checked: boolean = $state(false);
 	hideSurahPage.set(() => checked);
 </script>
@@ -39,7 +39,7 @@
 {/snippet}
 
 {#snippet collapsedIcon()}
-	<Icon icon="solar:black-hole-line-duotone" width="1.5em" />
+	<Icon icon="solar:menu-dots-line-duotone" width="2em" />
 {/snippet}
 
 {#snippet controlCard()}

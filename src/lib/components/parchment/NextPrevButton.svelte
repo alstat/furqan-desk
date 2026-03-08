@@ -15,12 +15,10 @@
 </script>
 
 <div class={position}>
-    <div
-        class="flex flex-row items-center justify-center gap-3"
-    >
+    <div class="flex flex-row items-center justify-center gap-3">
         {#if $selectedSurahIdx === 114}
             <button title="No next surah" disabled class={btnDisabled}>
-                <Icon icon="solar:skip-previous-line-duotone" width="1rem" />
+                <Icon icon="solar:arrow-left-bold-duotone" width="1rem" />
             </button>
         {:else}
             <button
@@ -28,13 +26,13 @@
                 title="Next Surah"
                 class={btnActive}
             >
-                <Icon icon="solar:skip-previous-line-duotone" width="1rem" />
+                <Icon icon="solar:arrow-left-bold-duotone" width="1rem" />
             </button>
         {/if}
 
         {#if $selectedSurahIdx === 1}
             <button title="No previous surah" disabled class={btnDisabled}>
-                <Icon icon="solar:skip-next-line-duotone" width="1rem" />
+                <Icon icon="solar:arrow-right-bold-duotone" width="1rem" />
             </button>
         {:else}
             <button
@@ -42,7 +40,7 @@
                 title="Previous Surah"
                 class={btnActive}
             >
-                <Icon icon="solar:skip-next-line-duotone" width="1rem" />
+                <Icon icon="solar:arrow-right-bold-duotone" width="1rem" />
             </button>
         {/if}
     </div>
