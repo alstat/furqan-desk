@@ -54,18 +54,15 @@
 		{/if}
 		<Divider />
 		<FontFamilyDropDown />
-		<div class="hidden md:flex md:flex-row md:items-center">
-			<FontSizeDropDown />
-			<Divider />
-			<BoldButton />
-			<ItalicButton />
-		</div>
-		<div class="hidden lg:flex lg:flex-row lg:items-center">
-			<UnderlineButton />
-			<StrikethroughButton />
-			<FormatCodeButton />
-		</div>
-		<div class="hidden xl:flex xl:flex-row xl:items-center">
+		<FontSizeDropDown />
+		<Divider />
+		<BoldButton />
+		<ItalicButton />
+		<UnderlineButton />
+		<StrikethroughButton />
+		<FormatCodeButton />
+
+		{#if windowWidth > 1380}
 			<Divider />
 			<InsertDropDown>
 				<InsertHRDropDownItem />
@@ -76,11 +73,10 @@
 			<Divider />
 			<Indent />
 			<Outdent />
-		</div>
-
+		{/if}
 
 		<!-- TripleDotsDropdown component with the window width -->
-		{#if windowWidth < 1280}
+		{#if windowWidth < 1380}
 			<Divider />
 			<TripleDotsDropDown
 				{windowWidth}
