@@ -14,8 +14,8 @@
     ];
 
     // Anchor the expanded panel to the correct corner of the fixed-size container
-    const panelCorner = `${yPosition === 'bottom' ? 'bottom-0' : 'top-0'} ${xPosition === 'right' ? 'right-0' : 'left-0'}`;
-    const panelAlign = xPosition === 'right' ? 'items-end' : 'items-start';
+    const panelCorner = $derived(`${yPosition === 'bottom' ? 'bottom-0' : 'top-0'} ${xPosition === 'right' ? 'right-0' : 'left-0'}`);
+    const panelAlign = $derived(xPosition === 'right' ? 'items-end' : 'items-start');
 </script>
 
 <!--

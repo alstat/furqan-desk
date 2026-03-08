@@ -30,6 +30,7 @@
 	import InsertEquationDialog from '../toolbar/dialogs/InsertEquationDialog.svelte';
 	import EquationShortcutButton from '$lexical/core/plugins/Equation/EquationShortcutButton.svelte';
 	import TripleDotsDropDown from '../toolbar/TripleDots/TripleDotsDropDown.svelte';
+    import TripleDotsDropDownSmall from '../toolbar/TripleDots/TripleDotsDropDownSmall.svelte';
 
 	let imageDialog = $state<InsertImageDialog | undefined>(undefined);
 	let equationDialog = $state<InsertEquationDialog | undefined>(undefined);
@@ -71,8 +72,13 @@
 			</InsertDropDown>
             <DropDownAlign />
 			<Divider />
-			<Indent />
-			<Outdent />
+			<!-- <Indent />
+			<Outdent /> -->
+			<TripleDotsDropDownSmall
+				{windowWidth}
+				onInsertImageClick={() => imageDialog?.open()}
+				onInsertEquationClick={() => equationDialog?.open()}
+			/>
 		{/if}
 
 		<!-- TripleDotsDropdown component with the window width -->

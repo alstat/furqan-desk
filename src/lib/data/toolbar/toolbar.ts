@@ -1,8 +1,8 @@
 import { modifyText } from "$lib/functions/toolbar/toolBarFunctions";
 import { activeClass } from "../config";
 
-export let actionBtnStyle = 'rounded-full bg-slate-100 hover:bg-slate-400 active:text-slate-50 active:bg-slate-500 text-slate-700 p-2 shadow-md'
-export let toolBarBtnStyle = 'hover:bg-slate-200 active:text-slate-50 active:bg-slate-300 text-slate-700 rounded-md'
+export let actionBtnStyle = 'cursor-pointer rounded-full bg-slate-100 hover:bg-slate-400 active:text-slate-50 active:bg-slate-500 text-slate-700 p-2 shadow-md'
+export let toolBarBtnStyle = 'cursor-pointer hover:bg-slate-200 active:text-slate-50 active:bg-slate-300 text-slate-700 rounded-md'
 export let activeBtnStyle = 'bg-slate-300 rounded-md'
 export let selectBtnStyle = 'border-1 block cursor-pointer rounded-md border border-slate-300 bg-slate-100 p-1 text-center text-sm text-lime-700'
 export let icons = {
@@ -42,7 +42,8 @@ export let icons = {
 	heading: 'dashicons:heading',
 	checklist: 'ic:round-checklist',
 	quote: 'fluent:text-quote-16-filled',
-	code: 'fluent:code-16-filled'
+	code: 'fluent:code-16-filled',
+	lineSpacing: 'material-symbols:format-line-spacing'
 };
 
 // export interface Tool {

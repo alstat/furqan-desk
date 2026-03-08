@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { onMount, onDestroy } from "svelte";
+    import { onMount, onDestroy, getContext } from "svelte";
+    import type { Readable } from "svelte/store";
     import BoldButton from "../BoldButton.svelte";
     import ItalicButton from "../ItalicButton.svelte";
     import UnderlineButton from "../UnderlineButton.svelte";
@@ -17,8 +18,16 @@
     import Portal from "../../generic/portal/Portal.svelte";
     import Icon from "@iconify/svelte";
     import { icons } from "$lib/data/toolbar/toolbar";
-    import { getActiveEditor } from "$lexical/core/composerContext.js";
+    import {
+        getActiveEditor,
+        getEditor,
+    } from "$lexical/core/composerContext.js";
     import { INSERT_HORIZONTAL_RULE_COMMAND } from "$lexical/core/plugins/HorizontalRuleNode.js";
+    import { $patchStyleText as patchStyleText } from "@lexical/selection";
+    import {
+        $getSelection as getSelection,
+        $isRangeSelection as isRangeSelection,
+    } from "lexical";
 
     let { windowWidth, onInsertImageClick, onInsertEquationClick } = $props();
 
@@ -27,6 +36,8 @@
     let buttonRect: DOMRect | null = $state(null);
     let portalContent: HTMLElement | null = $state(null);
     const activeEditor = getActiveEditor();
+    const editor = getEditor();
+    const lineHeight = getContext<Readable<string>>("lineHeight");
 
     $effect(() => {
         windowWidth; // reactive dependency — runs whenever windowWidth changes
@@ -82,6 +93,15 @@
         portalContent = node;
     }
 
+    function applyLineSpacing(lineHeight: string) {
+        editor.update(() => {
+            const selection = getSelection();
+            if (isRangeSelection(selection)) {
+                patchStyleText(selection, { "line-height": lineHeight });
+            }
+        });
+    }
+
     onMount(() => {
         // Only add event listeners in the browser environment
         if (typeof window !== "undefined") {
@@ -113,7 +133,7 @@
 <div class="relative" bind:this={dropdownRef}>
     <button
         onclick={toggleDropdown}
-        class="flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100"
+        class="flex h-8 w-8 cursor-pointer items-center justify-center rounded hover:bg-gray-100"
         aria-label="More options"
     >
         <svg
@@ -136,7 +156,7 @@
     {#if isOpen && buttonRect}
         <Portal>
             <div
-                class="portal-dropdown-content fixed z-50 rounded-md border border-slate-200 bg-slate-100 bg-opacity-80 shadow-2xl backdrop-blur-sm"
+                class="portal-dropdown-content fixed z-10 rounded-md border border-slate-200 bg-slate-100 bg-opacity-80 shadow-2xl backdrop-blur-sm"
                 style="top: {buttonRect.bottom +
                     14 +
                     (typeof window !== 'undefined'
@@ -176,7 +196,7 @@
                             >
                             <div class="mt-1 flex flex-col space-y-1">
                                 <button
-                                    class="px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200"
+                                    class="cursor-pointer px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200"
                                     onclick={onInsertImageClick}
                                 >
                                     <div
@@ -192,7 +212,7 @@
                                     </div>
                                 </button>
                                 <button
-                                    class="px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200"
+                                    class="cursor-pointer px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200"
                                     onclick={() => {
                                         $activeEditor.dispatchCommand(
                                             INSERT_HORIZONTAL_RULE_COMMAND,
@@ -213,7 +233,7 @@
                                     </div>
                                 </button>
                                 <button
-                                    class="px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200"
+                                    class="cursor-pointer px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200"
                                     onclick={onInsertEquationClick}
                                 >
                                     <div
@@ -238,6 +258,36 @@
                             {/if}
                             <Indent />
                             <Outdent />
+                        </div>
+                        <hr class="my-1 border-gray-200" />
+                        <div class="px-2 py-1">
+                            <span class="text-sm font-medium text-gray-700"
+                                >Line Spacing</span
+                            >
+                            <div class="mt-1 flex flex-col space-y-1">
+                                {#each [{ label: "Single", value: "1" }, { label: "1.5 Lines", value: "1.5" }, { label: "Double", value: "2" }] as spacing}
+                                    <button
+                                        class="cursor-pointer px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200 {$lineHeight ===
+                                        spacing.value
+                                            ? 'bg-slate-300 text-slate-900 font-semibold'
+                                            : ''}"
+                                        onclick={() =>
+                                            applyLineSpacing(spacing.value)}
+                                    >
+                                        <div
+                                            class="flex w-32 flex-row items-center"
+                                        >
+                                            <div class="pr-2">
+                                                <Icon
+                                                    icon={icons["lineSpacing"]}
+                                                    width="1rem"
+                                                />
+                                            </div>
+                                            <div>{spacing.label}</div>
+                                        </div>
+                                    </button>
+                                {/each}
+                            </div>
                         </div>
                     </div>
                     <!-- {/if} -->

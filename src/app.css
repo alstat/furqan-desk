@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-    --font-scheherazade: 'Scheherazade New', serif;
-    --font-amiri: 'Amiri', serif;
-    --font-reem: 'Reem Kufi Ink', sans-serif;
+    --font-scheherazade: "Scheherazade New", serif;
+    --font-amiri: "Amiri", serif;
+    --font-reem: "Reem Kufi Ink", sans-serif;
 }
 
 .default-scroll {
@@ -11,10 +11,6 @@
     scrollbar-width: thin;
     scrollbar-color: #c6c6c582 #fef3c700;
     /* direction: rtl; */
-}
-
-.default-scroll > * {
-    /* direction: ltr;  */
 }
 
 /* Hide scrollbar by default */
@@ -1128,8 +1124,7 @@ i.chevron-down {
     border-radius: 10px;
     padding: 8px;
     vertical-align: middle;
-    -webkit-appearance: none;
-    -moz-appearance: none;
+    appearance: none;
     width: 70px;
     font-size: 14px;
     color: #777;

@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import { CodeNode } from "$lexical/core/plugins/CodeHighlighter/CodeNode";
     import CodePlugin from "$lexical/core/plugins/CodeHighlighter/CodePlugin.svelte";
     import { EquationNode } from "$lexical/core/plugins/Equation/EquationNode";
@@ -45,6 +45,7 @@
     import CaptionEditorHistoryPlugin from "$lexical/core/plugins/Image/CaptionEditorHistoryPlugin.svelte";
 
     const initialConfig = {
+        namespace: "Editor",
         theme: PlaygroundEditorTheme,
         nodes: [
             HeadingNode,
@@ -56,7 +57,7 @@
             EquationNode,
             CodeNode,
         ],
-        onError: (error) => {
+        onError: (error: Error) => {
             throw error;
         },
         editorState: () => {
