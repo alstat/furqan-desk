@@ -63,18 +63,6 @@
             const root = getRoot();
             if (root.getFirstChild() === null) {
                 const paragraph = createParagraphNode();
-                paragraph.append(
-                    createTextNode(
-                        "This demo environment is built with This demo environment is built with This demo environment is built with This demo environment is built with This demo environment is built with This demo environment is built with This demo environment is built with This demo environment is built with This demo environment is built with This demo environment is built with This demo environment is built with This demo environment is built with This demo environment is built with ",
-                    ),
-                    // createTextNode('svelte-lexical').toggleFormat('code'),
-                    createTextNode("."),
-                    createTextNode(" Try typing in "),
-                    createTextNode("some text").toggleFormat("bold"),
-                    createTextNode(" with "),
-                    createTextNode("different").toggleFormat("italic"),
-                    createTextNode(" formats."),
-                );
                 root.append(paragraph);
             }
         },

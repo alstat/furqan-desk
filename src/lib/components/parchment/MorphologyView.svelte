@@ -108,7 +108,7 @@
             </div>
             <hr class="mb-4 border-slate-200" />
         {/if}
-        <div dir="rtl" class="leading-loose w-full text-right wrap-break-word"
+        <div dir="rtl" class="leading-loose w-full text-justify wrap-break-word"
             >{#each $surahMorphology.ayahs as ayahData}{#each ayahData.words as word}<span
                 dir="rtl"
                         role="button"
@@ -121,9 +121,9 @@
                             : ''}"
                         onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                         onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
-                    >{word.combined_arabic}</span>{/each}<span class="font-scheherazade text-lime-700">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span>{/each}</div>
+                    >{word.combined_arabic}</span>{/each}<span class="font-scheherazade text-lime-700 px-1 whitespace-nowrap">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span>{/each}</div>
     {:else}
-        <div class="py-8 text-center text-gray-500">
+        <div class="py-8 text-center text-gray-500 h-full">
             Loading morphology data...
         </div>
     {/if}

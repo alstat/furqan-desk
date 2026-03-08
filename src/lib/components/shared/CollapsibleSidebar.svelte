@@ -20,7 +20,7 @@
 		} else {
 			rotateSpring.set(isOpen ? 0 : 180);
 		}
-		sidebarWidth = isOpen ? 'w-6/12' : '';
+		sidebarWidth = isOpen ? 'sm:w-full md:w-9/12 lg:w-6/12' : '';
 	}
 
 	interface HorizontalSlideParams {
@@ -53,7 +53,7 @@
 	}
 </script>
 
-<div class={`relative flex justify-center overflow-visible font-base text-slate-900 ${sidebarWidth}`}>
+<div class={`relative flex justify-right overflow-visible font-base text-slate-900 ${sidebarWidth}`}>
 	<button
 		class={`${$hideSurahPage() ? 'hidden ' : ''} absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} top-4 z-10 rounded-full bg-amber-200 p-2 shadow-md transition-colors text-lime-700 hover:bg-amber-300 active:bg-amber-400`}
 		onclick={toggleSidebar}
@@ -70,7 +70,7 @@
 			<path d="M15 19l-7-7 7-7" />
 		</svg>
 	</button>
-	<div class={isOpen ? `flex flex-row` : `hidden`}>
+	<div class={isOpen ? `flex flex-row w-full` : `hidden`}>
 		<!-- Toggle Button -->
 
 		<!-- Sidebar Content -->
@@ -86,7 +86,7 @@
 					duration: 300,
 					direction: $surahOrientation() == 'flex-row-reverse' ? 'right' : 'left'// or 'left' for left-to-right
 				}}
-				class="space-y-2 overflow-visible bg-white p-4 text-xl border border-stone-200 rounded-md"
+				class="w-full space-y-2 overflow-visible bg-white p-4 text-xl border border-stone-200 rounded-md"
 			>
 				{@render children()}
 			</div>

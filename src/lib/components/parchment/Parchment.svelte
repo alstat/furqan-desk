@@ -14,5 +14,5 @@
         <MorphologyView />
     </div>
 
-    <NextPrevButton position={"absolute -bottom-3 inset-x-0 z-20"} />
+    <NextPrevButton position={"absolute -bottom-4 inset-x-0 z-20"} />
 </div>

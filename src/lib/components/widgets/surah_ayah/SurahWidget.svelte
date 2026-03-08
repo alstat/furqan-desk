@@ -72,7 +72,7 @@
 {/snippet}
 
 {#snippet collapsedIcon()}
-	<Icon icon="hugeicons:quran-01" width="1.5em" />
+	<Icon icon="solar:book-bookmark-bold-duotone" width="1.5em" />
 {/snippet}
 
 {#snippet controlCard()}
