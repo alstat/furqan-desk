@@ -168,79 +168,79 @@
                     {/if}
 
                     <!-- XL breakpoint items (show when width < xl) -->
-                    {#if windowWidth > 1380}
-                        <div class="">
-                            <div class="mb-2 px-2 py-1">
-                                <span class="text-sm font-medium text-gray-700"
-                                    >Insert</span
+                    <!-- {#if windowWidth < 1380} -->
+                    <div class="">
+                        <div class="mb-2 px-2 py-1">
+                            <span class="text-sm font-medium text-gray-700"
+                                >Insert</span
+                            >
+                            <div class="mt-1 flex flex-col space-y-1">
+                                <button
+                                    class="px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200"
+                                    onclick={onInsertImageClick}
                                 >
-                                <div class="mt-1 flex flex-col space-y-1">
-                                    <button
-                                        class="px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200"
-                                        onclick={onInsertImageClick}
+                                    <div
+                                        class="flex w-32 flex-row items-center"
                                     >
-                                        <div
-                                            class="flex w-32 flex-row items-center"
-                                        >
-                                            <div class="pr-2">
-                                                <Icon
-                                                    icon={icons["image"]}
-                                                    width="1rem"
-                                                />
-                                            </div>
-                                            <div>Image</div>
+                                        <div class="pr-2">
+                                            <Icon
+                                                icon={icons["image"]}
+                                                width="1rem"
+                                            />
                                         </div>
-                                    </button>
-                                    <button
-                                        class="px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200"
-                                        onclick={() => {
-                                            $activeEditor.dispatchCommand(
-                                                INSERT_HORIZONTAL_RULE_COMMAND,
-                                                undefined,
-                                            );
-                                        }}
+                                        <div>Image</div>
+                                    </div>
+                                </button>
+                                <button
+                                    class="px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200"
+                                    onclick={() => {
+                                        $activeEditor.dispatchCommand(
+                                            INSERT_HORIZONTAL_RULE_COMMAND,
+                                            undefined,
+                                        );
+                                    }}
+                                >
+                                    <div
+                                        class="flex w-32 flex-row items-center"
                                     >
-                                        <div
-                                            class="flex w-32 flex-row items-center"
-                                        >
-                                            <div class="pr-2">
-                                                <Icon
-                                                    icon={icons["hr"]}
-                                                    width="1rem"
-                                                />
-                                            </div>
-                                            <div>Horizontal Rule</div>
+                                        <div class="pr-2">
+                                            <Icon
+                                                icon={icons["hr"]}
+                                                width="1rem"
+                                            />
                                         </div>
-                                    </button>
-                                    <button
-                                        class="px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200"
-                                        onclick={onInsertEquationClick}
+                                        <div>Horizontal Rule</div>
+                                    </div>
+                                </button>
+                                <button
+                                    class="px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200"
+                                    onclick={onInsertEquationClick}
+                                >
+                                    <div
+                                        class="flex w-32 flex-row items-center"
                                     >
-                                        <div
-                                            class="flex w-32 flex-row items-center"
-                                        >
-                                            <div class="pr-2">
-                                                <Icon
-                                                    icon={icons["math"]}
-                                                    width="1rem"
-                                                />
-                                            </div>
-                                            <div>Equation</div>
+                                        <div class="pr-2">
+                                            <Icon
+                                                icon={icons["math"]}
+                                                width="1rem"
+                                            />
                                         </div>
-                                    </button>
-                                </div>
-                            </div>
-                            <hr class="my-1 border-gray-200" />
-                            <div class="flex items-center px-2 py-1">
-                                <DropDownAlign />
-                                {#if windowWidth < 768}
-                                    <FontSizeDropDown />
-                                {/if}
-                                <Indent />
-                                <Outdent />
+                                        <div>Equation</div>
+                                    </div>
+                                </button>
                             </div>
                         </div>
-                    {/if}
+                        <hr class="my-1 border-gray-200" />
+                        <div class="flex items-center px-2 py-1">
+                            <DropDownAlign />
+                            {#if windowWidth < 768}
+                                <FontSizeDropDown />
+                            {/if}
+                            <Indent />
+                            <Outdent />
+                        </div>
+                    </div>
+                    <!-- {/if} -->
                 </div>
             </div>
         </Portal>
