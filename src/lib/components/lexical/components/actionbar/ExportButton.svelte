@@ -6,37 +6,51 @@
     import { save } from "@tauri-apps/plugin-dialog";
     import { writeTextFile } from "@tauri-apps/plugin-fs";
     import { serializedDocumentFromEditorState } from "@lexical/file";
+    import { onMount } from "svelte";
+    import { IS_APPLE } from "@lexical/utils";
 
     const editor: LexicalEditor = getEditor();
+    let currentFilePath = $state<string | null>(null);
 
-    async function handleExport() {
+    async function saveFile() {
         const doc = serializedDocumentFromEditorState(editor.getEditorState(), {
             source: "Playground",
         });
         const json = JSON.stringify(doc, null, 2);
 
-        const filePath = await save({
-            title: "Export Editor File",
-            defaultPath: `Playground ${new Date().toISOString()}.lexical`,
-            filters: [
-                {
-                    name: "Lexical Editor File",
-                    extensions: ["lexical", "json"],
-                },
-            ],
-        });
+        if (!currentFilePath) {
+            const filePath = await save({
+                title: "Save Editor File",
+                defaultPath: `Playground ${new Date().toISOString()}.lexical`,
+                filters: [
+                    { name: "Lexical Editor File", extensions: ["lexical", "json"] },
+                ],
+            });
+            if (!filePath) return;
+            currentFilePath = filePath;
+        }
 
-        if (filePath) {
-            await writeTextFile(filePath, json);
+        await writeTextFile(currentFilePath, json);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+        if ((IS_APPLE ? event.metaKey : event.ctrlKey) && event.key === "s") {
+            event.preventDefault();
+            saveFile();
         }
     }
+
+    onMount(() => {
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    });
 </script>
 
 <button
     class={actionBtnStyle + " p-1"}
-    onclick={handleExport}
-    title="Export"
-    aria-label="Export editor state to JSON"
+    onclick={saveFile}
+    title={IS_APPLE ? "Save (⌘S)" : "Save (Ctrl+S)"}
+    aria-label="Save editor state"
 >
-    <Icon icon="solar:export-bold-duotone" width="1rem" />
+    <Icon icon="solar:diskette-bold-duotone" width="1rem" />
 </button>
