@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:dmg": "mkdir -p src-tauri/target/release/bundle/dmg && hdiutil create -volname furqan-desk -srcfolder src-tauri/target/release/bundle/macos/furqan-desk.app -ov -format UDZO src-tauri/target/release/bundle/dmg/furqan-desk_0.1.0_aarch64.dmg"
   },
   "license": "MIT",
   "dependencies": {
