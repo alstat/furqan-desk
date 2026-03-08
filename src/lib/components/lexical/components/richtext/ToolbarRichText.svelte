@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import BlockFormatDropDown from '../toolbar/BlockFormatDropDown/BlockFormatDropDown.svelte';
 	import BoldButton from '../toolbar/BoldButton.svelte';
 	import Divider from '../toolbar/Divider.svelte';
@@ -35,22 +34,9 @@
 	let imageDialog = $state<InsertImageDialog | undefined>(undefined);
 	let equationDialog = $state<InsertEquationDialog | undefined>(undefined);
 	let windowWidth = $state(0);
-
-	function handleWindowResize() {
-		windowWidth = window.innerWidth;
-	}
-
-	onMount(() => {
-		window.addEventListener('resize', handleWindowResize);
-		windowWidth = window.innerWidth;
-
-		return () => {
-			window.removeEventListener('resize', handleWindowResize);
-		};
-	});
 </script>
 
-<svelte:window on:resize={handleWindowResize} />
+<svelte:window bind:innerWidth={windowWidth} />
 
 <Toolbar>
 	{#snippet children({ editor, activeEditor, blockType })}
@@ -91,18 +77,18 @@
 			<Indent />
 			<Outdent />
 		</div>
-		
-		
+
+
 		<!-- TripleDotsDropdown component with the window width -->
 		{#if windowWidth < 1280}
 			<Divider />
-			<TripleDotsDropDown 
-				{windowWidth} 
-				onInsertImageClick={() => imageDialog?.open()} 
-				onInsertEquationClick={() => equationDialog?.open()} 
+			<TripleDotsDropDown
+				{windowWidth}
+				onInsertImageClick={() => imageDialog?.open()}
+				onInsertEquationClick={() => equationDialog?.open()}
 			/>
 		{/if}
-	
+
 		<!-- action bar -->
 		<ActionBar />
 

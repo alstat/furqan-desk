@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+    --font-scheherazade: 'Scheherazade New', serif;
+    --font-amiri: 'Amiri', serif;
+    --font-reem: 'Reem Kufi Ink', sans-serif;
+}
+
 .default-scroll {
     /* Firefox */
     scrollbar-width: thin;
@@ -38,69 +44,8 @@
     background-clip: padding-box;
 }
 
-/* Add hover effect for Firefox */
-.vintage-scroll {
-    /* scrollbar-width: none; Hide by default */
-}
-
-.vintage-scroll:hover {
-    /* scrollbar-width: thin; Show on hover */
-}
-
 /* Edge and IE */
 .default-scroll {
-    -ms-overflow-style: -ms-autohiding-scrollbar;
-}
-
-.vintage-scroll {
-    /* Firefox */
-    scrollbar-width: thin;
-    scrollbar-color: #f7d66182 #fef3c700;
-    /* direction: rtl; */
-}
-
-.vintage-scroll > * {
-    /* direction: ltr;  */
-}
-
-/* Hide scrollbar by default */
-.vintage-scroll::-webkit-scrollbar {
-    width: 4px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-/* Show scrollbar only when hovering over or actively scrolling */
-.vintage-scroll:hover::-webkit-scrollbar,
-.vintage-scroll:active::-webkit-scrollbar,
-.vintage-scroll:focus::-webkit-scrollbar {
-    opacity: 1;
-}
-
-.vintage-scroll::-webkit-scrollbar-track {
-    background: #fef3c700;
-    width: 4px;
-}
-
-.vintage-scroll::-webkit-scrollbar-thumb {
-    background-color: #f7d66182;
-    border-radius: 1px;
-    width: 4px;
-    border: none;
-    background-clip: padding-box;
-}
-
-/* Add hover effect for Firefox */
-.vintage-scroll {
-    /* scrollbar-width: none; Hide by default */
-}
-
-.vintage-scroll:hover {
-    /* scrollbar-width: thin; Show on hover */
-}
-
-/* Edge and IE */
-.vintage-scroll {
     -ms-overflow-style: -ms-autohiding-scrollbar;
 }
 /*

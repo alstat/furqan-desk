@@ -17,8 +17,8 @@
 
 <DropDown
   disabled={!$isEditable}
-  buttonClassName="w-28 "
-  buttonIconClassName={'w-28 ' + $blockType}
+  buttonClassName="w-22 "
+  buttonIconClassName={'w-22 ' + $blockType}
   buttonLabel={blockTypeToBlockName[$blockType]}
   buttonAriaLabel="Formatting options for text style">
   {@render children?.()}

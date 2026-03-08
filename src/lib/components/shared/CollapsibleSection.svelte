@@ -1,7 +1,8 @@
 <script lang="ts">
     import { slide } from 'svelte/transition';
     import type { Dir } from '$lib/functions/utils/utils';
-    import { fontSize, fontFamily, selectedSurahName, enSurahName } from '$lib/stores/quran.svelte';
+    import { selectedSurahName, enSurahName } from '$lib/stores/quran.svelte';
+    import { morphFontFamily, morphFontSize } from '$lib/stores/morphology.store';
     let { children, title, isTafsirTrans = false, isOpen = true, dir = "ltr" as Dir } = $props()
 </script>
 
@@ -22,14 +23,14 @@
             {/if}
             <span class="font-base italic">
                 {title} {#if isTafsirTrans}
-                <span class={`${$fontFamily()} pr-1`}>{$selectedSurahName}</span> ({$enSurahName})
+                <span class={`${$morphFontFamily} pr-1`}>{$selectedSurahName}</span> ({$enSurahName})
             {/if}
             </span>
         </div>
     </button>
     
     {#if isOpen}
-        <div dir="{dir}" class={`${$fontSize() == 'text-base' ? 'text-xs' : $fontSize() == 'text-xl' ? 'text-lg' : 'text-xl'} vintage-scroll max-h-96 overflow-auto font-base border border-1 border-t-0 border-amber-300 text-sm p-2`} transition:slide={{ duration: 300 }}>
+        <div dir="{dir}" class={`${$morphFontSize == 'text-base' ? 'text-xs' : $morphFontSize == 'text-xl' ? 'text-lg' : 'text-xl'} default-scroll max-h-96 overflow-auto font-base border border-1 border-t-0 border-amber-300 text-sm p-2`} transition:slide={{ duration: 300 }}>
             {@render children()}
         </div>
     {/if}
