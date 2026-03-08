@@ -113,7 +113,7 @@
                 {#each $basmallahMorphology.words as word}<span
                         role="button"
                         tabindex="0"
-                        class="morph-word {$morphFontFamily} cursor-pointer rounded px-0.5 transition-colors  inline-block {getWordColor(
+                        class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors  inline-block {getWordColor(
                             word,
                         )} {selectedWord?.word === word &&
                         selectedWord?.ayahNum === 0
@@ -121,7 +121,7 @@
                             : ''}"
                         onclick={(e) => handleWordClick(e, word, 0)}
                         onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, 0)}
-                    >{word.combined_arabic}</span>{/each}
+                    >{word.combined_arabic}&nbsp;</span>{/each}
             </div>
             <hr class="mb-4 border-slate-200" />
         {/if}
@@ -130,7 +130,7 @@
                 dir="rtl"
                         role="button"
                         tabindex="0"
-                        class="morph-word {$morphFontFamily} cursor-pointer rounded px-0.5 transition-colors inline-block {getWordColor(
+                        class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(
                             word,
                         )} {selectedWord?.word === word &&
                         selectedWord?.ayahNum === ayahData.ayah
@@ -138,7 +138,7 @@
                             : ''}"
                         onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                         onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
-                    >{word.combined_arabic}</span>{/each}<span class="font-scheherazade text-lime-700 px-1 whitespace-nowrap">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span>{/each}</div>
+                    >{word.combined_arabic}&nbsp;</span>{/each}<span class="font-scheherazade text-lime-700 px-1 whitespace-nowrap">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span>{/each}</div>
     {:else}
         <div class="py-8 text-center text-gray-500 h-full">
             Loading morphology data...

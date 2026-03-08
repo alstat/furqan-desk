@@ -7,7 +7,7 @@
 </script>
 
 <div class="shadow-md flex flex-col rounded-md">
-    <button 
+    <button
         class="flex items-center justify-between text-sm p-1 border border-amber-300 hover:bg-opacity-10 bg-gradient-to-r from-amber-100 via-amber-50 to-amber-100 text-lime-900"
         onclick={() => isOpen = !isOpen}
     >
@@ -28,7 +28,7 @@
             </span>
         </div>
     </button>
-    
+
     {#if isOpen}
         <div dir="{dir}" class={`${$morphFontSize == 'text-base' ? 'text-xs' : $morphFontSize == 'text-xl' ? 'text-lg' : 'text-xl'} default-scroll max-h-96 overflow-auto font-base border border-1 border-t-0 border-amber-300 text-sm p-2`} transition:slide={{ duration: 300 }}>
             {@render children()}
