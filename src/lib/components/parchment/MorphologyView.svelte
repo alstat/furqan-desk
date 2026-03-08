@@ -108,12 +108,12 @@
             </div>
             <hr class="mb-4 border-slate-200" />
         {/if}
-        <div dir="rtl" class="leading-loose w-full text-justify wrap-break-word"
+        <div dir="rtl" class="leading-loose w-full text-center wrap-break-word"
             >{#each $surahMorphology.ayahs as ayahData}{#each ayahData.words as word}<span
                 dir="rtl"
                         role="button"
                         tabindex="0"
-                        class="morph-word {$morphFontFamily} cursor-pointer rounded px-0.5 transition-colors {getWordColor(
+                        class="morph-word {$morphFontFamily} cursor-pointer rounded px-0.5 transition-colors inline-block {getWordColor(
                             word,
                         )} {selectedWord?.word === word &&
                         selectedWord?.ayahNum === ayahData.ayah
