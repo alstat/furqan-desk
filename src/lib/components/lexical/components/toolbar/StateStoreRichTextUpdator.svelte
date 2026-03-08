@@ -46,6 +46,7 @@
 	const fontFamily: Writable<string> = getContext('fontFamily');
 	const fontColor: Writable<string> = getContext('fontColor');
 	const bgColor: Writable<string> = getContext('bgColor');
+	const lineHeight: Writable<string> = getContext('lineHeight');
 	const isLink: Writable<boolean> = getContext('isLink');
 	const isImageCaption: Writable<boolean> = getContext('isImageCaption');
 
@@ -121,6 +122,7 @@
 		//TODO: create a separate toolbar updator that doesn't suppprt tables (doesn't use isTableSelection) and save on package size
 		if (isRangeSelection(selection) || isTableSelection(selection)) {
 			$fontSize = getSelectionStyleValueForProperty(selection, 'font-size', '16px');
+			$lineHeight = getSelectionStyleValueForProperty(selection, 'line-height', '');
 		}
 	};
 

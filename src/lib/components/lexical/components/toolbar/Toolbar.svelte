@@ -41,6 +41,7 @@
 	setContext('codeLanguage', writable(''));
 	setContext('isLink', writable(false));
 	setContext('isImageCaption', writable(false));
+	setContext('lineHeight', writable(''));
 </script>
 
 <StateStoreRichTextUpdator />

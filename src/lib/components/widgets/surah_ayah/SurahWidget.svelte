@@ -54,15 +54,15 @@
 {#snippet fontBody()}
 	<div class="flex flex-col gap-3 px-4 py-3">
 		<div>
-			<label class="mb-1.5 block text-xs font-medium text-slate-400">Font Family</label>
-			<select bind:value={font} class={selectClass}>
+			<label for="surah-font-family" class="mb-1.5 block text-xs font-medium text-slate-400">Font Family</label>
+			<select id="surah-font-family" bind:value={font} class={selectClass}>
 				<option value="font-scheherazade">Scheherazade New</option>
 				<option value="font-amiri">Amiri Qur'an</option>
 			</select>
 		</div>
 		<div>
-			<label class="mb-1.5 block text-xs font-medium text-slate-400">Font Size</label>
-			<select bind:value={textSize} class={selectClass}>
+			<label for="surah-font-size" class="mb-1.5 block text-xs font-medium text-slate-400">Font Size</label>
+			<select id="surah-font-size" bind:value={textSize} class={selectClass}>
 				<option value="text-base">Small</option>
 				<option value="text-xl">Medium</option>
 				<option value="text-3xl">Large</option>
