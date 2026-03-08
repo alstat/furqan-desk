@@ -14,6 +14,23 @@
         $state(null);
     let popoverPosition = $state({ x: 0, y: 0, placement: 'below' as 'above' | 'below' });
 
+    // Progressive rendering
+    const CHUNK_SIZE = 30;
+    let renderedAyahCount = $state(CHUNK_SIZE);
+
+    $effect(() => {
+        const total = $surahMorphology?.ayahs?.length ?? 0;
+        renderedAyahCount = Math.min(CHUNK_SIZE, total);
+
+        if (total <= CHUNK_SIZE) return;
+
+        function renderMore() {
+            renderedAyahCount = Math.min(renderedAyahCount + CHUNK_SIZE, total);
+            if (renderedAyahCount < total) requestAnimationFrame(renderMore);
+        }
+        requestAnimationFrame(renderMore);
+    });
+
     function getWordColor(word: MorphWord): string {
         // Get primary tag from the stem (non-prefix/suffix token)
         const stemToken = word.tokens.find(
@@ -92,11 +109,11 @@
 
     {#if $surahMorphology}
         {#if $surahMorphology.surah !== 1 && $surahMorphology.surah !== 9 && $basmallahMorphology}
-            <div class="mb-4 text-center leading-loose">
+            <div class="mb-4 text-center wrap-break-word leading-loose">
                 {#each $basmallahMorphology.words as word}<span
                         role="button"
                         tabindex="0"
-                        class="morph-word {$morphFontFamily} cursor-pointer rounded px-0.5 transition-colors {getWordColor(
+                        class="morph-word {$morphFontFamily} cursor-pointer rounded px-0.5 transition-colors  inline-block {getWordColor(
                             word,
                         )} {selectedWord?.word === word &&
                         selectedWord?.ayahNum === 0
@@ -108,8 +125,8 @@
             </div>
             <hr class="mb-4 border-slate-200" />
         {/if}
-        <div dir="rtl" class="leading-loose w-full text-center wrap-break-word"
-            >{#each $surahMorphology.ayahs as ayahData}{#each ayahData.words as word}<span
+        <div dir="rtl" class="leading-loose w-full text-center wrap-break-word" style="contain: style;"
+            >{#each $surahMorphology.ayahs.slice(0, renderedAyahCount) as ayahData}{#each ayahData.words as word}<span
                 dir="rtl"
                         role="button"
                         tabindex="0"
