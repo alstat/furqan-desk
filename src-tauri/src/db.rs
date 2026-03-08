@@ -1,22 +1,22 @@
 use crate::buckwalter::buckwalter_to_arabic;
 use rusqlite::{Connection, Result};
 use std::fs;
+use std::path::PathBuf;
 use std::sync::Mutex;
 
 pub struct Database(pub Mutex<Connection>);
 
 impl Database {
-    // Database initialization methods
-    pub fn new() -> Result<Self> {
-        let conn = Connection::open("quran.db")?;
+    pub fn new(db_path: PathBuf, sql_path: PathBuf, morph_path: PathBuf) -> Result<Self> {
+        let conn = Connection::open(&db_path)?;
 
         // Initialize tables and load data
-        Self::init_quran_db(&conn)?;
-        Self::init_morphology_db(&conn)?;
+        Self::init_quran_db(&conn, &sql_path)?;
+        Self::init_morphology_db(&conn, &morph_path)?;
         Ok(Database(Mutex::new(conn)))
     }
 
-    fn init_quran_db(conn: &Connection) -> Result<()> {
+    fn init_quran_db(conn: &Connection, sql_path: &PathBuf) -> Result<()> {
         // Create the quran_text table (SQLite syntax)
         conn.execute(
             "CREATE TABLE IF NOT EXISTS quran_text (
@@ -41,16 +41,16 @@ impl Database {
         }
 
         // Load data from SQL file
-        Self::load_sql_data(conn)?;
+        Self::load_sql_data(conn, sql_path)?;
 
         Ok(())
     }
 
-    fn load_sql_data(conn: &Connection) -> Result<()> {
+    fn load_sql_data(conn: &Connection, sql_path: &PathBuf) -> Result<()> {
         println!("Loading Quran data from SQL file...");
 
         // Read the SQL file
-        let sql_content = fs::read_to_string("data/quran-uthmani.sql")
+        let sql_content = fs::read_to_string(sql_path)
             .map_err(|e| {
                 eprintln!("Failed to read SQL file: {}", e);
                 rusqlite::Error::ToSqlConversionFailure(Box::new(e))
@@ -129,7 +129,7 @@ impl Database {
         Ok(())
     }
 
-    fn init_morphology_db(conn: &Connection) -> Result<()> {
+    fn init_morphology_db(conn: &Connection, morph_path: &PathBuf) -> Result<()> {
         // Create the morphology table
         conn.execute(
             "CREATE TABLE IF NOT EXISTS morphology (
@@ -165,16 +165,16 @@ impl Database {
         }
 
         // Load data from morphology file
-        Self::load_morphology_data(conn)?;
+        Self::load_morphology_data(conn, morph_path)?;
 
         Ok(())
     }
 
-    fn load_morphology_data(conn: &Connection) -> Result<()> {
+    fn load_morphology_data(conn: &Connection, morph_path: &PathBuf) -> Result<()> {
         println!("Loading morphology data from corpus file...");
 
         // Read the morphology file
-        let content = fs::read_to_string("data/quranic-corpus-morphology-0.4 2.txt").map_err(
+        let content = fs::read_to_string(morph_path).map_err(
             |e| {
                 eprintln!("Failed to read morphology file: {}", e);
                 rusqlite::Error::ToSqlConversionFailure(Box::new(e))

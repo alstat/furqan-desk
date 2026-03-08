@@ -3,174 +3,68 @@
 	import ControlCard from '../cards/ControlCard.svelte';
 	import GroupCards from '../cards/GroupCards.svelte';
 	import {
-		surah,
-		surahTranslation,
-		selectedSurahName,
 		selectedSurahIdx,
-		fontFamily,
-		fontSize,
-		surahOrientation,
-		surahTafsir,
-		enSurahName,
-		surahTemplate,
-		onLoadPayload,
-		defaultTranslation,
-		defaultTafsir,
-		displayMode,
-		type DisplayMode
+		selectedSurahName,
+		surahLabels,
 	} from '$lib/stores/quran.svelte';
+	import { morphFontFamily, morphFontSize } from '$lib/stores/morphology.store';
+	import { loadMorphologySurah, loadBasmallahMorphology } from '$lib/functions/widgets/surahWidget';
+	import { onMount } from 'svelte';
 
-	import { handleSurahChange, handleTafsirChange, handleDisplayModeChange } from '$lib/functions/widgets/surahWidget';
-	import { handleTranslationChange } from '$lib/functions/widgets/surahWidget';
-	import Toggle from './Toggle.svelte';
-	import { selectBtnStyle } from '$lib/data/toolbar/toolbar';
-
-	let font: string = $state('font-amiri');
+	let font: string = $state('font-scheherazade');
 	let textSize: string = $state('text-xl');
-	let surahLocation: string = $state('flex-row-reverse');
-	let pageTemplate: string = $state('ayah-only');
-	let translation: string = $state($defaultTranslation);
-	let tafsir: string = $state($defaultTafsir);
-	let currentDisplayMode: DisplayMode = $state('standard');
 
-	function onDisplayModeChange(event: Event) {
-		const target = event.target as HTMLSelectElement;
-		currentDisplayMode = target.value as DisplayMode;
-		handleDisplayModeChange(currentDisplayMode);
+	onMount(() => { loadBasmallahMorphology(); });
+
+	$effect(() => { morphFontFamily.set(font); });
+	$effect(() => { morphFontSize.set(textSize); });
+
+	$effect(() => {
+		const idx = $selectedSurahIdx;
+		selectedSurahName.set($surahLabels[idx - 1]?.ar ?? '');
+		loadMorphologySurah(idx);
+	});
+
+	function onSurahChange(event: Event) {
+		const idx = parseInt((event.target as HTMLSelectElement).value);
+		selectedSurahIdx.set(idx);
 	}
 
-	fontFamily.set(() => font);
-	fontSize.set(() => textSize);
-	surahOrientation.set(() => surahLocation);
-	surahTemplate.set(() => pageTemplate);
-	console.log($onLoadPayload);
+	const selectClass = 'w-full cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm transition-colors hover:border-slate-300 focus:border-slate-300 focus:outline-none';
 </script>
 
 {#snippet surahCardBody()}
-	<div class="flex flex-col">
-		<div class="grid grid-cols-2 justify-center space-x-1 p-4">
-			<div class="flex flex-col justify-items-center space-y-5">
-				<div>Surah</div>
-				<div>Translation</div>
-				<div>Tafsir</div>
-			</div>
-			<div class="flex flex-col space-y-2">
-				<form class="block" action="/rest/load_quran" method="POST">
-					<select
-						name="surah-idx"
-						id="surah-idx"
-						onchange={handleSurahChange}
-						class=" w-36 cursor-pointer rounded-md border border-slate-300 bg-slate-100 p-1 text-center font-scheherazade text-sm text-lime-700"
-					>
-						{#each $onLoadPayload.ar_labels as aLab, i}
-							{#if $selectedSurahIdx - 1 != i}
-								<option class="" value={`${i + 1}`} title={$onLoadPayload.en_labels[i]}
-									>{aLab}</option
-								>
-							{:else}
-								<option class="" value={`${i + 1}`} title={$onLoadPayload.en_labels[i]} selected
-									>{aLab}</option
-								>
-							{/if}
-						{/each}
-					</select>
-				</form>
-
-				<form action="/rest/translate" method="POST">
-					<select
-						name="surah-translation"
-						id="surah-translation"
-						onchange={handleTranslationChange}
-						bind:value={translation}
-						class={selectBtnStyle + ' w-36'}
-					>
-						{#each $onLoadPayload.list_translations as transLab, i}
-							<option class="" value={transLab}>{transLab}</option>
-						{/each}
-					</select>
-				</form>
-
-				<form action="/rest/tafsir" method="POST">
-					<select
-						name="surah-tafsir"
-						id="surah-tafsir"
-						onchange={handleTafsirChange}
-						bind:value={tafsir}
-						class={selectBtnStyle + ' w-36'}
-					>
-						{#each $onLoadPayload.list_tafsir as tafsirLab, i}
-							<option class="" value={tafsirLab}>{tafsirLab}</option>
-						{/each}
-					</select>
-				</form>
-			</div>
-		</div>
-		<hr />
-		<div class="grid grid-cols-2 justify-center space-x-1 p-4">
-			<div class="flex flex-col justify-items-center space-y-5">
-				<div>Layout</div>
-				<div>Orientation</div>
-				<div>Data Source</div>
-			</div>
-
-			<div class="flex flex-col space-y-2">
-				<select
-					bind:value={pageTemplate}
-					name="tafsir"
-					id="tafsir"
-					class={selectBtnStyle + ' w-36'}
-				>
-					<option value="ayah-only" selected>Ayah Only</option>
-					<option value="ayah-with-translation">Ayah w/ Translation</option>
-					<option value="ayah-with-tafsir">Ayah w/ Tafsir</option>
-					<option value="separated-sections">Separated Sections</option>
-				</select>
-				<select
-					bind:value={surahLocation}
-					name="tafsir"
-					id="tafsir"
-					class={selectBtnStyle + ' w-36'}
-				>
-					<option value="flex-row-reverse">Right</option>
-					<option value="flex-row">Left</option>
-				</select>
-				<select
-					bind:value={currentDisplayMode}
-					onchange={onDisplayModeChange}
-					class={selectBtnStyle + ' w-36'}
-				>
-					<option value="standard">Standard</option>
-					<option value="morphological">Morphological</option>
-				</select>
-			</div>
-		</div>
+	<div class="px-4 py-3">
+		<label for="surah-idx" class="mb-1.5 block text-xs font-medium text-slate-400">Surah</label>
+		<select
+			id="surah-idx"
+			onchange={onSurahChange}
+			class="{selectClass} text-center font-scheherazade"
+			dir="rtl"
+		>
+			{#each $surahLabels as label, i}
+				<option value={`${i + 1}`} title={label.en} selected={$selectedSurahIdx - 1 === i}>
+					{label.ar}
+				</option>
+			{/each}
+		</select>
 	</div>
 {/snippet}
 
 {#snippet fontBody()}
-	<div class="grid grid-cols-2 space-x-1 p-4">
-		<div class="flex flex-col justify-items-center space-y-5">
-			<div>Font Family</div>
-			<div>Font Size</div>
-		</div>
-		<div class="flex flex-col space-y-2">
-			<select
-				bind:value={font}
-				name="tafsir"
-				id="tafsir"
-				class={selectBtnStyle + ' w-36'}
-			>
-				<option value="font-scheherazade">Scheherazade</option>
-				<option value="font-amiri" selected>Amiri Qur'an</option>
+	<div class="flex flex-col gap-3 px-4 py-3">
+		<div>
+			<label class="mb-1.5 block text-xs font-medium text-slate-400">Font Family</label>
+			<select bind:value={font} class={selectClass}>
+				<option value="font-scheherazade">Scheherazade New</option>
+				<option value="font-amiri">Amiri Qur'an</option>
 			</select>
-			<select
-				bind:value={textSize}
-				name="tafsir"
-				id="tafsir"
-				class={selectBtnStyle + ' w-36'}
-			>
+		</div>
+		<div>
+			<label class="mb-1.5 block text-xs font-medium text-slate-400">Font Size</label>
+			<select bind:value={textSize} class={selectClass}>
 				<option value="text-base">Small</option>
-				<option value="text-xl" selected>Medium</option>
+				<option value="text-xl">Medium</option>
 				<option value="text-3xl">Large</option>
 			</select>
 		</div>
@@ -183,8 +77,8 @@
 
 {#snippet controlCard()}
 	<div class="space-y-2">
-		<ControlCard cardTitle={'Surah Controls'} cardBody={surahCardBody} />
-		<ControlCard cardTitle={'Page Settings'} cardBody={fontBody} />
+		<ControlCard cardTitle={'Surah'} cardBody={surahCardBody} />
+		<ControlCard cardTitle={'Display'} cardBody={fontBody} />
 	</div>
 {/snippet}
 

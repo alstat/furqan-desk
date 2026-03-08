@@ -60,6 +60,59 @@ pub struct SurahMorphology {
     pub ayahs: Vec<AyahMorphology>,
 }
 
+#[derive(Serialize, Clone)]
+pub struct SurahLabel {
+    pub en: String,
+    pub ar: String,
+}
+
+#[tauri::command]
+pub fn get_surah_labels() -> Vec<SurahLabel> {
+    vec![
+        ("Al-Fatihah", "الفاتحة"), ("Al-Baqarah", "البقرة"), ("Ali 'Imran", "آل عمران"),
+        ("An-Nisa", "النساء"), ("Al-Ma'idah", "المائدة"), ("Al-An'am", "الأنعام"),
+        ("Al-A'raf", "الأعراف"), ("Al-Anfal", "الأنفال"), ("At-Tawbah", "التوبة"),
+        ("Yunus", "يونس"), ("Hud", "هود"), ("Yusuf", "يوسف"),
+        ("Ar-Ra'd", "الرعد"), ("Ibrahim", "إبراهيم"), ("Al-Hijr", "الحجر"),
+        ("An-Nahl", "النحل"), ("Al-Isra", "الإسراء"), ("Al-Kahf", "الكهف"),
+        ("Maryam", "مريم"), ("Ta-Ha", "طه"), ("Al-Anbiya", "الأنبياء"),
+        ("Al-Hajj", "الحج"), ("Al-Mu'minun", "المؤمنون"), ("An-Nur", "النور"),
+        ("Al-Furqan", "الفرقان"), ("Ash-Shu'ara", "الشعراء"), ("An-Naml", "النمل"),
+        ("Al-Qasas", "القصص"), ("Al-'Ankabut", "العنكبوت"), ("Ar-Rum", "الروم"),
+        ("Luqman", "لقمان"), ("As-Sajdah", "السجدة"), ("Al-Ahzab", "الأحزاب"),
+        ("Saba", "سبأ"), ("Fatir", "فاطر"), ("Ya-Sin", "يس"),
+        ("As-Saffat", "الصافات"), ("Sad", "ص"), ("Az-Zumar", "الزمر"),
+        ("Ghafir", "غافر"), ("Fussilat", "فصلت"), ("Ash-Shura", "الشورى"),
+        ("Az-Zukhruf", "الزخرف"), ("Ad-Dukhan", "الدخان"), ("Al-Jathiyah", "الجاثية"),
+        ("Al-Ahqaf", "الأحقاف"), ("Muhammad", "محمد"), ("Al-Fath", "الفتح"),
+        ("Al-Hujurat", "الحجرات"), ("Qaf", "ق"), ("Adh-Dhariyat", "الذاريات"),
+        ("At-Tur", "الطور"), ("An-Najm", "النجم"), ("Al-Qamar", "القمر"),
+        ("Ar-Rahman", "الرحمن"), ("Al-Waqi'ah", "الواقعة"), ("Al-Hadid", "الحديد"),
+        ("Al-Mujadila", "المجادلة"), ("Al-Hashr", "الحشر"), ("Al-Mumtahanah", "الممتحنة"),
+        ("As-Saf", "الصف"), ("Al-Jumu'ah", "الجمعة"), ("Al-Munafiqun", "المنافقون"),
+        ("At-Taghabun", "التغابن"), ("At-Talaq", "الطلاق"), ("At-Tahrim", "التحريم"),
+        ("Al-Mulk", "الملك"), ("Al-Qalam", "القلم"), ("Al-Haqqah", "الحاقة"),
+        ("Al-Ma'arij", "المعارج"), ("Nuh", "نوح"), ("Al-Jinn", "الجن"),
+        ("Al-Muzzammil", "المزمل"), ("Al-Muddaththir", "المدثر"), ("Al-Qiyamah", "القيامة"),
+        ("Al-Insan", "الإنسان"), ("Al-Mursalat", "المرسلات"), ("An-Naba", "النبأ"),
+        ("An-Nazi'at", "النازعات"), ("'Abasa", "عبس"), ("At-Takwir", "التكوير"),
+        ("Al-Infitar", "الانفطار"), ("Al-Mutaffifin", "المطففين"), ("Al-Inshiqaq", "الانشقاق"),
+        ("Al-Buruj", "البروج"), ("At-Tariq", "الطارق"), ("Al-A'la", "الأعلى"),
+        ("Al-Ghashiyah", "الغاشية"), ("Al-Fajr", "الفجر"), ("Al-Balad", "البلد"),
+        ("Ash-Shams", "الشمس"), ("Al-Layl", "الليل"), ("Ad-Duha", "الضحى"),
+        ("Ash-Sharh", "الشرح"), ("At-Tin", "التين"), ("Al-'Alaq", "العلق"),
+        ("Al-Qadr", "القدر"), ("Al-Bayyinah", "البينة"), ("Az-Zalzalah", "الزلزلة"),
+        ("Al-'Adiyat", "العاديات"), ("Al-Qari'ah", "القارعة"), ("At-Takathur", "التكاثر"),
+        ("Al-'Asr", "العصر"), ("Al-Humazah", "الهمزة"), ("Al-Fil", "الفيل"),
+        ("Quraysh", "قريش"), ("Al-Ma'un", "الماعون"), ("Al-Kawthar", "الكوثر"),
+        ("Al-Kafirun", "الكافرون"), ("An-Nasr", "النصر"), ("Al-Masad", "المسد"),
+        ("Al-Ikhlas", "الإخلاص"), ("Al-Falaq", "الفلق"), ("An-Nas", "الناس"),
+    ]
+    .into_iter()
+    .map(|(en, ar)| SurahLabel { en: en.to_string(), ar: ar.to_string() })
+    .collect()
+}
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 pub fn greet(name: &str) -> String {
@@ -345,6 +398,69 @@ pub fn get_surah_morphology(
         surah: surah_number,
         ayahs,
     })
+}
+
+#[tauri::command]
+pub fn get_basmallah_morphology(db: State<Database>) -> Result<AyahMorphology, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT word, token, form_buckwalter, form_arabic, tag, features
+             FROM morphology
+             WHERE surah = 1 AND ayah = 1
+             ORDER BY word, token",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, i64>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, String>(3)?,
+                row.get::<_, String>(4)?,
+                row.get::<_, String>(5)?,
+            ))
+        })
+        .map_err(|e| e.to_string())?;
+
+    let mut words_map: BTreeMap<i64, Vec<MorphToken>> = BTreeMap::new();
+
+    for row_result in rows {
+        let (word, token, form_bw, form_ar, tag, features) =
+            row_result.map_err(|e| e.to_string())?;
+
+        let parsed = parse_features(&features);
+        let tag_name = get_tag_name(&tag);
+
+        words_map
+            .entry(word)
+            .or_default()
+            .push(MorphToken {
+                token,
+                form_buckwalter: form_bw,
+                form_arabic: form_ar,
+                tag,
+                tag_name,
+                features: parsed,
+            });
+    }
+
+    let words: Vec<MorphWord> = words_map
+        .into_iter()
+        .map(|(word, tokens)| {
+            let combined_arabic: String = tokens.iter().map(|t| t.form_arabic.as_str()).collect();
+            MorphWord {
+                word,
+                tokens,
+                combined_arabic,
+            }
+        })
+        .collect();
+
+    Ok(AyahMorphology { ayah: 1, words })
 }
 
 #[tauri::command]
