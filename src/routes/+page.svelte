@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
     import Parchment from "$lib/components/parchment/Parchment.svelte";
+    import TypstPreview from "$lib/components/editor/TypstPreview.svelte";
     import SurahWidget from "$lib/components/widgets/surah_ayah/SurahWidget.svelte";
     import EditorToolbar from "$lib/components/widgets/editor/EditorToolbar.svelte";
     import Sidebar from "$lib/components/sidebar/Sidebar.svelte";
@@ -10,8 +11,10 @@
         surahOrientation,
         surahLabels,
         selectedSurahName,
+        hideSurahPage,
     } from "$lib/stores/quran.svelte";
     import type { SurahLabel } from "$lib/stores/quran.svelte";
+    import { typstMode } from "$lib/stores/editor.store";
 
     let height: number = $state(10);
 
@@ -35,7 +38,11 @@
         class={`flex ${$surahOrientation()} ${$isSidebar ? "bg-white " : ""} flex-row justify-center`}
         style:height="{height - 47}px"
     >
-        <Parchment />
+        {#if $hideSurahPage() && $typstMode}
+            <TypstPreview />
+        {:else}
+            <Parchment />
+        {/if}
         <Sidebar />
     </div>
 </div>

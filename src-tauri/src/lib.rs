@@ -1,6 +1,7 @@
 mod buckwalter;
 mod commands;
 mod db;
+mod typst_world;
 
 use tauri::Manager;
 
@@ -27,6 +28,12 @@ pub fn run() {
                 .expect("Failed to initialize database");
             app.manage(database);
 
+            // Eagerly initialise the Typst world (font scanning) in the background
+            // so the first compile is fast.
+            std::thread::spawn(|| {
+                let _ = typst_world::get_world();
+            });
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -43,7 +50,13 @@ pub fn run() {
             commands::get_last_read,
             commands::add_highlight,
             commands::get_highlights,
-            commands::delete_highlight
+            commands::delete_highlight,
+            commands::compile_typst_svg,
+            commands::compile_typst_pdf,
+            commands::check_typst_package,
+            commands::install_typst_package,
+            commands::check_typst_fonts,
+            commands::install_typst_fonts,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

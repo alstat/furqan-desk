@@ -43,6 +43,7 @@
     } from "../lexical";
 
     import CaptionEditorHistoryPlugin from "$lexical/core/plugins/Image/CaptionEditorHistoryPlugin.svelte";
+    import EditorStorePlugin from "./EditorStorePlugin.svelte";
 
     const initialConfig = {
         namespace: "Editor",
@@ -89,6 +90,7 @@
             </ImagePlugin>
             <EquationPlugin />
             <CodePlugin />
+            <EditorStorePlugin />
         </div>
     </div>
 </Composer>

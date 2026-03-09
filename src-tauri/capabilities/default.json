@@ -9,6 +9,7 @@
     "dialog:allow-save",
     "dialog:allow-open",
     "fs:allow-write-text-file",
+    "fs:allow-write-file",
     "fs:allow-read-file",
     "fs:allow-exists",
     "fs:scope-home-recursive"
