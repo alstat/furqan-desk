@@ -50,21 +50,120 @@
         return TOKEN_STYLES[tag] ?? DEFAULT_STYLE;
     }
 
-    const FEATURES: Array<{ key: keyof typeof word.tokens[0]['features']; label: string; arabic?: boolean }> = [
-        { key: 'root',        label: 'Root',   arabic: true  },
-        { key: 'lemma',       label: 'Lemma',  arabic: true  },
-        { key: 'pos',         label: 'POS'                   },
-        { key: 'gender',      label: 'Gender'                },
-        { key: 'number',      label: 'Number'                },
-        { key: 'case_type',   label: 'Case'                  },
-        { key: 'person',      label: 'Person'                },
-        { key: 'aspect',      label: 'Aspect'                },
-        { key: 'voice',       label: 'Voice'                 },
-        { key: 'mood',        label: 'Mood'                  },
-        { key: 'state',       label: 'State'                 },
-        { key: 'derivation',  label: 'Form'                  },
-        { key: 'prefix_type', label: 'Prefix'                },
-        { key: 'suffix_type', label: 'Suffix'                },
+    // Value lookup tables aligned with MorphologyDetails.md
+    const POS_LABELS: Record<string, string> = {
+        N:           'Noun',
+        PN:          'Proper noun',
+        ADJ:         'Adjective',
+        IMPN:        'Imperative verbal noun',
+        PRON:        'Personal pronoun',
+        DEM:         'Demonstrative pronoun',
+        REL:         'Relative pronoun',
+        T:           'Time adverb',
+        LOC:         'Location adverb',
+        P:           'Preposition',
+        EMPH:        'Emphatic lam prefix',
+        IMPV:        'Imperative lam prefix',
+        PRP:         'Purpose lam prefix',
+        CONJ:        'Coordinating conjunction',
+        SUB:         'Subordinating particle',
+        ACC:         'Accusative particle',
+        AMD:         'Amendment particle',
+        ANS:         'Answer particle',
+        AVR:         'Aversion particle',
+        CAUS:        'Particle of cause',
+        CERT:        'Particle of certainty',
+        CIRC:        'Circumstantial particle',
+        COM:         'Comitative particle',
+        COND:        'Conditional particle',
+        EQ:          'Equalization particle',
+        EXH:         'Exhortation particle',
+        EXL:         'Explanation particle',
+        EXP:         'Exceptive particle',
+        FUT:         'Future particle',
+        INC:         'Inceptive particle',
+        INT:         'Interpretation particle',
+        INTG:        'Interrogative particle',
+        NEG:         'Negative particle',
+        PREV:        'Preventive particle',
+        PRO:         'Prohibition particle',
+        REM:         'Resumption particle',
+        RES:         'Restriction particle',
+        RET:         'Retraction particle',
+        RSLT:        'Result particle',
+        SUP:         'Supplemental particle',
+        SUR:         'Surprise particle',
+        VOC:         'Vocative particle',
+        INL:         'Quranic initials',
+        V:           'Verb',
+        VN:          'Verbal noun',
+        'ACT PCPL':  'Active participle',
+        'PASS PCPL': 'Passive participle',
+        DET:         'Determiner',
+    };
+
+    const PERSON_LABELS: Record<string, string> = {
+        '1st': 'First person',
+        '2nd': 'Second person',
+        '3rd': 'Third person',
+    };
+
+    const DERIVATION_LABELS: Record<string, string> = {
+        '(I)':    'Form I',    '(II)':   'Form II',   '(III)':  'Form III',
+        '(IV)':   'Form IV',   '(V)':    'Form V',    '(VI)':   'Form VI',
+        '(VII)':  'Form VII',  '(VIII)': 'Form VIII', '(IX)':   'Form IX',
+        '(X)':    'Form X',    '(XI)':   'Form XI',   '(XII)':  'Form XII',
+    };
+
+    const PREFIX_LABELS: Record<string, string> = {
+        Al:      'Definite article (al-)',
+        bi:      'Preposition (bi-)',
+        'l:P':   'Preposition (li-)',
+        'l:EMPH':'Emphatic lam (la-)',
+        'l:IMPV':'Imperative lam (li-)',
+        'l:PRP': 'Purpose lam (li-)',
+        'w:CONJ':'Conjunction (wa-)',
+        'f:CONJ':'Conjunction (fa-)',
+        'w:P':   'Preposition (wa-)',
+        'k:P':   'Preposition (ka-)',
+        sa:      'Future particle (sa-)',
+        ta:      'Oath particle (ta-)',
+    };
+
+    const MOOD_LABELS: Record<string, string> = {
+        IND:  'Indicative',
+        JUS:  'Jussive',
+        SUBJ: 'Subjunctive',
+    };
+
+    // PRON: in corpus stores person-gender-number codes e.g. "3MS", "2FS", "1P"
+    const SUFFIX_LABELS: Record<string, string> = {
+        '3MS': '3rd masc. sg.',   '3FS': '3rd fem. sg.',
+        '3MD': '3rd masc. dual',  '3FD': '3rd fem. dual',
+        '3MP': '3rd masc. pl.',   '3FP': '3rd fem. pl.',
+        '2MS': '2nd masc. sg.',   '2FS': '2nd fem. sg.',
+        '2MD': '2nd masc. dual',  '2FD': '2nd fem. dual',
+        '2MP': '2nd masc. pl.',   '2FP': '2nd fem. pl.',
+        '1S':  '1st sg.',
+        '1D':  '1st dual',
+        '1P':  '1st pl.',
+    };
+
+    const FEATURES: Array<{ key: keyof typeof word.tokens[0]['features']; label: string; arabic?: boolean; transform?: (v: string) => string }> = [
+        { key: 'root',        label: 'Root',    arabic: true },
+        { key: 'lemma',       label: 'Lemma',   arabic: true },
+        { key: 'pos',         label: 'POS',         transform: v => POS_LABELS[v]        ?? v },
+        { key: 'gender',      label: 'Gender'                                                 },
+        { key: 'number',      label: 'Number'                                                 },
+        { key: 'case_type',   label: 'Case'                                                   },
+        { key: 'person',      label: 'Person',      transform: v => PERSON_LABELS[v]     ?? v },
+        { key: 'aspect',      label: 'Aspect'                                                 },
+        { key: 'voice',       label: 'Voice'                                                  },
+        { key: 'mood',        label: 'Mood',        transform: v => MOOD_LABELS[v]        ?? v },
+        { key: 'state',       label: 'State'                                                  },
+        { key: 'derivation',  label: 'Form',        transform: v => DERIVATION_LABELS[v] ?? v },
+        { key: 'prefix_type', label: 'Prefix',      transform: v => PREFIX_LABELS[v]     ?? v },
+        { key: 'suffix_type', label: 'Suffix',      transform: v => SUFFIX_LABELS[v]     ?? v },
     ];
 </script>
 
@@ -122,7 +221,7 @@
                 <!-- Features -->
                 {#if FEATURES.some(f => token.features[f.key])}
                     <div class="divide-y divide-slate-100 border-t {s.border} px-3 pb-0.5">
-                        {#each FEATURES as { key, label, arabic }}
+                        {#each FEATURES as { key, label, arabic, transform }}
                             {#if token.features[key]}
                                 <div class="flex items-center justify-between gap-3 py-1.5">
                                     <span class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
@@ -134,7 +233,7 @@
                                         </span>
                                     {:else}
                                         <span class="text-[11px] font-medium text-slate-600">
-                                            {token.features[key]}
+                                            {transform ? transform(token.features[key] as string) : token.features[key]}
                                         </span>
                                     {/if}
                                 </div>

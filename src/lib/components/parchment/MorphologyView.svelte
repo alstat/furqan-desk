@@ -145,25 +145,9 @@
     {#if $surahMorphology}
         {#if $surahMorphology.surah !== 1 && $surahMorphology.surah !== 9 && $basmallahMorphology}
             <div class="relative mb-8">
-                <!-- Top ornamental rule -->
-                <div class="flex items-center">
-                    <div class="flex-1 h-0.5 bg-gradient-to-r from-transparent to-amber-400"></div>
-                    <div class="flex items-center gap-1 px-2">
-                        <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-400"></span>
-                        <span class="inline-block h-2.5 w-2.5 rotate-45 bg-amber-500"></span>
-                        <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-400"></span>
-                    </div>
-                    <div class="flex-1 h-0.5 bg-gradient-to-l from-transparent to-amber-400"></div>
-                </div>
-                <div class="h-px bg-gradient-to-r from-transparent via-amber-300/60 to-transparent mt-0.5 mb-2"></div>
 
-                <!-- Basmallah panel with corner bracket ornaments -->
-                <div class="relative px-6 py-4">
-                    <span class="absolute top-0 left-0 h-4 w-4 border-t-2 border-l-2 border-amber-400/80 pointer-events-none"></span>
-                    <span class="absolute top-0 right-0 h-4 w-4 border-t-2 border-r-2 border-amber-400/80 pointer-events-none"></span>
-                    <span class="absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2 border-amber-400/80 pointer-events-none"></span>
-                    <span class="absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2 border-amber-400/80 pointer-events-none"></span>
-                    <div class="absolute inset-0 bg-gradient-to-b from-amber-50/40 to-transparent rounded-sm pointer-events-none"></div>
+                <!-- Basmallah text with subtle tint, no frame -->
+                <div class="relative px-6 py-1">
                     <div class="relative text-center wrap-break-word leading-loose">
                         {#each $basmallahMorphology.words as word}<span
                                 role="button"
@@ -175,17 +159,6 @@
                     </div>
                 </div>
 
-                <!-- Bottom ornamental rule -->
-                <div class="h-px bg-gradient-to-r from-transparent via-amber-300/60 to-transparent mt-2 mb-0.5"></div>
-                <div class="flex items-center">
-                    <div class="flex-1 h-0.5 bg-gradient-to-r from-transparent to-amber-400"></div>
-                    <div class="flex items-center gap-1 px-2">
-                        <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-400"></span>
-                        <span class="inline-block h-2.5 w-2.5 rotate-45 bg-amber-500"></span>
-                        <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-400"></span>
-                    </div>
-                    <div class="flex-1 h-0.5 bg-gradient-to-l from-transparent to-amber-400"></div>
-                </div>
             </div>
         {/if}
         <div dir="rtl" class="leading-loose w-full text-center wrap-break-word" style="contain: style;"

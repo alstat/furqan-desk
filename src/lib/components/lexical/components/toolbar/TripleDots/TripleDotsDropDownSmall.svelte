@@ -17,7 +17,11 @@
     import Divider from "../Divider.svelte";
     import Portal from "../../generic/portal/Portal.svelte";
     import Icon from "@iconify/svelte";
-    import { icons } from "$lib/data/toolbar/toolbar";
+    import {
+        icons,
+        toolBarBtnStyle,
+        activeBtnStyle,
+    } from "$lib/data/toolbar/toolbar";
     import {
         getActiveEditor,
         getEditor,
@@ -133,24 +137,10 @@
 <div class="relative" bind:this={dropdownRef}>
     <button
         onclick={toggleDropdown}
-        class="flex h-8 w-8 cursor-pointer items-center justify-center rounded hover:bg-gray-100"
+        class={"p-1 " + toolBarBtnStyle + (isOpen ? " " + activeBtnStyle : "")}
         aria-label="More options"
     >
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        >
-            <circle cx="12" cy="12" r="1"></circle>
-            <circle cx="19" cy="12" r="1"></circle>
-            <circle cx="5" cy="12" r="1"></circle>
-        </svg>
+        <Icon icon={icons["tripleDots"]} height="1rem" />
     </button>
 
     {#if isOpen && buttonRect}
