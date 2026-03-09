@@ -322,6 +322,12 @@ i.equation {
     cursor: pointer;
 }
 
+.link-editor div.link-cancel,
+.link-editor div.link-confirm,
+.link-editor div.link-trash {
+    cursor: pointer;
+}
+
 .link-editor .link-input a {
     color: rgb(33, 111, 219);
     text-decoration: none;

@@ -127,6 +127,10 @@
         gap: 8px;
         margin-bottom: 8px;
     }
+
+    .equation-editor-buttons button {
+        cursor: pointer;
+    }
     
     .equation-preview {
         padding: 8px;

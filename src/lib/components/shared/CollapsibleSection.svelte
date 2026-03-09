@@ -8,7 +8,7 @@
 
 <div class="shadow-md flex flex-col rounded-md">
     <button
-        class="flex items-center justify-between text-sm p-1 border border-amber-300 hover:bg-opacity-10 bg-gradient-to-r from-amber-100 via-amber-50 to-amber-100 text-lime-900"
+        class="cursor-pointer flex items-center justify-between text-sm p-1 border border-amber-300 hover:bg-opacity-10 bg-gradient-to-r from-amber-100 via-amber-50 to-amber-100 text-lime-900"
         onclick={() => isOpen = !isOpen}
     >
         <div class="flex items-center gap-2">

@@ -5,22 +5,25 @@
 	import { hideSurahPage, isSidebar, surahOrientation } from '$lib/stores/quran.svelte';
 
 	let { children } = $props();
-	// State
-	let isOpen = $state(false);
-	let sidebarWidth = $state('');
 
-	// Spring animation for the collapse icon
+	let sidebarWidth = $derived($isSidebar ? 'sm:w-full md:w-9/12 lg:w-6/12' : '');
 
 	function toggleSidebar() {
-		$isSidebar = !$isSidebar;
-		isOpen = !isOpen;
-		rotateSpring.set(isOpen ? 180 : 0);
-		if ($surahOrientation() == 'flex-row-reverse') {
-			rotateSpring.set(isOpen ? 180 : 0);
-		} else {
-			rotateSpring.set(isOpen ? 0 : 180);
+		const opening = !$isSidebar;
+
+		// Prevent both panels from being hidden at the same time:
+		// if closing the sidebar while parchment is already hidden, reveal
+		// the parchment instead so the user always sees content.
+		if (!opening && $hideSurahPage()) {
+			hideSurahPage.set(() => false);
 		}
-		sidebarWidth = isOpen ? 'sm:w-full md:w-9/12 lg:w-6/12' : '';
+
+		$isSidebar = opening;
+		rotateSpring.set(
+			$surahOrientation() === 'flex-row-reverse'
+				? (opening ? 180 : 0)
+				: (opening ? 0 : 180)
+		);
 	}
 
 	interface HorizontalSlideParams {
@@ -55,9 +58,9 @@
 
 <div class={`relative flex justify-right overflow-visible font-base text-slate-900 ${sidebarWidth}`}>
 	<button
-		class={`${$hideSurahPage() ? 'hidden ' : ''} absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} top-4 z-10 rounded-full bg-amber-200 p-2 shadow-md transition-colors text-lime-700 hover:bg-amber-300 active:bg-amber-400`}
+		class={`${$hideSurahPage() ? 'hidden ' : ''} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} top-4 z-10 rounded-full bg-amber-200 p-2 shadow-md transition-colors text-lime-700 hover:bg-amber-300 active:bg-amber-400`}
 		onclick={toggleSidebar}
-		aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+		aria-label={$isSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
 	>
 		<svg
 			class="h-4 w-4 transform transition-transform"
@@ -70,9 +73,7 @@
 			<path d="M15 19l-7-7 7-7" />
 		</svg>
 	</button>
-	<div class={isOpen ? `flex flex-row w-full` : `hidden`}>
-		<!-- Toggle Button -->
-
+	<div class={$isSidebar ? `flex flex-row w-full` : `hidden`}>
 		<!-- Sidebar Content -->
 		<!-- {#if isOpen} -->
 			<!-- <div
@@ -86,7 +87,7 @@
 					duration: 300,
 					direction: $surahOrientation() == 'flex-row-reverse' ? 'right' : 'left'// or 'left' for left-to-right
 				}}
-				class="w-full space-y-2 overflow-visible bg-white p-4 text-xl border border-stone-200 rounded-md"
+				class="w-full space-y-2 overflow-visible bg-white p-4 text-xl border border-stone-200 sm:shadow-xl sm:shadow-slate-200/60 {$hideSurahPage() ? 'rounded-md' : 'rounded-l-md'}"
 			>
 				{@render children()}
 			</div>

@@ -5,11 +5,9 @@
         basmallahMorphology,
         selectedSurahName,
     } from "$lib/stores/quran.svelte";
-    import { morphFontFamily, tajweedEnabled } from "$lib/stores/morphology.store";
-    import { applyTajweed, firstBaseLetter, TAJWEED_COLORS } from "$lib/functions/utils/tajweed";
+    import { morphFontFamily } from "$lib/stores/morphology.store";
     import type { MorphWord } from "$lib/types/morphology";
     import WordMorphologyPopover from "./WordMorphologyPopover.svelte";
-    import { onMount } from "svelte";
 
     // State for selected word
     let selectedWord: { word: MorphWord; ayahNum: number } | null =
@@ -19,27 +17,22 @@
     // Progressive rendering
     const CHUNK_SIZE = 30;
     let renderedAyahCount = $state(CHUNK_SIZE);
-    let renderComplete = $state(false);
     let renderRafId: number | null = null;
 
     $effect(() => {
         const total = $surahMorphology?.ayahs?.length ?? 0;
 
-        // Cancel any in-progress render loop from a previous surah
         if (renderRafId !== null) { cancelAnimationFrame(renderRafId); renderRafId = null; }
 
-        renderComplete = false;
         renderedAyahCount = Math.min(CHUNK_SIZE, total);
 
-        if (total <= CHUNK_SIZE) { renderComplete = true; return; }
+        if (total <= CHUNK_SIZE) return;
 
         function renderMore() {
             renderRafId = null;
             renderedAyahCount = Math.min(renderedAyahCount + CHUNK_SIZE, total);
             if (renderedAyahCount < total) {
                 renderRafId = requestAnimationFrame(renderMore);
-            } else {
-                renderComplete = true;
             }
         }
         renderRafId = requestAnimationFrame(renderMore);
@@ -47,133 +40,7 @@
         return () => { if (renderRafId !== null) { cancelAnimationFrame(renderRafId); renderRafId = null; } };
     });
 
-    // ── CSS Custom Highlight API (character-level tajweed colors, no DOM splitting) ──
-    const supportsHighlightAPI =
-        typeof CSS !== 'undefined' && 'highlights' in CSS;
-
-    onMount(() => {
-        if (!supportsHighlightAPI) return;
-        // Inject ::highlight() rules once
-        const style = document.createElement('style');
-        style.id = 'tajweed-highlight-styles';
-        style.textContent = Object.values(TAJWEED_COLORS)
-            .map(c => `::highlight(tj-${c.replace('#', '')}) { color: ${c}; }`)
-            .join('\n');
-        document.head.appendChild(style);
-        return () => style.remove();
-    });
-
-    function clearHighlights() {
-        if (!supportsHighlightAPI) return;
-        const hl = (CSS as any).highlights as Map<string, unknown>;
-        for (const key of [...hl.keys()])
-            if ((key as string).startsWith('tj-')) hl.delete(key as string);
-    }
-
-    // ── CSS Highlight sliding window ─────────────────────────────────────────────
-    // The previous approach accumulated Range objects for every word scrolled past.
-    // After scrolling through a long surah the Highlight registry could hold 10,000+
-    // live Ranges; clearing them while those spans were still in the DOM forced the
-    // browser to repaint every highlighted character — causing multi-second freezes.
-    //
-    // Fix: treat the highlighted region as a sliding window.  Ranges are ADDED when
-    // a span enters the extended viewport and REMOVED when it leaves.  The live Range
-    // count is always proportional to what is currently visible (~few hundred),
-    // regardless of how far the user has scrolled.  teardownObserver() therefore
-    // only ever clears a small, bounded set of Ranges — always fast.
-
-    let tajweedObserver: IntersectionObserver | null = null;
-
-    function teardownObserver() {
-        tajweedObserver?.disconnect();
-        tajweedObserver = null;
-        clearHighlights();      // cheap: only live Ranges in the current viewport window
-    }
-
-    function setupObserver() {
-        if (!supportsHighlightAPI) return;
-
-        tajweedObserver?.disconnect();
-        clearHighlights();
-
-        const hl = (CSS as any).highlights;
-        // Per-observer map so that toggling off→on starts with a fresh slate
-        const spanRanges = new Map<HTMLElement, Array<{ hlName: string; range: Range }>>();
-
-        tajweedObserver = new IntersectionObserver((entries) => {
-            for (const entry of entries) {
-                const span = entry.target as HTMLElement;
-
-                if (entry.isIntersecting) {
-                    if (spanRanges.has(span)) continue;   // already highlighted
-
-                    const arabicText = span.dataset.arabic;
-                    if (!arabicText) continue;
-                    const nextLetter = span.dataset.nextLetter || null;
-
-                    let textNode: Text | null = null;
-                    for (const node of span.childNodes) {
-                        if (node.nodeType === Node.TEXT_NODE) { textNode = node as Text; break; }
-                    }
-                    if (!textNode) continue;
-
-                    const added: Array<{ hlName: string; range: Range }> = [];
-                    let pos = 0;
-                    for (const chunk of applyTajweed(arabicText, nextLetter)) {
-                        if (chunk.color) {
-                            try {
-                                const r = new Range();
-                                r.setStart(textNode, pos);
-                                r.setEnd(textNode, pos + chunk.text.length);
-                                const hlName = `tj-${chunk.color.replace('#', '')}`;
-                                if (!hl.has(hlName)) hl.set(hlName, new (window as any).Highlight());
-                                hl.get(hlName).add(r);
-                                added.push({ hlName, range: r });
-                            } catch { /* offset out of bounds — skip */ }
-                        }
-                        pos += chunk.text.length;
-                    }
-                    if (added.length) spanRanges.set(span, added);
-
-                } else {
-                    // Span left the extended viewport — remove its Ranges to keep
-                    // the live count bounded.
-                    const entries = spanRanges.get(span);
-                    if (entries) {
-                        for (const { hlName, range } of entries) {
-                            (hl.get(hlName) as any)?.delete(range);
-                        }
-                        spanRanges.delete(span);
-                    }
-                }
-            }
-        }, {
-            // 800 px pre-load above and below so fast scrolling never shows un-highlighted words
-            rootMargin: '800px 0px',
-            threshold: 0,
-        });
-
-        for (const span of document.querySelectorAll<HTMLElement>('.morph-word[data-arabic]')) {
-            tajweedObserver.observe(span);
-        }
-    }
-
-    // Set up the observer once all ayahs are in the DOM and tajweed is on.
-    // renderedAyahCount is intentionally kept out of this effect's dependencies
-    // to avoid re-creating the observer (and clearing highlights) on every chunk.
-    $effect(() => {
-        const enabled = $tajweedEnabled;
-        const done = renderComplete;
-
-        teardownObserver();
-
-        if (done && enabled) setupObserver();
-
-        return () => teardownObserver();
-    });
-
     function getWordColor(word: MorphWord): string {
-        // Get primary tag from the stem (non-prefix/suffix token)
         const stemToken = word.tokens.find(
             (t) => !t.features.prefix_type && !t.features.suffix_type,
         );
@@ -196,14 +63,9 @@
     }
 
     const POPOVER_WIDTH = 352;  // w-[22rem]
-    const POPOVER_MIN_HEIGHT = 320; // minimum space needed to comfortably show below
+    const POPOVER_MIN_HEIGHT = 320;
 
-    function handleWordClick(
-        event: MouseEvent,
-        word: MorphWord,
-        ayahNum: number,
-    ) {
-        // If clicking the same word, close the popover
+    function handleWordClick(event: MouseEvent, word: MorphWord, ayahNum: number) {
         if (selectedWord?.word === word && selectedWord?.ayahNum === ayahNum) {
             selectedWord = null;
             return;
@@ -213,13 +75,10 @@
         const viewportHeight = window.innerHeight;
         const viewportWidth = window.innerWidth;
 
-        // Horizontal: clamp so popover stays within viewport
         let x = rect.left;
         if (x + POPOVER_WIDTH > viewportWidth) x = viewportWidth - POPOVER_WIDTH - 8;
         if (x < 8) x = 8;
 
-        // Vertical: show below when there's enough room, otherwise flip above.
-        // y is the anchor edge — rect.bottom for 'below', rect.top for 'above'.
         const spaceBelow = viewportHeight - rect.bottom;
         const placement = spaceBelow >= POPOVER_MIN_HEIGHT ? 'below' : 'above';
         const y = placement === 'below' ? rect.bottom : rect.top;
@@ -242,41 +101,99 @@
 <svelte:window on:click={handleClickOutside} />
 
 <div dir="rtl" class="w-full min-w-0">
-    <div
-        class="mb-5 text-center font-scheherazade text-2xl supports-[-webkit-hyphens:none]:font-scheherazade supports-[not(-webkit-hyphens:none)]:font-reem"
-    >
-        {$selectedSurahName}
+    <!-- Ornate surah name header -->
+    <div class="mb-8" dir="ltr">
+        <div class="flex items-center">
+            <!-- Left decorative arm -->
+            <div class="flex flex-1 items-center">
+                <div class="h-px flex-1 bg-gradient-to-r from-transparent to-amber-300"></div>
+                <div class="flex items-center gap-1 px-2">
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300"></span>
+                    <span class="inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300"></span>
+                </div>
+            </div>
+
+            <!-- Surah name panel -->
+            <div class="relative border border-amber-400/80 bg-gradient-to-b from-amber-50/60 to-white/0 px-10 py-2.5">
+                <!-- Inner border -->
+                <div class="pointer-events-none absolute inset-[3px] border border-amber-300/40"></div>
+                <!-- Mid-border diamonds -->
+                <span class="absolute -top-[5px] left-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-amber-500"></span>
+                <span class="absolute -bottom-[5px] left-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-amber-500"></span>
+                <!-- Corner diamonds -->
+                <span class="absolute -left-[4px] -top-[4px] inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
+                <span class="absolute -right-[4px] -top-[4px] inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
+                <span class="absolute -bottom-[4px] -left-[4px] inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
+                <span class="absolute -bottom-[4px] -right-[4px] inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
+                <!-- Surah name -->
+                <span class="relative font-scheherazade text-2xl leading-none text-slate-800 supports-[-webkit-hyphens:none]:font-scheherazade supports-[not(-webkit-hyphens:none)]:font-reem">{$selectedSurahName}</span>
+            </div>
+
+            <!-- Right decorative arm -->
+            <div class="flex flex-1 items-center">
+                <div class="flex items-center gap-1 px-2">
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300"></span>
+                    <span class="inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300"></span>
+                </div>
+                <div class="h-px flex-1 bg-gradient-to-l from-transparent to-amber-300"></div>
+            </div>
+        </div>
     </div>
 
     {#if $surahMorphology}
         {#if $surahMorphology.surah !== 1 && $surahMorphology.surah !== 9 && $basmallahMorphology}
-            <div class="mb-4 text-center wrap-break-word leading-loose">
-                {#each $basmallahMorphology.words as word, wi}<span
-                        role="button"
-                        tabindex="0"
-                        class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors  inline-block {$tajweedEnabled ? '' : getWordColor(word)} {selectedWord?.word === word &&
-                        selectedWord?.ayahNum === 0
-                            ? 'bg-yellow-200'
-                            : ''}"
-                        data-arabic={word.combined_arabic}
-                        data-next-letter={firstBaseLetter($basmallahMorphology.words[wi + 1]?.combined_arabic ?? '') ?? ''}
-                        onclick={(e) => handleWordClick(e, word, 0)}
-                        onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, 0)}
-                    >{word.combined_arabic}&nbsp;</span>{/each}
+            <div class="relative mb-8">
+                <!-- Top ornamental rule -->
+                <div class="flex items-center">
+                    <div class="flex-1 h-0.5 bg-gradient-to-r from-transparent to-amber-400"></div>
+                    <div class="flex items-center gap-1 px-2">
+                        <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-400"></span>
+                        <span class="inline-block h-2.5 w-2.5 rotate-45 bg-amber-500"></span>
+                        <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-400"></span>
+                    </div>
+                    <div class="flex-1 h-0.5 bg-gradient-to-l from-transparent to-amber-400"></div>
+                </div>
+                <div class="h-px bg-gradient-to-r from-transparent via-amber-300/60 to-transparent mt-0.5 mb-2"></div>
+
+                <!-- Basmallah panel with corner bracket ornaments -->
+                <div class="relative px-6 py-4">
+                    <span class="absolute top-0 left-0 h-4 w-4 border-t-2 border-l-2 border-amber-400/80 pointer-events-none"></span>
+                    <span class="absolute top-0 right-0 h-4 w-4 border-t-2 border-r-2 border-amber-400/80 pointer-events-none"></span>
+                    <span class="absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2 border-amber-400/80 pointer-events-none"></span>
+                    <span class="absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2 border-amber-400/80 pointer-events-none"></span>
+                    <div class="absolute inset-0 bg-gradient-to-b from-amber-50/40 to-transparent rounded-sm pointer-events-none"></div>
+                    <div class="relative text-center wrap-break-word leading-loose">
+                        {#each $basmallahMorphology.words as word}<span
+                                role="button"
+                                tabindex="0"
+                                class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === 0 ? 'bg-yellow-200' : ''}"
+                                onclick={(e) => handleWordClick(e, word, 0)}
+                                onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, 0)}
+                            >{word.combined_arabic}&nbsp;</span>{/each}
+                    </div>
+                </div>
+
+                <!-- Bottom ornamental rule -->
+                <div class="h-px bg-gradient-to-r from-transparent via-amber-300/60 to-transparent mt-2 mb-0.5"></div>
+                <div class="flex items-center">
+                    <div class="flex-1 h-0.5 bg-gradient-to-r from-transparent to-amber-400"></div>
+                    <div class="flex items-center gap-1 px-2">
+                        <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-400"></span>
+                        <span class="inline-block h-2.5 w-2.5 rotate-45 bg-amber-500"></span>
+                        <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-400"></span>
+                    </div>
+                    <div class="flex-1 h-0.5 bg-gradient-to-l from-transparent to-amber-400"></div>
+                </div>
             </div>
-            <hr class="mb-4 border-slate-200" />
         {/if}
         <div dir="rtl" class="leading-loose w-full text-center wrap-break-word" style="contain: style;"
-            >{#each $surahMorphology.ayahs.slice(0, renderedAyahCount) as ayahData}{#each ayahData.words as word, wi}<span
+            >{#each $surahMorphology.ayahs.slice(0, renderedAyahCount) as ayahData}{#each ayahData.words as word}<span
                 dir="rtl"
                         role="button"
                         tabindex="0"
-                        class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {$tajweedEnabled ? '' : getWordColor(word)} {selectedWord?.word === word &&
-                        selectedWord?.ayahNum === ayahData.ayah
-                            ? 'bg-yellow-200'
-                            : ''}"
-                        data-arabic={word.combined_arabic}
-                        data-next-letter={firstBaseLetter(ayahData.words[wi + 1]?.combined_arabic ?? '') ?? ''}
+                        class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === ayahData.ayah ? 'bg-yellow-200' : ''}"
                         onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                         onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
                     >{word.combined_arabic}&nbsp;</span>{/each}<span class="font-scheherazade text-lime-700 px-1 whitespace-nowrap">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span>{/each}</div>
