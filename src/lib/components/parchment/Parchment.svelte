@@ -17,6 +17,7 @@
 >
     <div
         bind:this={scrollContainer}
+        data-scroll-container
         class={`default-scroll border border-stone-200 rounded-md w-full flex-1 overflow-y-auto px-12 py-10 text-right ${$morphFontSize} leading-loose text-slate-600`}
     >
         <MorphologyView />
