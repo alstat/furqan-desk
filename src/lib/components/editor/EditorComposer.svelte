@@ -72,7 +72,7 @@
 </script>
 
 <Composer {initialConfig}>
-    <div class="editor-shell p-2">
+    <div class="editor-shell p-2 relative overflow-visible">
         <ToolbarRichText />
         <div class="editor-container flex flex-col justify-stretch">
             <div class="editor-scroller">

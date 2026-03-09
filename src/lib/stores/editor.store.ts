@@ -1,7 +1,8 @@
-import { writable, type Writable } from 'svelte/store';
+import { writable, derived, type Writable } from 'svelte/store';
 import type { LexicalEditor } from 'lexical';
+import { activeTab } from './tabs.store';
 
-export const typstMode:             Writable<boolean>            = writable(false);
+export const typstMode = derived(activeTab, $t => $t?.type === 'typst' || $t?.type === 'text');
 export const typstSource:           Writable<string>             = writable('');
 export const lexicalSnapshot:       Writable<string | null>      = writable(null);
 export const lexicalEditorInstance: Writable<LexicalEditor | null> = writable(null);

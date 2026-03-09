@@ -11,6 +11,8 @@
         typstIsCompiling,
     } from "$lib/stores/editor.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
+    import { activeTab, setActiveTabContent } from "$lib/stores/tabs.store";
+    import ActionBar from "$lib/components/lexical/components/actionbar/ActionBar.svelte";
 
     // True when the preview is displayed in the Parchment area (side-by-side mode).
     // In that case we hide the inline preview here to avoid duplication.
@@ -18,8 +20,20 @@
 
     let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
+    // Keep typstSource in sync with active tab content
+    $effect(() => {
+        if ($activeTab?.type === "typst" || $activeTab?.type === "text") {
+            typstSource.set($activeTab.content);
+        }
+    });
+
     $effect(() => {
         void $typstRecompile;
+        if ($activeTab?.type !== "typst") {
+            typstSvgPages.set([]);
+            typstCompileError.set("");
+            return;
+        }
         const src = $typstSource;
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => compileToSvg(src), 300);
@@ -61,24 +75,29 @@
         }
     }
 
+    function handleInput() {
+        setActiveTabContent($typstSource);
+    }
+
     const labelClass =
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
 </script>
 
-<div class="flex flex-col h-full">
+<div class="relative overflow-visible flex flex-col h-full">
     <!-- Textarea — always visible -->
     <div class="flex-1 flex flex-col min-h-0">
-        <span class="{labelClass} px-2 pt-2">Typst Source</span>
+        <span class="{labelClass} px-2 pt-1">Editor</span>
         <textarea
             bind:value={$typstSource}
-            class={`${sideBySide ? "mb-3" : ""} flex-1 resize-none font-mono text-sm bg-brand-sand-50 border border-brand-sand-200 rounded-md mx-2 p-2 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 focus:border-brand-gold-400`}
+            oninput={handleInput}
+            class={`${$activeTab?.type !== "typst" ? "mb-4" : ""} ${sideBySide ? "mb-3" : ""} flex-1 resize-none font-mono text-sm bg-brand-sand-50 border border-brand-sand-200 rounded-md mx-2 p-2 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 focus:border-brand-gold-400`}
             placeholder="#import &quot;@preview/ilm:1.4.2&quot;: *&#10;&#10;#show: ilm.with(title: [Title], author: &quot;Name&quot;)&#10;&#10;= Introduction&#10;&#10;This is *bold*."
             spellcheck="false"
         ></textarea>
     </div>
 
-    <!-- Inline preview — only shown when NOT in side-by-side mode -->
-    {#if !sideBySide}
+    <!-- Inline preview — only shown for .typ files and NOT in side-by-side mode -->
+    {#if $activeTab?.type === "typst" && !sideBySide}
         <div class="flex-none h-52 flex flex-col p-2">
             <span class={labelClass}>Preview</span>
             <div class="flex-1 overflow-auto min-h-0">
@@ -108,8 +127,8 @@
         </div>
     {/if}
 
-    <!-- Footer — Export PDF hidden in side-by-side mode (TypstPreview has its own) -->
-    {#if !sideBySide}
+    <!-- Footer — only for .typ files, hidden in side-by-side mode -->
+    {#if $activeTab?.type === "typst" && !sideBySide}
         <div
             class="h-10 flex items-center justify-end px-3 border-t border-brand-sand-200 gap-2"
         >
@@ -124,6 +143,8 @@
             </button>
         </div>
     {/if}
+
+    <ActionBar topOffset="-top-9" />
 </div>
 
 <style>
