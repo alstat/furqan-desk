@@ -10,6 +10,7 @@ export interface EditorTab {
 	name: string;
 	content: string; // typst src / lexical JSON snapshot / raw text
 	isDirty: boolean;
+	isPreview: boolean; // true = VSCode-style preview tab (italic, replaced on next single-click)
 }
 
 export const tabs        = writable<EditorTab[]>([]);
@@ -19,9 +20,36 @@ export const activeTab   = derived(
 	([$t, $id]) => $t.find(t => t.id === $id) ?? null
 );
 
+// Folder opened via "Open Folder" button — drives the file browser in Editor Controls
+export const openFolderPath = writable<string | null>(null);
+
 // Non-reactive undo/redo (keyed by tab id — avoids store churn)
 export const undoHistory = new Map<string, string[]>();
 export const redoHistory = new Map<string, string[]>();
+
+// Allowlist of extensions that are safe to open in a text editor
+const FLAT_FILE_EXTENSIONS = new Set([
+	// document / markup
+	'typ', 'bib', 'txt', 'md', 'mdx', 'rst', 'tex', 'html', 'htm', 'xml', 'svg',
+	// data / config
+	'json', 'jsonc', 'yaml', 'yml', 'toml', 'ini', 'env', 'csv', 'tsv',
+	// code
+	'js', 'mjs', 'cjs', 'ts', 'jsx', 'tsx', 'svelte', 'vue',
+	'py', 'rb', 'rs', 'go', 'java', 'kt', 'swift', 'c', 'cpp', 'h', 'hpp',
+	'cs', 'php', 'lua', 'r', 'sh', 'bash', 'zsh', 'fish', 'ps1',
+	// style
+	'css', 'scss', 'sass', 'less',
+	// misc text
+	'lexical', 'log', 'diff', 'patch', 'sql', 'graphql', 'gql',
+	'dockerfile', 'makefile', 'gitignore', 'prettierrc', 'eslintrc',
+]);
+
+export function isFlatFile(filename: string): boolean {
+	const ext = filename.split('.').pop()?.toLowerCase() ?? '';
+	// Also allow files with no extension or dotfiles (e.g. .gitignore)
+	if (!ext || filename.startsWith('.')) return true;
+	return FLAT_FILE_EXTENSIONS.has(ext);
+}
 
 export function detectType(path: string): TabType {
 	const ext = path.split('.').pop()?.toLowerCase() ?? '';
@@ -34,7 +62,8 @@ export function createTab(
 	type: TabType,
 	content = '',
 	path: string | null = null,
-	name?: string
+	name?: string,
+	isPreview = false
 ): EditorTab {
 	return {
 		id: crypto.randomUUID(),
@@ -42,17 +71,52 @@ export function createTab(
 		path,
 		name: name ?? (path ? path.split('/').pop()! : 'Untitled'),
 		content,
-		isDirty: false
+		isDirty: false,
+		isPreview
 	};
 }
 
-// Open a file as a tab; if already open, just focus it
-export function openOrFocusTab(path: string, content: string): void {
-	const existing = get(tabs).find(t => t.path === path);
+// Single-click: open as preview tab (italic). Replaces any existing preview tab.
+// If already open as a permanent tab, just focus it.
+export function openPreviewTab(path: string, content: string): void {
+	// Already open as permanent — just focus
+	const permanent = get(tabs).find(t => t.path === path && !t.isPreview);
+	if (permanent) { activeTabId.set(permanent.id); return; }
+
+	const type = detectType(path);
+	const name = path.split('/').pop()!;
+	const existing = get(tabs).find(t => t.isPreview);
+
 	if (existing) {
+		// Reuse the preview slot in-place (keep same id so tab position stays)
+		tabs.update(ts => ts.map(t =>
+			t.id === existing.id
+				? { ...t, type, path, name, content, isDirty: false }
+				: t
+		));
 		activeTabId.set(existing.id);
+	} else {
+		const tab = createTab(type, content, path, name, true);
+		tabs.update(ts => [...ts, tab]);
+		activeTabId.set(tab.id);
+	}
+}
+
+// Double-click: promote preview → permanent, or open new permanent tab.
+export function openOrFocusTab(path: string, content: string): void {
+	// Already open as permanent — focus
+	const permanent = get(tabs).find(t => t.path === path && !t.isPreview);
+	if (permanent) { activeTabId.set(permanent.id); return; }
+
+	// Exists as preview with same path — promote it
+	const preview = get(tabs).find(t => t.path === path && t.isPreview);
+	if (preview) {
+		tabs.update(ts => ts.map(t => t.id === preview.id ? { ...t, isPreview: false } : t));
+		activeTabId.set(preview.id);
 		return;
 	}
+
+	// Create new permanent tab (replaces any other preview slot if it exists)
 	const tab = createTab(detectType(path), content, path);
 	tabs.update(ts => [...ts, tab]);
 	activeTabId.set(tab.id);
@@ -70,8 +134,9 @@ export function setActiveTabContent(content: string): void {
 	if (stack.length > 100) stack.shift();
 	undoHistory.set(id, stack);
 	redoHistory.set(id, []); // clear redo on new edit
+	// Editing a preview tab promotes it to permanent
 	tabs.update(ts =>
-		ts.map(t => (t.id === id ? { ...t, content, isDirty: true } : t))
+		ts.map(t => (t.id === id ? { ...t, content, isDirty: true, isPreview: false } : t))
 	);
 }
 
@@ -110,7 +175,7 @@ export function redoActiveTab(): void {
 export function markTabSaved(id: string, path: string): void {
 	const name = path.split('/').pop()!;
 	tabs.update(ts =>
-		ts.map(t => (t.id === id ? { ...t, path, name, isDirty: false } : t))
+		ts.map(t => (t.id === id ? { ...t, path, name, isDirty: false, isPreview: false } : t))
 	);
 }
 
@@ -137,7 +202,6 @@ export function toggleActiveTabType(): void {
 	const tab = get(activeTab);
 	if (!tab) return;
 	if (tab.type === 'lexical') {
-		// Convert lexical JSON → typst
 		const typstSrc = lexicalToTypst(tab.content);
 		tabs.update(ts =>
 			ts.map(t =>
@@ -147,7 +211,6 @@ export function toggleActiveTabType(): void {
 			)
 		);
 	} else if (tab.type === 'typst') {
-		// Switch back to lexical
 		tabs.update(ts =>
 			ts.map(t =>
 				t.id === tab.id ? { ...t, type: 'lexical', isDirty: false } : t

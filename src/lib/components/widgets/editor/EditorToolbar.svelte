@@ -5,7 +5,7 @@
 	import ControlCard from '../cards/ControlCard.svelte';
 	import GroupCards from '../cards/GroupCards.svelte';
 	import { typstRecompile } from '$lib/stores/editor.store';
-	import { activeTab, openOrFocusTab, createTab, tabs, activeTabId } from '$lib/stores/tabs.store';
+	import { openOrFocusTab, openPreviewTab, createTab, tabs, activeTabId, openFolderPath, isFlatFile } from '$lib/stores/tabs.store';
 	import { readDir, readTextFile } from '@tauri-apps/plugin-fs';
 
 	// ── ilm package state ──────────────────────────────────────────────────────
@@ -34,32 +34,32 @@
 
 	// ── file browser state ─────────────────────────────────────────────────────
 	let dirFiles = $state<string[]>([]);
-	const currentDir = $derived(
-		$activeTab?.path
-			? $activeTab.path.substring(0, $activeTab.path.lastIndexOf('/'))
-			: null
-	);
 
 	$effect(() => {
-		if (!currentDir) {
-			dirFiles = [];
-			return;
-		}
-		readDir(currentDir)
+		const folder = $openFolderPath;
+		if (!folder) { dirFiles = []; return; }
+		readDir(folder)
 			.then(entries => {
 				dirFiles = entries
-					.filter(e => !e.isDirectory && e.name)
+					.filter(e => !e.isDirectory && e.name && isFlatFile(e.name))
 					.map(e => e.name!)
 					.sort();
 			})
-			.catch(() => {
-				dirFiles = [];
-			});
+			.catch(() => { dirFiles = []; });
 	});
 
-	async function openDirFile(filename: string) {
-		if (!currentDir) return;
-		const path = `${currentDir}/${filename}`;
+	// Single-click: preview (italic tab, replaced by next single-click)
+	async function previewFile(filename: string) {
+		if (!$openFolderPath) return;
+		const path = `${$openFolderPath}/${filename}`;
+		const content = await readTextFile(path);
+		openPreviewTab(path, content);
+	}
+
+	// Double-click: open permanently
+	async function openFile(filename: string) {
+		if (!$openFolderPath) return;
+		const path = `${$openFolderPath}/${filename}`;
 		const content = await readTextFile(path);
 		openOrFocusTab(path, content);
 	}
@@ -122,7 +122,7 @@
 						onclick={() => createNew('lexical')}
 						class="cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full
 							   border border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200
-							   text-brand-charcoal-600 transition-colors"
+							   text-brand-charcoal-500 transition-colors"
 					>
 						Lexical
 					</button>
@@ -139,7 +139,7 @@
 					onclick={() => (showNewOptions = true)}
 					class="cursor-pointer mt-1.5 w-full px-3 py-1 text-[11px] font-semibold rounded-full
 						   border border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200
-						   text-brand-charcoal-600 transition-colors flex items-center justify-center gap-1.5"
+						   text-brand-charcoal-500 transition-colors flex items-center justify-center gap-1.5"
 				>
 					<Icon icon="solar:add-circle-bold-duotone" width="0.85rem" />
 					Create New
@@ -154,7 +154,7 @@
 		<div>
 			<span class={labelClass}>Packages</span>
 			<div class="flex items-center justify-between gap-2">
-				<span class="text-xs text-brand-charcoal-600 font-mono">ilm {ILM_VERSION}</span>
+				<span class="text-xs text-brand-charcoal-500 font-mono">ilm {ILM_VERSION}</span>
 
 				{#if installStatus === 'unknown'}
 					<span class="text-xs text-brand-charcoal-300 italic">Checking…</span>
@@ -197,7 +197,7 @@
 		<div>
 			<span class={labelClass}>Typst Fonts</span>
 			<div class="flex items-center justify-between gap-2">
-				<span class="text-xs text-brand-charcoal-600 font-mono">New Computer Modern</span>
+				<span class="text-xs text-brand-charcoal-500 font-mono">New Computer Modern</span>
 
 				{#if fontsStatus === 'unknown'}
 					<span class="text-xs text-brand-charcoal-300 italic">Checking…</span>
@@ -232,24 +232,28 @@
 			{/if}
 		</div>
 
-		{#if currentDir}
+		{#if $openFolderPath}
 			<!-- Divider -->
 			<div class="border-t border-brand-sand-200"></div>
 
 			<!-- File Browser -->
 			<div>
 				<span class={labelClass}>Files</span>
-				<div class="max-h-40 overflow-y-auto flex flex-col gap-0.5 mt-1">
+				<p class="text-[9px] text-brand-charcoal-300 mb-1 truncate" title={$openFolderPath}>
+					{$openFolderPath.split('/').pop()}
+				</p>
+				<div class="max-h-64 min-h-0 overflow-y-auto pr-1">
 					{#each dirFiles as file}
 						<button
-							onclick={() => openDirFile(file)}
-							class="text-left text-[11px] text-brand-charcoal-600 hover:text-brand-gold-500
-							       px-1 py-0.5 rounded truncate font-mono transition-colors"
-							title={file}
+							onclick={() => previewFile(file)}
+							ondblclick={() => openFile(file)}
+							class="block w-full text-left text-[11px] text-brand-charcoal-500 hover:text-brand-gold-500
+							       px-1 py-1 rounded truncate font-mono transition-colors"
+							title="Click to preview · Double-click to open"
 						>{file}</button>
 					{/each}
 					{#if dirFiles.length === 0}
-						<p class="text-[10px] text-brand-charcoal-300 italic">No files in directory</p>
+						<p class="text-[10px] text-brand-charcoal-300 italic">No files</p>
 					{/if}
 				</div>
 			</div>

@@ -2,6 +2,8 @@
     import Icon from '@iconify/svelte';
     import NextPrevButton from "./NextPrevButton.svelte";
     import ParchmentActionBar from "./ParchmentActionBar.svelte";
+    import BookmarkDialog from "./BookmarkDialog.svelte";
+    import HighlightDialog from "./HighlightDialog.svelte";
     import {
         hideSurahPage,
         isSidebar,
@@ -13,6 +15,8 @@
     import { pendingJumpAyah } from "$lib/stores/bookmarks.store";
 
     let scrollContainer = $state<HTMLElement | null>(null);
+    let showBookmarks  = $state(false);
+    let showHighlights = $state(false);
 
     $effect(() => {
         $selectedSurahIdx; // track changes
@@ -88,7 +92,10 @@
 <div
     class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 flex flex-col items-center bg-white sm:w-full md:w-9/12 lg:w-6/12 sm:shadow-xl sm:shadow-slate-200/60`}
 >
-    <ParchmentActionBar />
+    <ParchmentActionBar
+        onOpenBookmarks={() => (showBookmarks = true)}
+        onOpenHighlights={() => (showHighlights = true)}
+    />
 
     <div
         bind:this={scrollContainer}
@@ -100,6 +107,10 @@
 
     <NextPrevButton position={"absolute -bottom-4 inset-x-0 z-20"} />
 </div>
+
+<!-- Dialogs — rendered outside the z-1 stacking context so their fixed backdrop covers the full viewport -->
+<BookmarkDialog  open={showBookmarks}  onClose={() => (showBookmarks  = false)} />
+<HighlightDialog open={showHighlights} onClose={() => (showHighlights = false)} />
 
 <!-- Floating Save Highlight button -->
 {#if selectionInfo}
