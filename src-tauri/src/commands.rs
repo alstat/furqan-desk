@@ -1,4 +1,5 @@
 use crate::db::Database;
+use crate::typst_world::get_world;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use tauri::State;
@@ -664,4 +665,171 @@ pub fn delete_highlight(db: State<Database>, id: i64) -> Result<(), String> {
     conn.execute("DELETE FROM highlights WHERE id = ?1", [id])
         .map_err(|e| e.to_string())?;
     Ok(())
+}
+
+// ── Typst package management commands ────────────────────────────────────────
+
+/// Returns true if the package is already present in the local typst cache.
+#[tauri::command]
+pub fn check_typst_package(namespace: String, name: String, version: String) -> bool {
+    dirs::data_dir()
+        .map(|d| {
+            d.join("typst")
+                .join("packages")
+                .join(&namespace)
+                .join(&name)
+                .join(&version)
+                .join("typst.toml")
+                .exists()
+        })
+        .unwrap_or(false)
+}
+
+/// Download a package from the typst registry and extract it into the local
+/// cache at `<data_dir>/typst/packages/<namespace>/<name>/<version>/`.
+///
+/// The typst package registry tarballs are flat (no wrapping directory):
+///   typst.toml, lib.typ, … land directly at the archive root.
+/// This matches what typst-cli does: `archive.unpack(package_dir)`.
+#[tauri::command]
+pub async fn install_typst_package(
+    namespace: String,
+    name: String,
+    version: String,
+) -> Result<(), String> {
+    use flate2::read::GzDecoder;
+    use tar::Archive;
+
+    let url = format!(
+        "https://packages.typst.org/{}/{}-{}.tar.gz",
+        namespace, name, version
+    );
+
+    // Download the tarball bytes.
+    let response = reqwest::get(&url)
+        .await
+        .map_err(|e| format!("Network error: {e}"))?;
+
+    if !response.status().is_success() {
+        return Err(format!(
+            "Package not found on registry (HTTP {}). Check the namespace/name/version.",
+            response.status()
+        ));
+    }
+
+    let bytes = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read response: {e}"))?;
+
+    // Destination: <data_dir>/typst/packages/<namespace>/<name>/<version>/
+    let pkg_dir = dirs::data_dir()
+        .ok_or("Cannot locate the system data directory")?
+        .join("typst")
+        .join("packages")
+        .join(&namespace)
+        .join(&name)
+        .join(&version);
+
+    // Wipe any previous (partial) install so we start clean.
+    if pkg_dir.exists() {
+        std::fs::remove_dir_all(&pkg_dir)
+            .map_err(|e| format!("Failed to remove old install: {e}"))?;
+    }
+    std::fs::create_dir_all(&pkg_dir)
+        .map_err(|e| format!("Failed to create package directory: {e}"))?;
+
+    // The registry tarball is flat — files are at the archive root with no
+    // wrapping directory.  Unpack them directly into pkg_dir.
+    let gz = GzDecoder::new(bytes.as_ref());
+    let mut archive = Archive::new(gz);
+    archive
+        .unpack(&pkg_dir)
+        .map_err(|e| format!("Failed to extract package: {e}"))?;
+
+    Ok(())
+}
+
+// ── Typst font installation commands ─────────────────────────────────────────
+
+/// Platform-specific directory where user fonts can be installed.
+fn typst_user_fonts_dir() -> Option<std::path::PathBuf> {
+    #[cfg(target_os = "macos")]
+    return dirs::home_dir().map(|h| h.join("Library").join("Fonts"));
+    #[cfg(target_os = "linux")]
+    return dirs::home_dir().map(|h| h.join(".local").join("share").join("fonts"));
+    #[cfg(target_os = "windows")]
+    return dirs::font_dir();
+    #[allow(unreachable_code)]
+    None
+}
+
+/// Returns true when typst's bundled fonts have been installed to the system.
+#[tauri::command]
+pub fn check_typst_fonts() -> bool {
+    typst_user_fonts_dir()
+        .map(|d| d.join(".typst-fonts-installed").exists())
+        .unwrap_or(false)
+}
+
+/// Install typst's bundled fonts (New Computer Modern, Linux Libertine, DejaVu, …)
+/// into the user's system font directory so they are available outside the app too.
+#[tauri::command]
+pub fn install_typst_fonts() -> Result<(), String> {
+    use typst::foundations::Bytes;
+    use typst::text::{Font, FontStyle};
+
+    let fonts_dir = typst_user_fonts_dir()
+        .ok_or_else(|| "Cannot locate user fonts directory".to_string())?;
+    std::fs::create_dir_all(&fonts_dir)
+        .map_err(|e| format!("Cannot create fonts directory: {e}"))?;
+
+    for (i, font_data) in typst_assets::fonts().enumerate() {
+        let ext = if font_data.starts_with(b"OTTO") { "otf" } else { "ttf" };
+        let stem = Font::new(Bytes::new(font_data), 0)
+            .map(|f| {
+                let info = f.info();
+                let style = match info.variant.style {
+                    FontStyle::Normal => "Regular",
+                    FontStyle::Italic => "Italic",
+                    FontStyle::Oblique => "Oblique",
+                };
+                format!("{}-{}_{i}", info.family.replace([' ', '/'], ""), style)
+            })
+            .unwrap_or_else(|| format!("TypstFont_{i}"));
+
+        let path = fonts_dir.join(format!("{stem}.{ext}"));
+        if !path.exists() {
+            std::fs::write(&path, font_data)
+                .map_err(|e| format!("Failed to write {stem}.{ext}: {e}"))?;
+        }
+    }
+
+    std::fs::write(fonts_dir.join(".typst-fonts-installed"), b"")
+        .map_err(|e| format!("Failed to write marker: {e}"))?;
+
+    Ok(())
+}
+
+// ── Typst compile commands ────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn compile_typst_svg(source: String) -> Result<Vec<String>, String> {
+    let world = get_world();
+    world.set_source(source);
+    let doc = typst::compile::<typst::layout::PagedDocument>(world)
+        .output
+        .map_err(|e| format!("{e:?}"))?;
+    Ok(doc.pages.iter().map(|p| typst_svg::svg(p)).collect())
+}
+
+#[tauri::command]
+pub fn compile_typst_pdf(source: String) -> Result<Vec<u8>, String> {
+    let world = get_world();
+    world.set_source(source);
+    let doc = typst::compile::<typst::layout::PagedDocument>(world)
+        .output
+        .map_err(|e| format!("{e:?}"))?;
+    typst_pdf::pdf(&doc, &typst_pdf::PdfOptions::default())
+        .map_err(|e| format!("{e:?}"))
 }
