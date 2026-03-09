@@ -13,7 +13,34 @@ impl Database {
         // Initialize tables and load data
         Self::init_quran_db(&conn, &sql_path)?;
         Self::init_morphology_db(&conn, &morph_path)?;
+        Self::init_user_data_tables(&conn)?;
         Ok(Database(Mutex::new(conn)))
+    }
+
+    fn init_user_data_tables(conn: &Connection) -> Result<()> {
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS bookmarks (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                surah       INTEGER NOT NULL,
+                ayah        INTEGER NOT NULL,
+                note        TEXT,
+                created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE TABLE IF NOT EXISTS last_read (
+                id          INTEGER PRIMARY KEY CHECK (id = 1),
+                surah       INTEGER NOT NULL,
+                ayah        INTEGER NOT NULL,
+                updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE TABLE IF NOT EXISTS highlights (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                surah       INTEGER NOT NULL,
+                ayah        INTEGER NOT NULL,
+                text        TEXT NOT NULL,
+                created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+            );",
+        )?;
+        Ok(())
     }
 
     fn init_quran_db(conn: &Connection, sql_path: &PathBuf) -> Result<()> {

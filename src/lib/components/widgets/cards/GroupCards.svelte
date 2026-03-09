@@ -33,7 +33,7 @@
             {@render controlCard()}
             <button
                 onclick={toggleExpand}
-                class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-md hover:bg-slate-50 hover:shadow-lg active:scale-95"
+                class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-2xl border border-brand-sand-200 bg-brand-sand-50 text-brand-charcoal-500 shadow-md hover:bg-brand-sand-100 hover:shadow-lg active:scale-95"
             >
                 <Icon icon="charm:chevron-down" width="1rem" />
             </button>
@@ -42,7 +42,7 @@
         <button
             in:fade={{ duration: 150 }}
             onclick={toggleExpand}
-            class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-2xl border border-slate-200 bg-white/90 text-slate-600 shadow-lg backdrop-blur-sm hover:bg-white hover:shadow-xl hover:scale-105 active:scale-95"
+            class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-2xl border border-brand-sand-200 bg-brand-sand-50/90 text-brand-gold-600 shadow-lg backdrop-blur-sm hover:bg-brand-sand-100 hover:shadow-xl hover:scale-105 active:scale-95"
         >
             {@render collapsedIcon()}
         </button>

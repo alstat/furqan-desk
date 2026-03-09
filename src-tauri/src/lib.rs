@@ -35,7 +35,15 @@ pub fn run() {
             commands::get_surah,
             commands::get_surah_morphology,
             commands::get_basmallah_morphology,
-            commands::get_word_morphology
+            commands::get_word_morphology,
+            commands::add_bookmark,
+            commands::get_bookmarks,
+            commands::delete_bookmark,
+            commands::set_last_read,
+            commands::get_last_read,
+            commands::add_highlight,
+            commands::get_highlights,
+            commands::delete_highlight
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

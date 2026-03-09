@@ -1,10 +1,10 @@
 import { modifyText } from "$lib/functions/toolbar/toolBarFunctions";
 import { activeClass } from "../config";
 
-export let actionBtnStyle = 'cursor-pointer rounded-full bg-slate-100 hover:bg-slate-400 active:text-slate-50 active:bg-slate-500 text-slate-700 p-2 shadow-md'
-export let toolBarBtnStyle = 'cursor-pointer hover:bg-slate-200 active:text-slate-50 active:bg-slate-300 text-slate-700 rounded-md'
-export let activeBtnStyle = 'bg-slate-300 rounded-md'
-export let selectBtnStyle = 'border-1 block cursor-pointer rounded-md border border-slate-300 bg-slate-100 p-1 text-center text-sm text-lime-700'
+export let actionBtnStyle = 'cursor-pointer rounded-full bg-brand-sand-100 hover:bg-brand-sand-200 active:bg-brand-sand-400 text-brand-charcoal-500 p-2 shadow-md'
+export let toolBarBtnStyle = 'cursor-pointer hover:bg-brand-sand-100 active:bg-brand-sand-200 text-brand-charcoal-500 rounded-md'
+export let activeBtnStyle = 'bg-brand-sand-200 rounded-md'
+export let selectBtnStyle = 'border-1 block cursor-pointer rounded-md border border-brand-sand-200 bg-brand-sand-100 p-1 text-center text-sm text-brand-gold-600'
 export let icons = {
 	undo: 'fluent:arrow-undo-16-filled',
 	redo: 'fluent:arrow-redo-16-filled',

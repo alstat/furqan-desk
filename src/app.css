@@ -4,6 +4,65 @@
     --font-scheherazade: "Scheherazade New", serif;
     --font-amiri: "Amiri", serif;
     --font-reem: "Reem Kufi Ink", sans-serif;
+
+    /* ── Brand palette ─────────────────────────────────────────────────────── */
+    /* Pastel tints derived from the brand hues below.                          */
+    /* Base hues (for reference): Deep Emerald #0F4D3F · Muted Teal #3C8C8C   */
+    /*   Warm Sand #E8DCC8 · Soft Gold #C8A96A · Charcoal Gray #2F2F2F         */
+
+    /* Deep Emerald */
+    --color-brand-emerald-50:  #EBF5F3;
+    --color-brand-emerald-100: #CEEAE3;
+    --color-brand-emerald-200: #9DD4C8;
+    --color-brand-emerald-400: #3D9B86;
+    --color-brand-emerald-600: #1A6B57;
+    --color-brand-emerald-900: #0F4D3F;
+
+    /* Muted Teal */
+    --color-brand-teal-50:  #EAF4F4;
+    --color-brand-teal-100: #C8E6E6;
+    --color-brand-teal-200: #92CCCC;
+    --color-brand-teal-400: #5AABAB;
+    --color-brand-teal-600: #3C8C8C;
+
+    /* Warm Sand */
+    --color-brand-sand-50:  #FAF7F2;
+    --color-brand-sand-100: #F5EFE4;
+    --color-brand-sand-200: #EDE2CE;
+    --color-brand-sand-400: #D4C0A0;
+
+    /* Soft Gold */
+    --color-brand-gold-50:  #FBF5E8;
+    --color-brand-gold-100: #F3E5C0;
+    --color-brand-gold-200: #E5CC90;
+    --color-brand-gold-400: #C8A96A;
+    --color-brand-gold-600: #9A7A40;
+
+    /* Charcoal */
+    --color-brand-charcoal-50:  #F2F2F2;
+    --color-brand-charcoal-100: #E0E0E0;
+    --color-brand-charcoal-300: #ABABAB;
+    --color-brand-charcoal-500: #707070;
+    --color-brand-charcoal-900: #2F2F2F;
+}
+
+/* Active dropdown item (currently selected value) */
+.dropdown-item-active {
+    background-color: var(--color-brand-gold-100);
+    color: var(--color-brand-gold-600);
+    font-weight: 600;
+}
+
+/* Ayah jump highlight */
+@keyframes ayah-flash {
+    0%   { background-color: transparent; border-radius: 4px; }
+    15%  { background-color: var(--color-brand-gold-100); border-radius: 4px; }
+    70%  { background-color: var(--color-brand-gold-100); border-radius: 4px; }
+    100% { background-color: transparent; border-radius: 4px; }
+}
+
+.ayah-highlight {
+    animation: ayah-flash 2.4s ease-in-out forwards;
 }
 
 .default-scroll {
