@@ -8,6 +8,8 @@
     import { morphFontFamily } from "$lib/stores/morphology.store";
     import type { MorphWord } from "$lib/types/morphology";
     import WordMorphologyPopover from "./WordMorphologyPopover.svelte";
+    import { setLastRead } from "$lib/functions/bookmarks";
+    import { currentReadingAyah } from "$lib/stores/bookmarks.store";
 
     // State for selected word
     let selectedWord: { word: MorphWord; ayahNum: number } | null =
@@ -85,6 +87,11 @@
 
         popoverPosition = { x, y, placement };
         selectedWord = { word, ayahNum };
+
+        if ($surahMorphology && ayahNum > 0) {
+            currentReadingAyah.set({ surah: $surahMorphology.surah, ayah: ayahNum });
+            setLastRead($surahMorphology.surah, ayahNum);
+        }
     }
 
     function handleClickOutside(event: MouseEvent) {
@@ -152,6 +159,8 @@
                         {#each $basmallahMorphology.words as word}<span
                                 role="button"
                                 tabindex="0"
+                                data-surah={$surahMorphology.surah}
+                                data-ayah={0}
                                 class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === 0 ? 'bg-yellow-200' : ''}"
                                 onclick={(e) => handleWordClick(e, word, 0)}
                                 onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, 0)}
@@ -166,10 +175,12 @@
                 dir="rtl"
                         role="button"
                         tabindex="0"
+                        data-surah={$surahMorphology.surah}
+                        data-ayah={ayahData.ayah}
                         class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === ayahData.ayah ? 'bg-yellow-200' : ''}"
                         onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                         onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
-                    >{word.combined_arabic}&nbsp;</span>{/each}<span class="font-scheherazade text-lime-700 px-1 whitespace-nowrap">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span>{/each}</div>
+                    >{word.combined_arabic}&nbsp;</span>{/each}<span id="ayah-{ayahData.ayah}" class="font-scheherazade text-lime-700 px-1 whitespace-nowrap">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span>{/each}</div>
     {:else}
         <div class="py-8 text-center text-gray-500 h-full">
             Loading morphology data...

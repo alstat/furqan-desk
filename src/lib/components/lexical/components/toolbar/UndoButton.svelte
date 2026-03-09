@@ -36,7 +36,7 @@
 	aria-label="Undo"
 >
   {#if !canUndo || !$isEditable}
-    <span class="text-slate-300"><Icon icon={icons['undo']} width=1rem/></span>
+    <span class="text-brand-charcoal-100"><Icon icon={icons['undo']} width=1rem/></span>
   {:else}
 	  <Icon icon={icons['undo']} width=1rem/>
   {/if}

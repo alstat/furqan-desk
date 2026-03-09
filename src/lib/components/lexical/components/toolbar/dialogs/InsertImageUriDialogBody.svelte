@@ -37,7 +37,7 @@
 			<button
 				data-test-id="image-modal-confirm-btn"
 				disabled={isDisabled}
-				class="bg-slate-300 hover:bg-slate-400 active:text-white shadow-md active:shadow-none cursor-pointer rounded-md p-2 text-sm font-sans mt-5"
+				class="bg-brand-sand-200 hover:bg-brand-sand-400 active:text-white shadow-md active:shadow-none cursor-pointer rounded-md p-2 text-sm font-sans mt-5 text-brand-charcoal-900"
 				onclick={() => {
                     console.log("image src: ", src);
 					$activeEditor.dispatchCommand(INSERT_IMAGE_COMMAND, { altText, src });

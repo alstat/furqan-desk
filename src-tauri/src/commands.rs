@@ -3,6 +3,32 @@ use serde::Serialize;
 use std::collections::BTreeMap;
 use tauri::State;
 
+// ── User-data structs ────────────────────────────────────────────────────────
+#[derive(Serialize)]
+pub struct Bookmark {
+    pub id: i64,
+    pub surah: i64,
+    pub ayah: i64,
+    pub note: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Serialize)]
+pub struct LastRead {
+    pub surah: i64,
+    pub ayah: i64,
+    pub updated_at: String,
+}
+
+#[derive(Serialize)]
+pub struct Highlight {
+    pub id: i64,
+    pub surah: i64,
+    pub ayah: i64,
+    pub text: String,
+    pub created_at: String,
+}
+
 #[derive(Serialize)]
 pub struct Ayah {
     pub id: i64,
@@ -516,4 +542,126 @@ pub fn get_word_morphology(
         tokens,
         combined_arabic,
     })
+}
+
+// ── Bookmark commands ────────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn add_bookmark(
+    db: State<Database>,
+    surah: i64,
+    ayah: i64,
+    note: Option<String>,
+) -> Result<Bookmark, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO bookmarks (surah, ayah, note) VALUES (?1, ?2, ?3)",
+        rusqlite::params![surah, ayah, note],
+    )
+    .map_err(|e| e.to_string())?;
+    let id = conn.last_insert_rowid();
+    conn.query_row(
+        "SELECT id, surah, ayah, note, created_at FROM bookmarks WHERE id = ?1",
+        [id],
+        |r| Ok(Bookmark { id: r.get(0)?, surah: r.get(1)?, ayah: r.get(2)?, note: r.get(3)?, created_at: r.get(4)? }),
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_bookmarks(db: State<Database>) -> Result<Vec<Bookmark>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare("SELECT id, surah, ayah, note, created_at FROM bookmarks ORDER BY created_at DESC")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt.query_map([], |r| Ok(Bookmark {
+        id: r.get(0)?, surah: r.get(1)?, ayah: r.get(2)?, note: r.get(3)?, created_at: r.get(4)?,
+    }))
+    .map_err(|e| e.to_string())?
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| e.to_string());
+    rows
+}
+
+#[tauri::command]
+pub fn delete_bookmark(db: State<Database>, id: i64) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM bookmarks WHERE id = ?1", [id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// ── Last-read commands ───────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn set_last_read(db: State<Database>, surah: i64, ayah: i64) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO last_read (id, surah, ayah, updated_at) VALUES (1, ?1, ?2, datetime('now'))
+         ON CONFLICT(id) DO UPDATE SET surah = ?1, ayah = ?2, updated_at = datetime('now')",
+        rusqlite::params![surah, ayah],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_last_read(db: State<Database>) -> Result<Option<LastRead>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    match conn.query_row(
+        "SELECT surah, ayah, updated_at FROM last_read WHERE id = 1",
+        [],
+        |r| Ok(LastRead { surah: r.get(0)?, ayah: r.get(1)?, updated_at: r.get(2)? }),
+    ) {
+        Ok(lr) => Ok(Some(lr)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+// ── Highlight commands ───────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn add_highlight(
+    db: State<Database>,
+    surah: i64,
+    ayah: i64,
+    text: String,
+) -> Result<Highlight, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO highlights (surah, ayah, text) VALUES (?1, ?2, ?3)",
+        rusqlite::params![surah, ayah, text],
+    )
+    .map_err(|e| e.to_string())?;
+    let id = conn.last_insert_rowid();
+    conn.query_row(
+        "SELECT id, surah, ayah, text, created_at FROM highlights WHERE id = ?1",
+        [id],
+        |r| Ok(Highlight { id: r.get(0)?, surah: r.get(1)?, ayah: r.get(2)?, text: r.get(3)?, created_at: r.get(4)? }),
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_highlights(db: State<Database>) -> Result<Vec<Highlight>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare("SELECT id, surah, ayah, text, created_at FROM highlights ORDER BY created_at DESC")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt.query_map([], |r| Ok(Highlight {
+        id: r.get(0)?, surah: r.get(1)?, ayah: r.get(2)?, text: r.get(3)?, created_at: r.get(4)?,
+    }))
+    .map_err(|e| e.to_string())?
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| e.to_string());
+    rows
+}
+
+#[tauri::command]
+pub fn delete_highlight(db: State<Database>, id: i64) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM highlights WHERE id = ?1", [id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
 }

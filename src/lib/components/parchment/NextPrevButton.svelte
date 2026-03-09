@@ -10,8 +10,8 @@
 
     const btnBase =
         "flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition-all cursor-pointer";
-    const btnActive = `${btnBase} border-slate-200 bg-white/90 text-slate-600 hover:bg-white hover:shadow-md hover:text-slate-800 active:scale-95 backdrop-blur-sm cursor-pointer`;
-    const btnDisabled = `${btnBase} border-slate-100 bg-white/60 text-slate-300 cursor-not-allowed cursor-pointer`;
+    const btnActive = `${btnBase} border-brand-sand-200 bg-brand-sand-50/90 text-brand-charcoal-500 hover:bg-brand-sand-100 hover:shadow-md hover:text-brand-charcoal-900 active:scale-95 backdrop-blur-sm cursor-pointer`;
+    const btnDisabled = `${btnBase} border-brand-sand-100 bg-brand-sand-50/60 text-brand-charcoal-100 cursor-not-allowed cursor-pointer`;
 </script>
 
 <div class={position}>

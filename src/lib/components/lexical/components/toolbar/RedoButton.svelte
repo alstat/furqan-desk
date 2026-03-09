@@ -43,7 +43,7 @@
   class={toolBarBtnStyle + ' p-1'}
   aria-label="Redo">
   {#if !canRedo || !$isEditable}
-    <span class="text-slate-300"><Icon icon={icons['redo']} width=1rem/></span>
+    <span class="text-brand-charcoal-100"><Icon icon={icons['redo']} width=1rem/></span>
   {:else}
 	  <Icon icon={icons['redo']} width=1rem/>
   {/if}

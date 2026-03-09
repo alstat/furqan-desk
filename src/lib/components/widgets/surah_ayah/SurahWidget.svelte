@@ -34,8 +34,8 @@
 		selectedSurahIdx.set(idx);
 	}
 
-	const selectClass = 'w-full appearance-none cursor-pointer rounded-xl border border-slate-200 bg-white/80 px-3 py-2 pr-8 text-sm text-slate-700 transition-all focus:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-100 hover:border-slate-300 hover:bg-white';
-	const labelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400';
+	const selectClass = 'w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 px-3 py-2 pr-8 text-sm text-brand-charcoal-900 transition-all focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100';
+	const labelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300';
 </script>
 
 {#snippet surahCardBody()}
@@ -54,7 +54,7 @@
 					</option>
 				{/each}
 			</select>
-			<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-slate-400">
+			<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
 				<Icon icon="charm:chevron-down" width="0.75rem" />
 			</span>
 		</div>
@@ -70,7 +70,7 @@
 					<option value="font-scheherazade">Scheherazade New</option>
 					<option value="font-amiri">Amiri Qur'an</option>
 				</select>
-				<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-slate-400">
+				<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
 					<Icon icon="charm:chevron-down" width="0.75rem" />
 				</span>
 			</div>
@@ -83,7 +83,7 @@
 					<option value="text-xl">Medium</option>
 					<option value="text-3xl">Large</option>
 				</select>
-				<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-slate-400">
+				<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
 					<Icon icon="charm:chevron-down" width="0.75rem" />
 				</span>
 			</div>
@@ -97,7 +97,7 @@
 				hideSurah = !hideSurah;
 				if (hideSurah && !$isSidebar) $isSidebar = true;
 			}}
-				class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {hideSurah ? 'bg-slate-600' : 'bg-slate-200'}"
+				class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {hideSurah ? 'bg-brand-gold-400' : 'bg-brand-charcoal-100'}"
 			>
 				<span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {hideSurah ? 'translate-x-4' : 'translate-x-1'}"></span>
 			</button>
