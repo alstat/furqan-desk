@@ -93,7 +93,7 @@
                     <div class="flex flex-col gap-3 pb-2">
                         {#each $typstSvgPages as pageSvg}
                             <div
-                                class="typst-page border border-brand-sand-300 rounded shadow-sm bg-white"
+                                class="typst-page overflow-hidden border border-stone-200 rounded-md shadow-sm bg-white"
                             >
                                 {@html pageSvg}
                             </div>
