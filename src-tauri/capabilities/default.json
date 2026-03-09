@@ -8,9 +8,12 @@
     "opener:default",
     "dialog:allow-save",
     "dialog:allow-open",
+    "dialog:allow-confirm",
     "fs:allow-write-text-file",
     "fs:allow-write-file",
     "fs:allow-read-file",
+    "fs:allow-read-text-file",
+    "fs:allow-read-dir",
     "fs:allow-exists",
     "fs:scope-home-recursive"
   ]
