@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ImportButton from './ImportButton.svelte';
+	import OpenFolderButton from './OpenFolderButton.svelte';
 	import ExportButton from './ExportButton.svelte';
 	import SaveAsButton from './SaveAsButton.svelte';
 	import RedoButton from './RedoButton.svelte';
@@ -15,6 +16,7 @@
 	</div>
 	<div class="ml-4">
 		<ImportButton />
+		<OpenFolderButton />
 		<ExportButton />
 		<SaveAsButton />
 	</div>

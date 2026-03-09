@@ -59,7 +59,7 @@
 
 <div class={`relative flex justify-right overflow-visible font-base text-slate-900 ${sidebarWidth}`}>
 	<button
-		class={`${$hideSurahPage() ? 'hidden ' : ''} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} top-4 z-10 rounded-full bg-amber-200 p-2 shadow-md transition-colors text-lime-700 hover:bg-amber-300 active:bg-amber-400`}
+		class={`${$hideSurahPage() ? 'hidden ' : ''} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} top-4 z-3 rounded-full bg-amber-200 p-2 shadow-md transition-colors text-lime-700 hover:bg-amber-300 active:bg-amber-400`}
 		onclick={toggleSidebar}
 		aria-label={$isSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
 	>

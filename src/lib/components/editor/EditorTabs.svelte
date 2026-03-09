@@ -37,7 +37,7 @@
                 width="0.75rem"
                 class="shrink-0 opacity-60"
             />
-            <span>{tab.name}{tab.isDirty ? " *" : ""}</span>
+            <span class={tab.isPreview ? 'italic' : ''}>{tab.name}{tab.isDirty ? " *" : ""}</span>
             <span
                 role="button"
                 tabindex="-1"

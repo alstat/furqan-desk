@@ -64,20 +64,20 @@
         <div class="flex w-full max-w-md flex-col rounded-2xl bg-white shadow-2xl overflow-hidden" style="max-height: 85vh;">
 
             <!-- Header -->
-            <div class="shrink-0 bg-brand-gold-100 border-b border-brand-gold-200 px-5 py-4">
+            <div class="shrink-0 bg-brand-sand-50 border-b border-brand-sand-200 px-5 py-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200">
-                            <Icon icon="solar:bookmark-bold-duotone" class="text-brand-gold-600" width="1rem" />
+                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-sand-100 border border-brand-sand-200">
+                            <Icon icon="solar:bookmark-bold-duotone" class="text-brand-gold-500" width="1rem" />
                         </div>
                         <div>
                             <h2 class="text-sm font-semibold text-brand-charcoal-900">Bookmarks</h2>
-                            <p class="text-[11px] text-brand-gold-600">{$bookmarks.length} saved</p>
+                            <p class="text-[11px] text-brand-charcoal-300">{$bookmarks.length} saved</p>
                         </div>
                     </div>
                     <button
                         onclick={onClose}
-                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 text-brand-gold-600 hover:bg-brand-gold-200/80 transition-colors"
+                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-sand-100 border border-brand-sand-200 text-brand-charcoal-400 hover:bg-brand-sand-200 transition-colors"
                     >
                         <Icon icon="solar:close-circle-bold" width="1rem" />
                     </button>
@@ -112,7 +112,7 @@
                         placeholder="Add a note… (optional)"
                         bind:value={noteInput}
                         rows="2"
-                        class="mb-3 w-full resize-none rounded-xl border border-brand-sand-200 bg-brand-sand-100 px-3 py-2.5 text-xs text-brand-charcoal-900 placeholder-brand-charcoal-300 focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                        class="mb-3 w-full resize-none rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 px-3 py-2.5 text-xs text-brand-charcoal-900 placeholder-brand-charcoal-300 focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100 transition-all"
                     ></textarea>
 
                     {#if saveError}
@@ -137,8 +137,8 @@
                         <p class="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300">Continue Reading</p>
                         <div class="flex items-center justify-between rounded-xl bg-brand-sand-100 border border-brand-sand-200 px-4 py-3">
                             <div class="flex items-center gap-2.5">
-                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-gold-100">
-                                    <Icon icon="solar:book-bookmark-bold-duotone" class="text-brand-gold-600" width="1rem" />
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-sand-100 border border-brand-sand-200">
+                                    <Icon icon="solar:book-bookmark-bold-duotone" class="text-brand-gold-500" width="1rem" />
                                 </div>
                                 <div>
                                     <p class="text-xs font-semibold text-brand-charcoal-900">

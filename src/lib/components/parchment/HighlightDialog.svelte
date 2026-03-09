@@ -29,20 +29,20 @@
         <div class="flex w-full max-w-md flex-col rounded-2xl bg-white shadow-2xl overflow-hidden" style="max-height: 85vh;">
 
             <!-- Header -->
-            <div class="shrink-0 bg-brand-gold-100 border-b border-brand-gold-200 px-5 py-4">
+            <div class="shrink-0 bg-brand-sand-50 border-b border-brand-sand-200 px-5 py-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200">
-                            <Icon icon="solar:magic-stick-3-bold-duotone" class="text-brand-gold-600" width="1rem" />
+                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-sand-100 border border-brand-sand-200">
+                            <Icon icon="solar:magic-stick-3-bold-duotone" class="text-brand-gold-500" width="1rem" />
                         </div>
                         <div>
                             <h2 class="text-sm font-semibold text-brand-charcoal-900">Highlights</h2>
-                            <p class="text-[11px] text-brand-gold-600">{$highlights.length} saved</p>
+                            <p class="text-[11px] text-brand-charcoal-300">{$highlights.length} saved</p>
                         </div>
                     </div>
                     <button
                         onclick={onClose}
-                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 text-brand-gold-600 hover:bg-brand-gold-200/80 transition-colors"
+                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-sand-100 border border-brand-sand-200 text-brand-charcoal-400 hover:bg-brand-sand-200 transition-colors"
                     >
                         <Icon icon="solar:close-circle-bold" width="1rem" />
                     </button>
