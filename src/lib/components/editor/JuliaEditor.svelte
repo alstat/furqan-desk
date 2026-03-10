@@ -10,11 +10,12 @@
         type ReplLine,
     } from "$lib/stores/editor.store";
     import JuliaActionBar from "./JuliaActionBar.svelte";
+    import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
+    import type { KeyBinding } from "@codemirror/view";
 
     const labelClass =
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
 
-    let textareaEl: HTMLTextAreaElement;
     let replOutputEl: HTMLDivElement;
     let isRunning = $state(false);
 
@@ -30,21 +31,6 @@
 
     function handleInput() {
         if ($activeTab) setActiveTabContent($activeTab.content);
-    }
-
-    function getCurrentLineOrSelection(): string {
-        if (!textareaEl) return "";
-        const { value, selectionStart, selectionEnd } = textareaEl;
-        if (selectionStart !== selectionEnd) {
-            return value.slice(selectionStart, selectionEnd);
-        }
-        // Find line boundaries around cursor
-        const before = value.lastIndexOf("\n", selectionStart - 1);
-        const after = value.indexOf("\n", selectionStart);
-        return value.slice(
-            before + 1,
-            after === -1 ? value.length : after,
-        );
     }
 
     async function executeCode(snippet: string) {
@@ -66,13 +52,22 @@
         await invoke("run_julia_code", { code: snippet });
     }
 
-    function handleKeyDown(e: KeyboardEvent) {
-        const mod = IS_APPLE ? e.metaKey : e.ctrlKey;
-        if (mod && e.key === "Enter") {
-            e.preventDefault();
-            executeCode(getCurrentLineOrSelection());
-        }
-    }
+    // CodeMirror keymap for Mod-Enter (Ctrl+Enter / ⌘+Enter)
+    const juliaKeymap: KeyBinding[] = [{
+        key: 'Mod-Enter',
+        run(view) {
+            const { from, to } = view.state.selection.main;
+            let snippet: string;
+            if (from !== to) {
+                snippet = view.state.sliceDoc(from, to);
+            } else {
+                const line = view.state.doc.lineAt(from);
+                snippet = line.text;
+            }
+            executeCode(snippet);
+            return true;
+        },
+    }];
 
     function scrollToBottom() {
         if (replOutputEl) {
@@ -116,21 +111,19 @@
 </script>
 
 <div class="relative overflow-visible flex flex-col h-full">
-    <!-- Editor textarea -->
+    <!-- Editor -->
     <div class="flex-1 flex flex-col min-h-0">
         <span class="{labelClass} px-2 pt-1">Julia Editor</span>
-        <textarea
+        <CodeMirrorEditor
             bind:value={$activeTab!.content}
-            bind:this={textareaEl}
-            oninput={handleInput}
-            onkeydown={handleKeyDown}
-            class="flex-1 resize-none font-mono text-sm bg-brand-sand-50 border border-brand-sand-200 rounded-md mx-2 p-2 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 focus:border-brand-gold-400"
-            placeholder="# Julia code&#10;x = 1 + 1&#10;# Press ⌘Enter (or Ctrl+Enter) to run the current line / selection"
-            spellcheck="false"
-        ></textarea>
+            language="julia"
+            extraKeymap={juliaKeymap}
+            onchange={handleInput}
+            class="flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 focus-within:ring-2 focus-within:ring-brand-gold-100 focus-within:border-brand-gold-400 font-mono"
+        />
     </div>
 
-    <!-- REPL panel — same outer wrapper structure as TypstEditor's preview section -->
+    <!-- REPL panel -->
     <div class="flex-none h-52 flex flex-col p-2">
         <div class="flex-1 flex flex-col rounded-md overflow-hidden border border-brand-sand-400 shadow-sm">
 

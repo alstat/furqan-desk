@@ -13,6 +13,7 @@
     import { hideSurahPage } from "$lib/stores/quran.svelte";
     import { activeTab, setActiveTabContent } from "$lib/stores/tabs.store";
     import ActionBar from "$lib/components/lexical/components/actionbar/ActionBar.svelte";
+    import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
 
     // True when the preview is displayed in the Parchment area (side-by-side mode).
     // In that case we hide the inline preview here to avoid duplication.
@@ -84,16 +85,15 @@
 </script>
 
 <div class="relative overflow-visible flex flex-col h-full">
-    <!-- Textarea — always visible -->
+    <!-- Editor — always visible -->
     <div class="flex-1 flex flex-col min-h-0">
         <span class="{labelClass} px-2 pt-1">Editor</span>
-        <textarea
+        <CodeMirrorEditor
             bind:value={$typstSource}
-            oninput={handleInput}
-            class={`${$activeTab?.type !== "typst" ? "mb-4" : ""} ${sideBySide ? "mb-3" : ""} flex-1 resize-none font-mono text-sm bg-brand-sand-50 border border-brand-sand-200 rounded-md mx-2 p-2 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 focus:border-brand-gold-400`}
-            placeholder="#import &quot;@preview/ilm:1.4.2&quot;: *&#10;&#10;#show: ilm.with(title: [Title], author: &quot;Name&quot;)&#10;&#10;= Introduction&#10;&#10;This is *bold*."
-            spellcheck="false"
-        ></textarea>
+            language="typst"
+            onchange={handleInput}
+            class={`${$activeTab?.type !== "typst" ? "mb-4" : ""} ${sideBySide ? "mb-3" : ""} flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 focus-within:ring-2 focus-within:ring-brand-gold-100 focus-within:border-brand-gold-400 font-mono`}
+        />
     </div>
 
     <!-- Inline preview — only shown for .typ files and NOT in side-by-side mode -->

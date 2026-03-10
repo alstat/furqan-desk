@@ -6,7 +6,7 @@
 	import Icon from '@iconify/svelte';
 	import ControlCard from '../cards/ControlCard.svelte';
 	import GroupCards from '../cards/GroupCards.svelte';
-	import { typstRecompile } from '$lib/stores/editor.store';
+	import { typstRecompile, editorTheme, type EditorTheme } from '$lib/stores/editor.store';
 	import { openOrFocusTab, openPreviewTab, createTab, tabs, activeTabId, openFolderPath, isFlatFile } from '$lib/stores/tabs.store';
 	import { isSidebar, surahOrientation } from '$lib/stores/quran.svelte';
 	import { rotateSpring } from '$lib/stores/animation';
@@ -154,6 +154,34 @@
 
 {#snippet cardBody()}
 	<div class="flex flex-col gap-3.5 px-4 py-3">
+
+		<!-- Editor Theme -->
+		<div>
+			<span class={labelClass}>Editor Theme</span>
+			<div class="flex gap-2 mt-1.5">
+				<button
+					onclick={() => editorTheme.set('ayu-light')}
+					class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
+						${$editorTheme === 'ayu-light'
+							? 'bg-brand-gold-400 text-white border-brand-gold-400'
+							: 'border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
+				>
+					Ayu Light
+				</button>
+				<button
+					onclick={() => editorTheme.set('ayu-mirage')}
+					class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
+						${$editorTheme === 'ayu-mirage'
+							? 'bg-[#1f2430] text-[#ffa759] border-[#ffa759]'
+							: 'border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
+				>
+					Ayu Mirage
+				</button>
+			</div>
+		</div>
+
+		<!-- Divider -->
+		<div class="border-t border-brand-sand-200"></div>
 
 		<!-- Create new file -->
 		<div>
