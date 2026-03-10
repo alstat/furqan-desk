@@ -173,12 +173,12 @@ pub fn julia_binary_path(custom: Option<&Path>) -> Option<PathBuf> {
 // ── Commands ─────────────────────────────────────────────────────────────────
 
 #[tauri::command]
-pub async fn check_julia(state: State<'_, JuliaState>) -> String {
+pub async fn check_julia(state: State<'_, JuliaState>) -> Result<String, String> {
     let custom = state.custom_path.lock().ok()
         .and_then(|g| g.clone());
     // Run on a blocking thread so directory/PATH scanning never stalls
     // the Tauri async runtime (especially noticeable on Windows at startup).
-    tokio::task::spawn_blocking(move || {
+    let result = tokio::task::spawn_blocking(move || {
         if julia_binary_path(custom.as_deref()).is_some() {
             "installed".to_string()
         } else {
@@ -186,7 +186,8 @@ pub async fn check_julia(state: State<'_, JuliaState>) -> String {
         }
     })
     .await
-    .unwrap_or_else(|_| "not_installed".to_string())
+    .unwrap_or_else(|_| "not_installed".to_string());
+    Ok(result)
 }
 
 /// Return the currently saved custom Julia binary path (empty string if none).
@@ -212,7 +213,12 @@ pub fn set_julia_path(
         // Clear the custom path — fall back to auto-detection
         *state.custom_path.lock().map_err(|e| e.to_string())? = None;
         clear_persisted_path(&app);
-        return Ok(check_julia(state));
+        let custom = state.custom_path.lock().ok().and_then(|g| g.clone());
+        return Ok(if julia_binary_path(custom.as_deref()).is_some() {
+            "installed".to_string()
+        } else {
+            "not_installed".to_string()
+        });
     }
 
     if !p.exists() {
