@@ -8,6 +8,44 @@ import { activeTab } from './tabs.store';
 
 export type EditorTheme = 'ayu-light' | 'ayu-mirage';
 
+// ── CodeMirror font size ──────────────────────────────────────────────────────
+
+function loadCmFontSize(): number {
+    try {
+        const v = localStorage.getItem('cm-font-size');
+        if (v) { const n = parseInt(v, 10); if (n >= 10 && n <= 24) return n; }
+    } catch { /* ignore */ }
+    return 14;
+}
+
+const _cmFontSize = writable<number>(loadCmFontSize());
+
+export const cmFontSize = {
+    subscribe: _cmFontSize.subscribe,
+    set(v: number) {
+        const clamped = Math.max(10, Math.min(24, v));
+        try { localStorage.setItem('cm-font-size', String(clamped)); } catch { /* ignore */ }
+        _cmFontSize.set(clamped);
+    },
+};
+
+// ── App dark mode ─────────────────────────────────────────────────────────────
+
+function loadAppDarkMode(): boolean {
+    try { return localStorage.getItem('app-dark-mode') === 'true'; } catch { /* ignore */ }
+    return false;
+}
+
+const _appDarkMode = writable<boolean>(loadAppDarkMode());
+
+export const appDarkMode = {
+    subscribe: _appDarkMode.subscribe,
+    set(v: boolean) {
+        try { localStorage.setItem('app-dark-mode', String(v)); } catch { /* ignore */ }
+        _appDarkMode.set(v);
+    },
+};
+
 function loadTheme(): EditorTheme {
     try {
         const v = localStorage.getItem('editor-theme');

@@ -27,7 +27,7 @@
     } from '@codemirror/language';
     import { tags } from '@lezer/highlight';
     import { julia } from '@codemirror/legacy-modes/mode/julia';
-    import { editorTheme, codeMirrorViewInstance, codeMirrorCanUndo, codeMirrorCanRedo } from '$lib/stores/editor.store';
+    import { editorTheme, cmFontSize, codeMirrorViewInstance, codeMirrorCanUndo, codeMirrorCanRedo } from '$lib/stores/editor.store';
 
     // ── Props ─────────────────────────────────────────────────────────────────
 
@@ -362,13 +362,13 @@
     });
 </script>
 
-<div bind:this={container} class={className}></div>
+<div bind:this={container} class={className} style="--cm-font-size: {$cmFontSize}px"></div>
 
 <style>
     div :global(.cm-editor) {
         height: 100%;
         border-radius: inherit;
-        font-size: 0.875rem; /* text-sm */
+        font-size: var(--cm-font-size, 0.875rem);
     }
     div :global(.cm-scroller) {
         border-radius: inherit;

@@ -90,7 +90,7 @@
 </script>
 
 <div
-    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 flex flex-col items-center bg-white sm:w-full md:w-9/12 lg:w-6/12 sm:shadow-xl sm:shadow-slate-200/60`}
+    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 flex flex-col items-center bg-white dark:bg-[#303446] sm:w-full md:w-9/12 lg:w-6/12 sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30`}
 >
     <ParchmentActionBar
         onOpenBookmarks={() => (showBookmarks = true)}
@@ -101,7 +101,7 @@
         bind:this={scrollContainer}
         role="document"
         onmouseup={handleMouseUp}
-        class={`default-scroll border border-stone-200 w-full flex-1 overflow-y-auto px-12 py-10 text-right ${$morphFontSize} leading-loose text-slate-600 ${$isSidebar ? "rounded-r-md" : "rounded-md"}`}
+        class={`default-scroll border border-stone-200 dark:border-[#414559] w-full flex-1 overflow-y-auto px-12 py-10 text-right ${$morphFontSize} leading-loose text-slate-600 dark:text-[#c6d0f5] ${$isSidebar ? "rounded-r-md" : "rounded-md"}`}
     >
         <MorphologyView />
     </div>
@@ -116,21 +116,21 @@
 <!-- Floating Save Highlight button -->
 {#if selectionInfo}
     <div
-        class="fixed z-40 flex items-center gap-1.5 rounded-lg border border-lime-200 bg-white px-3 py-1.5 shadow-lg"
+        class="fixed z-40 flex items-center gap-1.5 rounded-lg border border-lime-200 dark:border-[#a6d189]/40 bg-white dark:bg-[#414559] px-3 py-1.5 shadow-lg"
         style="left: {selectionInfo.x}px; top: {selectionInfo.y - 48}px; transform: translateX(-50%);"
     >
         <Icon icon="solar:magic-stick-3-bold-duotone" class="shrink-0 text-lime-600" width="0.9rem" />
         <button
             onclick={saveHighlight}
             disabled={savingHighlight}
-            class="cursor-pointer text-xs font-medium text-slate-700 hover:text-lime-700 disabled:opacity-50 transition-colors"
+            class="cursor-pointer text-xs font-medium text-slate-700 dark:text-[#c6d0f5] hover:text-lime-700 dark:hover:text-[#a6d189] disabled:opacity-50 transition-colors"
         >
             {savingHighlight ? 'Saving…' : 'Save Highlight'}
         </button>
         <button
             onclick={() => (selectionInfo = null)}
             aria-label="Dismiss"
-            class="cursor-pointer ml-0.5 text-slate-400 hover:text-slate-600 transition-colors"
+            class="cursor-pointer ml-0.5 text-slate-400 dark:text-[#838ba7] hover:text-slate-600 dark:hover:text-[#949cbb] transition-colors"
         >
             <Icon icon="solar:close-circle-linear" width="0.85rem" />
         </button>

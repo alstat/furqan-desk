@@ -6,7 +6,7 @@
 	import Icon from '@iconify/svelte';
 	import ControlCard from '../cards/ControlCard.svelte';
 	import GroupCards from '../cards/GroupCards.svelte';
-	import { typstRecompile, editorTheme, type EditorTheme } from '$lib/stores/editor.store';
+	import { typstRecompile, editorTheme, cmFontSize, appDarkMode, type EditorTheme } from '$lib/stores/editor.store';
 	import { openOrFocusTab, openPreviewTab, createTab, tabs, activeTabId, openFolderPath, isFlatFile } from '$lib/stores/tabs.store';
 	import { isSidebar, surahOrientation } from '$lib/stores/quran.svelte';
 	import { rotateSpring } from '$lib/stores/animation';
@@ -176,6 +176,65 @@
 							: 'border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
 				>
 					Ayu Mirage
+				</button>
+			</div>
+		</div>
+
+		<!-- Divider -->
+		<div class="border-t border-brand-sand-200"></div>
+
+		<!-- Code Editor Font Size -->
+		<div>
+			<span class={labelClass}>Code Editor Font Size</span>
+			<div class="flex items-center gap-2 mt-1.5">
+				<button
+					onclick={() => cmFontSize.set($cmFontSize - 1)}
+					disabled={$cmFontSize <= 10}
+					class="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full border
+						   border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200
+						   text-brand-charcoal-500 font-semibold text-sm transition-colors
+						   disabled:opacity-40 disabled:cursor-not-allowed"
+					title="Decrease font size"
+				>−</button>
+				<span class="flex-1 text-center text-[12px] font-mono font-semibold text-brand-charcoal-500">
+					{$cmFontSize}px
+				</span>
+				<button
+					onclick={() => cmFontSize.set($cmFontSize + 1)}
+					disabled={$cmFontSize >= 24}
+					class="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full border
+						   border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200
+						   text-brand-charcoal-500 font-semibold text-sm transition-colors
+						   disabled:opacity-40 disabled:cursor-not-allowed"
+					title="Increase font size"
+				>+</button>
+			</div>
+		</div>
+
+		<!-- Divider -->
+		<div class="border-t border-brand-sand-200"></div>
+
+		<!-- App Theme -->
+		<div>
+			<span class={labelClass}>App Theme</span>
+			<div class="flex gap-2 mt-1.5">
+				<button
+					onclick={() => appDarkMode.set(false)}
+					class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
+						${!$appDarkMode
+							? 'bg-brand-gold-400 text-white border-brand-gold-400'
+							: 'border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
+				>
+					Light
+				</button>
+				<button
+					onclick={() => appDarkMode.set(true)}
+					class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
+						${$appDarkMode
+							? 'bg-[#1a1d2e] text-[#c8a96a] border-[#3e4568]'
+							: 'border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
+				>
+					Dark
 				</button>
 			</div>
 		</div>

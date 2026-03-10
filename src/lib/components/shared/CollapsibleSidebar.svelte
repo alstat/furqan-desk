@@ -57,9 +57,9 @@
 	}
 </script>
 
-<div class={`relative flex justify-right overflow-visible font-base text-slate-900 ${sidebarWidth}`}>
+<div class={`relative flex justify-right overflow-visible font-base text-slate-900 dark:text-[#c6d0f5] ${sidebarWidth}`}>
 	<button
-		class={`${$hideSurahPage() ? 'hidden ' : ''} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} top-4 z-3 rounded-full bg-amber-200 p-2 shadow-md transition-colors text-lime-700 hover:bg-amber-300 active:bg-amber-400`}
+		class={`${$hideSurahPage() ? 'hidden ' : ''} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} top-4 z-3 rounded-full bg-amber-200 dark:bg-[#414559] p-2 shadow-md transition-colors text-lime-700 dark:text-[#a6d189] hover:bg-amber-300 dark:hover:bg-[#51576d] active:bg-amber-400 dark:active:bg-[#626880]`}
 		onclick={toggleSidebar}
 		aria-label={$isSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
 	>
@@ -88,7 +88,7 @@
 					duration: 300,
 					direction: $surahOrientation() == 'flex-row-reverse' ? 'right' : 'left'// or 'left' for left-to-right
 				}}
-				class="w-full space-y-2 overflow-visible bg-white px-1 pb-4 text-xl border border-stone-200 sm:shadow-xl sm:shadow-slate-200/60 {$hideSurahPage() && !$typstMode ? 'rounded-md' : 'rounded-l-md'}"
+				class="w-full space-y-2 overflow-visible bg-white dark:bg-[#292c3c] px-1 pb-4 text-xl border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/40 {$hideSurahPage() && !$typstMode ? 'rounded-md' : 'rounded-l-md'}"
 			>
 				{@render children()}
 			</div>

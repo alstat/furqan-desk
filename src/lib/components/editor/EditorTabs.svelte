@@ -17,7 +17,7 @@
 </script>
 
 <div
-    class="flex flex-row absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] overflow-x-auto rounded-full border border-stone-200 bg-brand-sand-50 shrink-0 min-h-8 z-30"
+    class="flex flex-row absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] overflow-x-auto rounded-full border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30"
 >
     {#each $tabs as tab (tab.id)}
         <button
@@ -25,8 +25,8 @@
             class="group cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-[11px] whitespace-nowrap
 			       border-r border-stone-200 transition-colors
 			       {$activeTabId === tab.id
-                ? 'bg-white border-t-2 border-t-brand-gold-400 text-brand-charcoal-800 font-medium'
-                : 'text-brand-charcoal-400 hover:bg-white/70'}"
+                ? 'bg-white dark:bg-[#414559] border-t-2 border-t-brand-gold-400 text-brand-charcoal-800 dark:text-[#e5c890] font-medium'
+                : 'text-brand-charcoal-400 hover:bg-white/70 dark:hover:bg-[#303446]/70'}"
         >
             <Icon
                 icon={tab.type === "typst"

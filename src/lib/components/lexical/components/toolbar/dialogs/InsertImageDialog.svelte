@@ -109,7 +109,7 @@
         class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
         onclick={(e) => { if (e.target === e.currentTarget) close(); }}
     >
-        <div class="flex w-full max-w-sm flex-col rounded-2xl bg-white shadow-2xl overflow-hidden">
+        <div class="flex w-full max-w-sm flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden">
 
             <!-- Header -->
             <div class="shrink-0 bg-brand-gold-100 border-b border-brand-gold-200 px-5 py-4">
