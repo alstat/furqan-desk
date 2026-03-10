@@ -365,7 +365,7 @@ while true
   catch e
     println(stderr, sprint(showerror, e))
   end
-  println(stdout, "__JULIA_DONE__")
+  print(stdout, "\n__JULIA_DONE__\n")
   flush(stdout)
   flush(stderr)
 end
@@ -438,7 +438,11 @@ pub async fn start_julia_repl(
                     match result {
                         Ok(Some(l)) => {
                             if l == "__JULIA_DONE__" {
-                                let chunk = output_buf.join("\n");
+                                // Strip the leading empty line produced by the
+                                // sentinel's leading '\n' when output already
+                                // ended with a newline (println case).
+                                let start = if output_buf.first().map(|s| s.is_empty()).unwrap_or(false) { 1 } else { 0 };
+                                let chunk = output_buf[start..].join("\n");
                                 output_buf.clear();
                                 let _ = app_stdout.emit("julia-output", JuliaOutput {
                                     chunk,
