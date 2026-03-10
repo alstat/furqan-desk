@@ -226,13 +226,18 @@ pub fn set_julia_path(
     }
 
     // Quick smoke-test: run `<path> --version`
-    let ok = std::process::Command::new(&p)
-        .arg("--version")
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .status()
-        .map(|s| s.success())
-        .unwrap_or(false);
+    let ok = {
+        let mut cmd = std::process::Command::new(&p);
+        cmd.arg("--version")
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null());
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+        }
+        cmd.status().map(|s| s.success()).unwrap_or(false)
+    };
 
     if !ok {
         return Err(format!("'{}' does not appear to be a valid Julia binary", path));
@@ -394,14 +399,20 @@ pub async fn start_julia_repl(
     };
 
     // spawn() on TokioCommand is synchronous — no await needed
-    let mut child = TokioCommand::new(julia)
-        .arg("--startup-file=no")
+    let mut cmd = TokioCommand::new(julia);
+    cmd.arg("--startup-file=no")
         .arg("-e")
         .arg(BOOT_SCRIPT)
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
+        .stderr(std::process::Stdio::piped());
+    // Prevent julialauncher from opening a visible console window on Windows
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+    let mut child = cmd.spawn()
         .map_err(|e| format!("Failed to spawn Julia: {e}"))?;
 
     let stdin  = child.stdin.take().ok_or("No stdin")?;
