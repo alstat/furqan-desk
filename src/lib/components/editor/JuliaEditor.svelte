@@ -29,8 +29,8 @@
         replLines = juliaReplHistory.get(id) ?? [];
     });
 
-    function handleInput() {
-        if ($activeTab) setActiveTabContent($activeTab.content);
+    function handleInput(newContent: string) {
+        setActiveTabContent(newContent);
     }
 
     async function executeCode(snippet: string) {
@@ -115,7 +115,7 @@
     <div class="flex-1 flex flex-col min-h-0">
         <span class="{labelClass} px-2 pt-1">Julia Editor</span>
         <CodeMirrorEditor
-            bind:value={$activeTab!.content}
+            value={$activeTab!.content}
             language="julia"
             extraKeymap={juliaKeymap}
             onchange={handleInput}

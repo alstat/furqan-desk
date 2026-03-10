@@ -231,7 +231,7 @@
 
 		<!-- ilm package installer -->
 		<div>
-			<span class={labelClass}>Packages</span>
+			<span class={labelClass}>Typst Packages</span>
 			<div class="flex items-center justify-between gap-2">
 				<span class="text-xs text-brand-charcoal-500 font-mono">ilm {ILM_VERSION}</span>
 

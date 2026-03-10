@@ -30,7 +30,7 @@
     // ── Props ─────────────────────────────────────────────────────────────────
 
     let {
-        value = $bindable(''),
+        value = '',
         language,
         extraKeymap = [],
         class: className = '',
@@ -40,7 +40,7 @@
         language: 'julia' | 'typst' | 'text';
         extraKeymap?: KeyBinding[];
         class?: string;
-        onchange?: () => void;
+        onchange?: (newValue: string) => void;
     } = $props();
 
     // ── Ayu Light theme ───────────────────────────────────────────────────────
@@ -294,8 +294,8 @@
                 langComp.of(getLangExt(language)),
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged) {
-                        value = update.state.doc.toString();
-                        onchange?.();
+                        const newValue = update.state.doc.toString();
+                        onchange?.(newValue);
                     }
                 }),
             ],
