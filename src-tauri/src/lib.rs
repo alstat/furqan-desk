@@ -2,6 +2,7 @@ mod buckwalter;
 mod commands;
 mod db;
 mod julia;
+mod terminal;
 mod typst_world;
 
 use tauri::Manager;
@@ -31,6 +32,7 @@ pub fn run() {
             // Load any previously saved custom Julia binary path before managing state
             let julia_custom_path = julia::load_persisted_path(&app.handle());
             app.manage(julia::JuliaState::new(julia_custom_path));
+            app.manage(terminal::TerminalState::new());
 
             // Eagerly initialise the Typst world (font scanning) in the background
             // so the first compile is fast.
@@ -69,6 +71,9 @@ pub fn run() {
             julia::run_julia_code,
             julia::julia_complete,
             julia::stop_julia_repl,
+            terminal::start_terminal,
+            terminal::send_terminal_input,
+            terminal::close_terminal,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
