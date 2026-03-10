@@ -17,7 +17,7 @@
 </script>
 
 <div
-    class="flex flex-row absolute -bottom-3 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] overflow-x-auto rounded-full border border-stone-200 bg-brand-sand-50 shrink-0 min-h-[2rem]"
+    class="flex flex-row absolute -bottom-3 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] overflow-x-auto rounded-full border border-stone-200 bg-brand-sand-50 shrink-0 min-h-[2rem] z-30"
 >
     {#each $tabs as tab (tab.id)}
         <button
