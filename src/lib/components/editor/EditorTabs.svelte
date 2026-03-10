@@ -17,7 +17,7 @@
 </script>
 
 <div
-    class="flex flex-row absolute -bottom-3 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] overflow-x-auto rounded-full border border-stone-200 bg-brand-sand-50 shrink-0 min-h-[2rem] z-30"
+    class="flex flex-row absolute -bottom-4 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] overflow-x-auto rounded-full border border-stone-200 bg-brand-sand-50 shrink-0 min-h-[2rem] z-30"
 >
     {#each $tabs as tab (tab.id)}
         <button
@@ -39,7 +39,9 @@
                 width="0.75rem"
                 class="shrink-0 opacity-60"
             />
-            <span class={tab.isPreview ? 'italic' : ''}>{tab.name}{tab.isDirty ? " *" : ""}</span>
+            <span class={tab.isPreview ? "italic" : ""}
+                >{tab.name}{tab.isDirty ? " *" : ""}</span
+            >
             <span
                 role="button"
                 tabindex="-1"
