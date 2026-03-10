@@ -19,7 +19,6 @@
         Composer,
         ContentEditable,
         ToolbarRichText,
-        ActionBar,
         RichTextPlugin,
         HistoryPlugin,
         ListPlugin,
@@ -44,6 +43,11 @@
 
     import CaptionEditorHistoryPlugin from "$lexical/core/plugins/Image/CaptionEditorHistoryPlugin.svelte";
     import EditorStorePlugin from "./EditorStorePlugin.svelte";
+    import { createEmptyHistoryState } from "@lexical/history";
+    import { lexicalHistoryState } from "$lib/stores/editor.store";
+
+    const historyState = createEmptyHistoryState();
+    lexicalHistoryState.set(historyState);
 
     const initialConfig = {
         namespace: "Editor",
@@ -81,7 +85,7 @@
                 </div>
             </div>
             <RichTextPlugin />
-            <HistoryPlugin />
+            <HistoryPlugin externalHistoryState={historyState} />
             <ListPlugin />
             <CheckListPlugin />
             <HorizontalRulePlugin />

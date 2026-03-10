@@ -9,7 +9,7 @@
 		const result = await openDialog({
 			multiple: false,
 			filters: [
-				{ name: 'All Supported Files', extensions: ['typ', 'bib', 'txt', 'md', 'lexical', 'json'] }
+				{ name: 'All Supported Files', extensions: ['typ', 'bib', 'txt', 'md', 'lexical', 'json', 'jl'] }
 			]
 		});
 		if (!result || Array.isArray(result)) return;

@@ -32,6 +32,17 @@
 			}
 			await writeTextFile(path, json);
 			markTabSaved(get(activeTabId)!, path);
+		} else if (tab.type === 'julia') {
+			let path = tab.path;
+			if (!path) {
+				path = await saveDialog({
+					defaultPath: `${tab.name}.jl`,
+					filters: [{ name: 'Julia', extensions: ['jl'] }]
+				});
+				if (!path) return;
+			}
+			await writeTextFile(path, tab.content);
+			markTabSaved(get(activeTabId)!, path);
 		} else {
 			// typst / text / bib — save raw content
 			let path = tab.path;

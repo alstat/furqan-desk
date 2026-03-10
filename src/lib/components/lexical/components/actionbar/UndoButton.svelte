@@ -2,9 +2,10 @@
 	import Icon from '@iconify/svelte';
 	import { CAN_UNDO_COMMAND, UNDO_COMMAND, COMMAND_PRIORITY_CRITICAL } from 'lexical';
 	import { IS_APPLE } from '@lexical/utils';
+	import { undo } from '@codemirror/commands';
 	import { actionBtnStyle, icons } from '$lib/data/toolbar/toolbar';
-	import { lexicalEditorInstance } from '$lib/stores/editor.store';
-	import { activeTab, activeTabId, undoHistory, undoActiveTab } from '$lib/stores/tabs.store';
+	import { lexicalEditorInstance, codeMirrorViewInstance, codeMirrorCanUndo } from '$lib/stores/editor.store';
+	import { activeTab } from '$lib/stores/tabs.store';
 	import { get } from 'svelte/store';
 
 	let lexicalCanUndo = $state(false);
@@ -26,16 +27,15 @@
 	});
 
 	const canUndo = $derived(
-		$activeTab?.type === 'lexical'
-			? lexicalCanUndo
-			: (undoHistory.get($activeTabId ?? '') ?? []).length > 0
+		$activeTab?.type === 'lexical' ? lexicalCanUndo : $codeMirrorCanUndo
 	);
 
 	function handleUndo() {
 		if ($activeTab?.type === 'lexical') {
 			get(lexicalEditorInstance)?.dispatchCommand(UNDO_COMMAND, undefined);
 		} else {
-			undoActiveTab();
+			const view = get(codeMirrorViewInstance);
+			if (view) undo(view);
 		}
 	}
 </script>

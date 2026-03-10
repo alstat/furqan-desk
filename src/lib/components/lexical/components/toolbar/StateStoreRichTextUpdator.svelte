@@ -129,8 +129,8 @@
 	// unregisters onDestory using returned callback
 	onMount(() => {
 		return mergeRegister(
-			editor.registerUpdateListener(({ editorState }) => {
-				editorState.read(() => {
+			editor.registerUpdateListener(() => {
+				editor.read(() => {
 					updateToolbar();
 				});
 			}),

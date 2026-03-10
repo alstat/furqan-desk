@@ -10,7 +10,6 @@
         juliaReplHistory,
         type ReplLine,
     } from "$lib/stores/editor.store";
-    import JuliaActionBar from "./JuliaActionBar.svelte";
     import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
     import type { KeyBinding } from "@codemirror/view";
     import { autocompletion, type CompletionSource } from "@codemirror/autocomplete";
@@ -220,7 +219,7 @@
     </div>
 
     <!-- REPL panel -->
-    <div class="flex-none h-56 flex flex-col p-2">
+    <div class="flex-none h-64 flex flex-col p-2">
         <div class="flex-1 flex flex-col rounded-md overflow-hidden border border-brand-sand-400 shadow-sm">
 
             <!-- REPL header bar -->
@@ -294,5 +293,4 @@
         </div>
     </div>
 
-    <JuliaActionBar />
 </div>
