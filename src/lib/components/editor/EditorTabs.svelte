@@ -49,7 +49,7 @@
                     e.stopPropagation();
                     tryClose(tab.id);
                 }}
-                class="opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity ml-0.5 leading-none"
+                class="opacity-0 text-base group-hover:opacity-50 hover:!opacity-100 transition-opacity ml-0.5 leading-none"
                 title="Close">×</span
             >
         </button>

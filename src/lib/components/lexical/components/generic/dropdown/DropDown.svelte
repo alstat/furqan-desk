@@ -91,7 +91,7 @@
 			</div>
 		{/if}
 		<div
-			class="absolute right-0 bg-gradient-to-l from-brand-sand-50/80 via-brand-sand-50/80 to-transparent text-brand-charcoal-300 hover:from-brand-sand-100/80 hover:via-brand-sand-100/80 hover:to-transparent"
+			class="absolute right-0 bg-linear-to-l from-brand-sand-50/80 via-brand-sand-50/80 to-transparent text-brand-charcoal-300 hover:from-brand-sand-100/80 hover:via-brand-sand-100/80 hover:to-transparent"
 		>
 			<Icon icon={icons['dropdown']} />
 		</div>
