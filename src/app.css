@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: applies dark: variants when html has .dark class */
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
     --font-scheherazade: "Scheherazade New", serif;
     --font-amiri: "Amiri", serif;
@@ -44,6 +47,41 @@
     --color-brand-charcoal-300: #ABABAB;
     --color-brand-charcoal-500: #707070;
     --color-brand-charcoal-900: #2F2F2F;
+}
+
+/* ── App dark theme (Catppuccin Frappe) ──────────────────────────────────────── */
+/* Frappe palette reference:
+   Crust #232634 · Mantle #292c3c · Base #303446
+   Surface0 #414559 · Surface1 #51576d · Surface2 #626880
+   Overlay0 #737994 · Overlay1 #838ba7 · Overlay2 #949cbb
+   Subtext0 #a5adce · Subtext1 #b5bfe2 · Text #c6d0f5
+   Yellow #e5c890 · Peach #ef9f76 · Green #a6d189 · Blue #8caaee */
+html.dark {
+    /* Sand → Frappe surfaces (lightest = Base, not Crust) */
+    --color-brand-sand-50:  #303446;  /* Base  — editor/REPL backgrounds */
+    --color-brand-sand-100: #292c3c;  /* Mantle — panel backgrounds */
+    --color-brand-sand-200: #414559;  /* Surface0 — dividers, headers */
+    --color-brand-sand-400: #626880;  /* Surface2 — borders */
+
+    /* Gold → Frappe yellow/peach accent */
+    --color-brand-gold-50:  #2a2740;
+    --color-brand-gold-100: #3b3757;
+    --color-brand-gold-200: #534e70;
+    --color-brand-gold-400: #e5c890;  /* Frappe Yellow — main accent */
+    --color-brand-gold-500: #d4b57f;
+    --color-brand-gold-600: #c4a26e;
+
+    /* Charcoal → Frappe text scale */
+    --color-brand-charcoal-50:  #c6d0f5;  /* Text */
+    --color-brand-charcoal-100: #b5bfe2;  /* Subtext1 */
+    --color-brand-charcoal-300: #838ba7;  /* Overlay1 — labels, muted */
+    --color-brand-charcoal-500: #a5adce;  /* Subtext0 — body text */
+    --color-brand-charcoal-900: #e8edff;  /* near-white headings */
+}
+
+html.dark body,
+html.dark .bg-gradient-radial {
+    background-color: #232634; /* Frappe Crust — outer app background */
 }
 
 /* Active dropdown item (currently selected value) */

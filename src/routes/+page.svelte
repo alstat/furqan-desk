@@ -35,7 +35,7 @@
 <svelte:window bind:innerHeight={height} />
 <div class="w-[95%] max-w-375 relative mx-auto p-0 sm:py-6">
     <div
-        class={`flex ${$surahOrientation()} ${$isSidebar ? "bg-white " : ""} flex-row justify-center`}
+        class={`flex ${$surahOrientation()} ${$isSidebar ? "bg-white dark:bg-[#232634] " : ""} flex-row justify-center`}
         style:height="{height - 47}px"
     >
         {#if $hideSurahPage() && $typstMode}
