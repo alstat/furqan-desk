@@ -33,12 +33,14 @@
         value = '',
         language,
         extraKeymap = [],
+        extensions: extraExtensions = [],
         class: className = '',
         onchange,
     }: {
         value?: string;
         language: 'julia' | 'typst' | 'text';
         extraKeymap?: KeyBinding[];
+        extensions?: Extension[];
         class?: string;
         onchange?: (newValue: string) => void;
     } = $props();
@@ -60,6 +62,14 @@
         '.cm-activeLineGutter': { backgroundColor: '#edf1f5' },
         '.cm-lineNumbers .cm-gutterElement': { padding: '0 8px 0 12px', minWidth: '2.4em' },
         '.cm-matchingBracket': { backgroundColor: '#c3dcee', outline: '1px solid #399ee6' },
+        // Autocomplete tooltip
+        '.cm-tooltip': { backgroundColor: '#fff', border: '1px solid #e8eaed', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden' },
+        '.cm-tooltip.cm-tooltip-autocomplete > ul': { maxHeight: '200px', fontFamily: 'inherit' },
+        '.cm-tooltip.cm-tooltip-autocomplete > ul > li': { padding: '3px 10px', lineHeight: '1.6' },
+        '.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected]': { backgroundColor: '#fff3e0', color: '#3d3d3d' },
+        '.cm-completionLabel': { color: '#5c6773' },
+        '.cm-completionDetail': { color: '#aab0b6', fontSize: '0.8em', marginLeft: '6px' },
+        '.cm-completionMatchedText': { color: '#ff9940', fontWeight: '600', textDecoration: 'none' },
     }, { dark: false });
 
     const ayuLightHighlight = HighlightStyle.define([
@@ -120,6 +130,14 @@
         '.cm-activeLineGutter': { backgroundColor: '#232834' },
         '.cm-lineNumbers .cm-gutterElement': { padding: '0 8px 0 12px', minWidth: '2.4em' },
         '.cm-matchingBracket': { backgroundColor: '#2d4466', outline: '1px solid #5ccfe6' },
+        // Autocomplete tooltip
+        '.cm-tooltip': { backgroundColor: '#242936', border: '1px solid #2d3343', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden' },
+        '.cm-tooltip.cm-tooltip-autocomplete > ul': { maxHeight: '200px', fontFamily: 'inherit' },
+        '.cm-tooltip.cm-tooltip-autocomplete > ul > li': { padding: '3px 10px', lineHeight: '1.6' },
+        '.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected]': { backgroundColor: '#2d3343', color: '#cbccc6' },
+        '.cm-completionLabel': { color: '#cbccc6' },
+        '.cm-completionDetail': { color: '#707a8c', fontSize: '0.8em', marginLeft: '6px' },
+        '.cm-completionMatchedText': { color: '#ffcc66', fontWeight: '600', textDecoration: 'none' },
     }, { dark: true });
 
     const ayuMirageHighlight = HighlightStyle.define([
@@ -292,6 +310,7 @@
                 ]),
                 themeComp.of(getThemeExt($editorTheme)),
                 langComp.of(getLangExt(language)),
+                ...extraExtensions,
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged) {
                         const newValue = update.state.doc.toString();

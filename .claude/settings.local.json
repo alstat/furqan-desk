@@ -9,7 +9,10 @@
       "Bash(cargo search:*)",
       "Bash(npm info:*)",
       "Bash(npm audit:*)",
-      "Bash(npm update:*)"
+      "Bash(npm update:*)",
+      "Bash(grep -r \"completion\\\\|autocomplete\\\\|snippet\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src --include=\"*.ts\" --include=\"*.svelte\" --include=\"*.js\" 2>/dev/null | head -10)",
+      "Bash(cd /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri && cargo check 2>&1)",
+      "Bash(cd /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk && npm run check 2>&1)"
     ]
   }
 }

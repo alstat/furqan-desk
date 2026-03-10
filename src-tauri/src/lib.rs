@@ -67,6 +67,7 @@ pub fn run() {
             julia::install_julia,
             julia::start_julia_repl,
             julia::run_julia_code,
+            julia::julia_complete,
             julia::stop_julia_repl,
         ])
         .on_window_event(|window, event| {
