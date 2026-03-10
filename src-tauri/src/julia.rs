@@ -59,20 +59,26 @@ fn clear_persisted_path(app: &AppHandle) {
 
 // ── Binary detection ─────────────────────────────────────────────────────────
 
-/// Check whether running `julia --version` via PATH succeeds.
-fn julia_on_path() -> bool {
-    std::process::Command::new("julia")
-        .arg("--version")
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .status()
-        .map(|s| s.success())
-        .unwrap_or(false)
+/// Scan the system PATH directories for the julia binary without spawning a
+/// subprocess.  Spawning `julia --version` on Windows can block for 1-3 s
+/// (process startup + AV scanning), making the startup check feel frozen.
+fn julia_in_path() -> Option<PathBuf> {
+    let path_var = std::env::var_os("PATH")?;
+    for dir in std::env::split_paths(&path_var) {
+        #[cfg(windows)]
+        let candidate = dir.join("julia.exe");
+        #[cfg(not(windows))]
+        let candidate = dir.join("julia");
+        if candidate.exists() {
+            return Some(candidate);
+        }
+    }
+    None
 }
 
 /// Try to locate the Julia binary. Priority:
 ///   1. User-supplied custom path (pre-validated on set)
-///   2. System PATH (`julia`)
+///   2. System PATH — filesystem scan, no subprocess spawning
 ///   3. juliaup default install location (platform-specific)
 ///   4. Platform-specific common install directories
 pub fn julia_binary_path(custom: Option<&Path>) -> Option<PathBuf> {
@@ -83,9 +89,9 @@ pub fn julia_binary_path(custom: Option<&Path>) -> Option<PathBuf> {
         }
     }
 
-    // 2. System PATH
-    if julia_on_path() {
-        return Some(PathBuf::from("julia"));
+    // 2. System PATH — fast filesystem scan, no subprocess
+    if let Some(p) = julia_in_path() {
+        return Some(p);
     }
 
     // 3. juliaup default location — binary name differs on Windows
@@ -167,14 +173,20 @@ pub fn julia_binary_path(custom: Option<&Path>) -> Option<PathBuf> {
 // ── Commands ─────────────────────────────────────────────────────────────────
 
 #[tauri::command]
-pub fn check_julia(state: State<'_, JuliaState>) -> String {
+pub async fn check_julia(state: State<'_, JuliaState>) -> String {
     let custom = state.custom_path.lock().ok()
         .and_then(|g| g.clone());
-    if julia_binary_path(custom.as_deref()).is_some() {
-        "installed".to_string()
-    } else {
-        "not_installed".to_string()
-    }
+    // Run on a blocking thread so directory/PATH scanning never stalls
+    // the Tauri async runtime (especially noticeable on Windows at startup).
+    tokio::task::spawn_blocking(move || {
+        if julia_binary_path(custom.as_deref()).is_some() {
+            "installed".to_string()
+        } else {
+            "not_installed".to_string()
+        }
+    })
+    .await
+    .unwrap_or_else(|_| "not_installed".to_string())
 }
 
 /// Return the currently saved custom Julia binary path (empty string if none).
