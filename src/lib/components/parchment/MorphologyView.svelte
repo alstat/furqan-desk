@@ -113,7 +113,7 @@
         <div class="flex items-center">
             <!-- Left decorative arm -->
             <div class="flex flex-1 items-center">
-                <div class="h-px flex-1 bg-gradient-to-r from-transparent to-amber-300"></div>
+                <div class="h-px flex-1 bg-linear-to-r from-transparent to-amber-300"></div>
                 <div class="flex items-center gap-1 px-2">
                     <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300"></span>
                     <span class="inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
@@ -122,7 +122,7 @@
             </div>
 
             <!-- Surah name panel -->
-            <div class="relative border border-amber-400/80 bg-gradient-to-b from-amber-50/60 to-white/0 px-10 py-2.5">
+            <div class="relative border border-amber-400/80 bg-linear-to-b from-amber-50/60 to-white/0 px-10 py-2.5">
                 <!-- Inner border -->
                 <div class="pointer-events-none absolute inset-[3px] border border-amber-300/40"></div>
                 <!-- Mid-border diamonds -->
@@ -144,7 +144,7 @@
                     <span class="inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
                     <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300"></span>
                 </div>
-                <div class="h-px flex-1 bg-gradient-to-l from-transparent to-amber-300"></div>
+                <div class="h-px flex-1 bg-linear-to-l from-transparent to-amber-300"></div>
             </div>
         </div>
     </div>

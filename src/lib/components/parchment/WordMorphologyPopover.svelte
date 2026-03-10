@@ -176,7 +176,7 @@
     transition:fly={{ y: position.placement === "below" ? 6 : -6, duration: 160, opacity: 0 }}
 >
     <!-- Header -->
-    <div class="flex shrink-0 items-center justify-between bg-gradient-to-b from-slate-50 to-white px-4 py-3.5 border-b border-slate-100">
+    <div class="flex shrink-0 items-center justify-between bg-linear-to-b from-slate-50 to-white px-4 py-3.5 border-b border-slate-100">
         <div dir="rtl" class="flex flex-col gap-1">
             <span class="font-scheherazade text-3xl leading-none text-slate-800">
                 {word.combined_arabic}
