@@ -4,6 +4,7 @@
 	import CollapsibleSidebar from '$lib/components/shared/CollapsibleSidebar.svelte';
 	import RichTextEditor from '$lib/components/editor/EditorComposer.svelte';
 	import TypstEditor from '$lib/components/editor/TypstEditor.svelte';
+	import JuliaEditor from '$lib/components/editor/JuliaEditor.svelte';
 	import EditorTabs from '$lib/components/editor/EditorTabs.svelte';
 	import { lexicalEditorInstance } from '$lib/stores/editor.store';
 	import { tabs, activeTab, activeTabId, createTab } from '$lib/stores/tabs.store';
@@ -40,6 +41,8 @@
 		// Restore arriving tab state
 		if (tab.type === 'typst' || tab.type === 'text') {
 			typstSource.set(tab.content);
+		} else if (tab.type === 'julia') {
+			/* REPL history is managed directly in JuliaEditor via juliaReplHistory map */
 		} else if (tab.type === 'lexical') {
 			const editor = get(lexicalEditorInstance);
 			if (editor && tab.content) {
@@ -62,6 +65,8 @@
 		<div class="flex-1 min-h-0 overflow-visible">
 			{#if $activeTab?.type === 'typst' || $activeTab?.type === 'text'}
 				<TypstEditor />
+			{:else if $activeTab?.type === 'julia'}
+				<JuliaEditor />
 			{:else}
 				<RichTextEditor />
 			{/if}

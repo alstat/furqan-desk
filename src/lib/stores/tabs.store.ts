@@ -1,7 +1,7 @@
 import { writable, derived, get } from 'svelte/store';
 import { lexicalToTypst } from '$lib/functions/utils/typstConverters';
 
-export type TabType = 'typst' | 'lexical' | 'text';
+export type TabType = 'typst' | 'lexical' | 'text' | 'julia';
 
 export interface EditorTab {
 	id: string;
@@ -39,6 +39,8 @@ const FLAT_FILE_EXTENSIONS = new Set([
 	'cs', 'php', 'lua', 'r', 'sh', 'bash', 'zsh', 'fish', 'ps1',
 	// style
 	'css', 'scss', 'sass', 'less',
+	// code — scripting languages
+	'jl',
 	// misc text
 	'lexical', 'log', 'diff', 'patch', 'sql', 'graphql', 'gql',
 	'dockerfile', 'makefile', 'gitignore', 'prettierrc', 'eslintrc',
@@ -55,6 +57,7 @@ export function detectType(path: string): TabType {
 	const ext = path.split('.').pop()?.toLowerCase() ?? '';
 	if (ext === 'typ') return 'typst';
 	if (ext === 'lexical' || ext === 'json') return 'lexical';
+	if (ext === 'jl') return 'julia';
 	return 'text';
 }
 

@@ -2,6 +2,10 @@ import { writable, derived, type Writable } from 'svelte/store';
 import type { LexicalEditor } from 'lexical';
 import { activeTab } from './tabs.store';
 
+export interface ReplLine { text: string; kind: 'input' | 'output' | 'error' }
+export const juliaReplHistory = new Map<string, ReplLine[]>();
+export const juliaReplStarted: Writable<boolean> = writable(false);
+
 export const typstMode = derived(activeTab, $t => $t?.type === 'typst' || $t?.type === 'text');
 export const typstSource:           Writable<string>             = writable('');
 export const lexicalSnapshot:       Writable<string | null>      = writable(null);
