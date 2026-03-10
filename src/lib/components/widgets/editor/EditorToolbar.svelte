@@ -18,10 +18,6 @@
 	let installStatus: InstallStatus = $state('unknown');
 	let installError  = $state('');
 
-	// ── typst fonts state ──────────────────────────────────────────────────────
-	let fontsStatus: InstallStatus = $state('unknown');
-	let fontsError  = $state('');
-
 	// ── create new tab ─────────────────────────────────────────────────────────
 	let showNewOptions = $state(false);
 
@@ -72,9 +68,6 @@
 		});
 		installStatus = installed ? 'installed' : 'error';
 		if (installed) installError = '';
-
-		const fontsInstalled = await invoke<boolean>('check_typst_fonts');
-		fontsStatus = fontsInstalled ? 'installed' : 'error';
 	});
 
 	async function installIlm() {
@@ -91,19 +84,6 @@
 		} catch (e) {
 			installStatus = 'error';
 			installError  = String(e);
-		}
-	}
-
-	async function installFonts() {
-		fontsStatus = 'installing';
-		fontsError  = '';
-		try {
-			await invoke('install_typst_fonts');
-			fontsStatus = 'installed';
-			typstRecompile.update((n: number) => n + 1);
-		} catch (e) {
-			fontsStatus = 'error';
-			fontsError  = String(e);
 		}
 	}
 
@@ -186,48 +166,6 @@
 			{#if installError && installStatus === 'error'}
 				<p class="mt-1 text-[10px] text-red-500 leading-snug break-all" title={installError}>
 					{installError.slice(0, 120)}{installError.length > 120 ? '…' : ''}
-				</p>
-			{/if}
-		</div>
-
-		<!-- Divider -->
-		<div class="border-t border-brand-sand-200"></div>
-
-		<!-- Typst fonts installer -->
-		<div>
-			<span class={labelClass}>Typst Fonts</span>
-			<div class="flex items-center justify-between gap-2">
-				<span class="text-xs text-brand-charcoal-500 font-mono">New Computer Modern</span>
-
-				{#if fontsStatus === 'unknown'}
-					<span class="text-xs text-brand-charcoal-300 italic">Checking…</span>
-
-				{:else if fontsStatus === 'installed'}
-					<span class="flex items-center gap-1 text-xs font-medium text-green-600">
-						<Icon icon="solar:check-circle-bold" width="0.9rem" />
-						Installed
-					</span>
-
-				{:else if fontsStatus === 'installing'}
-					<span class="flex items-center gap-1 text-xs text-brand-charcoal-400 italic">
-						<Icon icon="solar:refresh-bold" width="0.9rem" class="animate-spin" />
-						Installing…
-					</span>
-
-				{:else}
-					<button
-						onclick={installFonts}
-						class="cursor-pointer px-2.5 py-0.5 text-[11px] font-semibold rounded-full
-							   bg-brand-gold-400 text-white hover:bg-brand-gold-500 transition-colors"
-					>
-						Install
-					</button>
-				{/if}
-			</div>
-
-			{#if fontsError && fontsStatus === 'error'}
-				<p class="mt-1 text-[10px] text-red-500 leading-snug break-all" title={fontsError}>
-					{fontsError.slice(0, 120)}{fontsError.length > 120 ? '…' : ''}
 				</p>
 			{/if}
 		</div>
