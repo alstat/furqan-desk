@@ -51,7 +51,7 @@
                 }}
                 class="opacity-0 group-hover:opacity-50 hover:opacity-100! transition-opacity ml-0.5 leading-none"
                 title="Close"
-                ><Icon icon="solar:close-circle-linear" width="0.75rem" /></span
+                ><Icon icon="solar:close-circle-bold" width="1rem" /></span
             >
         </button>
     {/each}

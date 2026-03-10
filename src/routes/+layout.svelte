@@ -14,7 +14,7 @@
 	});
 </script>
 
-<div class="bg-gradient-radial overflow-hidden">
+<div class="bg-gradient-radial h-screen overflow-hidden">
 	{@render children()}
 </div>
 
