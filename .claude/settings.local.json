@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm outdated:*)",
+      "Bash(cargo update:*)",
+      "Bash(cd /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk && cargo search typst 2>/dev/null | head -5; cargo search rusqlite 2>/dev/null | head -3; cargo search fontdb 2>/dev/null | head -3)",
+      "Bash(npm list:*)",
+      "Bash(cargo search:*)",
+      "Bash(npm info:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm update:*)"
     ]
   }
 }

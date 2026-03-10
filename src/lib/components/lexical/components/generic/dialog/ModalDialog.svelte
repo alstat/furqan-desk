@@ -29,7 +29,7 @@
 	bind:this={dialog}
 	onclose={() => (showModal = false)}
 	onclick={self(() => dialog!.close())}
-	class="min-w-[280px] max-w-[90vw] max-h-[85vh] overflow-auto fixed m-auto p-2 inset-0 rounded-md border border-slate-200 bg-slate-50 bg-opacity-60 hover:bg-opacity-70 font-base text-amber-900 shadow-2xl backdrop-blur-sm"
+	class="min-w-70 max-w-[90vw] max-h-[85vh] overflow-auto fixed m-auto p-2 inset-0 rounded-md border border-slate-200 bg-slate-50 bg-opacity-60 hover:bg-opacity-70 font-base text-amber-900 shadow-2xl backdrop-blur-sm"
 >
 	{#if stopPropagation}
 		<!-- svelte-ignore a11y_no_static_element_interactions -->

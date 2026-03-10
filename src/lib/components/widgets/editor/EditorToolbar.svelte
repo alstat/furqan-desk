@@ -284,7 +284,7 @@
 					<Icon icon="solar:check-circle-bold" width="0.9rem" />
 					Installed
 					{#if juliaCustomPath}
-						<span class="text-brand-charcoal-300 font-mono truncate max-w-[8rem]" title={juliaCustomPath}>({juliaCustomPath.split(/[\\/]/).pop()})</span>
+						<span class="text-brand-charcoal-300 font-mono truncate max-w-32" title={juliaCustomPath}>({juliaCustomPath.split(/[\\/]/).pop()})</span>
 					{/if}
 				</span>
 

@@ -99,6 +99,7 @@
 
     <div
         bind:this={scrollContainer}
+        role="document"
         onmouseup={handleMouseUp}
         class={`default-scroll border border-stone-200 w-full flex-1 overflow-y-auto px-12 py-10 text-right ${$morphFontSize} leading-loose text-slate-600 ${$isSidebar ? "rounded-r-md" : "rounded-md"}`}
     >
@@ -128,6 +129,7 @@
         </button>
         <button
             onclick={() => (selectionInfo = null)}
+            aria-label="Dismiss"
             class="cursor-pointer ml-0.5 text-slate-400 hover:text-slate-600 transition-colors"
         >
             <Icon icon="solar:close-circle-linear" width="0.85rem" />
