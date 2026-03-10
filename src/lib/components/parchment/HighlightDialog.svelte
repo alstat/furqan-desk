@@ -64,7 +64,7 @@
                 {:else}
                     <div class="divide-y divide-brand-sand-200">
                         {#each $highlights as hl (hl.id)}
-                            <div class="group px-5 py-3.5 hover:bg-brand-gold-50 transition-colors">
+                            <div class="group px-5 py-3.5 hover:bg-brand-gold-50 dark:hover:bg-[#414559] transition-colors">
                                 <!-- Arabic text -->
                                 <p class="mb-2.5 font-scheherazade text-xl leading-loose text-brand-charcoal-900 break-words overflow-hidden" dir="rtl">
                                     {hl.text}
@@ -81,14 +81,14 @@
                                     <div class="flex shrink-0 items-center gap-1">
                                         <button
                                             onclick={() => navigate(hl.surah, hl.ayah)}
-                                            class="cursor-pointer flex items-center gap-1 rounded-lg bg-white border border-brand-sand-200 px-2.5 py-1 text-[11px] font-medium text-brand-charcoal-500 hover:bg-brand-gold-100 active:bg-brand-gold-200 transition-colors"
+                                            class="cursor-pointer flex items-center gap-1 rounded-lg bg-white dark:bg-[#414559] border border-brand-sand-200 px-2.5 py-1 text-[11px] font-medium text-brand-charcoal-500 hover:bg-brand-gold-100 dark:hover:bg-[#51576d] active:bg-brand-gold-200 transition-colors"
                                         >
                                             <Icon icon="solar:arrow-right-up-linear" width="0.7rem" />
                                             Go
                                         </button>
                                         <button
                                             onclick={() => deleteHighlight(hl.id)}
-                                            class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg text-brand-charcoal-300 hover:bg-red-50 hover:text-red-400 active:bg-red-100 transition-colors"
+                                            class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg text-brand-charcoal-300 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-400 active:bg-red-100 dark:active:bg-red-900/50 transition-colors"
                                             title="Delete"
                                         >
                                             <Icon icon="solar:trash-bin-minimalistic-bold" width="0.75rem" />

@@ -23,7 +23,7 @@
         <button
             onclick={() => activeTabId.set(tab.id)}
             class="group cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-[11px] whitespace-nowrap
-			       border-r border-stone-200 transition-colors
+			       border-r border-stone-200 dark:border-[#414559] transition-colors
 			       {$activeTabId === tab.id
                 ? 'bg-white dark:bg-[#414559] border-t-2 border-t-brand-gold-400 text-brand-charcoal-800 dark:text-[#e5c890] font-medium'
                 : 'text-brand-charcoal-400 hover:bg-white/70 dark:hover:bg-[#303446]/70'}"
