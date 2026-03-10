@@ -670,19 +670,25 @@ pub fn delete_highlight(db: State<Database>, id: i64) -> Result<(), String> {
 // ── Typst package management commands ────────────────────────────────────────
 
 /// Returns true if the package is already present in the local typst cache.
+/// Runs on a blocking thread so the filesystem check doesn't stall the async
+/// runtime on startup (particularly slow on Windows/network drives).
 #[tauri::command]
-pub fn check_typst_package(namespace: String, name: String, version: String) -> bool {
-    dirs::data_dir()
-        .map(|d| {
-            d.join("typst")
-                .join("packages")
-                .join(&namespace)
-                .join(&name)
-                .join(&version)
-                .join("typst.toml")
-                .exists()
-        })
-        .unwrap_or(false)
+pub async fn check_typst_package(namespace: String, name: String, version: String) -> bool {
+    tokio::task::spawn_blocking(move || {
+        dirs::data_dir()
+            .map(|d| {
+                d.join("typst")
+                    .join("packages")
+                    .join(&namespace)
+                    .join(&name)
+                    .join(&version)
+                    .join("typst.toml")
+                    .exists()
+            })
+            .unwrap_or(false)
+    })
+    .await
+    .unwrap_or(false)
 }
 
 /// Download a package from the typst registry and extract it into the local
@@ -766,10 +772,14 @@ fn typst_user_fonts_dir() -> Option<std::path::PathBuf> {
 
 /// Returns true when typst's bundled fonts have been installed to the system.
 #[tauri::command]
-pub fn check_typst_fonts() -> bool {
-    typst_user_fonts_dir()
-        .map(|d| d.join(".typst-fonts-installed").exists())
-        .unwrap_or(false)
+pub async fn check_typst_fonts() -> bool {
+    tokio::task::spawn_blocking(|| {
+        typst_user_fonts_dir()
+            .map(|d| d.join(".typst-fonts-installed").exists())
+            .unwrap_or(false)
+    })
+    .await
+    .unwrap_or(false)
 }
 
 /// Install typst's bundled fonts (New Computer Modern, Linux Libertine, DejaVu, …)
