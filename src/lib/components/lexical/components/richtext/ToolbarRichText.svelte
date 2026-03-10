@@ -24,7 +24,6 @@
 	import InsertImageDropDownItem from '../toolbar/InsertDropDown/InsertImageDropDownItem.svelte';
 	import Indent from '../toolbar/Indent.svelte';
 	import Outdent from '../toolbar/Outdent.svelte';
-	import ActionBar from '../actionbar/ActionBar.svelte';
 	import CodeDropDownItem from '../toolbar/BlockFormatDropDown/CodeDropDownItem.svelte';
 	import InsertEquationDropDownItem from '../toolbar/InsertDropDown/InsertEquationDropDownItem.svelte';
 	import InsertEquationDialog from '../toolbar/dialogs/InsertEquationDialog.svelte';
@@ -90,9 +89,6 @@
 				onInsertEquationClick={() => equationDialog?.open()}
 			/>
 		{/if}
-
-		<!-- action bar -->
-		<ActionBar />
 
 		<!-- dialogs -->
 		<InsertImageDialog bind:this={imageDialog} />

@@ -10,7 +10,7 @@
 </script>
 
 <div
-    class="absolute -top-4 inset-x-0 flex items-center justify-center gap-2"
+    class="absolute -top-5 inset-x-0 flex items-center justify-center gap-2"
     dir="ltr"
 >
     <button

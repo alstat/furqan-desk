@@ -17,7 +17,7 @@
 </script>
 
 <div
-    class="flex flex-row absolute -bottom-4 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] overflow-x-auto rounded-full border border-stone-200 bg-brand-sand-50 shrink-0 min-h-8 z-30"
+    class="flex flex-row absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] overflow-x-auto rounded-full border border-stone-200 bg-brand-sand-50 shrink-0 min-h-8 z-30"
 >
     {#each $tabs as tab (tab.id)}
         <button
@@ -51,7 +51,7 @@
                 }}
                 class="opacity-0 group-hover:opacity-50 hover:opacity-100! transition-opacity ml-0.5 leading-none"
                 title="Close"
-            ><Icon icon="solar:close-circle-linear" width="0.75rem" /></span
+                ><Icon icon="solar:close-circle-linear" width="0.75rem" /></span
             >
         </button>
     {/each}

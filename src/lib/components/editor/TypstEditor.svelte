@@ -12,9 +12,11 @@
     } from "$lib/stores/editor.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
     import { activeTab, setActiveTabContent } from "$lib/stores/tabs.store";
-    import ActionBar from "$lib/components/lexical/components/actionbar/ActionBar.svelte";
     import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
-    import { autocompletion, type CompletionSource } from "@codemirror/autocomplete";
+    import {
+        autocompletion,
+        type CompletionSource,
+    } from "@codemirror/autocomplete";
     import { TYPST_COMPLETIONS } from "$lib/completions/typst";
 
     // True when the preview is displayed in the Parchment area (side-by-side mode).
@@ -91,26 +93,36 @@
 
         if (hashMatch) {
             const prefix = hashMatch.text.slice(1).toLowerCase();
-            const filtered = TYPST_COMPLETIONS.filter(c =>
-                c.label.toLowerCase().startsWith(prefix)
+            const filtered = TYPST_COMPLETIONS.filter((c) =>
+                c.label.toLowerCase().startsWith(prefix),
             );
             if (filtered.length === 0 && !context.explicit) return null;
-            return { from: hashMatch.from + 1, options: filtered, validFor: /^[\w-]*$/ };
+            return {
+                from: hashMatch.from + 1,
+                options: filtered,
+                validFor: /^[\w-]*$/,
+            };
         }
 
         if (wordMatch && (wordMatch.to > wordMatch.from || context.explicit)) {
             const prefix = wordMatch.text.toLowerCase();
-            const filtered = TYPST_COMPLETIONS.filter(c =>
-                c.label.toLowerCase().startsWith(prefix)
+            const filtered = TYPST_COMPLETIONS.filter((c) =>
+                c.label.toLowerCase().startsWith(prefix),
             );
             if (filtered.length === 0) return null;
-            return { from: wordMatch.from, options: filtered, validFor: /^[\w-]*$/ };
+            return {
+                from: wordMatch.from,
+                options: filtered,
+                validFor: /^[\w-]*$/,
+            };
         }
 
         return null;
     };
 
-    const typstCompletionExtension = autocompletion({ override: [typstCompletionSource] });
+    const typstCompletionExtension = autocompletion({
+        override: [typstCompletionSource],
+    });
 
     const labelClass =
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
@@ -131,7 +143,7 @@
 
     <!-- Inline preview — only shown for .typ files and NOT in side-by-side mode -->
     {#if $activeTab?.type === "typst" && !sideBySide}
-        <div class="flex-none h-52 flex flex-col p-2">
+        <div class="flex-none h-54 flex flex-col p-2">
             <span class={labelClass}>Preview</span>
             <div class="flex-1 overflow-auto min-h-0">
                 {#if $typstIsCompiling}
@@ -177,7 +189,6 @@
         </div>
     {/if}
 
-    <ActionBar topOffset="-top-9" />
 </div>
 
 <style>

@@ -1,5 +1,7 @@
 import { writable, derived, type Writable } from 'svelte/store';
 import type { LexicalEditor } from 'lexical';
+import type { HistoryState } from '@lexical/history';
+import type { EditorView } from '@codemirror/view';
 import { activeTab } from './tabs.store';
 
 // ── Editor theme (Ayu Light / Ayu Mirage) ────────────────────────────────────
@@ -32,6 +34,10 @@ export const typstMode = derived(activeTab, $t => $t?.type === 'typst' || $t?.ty
 export const typstSource:           Writable<string>             = writable('');
 export const lexicalSnapshot:       Writable<string | null>      = writable(null);
 export const lexicalEditorInstance: Writable<LexicalEditor | null> = writable(null);
+export const lexicalHistoryState:   Writable<HistoryState | null>  = writable(null);
+export const codeMirrorViewInstance: Writable<EditorView | null>   = writable(null);
+export const codeMirrorCanUndo:      Writable<boolean>             = writable(false);
+export const codeMirrorCanRedo:      Writable<boolean>             = writable(false);
 /** Increment to force TypstEditor to recompile without changing the source. */
 export const typstRecompile:        Writable<number>             = writable(0);
 

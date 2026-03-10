@@ -9,12 +9,14 @@
         scrollPastEnd,
         type KeyBinding,
     } from '@codemirror/view';
-    import { EditorState, Compartment, type Extension } from '@codemirror/state';
+    import { EditorState, Compartment, Transaction, type Extension } from '@codemirror/state';
     import {
         defaultKeymap,
         history,
         historyKeymap,
         indentWithTab,
+        undoDepth,
+        redoDepth,
     } from '@codemirror/commands';
     import {
         syntaxHighlighting,
@@ -25,7 +27,7 @@
     } from '@codemirror/language';
     import { tags } from '@lezer/highlight';
     import { julia } from '@codemirror/legacy-modes/mode/julia';
-    import { editorTheme } from '$lib/stores/editor.store';
+    import { editorTheme, codeMirrorViewInstance, codeMirrorCanUndo, codeMirrorCanRedo } from '$lib/stores/editor.store';
 
     // ── Props ─────────────────────────────────────────────────────────────────
 
@@ -313,24 +315,41 @@
                 ...extraExtensions,
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged) {
-                        const newValue = update.state.doc.toString();
-                        onchange?.(newValue);
+                        onchange?.(update.state.doc.toString());
                     }
+                    codeMirrorCanUndo.set(undoDepth(update.state) > 0);
+                    codeMirrorCanRedo.set(redoDepth(update.state) > 0);
                 }),
             ],
         });
 
         view = new EditorView({ state, parent: container });
+        codeMirrorViewInstance.set(view);
+        codeMirrorCanUndo.set(false);
+        codeMirrorCanRedo.set(false);
 
-        return () => view.destroy();
+        return () => {
+            codeMirrorViewInstance.set(null);
+            codeMirrorCanUndo.set(false);
+            codeMirrorCanRedo.set(false);
+            view.destroy();
+        };
     });
 
     // Sync external value changes (e.g. tab switch)
+    // addToHistory:false prevents these programmatic replaces from entering CM's own history.
+    // We preserve the current selection so the caret doesn't jump on reactive re-renders.
     $effect(() => {
         if (!view) return;
-        if (value !== view.state.doc.toString()) {
+        const newValue = value;
+        const currentDoc = view.state.doc.toString();
+        if (newValue !== currentDoc) {
+            const { main } = view.state.selection;
+            const len = newValue.length;
             view.dispatch({
-                changes: { from: 0, to: view.state.doc.length, insert: value },
+                changes: { from: 0, to: currentDoc.length, insert: newValue },
+                selection: { anchor: Math.min(main.anchor, len), head: Math.min(main.head, len) },
+                annotations: Transaction.addToHistory.of(false),
             });
         }
     });

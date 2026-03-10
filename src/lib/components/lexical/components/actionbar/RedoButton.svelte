@@ -2,9 +2,10 @@
 	import Icon from '@iconify/svelte';
 	import { CAN_REDO_COMMAND, REDO_COMMAND, COMMAND_PRIORITY_CRITICAL } from 'lexical';
 	import { IS_APPLE } from '@lexical/utils';
+	import { redo } from '@codemirror/commands';
 	import { actionBtnStyle, icons } from '$lib/data/toolbar/toolbar';
-	import { lexicalEditorInstance } from '$lib/stores/editor.store';
-	import { activeTab, activeTabId, redoHistory, redoActiveTab } from '$lib/stores/tabs.store';
+	import { lexicalEditorInstance, codeMirrorViewInstance, codeMirrorCanRedo } from '$lib/stores/editor.store';
+	import { activeTab } from '$lib/stores/tabs.store';
 	import { get } from 'svelte/store';
 
 	let lexicalCanRedo = $state(false);
@@ -26,16 +27,15 @@
 	});
 
 	const canRedo = $derived(
-		$activeTab?.type === 'lexical'
-			? lexicalCanRedo
-			: (redoHistory.get($activeTabId ?? '') ?? []).length > 0
+		$activeTab?.type === 'lexical' ? lexicalCanRedo : $codeMirrorCanRedo
 	);
 
 	function handleRedo() {
 		if ($activeTab?.type === 'lexical') {
 			get(lexicalEditorInstance)?.dispatchCommand(REDO_COMMAND, undefined);
 		} else {
-			redoActiveTab();
+			const view = get(codeMirrorViewInstance);
+			if (view) redo(view);
 		}
 	}
 </script>

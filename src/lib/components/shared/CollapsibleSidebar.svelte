@@ -88,7 +88,7 @@
 					duration: 300,
 					direction: $surahOrientation() == 'flex-row-reverse' ? 'right' : 'left'// or 'left' for left-to-right
 				}}
-				class="w-full space-y-2 overflow-visible bg-white p-4 text-xl border border-stone-200 sm:shadow-xl sm:shadow-slate-200/60 {$hideSurahPage() && !$typstMode ? 'rounded-md' : 'rounded-l-md'}"
+				class="w-full space-y-2 overflow-visible bg-white px-1 pb-4 text-xl border border-stone-200 sm:shadow-xl sm:shadow-slate-200/60 {$hideSurahPage() && !$typstMode ? 'rounded-md' : 'rounded-l-md'}"
 			>
 				{@render children()}
 			</div>
