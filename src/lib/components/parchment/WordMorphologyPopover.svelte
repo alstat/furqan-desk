@@ -27,23 +27,23 @@
     };
 
     const TOKEN_STYLES: Record<string, TokenStyle> = {
-        N:    { bg: "bg-sky-50/60",     border: "border-sky-200",     badge: "bg-sky-100 text-sky-700",       text: "text-sky-700",     dot: "bg-sky-400",     accent: "bg-sky-400"    },
-        V:    { bg: "bg-emerald-50/60", border: "border-emerald-200", badge: "bg-emerald-100 text-emerald-700", text: "text-emerald-700", dot: "bg-emerald-400", accent: "bg-emerald-400" },
-        P:    { bg: "bg-violet-50/60",  border: "border-violet-200",  badge: "bg-violet-100 text-violet-700",  text: "text-violet-700",  dot: "bg-violet-400",  accent: "bg-violet-400"  },
-        PN:   { bg: "bg-indigo-50/60",  border: "border-indigo-200",  badge: "bg-indigo-100 text-indigo-700",  text: "text-indigo-700",  dot: "bg-indigo-400",  accent: "bg-indigo-400"  },
-        ADJ:  { bg: "bg-amber-50/60",   border: "border-amber-200",   badge: "bg-amber-100 text-amber-700",    text: "text-amber-700",   dot: "bg-amber-400",   accent: "bg-amber-400"   },
-        DET:  { bg: "bg-slate-50/60",   border: "border-slate-200",   badge: "bg-slate-100 text-slate-600",    text: "text-slate-600",   dot: "bg-slate-400",   accent: "bg-slate-300"   },
-        PRON: { bg: "bg-rose-50/60",    border: "border-rose-200",    badge: "bg-rose-100 text-rose-700",      text: "text-rose-700",    dot: "bg-rose-400",    accent: "bg-rose-400"    },
-        REL:  { bg: "bg-rose-50/60",    border: "border-rose-200",    badge: "bg-rose-100 text-rose-700",      text: "text-rose-700",    dot: "bg-rose-400",    accent: "bg-rose-400"    },
-        DEM:  { bg: "bg-rose-50/60",    border: "border-rose-200",    badge: "bg-rose-100 text-rose-700",      text: "text-rose-700",    dot: "bg-rose-400",    accent: "bg-rose-400"    },
-        CONJ: { bg: "bg-orange-50/60",  border: "border-orange-200",  badge: "bg-orange-100 text-orange-700",  text: "text-orange-700",  dot: "bg-orange-400",  accent: "bg-orange-400"  },
-        NEG:  { bg: "bg-red-50/60",     border: "border-red-200",     badge: "bg-red-100 text-red-700",        text: "text-red-700",     dot: "bg-red-400",     accent: "bg-red-400"     },
+        N:    { bg: "bg-sky-50/60 dark:bg-sky-900/20",     border: "border-sky-200 dark:border-sky-700/40",     badge: "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300",       text: "text-sky-700 dark:text-sky-300",     dot: "bg-sky-400 dark:bg-sky-500",     accent: "bg-sky-400 dark:bg-sky-600"    },
+        V:    { bg: "bg-emerald-50/60 dark:bg-emerald-900/20", border: "border-emerald-200 dark:border-emerald-700/40", badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300", text: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-400 dark:bg-emerald-500", accent: "bg-emerald-400 dark:bg-emerald-600" },
+        P:    { bg: "bg-violet-50/60 dark:bg-violet-900/20",  border: "border-violet-200 dark:border-violet-700/40",  badge: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",  text: "text-violet-700 dark:text-violet-300",  dot: "bg-violet-400 dark:bg-violet-500",  accent: "bg-violet-400 dark:bg-violet-600"  },
+        PN:   { bg: "bg-indigo-50/60 dark:bg-indigo-900/20",  border: "border-indigo-200 dark:border-indigo-700/40",  badge: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",  text: "text-indigo-700 dark:text-indigo-300",  dot: "bg-indigo-400 dark:bg-indigo-500",  accent: "bg-indigo-400 dark:bg-indigo-600"  },
+        ADJ:  { bg: "bg-amber-50/60 dark:bg-amber-900/20",   border: "border-amber-200 dark:border-amber-700/40",   badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",    text: "text-amber-700 dark:text-amber-300",   dot: "bg-amber-400 dark:bg-amber-500",   accent: "bg-amber-400 dark:bg-amber-600"   },
+        DET:  { bg: "bg-slate-50/60 dark:bg-slate-700/20",   border: "border-slate-200 dark:border-slate-600/40",   badge: "bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-300",    text: "text-slate-600 dark:text-slate-300",   dot: "bg-slate-400 dark:bg-slate-500",   accent: "bg-slate-300 dark:bg-slate-600"   },
+        PRON: { bg: "bg-rose-50/60 dark:bg-rose-900/20",    border: "border-rose-200 dark:border-rose-700/40",    badge: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",      text: "text-rose-700 dark:text-rose-300",    dot: "bg-rose-400 dark:bg-rose-500",    accent: "bg-rose-400 dark:bg-rose-600"    },
+        REL:  { bg: "bg-rose-50/60 dark:bg-rose-900/20",    border: "border-rose-200 dark:border-rose-700/40",    badge: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",      text: "text-rose-700 dark:text-rose-300",    dot: "bg-rose-400 dark:bg-rose-500",    accent: "bg-rose-400 dark:bg-rose-600"    },
+        DEM:  { bg: "bg-rose-50/60 dark:bg-rose-900/20",    border: "border-rose-200 dark:border-rose-700/40",    badge: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",      text: "text-rose-700 dark:text-rose-300",    dot: "bg-rose-400 dark:bg-rose-500",    accent: "bg-rose-400 dark:bg-rose-600"    },
+        CONJ: { bg: "bg-orange-50/60 dark:bg-orange-900/20",  border: "border-orange-200 dark:border-orange-700/40",  badge: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",  text: "text-orange-700 dark:text-orange-300",  dot: "bg-orange-400 dark:bg-orange-500",  accent: "bg-orange-400 dark:bg-orange-600"  },
+        NEG:  { bg: "bg-red-50/60 dark:bg-red-900/20",     border: "border-red-200 dark:border-red-700/40",     badge: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",        text: "text-red-700 dark:text-red-300",     dot: "bg-red-400 dark:bg-red-500",     accent: "bg-red-400 dark:bg-red-600"     },
     };
 
     const DEFAULT_STYLE: TokenStyle = {
-        bg: "bg-slate-50/60", border: "border-slate-200",
-        badge: "bg-slate-100 text-slate-600", text: "text-slate-600",
-        dot: "bg-slate-400", accent: "bg-slate-300",
+        bg: "bg-slate-50/60 dark:bg-slate-700/20", border: "border-slate-200 dark:border-slate-600/40",
+        badge: "bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-300", text: "text-slate-600 dark:text-slate-300",
+        dot: "bg-slate-400 dark:bg-slate-500", accent: "bg-slate-300 dark:bg-slate-600",
     };
 
     function getStyle(tag: string): TokenStyle {
@@ -169,26 +169,26 @@
 
 <div
     use:portal
-    class="ayah-tooltip fixed z-9999 flex w-88 max-h-[76vh] flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white/98 shadow-2xl backdrop-blur-sm"
+    class="ayah-tooltip fixed z-9999 flex w-88 max-h-[76vh] flex-col overflow-hidden rounded-2xl border border-slate-200/70 dark:border-[#414559] bg-white/98 dark:bg-[#292c3c] shadow-2xl backdrop-blur-sm"
     style={position.placement === "below"
         ? `left: ${position.x}px; top: ${position.y + 8}px;`
         : `left: ${position.x}px; bottom: calc(100vh - ${position.y}px + 8px);`}
     transition:fly={{ y: position.placement === "below" ? 6 : -6, duration: 160, opacity: 0 }}
 >
     <!-- Header -->
-    <div class="flex shrink-0 items-center justify-between bg-linear-to-b from-slate-50 to-white px-4 py-3.5 border-b border-slate-100">
+    <div class="flex shrink-0 items-center justify-between bg-linear-to-b from-slate-50 to-white dark:from-[#232634] dark:to-[#292c3c] px-4 py-3.5 border-b border-slate-100 dark:border-[#414559]">
         <div dir="rtl" class="flex flex-col gap-1">
-            <span class="font-scheherazade text-3xl leading-none text-slate-800">
+            <span class="font-scheherazade text-3xl leading-none text-slate-800 dark:text-[#c6d0f5]">
                 {word.combined_arabic}
             </span>
-            <span class="text-[10px] font-medium text-slate-400">
+            <span class="text-[10px] font-medium text-slate-400 dark:text-[#838ba7]">
                 {word.tokens.length} token{word.tokens.length !== 1 ? 's' : ''}
             </span>
         </div>
         <button
             onclick={onClose}
             aria-label="Close"
-            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 active:scale-95"
+            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 dark:text-[#838ba7] transition-all hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-slate-600 dark:hover:text-[#c6d0f5] active:scale-95"
         >
             <Icon icon="mdi:close" width="14" />
         </button>
@@ -213,7 +213,7 @@
                         <span class="font-scheherazade text-2xl leading-none {s.text}">
                             {token.form_arabic}
                         </span>
-                        <code class="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500" dir="ltr">
+                        <code class="rounded-md bg-slate-100 dark:bg-[#414559] px-1.5 py-0.5 font-mono text-[10px] text-slate-500 dark:text-[#949cbb]" dir="ltr">
                             {token.form_buckwalter}
                         </code>
                     </div>
@@ -221,11 +221,11 @@
 
                 <!-- Features -->
                 {#if FEATURES.some(f => token.features[f.key])}
-                    <div class="divide-y divide-slate-100 border-t {s.border} px-3 pb-0.5">
+                    <div class="divide-y divide-slate-100 dark:divide-[#414559]/60 border-t {s.border} px-3 pb-0.5">
                         {#each FEATURES as { key, label, arabic, transform }}
                             {#if token.features[key]}
                                 <div class="flex items-center justify-between gap-3 py-1.5">
-                                    <span class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                    <span class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-[#838ba7]">
                                         {label}
                                     </span>
                                     {#if arabic}
@@ -233,7 +233,7 @@
                                             {buckwalterToArabic(token.features[key] as string)}
                                         </span>
                                     {:else}
-                                        <span class="text-[11px] font-medium text-slate-600">
+                                        <span class="text-[11px] font-medium text-slate-600 dark:text-[#a5adce]">
                                             {transform ? transform(token.features[key] as string) : token.features[key]}
                                         </span>
                                     {/if}

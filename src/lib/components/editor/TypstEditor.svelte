@@ -182,7 +182,7 @@
             {/if}
             <button
                 onclick={exportPdf}
-                class="cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 text-white hover:bg-brand-gold-500 transition-colors"
+                class="cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 text-white hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 transition-colors"
             >
                 Export PDF
             </button>

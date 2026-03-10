@@ -258,7 +258,7 @@
 					<button
 						onclick={() => createNew('typst')}
 						class="cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full
-							   bg-brand-gold-400 hover:bg-brand-gold-500 text-white transition-colors"
+							   bg-brand-gold-400 hover:bg-brand-gold-500 dark:bg-brand-gold-600 dark:hover:bg-brand-gold-500 dark:text-[#1a1d2e] text-white transition-colors"
 					>
 						Typst
 					</button>
@@ -266,7 +266,7 @@
 					<button
 						onclick={() => createNew('julia')}
 						class="cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full
-							   bg-violet-500 hover:bg-violet-600 text-white transition-colors"
+							   bg-violet-500 hover:bg-violet-600 dark:bg-violet-800 dark:hover:bg-violet-700 dark:text-violet-200 text-white transition-colors"
 					>
 						Julia
 					</button>
@@ -298,7 +298,7 @@
 					<span class="text-xs text-brand-charcoal-300 italic">Checking…</span>
 
 				{:else if installStatus === 'installed'}
-					<span class="flex items-center gap-1 text-xs font-medium text-green-600">
+					<span class="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
 						<Icon icon="solar:check-circle-bold" width="0.9rem" />
 						Installed
 					</span>
@@ -339,7 +339,7 @@
 				<span class="text-xs text-brand-charcoal-300 italic">Checking…</span>
 
 			{:else if juliaStatus === 'installed'}
-				<span class="flex items-center gap-1 text-xs font-medium text-green-600">
+				<span class="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
 					<Icon icon="solar:check-circle-bold" width="0.9rem" />
 					Installed
 					{#if juliaCustomPath}

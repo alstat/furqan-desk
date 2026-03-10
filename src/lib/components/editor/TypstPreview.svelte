@@ -29,15 +29,15 @@
 
 <!-- Outer: matches Parchment's outer wrapper exactly -->
 <div
-    class="relative z-1 flex flex-col items-center bg-white sm:w-full md:w-9/12 lg:w-6/12 sm:shadow-xl sm:shadow-slate-200/60"
+    class="relative z-1 flex flex-col items-center bg-white dark:bg-[#303446] sm:w-full md:w-9/12 lg:w-6/12 sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"
 >
     <!-- Inner: matches Parchment's inner scrollable div (border + rounded-r-md) -->
     <div
-        class="border border-stone-200 w-full flex-1 overflow-y-auto rounded-r-md flex flex-col min-h-0"
+        class="border border-stone-200 dark:border-[#414559] w-full flex-1 overflow-y-auto rounded-r-md flex flex-col min-h-0"
     >
         <!-- Toolbar inside the border -->
         <div
-            class="flex items-center justify-between px-4 py-2 border-b border-stone-200 shrink-0"
+            class="flex items-center justify-between px-4 py-2 border-b border-stone-200 dark:border-[#414559] shrink-0"
         >
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
@@ -61,7 +61,7 @@
             </span>
             <button
                 onclick={exportPdf}
-                class="cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 text-white hover:bg-brand-gold-500 transition-colors"
+                class="cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 text-white hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 transition-colors"
             >
                 Export PDF
             </button>
@@ -76,7 +76,7 @@
                 <div class="flex flex-col gap-6">
                     {#each $typstSvgPages as pageSvg}
                         <div
-                            class="typst-page overflow-hidden border border-stone-200 rounded-md shadow-sm bg-white"
+                            class="typst-page overflow-hidden border border-stone-200 dark:border-[#414559] rounded-md shadow-sm bg-white"
                         >
                             {@html pageSvg}
                         </div>

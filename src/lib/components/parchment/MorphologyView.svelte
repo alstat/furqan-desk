@@ -49,19 +49,19 @@
         const tag = stemToken?.tag || word.tokens[0]?.tag || "N";
 
         const colors: Record<string, string> = {
-            N: "hover:bg-blue-100",
-            V: "hover:bg-green-100",
-            P: "hover:bg-purple-100",
-            PN: "hover:bg-indigo-100",
-            ADJ: "hover:bg-yellow-100",
-            DET: "hover:bg-gray-100",
-            PRON: "hover:bg-pink-100",
-            REL: "hover:bg-pink-100",
-            DEM: "hover:bg-pink-100",
-            CONJ: "hover:bg-orange-100",
-            NEG: "hover:bg-red-100",
+            N: "hover:bg-blue-100 dark:hover:bg-blue-800/40",
+            V: "hover:bg-green-100 dark:hover:bg-green-800/40",
+            P: "hover:bg-purple-100 dark:hover:bg-purple-800/40",
+            PN: "hover:bg-indigo-100 dark:hover:bg-indigo-800/40",
+            ADJ: "hover:bg-yellow-100 dark:hover:bg-yellow-800/40",
+            DET: "hover:bg-gray-100 dark:hover:bg-gray-600/40",
+            PRON: "hover:bg-pink-100 dark:hover:bg-pink-800/40",
+            REL: "hover:bg-pink-100 dark:hover:bg-pink-800/40",
+            DEM: "hover:bg-pink-100 dark:hover:bg-pink-800/40",
+            CONJ: "hover:bg-orange-100 dark:hover:bg-orange-800/40",
+            NEG: "hover:bg-red-100 dark:hover:bg-red-800/40",
         };
-        return colors[tag] || "hover:bg-slate-100";
+        return colors[tag] || "hover:bg-slate-100 dark:hover:bg-slate-600/40";
     }
 
     const POPOVER_WIDTH = 352;  // w-[22rem]
@@ -113,38 +113,38 @@
         <div class="flex items-center">
             <!-- Left decorative arm -->
             <div class="flex flex-1 items-center">
-                <div class="h-px flex-1 bg-linear-to-r from-transparent to-amber-300"></div>
+                <div class="h-px flex-1 bg-linear-to-r from-transparent to-amber-300 dark:to-amber-700/50"></div>
                 <div class="flex items-center gap-1 px-2">
-                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300"></span>
-                    <span class="inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
-                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300"></span>
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300 dark:bg-amber-600/60"></span>
+                    <span class="inline-block h-2 w-2 rotate-45 bg-amber-400 dark:bg-amber-600/70"></span>
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300 dark:bg-amber-600/60"></span>
                 </div>
             </div>
 
             <!-- Surah name panel -->
-            <div class="relative border border-amber-400/80 bg-linear-to-b from-amber-50/60 to-white/0 px-10 py-2.5">
+            <div class="relative border border-amber-400/80 dark:border-amber-700/40 bg-linear-to-b from-amber-50/60 to-white/0 dark:from-amber-900/20 dark:to-transparent px-10 py-2.5">
                 <!-- Inner border -->
-                <div class="pointer-events-none absolute inset-0.75 border border-amber-300/40"></div>
+                <div class="pointer-events-none absolute inset-0.75 border border-amber-300/40 dark:border-amber-700/20"></div>
                 <!-- Mid-border diamonds -->
-                <span class="absolute -top-1.25 left-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-amber-500"></span>
-                <span class="absolute -bottom-1.25 left-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-amber-500"></span>
+                <span class="absolute -top-1.25 left-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-amber-500 dark:bg-amber-700/70"></span>
+                <span class="absolute -bottom-1.25 left-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-amber-500 dark:bg-amber-700/70"></span>
                 <!-- Corner diamonds -->
-                <span class="absolute -left-1 -top-1 inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
-                <span class="absolute -right-1 -top-1 inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
-                <span class="absolute -bottom-1 -left-1 inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
-                <span class="absolute -bottom-1 -right-1 inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
+                <span class="absolute -left-1 -top-1 inline-block h-2 w-2 rotate-45 bg-amber-400 dark:bg-amber-600/60"></span>
+                <span class="absolute -right-1 -top-1 inline-block h-2 w-2 rotate-45 bg-amber-400 dark:bg-amber-600/60"></span>
+                <span class="absolute -bottom-1 -left-1 inline-block h-2 w-2 rotate-45 bg-amber-400 dark:bg-amber-600/60"></span>
+                <span class="absolute -bottom-1 -right-1 inline-block h-2 w-2 rotate-45 bg-amber-400 dark:bg-amber-600/60"></span>
                 <!-- Surah name -->
-                <span class="relative font-scheherazade text-2xl leading-none text-slate-800 supports-[-webkit-hyphens:none]:font-scheherazade supports-[not(-webkit-hyphens:none)]:font-reem">{$selectedSurahName}</span>
+                <span class="relative font-scheherazade text-2xl leading-none text-slate-800 dark:text-[#c6d0f5] supports-[-webkit-hyphens:none]:font-scheherazade supports-[not(-webkit-hyphens:none)]:font-reem">{$selectedSurahName}</span>
             </div>
 
             <!-- Right decorative arm -->
             <div class="flex flex-1 items-center">
                 <div class="flex items-center gap-1 px-2">
-                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300"></span>
-                    <span class="inline-block h-2 w-2 rotate-45 bg-amber-400"></span>
-                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300"></span>
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300 dark:bg-amber-600/60"></span>
+                    <span class="inline-block h-2 w-2 rotate-45 bg-amber-400 dark:bg-amber-600/70"></span>
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300 dark:bg-amber-600/60"></span>
                 </div>
-                <div class="h-px flex-1 bg-linear-to-l from-transparent to-amber-300"></div>
+                <div class="h-px flex-1 bg-linear-to-l from-transparent to-amber-300 dark:to-amber-700/50"></div>
             </div>
         </div>
     </div>
@@ -161,7 +161,7 @@
                                 tabindex="0"
                                 data-surah={$surahMorphology.surah}
                                 data-ayah={0}
-                                class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === 0 ? 'bg-yellow-200' : ''}"
+                                class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === 0 ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                                 onclick={(e) => handleWordClick(e, word, 0)}
                                 onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, 0)}
                             >{word.combined_arabic}&nbsp;</span>{/each}
@@ -177,12 +177,12 @@
                         tabindex="0"
                         data-surah={$surahMorphology.surah}
                         data-ayah={ayahData.ayah}
-                        class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === ayahData.ayah ? 'bg-yellow-200' : ''}"
+                        class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === ayahData.ayah ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                         onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                         onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
                     >{word.combined_arabic}&nbsp;</span>{/each}<span id="ayah-{ayahData.ayah}" class="font-scheherazade text-lime-700 px-1 whitespace-nowrap">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span>{/each}</div>
     {:else}
-        <div class="py-8 text-center text-gray-500 h-full">
+        <div class="py-8 text-center text-gray-500 dark:text-[#838ba7] h-full">
             Loading morphology data...
         </div>
     {/if}
