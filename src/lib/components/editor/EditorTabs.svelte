@@ -33,7 +33,9 @@
                     ? "solar:document-text-bold-duotone"
                     : tab.type === "lexical"
                       ? "solar:text-bold-duotone"
-                      : "solar:file-bold-duotone"}
+                      : tab.type === "julia"
+                        ? "solar:code-bold-duotone"
+                        : "solar:file-bold-duotone"}
                 width="0.75rem"
                 class="shrink-0 opacity-60"
             />

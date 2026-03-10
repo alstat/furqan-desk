@@ -27,6 +27,15 @@
 			if (!path) return;
 			await writeTextFile(path, JSON.stringify(doc, null, 2));
 			markTabSaved(get(activeTabId)!, path);
+		} else if (tab.type === 'julia') {
+			const path = await saveDialog({
+				title: 'Save As',
+				defaultPath: `${tab.name}.jl`,
+				filters: [{ name: 'Julia', extensions: ['jl'] }]
+			});
+			if (!path) return;
+			await writeTextFile(path, tab.content);
+			markTabSaved(get(activeTabId)!, path);
 		} else {
 			const ext = tab.type === 'typst' ? 'typ' : 'txt';
 			const path = await saveDialog({

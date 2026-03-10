@@ -1,6 +1,7 @@
 mod buckwalter;
 mod commands;
 mod db;
+mod julia;
 mod typst_world;
 
 use tauri::Manager;
@@ -27,6 +28,9 @@ pub fn run() {
             let database = db::Database::new(db_path, sql_path, morph_path)
                 .expect("Failed to initialize database");
             app.manage(database);
+            // Load any previously saved custom Julia binary path before managing state
+            let julia_custom_path = julia::load_persisted_path(&app.handle());
+            app.manage(julia::JuliaState::new(julia_custom_path));
 
             // Eagerly initialise the Typst world (font scanning) in the background
             // so the first compile is fast.
@@ -57,7 +61,24 @@ pub fn run() {
             commands::install_typst_package,
             commands::check_typst_fonts,
             commands::install_typst_fonts,
+            julia::check_julia,
+            julia::get_julia_path,
+            julia::set_julia_path,
+            julia::install_julia,
+            julia::start_julia_repl,
+            julia::run_julia_code,
+            julia::stop_julia_repl,
         ])
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::Destroyed = event {
+                // Clean up Julia process to avoid zombies
+                if let Some(state) = window.try_state::<julia::JuliaState>() {
+                    if let Ok(mut guard) = state.process.lock() {
+                        guard.take(); // drop stdin → Julia exits
+                    }
+                }
+            }
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
