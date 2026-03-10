@@ -28,6 +28,8 @@ pub struct JuliaProcess {
     /// drop the outer std::sync::MutexGuard, then await the write.
     stdin: Arc<tokio::sync::Mutex<tokio::process::ChildStdin>>,
     abort_tx: mpsc::Sender<()>,
+    /// One-shot channel slot: set by `julia_complete`, consumed by the stdout reader.
+    completion_tx: Arc<std::sync::Mutex<Option<tokio::sync::oneshot::Sender<Vec<String>>>>>,
 }
 
 // ── Custom-path persistence ───────────────────────────────────────────────────
@@ -347,6 +349,7 @@ pub async fn install_julia(app: AppHandle) -> Result<(), String> {
 
 // Boot script sent to the Julia process via -e
 const BOOT_SCRIPT: &str = r#"
+try; import REPL; catch; end
 while true
   local buf = IOBuffer()
   while true
@@ -355,15 +358,27 @@ while true
     println(buf, line)
   end
   code = String(take!(buf))
-  try
-    parsed = Meta.parseall(code)
-    result = nothing
-    for expr in parsed.args
-      result = Core.eval(Main, expr)
+  if startswith(code, "__JULIA_COMPLETE__:")
+    prefix = strip(code[length("__JULIA_COMPLETE__:")+1:end])
+    print(stdout, "__JULIA_COMPLETE_START__\n")
+    try
+      completions_list, _, _ = REPL.REPLCompletions.completions(prefix, lastindex(prefix))
+      for c in completions_list
+        println(stdout, REPL.REPLCompletions.completion_text(c))
+      end
+    catch
     end
-    result !== nothing && (show(stdout, MIME("text/plain"), result); println(stdout))
-  catch e
-    println(stderr, sprint(showerror, e))
+  else
+    try
+      parsed = Meta.parseall(code)
+      result = nothing
+      for expr in parsed.args
+        result = Core.eval(Main, expr)
+      end
+      result !== nothing && (show(stdout, MIME("text/plain"), result); println(stdout))
+    catch e
+      println(stderr, sprint(showerror, e))
+    end
   end
   print(stdout, "\n__JULIA_DONE__\n")
   flush(stdout)
@@ -424,6 +439,11 @@ pub async fn start_julia_repl(
     let (abort_tx,  mut abort_rx)  = mpsc::channel::<()>(1);
     let (abort_tx2, mut abort_rx2) = mpsc::channel::<()>(1);
 
+    // Shared slot for pending completion oneshot senders
+    let completion_tx_arc: Arc<std::sync::Mutex<Option<tokio::sync::oneshot::Sender<Vec<String>>>>> =
+        Arc::new(std::sync::Mutex::new(None));
+    let completion_tx_for_reader = Arc::clone(&completion_tx_arc);
+
     // stdout reader task
     let app_stdout = app.clone();
     tokio::spawn(async move {
@@ -438,17 +458,32 @@ pub async fn start_julia_repl(
                     match result {
                         Ok(Some(l)) => {
                             if l == "__JULIA_DONE__" {
-                                // Strip the leading empty line produced by the
-                                // sentinel's leading '\n' when output already
-                                // ended with a newline (println case).
-                                let start = if output_buf.first().map(|s| s.is_empty()).unwrap_or(false) { 1 } else { 0 };
-                                let chunk = output_buf[start..].join("\n");
-                                output_buf.clear();
-                                let _ = app_stdout.emit("julia-output", JuliaOutput {
-                                    chunk,
-                                    is_done: true,
-                                    error: None,
-                                });
+                                // Check if this is a completion response
+                                if output_buf.first().map(|s| s == "__JULIA_COMPLETE_START__").unwrap_or(false) {
+                                    let completions: Vec<String> = output_buf[1..]
+                                        .iter()
+                                        .filter(|s| !s.is_empty())
+                                        .cloned()
+                                        .collect();
+                                    output_buf.clear();
+                                    if let Ok(mut slot) = completion_tx_for_reader.lock() {
+                                        if let Some(tx) = slot.take() {
+                                            let _ = tx.send(completions);
+                                        }
+                                    }
+                                } else {
+                                    // Strip the leading empty line produced by the
+                                    // sentinel's leading '\n' when output already
+                                    // ended with a newline (println case).
+                                    let start = if output_buf.first().map(|s| s.is_empty()).unwrap_or(false) { 1 } else { 0 };
+                                    let chunk = output_buf[start..].join("\n");
+                                    output_buf.clear();
+                                    let _ = app_stdout.emit("julia-output", JuliaOutput {
+                                        chunk,
+                                        is_done: true,
+                                        error: None,
+                                    });
+                                }
                             } else {
                                 output_buf.push(l);
                             }
@@ -487,7 +522,7 @@ pub async fn start_julia_repl(
     // Store process — no await after this point
     {
         let mut guard = state.process.lock().map_err(|e| e.to_string())?;
-        *guard = Some(JuliaProcess { stdin: stdin_arc, abort_tx });
+        *guard = Some(JuliaProcess { stdin: stdin_arc, abort_tx, completion_tx: completion_tx_arc });
     }
 
     std::mem::forget(abort_tx2);
@@ -518,6 +553,40 @@ pub async fn run_julia_code(
         .map_err(|e| format!("Failed to flush Julia stdin: {e}"))?;
 
     Ok(())
+}
+
+/// Request tab-completions from the running Julia REPL for the given prefix.
+/// Returns the list of completion strings, or an error if the REPL is not
+/// running or the request times out.
+#[tauri::command]
+pub async fn julia_complete(
+    prefix: String,
+    state: State<'_, JuliaState>,
+) -> Result<Vec<String>, String> {
+    let (tx, rx) = tokio::sync::oneshot::channel::<Vec<String>>();
+
+    let stdin_arc = {
+        let guard = state.process.lock().map_err(|e| e.to_string())?;
+        let proc = guard.as_ref().ok_or("Julia REPL is not started")?;
+        {
+            let mut slot = proc.completion_tx.lock().unwrap();
+            *slot = Some(tx);
+        }
+        Arc::clone(&proc.stdin)
+    }; // std::sync::MutexGuard dropped here
+
+    let payload = format!("__JULIA_COMPLETE__:{}\n__JULIA_EXEC__\n", prefix);
+    let mut stdin = stdin_arc.lock().await;
+    stdin.write_all(payload.as_bytes()).await
+        .map_err(|e| format!("Failed to write to Julia stdin: {e}"))?;
+    stdin.flush().await
+        .map_err(|e| format!("Failed to flush Julia stdin: {e}"))?;
+    drop(stdin);
+
+    tokio::time::timeout(std::time::Duration::from_secs(5), rx)
+        .await
+        .map_err(|_| "completion request timed out".to_string())?
+        .map_err(|_| "completion channel closed".to_string())
 }
 
 #[tauri::command]

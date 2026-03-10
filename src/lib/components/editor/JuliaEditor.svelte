@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { listen } from "@tauri-apps/api/event";
+    import { get } from "svelte/store";
     import { IS_APPLE } from "@lexical/utils";
     import { activeTab, setActiveTabContent, activeTabId } from "$lib/stores/tabs.store";
     import {
@@ -12,12 +13,44 @@
     import JuliaActionBar from "./JuliaActionBar.svelte";
     import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
     import type { KeyBinding } from "@codemirror/view";
+    import { autocompletion, type CompletionSource } from "@codemirror/autocomplete";
+    import { JULIA_COMPLETIONS } from "$lib/completions/julia";
 
     const labelClass =
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
 
     let replOutputEl: HTMLDivElement;
     let isRunning = $state(false);
+
+    // ── Completion source ─────────────────────────────────────────────────────
+    const juliaCompletionSource: CompletionSource = async (context) => {
+        const word = context.matchBefore(/\w+/);
+        if (!word || (word.from === word.to && !context.explicit)) return null;
+
+        // Use REPL completions when available and not executing
+        if (get(juliaReplStarted) && !isRunning) {
+            try {
+                const replCompletions = await invoke<string[]>('julia_complete', { prefix: word.text });
+                if (replCompletions.length > 0) {
+                    return {
+                        from: word.from,
+                        options: replCompletions.map(label => ({ label, type: 'function' })),
+                        validFor: /^\w*$/,
+                    };
+                }
+            } catch {
+                // fall through to static completions
+            }
+        }
+
+        // Static fallback
+        const lower = word.text.toLowerCase();
+        const filtered = JULIA_COMPLETIONS.filter(c => c.label.toLowerCase().startsWith(lower));
+        if (filtered.length === 0) return null;
+        return { from: word.from, options: filtered, validFor: /^\w*$/ };
+    };
+
+    const juliaCompletionExtension = autocompletion({ override: [juliaCompletionSource] });
 
     // Per-tab REPL lines — restored from juliaReplHistory on mount/tab-switch
     let replLines = $state<ReplLine[]>([]);
@@ -118,6 +151,7 @@
             value={$activeTab!.content}
             language="julia"
             extraKeymap={juliaKeymap}
+            extensions={[juliaCompletionExtension]}
             onchange={handleInput}
             class="flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 focus-within:ring-2 focus-within:ring-brand-gold-100 focus-within:border-brand-gold-400 font-mono"
         />
