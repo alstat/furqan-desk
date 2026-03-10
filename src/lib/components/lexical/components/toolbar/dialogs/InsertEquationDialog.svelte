@@ -57,6 +57,7 @@
 
 {#if showModal}
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
         use:portal
         class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
@@ -97,7 +98,7 @@
                 </div>
 
                 <!-- Preview -->
-                <div class="rounded-xl border border-brand-sand-200 bg-brand-sand-100 px-3 py-2.5 min-h-[2.5rem] flex items-center justify-center">
+                <div class="rounded-xl border border-brand-sand-200 bg-brand-sand-100 px-3 py-2.5 min-h-10 flex items-center justify-center">
                     <div bind:this={previewEl} class="text-brand-charcoal-900 text-sm"></div>
                     {#if !equation}
                         <span class="text-xs text-brand-charcoal-300">Preview will appear here</span>

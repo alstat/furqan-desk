@@ -103,6 +103,7 @@
 
 {#if showModal}
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
         use:portal
         class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
@@ -204,7 +205,7 @@
                     <!-- Thumbnail preview -->
                     {#if fileSrc}
                         <div class="flex items-center justify-center rounded-xl border border-brand-sand-200 bg-brand-sand-100 overflow-hidden" style="max-height: 140px;">
-                            <img src={fileSrc} alt="preview" class="max-h-[140px] object-contain" />
+                            <img src={fileSrc} alt="preview" class="max-h-35 object-contain" />
                         </div>
                     {/if}
 

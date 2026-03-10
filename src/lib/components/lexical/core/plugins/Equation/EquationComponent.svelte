@@ -140,7 +140,7 @@
             </span>
 
             <!-- Preview -->
-            <span class="border-t border-brand-sand-200 bg-brand-sand-50 px-3 py-2 flex items-center justify-center min-h-[2rem]">
+            <span class="border-t border-brand-sand-200 bg-brand-sand-50 px-3 py-2 flex items-center justify-center min-h-8">
                 {#if editableValue}
                     <span bind:this={previewEl} class="text-brand-charcoal-900 text-sm"></span>
                 {:else}

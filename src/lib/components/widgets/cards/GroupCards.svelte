@@ -9,8 +9,8 @@
         isExpanded = !isExpanded;
     }
 
-    const _ = ['sm:bottom-[27px]', 'sm:top-[27px]', 'sm:left-[10px]', 'sm:right-[10px]',
-        'bottom-[10px]', 'top-[10px]', 'left-[10px]', 'right-[10px]'
+    const _ = ['sm:bottom-6.75', 'sm:top-6.75', 'sm:left-2.5', 'sm:right-2.5',
+        'bottom-2.5', 'top-2.5', 'left-2.5', 'right-2.5'
     ];
 
     // Anchor the expanded panel to the correct corner of the fixed-size container
@@ -23,7 +23,7 @@
     The expanded panel is absolutely positioned out of flow so it never
     changes the container's dimensions and causes the button to drift.
 -->
-<div class={`absolute ${yPosition}-[10px] ${xPosition}-[10px] sm:${yPosition}-[10px] sm:${xPosition}-[10px] z-20 h-10 w-10`}>
+<div class={`absolute ${yPosition}-2.5 ${xPosition}-2.5 sm:${yPosition}-2.5 sm:${xPosition}-2.5 z-20 h-10 w-10`}>
 
     {#if isExpanded}
         <div

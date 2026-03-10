@@ -169,7 +169,7 @@
 
 <div
     use:portal
-    class="ayah-tooltip fixed z-9999 flex w-[22rem] max-h-[76vh] flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white/98 shadow-2xl backdrop-blur-sm"
+    class="ayah-tooltip fixed z-9999 flex w-88 max-h-[76vh] flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white/98 shadow-2xl backdrop-blur-sm"
     style={position.placement === "below"
         ? `left: ${position.x}px; top: ${position.y + 8}px;`
         : `left: ${position.x}px; bottom: calc(100vh - ${position.y}px + 8px);`}
@@ -187,6 +187,7 @@
         </div>
         <button
             onclick={onClose}
+            aria-label="Close"
             class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 active:scale-95"
         >
             <Icon icon="mdi:close" width="14" />
