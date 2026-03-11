@@ -16,8 +16,7 @@
     } from "$lib/stores/quran.svelte";
     import type { SurahLabel } from "$lib/stores/quran.svelte";
     import { typstMode } from "$lib/stores/editor.store";
-    import { activeTab, activeTabId } from "$lib/stores/tabs.store";
-    import { splitJuliaTabId } from "$lib/stores/julia-terminal.store";
+    import { activeTab } from "$lib/stores/tabs.store";
 
     let height: number = $state(10);
 
@@ -45,23 +44,15 @@
         style:height="{height - 47}px"
     >
         {#if juliaReplMode}
-            <!-- Julia REPL panel on the right (or left in RTL layout) -->
-            {#if $splitJuliaTabId}
-                <!-- Split: two REPL panes stacked -->
-                <div class="flex flex-col flex-1 min-h-0 p-2 gap-2">
-                    <div class="flex-1 min-h-0 flex flex-col">
-                        <JuliaReplPane tabId={$activeTabId ?? ''} />
-                    </div>
-                    <div class="flex-1 min-h-0 flex flex-col">
-                        <JuliaReplPane tabId={$splitJuliaTabId} />
-                    </div>
+            <!-- Julia REPL panel on the right (or left in RTL layout) — shared by all tabs -->
+            <div class="relative z-1 flex flex-col items-center bg-white dark:bg-[#303446]
+                        sm:w-full md:w-9/12 lg:w-6/12
+                        sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30">
+                <div class="border border-stone-200 dark:border-[#414559]
+                            w-full flex-1 rounded-r-md flex flex-col min-h-0 p-2 overflow-hidden">
+                    <JuliaReplPane />
                 </div>
-            {:else}
-                <!-- Single REPL pane -->
-                <div class="flex-1 min-h-0 flex flex-col p-2">
-                    <JuliaReplPane tabId={$activeTabId ?? ''} />
-                </div>
-            {/if}
+            </div>
         {:else if $hideSurahPage() && $typstMode}
             <TypstPreview />
         {:else}

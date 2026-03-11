@@ -146,7 +146,7 @@
     {#if isOpen}
         <Portal>
             <div
-                class="portal-dropdown-content absolute z-50 rounded-xl border border-brand-sand-200 bg-brand-sand-50 bg-opacity-95 shadow-xl backdrop-blur-sm"
+                class="portal-dropdown-content absolute z-50 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm"
                 style="width: 12rem;"
                 bind:this={panelRef}
                 use:handlePortalMount
@@ -184,7 +184,7 @@
                             <div class="mt-1 flex flex-col space-y-1">
                                 {#each [{ label: "Single", value: "1" }, { label: "1.5 Lines", value: "1.5" }, { label: "Double", value: "2" }] as spacing}
                                     <button
-                                        class="cursor-pointer px-2 py-1 text-left text-sm rounded-lg hover:bg-brand-sand-200 hover:text-brand-charcoal-900 active:bg-brand-sand-100 {$lineHeight ===
+                                        class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-lg hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100 {$lineHeight ===
                                         spacing.value
                                             ? 'bg-brand-sand-200 text-brand-charcoal-900 font-semibold'
                                             : ''}"

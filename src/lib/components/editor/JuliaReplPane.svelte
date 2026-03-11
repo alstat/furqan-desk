@@ -1,35 +1,23 @@
 <script lang="ts">
-    import { onMount, getContext } from "svelte";
+    import { onMount } from "svelte";
     import { get } from "svelte/store";
     import { invoke } from "@tauri-apps/api/core";
     import { listen } from "@tauri-apps/api/event";
     import { IS_APPLE } from "@lexical/utils";
     import {
-        juliaTermStates, splitJuliaTabId, runningJuliaTabId, juliaIsRunning,
-        makeDefaultTermState, executeJuliaCode,
-        type TermLine, type TermTab, type JuliaTabTermState,
+        sharedTermState, juliaIsRunning,
+        executeJuliaCode,
+        type TermLine, type TermTab,
     } from "$lib/stores/julia-terminal.store";
-    import { juliaReplHistory, juliaReplStarted, type ReplLine } from "$lib/stores/editor.store";
+    import { juliaReplHistory, type ReplLine } from "$lib/stores/editor.store";
 
-    let { tabId }: { tabId: string } = $props();
+    // ── Terminal state (shared across all Julia tabs) ─────────────────────────
 
-    // ── Terminal state (persisted in store) ───────────────────────────────────
+    let ts = $state(get(sharedTermState));
 
-    // Local deep-reactive copy; synced to/from store on tabId change + unmount
-    let ts = $state<JuliaTabTermState>(
-        get(juliaTermStates)[tabId] ?? makeDefaultTermState()
-    );
-
-    // Restore state when tabId prop changes
+    // Persist local state changes back to the shared store
     $effect(() => {
-        const saved = get(juliaTermStates)[tabId];
-        ts = saved ? { ...saved } : makeDefaultTermState();
-    });
-
-    // Persist state back to store on every change
-    $effect(() => {
-        // Capture nested values to ensure deep tracking
-        const snapshot: JuliaTabTermState = {
+        const snapshot = {
             activePanel:     ts.activePanel,
             termTabs:        ts.termTabs,
             termOutputLines: ts.termOutputLines,
@@ -38,12 +26,12 @@
             termCounter:     ts.termCounter,
             termInputValues: ts.termInputValues,
         };
-        juliaTermStates.update(all => ({ ...all, [tabId]: snapshot }));
+        sharedTermState.set(snapshot);
     });
 
-    // ── REPL lines (reactive from store) ──────────────────────────────────────
+    // ── REPL lines (reactive from shared store) ───────────────────────────────
 
-    let replLines = $derived<ReplLine[]>($juliaReplHistory[tabId] ?? []);
+    let replLines = $derived<ReplLine[]>($juliaReplHistory);
 
     // ── REPL input state ──────────────────────────────────────────────────────
 
@@ -58,8 +46,7 @@
 
     const replInputRows = $derived(Math.max(1, (replInput.match(/\n/g) ?? []).length + 1));
 
-    // Whether THIS pane's REPL is currently running
-    let isRunning = $derived($juliaIsRunning && $runningJuliaTabId === tabId);
+    let isRunning = $derived($juliaIsRunning);
 
     // ── Terminal output/input DOM refs ────────────────────────────────────────
 
@@ -83,7 +70,7 @@
     }
 
     function clearRepl() {
-        juliaReplHistory.update(h => ({ ...h, [tabId]: [] }));
+        juliaReplHistory.set([]);
     }
 
     async function runReplInput() {
@@ -94,7 +81,7 @@
         savedInput     = '';
         replCmdHistory = [code, ...replCmdHistory];
         focusReplOnDone = true;
-        await executeJuliaCode(tabId, code);
+        await executeJuliaCode(code);
     }
 
     function handleReplKeydown(e: KeyboardEvent) {
@@ -135,7 +122,7 @@
 
     async function addTerminal() {
         ts.termCounter++;
-        const id    = `${tabId}-term-${ts.termCounter}`;
+        const id    = `term-${ts.termCounter}`;
         const label = `Terminal ${ts.termCounter}`;
         ts.termTabs             = [...ts.termTabs, { id, label }];
         ts.termOutputLines[id]  = [];
@@ -189,17 +176,15 @@
         const unlistenJulia = listen<{ chunk: string; is_done: boolean; error: string | null }>(
             'julia-output',
             (event) => {
-                if (get(runningJuliaTabId) !== tabId) return;
                 const { chunk, is_done, error } = event.payload;
                 if (chunk) {
-                    juliaReplHistory.update(h => ({
+                    juliaReplHistory.update(h => [
                         ...h,
-                        [tabId]: [...(h[tabId] ?? []), { text: chunk, kind: error ? 'error' : 'output' }],
-                    }));
+                        { text: chunk, kind: error ? 'error' : 'output' },
+                    ]);
                 }
                 if (is_done) {
                     juliaIsRunning.set(false);
-                    runningJuliaTabId.set(null);
                     if (focusReplOnDone) {
                         focusReplOnDone = false;
                         requestAnimationFrame(() => replInputEl?.focus());

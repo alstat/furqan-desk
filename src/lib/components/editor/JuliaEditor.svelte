@@ -1,10 +1,10 @@
 <script lang="ts">
     import { get } from "svelte/store";
     import { IS_APPLE } from "@lexical/utils";
-    import { activeTab, activeTabId, setActiveTabContent, setTabContent, tabs } from "$lib/stores/tabs.store";
+    import { activeTab, setActiveTabContent, setTabContent, tabs } from "$lib/stores/tabs.store";
     import { juliaReplStarted } from "$lib/stores/editor.store";
     import {
-        juliaIsRunning, runningJuliaTabId, executeJuliaCode,
+        juliaIsRunning, executeJuliaCode, flashingTabId,
     } from "$lib/stores/julia-terminal.store";
     import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
     import JuliaReplPane from "./JuliaReplPane.svelte";
@@ -34,11 +34,10 @@
             : $activeTab
     );
 
-    let effectiveTabId = $derived(tabId ?? $activeTabId ?? '');
-
     // ── Completion source ─────────────────────────────────────────────────────
 
-    let isRunning = $derived($juliaIsRunning && $runningJuliaTabId === effectiveTabId);
+    let isRunning = $derived($juliaIsRunning);
+    let isFlashing = $derived($flashingTabId === effectiveTab?.id);
 
     const juliaCompletionSource: CompletionSource = async (context) => {
         const word = context.matchBefore(/\w+/);
@@ -81,8 +80,7 @@
     // ── Execute code (called from keymap) ─────────────────────────────────────
 
     async function executeCode(snippet: string) {
-        if (!effectiveTabId) return;
-        await executeJuliaCode(effectiveTabId, snippet);
+        await executeJuliaCode(snippet);
     }
 
     // ── Editor keymap ─────────────────────────────────────────────────────────
@@ -112,23 +110,25 @@
 <div class="relative overflow-visible flex flex-col h-full">
     <!-- Editor area -->
     <div class="flex-1 flex flex-col min-h-0">
-        <span class="{labelClass} px-2 pt-1">Julia Editor</span>
+        <span class="{labelClass} px-2 pt-1">{effectiveTab?.name ?? 'Julia Editor'}</span>
         {#if effectiveTab}
-            <CodeMirrorEditor
-                value={effectiveTab.content}
-                language="julia"
-                extraKeymap={juliaKeymap}
-                extensions={[juliaCompletionExtension]}
-                onchange={handleInput}
-                class="flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 focus-within:ring-2 focus-within:ring-brand-gold-100 focus-within:border-brand-gold-400 font-mono"
-            />
+            <div class="flex-1 min-h-0 rounded-md mx-2 border border-brand-sand-200 overflow-hidden focus-within:ring-2 focus-within:ring-brand-gold-100 focus-within:border-brand-gold-400 {isFlashing ? 'flash-border-anim' : ''}">
+                <CodeMirrorEditor
+                    value={effectiveTab.content}
+                    language="julia"
+                    extraKeymap={juliaKeymap}
+                    extensions={[juliaCompletionExtension]}
+                    onchange={handleInput}
+                    class="h-full font-mono"
+                />
+            </div>
         {/if}
     </div>
 
     <!-- Embedded REPL / Terminal panel (hidden when panel is on the right side) -->
     {#if !hideRepl}
         <div class="flex-none h-64 flex flex-col p-2">
-            <JuliaReplPane tabId={effectiveTabId} />
+            <JuliaReplPane />
         </div>
     {/if}
 </div>
