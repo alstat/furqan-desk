@@ -98,27 +98,29 @@
 		: null);
 
 	function fileTypeInfo(tab: EditorTab): { icon: string; label: string; color: string } {
-		if (tab.type === 'julia')  return { icon: 'solar:code-bold-duotone',          label: 'Julia',     color: 'text-violet-400' };
-		if (tab.type === 'typst')  return { icon: 'solar:document-text-bold-duotone', label: 'Typst',     color: 'text-brand-gold-400' };
-		if (tab.type === 'lexical')return { icon: 'solar:text-bold-duotone',           label: 'Rich Text', color: 'text-teal-400' };
+		const c = 'text-brand-charcoal-300';
+		if (tab.type === 'julia')  return { icon: 'solar:code-bold-duotone',          label: 'Julia',     color: c };
+		if (tab.type === 'typst')  return { icon: 'solar:document-text-bold-duotone', label: 'Typst',     color: c };
+		if (tab.type === 'lexical')return { icon: 'solar:text-bold-duotone',           label: 'Rich Text', color: c };
 		const ext = (tab.path ?? tab.name).split('.').pop()?.toLowerCase() ?? '';
-		const extMap: Record<string, { icon: string; label: string; color: string }> = {
-			py:  { icon: 'solar:code-bold-duotone',          label: '.py',   color: 'text-blue-400'   },
-			r:   { icon: 'solar:code-bold-duotone',          label: '.r',    color: 'text-sky-400'    },
-			bib: { icon: 'solar:book-bold-duotone',          label: '.bib',  color: 'text-amber-400'  },
-			tex: { icon: 'solar:document-text-bold-duotone', label: '.tex',  color: 'text-orange-400' },
-			md:  { icon: 'solar:text-bold-duotone',          label: '.md',   color: 'text-teal-400'   },
-			csv: { icon: 'solar:database-bold-duotone',      label: '.csv',  color: 'text-emerald-400'},
-			js:  { icon: 'solar:code-bold-duotone',          label: '.js',   color: 'text-yellow-400' },
-			ts:  { icon: 'solar:code-bold-duotone',          label: '.ts',   color: 'text-blue-400'   },
-			json:{ icon: 'solar:file-text-bold-duotone',     label: '.json', color: 'text-lime-400'   },
-			sh:  { icon: 'solar:terminal-bold-duotone',      label: '.sh',   color: 'text-brand-charcoal-400'},
-			sql: { icon: 'solar:database-bold-duotone',      label: '.sql',  color: 'text-indigo-400' },
-			html:{ icon: 'solar:code-bold-duotone',          label: '.html', color: 'text-rose-400'   },
-			css: { icon: 'solar:pallete-bold-duotone',       label: '.css',  color: 'text-pink-400'   },
-			typ: { icon: 'solar:document-text-bold-duotone', label: '.typ',  color: 'text-brand-gold-400'},
+		const extMap: Record<string, { icon: string; label: string }> = {
+			py:  { icon: 'solar:code-bold-duotone',          label: '.py'   },
+			r:   { icon: 'solar:code-bold-duotone',          label: '.r'    },
+			bib: { icon: 'solar:book-bold-duotone',          label: '.bib'  },
+			tex: { icon: 'solar:document-text-bold-duotone', label: '.tex'  },
+			md:  { icon: 'solar:text-bold-duotone',          label: '.md'   },
+			csv: { icon: 'solar:database-bold-duotone',      label: '.csv'  },
+			js:  { icon: 'solar:code-bold-duotone',          label: '.js'   },
+			ts:  { icon: 'solar:code-bold-duotone',          label: '.ts'   },
+			json:{ icon: 'solar:file-text-bold-duotone',     label: '.json' },
+			sh:  { icon: 'solar:terminal-bold-duotone',      label: '.sh'   },
+			sql: { icon: 'solar:database-bold-duotone',      label: '.sql'  },
+			html:{ icon: 'solar:code-bold-duotone',          label: '.html' },
+			css: { icon: 'solar:pallete-bold-duotone',       label: '.css'  },
+			typ: { icon: 'solar:document-text-bold-duotone', label: '.typ'  },
 		};
-		return extMap[ext] ?? { icon: 'solar:file-bold-duotone', label: ext ? `.${ext}` : 'Text', color: 'text-brand-charcoal-300' };
+		const e = extMap[ext] ?? { icon: 'solar:file-bold-duotone', label: ext ? `.${ext}` : 'Text' };
+		return { ...e, color: c };
 	}
 </script>
 

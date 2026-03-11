@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "furqan-desk",
+  "productName": "Quran Study",
   "version": "0.1.0",
   "identifier": "com.al-ahmadgaidasaad.furqan-desk",
   "build": {
@@ -28,7 +28,9 @@
     "targets": ["app"],
     "resources": [
       "data/quran-uthmani.sql",
-      "data/quranic-corpus-morphology-0.4 2.txt"
+      "data/quranic-corpus-morphology-0.4 2.txt",
+      "data/recitation/ayah-recitation-mishari-rashid-al-afasy-murattal-hafs-953.db",
+      "data/recitation/ayah-recitation-saad-al-ghamdi-murattal-hafs-954.db"
     ],
     "icon": [
       "icons/32x32.png",

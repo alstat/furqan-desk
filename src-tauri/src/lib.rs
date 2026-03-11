@@ -25,8 +25,12 @@ pub fn run() {
             let db_path   = app_data_dir.join("quran.db");
             let sql_path  = resource_dir.join("data/quran-uthmani.sql");
             let morph_path = resource_dir.join("data/quranic-corpus-morphology-0.4 2.txt");
+            let recitation_paths = vec![
+                (953i64, resource_dir.join("data/recitation/ayah-recitation-mishari-rashid-al-afasy-murattal-hafs-953.db")),
+                (954i64, resource_dir.join("data/recitation/ayah-recitation-saad-al-ghamdi-murattal-hafs-954.db")),
+            ];
 
-            let database = db::Database::new(db_path, sql_path, morph_path)
+            let database = db::Database::new(db_path, sql_path, morph_path, recitation_paths)
                 .expect("Failed to initialize database");
             app.manage(database);
             // Load any previously saved custom Julia binary path before managing state
@@ -63,6 +67,7 @@ pub fn run() {
             commands::install_typst_package,
             commands::check_typst_fonts,
             commands::install_typst_fonts,
+            commands::get_recitation_ayah,
             julia::check_julia,
             julia::get_julia_path,
             julia::set_julia_path,

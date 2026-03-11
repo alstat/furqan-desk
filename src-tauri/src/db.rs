@@ -7,13 +7,19 @@ use std::sync::Mutex;
 pub struct Database(pub Mutex<Connection>);
 
 impl Database {
-    pub fn new(db_path: PathBuf, sql_path: PathBuf, morph_path: PathBuf) -> Result<Self> {
+    pub fn new(
+        db_path: PathBuf,
+        sql_path: PathBuf,
+        morph_path: PathBuf,
+        recitation_paths: Vec<(i64, PathBuf)>,
+    ) -> Result<Self> {
         let conn = Connection::open(&db_path)?;
 
         // Initialize tables and load data
         Self::init_quran_db(&conn, &sql_path)?;
         Self::init_morphology_db(&conn, &morph_path)?;
         Self::init_user_data_tables(&conn)?;
+        Self::init_recitation_tables(&conn, &recitation_paths)?;
         Ok(Database(Mutex::new(conn)))
     }
 
@@ -193,6 +199,81 @@ impl Database {
 
         // Load data from morphology file
         Self::load_morphology_data(conn, morph_path)?;
+
+        Ok(())
+    }
+
+    fn init_recitation_tables(conn: &Connection, recitation_paths: &[(i64, PathBuf)]) -> Result<()> {
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS recitations (
+                reciter_id    INTEGER NOT NULL,
+                surah_number  INTEGER NOT NULL,
+                ayah_number   INTEGER NOT NULL,
+                audio_url     TEXT    NOT NULL,
+                duration      INTEGER,
+                segments      TEXT,
+                PRIMARY KEY (reciter_id, surah_number, ayah_number)
+            );",
+        )?;
+
+        let count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM recitations",
+            [],
+            |row| row.get(0),
+        )?;
+
+        if count > 0 {
+            // Check if ayah_number was incorrectly imported as global (surah 2 should start at 1)
+            let valid: bool = conn.query_row(
+                "SELECT EXISTS(SELECT 1 FROM recitations WHERE surah_number=2 AND ayah_number=1)",
+                [],
+                |row| row.get(0),
+            )?;
+            if valid {
+                return Ok(()); // data is correct, skip
+            }
+            // Wrong numbering — wipe and re-import
+            conn.execute("DELETE FROM recitations", [])?;
+            println!("Recitation data had incorrect ayah numbering, clearing for re-import...");
+        }
+
+        for (reciter_id, path) in recitation_paths {
+            if !path.exists() {
+                eprintln!("Recitation DB not found: {:?}", path);
+                continue;
+            }
+            let src = Connection::open(path)?;
+            let mut src_stmt = src.prepare(
+                "SELECT surah_number,
+                        ROW_NUMBER() OVER (PARTITION BY surah_number ORDER BY ayah_number) AS ayah_num,
+                        audio_url, duration, segments
+                 FROM verses
+                 ORDER BY surah_number, ayah_number",
+            )?;
+
+            let tx = conn.unchecked_transaction()?;
+            {
+                let mut ins = conn.prepare(
+                    "INSERT OR IGNORE INTO recitations (reciter_id, surah_number, ayah_number, audio_url, duration, segments)
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                )?;
+                let rows = src_stmt.query_map([], |row| {
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, i64>(1)?,
+                        row.get::<_, String>(2)?,
+                        row.get::<_, Option<i64>>(3)?,
+                        row.get::<_, Option<String>>(4)?,
+                    ))
+                })?;
+                for row in rows {
+                    let (surah, ayah, url, duration, segments) = row?;
+                    ins.execute(rusqlite::params![reciter_id, surah, ayah, url, duration, segments])?;
+                }
+            }
+            tx.commit()?;
+            println!("Imported recitation data for reciter {}", reciter_id);
+        }
 
         Ok(())
     }

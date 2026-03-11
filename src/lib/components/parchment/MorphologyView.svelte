@@ -10,6 +10,8 @@
     import WordMorphologyPopover from "./WordMorphologyPopover.svelte";
     import { setLastRead } from "$lib/functions/bookmarks";
     import { currentReadingAyah } from "$lib/stores/bookmarks.store";
+    import Icon from "@iconify/svelte";
+    import { requestPlayAyah } from "$lib/stores/recitation.store";
 
     // State for selected word
     let selectedWord: { word: MorphWord; ayahNum: number } | null =
@@ -180,7 +182,7 @@
                         class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === ayahData.ayah ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                         onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                         onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
-                    >{word.combined_arabic}&nbsp;</span>{/each}<span id="ayah-{ayahData.ayah}" class="font-scheherazade text-lime-700 dark:text-lime-600 px-1 whitespace-nowrap">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span>{/each}</div>
+                    >{word.combined_arabic}&nbsp;</span>{/each}<span id="ayah-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><button onclick={() => requestPlayAyah.set(ayahData.ayah)} title="Play ayah {ayahData.ayah}" class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity cursor-pointer z-20 flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button></span>{/each}</div>
     {:else}
         <div class="py-8 text-center text-gray-500 dark:text-[#838ba7] h-full min-h-[300px]">
             Loading morphology data...
