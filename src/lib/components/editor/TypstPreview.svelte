@@ -10,6 +10,7 @@
         typstIsCompiling,
     } from "$lib/stores/editor.store";
     import Icon from "@iconify/svelte";
+    import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
 
     async function exportPdf() {
         typstCompileError.set("");
@@ -37,7 +38,7 @@
     >
         <!-- Toolbar inside the border -->
         <div
-            class="flex items-center justify-between px-4 py-2 border-b border-stone-200 dark:border-[#414559] shrink-0"
+            class="flex items-center justify-between px-4 py-1 border-b border-stone-200 dark:border-[#414559] shrink-0"
         >
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
@@ -61,14 +62,14 @@
             </span>
             <button
                 onclick={exportPdf}
-                class="cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 text-white hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 transition-colors"
+                class={actionBtnStyle + " absolute -top-5 left-11/12"}
             >
-                Export PDF
+                <Icon icon="ph:file-pdf-bold" />
             </button>
         </div>
 
         <!-- Pages -->
-        <div class="mb-3 flex-1 overflow-y-auto px-6 py-4">
+        <div class="flex-1 overflow-y-auto px-6 pt-4 mb-7">
             {#if $typstCompileError}
                 <pre
                     class="text-xs text-red-500 whitespace-pre-wrap">{$typstCompileError}</pre>
