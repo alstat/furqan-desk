@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Icon from '@iconify/svelte';
+    import Icon from "@iconify/svelte";
     import NextPrevButton from "./NextPrevButton.svelte";
     import ParchmentActionBar from "./ParchmentActionBar.svelte";
     import BookmarkDialog from "./BookmarkDialog.svelte";
@@ -15,7 +15,7 @@
     import { pendingJumpAyah } from "$lib/stores/bookmarks.store";
 
     let scrollContainer = $state<HTMLElement | null>(null);
-    let showBookmarks  = $state(false);
+    let showBookmarks = $state(false);
     let showHighlights = $state(false);
 
     $effect(() => {
@@ -30,57 +30,88 @@
         pendingJumpAyah.set(null);
         setTimeout(() => {
             const anchor = scrollContainer?.querySelector(`#ayah-${target}`);
-            anchor?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            anchor?.scrollIntoView({ behavior: "smooth", block: "center" });
 
             // Soft highlight on all words + the verse number of the target ayah
             const words = scrollContainer?.querySelectorAll<HTMLElement>(
-                `[data-ayah="${target}"], #ayah-${target}`
+                `[data-ayah="${target}"], #ayah-${target}`,
             );
-            words?.forEach(el => {
-                el.classList.remove('ayah-highlight');
+            words?.forEach((el) => {
+                el.classList.remove("ayah-highlight");
                 // force reflow so re-triggering works if same ayah is jumped to twice
                 void el.offsetWidth;
-                el.classList.add('ayah-highlight');
+                el.classList.add("ayah-highlight");
             });
             setTimeout(() => {
-                words?.forEach(el => el.classList.remove('ayah-highlight'));
+                words?.forEach((el) => el.classList.remove("ayah-highlight"));
             }, 2500);
         }, 800);
     });
 
     // Text selection / highlight state
-    interface SelectionInfo { text: string; surah: number; ayah: number; x: number; y: number; }
+    interface SelectionInfo {
+        text: string;
+        surah: number;
+        ayah: number;
+        x: number;
+        y: number;
+    }
     let selectionInfo = $state<SelectionInfo | null>(null);
     let savingHighlight = $state(false);
 
     function handleMouseUp(event: MouseEvent) {
         const selection = window.getSelection();
-        if (!selection || selection.isCollapsed) { selectionInfo = null; return; }
+        if (!selection || selection.isCollapsed) {
+            selectionInfo = null;
+            return;
+        }
 
         const text = selection.toString().trim();
-        if (!text) { selectionInfo = null; return; }
+        if (!text) {
+            selectionInfo = null;
+            return;
+        }
 
         // Use startContainer — commonAncestorContainer is the parent div for multi-word selections
         const range = selection.getRangeAt(0);
         const startNode = range.startContainer;
-        const el = startNode.nodeType === Node.TEXT_NODE ? startNode.parentElement : startNode as HTMLElement;
-        const wordEl = el?.closest('[data-ayah]') as HTMLElement | null;
+        const el =
+            startNode.nodeType === Node.TEXT_NODE
+                ? startNode.parentElement
+                : (startNode as HTMLElement);
+        const wordEl = el?.closest("[data-ayah]") as HTMLElement | null;
 
-        if (!wordEl) { selectionInfo = null; return; }
+        if (!wordEl) {
+            selectionInfo = null;
+            return;
+        }
 
-        const surah = parseInt(wordEl.dataset.surah ?? '0');
-        const ayah = parseInt(wordEl.dataset.ayah ?? '0');
+        const surah = parseInt(wordEl.dataset.surah ?? "0");
+        const ayah = parseInt(wordEl.dataset.ayah ?? "0");
 
-        if (!surah || !ayah) { selectionInfo = null; return; }
+        if (!surah || !ayah) {
+            selectionInfo = null;
+            return;
+        }
 
-        selectionInfo = { text, surah, ayah, x: event.clientX, y: event.clientY };
+        selectionInfo = {
+            text,
+            surah,
+            ayah,
+            x: event.clientX,
+            y: event.clientY,
+        };
     }
 
     async function saveHighlight() {
         if (!selectionInfo) return;
         savingHighlight = true;
         try {
-            await addHighlight(selectionInfo.surah, selectionInfo.ayah, selectionInfo.text);
+            await addHighlight(
+                selectionInfo.surah,
+                selectionInfo.ayah,
+                selectionInfo.text,
+            );
             window.getSelection()?.removeAllRanges();
             selectionInfo = null;
         } finally {
@@ -90,7 +121,7 @@
 </script>
 
 <div
-    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 flex flex-col items-center bg-white dark:bg-[#303446] sm:w-full md:w-9/12 lg:w-6/12 sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30`}
+    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 flex flex-col items-center rounded-md bg-white dark:bg-[#303446] sm:w-full md:w-9/12 lg:w-6/12 sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30`}
 >
     <ParchmentActionBar
         onOpenBookmarks={() => (showBookmarks = true)}
@@ -110,22 +141,30 @@
 </div>
 
 <!-- Dialogs — rendered outside the z-1 stacking context so their fixed backdrop covers the full viewport -->
-<BookmarkDialog  open={showBookmarks}  onClose={() => (showBookmarks  = false)} />
-<HighlightDialog open={showHighlights} onClose={() => (showHighlights = false)} />
+<BookmarkDialog open={showBookmarks} onClose={() => (showBookmarks = false)} />
+<HighlightDialog
+    open={showHighlights}
+    onClose={() => (showHighlights = false)}
+/>
 
 <!-- Floating Save Highlight button -->
 {#if selectionInfo}
     <div
         class="fixed z-40 flex items-center gap-1.5 rounded-lg border border-lime-200 dark:border-[#a6d189]/40 bg-white dark:bg-[#414559] px-3 py-1.5 shadow-lg"
-        style="left: {selectionInfo.x}px; top: {selectionInfo.y - 48}px; transform: translateX(-50%);"
+        style="left: {selectionInfo.x}px; top: {selectionInfo.y -
+            48}px; transform: translateX(-50%);"
     >
-        <Icon icon="solar:magic-stick-3-bold-duotone" class="shrink-0 text-lime-600" width="0.9rem" />
+        <Icon
+            icon="solar:magic-stick-3-bold-duotone"
+            class="shrink-0 text-lime-600"
+            width="0.9rem"
+        />
         <button
             onclick={saveHighlight}
             disabled={savingHighlight}
             class="cursor-pointer text-xs font-medium text-slate-700 dark:text-[#c6d0f5] hover:text-lime-700 dark:hover:text-[#a6d189] disabled:opacity-50 transition-colors"
         >
-            {savingHighlight ? 'Saving…' : 'Save Highlight'}
+            {savingHighlight ? "Saving…" : "Save Highlight"}
         </button>
         <button
             onclick={() => (selectionInfo = null)}
