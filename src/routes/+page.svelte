@@ -34,22 +34,37 @@
     });
 
     // Julia REPL side-panel mode: active tab is julia AND hideSurahPage is on
-    let juliaReplMode = $derived($hideSurahPage() && $activeTab?.type === 'julia');
+    let juliaReplMode = $derived(
+        $hideSurahPage() && $activeTab?.type === "julia",
+    );
 </script>
 
 <svelte:window bind:innerHeight={height} />
-<div class="w-[95%] max-w-375 relative mx-auto p-0 sm:py-6">
+<div class="w-[95%] rounded-r-md max-w-375 relative mx-auto p-0 sm:py-6">
     <div
-        class={`flex ${$surahOrientation()} ${$isSidebar ? "bg-white dark:bg-[#232634] " : ""} flex-row justify-center`}
+        class={`flex rounded-r-md ${$surahOrientation()} ${$isSidebar ? "bg-white dark:bg-[#232634] " : ""} flex-row justify-center`}
         style:height="{height - 47}px"
     >
         {#if juliaReplMode}
             <!-- Julia REPL panel on the right (or left in RTL layout) — shared by all tabs -->
-            <div class="relative z-1 flex flex-col items-center bg-white dark:bg-[#303446]
-                        sm:w-full md:w-9/12 lg:w-6/12
-                        sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30">
-                <div class="border border-stone-200 dark:border-[#414559]
-                            w-full flex-1 rounded-r-md flex flex-col min-h-0 p-2 overflow-hidden">
+            <div
+                class="relative z-1 flex flex-col items-center bg-white dark:bg-[#303446]
+                        sm:w-full md:w-9/12 lg:w-6/12 border border-stone-200 dark:border-[#414559]
+                        sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 rounded-r-md"
+            >
+                <div
+                    class=" mb-5
+                            w-full flex-1 flex flex-col min-h-0 pt-1 pb-2 px-3 overflow-hidden"
+                >
+                    <div
+                        class="flex items-center justify-between px-1 pb-1 shrink-0"
+                    >
+                        <span
+                            class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
+                        >
+                            Julia
+                        </span>
+                    </div>
                     <JuliaReplPane />
                 </div>
             </div>
