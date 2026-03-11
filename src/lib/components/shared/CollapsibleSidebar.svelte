@@ -5,7 +5,7 @@
 	import { hideSurahPage, isSidebar, surahOrientation } from '$lib/stores/quran.svelte';
 	import { typstMode } from '$lib/stores/editor.store';
 
-	let { children } = $props();
+	let { children, roundRight = true } = $props();
 
 	let sidebarWidth = $derived($isSidebar ? 'sm:w-full md:w-9/12 lg:w-6/12' : '');
 
@@ -88,7 +88,7 @@
 					duration: 300,
 					direction: $surahOrientation() == 'flex-row-reverse' ? 'right' : 'left'// or 'left' for left-to-right
 				}}
-				class="w-full space-y-2 overflow-visible bg-white dark:bg-[#292c3c] px-1 pb-4 text-xl border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/40 {$hideSurahPage() && !$typstMode ? 'rounded-md' : 'rounded-l-md'}"
+				class="w-full space-y-2 overflow-visible bg-white dark:bg-[#292c3c] px-1 pb-4 text-xl border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/40 {roundRight && $hideSurahPage() && !$typstMode ? 'rounded-md' : 'rounded-l-md'}"
 			>
 				{@render children()}
 			</div>

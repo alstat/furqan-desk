@@ -39,6 +39,7 @@
     --color-brand-gold-100: #F3E5C0;
     --color-brand-gold-200: #E5CC90;
     --color-brand-gold-400: #C8A96A;
+    --color-brand-gold-500: #B89558;
     --color-brand-gold-600: #9A7A40;
 
     /* Charcoal */
@@ -120,6 +121,17 @@ html.dark ::-webkit-scrollbar-corner {
     background-color: var(--color-brand-gold-100);
     color: var(--color-brand-gold-600);
     font-weight: 600;
+}
+
+/* Editor pane flash (grouped tab click) */
+@keyframes flash-border {
+    0%   { box-shadow: 0 0 0 3px var(--color-brand-gold-400); }
+    60%  { box-shadow: 0 0 0 3px var(--color-brand-gold-400); }
+    100% { box-shadow: 0 0 0 0px transparent; }
+}
+
+.flash-border-anim {
+    animation: flash-border 1.5s ease-out forwards;
 }
 
 /* Ayah jump highlight */

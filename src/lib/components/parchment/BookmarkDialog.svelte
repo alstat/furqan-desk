@@ -64,10 +64,10 @@
         <div class="flex w-full max-w-md flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden" style="max-height: 85vh;">
 
             <!-- Header -->
-            <div class="shrink-0 bg-brand-sand-50 border-b border-brand-sand-200 px-5 py-4">
+            <div class="shrink-0 bg-brand-sand-50 dark:bg-[#292c3c] border-b border-brand-sand-200 dark:border-[#414559] px-5 py-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-sand-100 border border-brand-sand-200">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-sand-100 dark:bg-[#414559] border border-brand-sand-200 dark:border-[#51576d]">
                             <Icon icon="solar:bookmark-bold-duotone" class="text-brand-gold-500" width="1rem" />
                         </div>
                         <div>
@@ -77,7 +77,7 @@
                     </div>
                     <button
                         onclick={onClose}
-                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-sand-100 border border-brand-sand-200 text-brand-charcoal-400 hover:bg-brand-sand-200 transition-colors"
+                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-sand-100 dark:bg-[#414559] border border-brand-sand-200 dark:border-[#51576d] text-brand-charcoal-400 dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#51576d] transition-colors"
                     >
                         <Icon icon="solar:close-circle-bold" width="1rem" />
                     </button>
@@ -135,9 +135,9 @@
                 {#if $lastRead}
                     <div class="px-5 py-4 border-b border-brand-sand-200">
                         <p class="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300">Continue Reading</p>
-                        <div class="flex items-center justify-between rounded-xl bg-brand-sand-100 border border-brand-sand-200 px-4 py-3">
+                        <div class="flex items-center justify-between rounded-xl bg-brand-sand-100 dark:bg-[#303446] border border-brand-sand-200 dark:border-[#414559] px-4 py-3">
                             <div class="flex items-center gap-2.5">
-                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-sand-100 border border-brand-sand-200">
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-sand-100 dark:bg-[#414559] border border-brand-sand-200 dark:border-[#51576d]">
                                     <Icon icon="solar:book-bookmark-bold-duotone" class="text-brand-gold-500" width="1rem" />
                                 </div>
                                 <div>

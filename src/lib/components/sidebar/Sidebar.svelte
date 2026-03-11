@@ -10,7 +10,9 @@
 	import { lexicalEditorInstance, lexicalHistoryState, typstSource } from '$lib/stores/editor.store';
 	import { tabs, activeTab, activeTabId, createTab } from '$lib/stores/tabs.store';
 	import { hideSurahPage } from '$lib/stores/quran.svelte';
-	import { splitJuliaTabId } from '$lib/stores/julia-terminal.store';
+	import { juliaGroups } from '$lib/stores/julia-terminal.store';
+	import Icon from '@iconify/svelte';
+	import type { EditorTab } from '$lib/stores/tabs.store';
 	import { CAN_UNDO_COMMAND, CAN_REDO_COMMAND } from 'lexical';
 	import type { HistoryState } from '@lexical/history';
 
@@ -88,25 +90,69 @@
 
 	// Whether we're in "Julia side-panel" mode: REPL moves to the right side
 	let juliaMode = $derived($hideSurahPage() && $activeTab?.type === 'julia');
+
+	// Split tab id (for badge visibility)
+	let _activeGroup = $derived($juliaGroups.find(g => g.tabA === $activeTabId || g.tabB === $activeTabId));
+	let splitTabId = $derived(_activeGroup
+		? (_activeGroup.tabA === $activeTabId ? _activeGroup.tabB : _activeGroup.tabA)
+		: null);
+
+	function fileTypeInfo(tab: EditorTab): { icon: string; label: string; color: string } {
+		if (tab.type === 'julia')  return { icon: 'solar:code-bold-duotone',          label: 'Julia',     color: 'text-violet-400' };
+		if (tab.type === 'typst')  return { icon: 'solar:document-text-bold-duotone', label: 'Typst',     color: 'text-brand-gold-400' };
+		if (tab.type === 'lexical')return { icon: 'solar:text-bold-duotone',           label: 'Rich Text', color: 'text-teal-400' };
+		const ext = (tab.path ?? tab.name).split('.').pop()?.toLowerCase() ?? '';
+		const extMap: Record<string, { icon: string; label: string; color: string }> = {
+			py:  { icon: 'solar:code-bold-duotone',          label: '.py',   color: 'text-blue-400'   },
+			r:   { icon: 'solar:code-bold-duotone',          label: '.r',    color: 'text-sky-400'    },
+			bib: { icon: 'solar:book-bold-duotone',          label: '.bib',  color: 'text-amber-400'  },
+			tex: { icon: 'solar:document-text-bold-duotone', label: '.tex',  color: 'text-orange-400' },
+			md:  { icon: 'solar:text-bold-duotone',          label: '.md',   color: 'text-teal-400'   },
+			csv: { icon: 'solar:database-bold-duotone',      label: '.csv',  color: 'text-emerald-400'},
+			js:  { icon: 'solar:code-bold-duotone',          label: '.js',   color: 'text-yellow-400' },
+			ts:  { icon: 'solar:code-bold-duotone',          label: '.ts',   color: 'text-blue-400'   },
+			json:{ icon: 'solar:file-text-bold-duotone',     label: '.json', color: 'text-lime-400'   },
+			sh:  { icon: 'solar:terminal-bold-duotone',      label: '.sh',   color: 'text-brand-charcoal-400'},
+			sql: { icon: 'solar:database-bold-duotone',      label: '.sql',  color: 'text-indigo-400' },
+			html:{ icon: 'solar:code-bold-duotone',          label: '.html', color: 'text-rose-400'   },
+			css: { icon: 'solar:pallete-bold-duotone',       label: '.css',  color: 'text-pink-400'   },
+			typ: { icon: 'solar:document-text-bold-duotone', label: '.typ',  color: 'text-brand-gold-400'},
+		};
+		return extMap[ext] ?? { icon: 'solar:file-bold-duotone', label: ext ? `.${ext}` : 'Text', color: 'text-brand-charcoal-300' };
+	}
 </script>
 
-<CollapsibleSidebar>
+<CollapsibleSidebar roundRight={!juliaMode}>
 	<div class="relative h-full flex flex-col overflow-visible">
 		<ActionBar />
+		{#if $activeTab}
+			{@const ft = fileTypeInfo($activeTab)}
+			<div class="absolute -top-5 right-2 z-10 pointer-events-none">
+				<span class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] font-semibold
+							 bg-brand-sand-100/80 border border-brand-sand-200 backdrop-blur-sm
+							 dark:bg-[#292c3c]/80 dark:border-[#414559] {ft.color}">
+					<Icon icon={ft.icon} width="0.6rem" />
+					{ft.label}
+				</span>
+			</div>
+		{/if}
 		<div class="flex-1 min-h-0 overflow-visible">
 			{#if $activeTab?.type === 'typst' || $activeTab?.type === 'text'}
 				<TypstEditor />
 			{:else if $activeTab?.type === 'julia'}
+				{@const activeGroup = $juliaGroups.find(g => g.tabA === $activeTabId || g.tabB === $activeTabId)}
+				{@const splitTabId = activeGroup
+					? (activeGroup.tabA === $activeTabId ? activeGroup.tabB : activeGroup.tabA)
+					: null}
 				{#if juliaMode}
-					{#if $splitJuliaTabId}
+					{#if splitTabId}
 						<!-- Split view: two Julia editors stacked, REPL panels on the right -->
 						<div class="flex flex-col h-full">
 							<div class="flex-1 min-h-0 overflow-visible">
 								<JuliaEditor hideRepl={true} />
 							</div>
-							<div class="border-t border-brand-sand-200 dark:border-[#414559]"></div>
 							<div class="flex-1 min-h-0 overflow-visible">
-								<JuliaEditor tabId={$splitJuliaTabId} hideRepl={true} />
+								<JuliaEditor tabId={splitTabId} hideRepl={true} />
 							</div>
 						</div>
 					{:else}

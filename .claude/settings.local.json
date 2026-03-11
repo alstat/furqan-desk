@@ -22,7 +22,8 @@
       "Bash(ls /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/tailwind* 2>/dev/null; ls /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/*.config* 2>/dev/null; head -5 /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/app.css)",
       "Bash(cargo build:*)",
       "Bash(npx tsc:*)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/lib/components/widgets -type f -name \"*.svelte\" 2>/dev/null | head -20)"
     ]
   }
 }
