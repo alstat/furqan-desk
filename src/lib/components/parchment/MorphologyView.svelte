@@ -113,26 +113,26 @@
         <div class="flex items-center">
             <!-- Left decorative arm -->
             <div class="flex flex-1 items-center">
-                <div class="h-px flex-1 bg-linear-to-r from-transparent to-amber-300 dark:to-amber-700/50"></div>
+                <div class="h-px flex-1 bg-linear-to-r from-transparent to-brand-gold-200 dark:to-brand-gold-400/30"></div>
                 <div class="flex items-center gap-1 px-2">
-                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300 dark:bg-amber-600/60"></span>
-                    <span class="inline-block h-2 w-2 rotate-45 bg-amber-400 dark:bg-amber-600/70"></span>
-                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300 dark:bg-amber-600/60"></span>
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-200 dark:bg-brand-gold-400/40"></span>
+                    <span class="inline-block h-2 w-2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/50"></span>
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-200 dark:bg-brand-gold-400/40"></span>
                 </div>
             </div>
 
             <!-- Surah name panel -->
-            <div class="relative border border-amber-400/80 dark:border-amber-700/40 bg-linear-to-b from-amber-50/60 to-white/0 dark:from-amber-900/20 dark:to-transparent px-10 py-2.5">
+            <div class="relative border border-brand-gold-400/80 dark:border-brand-gold-200/30 bg-linear-to-b from-brand-gold-50/60 to-white/0 dark:from-brand-gold-100/30 dark:to-transparent px-10 py-2.5">
                 <!-- Inner border -->
-                <div class="pointer-events-none absolute inset-0.75 border border-amber-300/40 dark:border-amber-700/20"></div>
+                <div class="pointer-events-none absolute inset-0.75 border border-brand-gold-200/40 dark:border-brand-gold-200/20"></div>
                 <!-- Mid-border diamonds -->
-                <span class="absolute -top-1.25 left-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-amber-500 dark:bg-amber-700/70"></span>
-                <span class="absolute -bottom-1.25 left-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-amber-500 dark:bg-amber-700/70"></span>
+                <span class="absolute -top-1.25 left-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/50"></span>
+                <span class="absolute -bottom-1.25 left-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/50"></span>
                 <!-- Corner diamonds -->
-                <span class="absolute -left-1 -top-1 inline-block h-2 w-2 rotate-45 bg-amber-400 dark:bg-amber-600/60"></span>
-                <span class="absolute -right-1 -top-1 inline-block h-2 w-2 rotate-45 bg-amber-400 dark:bg-amber-600/60"></span>
-                <span class="absolute -bottom-1 -left-1 inline-block h-2 w-2 rotate-45 bg-amber-400 dark:bg-amber-600/60"></span>
-                <span class="absolute -bottom-1 -right-1 inline-block h-2 w-2 rotate-45 bg-amber-400 dark:bg-amber-600/60"></span>
+                <span class="absolute -left-1 -top-1 inline-block h-2 w-2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/40"></span>
+                <span class="absolute -right-1 -top-1 inline-block h-2 w-2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/40"></span>
+                <span class="absolute -bottom-1 -left-1 inline-block h-2 w-2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/40"></span>
+                <span class="absolute -bottom-1 -right-1 inline-block h-2 w-2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/40"></span>
                 <!-- Surah name -->
                 <span class="relative font-scheherazade text-2xl leading-none text-slate-800 dark:text-[#c6d0f5] supports-[-webkit-hyphens:none]:font-scheherazade supports-[not(-webkit-hyphens:none)]:font-reem">{$selectedSurahName}</span>
             </div>
@@ -140,11 +140,11 @@
             <!-- Right decorative arm -->
             <div class="flex flex-1 items-center">
                 <div class="flex items-center gap-1 px-2">
-                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300 dark:bg-amber-600/60"></span>
-                    <span class="inline-block h-2 w-2 rotate-45 bg-amber-400 dark:bg-amber-600/70"></span>
-                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-amber-300 dark:bg-amber-600/60"></span>
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-200 dark:bg-brand-gold-400/40"></span>
+                    <span class="inline-block h-2 w-2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/50"></span>
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-200 dark:bg-brand-gold-400/40"></span>
                 </div>
-                <div class="h-px flex-1 bg-linear-to-l from-transparent to-amber-300 dark:to-amber-700/50"></div>
+                <div class="h-px flex-1 bg-linear-to-l from-transparent to-brand-gold-200 dark:to-brand-gold-400/30"></div>
             </div>
         </div>
     </div>

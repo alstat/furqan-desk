@@ -11,7 +11,7 @@
         type TermLine,
         type TermTab,
     } from "$lib/stores/julia-terminal.store";
-    import { juliaReplHistory, type ReplLine } from "$lib/stores/editor.store";
+    import { juliaReplHistory, cmFontSize, type ReplLine } from "$lib/stores/editor.store";
 
     // ── Terminal state (shared across all Julia tabs) ─────────────────────────
 
@@ -264,8 +264,15 @@
     });
 </script>
 
+<style>
+    :global(.repl-mono) {
+        font-size: var(--repl-font-size, 11px);
+    }
+</style>
+
 <div
     class="flex-1 flex flex-col rounded-md overflow-hidden border border-brand-sand-400 dark:border-[#414559] shadow-sm min-h-0 h-full"
+    style="--repl-font-size: {$cmFontSize}px"
 >
     <!-- Tab bar -->
     <div
@@ -345,7 +352,7 @@
             <!-- Output -->
             <div
                 bind:this={replOutputEl}
-                class="flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono text-[11px] leading-relaxed"
+                class="flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono repl-mono leading-relaxed"
                 role="log"
                 aria-label="REPL output"
             >
@@ -393,7 +400,7 @@
                 onclick={() => replInputEl?.focus()}
             >
                 <span
-                    class="text-brand-gold-600 shrink-0 select-none font-semibold font-mono text-[11px] leading-relaxed pt-px"
+                    class="text-brand-gold-600 shrink-0 select-none font-semibold font-mono repl-mono leading-relaxed pt-px"
                     >julia&gt;</span
                 >
                 <textarea
@@ -405,7 +412,7 @@
                     placeholder={isRunning
                         ? "Running…"
                         : "Enter code, Shift+Enter for newline"}
-                    class="flex-1 resize-none bg-transparent font-mono text-[11px] text-brand-charcoal-700 dark:text-[#c6d0f5]
+                    class="flex-1 resize-none bg-transparent font-mono repl-mono text-brand-charcoal-700 dark:text-[#c6d0f5]
                            leading-relaxed outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880]
                            disabled:opacity-40 disabled:cursor-not-allowed"
                 ></textarea>
@@ -420,7 +427,7 @@
                 <!-- Output -->
                 <div
                     bind:this={termOutputEl}
-                    class="flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono text-[11px] leading-relaxed"
+                    class="flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono repl-mono leading-relaxed"
                     role="log"
                     aria-label="Terminal output"
                 >
@@ -473,7 +480,7 @@
                     onclick={() => termInputEl?.focus()}
                 >
                     <span
-                        class="text-brand-gold-600 shrink-0 select-none font-semibold font-mono text-[11px]"
+                        class="text-brand-gold-600 shrink-0 select-none font-semibold font-mono repl-mono"
                         >$</span
                     >
                     <input
@@ -488,7 +495,7 @@
                             : ts.termIsRunning[tab.id]
                               ? "Running…"
                               : "Enter command, press Enter to run"}
-                        class="flex-1 bg-transparent font-mono text-[11px] text-brand-charcoal-700 dark:text-[#c6d0f5]
+                        class="flex-1 bg-transparent font-mono repl-mono text-brand-charcoal-700 dark:text-[#c6d0f5]
                                outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880]
                                disabled:opacity-40 disabled:cursor-not-allowed"
                     />

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { get } from "svelte/store";
+    import { onDestroy } from "svelte";
     import { IS_APPLE } from "@lexical/utils";
     import {
         activeTab,
@@ -103,6 +104,28 @@
 
     // ── Editor keymap ─────────────────────────────────────────────────────────
 
+    // ── Draggable REPL splitter ───────────────────────────────────────────────
+
+    let replHeight = $state(256);
+    let dragStartY = 0;
+    let dragStartHeight = 0;
+
+    function startDrag(e: PointerEvent) {
+        dragStartY = e.clientY;
+        dragStartHeight = replHeight;
+        window.addEventListener('pointermove', onDrag);
+        window.addEventListener('pointerup', stopDrag, { once: true });
+    }
+    function onDrag(e: PointerEvent) {
+        const delta = dragStartY - e.clientY;
+        replHeight = Math.max(120, dragStartHeight + delta);
+    }
+    function stopDrag() {
+        window.removeEventListener('pointermove', onDrag);
+    }
+
+    onDestroy(() => { window.removeEventListener('pointermove', onDrag); });
+
     const juliaKeymap: KeyBinding[] = [
         {
             key: "Mod-Enter",
@@ -129,7 +152,7 @@
 
 <div class="relative overflow-visible flex flex-col h-full">
     <!-- Editor area -->
-    <div class="flex-1 flex flex-col min-h-0">
+    <div class="flex-1 flex flex-col min-h-0" style="min-height: 120px">
         <span class="{labelClass} px-2 pt-1"
             >{effectiveTab?.name ?? "Julia Editor"}</span
         >
@@ -153,7 +176,18 @@
 
     <!-- Embedded REPL / Terminal panel (hidden when panel is on the right side) -->
     {#if !hideRepl}
-        <div class="flex-none h-64 flex flex-col p-2">
+        <!-- Draggable splitter -->
+        <div
+            class="flex-none h-1.5 cursor-row-resize flex items-center justify-center group
+                   hover:bg-brand-gold-100 dark:hover:bg-brand-gold-100/10 transition-colors select-none"
+            onpointerdown={startDrag}
+            role="separator"
+            aria-orientation="horizontal"
+        >
+            <div class="w-8 h-0.5 rounded-full bg-brand-sand-400 dark:bg-[#414559]
+                        group-hover:bg-brand-gold-400 transition-colors"></div>
+        </div>
+        <div class="flex-none flex flex-col p-2" style:height="{replHeight}px">
             <JuliaReplPane />
         </div>
     {/if}
