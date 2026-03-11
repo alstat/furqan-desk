@@ -48,7 +48,7 @@
 		ariaRequired = undefined,
 		autoCapitalize = undefined,
 		// className = 'ContentEditable__root',
-        className = 'relative block top-2 px-4 w-full outline-none border-0 text-surface-800 dark:text-surface-200 default-scroll',
+        className = 'ContentEditable__root relative block top-2 px-4 w-full outline-none border-0 text-surface-800 dark:text-surface-200 default-scroll',
 		id = undefined,
 		role = 'textbox',
 		spellCheck = true,

@@ -18,7 +18,7 @@
     import { typstMode } from "$lib/stores/editor.store";
     import { activeTab } from "$lib/stores/tabs.store";
 
-    let height: number = $state(10);
+    let height: number = $state(typeof window !== 'undefined' ? window.innerHeight : 600);
 
     onMount(async () => {
         try {
@@ -62,7 +62,7 @@
                         <span
                             class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
                         >
-                            Julia
+                            Terminal
                         </span>
                     </div>
                     <JuliaReplPane />
