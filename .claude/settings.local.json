@@ -20,7 +20,9 @@
       "Bash(grep -r \"gradient-radial\\\\|--gradient-radial\\\\|bg-gradient\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/tailwind.config* /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/vite.config* 2>/dev/null | head -20; grep -r \"gradient-radial\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/app.css 2>/dev/null | head -5)",
       "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -name \"tailwind.config.*\" -o -name \"tailwind.config.ts\" 2>/dev/null | head -5)",
       "Bash(ls /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/tailwind* 2>/dev/null; ls /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/*.config* 2>/dev/null; head -5 /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/app.css)",
-      "Bash(cargo build:*)"
+      "Bash(cargo build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)"
     ]
   }
 }
