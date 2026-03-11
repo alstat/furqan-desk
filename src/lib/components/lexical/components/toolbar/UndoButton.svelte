@@ -11,6 +11,7 @@
 	const isEditable = getIsEditable();
 
 	let canUndo = $state(false);
+	let disabledClass = $derived(!canUndo || !$isEditable ? 'opacity-30 cursor-not-allowed pointer-events-none' : '');
 
 	// unregisters onDestroy through returned callback
 	onMount(() => {
@@ -32,11 +33,11 @@
 	}}
 	title={IS_APPLE ? 'Undo (⌘Z)' : 'Undo (Ctrl+Z)'}
 	type="button"
-	class={toolBarBtnStyle + ' p-1'}
+	class={toolBarBtnStyle + ' p-1 ' + disabledClass}
 	aria-label="Undo"
 >
   {#if !canUndo || !$isEditable}
-    <span class="text-brand-charcoal-100"><Icon icon={icons['undo']} width=1rem/></span>
+    <span class="text-brand-charcoal-100 dark:text-[#626880]"><Icon icon={icons['undo']} width=1rem/></span>
   {:else}
 	  <Icon icon={icons['undo']} width=1rem/>
   {/if}

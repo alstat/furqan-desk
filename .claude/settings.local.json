@@ -23,7 +23,8 @@
       "Bash(cargo build:*)",
       "Bash(npx tsc:*)",
       "Bash(npx vite:*)",
-      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/lib/components/widgets -type f -name \"*.svelte\" 2>/dev/null | head -20)"
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/lib/components/widgets -type f -name \"*.svelte\" 2>/dev/null | head -20)",
+      "Bash(grep -r \"ayah-\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src --include=\"*.css\" --include=\"*.svelte\" 2>/dev/null | head -20)"
     ]
   }
 }

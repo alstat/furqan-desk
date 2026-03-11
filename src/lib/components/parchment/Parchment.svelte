@@ -121,7 +121,7 @@
 </script>
 
 <div
-    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 flex flex-col items-center rounded-md bg-white dark:bg-[#303446] sm:w-full md:w-9/12 lg:w-6/12 sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30`}
+    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 h-full flex flex-col items-center rounded-md bg-white dark:bg-[#303446] sm:w-full md:w-9/12 lg:w-6/12 sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30`}
 >
     <ParchmentActionBar
         onOpenBookmarks={() => (showBookmarks = true)}
@@ -132,7 +132,7 @@
         bind:this={scrollContainer}
         role="document"
         onmouseup={handleMouseUp}
-        class={`default-scroll border border-stone-200 dark:border-[#414559] w-full flex-1 overflow-y-auto px-12 py-10 text-right ${$morphFontSize} leading-loose text-slate-600 dark:text-[#c6d0f5] ${$isSidebar ? "rounded-r-md" : "rounded-md"}`}
+        class={`default-scroll border border-stone-200 dark:border-[#414559] w-full flex-1 min-h-0 overflow-y-auto px-12 py-10 text-right ${$morphFontSize} leading-loose text-slate-600 dark:text-[#c6d0f5] ${$isSidebar ? "rounded-r-md" : "rounded-md"}`}
     >
         <MorphologyView />
     </div>

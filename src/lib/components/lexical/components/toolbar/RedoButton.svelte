@@ -19,6 +19,7 @@
   const isEditable = getIsEditable();
 
   let canRedo = $state(false);
+  let disabledClass = $derived(!canRedo || !$isEditable ? 'opacity-30 cursor-not-allowed pointer-events-none' : '');
 
   // unregisters onDestroy through returned callback
   onMount(() => {
@@ -40,10 +41,10 @@
   }}
   title={IS_APPLE ? 'Redo (⌘Y)' : 'Redo (Ctrl+Y)'}
   type="button"
-  class={toolBarBtnStyle + ' p-1'}
+  class={toolBarBtnStyle + ' p-1 ' + disabledClass}
   aria-label="Redo">
   {#if !canRedo || !$isEditable}
-    <span class="text-brand-charcoal-100"><Icon icon={icons['redo']} width=1rem/></span>
+    <span class="text-brand-charcoal-100 dark:text-[#626880]"><Icon icon={icons['redo']} width=1rem/></span>
   {:else}
 	  <Icon icon={icons['redo']} width=1rem/>
   {/if}

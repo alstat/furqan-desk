@@ -360,6 +360,12 @@
         if (!view) return;
         view.dispatch({ effects: themeComp.reconfigure(getThemeExt(theme)) });
     });
+
+    // Remeasure layout after font-size change so line numbers stay aligned
+    $effect(() => {
+        $cmFontSize; // reactive dependency
+        if (view) requestAnimationFrame(() => view.requestMeasure());
+    });
 </script>
 
 <div bind:this={container} class={className} style="--cm-font-size: {$cmFontSize}px"></div>

@@ -284,7 +284,7 @@
                        {ts.activePanel === 'julia'
                     ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
                     : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
-                >Julia REPL</button
+                >REPL</button
             >
             {#if ts.activePanel === "julia"}
                 {#if isRunning}

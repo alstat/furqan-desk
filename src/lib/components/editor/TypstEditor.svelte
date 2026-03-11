@@ -131,7 +131,7 @@
 <div class="relative overflow-visible flex flex-col h-full">
     <!-- Editor — always visible -->
     <div class="flex-1 flex flex-col min-h-0">
-        <span class="{labelClass} px-2 pt-1">Editor</span>
+        <span class="{labelClass} px-2 pt-1">{$activeTab?.name ?? "Editor"}</span>
         <CodeMirrorEditor
             value={$typstSource}
             language="typst"
