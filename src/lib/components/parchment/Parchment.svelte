@@ -4,19 +4,26 @@
     import ParchmentActionBar from "./ParchmentActionBar.svelte";
     import BookmarkDialog from "./BookmarkDialog.svelte";
     import HighlightDialog from "./HighlightDialog.svelte";
+    import RecitationPlayer from "./RecitationPlayer.svelte";
     import {
         hideSurahPage,
         isSidebar,
         selectedSurahIdx,
+        surahMorphology,
     } from "$lib/stores/quran.svelte";
     import { morphFontSize } from "$lib/stores/morphology.store";
     import MorphologyView from "./MorphologyView.svelte";
     import { addHighlight } from "$lib/functions/bookmarks";
     import { pendingJumpAyah } from "$lib/stores/bookmarks.store";
+    import { totalAyahsInSurah } from "$lib/stores/recitation.store";
 
     let scrollContainer = $state<HTMLElement | null>(null);
     let showBookmarks = $state(false);
     let showHighlights = $state(false);
+
+    $effect(() => {
+        totalAyahsInSurah.set($surahMorphology?.ayahs?.length ?? 0);
+    });
 
     $effect(() => {
         $selectedSurahIdx; // track changes
@@ -132,11 +139,18 @@
         bind:this={scrollContainer}
         role="document"
         onmouseup={handleMouseUp}
-        class={`default-scroll border border-stone-200 dark:border-[#414559] w-full flex-1 min-h-0 overflow-y-auto px-12 py-10 text-right ${$morphFontSize} leading-loose text-slate-600 dark:text-[#c6d0f5] ${$isSidebar ? "rounded-r-md" : "rounded-md"}`}
+        class={`default-scroll border border-stone-200 dark:border-[#414559] w-full flex-1 min-h-0 overflow-y-auto px-12 pt-10 pb-20 text-right ${$morphFontSize} leading-loose text-slate-600 dark:text-[#c6d0f5] ${$isSidebar ? "rounded-r-md" : "rounded-md"}`}
     >
         <MorphologyView />
     </div>
 
+    <div
+        class="absolute bottom-7 inset-x-6 z-10 flex justify-center pointer-events-none"
+    >
+        <div class="pointer-events-auto">
+            <RecitationPlayer {scrollContainer} />
+        </div>
+    </div>
     <NextPrevButton position={"absolute -bottom-4 inset-x-0 z-20"} />
 </div>
 

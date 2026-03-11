@@ -25,7 +25,20 @@
       "Bash(npx vite:*)",
       "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/lib/components/widgets -type f -name \"*.svelte\" 2>/dev/null | head -20)",
       "Bash(grep -r \"ayah-\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src --include=\"*.css\" --include=\"*.svelte\" 2>/dev/null | head -20)",
-      "Bash(mkdir -p /Users/al-ahmadgaidasaad/.claude/plans && touch /Users/al-ahmadgaidasaad/.claude/plans/calm-whistling-mochi.md)"
+      "Bash(mkdir -p /Users/al-ahmadgaidasaad/.claude/plans && touch /Users/al-ahmadgaidasaad/.claude/plans/calm-whistling-mochi.md)",
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/recitation -type f -name \"*.db\" -o -name \"*.sql\" -o -name \"*.rs\" 2>/dev/null | head -20)",
+      "Bash(sqlite3 /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/recitation/ayah-recitation-saad-al-ghamdi-murattal-hafs-954.db \".schema\" 2>/dev/null)",
+      "Bash(sqlite3 /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/recitation/ayah-recitation-saad-al-ghamdi-murattal-hafs-954.db \"SELECT sql FROM sqlite_master WHERE type='table';\" 2>/dev/null)",
+      "Bash(sqlite3 /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/recitation/ayah-recitation-saad-al-ghamdi-murattal-hafs-954.db \"SELECT COUNT\\(*\\) as row_count FROM verses; SELECT * FROM verses LIMIT 1;\" 2>/dev/null)",
+      "Bash(grep -r \"ayah-highlight\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src --include=\"*.svelte\" --include=\"*.css\" 2>/dev/null | head -20)",
+      "Bash(cat /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/tauri.conf.json | python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('bundle',{}\\).get\\('resources',{}\\), indent=2\\)\\)\" 2>/dev/null || cat /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/tauri.conf.json | grep -A 20 '\"resources\"')",
+      "Bash(sqlite3 \"src-tauri/data/recitation/ayah-recitation-mishari-rashid-al-afasy-murattal-hafs-953.db\" \".schema\" 2>&1 | head -30)",
+      "Bash(sqlite3 \"src-tauri/data/recitation/ayah-recitation-mishari-rashid-al-afasy-murattal-hafs-953.db\" \"SELECT * FROM verses LIMIT 3;\")",
+      "Bash(sqlite3 /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/recitation/ayah-recitation-mishari-rashid-al-afasy-murattal-hafs-953.db \"SELECT COUNT\\(*\\) FROM verses WHERE surah_number = 2 LIMIT 1;\")",
+      "Bash(sqlite3 \"$HOME/Library/Application Support/com.al-ahmadgaidasaad.furqan-desk/quran.db\" \"SELECT COUNT\\(*\\) FROM recitations; SELECT COUNT\\(*\\) FROM recitations WHERE surah_number=2; SELECT * FROM recitations WHERE surah_number=2 AND ayah_number=1 LIMIT 1;\" 2>&1)",
+      "Bash(sqlite3 \"$HOME/Library/Application Support/com.al-ahmadgaidasaad.furqan-desk/quran.db\" \".mode line\" \"SELECT * FROM recitations WHERE reciter_id=953 AND surah_number=2 AND ayah_number=1;\" 2>&1)",
+      "Bash(sqlite3 \"$HOME/Library/Application Support/com.al-ahmadgaidasaad.furqan-desk/quran.db\" \\\\\n  \"SELECT reciter_id, surah_number, ayah_number FROM recitations ORDER BY reciter_id, surah_number, ayah_number LIMIT 10;\" \\\\\n  \"SELECT DISTINCT reciter_id FROM recitations;\" \\\\\n  \"SELECT DISTINCT surah_number FROM recitations ORDER BY surah_number LIMIT 10;\" 2>&1)",
+      "Bash(sqlite3 \"src-tauri/data/recitation/ayah-recitation-mishari-rashid-al-afasy-murattal-hafs-953.db\" \\\\\n  \"SELECT surah_number, ayah_number, audio_url FROM verses WHERE surah_number=2 ORDER BY ayah_number LIMIT 3;\" 2>&1)"
     ]
   }
 }

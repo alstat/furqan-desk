@@ -3,6 +3,9 @@
 /* Class-based dark mode: applies dark: variants when html has .dark class */
 @variant dark (&:where(.dark, .dark *));
 
+/* Always apply hover styles regardless of pointer type (fixes touchscreen laptops) */
+@variant hover (&:hover);
+
 @theme {
     --font-scheherazade: "Scheherazade New", serif;
     --font-amiri: "Amiri", serif;
@@ -144,6 +147,16 @@ html.dark ::-webkit-scrollbar-corner {
 
 .ayah-highlight {
     animation: ayah-flash 2.4s ease-in-out forwards;
+}
+
+/* Recitation playback — persistent highlight on currently playing ayah */
+.ayah-playing {
+    background-color: var(--color-brand-gold-50);
+    border-radius: 4px;
+}
+
+html.dark .ayah-playing {
+    background-color: color-mix(in srgb, var(--color-brand-gold-400) 12%, transparent);
 }
 
 .default-scroll {

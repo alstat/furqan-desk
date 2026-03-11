@@ -4,6 +4,43 @@ use serde::Serialize;
 use std::collections::BTreeMap;
 use tauri::State;
 
+// ── Recitation structs ───────────────────────────────────────────────────────
+#[derive(Serialize)]
+pub struct RecitationAyah {
+    pub audio_url: String,
+    pub duration: Option<i64>,
+    pub segments: Option<String>,
+}
+
+#[tauri::command]
+pub fn get_recitation_ayah(
+    state: State<Database>,
+    surah: i64,
+    ayah: i64,
+    reciter_id: i64,
+) -> Result<Option<RecitationAyah>, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT audio_url, duration, segments FROM recitations
+             WHERE reciter_id = ?1 AND surah_number = ?2 AND ayah_number = ?3",
+        )
+        .map_err(|e| e.to_string())?;
+    let mut rows = stmt
+        .query_map(rusqlite::params![reciter_id, surah, ayah], |row| {
+            Ok(RecitationAyah {
+                audio_url: row.get(0)?,
+                duration: row.get(1)?,
+                segments: row.get(2)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+    match rows.next() {
+        Some(r) => Ok(Some(r.map_err(|e| e.to_string())?)),
+        None => Ok(None),
+    }
+}
+
 // ── User-data structs ────────────────────────────────────────────────────────
 #[derive(Serialize)]
 pub struct Bookmark {
