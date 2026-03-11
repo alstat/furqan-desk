@@ -125,6 +125,20 @@ export function openOrFocusTab(path: string, content: string): void {
 	activeTabId.set(tab.id);
 }
 
+// Update a specific tab's content by id, mark dirty, push to undo history
+export function setTabContent(id: string, content: string): void {
+	const current = get(tabs).find(t => t.id === id);
+	if (!current) return;
+	const stack = undoHistory.get(id) ?? [];
+	stack.push(current.content);
+	if (stack.length > 100) stack.shift();
+	undoHistory.set(id, stack);
+	redoHistory.set(id, []);
+	tabs.update(ts =>
+		ts.map(t => (t.id === id ? { ...t, content, isDirty: true, isPreview: false } : t))
+	);
+}
+
 // Update active tab content, mark dirty, push to undo history
 export function setActiveTabContent(content: string): void {
 	const id = get(activeTabId);

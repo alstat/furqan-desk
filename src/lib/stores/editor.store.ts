@@ -65,7 +65,8 @@ export const editorTheme = {
 };
 
 export interface ReplLine { text: string; kind: 'input' | 'output' | 'error' }
-export const juliaReplHistory = new Map<string, ReplLine[]>();
+/** Per Julia tab-ID → REPL output lines (reactive writable store) */
+export const juliaReplHistory: Writable<Record<string, ReplLine[]>> = writable({});
 export const juliaReplStarted: Writable<boolean> = writable(false);
 
 export const typstMode = derived(activeTab, $t => $t?.type === 'typst' || $t?.type === 'text');
