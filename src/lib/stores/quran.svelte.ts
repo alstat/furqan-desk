@@ -17,3 +17,5 @@ export let isSidebar: Writable<boolean> = writable(false);
 // Morphology stores
 export let surahMorphology: Writable<SurahMorphology | null> = writable(null);
 export let basmallahMorphology: Writable<AyahMorphology | null> = writable(null);
+export const morphologyAyahFilter: Writable<number[] | null> = writable(null);
+export const morphologyMultiSurahList: Writable<SurahMorphology[] | null> = writable(null);

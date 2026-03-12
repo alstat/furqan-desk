@@ -12,6 +12,10 @@
         type TermTab,
     } from "$lib/stores/julia-terminal.store";
     import { juliaReplHistory, cmFontSize, type ReplLine } from "$lib/stores/editor.store";
+    import { selectedSurahIdx, morphologyAyahFilter, morphologyMultiSurahList } from '$lib/stores/quran.svelte';
+    import type { SurahMorphology } from '$lib/types/morphology';
+    import { recitationPlaylist } from '$lib/stores/recitation.store';
+    import { multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap } from '$lib/stores/translation.store';
 
     // ── Terminal state (shared across all Julia tabs) ─────────────────────────
 
@@ -206,10 +210,82 @@
         }>("julia-output", (event) => {
             const { chunk, is_done, error } = event.payload;
             if (chunk) {
-                juliaReplHistory.update((h) => [
-                    ...h,
-                    { text: chunk, kind: error ? "error" : "output" },
-                ]);
+                const lines = chunk.split('\n');
+                const alLines = lines.filter(l => l.startsWith('__AL_CMD__:'));
+                const restLines = lines.filter(l => !l.startsWith('__AL_CMD__:'));
+
+                for (const cmdLine of alLines) {
+                    try {
+                        const cmd = JSON.parse(cmdLine.slice('__AL_CMD__:'.length));
+                        if (cmd.type === 'display') {
+                            const surahs: number[] = cmd.surahs;
+                            const ayahs: number[] | null = cmd.ayahs;
+
+                            if (surahs.length === 1 && ayahs === null) {
+                                // Simple single-surah navigation — let SurahWidget load it
+                                morphologyMultiSurahList.set(null);
+                                morphologyAyahFilter.set(null);
+                                recitationPlaylist.set(null);
+                                multiSurahTranslationMap.set(null);
+                                multiSurahTransliterationMap.set(null);
+                                multiSurahWordByWordMap.set(null);
+                                selectedSurahIdx.set(surahs[0]);
+                            } else {
+                                // Load surahs, validate ayah numbers, display
+                                (async () => {
+                                    const ayahFilter = ayahs;
+                                    const loaded: SurahMorphology[] = [];
+                                    for (const surahNum of surahs) {
+                                        try {
+                                            const data = await invoke<SurahMorphology>('get_surah_morphology', { surahNumber: surahNum });
+                                            if (ayahFilter !== null) {
+                                                const maxAyah = Math.max(...data.ayahs.map(a => a.ayah));
+                                                const missing = ayahFilter.filter(n => n > maxAyah);
+                                                if (missing.length > 0) {
+                                                    juliaReplHistory.update(h => [...h, {
+                                                        text: `Surah ${surahNum} has only ${maxAyah} ayahs — requested: ${missing.join(', ')}`,
+                                                        kind: 'error' as const,
+                                                    }]);
+                                                    scrollReplToBottom();
+                                                }
+                                            }
+                                            loaded.push(data);
+                                        } catch (e) {
+                                            juliaReplHistory.update(h => [...h, {
+                                                text: `Failed to load surah ${surahNum}: ${e}`,
+                                                kind: 'error' as const,
+                                            }]);
+                                            scrollReplToBottom();
+                                        }
+                                    }
+                                    if (loaded.length === 0) return;
+                                    morphologyMultiSurahList.set(loaded);
+                                    morphologyAyahFilter.set(ayahFilter);
+                                    if (surahs.length === 1) selectedSurahIdx.set(surahs[0]);
+                                    // Build ordered playlist from displayed ayahs
+                                    const playlist: { surah: number; ayah: number }[] = [];
+                                    for (const surahData of loaded) {
+                                        const surahAyahs = ayahFilter
+                                            ? surahData.ayahs.filter(a => ayahFilter.includes(a.ayah))
+                                            : surahData.ayahs;
+                                        for (const a of surahAyahs) {
+                                            playlist.push({ surah: surahData.surah, ayah: a.ayah });
+                                        }
+                                    }
+                                    recitationPlaylist.set(playlist.length > 0 ? playlist : null);
+                                })();
+                            }
+                        }
+                    } catch { /* ignore malformed */ }
+                }
+
+                const displayChunk = restLines.join('\n');
+                if (displayChunk) {
+                    juliaReplHistory.update((h) => [
+                        ...h,
+                        { text: displayChunk, kind: error ? "error" : "output" },
+                    ]);
+                }
             }
             if (is_done) {
                 juliaIsRunning.set(false);

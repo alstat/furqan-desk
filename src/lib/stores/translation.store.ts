@@ -40,3 +40,8 @@ wordByWordEnabled.subscribe(v => {
 });
 
 export const surahWordByWord = writable<Map<string, string> | null>(null);
+
+// Multi-surah maps: surah number → per-ayah data (populated in multi-surah / AL mode)
+export const multiSurahTranslationMap = writable<Map<number, Map<number, AyahTranslation>> | null>(null);
+export const multiSurahTransliterationMap = writable<Map<number, Map<number, string>> | null>(null);
+export const multiSurahWordByWordMap = writable<Map<number, Map<string, string>> | null>(null);

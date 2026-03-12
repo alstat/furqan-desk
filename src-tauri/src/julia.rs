@@ -350,6 +350,37 @@ pub async fn install_julia(app: AppHandle) -> Result<(), String> {
 // Boot script sent to the Julia process via -e
 const BOOT_SCRIPT: &str = r#"
 try; import REPL; catch; end
+module AL
+  struct SurahRef; surahs::Vector{Int}; end
+  struct AyahRef; surahs::Vector{Int}; ayahs::Vector{Int}; end
+
+  surah(n::Integer) = SurahRef([Int(n)])
+  surah(ns::AbstractVector) = SurahRef([Int(x) for x in ns])
+  ayah(s::SurahRef, n::Integer) = AyahRef(s.surahs, [Int(n)])
+  ayah(s::SurahRef, ns::AbstractVector) = AyahRef(s.surahs, [Int(x) for x in ns])
+
+  _ja(v) = "[" * join(v, ",") * "]"
+
+  Base.show(io::IO, ::MIME"text/plain", s::SurahRef) =
+    print(io, "__AL_CMD__:{\"type\":\"display\",\"surahs\":", _ja(s.surahs), ",\"ayahs\":null}")
+  Base.show(io::IO, ::MIME"text/plain", a::AyahRef) =
+    print(io, "__AL_CMD__:{\"type\":\"display\",\"surahs\":", _ja(a.surahs), ",\"ayahs\":", _ja(a.ayahs), "}")
+  Base.show(io::IO, ::MIME"text/plain", v::Vector{AyahRef}) = begin
+    all_surahs = unique(reduce(vcat, [r.surahs for r in v]; init=Int[]))
+    all_ayahs  = unique(reduce(vcat, [r.ayahs  for r in v]; init=Int[]))
+    print(io, "__AL_CMD__:{\"type\":\"display\",\"surahs\":", _ja(all_surahs), ",\"ayahs\":", _ja(all_ayahs), "}")
+  end
+
+  Base.show(io::IO, s::SurahRef) = length(s.surahs) == 1 ?
+    print(io, "AL.surah(", s.surahs[1], ")") :
+    print(io, "AL.surah([", join(s.surahs, ", "), "])")
+  Base.show(io::IO, a::AyahRef) = begin
+    length(a.surahs) == 1 ? print(io, "AL.ayah(AL.surah(", a.surahs[1], "), ") :
+      print(io, "AL.ayah(AL.surah([", join(a.surahs, ", "), "]), ")
+    length(a.ayahs) == 1 ? print(io, a.ayahs[1], ")") :
+      print(io, "[", join(a.ayahs, ", "), "])")
+  end
+end
 while true
   local buf = IOBuffer()
   while true

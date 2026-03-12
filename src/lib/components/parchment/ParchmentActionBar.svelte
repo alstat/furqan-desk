@@ -15,7 +15,7 @@
 >
     <button
         onclick={onOpenBookmarks}
-        class={actionBtnStyle + " p-1"}
+        class={actionBtnStyle + " p-1 z-50"}
         title="Bookmarks"
         aria-label="Open bookmarks"
     >
@@ -24,7 +24,7 @@
 
     <button
         onclick={onOpenHighlights}
-        class={actionBtnStyle + " p-1"}
+        class={actionBtnStyle + " p-1 z-50"}
         title="Highlights"
         aria-label="Open highlights"
     >
