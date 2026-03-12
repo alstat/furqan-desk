@@ -8,7 +8,11 @@
 		surahLabels,
 		hideSurahPage,
 		isSidebar,
+		morphologyAyahFilter,
+		morphologyMultiSurahList,
 	} from '$lib/stores/quran.svelte';
+	import { recitationPlaylist } from '$lib/stores/recitation.store';
+	import { multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap } from '$lib/stores/translation.store';
 	import { morphFontFamily, morphFontSize } from '$lib/stores/morphology.store';
 	import { loadMorphologySurah, loadBasmallahMorphology } from '$lib/functions/widgets/surahWidget';
 	import { availableTranslators, activeTranslatorId, transliterationEnabled, wordByWordEnabled } from '$lib/stores/translation.store';
@@ -57,6 +61,12 @@
 	function onSurahChange(event: Event) {
 		const idx = parseInt((event.target as HTMLSelectElement).value);
 		selectedSurahIdx.set(idx);
+		morphologyAyahFilter.set(null);
+		morphologyMultiSurahList.set(null);
+		recitationPlaylist.set(null);
+		multiSurahTranslationMap.set(null);
+		multiSurahTransliterationMap.set(null);
+		multiSurahWordByWordMap.set(null);
 	}
 
 	const selectClass = 'w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 transition-all focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100';

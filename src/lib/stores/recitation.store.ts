@@ -18,6 +18,11 @@ export const totalAyahsInSurah = writable(0);
 // Set to an ayah number to request playback from outside the player
 export const requestPlayAyah = writable<number | null>(null);
 
+// Ordered playlist for multi-surah / filtered AL playback. null = standard single-surah mode.
+export const recitationPlaylist = writable<{ surah: number; ayah: number }[] | null>(null);
+// Set to request playback of a specific surah+ayah position (used by multi-surah play buttons)
+export const requestPlayPosition = writable<{ surah: number; ayah: number } | null>(null);
+
 // ── Offline download ──────────────────────────────────────────────────────────
 export const downloadedSurahs = writable<Record<number, number[]>>({ 953: [], 954: [] });
 export const isDownloading = writable(false);

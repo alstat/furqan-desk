@@ -12,6 +12,8 @@
         downloadedSurahs,
         isDownloading,
         downloadProgress,
+        recitationPlaylist,
+        requestPlayPosition,
     } from "$lib/stores/recitation.store";
     import RecitationDownloadDialog from "./RecitationDownloadDialog.svelte";
 
@@ -25,6 +27,11 @@
     let isCurrentLocal = $state(false);
     // Blob URL for the current local audio file; revoked when moving to the next ayah
     let currentBlobUrl: string | null = null;
+    // Playlist mode state
+    let playlistIdx = $state(0);
+    let currentPlayingSurah = $state<number | null>(null);
+    const inPlaylist = $derived($recitationPlaylist !== null);
+    const playlistLen = $derived($recitationPlaylist?.length ?? 0);
 
     function revokeBlobUrl() {
         if (currentBlobUrl) {
@@ -84,24 +91,20 @@
         currentPlayingAyah.set(null);
         isPlaying.set(false);
         isCurrentLocal = false;
+        playlistIdx = 0;
+        currentPlayingSurah = null;
     }
 
-    async function playAyah(ayahNum: number) {
+    async function playAyahOfSurah(surah: number, ayahNum: number) {
         if (!audioEl) return;
-        const surah = $selectedSurahIdx;
         const reciterId = $activeReciterId;
-
         try {
             const result = await invoke<{
                 audio_url: string;
                 duration: number | null;
                 segments: string | null;
                 is_local: boolean;
-            } | null>("get_recitation_ayah", {
-                surah,
-                ayah: ayahNum,
-                reciterId,
-            });
+            } | null>("get_recitation_ayah", { surah, ayah: ayahNum, reciterId });
 
             if (!result) return;
 
@@ -109,11 +112,7 @@
             revokeBlobUrl();
 
             if (result.is_local) {
-                // Read the file bytes via IPC and create a blob: URL —
-                // avoids the asset:// protocol and its CSP/scope restrictions.
-                const bytes = await invoke<number[]>("read_audio_bytes", {
-                    path: result.audio_url,
-                });
+                const bytes = await invoke<number[]>("read_audio_bytes", { path: result.audio_url });
                 const blob = new Blob([new Uint8Array(bytes)], { type: "audio/mpeg" });
                 currentBlobUrl = URL.createObjectURL(blob);
                 audioEl.src = currentBlobUrl;
@@ -125,7 +124,6 @@
             isPlaying.set(true);
             await audioEl.play();
         } catch (e: unknown) {
-            // Ignore AbortError — happens when a new play() interrupts a pending one
             if (e instanceof DOMException && e.name === "AbortError") return;
             isPlaying.set(false);
             if (!isCurrentLocal && !navigator.onLine) {
@@ -134,6 +132,21 @@
                 console.error("Failed to play recitation:", e);
             }
         }
+    }
+
+    async function playAyah(ayahNum: number) {
+        currentPlayingSurah = $selectedSurahIdx;
+        await playAyahOfSurah($selectedSurahIdx, ayahNum);
+    }
+
+    async function playAtPlaylistIdx(idx: number) {
+        const playlist = $recitationPlaylist;
+        if (!playlist || !audioEl) return;
+        const item = playlist[idx];
+        if (!item) return;
+        playlistIdx = idx;
+        currentPlayingSurah = item.surah;
+        await playAyahOfSurah(item.surah, item.ayah);
     }
 
     // Refresh downloaded surahs after a download completes
@@ -151,7 +164,13 @@
         }
     });
 
-    // Watch for external play requests (e.g. clicking a verse number)
+    // Reset player whenever the playlist changes (new AL command or cleared)
+    $effect(() => {
+        void $recitationPlaylist;
+        stopAndReset();
+    });
+
+    // Watch for external play requests in standard single-surah mode
     $effect(() => {
         const n = $requestPlayAyah;
         if (n === null) return;
@@ -159,13 +178,35 @@
         playAyah(n);
     });
 
+    // Watch for position-based play requests from multi-surah view
+    $effect(() => {
+        const pos = $requestPlayPosition;
+        if (pos === null) return;
+        requestPlayPosition.set(null);
+        const playlist = $recitationPlaylist;
+        if (!playlist) return;
+        const idx = playlist.findIndex(p => p.surah === pos.surah && p.ayah === pos.ayah);
+        if (idx >= 0) playAtPlaylistIdx(idx);
+    });
+
     function handleEnded() {
-        const next = ($currentPlayingAyah ?? 0) + 1;
-        if (next <= $totalAyahsInSurah) {
-            playAyah(next);
+        if ($recitationPlaylist) {
+            const nextIdx = playlistIdx + 1;
+            if (nextIdx < $recitationPlaylist.length) {
+                playAtPlaylistIdx(nextIdx);
+            } else {
+                isPlaying.set(false);
+                currentPlayingAyah.set(null);
+                currentPlayingSurah = null;
+            }
         } else {
-            isPlaying.set(false);
-            currentPlayingAyah.set(null);
+            const next = ($currentPlayingAyah ?? 0) + 1;
+            if (next <= $totalAyahsInSurah) {
+                playAyah(next);
+            } else {
+                isPlaying.set(false);
+                currentPlayingAyah.set(null);
+            }
         }
     }
 
@@ -178,6 +219,8 @@
             if ($currentPlayingAyah !== null) {
                 audioEl.play();
                 isPlaying.set(true);
+            } else if ($recitationPlaylist) {
+                playAtPlaylistIdx(0);
             } else {
                 playAyah(1);
             }
@@ -185,18 +228,27 @@
     }
 
     function prevAyah() {
-        const cur = $currentPlayingAyah ?? 1;
-        if (cur > 1) playAyah(cur - 1);
+        if ($recitationPlaylist) {
+            if (playlistIdx > 0) playAtPlaylistIdx(playlistIdx - 1);
+        } else {
+            const cur = $currentPlayingAyah ?? 1;
+            if (cur > 1) playAyah(cur - 1);
+        }
     }
 
     function nextAyah() {
-        const cur = $currentPlayingAyah ?? 0;
-        if (cur < $totalAyahsInSurah) playAyah(cur + 1);
+        if ($recitationPlaylist) {
+            if (playlistIdx < $recitationPlaylist.length - 1) playAtPlaylistIdx(playlistIdx + 1);
+        } else {
+            const cur = $currentPlayingAyah ?? 0;
+            if (cur < $totalAyahsInSurah) playAyah(cur + 1);
+        }
     }
 
     // Highlight and auto-scroll when current ayah changes
     $effect(() => {
         const ayah = $currentPlayingAyah;
+        const surah = currentPlayingSurah;
 
         // Remove previous highlights
         document
@@ -205,14 +257,19 @@
 
         if (ayah === null) return;
 
-        const elements = document.querySelectorAll<HTMLElement>(
-            `[data-ayah="${ayah}"], #ayah-${ayah}`
-        );
-        elements.forEach((el) => el.classList.add("ayah-playing"));
+        // In playlist mode use surah-qualified selectors (multi-surah DOM ids)
+        const inPlaylist = $recitationPlaylist !== null && surah !== null;
+        const elemSelector = inPlaylist
+            ? `[data-surah="${surah}"][data-ayah="${ayah}"], #ayah-${surah}-${ayah}`
+            : `[data-ayah="${ayah}"], #ayah-${ayah}`;
+        const anchorSelector = inPlaylist ? `#ayah-${surah}-${ayah}` : `#ayah-${ayah}`;
+
+        document.querySelectorAll<HTMLElement>(elemSelector)
+            .forEach((el) => el.classList.add("ayah-playing"));
 
         // Auto-scroll if ayah is near bottom 20% of viewport
         if (scrollContainer) {
-            const anchor = scrollContainer.querySelector(`#ayah-${ayah}`);
+            const anchor = scrollContainer.querySelector(anchorSelector);
             if (anchor) {
                 const rect = anchor.getBoundingClientRect();
                 const containerRect = scrollContainer.getBoundingClientRect();
@@ -228,6 +285,8 @@
         if (id === $activeReciterId) return;
         const ayah = $currentPlayingAyah;
         const wasPlaying = $isPlaying;
+        const savedPlaylistIdx = playlistIdx;
+        const inPlaylist = $recitationPlaylist !== null;
         if (audioEl) {
             audioEl.pause();
             // Do NOT clear audioEl.src here — setting it to "" puts Chromium into
@@ -239,7 +298,11 @@
         isPlaying.set(false);
         activeReciterId.set(id);
         if (ayah !== null && wasPlaying) {
-            playAyah(ayah);
+            if (inPlaylist) {
+                playAtPlaylistIdx(savedPlaylistIdx);
+            } else {
+                playAyah(ayah);
+            }
         }
     }
 </script>
@@ -275,7 +338,7 @@
         <!-- Prev -->
         <button
             onclick={prevAyah}
-            disabled={!$currentPlayingAyah || $currentPlayingAyah <= 1}
+            disabled={inPlaylist ? playlistIdx <= 0 : (!$currentPlayingAyah || $currentPlayingAyah <= 1)}
             aria-label="Previous ayah"
             class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
                    hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
@@ -303,7 +366,7 @@
         <!-- Next -->
         <button
             onclick={nextAyah}
-            disabled={$currentPlayingAyah !== null && $currentPlayingAyah >= $totalAyahsInSurah}
+            disabled={inPlaylist ? playlistIdx >= playlistLen - 1 : ($currentPlayingAyah !== null && $currentPlayingAyah >= $totalAyahsInSurah)}
             aria-label="Next ayah"
             class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
                    hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
@@ -318,7 +381,11 @@
 
         <!-- Ayah counter -->
         <span class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] tabular-nums px-1 min-w-[3.5rem] text-center">
-            {$currentPlayingAyah ?? 1} / {$totalAyahsInSurah}
+            {#if inPlaylist}
+                {playlistIdx + 1} / {playlistLen}
+            {:else}
+                {$currentPlayingAyah ?? 1} / {$totalAyahsInSurah}
+            {/if}
         </span>
 
         <!-- Divider -->
