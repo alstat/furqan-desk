@@ -47,6 +47,7 @@
 </script>
 
 <div
+    id="tour-action-bar"
     class="absolute -top-5 inset-x-0 flex items-center justify-center gap-2"
     dir="ltr"
 >

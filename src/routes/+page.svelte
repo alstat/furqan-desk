@@ -7,6 +7,8 @@
     import SurahWidget from "$lib/components/widgets/surah_ayah/SurahWidget.svelte";
     import EditorToolbar from "$lib/components/widgets/editor/EditorToolbar.svelte";
     import Sidebar from "$lib/components/sidebar/Sidebar.svelte";
+    import TourOverlay from "$lib/components/tour/TourOverlay.svelte";
+    import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
     import {
         isSidebar,
         surahOrientation,
@@ -17,8 +19,10 @@
     import type { SurahLabel } from "$lib/stores/quran.svelte";
     import { typstMode } from "$lib/stores/editor.store";
     import { activeTab } from "$lib/stores/tabs.store";
+    import { checkFirstRun } from "$lib/stores/tour.store";
 
     let height: number = $state(typeof window !== 'undefined' ? window.innerHeight : 600);
+    let showSettings = $state(false);
 
     onMount(async () => {
         try {
@@ -31,6 +35,7 @@
                 error instanceof Error ? error.message : error,
             );
         }
+        checkFirstRun();
     });
 
     // Julia REPL side-panel mode: active tab is julia AND hideSurahPage is on
@@ -77,4 +82,6 @@
     </div>
 </div>
 <SurahWidget />
-<EditorToolbar />
+<EditorToolbar onOpenSettings={() => (showSettings = true)} />
+<TourOverlay />
+<SettingsDialog open={showSettings} onClose={() => (showSettings = false)} />

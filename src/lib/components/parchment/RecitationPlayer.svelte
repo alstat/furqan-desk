@@ -307,7 +307,7 @@
     }
 </script>
 
-<div class="flex flex-col items-center gap-2">
+<div id="tour-recitation" class="flex flex-col items-center gap-2">
     <!-- No internet toast -->
     {#if noInternetToast}
         <div

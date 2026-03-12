@@ -51,7 +51,8 @@
       "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/src -type f -name \"*.rs\" 2>/dev/null | head -30)",
       "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) 2>/dev/null | head -20)",
       "Bash(grep -r \"morphology\\\\|get_surah_morphology\\\\|search\\\\|LIKE\\\\|FTS\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/src --include=\"*.rs\" 2>/dev/null | head -50)",
-      "Bash(grep -i \"fts\\\\|virtual\\\\|search\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/src/*.rs)"
+      "Bash(grep -i \"fts\\\\|virtual\\\\|search\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/src/*.rs)",
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/lib/components -type f -name \"*.svelte\" | xargs basename -a | sort)"
     ]
   }
 }

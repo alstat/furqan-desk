@@ -2,7 +2,7 @@
     import { fade, fly } from 'svelte/transition';
     import Icon from '@iconify/svelte';
 
-    let { controlCard, collapsedIcon, xPosition = 'left', yPosition = 'bottom' } = $props();
+    let { controlCard, collapsedIcon, xPosition = 'left', yPosition = 'bottom', id = undefined } = $props();
     let isExpanded = $state(false);
 
     function toggleExpand() {
@@ -23,7 +23,7 @@
     The expanded panel is absolutely positioned out of flow so it never
     changes the container's dimensions and causes the button to drift.
 -->
-<div class={`absolute ${yPosition}-2.5 ${xPosition}-2.5 sm:${yPosition}-2.5 sm:${xPosition}-2.5 z-20 h-10 w-10`}>
+<div {id} class={`absolute ${yPosition}-2.5 ${xPosition}-2.5 sm:${yPosition}-2.5 sm:${xPosition}-2.5 z-20 h-10 w-10`}>
 
     {#if isExpanded}
         <div

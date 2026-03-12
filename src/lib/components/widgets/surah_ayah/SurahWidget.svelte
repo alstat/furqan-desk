@@ -208,4 +208,4 @@
 	</div>
 {/snippet}
 
-<GroupCards {controlCard} {collapsedIcon} xPosition={'right'} />
+<GroupCards {controlCard} {collapsedIcon} xPosition={'right'} id="tour-surah-widget" />
