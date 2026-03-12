@@ -7,9 +7,10 @@
     interface Props {
         open: boolean;
         onClose: () => void;
+        onOpenHelp: () => void;
     }
 
-    let { open, onClose }: Props = $props();
+    let { open, onClose, onOpenHelp }: Props = $props();
 
     function handleRestartTour() {
         onClose();
@@ -24,6 +25,18 @@
 
 <Dialog {open} title="Settings" {onClose}>
     {#snippet children()}
+        <!-- Help -->
+        <div class="py-2">
+            <p class={sectionLabel}>Help</p>
+            <div class="flex items-center justify-between">
+                <span class={rowLabel}>Browse the user guide</span>
+                <button onclick={onOpenHelp} class={actionBtn}>
+                    <Icon icon="solar:question-circle-bold-duotone" width="0.85rem" />
+                    Open Help
+                </button>
+            </div>
+        </div>
+
         <!-- Tutorial -->
         <div class="py-2">
             <p class={sectionLabel}>Tutorial</p>

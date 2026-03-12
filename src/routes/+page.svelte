@@ -9,6 +9,7 @@
     import Sidebar from "$lib/components/sidebar/Sidebar.svelte";
     import TourOverlay from "$lib/components/tour/TourOverlay.svelte";
     import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
+    import HelpDialog from "$lib/components/help/HelpDialog.svelte";
     import {
         isSidebar,
         surahOrientation,
@@ -23,6 +24,7 @@
 
     let height: number = $state(typeof window !== 'undefined' ? window.innerHeight : 600);
     let showSettings = $state(false);
+    let showHelp = $state(false);
 
     onMount(async () => {
         try {
@@ -84,4 +86,5 @@
 <SurahWidget />
 <EditorToolbar onOpenSettings={() => (showSettings = true)} />
 <TourOverlay />
-<SettingsDialog open={showSettings} onClose={() => (showSettings = false)} />
+<SettingsDialog open={showSettings} onClose={() => (showSettings = false)} onOpenHelp={() => (showHelp = true)} />
+<HelpDialog open={showHelp} onClose={() => (showHelp = false)} />
