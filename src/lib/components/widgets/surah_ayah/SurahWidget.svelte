@@ -11,7 +11,7 @@
 	} from '$lib/stores/quran.svelte';
 	import { morphFontFamily, morphFontSize } from '$lib/stores/morphology.store';
 	import { loadMorphologySurah, loadBasmallahMorphology } from '$lib/functions/widgets/surahWidget';
-	import { availableTranslators, activeTranslatorId, transliterationEnabled } from '$lib/stores/translation.store';
+	import { availableTranslators, activeTranslatorId, transliterationEnabled, wordByWordEnabled } from '$lib/stores/translation.store';
 	import { invoke } from '@tauri-apps/api/core';
 	import type { TranslatorInfo } from '$lib/stores/translation.store';
 	import { onMount } from 'svelte';
@@ -21,6 +21,7 @@
 	let hideSurah: boolean = $state(false);
 	let selectedTranslatorId: string = $state('');
 	let translitEnabled: boolean = $state(false);
+	let wbwEnabled: boolean = $state(false);
 
 	onMount(async () => {
 		loadBasmallahMorphology();
@@ -33,6 +34,7 @@
 		const saved = $activeTranslatorId;
 		if (saved !== null) selectedTranslatorId = String(saved);
 		translitEnabled = $transliterationEnabled;
+		wbwEnabled = $wordByWordEnabled;
 	});
 
 	$effect(() => { morphFontFamily.set(font); });
@@ -50,6 +52,7 @@
 	});
 
 	$effect(() => { transliterationEnabled.set(translitEnabled); });
+	$effect(() => { wordByWordEnabled.set(wbwEnabled); });
 
 	function onSurahChange(event: Event) {
 		const idx = parseInt((event.target as HTMLSelectElement).value);
@@ -158,6 +161,17 @@
 				<span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {translitEnabled ? 'translate-x-4' : 'translate-x-1'}"></span>
 			</button>
 		</div>
+		<div class="flex items-center justify-between">
+			<span class={labelClass}>Word by Word</span>
+			<button
+				role="switch"
+				aria-checked={wbwEnabled}
+				onclick={() => { wbwEnabled = !wbwEnabled; }}
+				class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {wbwEnabled ? 'bg-brand-gold-400' : 'bg-brand-charcoal-100'}"
+			>
+				<span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {wbwEnabled ? 'translate-x-4' : 'translate-x-1'}"></span>
+			</button>
+		</div>
 	</div>
 {/snippet}
 
@@ -167,9 +181,9 @@
 
 {#snippet controlCard()}
 	<div class="space-y-2">
-		<ControlCard cardTitle={'Surah'} cardBody={surahCardBody} />
 		<ControlCard cardTitle={'Display'} cardBody={fontBody} />
 		<ControlCard cardTitle={'Translation'} cardBody={translationBody} />
+		<ControlCard cardTitle={'Surah'} cardBody={surahCardBody} />
 	</div>
 {/snippet}
 

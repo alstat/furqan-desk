@@ -1057,6 +1057,40 @@ pub fn get_surah_transliteration(
     Ok(rows)
 }
 
+// ── Word-by-word commands ─────────────────────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct WordTranslation {
+    pub ayah: i64,
+    pub word: i64,
+    pub text: String,
+}
+
+#[tauri::command]
+pub fn get_surah_word_by_word(
+    db: State<Database>,
+    surah: i64,
+) -> Result<Vec<WordTranslation>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT ayah, word, text FROM word_by_word WHERE surah = ?1 ORDER BY ayah, word",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![surah], |row| {
+            Ok(WordTranslation {
+                ayah: row.get(0)?,
+                word: row.get(1)?,
+                text: row.get(2)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
 // ── Typst package management commands ────────────────────────────────────────
 
 /// Returns true if the package is already present in the local typst cache.

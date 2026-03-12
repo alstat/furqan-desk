@@ -47,7 +47,9 @@
       "Bash(cargo check:*)",
       "Bash(xargs grep:*)",
       "Bash(sqlite3:*)",
-      "Bash(npx svelte-check:*)"
+      "Bash(npx svelte-check:*)",
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/src -type f -name \"*.rs\" 2>/dev/null | head -30)",
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) 2>/dev/null | head -20)"
     ]
   }
 }

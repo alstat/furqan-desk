@@ -15,6 +15,7 @@ impl Database {
         recitation_paths: Vec<(i64, PathBuf)>,
         translation_paths: Vec<(String, String, PathBuf)>,
         transliteration_path: PathBuf,
+        word_by_word_path: PathBuf,
     ) -> Result<Self> {
         let conn = Connection::open(&db_path)?;
 
@@ -25,6 +26,7 @@ impl Database {
         Self::init_recitation_tables(&conn, &recitation_paths)?;
         Self::init_translation_tables(&conn, &translation_paths)?;
         Self::init_transliteration_table(&conn, &transliteration_path)?;
+        Self::init_word_by_word_table(&conn, &word_by_word_path)?;
         Ok(Database(Mutex::new(conn)))
     }
 
@@ -517,6 +519,69 @@ impl Database {
         }
         tx.commit()?;
         println!("Imported transliteration data");
+
+        Ok(())
+    }
+
+    fn init_word_by_word_table(conn: &Connection, path: &PathBuf) -> Result<()> {
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS word_by_word (
+                surah  INTEGER NOT NULL,
+                ayah   INTEGER NOT NULL,
+                word   INTEGER NOT NULL,
+                text   TEXT    NOT NULL,
+                PRIMARY KEY (surah, ayah, word)
+            );",
+        )?;
+
+        let count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM word_by_word",
+            [],
+            |row| row.get(0),
+        )?;
+
+        if count > 0 {
+            return Ok(());
+        }
+
+        if !path.exists() {
+            eprintln!("Word-by-word file not found: {:?}", path);
+            return Ok(());
+        }
+
+        let content = fs::read_to_string(path).map_err(|e| {
+            rusqlite::Error::ToSqlConversionFailure(Box::new(e))
+        })?;
+
+        let json: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
+            rusqlite::Error::ToSqlConversionFailure(Box::new(e))
+        })?;
+
+        let obj = match json.as_object() {
+            Some(o) => o,
+            None => return Ok(()),
+        };
+
+        let tx = conn.unchecked_transaction()?;
+        {
+            let mut stmt = conn.prepare(
+                "INSERT OR IGNORE INTO word_by_word (surah, ayah, word, text) VALUES (?1, ?2, ?3, ?4)",
+            )?;
+
+            for (key, val) in obj {
+                let parts: Vec<&str> = key.split(':').collect();
+                if parts.len() != 3 { continue; }
+                let surah: i64 = parts[0].parse().unwrap_or(0);
+                let ayah: i64 = parts[1].parse().unwrap_or(0);
+                let word: i64 = parts[2].parse().unwrap_or(0);
+                if surah == 0 || ayah == 0 || word == 0 { continue; }
+
+                let text = val.as_str().unwrap_or("");
+                stmt.execute(rusqlite::params![surah, ayah, word, text])?;
+            }
+        }
+        tx.commit()?;
+        println!("Imported word-by-word translation data");
 
         Ok(())
     }

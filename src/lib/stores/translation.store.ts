@@ -31,3 +31,12 @@ transliterationEnabled.subscribe(v => {
 });
 
 export const surahTransliteration = writable<Map<number, string> | null>(null);
+
+export const wordByWordEnabled = writable<boolean>(
+    browser ? localStorage.getItem('wordByWordEnabled') === 'true' : false
+);
+wordByWordEnabled.subscribe(v => {
+    if (browser) localStorage.setItem('wordByWordEnabled', String(v));
+});
+
+export const surahWordByWord = writable<Map<string, string> | null>(null);
