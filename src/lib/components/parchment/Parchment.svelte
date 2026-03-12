@@ -10,12 +10,17 @@
         isSidebar,
         selectedSurahIdx,
         surahMorphology,
+        morphologyMultiSurahList,
+        morphologyAyahFilter,
     } from "$lib/stores/quran.svelte";
+    import type { SurahMorphology } from "$lib/types/morphology";
     import { morphFontSize } from "$lib/stores/morphology.store";
     import MorphologyView from "./MorphologyView.svelte";
     import { addHighlight } from "$lib/functions/bookmarks";
     import { pendingJumpAyah } from "$lib/stores/bookmarks.store";
-    import { totalAyahsInSurah } from "$lib/stores/recitation.store";
+    import { totalAyahsInSurah, recitationPlaylist } from "$lib/stores/recitation.store";
+    import { invoke } from "@tauri-apps/api/core";
+    import { activeTranslatorId } from "$lib/stores/translation.store";
 
     let scrollContainer = $state<HTMLElement | null>(null);
     let showBookmarks = $state(false);
@@ -125,6 +130,62 @@
             savingHighlight = false;
         }
     }
+
+    let isSearching = $state(false);
+
+    async function handleSearch(query: string) {
+        if (!query.trim()) {
+            morphologyMultiSurahList.set(null);
+            morphologyAyahFilter.set(null);
+            recitationPlaylist.set(null);
+            return;
+        }
+        isSearching = true;
+        try {
+            const matches = await invoke<{ surah: number; ayah: number }[]>('search_quran', {
+                query,
+                translatorId: $activeTranslatorId,
+            });
+            if (!matches.length) {
+                morphologyMultiSurahList.set(null);
+                morphologyAyahFilter.set(null);
+                recitationPlaylist.set(null);
+                return;
+            }
+
+            // Group by surah
+            const surahAyahMap = new Map<number, number[]>();
+            for (const m of matches) {
+                if (!surahAyahMap.has(m.surah)) surahAyahMap.set(m.surah, []);
+                surahAyahMap.get(m.surah)!.push(m.ayah);
+            }
+
+            // Load morphology for each surah and filter to matched ayahs
+            const surahNums = [...surahAyahMap.keys()].sort((a, b) => a - b);
+            const morphResults = await Promise.all(
+                surahNums.map(s => invoke<SurahMorphology>('get_surah_morphology', { surahNumber: s }))
+            );
+
+            const filtered: SurahMorphology[] = morphResults.map((morph, i) => {
+                const allowed = new Set(surahAyahMap.get(surahNums[i])!);
+                return { ...morph, ayahs: morph.ayahs.filter(a => allowed.has(a.ayah)) };
+            });
+
+            // Build recitation playlist
+            const playlist: { surah: number; ayah: number }[] = [];
+            for (const s of filtered) {
+                for (const a of s.ayahs) playlist.push({ surah: s.surah, ayah: a.ayah });
+            }
+
+            morphologyMultiSurahList.set(filtered);
+            morphologyAyahFilter.set(null);
+            recitationPlaylist.set(playlist);
+        } catch (e) {
+            console.error('Search failed', e);
+        } finally {
+            isSearching = false;
+        }
+    }
 </script>
 
 <div
@@ -133,6 +194,8 @@
     <ParchmentActionBar
         onOpenBookmarks={() => (showBookmarks = true)}
         onOpenHighlights={() => (showHighlights = true)}
+        onSearch={handleSearch}
+        {isSearching}
     />
 
     <div

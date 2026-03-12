@@ -125,6 +125,7 @@ pub fn run() {
             terminal::start_terminal,
             terminal::send_terminal_input,
             terminal::close_terminal,
+            commands::search_quran,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {

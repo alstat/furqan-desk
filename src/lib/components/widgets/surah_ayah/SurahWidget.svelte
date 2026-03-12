@@ -20,6 +20,13 @@
 	import type { TranslatorInfo } from '$lib/stores/translation.store';
 	import { onMount } from 'svelte';
 
+	const LANG_NAMES: Record<string, string> = {
+		AR: 'Arabic', BN: 'Bengali', EN: 'English', FA: 'Persian',
+		HA: 'Hausa',  HI: 'Hindi',  ID: 'Indonesian', MS: 'Malay',
+		PA: 'Punjabi', PS: 'Pashto', SW: 'Swahili', TL: 'Tagalog',
+		TR: 'Turkish', UR: 'Urdu',
+	};
+
 	let font: string = $state('font-scheherazade');
 	let textSize: string = $state('text-xl');
 	let hideSurah: boolean = $state(false);
@@ -151,8 +158,12 @@
 					class={selectClass}
 				>
 					<option value="">None</option>
-					{#each $availableTranslators as t}
-						<option value={String(t.id)}>{t.name} ({t.lang})</option>
+					{#each [...new Set($availableTranslators.map(t => t.lang))] as lang}
+						<optgroup label={LANG_NAMES[lang] ?? lang}>
+							{#each $availableTranslators.filter(t => t.lang === lang) as t}
+								<option value={String(t.id)}>{t.name}</option>
+							{/each}
+						</optgroup>
 					{/each}
 				</select>
 				<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">

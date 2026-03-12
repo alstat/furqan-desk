@@ -1267,3 +1267,195 @@ pub fn compile_typst_pdf(source: String) -> Result<Vec<u8>, String> {
     typst_pdf::pdf(&doc, &typst_pdf::PdfOptions::default())
         .map_err(|e| format!("{e:?}"))
 }
+
+// ── Quranic search ────────────────────────────────────────────────────────────
+#[derive(Serialize)]
+pub struct AyahMatch {
+    pub surah: i64,
+    pub ayah: i64,
+}
+
+/// Strip Arabic diacritics (harakat + Quranic annotation marks) so consonant-only
+/// queries match fully-vowelised stored text.
+fn strip_arabic_diacritics(s: &str) -> String {
+    s.chars()
+        .filter(|&c| {
+            !matches!(c,
+                '\u{064B}'..='\u{065F}' // fathatan … wavy hamza below
+                | '\u{0610}'..='\u{061A}' // extended Arabic marks
+                | '\u{0670}'              // superscript alef
+                | '\u{06D6}'..='\u{06DC}' // Quranic annotation signs
+                | '\u{06DF}'..='\u{06E4}'
+                | '\u{06E7}'..='\u{06E8}'
+                | '\u{06EA}'..='\u{06ED}'
+            )
+        })
+        .collect()
+}
+
+/// Languages (ISO codes stored in `translators.lang`) whose translation text is
+/// written in Arabic script and therefore benefits from consonantal search.
+const ARABIC_SCRIPT_LANGS: &[&str] = &["FA", "HA", "MS", "PA", "PS", "UR"];
+
+/// Return true if `word` appears in `text` as a whole token (split on whitespace).
+fn is_whole_word(text: &str, word: &str) -> bool {
+    text.split_whitespace().any(|t| t == word)
+}
+
+/// Check all `words` against `text`. The last word uses whole-word matching when
+/// `last_whole_word` is true; all other words use substring matching.
+fn words_match(text: &str, words: &[String], last_whole_word: bool) -> bool {
+    let last = words.len().saturating_sub(1);
+    words.iter().enumerate().all(|(i, w)| {
+        if i == last && last_whole_word {
+            is_whole_word(text, w.as_str())
+        } else {
+            text.contains(w.as_str())
+        }
+    })
+}
+
+/// Fetch all (surah, ayah, text) rows from `translations` for a given translator,
+/// then filter in Rust using consonantal, multi-word AND matching.
+fn consonantal_translation_search(
+    conn: &rusqlite::Connection,
+    tid: i64,
+    words: &[String],
+    last_whole_word: bool,
+) -> Result<Vec<AyahMatch>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT surah, ayah, text FROM translations
+             WHERE translator_id = ?1 ORDER BY surah, ayah",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![tid], |row| {
+            Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, String>(2)?))
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    let results = rows
+        .into_iter()
+        .filter_map(|(surah, ayah, text)| {
+            let stripped = strip_arabic_diacritics(&text);
+            if words_match(&stripped, words, last_whole_word) {
+                Some(AyahMatch { surah, ayah })
+            } else {
+                None
+            }
+        })
+        .collect();
+    Ok(results)
+}
+
+#[tauri::command]
+pub fn search_quran(
+    db: State<Database>,
+    query: String,
+    translator_id: Option<i64>,
+) -> Result<Vec<AyahMatch>, String> {
+    if query.trim().is_empty() {
+        return Ok(vec![]);
+    }
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+
+    // Detect Arabic script in the query
+    let is_arabic = query.chars().any(|c| ('\u{0600}'..='\u{06FF}').contains(&c));
+
+    // Trailing whitespace in the query means the user wants the last word matched
+    // as a standalone token (whole-word boundary), not as a prefix of another word.
+    let last_whole_word = query.ends_with(|c: char| c.is_whitespace());
+
+    if is_arabic {
+        // Strip diacritics from the query and split into words for AND matching
+        let stripped_query = strip_arabic_diacritics(query.trim());
+        let words: Vec<String> = stripped_query
+            .split_whitespace()
+            .map(|w| w.to_string())
+            .collect();
+
+        // If an Arabic-script translator is active, search that translation table.
+        // Otherwise search the Quran text directly.
+        if let Some(tid) = translator_id {
+            let lang: Option<String> = conn
+                .query_row(
+                    "SELECT lang FROM translators WHERE id = ?1",
+                    rusqlite::params![tid],
+                    |row| row.get(0),
+                )
+                .ok();
+            if lang.as_deref().map(|l| ARABIC_SCRIPT_LANGS.contains(&l)).unwrap_or(false) {
+                return consonantal_translation_search(&conn, tid, &words, last_whole_word);
+            }
+        }
+
+        // Default: search quran_text consonantally
+        let mut stmt = conn
+            .prepare("SELECT sura, aya, text FROM quran_text ORDER BY sura, aya")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map([], |row| {
+                Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, String>(2)?))
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        let results = rows
+            .into_iter()
+            .filter_map(|(sura, aya, text)| {
+                let stripped = strip_arabic_diacritics(&text);
+                if words_match(&stripped, &words, last_whole_word) {
+                    Some(AyahMatch { surah: sura, ayah: aya })
+                } else {
+                    None
+                }
+            })
+            .collect();
+        Ok(results)
+    } else {
+        // Latin/Roman query — multi-word AND search against the active translation.
+        // Diacritics are stripped from the stored text too, covering Arabic-script
+        // translations that the user might query via romanised input.
+        let tid = translator_id.unwrap_or(1);
+        let words: Vec<String> = query
+            .trim()
+            .split_whitespace()
+            .map(|w| w.to_lowercase())
+            .collect();
+        if words.is_empty() {
+            return Ok(vec![]);
+        }
+
+        // Pre-filter in SQL on the first word to reduce in-memory work, then
+        // apply the remaining words and diacritic stripping in Rust.
+        let first_pattern = format!("%{}%", words[0]);
+        let mut stmt = conn
+            .prepare(
+                "SELECT surah, ayah, text FROM translations
+                 WHERE translator_id = ?1 AND text LIKE ?2
+                 ORDER BY surah, ayah",
+            )
+            .map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(rusqlite::params![tid, first_pattern], |row| {
+                Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, String>(2)?))
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        let results = rows
+            .into_iter()
+            .filter_map(|(surah, ayah, text)| {
+                let normalised = strip_arabic_diacritics(&text).to_lowercase();
+                if words_match(&normalised, &words, last_whole_word) {
+                    Some(AyahMatch { surah, ayah })
+                } else {
+                    None
+                }
+            })
+            .collect();
+        Ok(results)
+    }
+}
