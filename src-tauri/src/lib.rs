@@ -63,8 +63,9 @@ pub fn run() {
             ];
 
             let transliteration_path = resource_dir.join("data/transliteration/english-transliteration-tajweed-simple.json");
+            let word_by_word_path = resource_dir.join("data/word-by-word/english-wbw-translation.json");
 
-            let database = db::Database::new(db_path, sql_path, morph_path, recitation_paths, translation_paths, transliteration_path)
+            let database = db::Database::new(db_path, sql_path, morph_path, recitation_paths, translation_paths, transliteration_path, word_by_word_path)
                 .expect("Failed to initialize database");
             app.manage(database);
             // Load any previously saved custom Julia binary path before managing state
@@ -112,6 +113,7 @@ pub fn run() {
             commands::get_translators,
             commands::get_surah_translation,
             commands::get_surah_transliteration,
+            commands::get_surah_word_by_word,
             julia::check_julia,
             julia::get_julia_path,
             julia::set_julia_path,

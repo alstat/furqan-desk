@@ -45,7 +45,8 @@
       "data/translation/tl/dar-al-salam-center-tagalog-simple.json",
       "data/translation/tr/dar-al-salam-center-simple.json",
       "data/translation/ur/bayan-ul-quran-simple.json",
-      "data/transliteration/english-transliteration-tajweed-simple.json"
+      "data/transliteration/english-transliteration-tajweed-simple.json",
+      "data/word-by-word/english-wbw-translation.json"
     ],
     "icon": [
       "icons/32x32.png",
