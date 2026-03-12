@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import 'highlight.js/styles/github.css';
+	import '$lib/icons';
 	import { appDarkMode } from '$lib/stores/editor.store';
 
 	let { children } = $props();
