@@ -150,10 +150,29 @@
 	}
 
 	const labelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300';
+
+	let { onOpenSettings = () => {} }: { onOpenSettings?: () => void } = $props();
 </script>
 
 {#snippet cardBody()}
 	<div class="flex flex-col gap-3.5 px-4 py-3">
+
+		<!-- Settings -->
+		<div>
+			<span class={labelClass}>App</span>
+			<button
+				onclick={onOpenSettings}
+				class="cursor-pointer mt-1.5 w-full px-3 py-1 text-[11px] font-semibold rounded-full
+					   border border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
+					   text-brand-charcoal-500 transition-colors flex items-center justify-center gap-1.5"
+			>
+				<Icon icon="solar:settings-bold-duotone" width="0.85rem" />
+				Settings
+			</button>
+		</div>
+
+		<!-- Divider -->
+		<div class="border-t border-brand-sand-200"></div>
 
 		<!-- Editor Theme -->
 		<div>
@@ -457,4 +476,4 @@
 	<ControlCard cardTitle={'Editor Controls'} {cardBody} />
 {/snippet}
 
-<GroupCards {controlCard} {collapsedIcon} xPosition={'left'} />
+<GroupCards {controlCard} {collapsedIcon} xPosition={'left'} id="tour-editor-toolbar" />
