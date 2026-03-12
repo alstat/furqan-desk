@@ -56,7 +56,7 @@
             targetId: null,
             title: "You're all set!",
             description:
-                "Explore freely. You can restart this tour anytime from the Settings panel in the Editor Tools.",
+                "For more, check the User Guide under the Settings panel. You can restart this tour anytime from the Settings panel in the Editor Tools.",
             position: "center" as const,
         },
     ];
