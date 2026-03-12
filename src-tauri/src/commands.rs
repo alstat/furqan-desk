@@ -2,7 +2,16 @@ use crate::db::Database;
 use crate::typst_world::get_world;
 use serde::Serialize;
 use std::collections::BTreeMap;
-use tauri::State;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
+use tauri::{AppHandle, Emitter, Manager, State};
+
+// ── Download state ────────────────────────────────────────────────────────────
+pub struct DownloadState {
+    pub cancel: Arc<AtomicBool>,
+}
 
 // ── Recitation structs ───────────────────────────────────────────────────────
 #[derive(Serialize)]
@@ -10,15 +19,26 @@ pub struct RecitationAyah {
     pub audio_url: String,
     pub duration: Option<i64>,
     pub segments: Option<String>,
+    pub is_local: bool,
 }
 
 #[tauri::command]
 pub fn get_recitation_ayah(
+    app: AppHandle,
     state: State<Database>,
     surah: i64,
     ayah: i64,
     reciter_id: i64,
 ) -> Result<Option<RecitationAyah>, String> {
+    // Check if a locally downloaded file exists first
+    let local_path = app.path().app_data_dir().ok().map(|d| {
+        d.join("recitation")
+            .join(reciter_id.to_string())
+            .join(surah.to_string())
+            .join(format!("{ayah}.mp3"))
+    });
+    let is_local = local_path.as_ref().map(|p| p.exists()).unwrap_or(false);
+
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare(
@@ -28,17 +48,254 @@ pub fn get_recitation_ayah(
         .map_err(|e| e.to_string())?;
     let mut rows = stmt
         .query_map(rusqlite::params![reciter_id, surah, ayah], |row| {
-            Ok(RecitationAyah {
-                audio_url: row.get(0)?,
-                duration: row.get(1)?,
-                segments: row.get(2)?,
-            })
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, Option<i64>>(1)?,
+                row.get::<_, Option<String>>(2)?,
+            ))
         })
         .map_err(|e| e.to_string())?;
     match rows.next() {
-        Some(r) => Ok(Some(r.map_err(|e| e.to_string())?)),
+        Some(r) => {
+            let (remote_url, duration, segments) = r.map_err(|e| e.to_string())?;
+            let audio_url = if is_local {
+                local_path.unwrap().to_string_lossy().into_owned()
+            } else {
+                remote_url
+            };
+            Ok(Some(RecitationAyah { audio_url, duration, segments, is_local }))
+        }
         None => Ok(None),
     }
+}
+
+// ── Download progress payload ─────────────────────────────────────────────────
+#[derive(Serialize, Clone)]
+pub struct DownloadProgressPayload {
+    pub reciter_id: i64,
+    pub surah: i64,
+    pub ayah: i64,
+    pub downloaded: usize,
+    pub total: usize,
+    pub done: bool,
+    pub failed: bool,
+}
+
+#[tauri::command]
+pub fn get_downloaded_surahs(
+    app: AppHandle,
+    state: State<Database>,
+    reciter_id: i64,
+) -> Result<Vec<i64>, String> {
+    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+
+    // Get expected ayah counts per surah in one query
+    let expected_counts: Vec<(i64, i64)> = {
+        let conn = state.0.lock().map_err(|e| e.to_string())?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT surah_number, COUNT(*) FROM recitations
+                 WHERE reciter_id = ?1 GROUP BY surah_number",
+            )
+            .map_err(|e| e.to_string())?;
+        let result = stmt.query_map(rusqlite::params![reciter_id], |row| {
+            Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+        result
+    };
+
+    let mut downloaded = Vec::new();
+    for (surah, expected) in expected_counts {
+        let surah_dir = data_dir
+            .join("recitation")
+            .join(reciter_id.to_string())
+            .join(surah.to_string());
+        if surah_dir.exists() {
+            let actual = std::fs::read_dir(&surah_dir)
+                .map(|rd| rd.filter_map(|e| e.ok()).count() as i64)
+                .unwrap_or(0);
+            if actual >= expected {
+                downloaded.push(surah);
+            }
+        }
+    }
+
+    Ok(downloaded)
+}
+
+#[tauri::command]
+pub async fn download_recitation(
+    app: AppHandle,
+    state: State<'_, Database>,
+    dl_state: State<'_, DownloadState>,
+    reciter_id: i64,
+    surah_filter: Option<i64>,
+) -> Result<(), String> {
+    dl_state.cancel.store(false, Ordering::Relaxed);
+
+    // Collect all rows before releasing the DB lock
+    let rows: Vec<(i64, i64, String)> = {
+        let conn = state.0.lock().map_err(|e| e.to_string())?;
+        if let Some(sf) = surah_filter {
+            let mut stmt = conn
+                .prepare(
+                    "SELECT surah_number, ayah_number, audio_url FROM recitations
+                     WHERE reciter_id = ?1 AND surah_number = ?2
+                     ORDER BY surah_number, ayah_number",
+                )
+                .map_err(|e| e.to_string())?;
+            let result = stmt.query_map(rusqlite::params![reciter_id, sf], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, i64>(1)?,
+                    row.get::<_, String>(2)?,
+                ))
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+            result
+        } else {
+            let mut stmt = conn
+                .prepare(
+                    "SELECT surah_number, ayah_number, audio_url FROM recitations
+                     WHERE reciter_id = ?1
+                     ORDER BY surah_number, ayah_number",
+                )
+                .map_err(|e| e.to_string())?;
+            let result = stmt.query_map(rusqlite::params![reciter_id], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, i64>(1)?,
+                    row.get::<_, String>(2)?,
+                ))
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+            result
+        }
+    }; // DB lock released here
+
+    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let total = rows.len();
+    let mut downloaded_count: usize = 0;
+    let client = reqwest::Client::new();
+
+    for (surah, ayah, url) in &rows {
+        if dl_state.cancel.load(Ordering::Relaxed) {
+            break;
+        }
+
+        let file_path = data_dir
+            .join("recitation")
+            .join(reciter_id.to_string())
+            .join(surah.to_string())
+            .join(format!("{ayah}.mp3"));
+
+        if file_path.exists() {
+            downloaded_count += 1;
+            let _ = app.emit(
+                "recitation-download-progress",
+                DownloadProgressPayload {
+                    reciter_id,
+                    surah: *surah,
+                    ayah: *ayah,
+                    downloaded: downloaded_count,
+                    total,
+                    done: false,
+                    failed: false,
+                },
+            );
+            continue;
+        }
+
+        if let Some(parent) = file_path.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+
+        let result = async {
+            let resp = client.get(url.as_str()).send().await?;
+            resp.bytes().await
+        }
+        .await;
+
+        match result {
+            Ok(bytes) => {
+                if let Err(e) = std::fs::write(&file_path, &bytes) {
+                    let _ = app.emit(
+                        "recitation-download-progress",
+                        DownloadProgressPayload {
+                            reciter_id,
+                            surah: *surah,
+                            ayah: *ayah,
+                            downloaded: downloaded_count,
+                            total,
+                            done: false,
+                            failed: true,
+                        },
+                    );
+                    return Err(e.to_string());
+                }
+                downloaded_count += 1;
+                let _ = app.emit(
+                    "recitation-download-progress",
+                    DownloadProgressPayload {
+                        reciter_id,
+                        surah: *surah,
+                        ayah: *ayah,
+                        downloaded: downloaded_count,
+                        total,
+                        done: false,
+                        failed: false,
+                    },
+                );
+            }
+            Err(_) => {
+                let _ = app.emit(
+                    "recitation-download-progress",
+                    DownloadProgressPayload {
+                        reciter_id,
+                        surah: *surah,
+                        ayah: *ayah,
+                        downloaded: downloaded_count,
+                        total,
+                        done: false,
+                        failed: true,
+                    },
+                );
+            }
+        }
+    }
+
+    let _ = app.emit(
+        "recitation-download-progress",
+        DownloadProgressPayload {
+            reciter_id,
+            surah: 0,
+            ayah: 0,
+            downloaded: downloaded_count,
+            total,
+            done: true,
+            failed: false,
+        },
+    );
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn cancel_recitation_download(dl_state: State<'_, DownloadState>) -> Result<(), String> {
+    dl_state.cancel.store(true, Ordering::Relaxed);
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn read_audio_bytes(path: String) -> Result<Vec<u8>, String> {
+    tokio::fs::read(&path).await.map_err(|e| e.to_string())
 }
 
 // ── User-data structs ────────────────────────────────────────────────────────

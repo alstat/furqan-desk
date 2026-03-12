@@ -17,3 +17,19 @@ export const isPlaying = writable(false);
 export const totalAyahsInSurah = writable(0);
 // Set to an ayah number to request playback from outside the player
 export const requestPlayAyah = writable<number | null>(null);
+
+// ── Offline download ──────────────────────────────────────────────────────────
+export const downloadedSurahs = writable<Record<number, number[]>>({ 953: [], 954: [] });
+export const isDownloading = writable(false);
+
+export type DownloadProgress = {
+    reciter_id: number;
+    surah: number;
+    ayah: number;
+    downloaded: number;
+    total: number;
+    done: boolean;
+    failed: boolean;
+} | null;
+
+export const downloadProgress = writable<DownloadProgress>(null);

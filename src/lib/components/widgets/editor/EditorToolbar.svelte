@@ -164,7 +164,7 @@
 					class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
 						${$editorTheme === 'ayu-light'
 							? 'bg-brand-gold-400 text-white border-brand-gold-400'
-							: 'border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
+							: 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
 				>
 					Ayu Light
 				</button>
@@ -173,7 +173,7 @@
 					class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
 						${$editorTheme === 'ayu-mirage'
 							? 'bg-[#1f2430] text-[#ffa759] border-[#ffa759]'
-							: 'border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
+							: 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
 				>
 					Ayu Mirage
 				</button>
@@ -191,7 +191,7 @@
 					onclick={() => cmFontSize.set($cmFontSize - 1)}
 					disabled={$cmFontSize <= 10}
 					class="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full border
-						   border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200
+						   border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
 						   text-brand-charcoal-500 font-semibold text-sm transition-colors
 						   disabled:opacity-40 disabled:cursor-not-allowed"
 					title="Decrease font size"
@@ -203,7 +203,7 @@
 					onclick={() => cmFontSize.set($cmFontSize + 1)}
 					disabled={$cmFontSize >= 24}
 					class="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full border
-						   border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200
+						   border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
 						   text-brand-charcoal-500 font-semibold text-sm transition-colors
 						   disabled:opacity-40 disabled:cursor-not-allowed"
 					title="Increase font size"
@@ -223,7 +223,7 @@
 					class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
 						${!$appDarkMode
 							? 'bg-brand-gold-400 text-white border-brand-gold-400'
-							: 'border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
+							: 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
 				>
 					Light
 				</button>
@@ -232,7 +232,7 @@
 					class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
 						${$appDarkMode
 							? 'bg-[#1a1d2e] text-[#c8a96a] border-[#3e4568]'
-							: 'border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
+							: 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
 				>
 					Dark
 				</button>
@@ -250,7 +250,7 @@
 					<button
 						onclick={() => createNew('lexical')}
 						class="cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full
-							   border border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200
+							   border border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
 							   text-brand-charcoal-500 transition-colors"
 					>
 						Lexical
@@ -276,7 +276,7 @@
 				<button
 					onclick={() => (showNewOptions = true)}
 					class="cursor-pointer mt-1.5 w-full px-3 py-1 text-[11px] font-semibold rounded-full
-						   border border-brand-sand-300 bg-brand-sand-100 hover:bg-brand-sand-200
+						   border border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
 						   text-brand-charcoal-500 transition-colors flex items-center justify-center gap-1.5"
 				>
 					<Icon icon="solar:add-circle-bold-duotone" width="0.85rem" />
@@ -381,15 +381,15 @@
 							<input
 								bind:value={juliaCustomPath}
 								placeholder="/usr/local/bin/julia"
-								class="flex-1 min-w-0 px-1.5 py-0.5 text-[10px] font-mono rounded border border-brand-sand-300
+								class="flex-1 min-w-0 px-1.5 py-0.5 text-[10px] font-mono rounded border border-brand-sand-200
 									   bg-brand-sand-50 text-brand-charcoal-600 focus:outline-none focus:ring-1
-									   focus:ring-violet-300 focus:border-violet-400"
+									   focus:ring-brand-gold-100 focus:border-brand-gold-400"
 								spellcheck="false"
 							/>
 							<button
 								onclick={browseJuliaPath}
 								title="Browse for julia binary"
-								class="cursor-pointer shrink-0 p-1 rounded border border-brand-sand-300
+								class="cursor-pointer shrink-0 p-1 rounded border border-brand-sand-200
 									   bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500
 									   transition-colors"
 							>
