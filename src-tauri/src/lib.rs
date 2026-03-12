@@ -5,6 +5,7 @@ mod julia;
 mod terminal;
 mod typst_world;
 
+use std::sync::{atomic::AtomicBool, Arc};
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -70,6 +71,9 @@ pub fn run() {
             let julia_custom_path = julia::load_persisted_path(&app.handle());
             app.manage(julia::JuliaState::new(julia_custom_path));
             app.manage(terminal::TerminalState::new());
+            app.manage(commands::DownloadState {
+                cancel: Arc::new(AtomicBool::new(false)),
+            });
 
             // Eagerly initialise the Typst world (font scanning) in the background
             // so the first compile is fast.
@@ -101,6 +105,10 @@ pub fn run() {
             commands::check_typst_fonts,
             commands::install_typst_fonts,
             commands::get_recitation_ayah,
+            commands::get_downloaded_surahs,
+            commands::download_recitation,
+            commands::cancel_recitation_download,
+            commands::read_audio_bytes,
             commands::get_translators,
             commands::get_surah_translation,
             commands::get_surah_transliteration,

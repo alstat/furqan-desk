@@ -1,6 +1,7 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
     import Icon from "@iconify/svelte";
+    import { onMount } from "svelte";
     import { selectedSurahIdx } from "$lib/stores/quran.svelte";
     import {
         activeReciterId,
@@ -8,13 +9,46 @@
         isPlaying,
         totalAyahsInSurah,
         requestPlayAyah,
+        downloadedSurahs,
+        isDownloading,
+        downloadProgress,
     } from "$lib/stores/recitation.store";
+    import RecitationDownloadDialog from "./RecitationDownloadDialog.svelte";
 
     let { scrollContainer }: { scrollContainer: HTMLElement | null } = $props();
 
     let audioEl = $state<HTMLAudioElement | null>(null);
     let noInternetToast = $state(false);
     let toastTimer: ReturnType<typeof setTimeout> | null = null;
+    let showDownloadDialog = $state(false);
+    // Tracks whether the currently loaded audio is a local file (not network)
+    let isCurrentLocal = $state(false);
+    // Blob URL for the current local audio file; revoked when moving to the next ayah
+    let currentBlobUrl: string | null = null;
+
+    function revokeBlobUrl() {
+        if (currentBlobUrl) {
+            URL.revokeObjectURL(currentBlobUrl);
+            currentBlobUrl = null;
+        }
+    }
+
+    let currentSurahDownloaded = $derived(
+        $downloadedSurahs[$activeReciterId]?.includes($selectedSurahIdx) ?? false
+    );
+
+    // Populate downloaded-surahs store on startup so the button state is correct immediately
+    onMount(async () => {
+        try {
+            const [s953, s954] = await Promise.all([
+                invoke<number[]>("get_downloaded_surahs", { reciterId: 953 }),
+                invoke<number[]>("get_downloaded_surahs", { reciterId: 954 }),
+            ]);
+            downloadedSurahs.set({ 953: s953, 954: s954 });
+        } catch (e) {
+            console.error("Failed to fetch downloaded surahs:", e);
+        }
+    });
 
     function showNetworkError() {
         noInternetToast = true;
@@ -23,6 +57,9 @@
     }
 
     function handleAudioError() {
+        // Never show the "no internet" toast when playing a local file —
+        // local audio errors are unrelated to network connectivity.
+        if (isCurrentLocal) return;
         // MEDIA_ERR_NETWORK = 2; also catch any error when the device is offline
         const code = audioEl?.error?.code;
         if (code === 2 || !navigator.onLine) {
@@ -38,12 +75,15 @@
     });
 
     function stopAndReset() {
+        revokeBlobUrl();
         if (audioEl) {
             audioEl.pause();
             audioEl.src = "";
+            audioEl.load(); // exits the error/aborted state so the element is ready for next play
         }
         currentPlayingAyah.set(null);
         isPlaying.set(false);
+        isCurrentLocal = false;
     }
 
     async function playAyah(ayahNum: number) {
@@ -56,6 +96,7 @@
                 audio_url: string;
                 duration: number | null;
                 segments: string | null;
+                is_local: boolean;
             } | null>("get_recitation_ayah", {
                 surah,
                 ayah: ayahNum,
@@ -64,7 +105,21 @@
 
             if (!result) return;
 
-            audioEl.src = result.audio_url;
+            isCurrentLocal = result.is_local;
+            revokeBlobUrl();
+
+            if (result.is_local) {
+                // Read the file bytes via IPC and create a blob: URL —
+                // avoids the asset:// protocol and its CSP/scope restrictions.
+                const bytes = await invoke<number[]>("read_audio_bytes", {
+                    path: result.audio_url,
+                });
+                const blob = new Blob([new Uint8Array(bytes)], { type: "audio/mpeg" });
+                currentBlobUrl = URL.createObjectURL(blob);
+                audioEl.src = currentBlobUrl;
+            } else {
+                audioEl.src = result.audio_url;
+            }
             audioEl.load();
             currentPlayingAyah.set(ayahNum);
             isPlaying.set(true);
@@ -73,13 +128,28 @@
             // Ignore AbortError — happens when a new play() interrupts a pending one
             if (e instanceof DOMException && e.name === "AbortError") return;
             isPlaying.set(false);
-            if (!navigator.onLine) {
+            if (!isCurrentLocal && !navigator.onLine) {
                 showNetworkError();
-            } else {
+            } else if (!isCurrentLocal) {
                 console.error("Failed to play recitation:", e);
             }
         }
     }
+
+    // Refresh downloaded surahs after a download completes
+    $effect(() => {
+        const p = $downloadProgress;
+        if (p?.done) {
+            invoke<number[]>("get_downloaded_surahs", { reciterId: p.reciter_id }).then(
+                (surahs) => {
+                    downloadedSurahs.update((prev) => ({
+                        ...prev,
+                        [p.reciter_id]: surahs,
+                    }));
+                }
+            );
+        }
+    });
 
     // Watch for external play requests (e.g. clicking a verse number)
     $effect(() => {
@@ -160,8 +230,12 @@
         const wasPlaying = $isPlaying;
         if (audioEl) {
             audioEl.pause();
-            audioEl.src = "";
+            // Do NOT clear audioEl.src here — setting it to "" puts Chromium into
+            // an aborted state that survives a subsequent load(), causing play() to
+            // throw NotSupportedError. playAyah() overwrites the src itself.
         }
+        revokeBlobUrl();
+        isCurrentLocal = false;
         isPlaying.set(false);
         activeReciterId.set(id);
         if (ayah !== null && wasPlaying) {
@@ -250,6 +324,27 @@
         <!-- Divider -->
         <div class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"></div>
 
+        <!-- Download / spinner — only rendered when relevant; trailing divider included -->
+        {#if $isDownloading || !currentSurahDownloaded}
+            {#if $isDownloading}
+                <div class="p-1.5 text-brand-gold-500 dark:text-[#e5c890]" title="Downloading…">
+                    <Icon icon="solar:refresh-bold-duotone" width="1rem" class="animate-spin" />
+                </div>
+            {:else}
+                <button
+                    onclick={() => (showDownloadDialog = true)}
+                    aria-label="Download recitation"
+                    class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
+                           hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
+                           hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
+                           transition-all"
+                >
+                    <Icon icon="solar:download-minimalistic-bold" width="1rem" />
+                </button>
+            {/if}
+            <div class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"></div>
+        {/if}
+
         <!-- Reciter toggle -->
         <div class="flex items-center gap-0.5 px-0.5">
             <button
@@ -278,3 +373,10 @@
 
 <!-- Hidden audio element -->
 <audio bind:this={audioEl} onended={handleEnded} onerror={handleAudioError} preload="none"></audio>
+
+{#if showDownloadDialog}
+    <RecitationDownloadDialog
+        open={showDownloadDialog}
+        onClose={() => (showDownloadDialog = false)}
+    />
+{/if}
