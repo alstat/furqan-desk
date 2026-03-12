@@ -13,6 +13,23 @@
     let { scrollContainer }: { scrollContainer: HTMLElement | null } = $props();
 
     let audioEl = $state<HTMLAudioElement | null>(null);
+    let noInternetToast = $state(false);
+    let toastTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function showNetworkError() {
+        noInternetToast = true;
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => (noInternetToast = false), 4000);
+    }
+
+    function handleAudioError() {
+        // MEDIA_ERR_NETWORK = 2; also catch any error when the device is offline
+        const code = audioEl?.error?.code;
+        if (code === 2 || !navigator.onLine) {
+            isPlaying.set(false);
+            showNetworkError();
+        }
+    }
 
     // Reset player when surah changes
     $effect(() => {
@@ -55,8 +72,12 @@
         } catch (e: unknown) {
             // Ignore AbortError — happens when a new play() interrupts a pending one
             if (e instanceof DOMException && e.name === "AbortError") return;
-            console.error("Failed to play recitation:", e);
             isPlaying.set(false);
+            if (!navigator.onLine) {
+                showNetworkError();
+            } else {
+                console.error("Failed to play recitation:", e);
+            }
         }
     }
 
@@ -149,92 +170,111 @@
     }
 </script>
 
-<!-- Floating player pill -->
-<div
-    class="flex items-center gap-1 px-2 py-1.5
-           rounded-2xl
-           bg-white/80 dark:bg-[#292c3c]/85
-           backdrop-blur-md
-           border border-stone-200/70 dark:border-[#414559]/60
-           shadow-lg shadow-stone-300/30 dark:shadow-black/40
-           text-sm select-none"
->
-    <!-- Prev -->
-    <button
-        onclick={prevAyah}
-        disabled={!$currentPlayingAyah || $currentPlayingAyah <= 1}
-        aria-label="Previous ayah"
-        class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
-               hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
-               hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
-               disabled:opacity-25 disabled:cursor-not-allowed transition-all"
-    >
-        <Icon icon="solar:skip-previous-bold" width="1rem" />
-    </button>
-
-    <!-- Play/Pause — slightly larger, gold accent -->
-    <button
-        onclick={togglePlay}
-        aria-label={$isPlaying ? "Pause" : "Play"}
-        class="cursor-pointer p-1.5 rounded-xl
-               text-brand-gold-600 dark:text-[#e5c890]
-               hover:bg-brand-gold-50 dark:hover:bg-[#3b3757]
-               transition-all"
-    >
-        <Icon
-            icon={$isPlaying ? "solar:pause-circle-bold-duotone" : "solar:play-circle-bold-duotone"}
-            width="1.5rem"
-        />
-    </button>
-
-    <!-- Next -->
-    <button
-        onclick={nextAyah}
-        disabled={$currentPlayingAyah !== null && $currentPlayingAyah >= $totalAyahsInSurah}
-        aria-label="Next ayah"
-        class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
-               hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
-               hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
-               disabled:opacity-25 disabled:cursor-not-allowed transition-all"
-    >
-        <Icon icon="solar:skip-next-bold" width="1rem" />
-    </button>
-
-    <!-- Divider -->
-    <div class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"></div>
-
-    <!-- Ayah counter -->
-    <span class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] tabular-nums px-1 min-w-[3.5rem] text-center">
-        {$currentPlayingAyah ?? 1} / {$totalAyahsInSurah}
-    </span>
-
-    <!-- Divider -->
-    <div class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"></div>
-
-    <!-- Reciter toggle -->
-    <div class="flex items-center gap-0.5 px-0.5">
-        <button
-            onclick={() => setReciter(953)}
-            class={`cursor-pointer px-2 py-0.5 rounded-lg text-xs font-medium transition-all ${
-                $activeReciterId === 953
-                    ? "bg-brand-gold-100 dark:bg-[#3b3757] text-brand-gold-600 dark:text-[#e5c890]"
-                    : "text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
-            }`}
+<div class="flex flex-col items-center gap-2">
+    <!-- No internet toast -->
+    {#if noInternetToast}
+        <div
+            class="flex items-center gap-2 px-3 py-2
+                   rounded-2xl
+                   bg-white/90 dark:bg-[#292c3c]/95
+                   backdrop-blur-md
+                   border border-red-200/80 dark:border-red-900/50
+                   shadow-lg shadow-stone-300/30 dark:shadow-black/40
+                   text-xs text-red-500 dark:text-red-400
+                   select-none"
         >
-            Mishary
-        </button>
+            <Icon icon="solar:wifi-router-minimalistic-bold-duotone" width="1rem" class="shrink-0" />
+            Internet connection required to stream recitation.
+        </div>
+    {/if}
+
+    <!-- Floating player pill -->
+    <div
+        class="flex items-center gap-1 px-2 py-1.5
+               rounded-2xl
+               bg-white/80 dark:bg-[#292c3c]/85
+               backdrop-blur-md
+               border border-stone-200/70 dark:border-[#414559]/60
+               shadow-lg shadow-stone-300/30 dark:shadow-black/40
+               text-sm select-none"
+    >
+        <!-- Prev -->
         <button
-            onclick={() => setReciter(954)}
-            class={`cursor-pointer px-2 py-0.5 rounded-lg text-xs font-medium transition-all ${
-                $activeReciterId === 954
-                    ? "bg-brand-gold-100 dark:bg-[#3b3757] text-brand-gold-600 dark:text-[#e5c890]"
-                    : "text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
-            }`}
+            onclick={prevAyah}
+            disabled={!$currentPlayingAyah || $currentPlayingAyah <= 1}
+            aria-label="Previous ayah"
+            class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
+                   hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
+                   hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
+                   disabled:opacity-25 disabled:cursor-not-allowed transition-all"
         >
-            Saad
+            <Icon icon="solar:skip-previous-bold" width="1rem" />
         </button>
+
+        <!-- Play/Pause — slightly larger, gold accent -->
+        <button
+            onclick={togglePlay}
+            aria-label={$isPlaying ? "Pause" : "Play"}
+            class="cursor-pointer p-1.5 rounded-xl
+                   text-brand-gold-600 dark:text-[#e5c890]
+                   hover:bg-brand-gold-50 dark:hover:bg-[#3b3757]
+                   transition-all"
+        >
+            <Icon
+                icon={$isPlaying ? "solar:pause-circle-bold-duotone" : "solar:play-circle-bold-duotone"}
+                width="1.5rem"
+            />
+        </button>
+
+        <!-- Next -->
+        <button
+            onclick={nextAyah}
+            disabled={$currentPlayingAyah !== null && $currentPlayingAyah >= $totalAyahsInSurah}
+            aria-label="Next ayah"
+            class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
+                   hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
+                   hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
+                   disabled:opacity-25 disabled:cursor-not-allowed transition-all"
+        >
+            <Icon icon="solar:skip-next-bold" width="1rem" />
+        </button>
+
+        <!-- Divider -->
+        <div class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"></div>
+
+        <!-- Ayah counter -->
+        <span class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] tabular-nums px-1 min-w-[3.5rem] text-center">
+            {$currentPlayingAyah ?? 1} / {$totalAyahsInSurah}
+        </span>
+
+        <!-- Divider -->
+        <div class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"></div>
+
+        <!-- Reciter toggle -->
+        <div class="flex items-center gap-0.5 px-0.5">
+            <button
+                onclick={() => setReciter(953)}
+                class={`cursor-pointer px-2 py-0.5 rounded-lg text-xs font-medium transition-all ${
+                    $activeReciterId === 953
+                        ? "bg-brand-gold-100 dark:bg-[#3b3757] text-brand-gold-600 dark:text-[#e5c890]"
+                        : "text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+                }`}
+            >
+                Mishary
+            </button>
+            <button
+                onclick={() => setReciter(954)}
+                class={`cursor-pointer px-2 py-0.5 rounded-lg text-xs font-medium transition-all ${
+                    $activeReciterId === 954
+                        ? "bg-brand-gold-100 dark:bg-[#3b3757] text-brand-gold-600 dark:text-[#e5c890]"
+                        : "text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+                }`}
+            >
+                Saad
+            </button>
+        </div>
     </div>
 </div>
 
 <!-- Hidden audio element -->
-<audio bind:this={audioEl} onended={handleEnded} preload="none"></audio>
+<audio bind:this={audioEl} onended={handleEnded} onerror={handleAudioError} preload="none"></audio>

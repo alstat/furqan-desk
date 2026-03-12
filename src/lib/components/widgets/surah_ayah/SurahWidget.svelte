@@ -11,13 +11,29 @@
 	} from '$lib/stores/quran.svelte';
 	import { morphFontFamily, morphFontSize } from '$lib/stores/morphology.store';
 	import { loadMorphologySurah, loadBasmallahMorphology } from '$lib/functions/widgets/surahWidget';
+	import { availableTranslators, activeTranslatorId, transliterationEnabled } from '$lib/stores/translation.store';
+	import { invoke } from '@tauri-apps/api/core';
+	import type { TranslatorInfo } from '$lib/stores/translation.store';
 	import { onMount } from 'svelte';
 
 	let font: string = $state('font-scheherazade');
 	let textSize: string = $state('text-xl');
 	let hideSurah: boolean = $state(false);
+	let selectedTranslatorId: string = $state('');
+	let translitEnabled: boolean = $state(false);
 
-	onMount(() => { loadBasmallahMorphology(); });
+	onMount(async () => {
+		loadBasmallahMorphology();
+		try {
+			const translators = await invoke<TranslatorInfo[]>('get_translators');
+			availableTranslators.set(translators);
+		} catch (e) {
+			console.error('Failed to load translators', e);
+		}
+		const saved = $activeTranslatorId;
+		if (saved !== null) selectedTranslatorId = String(saved);
+		translitEnabled = $transliterationEnabled;
+	});
 
 	$effect(() => { morphFontFamily.set(font); });
 	$effect(() => { morphFontSize.set(textSize); });
@@ -28,6 +44,12 @@
 		selectedSurahName.set($surahLabels[idx - 1]?.ar ?? '');
 		loadMorphologySurah(idx);
 	});
+
+	$effect(() => {
+		activeTranslatorId.set(selectedTranslatorId ? parseInt(selectedTranslatorId) : null);
+	});
+
+	$effect(() => { transliterationEnabled.set(translitEnabled); });
 
 	function onSurahChange(event: Event) {
 		const idx = parseInt((event.target as HTMLSelectElement).value);
@@ -105,6 +127,40 @@
 	</div>
 {/snippet}
 
+{#snippet translationBody()}
+	<div class="flex flex-col gap-3.5 px-4 py-3">
+		<div>
+			<label for="translator-select" class={labelClass}>Translator</label>
+			<div class="relative">
+				<select
+					id="translator-select"
+					bind:value={selectedTranslatorId}
+					class={selectClass}
+				>
+					<option value="">None</option>
+					{#each $availableTranslators as t}
+						<option value={String(t.id)}>{t.name} ({t.lang})</option>
+					{/each}
+				</select>
+				<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+					<Icon icon="charm:chevron-down" width="0.75rem" />
+				</span>
+			</div>
+		</div>
+		<div class="flex items-center justify-between">
+			<span class={labelClass}>Transliteration</span>
+			<button
+				role="switch"
+				aria-checked={translitEnabled}
+				onclick={() => { translitEnabled = !translitEnabled; }}
+				class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {translitEnabled ? 'bg-brand-gold-400' : 'bg-brand-charcoal-100'}"
+			>
+				<span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {translitEnabled ? 'translate-x-4' : 'translate-x-1'}"></span>
+			</button>
+		</div>
+	</div>
+{/snippet}
+
 {#snippet collapsedIcon()}
 	<Icon icon="solar:book-bookmark-bold-duotone" width="1.5em" />
 {/snippet}
@@ -113,6 +169,7 @@
 	<div class="space-y-2">
 		<ControlCard cardTitle={'Surah'} cardBody={surahCardBody} />
 		<ControlCard cardTitle={'Display'} cardBody={fontBody} />
+		<ControlCard cardTitle={'Translation'} cardBody={translationBody} />
 	</div>
 {/snippet}
 

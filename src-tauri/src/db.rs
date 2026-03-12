@@ -1,5 +1,6 @@
 use crate::buckwalter::buckwalter_to_arabic;
 use rusqlite::{Connection, Result};
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -12,6 +13,8 @@ impl Database {
         sql_path: PathBuf,
         morph_path: PathBuf,
         recitation_paths: Vec<(i64, PathBuf)>,
+        translation_paths: Vec<(String, String, PathBuf)>,
+        transliteration_path: PathBuf,
     ) -> Result<Self> {
         let conn = Connection::open(&db_path)?;
 
@@ -20,6 +23,8 @@ impl Database {
         Self::init_morphology_db(&conn, &morph_path)?;
         Self::init_user_data_tables(&conn)?;
         Self::init_recitation_tables(&conn, &recitation_paths)?;
+        Self::init_translation_tables(&conn, &translation_paths)?;
+        Self::init_transliteration_table(&conn, &transliteration_path)?;
         Ok(Database(Mutex::new(conn)))
     }
 
@@ -274,6 +279,244 @@ impl Database {
             tx.commit()?;
             println!("Imported recitation data for reciter {}", reciter_id);
         }
+
+        Ok(())
+    }
+
+    fn strip_html_simple(s: &str) -> String {
+        let mut result = String::new();
+        let mut in_tag = false;
+        for c in s.chars() {
+            match c {
+                '<' => in_tag = true,
+                '>' => in_tag = false,
+                _ if !in_tag => result.push(c),
+                _ => {}
+            }
+        }
+        result
+    }
+
+    fn process_translation(
+        text: &str,
+        f_map: &serde_json::Map<String, serde_json::Value>,
+    ) -> (String, Option<String>) {
+        let mut result = String::new();
+        let mut footnotes: BTreeMap<String, String> = BTreeMap::new();
+        let chars: Vec<char> = text.chars().collect();
+        let mut i = 0;
+
+        while i < chars.len() {
+            if chars[i] == '<' {
+                i += 1;
+                let mut tag_content = String::new();
+                while i < chars.len() && chars[i] != '>' {
+                    tag_content.push(chars[i]);
+                    i += 1;
+                }
+                i += 1; // skip '>'
+
+                if tag_content.starts_with("sup foot_note=\"") {
+                    let after_prefix = &tag_content["sup foot_note=\"".len()..];
+                    if let Some(end_quote) = after_prefix.find('"') {
+                        let id = &after_prefix[..end_quote];
+
+                        // Read display number until </sup>
+                        let mut display_num = String::new();
+                        while i < chars.len() {
+                            if chars[i] == '<' {
+                                i += 1;
+                                // skip the closing tag content
+                                while i < chars.len() && chars[i] != '>' {
+                                    i += 1;
+                                }
+                                i += 1; // skip '>'
+                                break;
+                            } else {
+                                display_num.push(chars[i]);
+                                i += 1;
+                            }
+                        }
+
+                        result.push('[');
+                        result.push_str(&display_num);
+                        result.push(']');
+
+                        if let Some(ft) = f_map.get(id) {
+                            let ft_str = ft.as_str().unwrap_or("");
+                            footnotes.insert(display_num, Self::strip_html_simple(ft_str));
+                        }
+                    }
+                }
+                // else: skip other HTML tags
+            } else {
+                result.push(chars[i]);
+                i += 1;
+            }
+        }
+
+        let footnotes_json = if footnotes.is_empty() {
+            None
+        } else {
+            serde_json::to_string(&footnotes).ok()
+        };
+
+        (result, footnotes_json)
+    }
+
+    fn init_translation_tables(conn: &Connection, paths: &[(String, String, PathBuf)]) -> Result<()> {
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS translators (
+                id    INTEGER PRIMARY KEY AUTOINCREMENT,
+                lang  TEXT NOT NULL,
+                name  TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS translations (
+                translator_id  INTEGER NOT NULL,
+                surah          INTEGER NOT NULL,
+                ayah           INTEGER NOT NULL,
+                text           TEXT    NOT NULL,
+                footnotes      TEXT,
+                PRIMARY KEY (translator_id, surah, ayah)
+            );
+            CREATE INDEX IF NOT EXISTS idx_trans_surah ON translations(translator_id, surah);",
+        )?;
+
+        let count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM translators",
+            [],
+            |row| row.get(0),
+        )?;
+
+        if count > 0 {
+            // Fix any stale translator names from earlier imports
+            conn.execute(
+                "UPDATE translators SET name = 'Abdul Haleem' WHERE lang = 'EN' AND name = 'Haleem'",
+                [],
+            )?;
+            return Ok(());
+        }
+
+        for (lang, name, path) in paths {
+            if !path.exists() {
+                eprintln!("Translation file not found: {:?}", path);
+                continue;
+            }
+
+            conn.execute(
+                "INSERT INTO translators (lang, name) VALUES (?1, ?2)",
+                rusqlite::params![lang, name],
+            )?;
+            let translator_id = conn.last_insert_rowid();
+
+            let content = fs::read_to_string(path).map_err(|e| {
+                rusqlite::Error::ToSqlConversionFailure(Box::new(e))
+            })?;
+
+            let json: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
+                rusqlite::Error::ToSqlConversionFailure(Box::new(e))
+            })?;
+
+            let obj = match json.as_object() {
+                Some(o) => o,
+                None => continue,
+            };
+
+            let tx = conn.unchecked_transaction()?;
+            {
+                let mut stmt = conn.prepare(
+                    "INSERT INTO translations (translator_id, surah, ayah, text, footnotes) VALUES (?1, ?2, ?3, ?4, ?5)",
+                )?;
+
+                for (key, val) in obj {
+                    let parts: Vec<&str> = key.split(':').collect();
+                    if parts.len() != 2 { continue; }
+                    let surah: i64 = parts[0].parse().unwrap_or(0);
+                    let ayah: i64 = parts[1].parse().unwrap_or(0);
+                    if surah == 0 || ayah == 0 { continue; }
+
+                    let t = val.get("t").and_then(|v| v.as_str()).unwrap_or("");
+                    let empty_map = serde_json::Map::new();
+                    let f_map = val.get("f")
+                        .and_then(|v| v.as_object())
+                        .unwrap_or(&empty_map);
+
+                    let (processed_text, footnotes_json) = Self::process_translation(t, f_map);
+
+                    stmt.execute(rusqlite::params![
+                        translator_id,
+                        surah,
+                        ayah,
+                        processed_text,
+                        footnotes_json,
+                    ])?;
+                }
+            }
+            tx.commit()?;
+            println!("Imported translation for {} - {}", lang, name);
+        }
+
+        Ok(())
+    }
+
+    fn init_transliteration_table(conn: &Connection, path: &PathBuf) -> Result<()> {
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS transliterations (
+                surah  INTEGER NOT NULL,
+                ayah   INTEGER NOT NULL,
+                text   TEXT    NOT NULL,
+                PRIMARY KEY (surah, ayah)
+            );
+            CREATE INDEX IF NOT EXISTS idx_translit_surah ON transliterations(surah);",
+        )?;
+
+        let count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM transliterations",
+            [],
+            |row| row.get(0),
+        )?;
+
+        if count > 0 {
+            return Ok(());
+        }
+
+        if !path.exists() {
+            eprintln!("Transliteration file not found: {:?}", path);
+            return Ok(());
+        }
+
+        let content = fs::read_to_string(path).map_err(|e| {
+            rusqlite::Error::ToSqlConversionFailure(Box::new(e))
+        })?;
+
+        let json: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
+            rusqlite::Error::ToSqlConversionFailure(Box::new(e))
+        })?;
+
+        let obj = match json.as_object() {
+            Some(o) => o,
+            None => return Ok(()),
+        };
+
+        let tx = conn.unchecked_transaction()?;
+        {
+            let mut stmt = conn.prepare(
+                "INSERT INTO transliterations (surah, ayah, text) VALUES (?1, ?2, ?3)",
+            )?;
+
+            for (key, val) in obj {
+                let parts: Vec<&str> = key.split(':').collect();
+                if parts.len() != 2 { continue; }
+                let surah: i64 = parts[0].parse().unwrap_or(0);
+                let ayah: i64 = parts[1].parse().unwrap_or(0);
+                if surah == 0 || ayah == 0 { continue; }
+
+                let text = val.get("t").and_then(|v| v.as_str()).unwrap_or("");
+                stmt.execute(rusqlite::params![surah, ayah, text])?;
+            }
+        }
+        tx.commit()?;
+        println!("Imported transliteration data");
 
         Ok(())
     }

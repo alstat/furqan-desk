@@ -30,7 +30,40 @@ pub fn run() {
                 (954i64, resource_dir.join("data/recitation/ayah-recitation-saad-al-ghamdi-murattal-hafs-954.db")),
             ];
 
-            let database = db::Database::new(db_path, sql_path, morph_path, recitation_paths)
+            let translation_paths: Vec<(String, String, std::path::PathBuf)> = vec![
+                ("BN".into(), "Dr. Abu Bakr Muhammad Zakaria".into(),
+                    resource_dir.join("data/translation/bn/dr-abu-bakr-muhammad-zakaria-simple.json")),
+                ("EN".into(), "Abdul Haleem".into(),
+                    resource_dir.join("data/translation/en/en-haleem-with-footnote-tags.json")),
+                ("EN".into(), "Sahih International".into(),
+                    resource_dir.join("data/translation/en/en-sahih-international-with-footnote-tags.json")),
+                ("FA".into(), "Hussein Taji".into(),
+                    resource_dir.join("data/translation/fa/fr-hussein-taji-simple.json")),
+                ("HA".into(), "Abubakar Mahmood Jummi".into(),
+                    resource_dir.join("data/translation/ha/abubakar-mahmood-jummi-with-footnote-tags.json")),
+                ("HI".into(), "Maulana Azizul Haque Al-Umari".into(),
+                    resource_dir.join("data/translation/hi/maulana-azizul-haque-al-umari-with-footnote-tags.json")),
+                ("ID".into(), "Quran Indonesia".into(),
+                    resource_dir.join("data/translation/id/quran-id-with-footnote-tags.json")),
+                ("MS".into(), "Abdullah Basamia".into(),
+                    resource_dir.join("data/translation/ms/abdullah-basamia-simple.json")),
+                ("PA".into(), "Bayan ul Quran".into(),
+                    resource_dir.join("data/translation/pa/bayan-ul-quran-simple.json")),
+                ("PS".into(), "Rowwad Translation Center".into(),
+                    resource_dir.join("data/translation/ps/pashto-translation-rowwad-translation-center-simple.json")),
+                ("SW".into(), "Dr. Abdullah Muhammad Abu Bakr & Sheikh Nasir Khamis".into(),
+                    resource_dir.join("data/translation/sw/dr-abdullah-muhammad-abu-bakr-and-sheikh-nasir-khamis-simple.json")),
+                ("TL".into(), "Dar al-Salam Center (Tagalog)".into(),
+                    resource_dir.join("data/translation/tl/dar-al-salam-center-tagalog-simple.json")),
+                ("TR".into(), "Dar al-Salam Center".into(),
+                    resource_dir.join("data/translation/tr/dar-al-salam-center-simple.json")),
+                ("UR".into(), "Bayan ul Quran".into(),
+                    resource_dir.join("data/translation/ur/bayan-ul-quran-simple.json")),
+            ];
+
+            let transliteration_path = resource_dir.join("data/transliteration/english-transliteration-tajweed-simple.json");
+
+            let database = db::Database::new(db_path, sql_path, morph_path, recitation_paths, translation_paths, transliteration_path)
                 .expect("Failed to initialize database");
             app.manage(database);
             // Load any previously saved custom Julia binary path before managing state
@@ -68,6 +101,9 @@ pub fn run() {
             commands::check_typst_fonts,
             commands::install_typst_fonts,
             commands::get_recitation_ayah,
+            commands::get_translators,
+            commands::get_surah_translation,
+            commands::get_surah_transliteration,
             julia::check_julia,
             julia::get_julia_path,
             julia::set_julia_path,

@@ -30,7 +30,22 @@
       "data/quran-uthmani.sql",
       "data/quranic-corpus-morphology-0.4 2.txt",
       "data/recitation/ayah-recitation-mishari-rashid-al-afasy-murattal-hafs-953.db",
-      "data/recitation/ayah-recitation-saad-al-ghamdi-murattal-hafs-954.db"
+      "data/recitation/ayah-recitation-saad-al-ghamdi-murattal-hafs-954.db",
+      "data/translation/bn/dr-abu-bakr-muhammad-zakaria-simple.json",
+      "data/translation/en/en-haleem-with-footnote-tags.json",
+      "data/translation/en/en-sahih-international-with-footnote-tags.json",
+      "data/translation/fa/fr-hussein-taji-simple.json",
+      "data/translation/ha/abubakar-mahmood-jummi-with-footnote-tags.json",
+      "data/translation/hi/maulana-azizul-haque-al-umari-with-footnote-tags.json",
+      "data/translation/id/quran-id-with-footnote-tags.json",
+      "data/translation/ms/abdullah-basamia-simple.json",
+      "data/translation/pa/bayan-ul-quran-simple.json",
+      "data/translation/ps/pashto-translation-rowwad-translation-center-simple.json",
+      "data/translation/sw/dr-abdullah-muhammad-abu-bakr-and-sheikh-nasir-khamis-simple.json",
+      "data/translation/tl/dar-al-salam-center-tagalog-simple.json",
+      "data/translation/tr/dar-al-salam-center-simple.json",
+      "data/translation/ur/bayan-ul-quran-simple.json",
+      "data/transliteration/english-transliteration-tajweed-simple.json"
     ],
     "icon": [
       "icons/32x32.png",

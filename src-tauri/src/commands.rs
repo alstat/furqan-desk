@@ -704,6 +704,102 @@ pub fn delete_highlight(db: State<Database>, id: i64) -> Result<(), String> {
     Ok(())
 }
 
+// ── Translation commands ──────────────────────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct TranslatorInfo {
+    pub id: i64,
+    pub lang: String,
+    pub name: String,
+}
+
+#[derive(Serialize)]
+pub struct AyahTranslation {
+    pub ayah: i64,
+    pub text: String,
+    pub footnotes: Option<String>,
+}
+
+#[tauri::command]
+pub fn get_translators(db: State<Database>) -> Result<Vec<TranslatorInfo>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare("SELECT id, lang, name FROM translators ORDER BY lang, name")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(TranslatorInfo {
+                id: row.get(0)?,
+                lang: row.get(1)?,
+                name: row.get(2)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+#[tauri::command]
+pub fn get_surah_translation(
+    db: State<Database>,
+    surah: i64,
+    translator_id: i64,
+) -> Result<Vec<AyahTranslation>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT ayah, text, footnotes FROM translations
+             WHERE translator_id = ?1 AND surah = ?2
+             ORDER BY ayah",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![translator_id, surah], |row| {
+            Ok(AyahTranslation {
+                ayah: row.get(0)?,
+                text: row.get(1)?,
+                footnotes: row.get(2)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+// ── Transliteration commands ──────────────────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct AyahTransliteration {
+    pub ayah: i64,
+    pub text: String,
+}
+
+#[tauri::command]
+pub fn get_surah_transliteration(
+    db: State<Database>,
+    surah: i64,
+) -> Result<Vec<AyahTransliteration>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT ayah, text FROM transliterations WHERE surah = ?1 ORDER BY ayah",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![surah], |row| {
+            Ok(AyahTransliteration {
+                ayah: row.get(0)?,
+                text: row.get(1)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
 // ── Typst package management commands ────────────────────────────────────────
 
 /// Returns true if the package is already present in the local typst cache.
