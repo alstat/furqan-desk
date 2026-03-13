@@ -80,6 +80,17 @@ export const codeMirrorCanRedo:      Writable<boolean>             = writable(fa
 /** Increment to force TypstEditor to recompile without changing the source. */
 export const typstRecompile:        Writable<number>             = writable(0);
 
+// ── Julia plot output ─────────────────────────────────────────────────────────
+
+export interface JuliaPlot {
+    id: string;
+    format: 'png' | 'svg';
+    data: string;       // base64-encoded image bytes
+    timestamp: number;
+}
+
+export const juliaPlots: Writable<JuliaPlot[]> = writable([]);
+
 /** Shared compile output — written by TypstEditor, read by TypstPreview. */
 export const typstSvgPages:     Writable<string[]> = writable([]);
 export const typstCompileError: Writable<string>   = writable('');

@@ -11,7 +11,7 @@
         type TermLine,
         type TermTab,
     } from "$lib/stores/julia-terminal.store";
-    import { juliaReplHistory, cmFontSize, type ReplLine } from "$lib/stores/editor.store";
+    import { juliaReplHistory, juliaPlots, cmFontSize, type ReplLine } from "$lib/stores/editor.store";
     import { selectedSurahIdx, morphologyAyahFilter, morphologyMultiSurahList } from '$lib/stores/quran.svelte';
     import type { SurahMorphology } from '$lib/types/morphology';
     import { recitationPlaylist } from '$lib/stores/recitation.store';
@@ -217,7 +217,15 @@
                 for (const cmdLine of alLines) {
                     try {
                         const cmd = JSON.parse(cmdLine.slice('__AL_CMD__:'.length));
-                        if (cmd.type === 'display') {
+                        if (cmd.type === 'plot') {
+                            const { format, data } = cmd as { format: 'png' | 'svg'; data: string };
+                            juliaPlots.update(plots => [...plots, {
+                                id: crypto.randomUUID(),
+                                format,
+                                data,
+                                timestamp: Date.now(),
+                            }]);
+                        } else if (cmd.type === 'display') {
                             const surahs: number[] = cmd.surahs;
                             const ayahs: number[] | null = cmd.ayahs;
 

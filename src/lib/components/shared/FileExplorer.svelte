@@ -251,9 +251,9 @@
 				<p class="text-[10px] italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2">
 					No folder open
 				</p>
-			{:else if !loadError && (rootNodes.length === 0 || !hasAnySupportedFile(rootNodes))}
+			{:else if !loadError && rootNodes.length === 0}
 				<p class="text-[10px] italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2">
-					No supported files in this folder
+					No files or folders found
 				</p>
 			{:else if !loadError}
 				{@render treeNodes(rootNodes, 0)}

@@ -91,6 +91,31 @@
 		multiSurahWordByWordMap.set(null);
 	}
 
+	const SURAH_EN = [
+		"The Opening", "The Cow", "The Family of 'Imran", "Women", "The Feast",
+		"Livestock", "The Heights", "Battle Gains", "Repentance", "Jonah",
+		"Hud", "Joseph", "Thunder", "Abraham", "Al-Hijr", "The Bee", "The Night Journey",
+		"The Cave", "Mary", "Ta Ha", "The Prophets", "The Pilgrimage", "The Believers",
+		"The Light", "The Differentiator", "The Poets", "The Ants", "The Story", "The Spider",
+		"The Byzantines", "Luqman", "Bowing Down In Worship", "The Joint Forces",
+		"Sheba", "The Creator", "Ya Sin", "Ranged In Rows", "Saad", "The Throngs",
+		"The Foregiver", "[Verses] Made Clear", "Consultation", "Ornaments Of Gold",
+		"Smoke", "Kneeling", "The Sand Dunes", "Muhammad", "Triumph", "The Private Rooms",
+		"Qaaf", "Scattering [Winds]", "The Mountain", "The Star", "The Moon", "The Lord Of Mercy",
+		"That Which Is Coming", "Iron", "The Dispute", "The Gathering [Of Forces]", "The Women Tested",
+		"Solid Lines", "The Day of Congregation", "The Hypocrites", "Mutual Neglect",
+		"Divorce", "Prohibition", "Control", "The Pen", "The Inevitable Hour", "The Ways Of Ascent",
+		"Noah", "The Jinn", "Enfolded", "Wrapped In His Cloak", "The Resurrection", "Man",
+		"[Winds] Sent Forth", "The Announcement", "The Forceful Chargers", "He Frowned",
+		"The Rolling Up", "The Breaking", "Those Who Give Short Measure", "The Cracking",
+		"The Towering Constellations", "The Night-Comer", "The Most High", "The Overwhelming Event",
+		"Daybreak", "The City", "The Sun", "The Night", "The Morning Brightness", "Relief",
+		"The Fig", "The Clinging Form", "The Night Of Glory", "Clear Evidence", "The Earthquake",
+		"The Charging Steeds", "The Crashing Blow", "Competing For More", "The Fading Day",
+		"The Backbiter", "The Elephant", "Quraysh", "Common Kindness", "Abundance", "The Disbelievers",
+		"Help", "Palm Fibre", "Purity of Faith", "Daybreak", "People",
+	];
+
 	const selectClass = 'w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 transition-all focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100';
 	const labelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300';
 </script>
@@ -102,12 +127,11 @@
 			<select
 				id="surah-idx"
 				onchange={onSurahChange}
-				class="{selectClass} pl-8 text-center font-scheherazade"
-				dir="rtl"
+				class="{selectClass} pl-8"
 			>
 				{#each $surahLabels as label, i}
-					<option value={`${i + 1}`} title={label.en} selected={$selectedSurahIdx - 1 === i}>
-						{label.ar}
+					<option value={`${i + 1}`} selected={$selectedSurahIdx - 1 === i}>
+						{label.ar} — {SURAH_EN[i]}
 					</option>
 				{/each}
 			</select>

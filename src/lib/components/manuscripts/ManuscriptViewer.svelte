@@ -349,7 +349,8 @@
     <!-- Header / drag handle -->
     <div
         class="flex items-center justify-between px-4 py-3 shrink-0
-               border-b border-slate-100 dark:border-[#414559]
+               border-b border-brand-gold-200 dark:border-[#414559]
+               bg-brand-gold-100 dark:bg-[#292c3c]
                select-none rounded-t-2xl
                {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
         onpointerdown={startDrag}
@@ -358,16 +359,16 @@
         <div class="flex items-center gap-2">
             <Icon icon="solar:document-text-bold-duotone" width="1.1rem" class="text-brand-gold-500" />
             {#if demoMode}
-                <span class="text-sm font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">
+                <span class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
                     Manuscripts — Surah 112 (Al-Ikhlas), Ayah 2
                     <span class="ml-1 text-[10px] font-normal text-brand-gold-500 border border-brand-gold-300 dark:border-[#e5c890]/40 rounded-full px-1.5 py-0.5">demo</span>
                 </span>
             {:else if $manuscriptAyah}
-                <span class="text-sm font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">
+                <span class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
                     Manuscripts — Surah {$manuscriptAyah.surah}, Ayah {$manuscriptAyah.ayah}
                 </span>
             {:else}
-                <span class="text-sm font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">
+                <span class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
                     Manuscripts
                 </span>
             {/if}
@@ -578,49 +579,49 @@
                             {#if selectedDetail.date?.trim()}
                                 <div class="flex gap-1.5">
                                     <span class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0">Date</span>
-                                    <span class="font-medium text-brand-charcoal-500 dark:text-[#c6d0f5]">{selectedDetail.date} CE</span>
+                                    <span class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]">{selectedDetail.date} CE</span>
                                 </div>
                             {/if}
                             {#if selectedDetail.carbon_dating?.trim()}
                                 <div class="flex gap-1.5">
                                     <span class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0">Radiocarbon</span>
-                                    <span class="font-medium text-brand-charcoal-500 dark:text-[#c6d0f5]">{selectedDetail.carbon_dating}</span>
+                                    <span class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]">{selectedDetail.carbon_dating}</span>
                                 </div>
                             {/if}
                             {#if selectedDetail.writing_surface?.trim()}
                                 <div class="flex gap-1.5">
                                     <span class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0">Material</span>
-                                    <span class="font-medium text-brand-charcoal-500 dark:text-[#c6d0f5]">{selectedDetail.writing_surface}</span>
+                                    <span class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]">{selectedDetail.writing_surface}</span>
                                 </div>
                             {/if}
                             {#if selectedDetail.script_styles?.length}
                                 <div class="flex gap-1.5">
                                     <span class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0">Script</span>
-                                    <span class="font-medium text-brand-charcoal-500 dark:text-[#c6d0f5]">{selectedDetail.script_styles.join(', ')}</span>
+                                    <span class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]">{selectedDetail.script_styles.join(', ')}</span>
                                 </div>
                             {/if}
                             {#if selectedDetail.dimensions?.trim()}
                                 <div class="flex gap-1.5">
                                     <span class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0">Size</span>
-                                    <span class="font-medium text-brand-charcoal-500 dark:text-[#c6d0f5]">{selectedDetail.dimensions} mm</span>
+                                    <span class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]">{selectedDetail.dimensions} mm</span>
                                 </div>
                             {/if}
                             {#if selectedDetail.number_of_folios != null}
                                 <div class="flex gap-1.5">
                                     <span class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0">Folios</span>
-                                    <span class="font-medium text-brand-charcoal-500 dark:text-[#c6d0f5]">{selectedDetail.number_of_folios}</span>
+                                    <span class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]">{selectedDetail.number_of_folios}</span>
                                 </div>
                             {/if}
                             {#if selectedDetail.call_number?.trim()}
                                 <div class="flex gap-1.5">
                                     <span class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0">Call no.</span>
-                                    <span class="font-medium text-brand-charcoal-500 dark:text-[#c6d0f5]">{selectedDetail.call_number}</span>
+                                    <span class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]">{selectedDetail.call_number}</span>
                                 </div>
                             {/if}
                             {#if selectedDetail.line_min?.trim()}
                                 <div class="flex gap-1.5">
                                     <span class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0">Lines/page</span>
-                                    <span class="font-medium text-brand-charcoal-500 dark:text-[#c6d0f5]">
+                                    <span class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]">
                                         {selectedDetail.line_min === selectedDetail.line_max
                                             ? selectedDetail.line_min
                                             : `${selectedDetail.line_min}–${selectedDetail.line_max}`}
