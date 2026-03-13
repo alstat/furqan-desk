@@ -1547,3 +1547,40 @@ html.dark .editor-shell .hljs-emphasis {
 html.dark .editor-shell .hljs-strong {
     font-weight: bold;
 }
+
+/* ── Tafsir HTML content ─────────────────────────────────────────────────── */
+.tafsir-content {
+    direction: ltr;
+    text-align: left;
+    unicode-bidi: isolate;
+}
+.tafsir-content p {
+    margin-bottom: 0.5rem;
+    text-align: left;
+}
+.tafsir-content h2,
+.tafsir-content h3 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-top: 0.75rem;
+    margin-bottom: 0.25rem;
+    color: #7a6539;
+}
+html.dark .tafsir-content h2,
+html.dark .tafsir-content h3 {
+    color: #e5c890;
+}
+.tafsir-content [lang="ar"],
+.tafsir-content .ar {
+    font-family: 'Scheherazade New', serif;
+    font-size: 1rem;
+    direction: rtl;
+    text-align: right;
+    display: block;
+    line-height: 1.9;
+    color: #444;
+}
+html.dark .tafsir-content [lang="ar"],
+html.dark .tafsir-content .ar {
+    color: #c6d0f5;
+}

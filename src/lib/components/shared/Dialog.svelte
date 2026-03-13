@@ -25,7 +25,7 @@
                 <h2 class="text-sm font-semibold text-slate-700 dark:text-[#c6d0f5]">{title}</h2>
                 <button
                     onclick={onClose}
-                    class="cursor-pointer rounded-md p-1 text-slate-400 dark:text-[#838ba7] hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-slate-600 dark:hover:text-[#c6d0f5] transition-colors"
+                    class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     aria-label="Close"
                 >
                     <Icon icon="solar:close-circle-linear" width="1.1rem" />

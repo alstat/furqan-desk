@@ -1,9 +1,10 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import { tourActive, completeTour } from "$lib/stores/tour.store";
+    import { tourActive, completeTour, donationOpen } from "$lib/stores/tour.store";
     import { manuscriptDemoOpen } from "$lib/stores/manuscripts.store";
 
     const MANUSCRIPT_STEP = 6; // index of the manuscript step
+    const AUTHOR_STEP = 8;     // index of the author's note step
 
     const steps = [
         {
@@ -61,6 +62,12 @@
             description:
                 "Create new tabs, browse local files, configure Julia & Typst packages, and access settings.",
             position: "top" as const,
+        },
+        {
+            targetId: null,
+            title: "A Note from the Author",
+            description: "",
+            position: "center" as const,
         },
         {
             targetId: null,
@@ -138,7 +145,7 @@
     const PAD = 8;
 
     function getTooltipStyle(rect: DOMRect | null, position: string, step: number): string {
-        const tooltipW = step === MANUSCRIPT_STEP ? 320 : 288; // w-80 vs w-72
+        const tooltipW = (step === MANUSCRIPT_STEP || step === AUTHOR_STEP) ? 320 : 288; // w-80 vs w-72
         if (!rect || position === "center") {
             if (step === MANUSCRIPT_STEP) {
                 // Place below center so the demo viewer behind is visible
@@ -209,7 +216,7 @@
     <!-- Tooltip card -->
     <div
         class="fixed z-[9999] rounded-xl bg-white dark:bg-[#303446] shadow-2xl p-5 border border-slate-100 dark:border-[#414559]
-               {currentStep === MANUSCRIPT_STEP ? 'w-80' : 'w-72'}"
+               {(currentStep === MANUSCRIPT_STEP || currentStep === AUTHOR_STEP) ? 'w-80' : 'w-72'}"
         style={tooltipStyle}
     >
         <!-- Step dots -->
@@ -225,14 +232,16 @@
         </div>
 
         <!-- Title -->
-        {#if currentStep === 0 || currentStep === steps.length - 1 || currentStep === MANUSCRIPT_STEP}
+        {#if currentStep === 0 || currentStep === steps.length - 1 || currentStep === MANUSCRIPT_STEP || currentStep === AUTHOR_STEP}
             <div class="flex items-center gap-2 mb-1">
                 <Icon
                     icon={currentStep === 0
                         ? "solar:graduation-cap-bold-duotone"
                         : currentStep === MANUSCRIPT_STEP
                           ? "solar:document-text-bold-duotone"
-                          : "solar:star-bold-duotone"}
+                          : currentStep === AUTHOR_STEP
+                            ? "solar:heart-bold-duotone"
+                            : "solar:star-bold-duotone"}
                     class="text-brand-gold-400 shrink-0"
                     width="1.1rem"
                 />
@@ -250,11 +259,23 @@
             </h3>
         {/if}
 
-        <p
-            class="text-xs text-slate-500 dark:text-[#838ba7] leading-relaxed mb-4"
-        >
-            {steps[currentStep].description}
-        </p>
+        {#if currentStep === AUTHOR_STEP}
+            <p class="text-xs text-slate-500 dark:text-[#838ba7] leading-relaxed mb-4 space-y-2">
+                Assalamu 'Alaikum wa Rahmatullahi wa Barakatuh.<br /><br />
+                AyahLab is a passion project built to serve the Quran studies community — and it is, and always will be, free.<br /><br />
+                If this app has benefited you and you are in a position to support it, even a small contribution helps keep it alive and actively developed. If not, sharing it with a friend and keeping me in your du'a means just as much.<br /><br />
+                Jazakallah Khairan Kathiran. —&nbsp;<button
+                    onclick={() => { completeTour(); currentStep = 0; $donationOpen = true; }}
+                    class="underline text-brand-gold-500 dark:text-[#e5c890] hover:opacity-80 transition-opacity cursor-pointer"
+                >Al-Ahmadgaid B. Asaad</button>
+            </p>
+        {:else}
+            <p
+                class="text-xs text-slate-500 dark:text-[#838ba7] leading-relaxed mb-4"
+            >
+                {steps[currentStep].description}
+            </p>
+        {/if}
 
         <div class="flex items-center justify-between">
             <button

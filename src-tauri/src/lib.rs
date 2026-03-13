@@ -36,7 +36,7 @@ pub fn run() {
             let translation_paths: Vec<(String, String, std::path::PathBuf)> = vec![
                 ("BN".into(), "Dr. Abu Bakr Muhammad Zakaria".into(),
                     resource_dir.join("data/translation/bn/dr-abu-bakr-muhammad-zakaria-simple.json")),
-                ("EN".into(), "Abdul Haleem".into(),
+                ("EN".into(), "Abdel Haleem".into(),
                     resource_dir.join("data/translation/en/en-haleem-with-footnote-tags.json")),
                 ("EN".into(), "Sahih International".into(),
                     resource_dir.join("data/translation/en/en-sahih-international-with-footnote-tags.json")),
@@ -62,12 +62,25 @@ pub fn run() {
                     resource_dir.join("data/translation/tr/dar-al-salam-center-simple.json")),
                 ("UR".into(), "Bayan ul Quran".into(),
                     resource_dir.join("data/translation/ur/bayan-ul-quran-simple.json")),
+                ("RU".into(), "Kuliev".into(),
+                    resource_dir.join("data/translation/ru/quran-ru-kuliev-simple.json")),
+            ];
+
+            let tafsir_paths: Vec<(String, String, std::path::PathBuf)> = vec![
+                ("AR".into(), "Ibn Kathir (Arabic)".into(),
+                    resource_dir.join("data/tafsir/ar/ar-tafsir-ibn-kathir.json")),
+                ("AR".into(), "Al-Tabari (Arabic)".into(),
+                    resource_dir.join("data/tafsir/ar/ar-tafsir-al-tabari.json")),
+                ("EN".into(), "Ibn Kathir (English)".into(),
+                    resource_dir.join("data/tafsir/en/en-tafisr-ibn-kathir.json")),
+                ("TL".into(), "Al-Mukhtasar (Tagalog)".into(),
+                    resource_dir.join("data/tafsir/tl/tagalog-Al-Mukhtasar.json")),
             ];
 
             let transliteration_path = resource_dir.join("data/transliteration/english-transliteration-tajweed-simple.json");
             let word_by_word_path = resource_dir.join("data/word-by-word/english-wbw-translation.json");
 
-            let database = db::Database::new(db_path, sql_path, morph_path, recitation_paths, translation_paths, transliteration_path, word_by_word_path)
+            let database = db::Database::new(db_path, sql_path, morph_path, recitation_paths, translation_paths, tafsir_paths, transliteration_path, word_by_word_path)
                 .expect("Failed to initialize database");
             app.manage(database);
             // Load any previously saved custom Julia binary path before managing state
@@ -116,6 +129,8 @@ pub fn run() {
             commands::get_surah_translation,
             commands::get_surah_transliteration,
             commands::get_surah_word_by_word,
+            commands::get_tafsir_authors,
+            commands::get_surah_tafsir,
             julia::check_julia,
             julia::get_julia_path,
             julia::set_julia_path,

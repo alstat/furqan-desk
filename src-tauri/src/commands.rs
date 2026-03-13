@@ -1672,3 +1672,65 @@ pub fn search_quran(
         Ok(results)
     }
 }
+
+// ── Tafsir commands ───────────────────────────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct TafsirAuthorInfo {
+    pub id: i64,
+    pub lang: String,
+    pub name: String,
+}
+
+#[derive(Serialize)]
+pub struct AyahTafsir {
+    pub ayah: i64,
+    pub text: String,
+}
+
+#[tauri::command]
+pub fn get_tafsir_authors(db: State<Database>) -> Result<Vec<TafsirAuthorInfo>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare("SELECT id, lang, name FROM tafsir_authors ORDER BY lang, name")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(TafsirAuthorInfo {
+                id: row.get(0)?,
+                lang: row.get(1)?,
+                name: row.get(2)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+#[tauri::command]
+pub fn get_surah_tafsir(
+    db: State<Database>,
+    surah: i64,
+    author_id: i64,
+) -> Result<Vec<AyahTafsir>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT ayah, text FROM tafsirs
+             WHERE author_id = ?1 AND surah = ?2
+             ORDER BY ayah",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![author_id, surah], |row| {
+            Ok(AyahTafsir {
+                ayah: row.get(0)?,
+                text: row.get(1)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}

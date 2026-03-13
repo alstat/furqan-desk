@@ -3,6 +3,7 @@ import { writable } from 'svelte/store';
 const TOUR_KEY = 'furqan-tour-seen';
 
 export const tourActive = writable(false);
+export const donationOpen = writable(false);
 
 export function checkFirstRun() {
     if (!localStorage.getItem(TOUR_KEY)) {

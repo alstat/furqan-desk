@@ -384,8 +384,7 @@
             </button>
             <button
                 onclick={onClose}
-                class="cursor-pointer p-1 rounded-full text-brand-charcoal-300 dark:text-[#8caaee]
-                       hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+                class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                 aria-label="Close manuscripts viewer"
             >
                 <Icon icon="solar:close-circle-bold-duotone" width="1.1rem" />

@@ -16,8 +16,8 @@
     import Icon from "@iconify/svelte";
     import { requestPlayAyah, requestPlayPosition } from "$lib/stores/recitation.store";
     import { invoke } from '@tauri-apps/api/core';
-    import { activeTranslatorId, surahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap } from '$lib/stores/translation.store';
-    import type { AyahTranslation } from '$lib/stores/translation.store';
+    import { activeTranslatorId, surahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir } from '$lib/stores/translation.store';
+    import type { AyahTranslation, AyahTafsir } from '$lib/stores/translation.store';
     import { manuscriptsEnabled, manuscriptAyah, manuscriptViewerOpen } from '$lib/stores/manuscripts.store';
 
     $effect(() => {
@@ -51,6 +51,15 @@
                 console.error('[WBW] invoke failed:', err);
                 surahWordByWord.set(null);
             });
+    });
+
+    $effect(() => {
+        const tid = $activeTafsirId;
+        const surah = $surahMorphology?.surah;
+        if (!tid || !surah || !$tafsirEnabled) { surahTafsir.set(null); return; }
+        invoke<AyahTafsir[]>('get_surah_tafsir', { surah, authorId: tid })
+            .then(rows => surahTafsir.set(rows))
+            .catch(() => surahTafsir.set(null));
     });
 
     // Multi-surah translation/transliteration/wbw loading
@@ -92,6 +101,20 @@
             ? new Map($surahTranslation.map(r => [r.ayah, r]))
             : null
     );
+
+    const tafsirMap = $derived(
+        $surahTafsir
+            ? new Map($surahTafsir.map(r => [r.ayah, r.text]))
+            : null
+    );
+
+    let expandedTafsirAyahs = $state(new Set<number>());
+
+    function toggleTafsir(ayah: number) {
+        const next = new Set(expandedTafsirAyahs);
+        if (next.has(ayah)) { next.delete(ayah); } else { next.add(ayah); }
+        expandedTafsirAyahs = next;
+    }
 
     const displayAyahs = $derived(
         $surahMorphology
@@ -345,7 +368,7 @@
 
             </div>
         {/if}
-        {#if translationMap !== null || $surahTransliteration !== null || $surahWordByWord !== null}
+        {#if translationMap !== null || $surahTransliteration !== null || $surahWordByWord !== null || tafsirMap !== null}
             <!-- Block mode: one ayah per row, right-justified, divider between ayahs -->
             <div dir="rtl" class="w-full min-w-0" style="contain: style;">
                 {#each displayAyahs.slice(0, renderedAyahCount) as ayahData, i}
@@ -379,6 +402,22 @@
                                             <li><span class="font-medium">[{num}]</span> {ftxt}</li>
                                         {/each}
                                     </ol>
+                                {/if}
+                            </div>
+                        {/if}
+                        {#if tafsirMap?.has(ayahData.ayah)}
+                            <div dir="ltr" class="mt-2 border-t border-brand-sand-100 dark:border-[#414559]/60 pt-2">
+                                <button
+                                    onclick={() => toggleTafsir(ayahData.ayah)}
+                                    class="cursor-pointer flex items-center gap-1.5 text-[10.5px] font-semibold text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890] transition-colors mb-1"
+                                >
+                                    <Icon icon={expandedTafsirAyahs.has(ayahData.ayah) ? 'solar:alt-arrow-up-bold' : 'solar:alt-arrow-down-bold'} width="0.65rem" />
+                                    {expandedTafsirAyahs.has(ayahData.ayah) ? 'Hide Tafsir' : 'Show Tafsir'}
+                                </button>
+                                {#if expandedTafsirAyahs.has(ayahData.ayah)}
+                                    <div dir="ltr" class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-400 dark:text-[#a5adce]">
+                                        {@html tafsirMap.get(ayahData.ayah)}
+                                    </div>
                                 {/if}
                             </div>
                         {/if}

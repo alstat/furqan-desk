@@ -5,7 +5,9 @@
 	import { hideSurahPage, isSidebar, surahOrientation } from '$lib/stores/quran.svelte';
 	import { typstMode } from '$lib/stores/editor.store';
 	import FeedbackDialog from './FeedbackDialog.svelte';
+	import DonationDialog from './DonationDialog.svelte';
 	import Icon from '@iconify/svelte';
+	import { donationOpen } from '$lib/stores/tour.store';
 
 	let feedbackOpen = $state(false);
 
@@ -80,6 +82,16 @@
 		</svg>
 	</button>
 
+	<!-- Donation button (above feedback) -->
+	<button
+		class={`${$hideSurahPage() ? 'hidden ' : ''} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} bottom-[3.75rem] z-3 rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559]`}
+		onclick={() => ($donationOpen = true)}
+		aria-label="Support AyahLab"
+		title="Donate / Support"
+	>
+		<Icon icon="solar:heart-bold-duotone" class="h-4 w-4" />
+	</button>
+
 	<!-- Feedback button (bottom) — same strip as toggle, aligned vertically at bottom -->
 	<button
 		class={`${$hideSurahPage() ? 'hidden ' : ''} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} bottom-4 z-3 rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559]`}
@@ -90,6 +102,7 @@
 		<Icon icon="solar:chat-round-dots-bold-duotone" class="h-4 w-4" />
 	</button>
 
+	<DonationDialog open={$donationOpen} onClose={() => ($donationOpen = false)} />
 	<FeedbackDialog open={feedbackOpen} onClose={() => (feedbackOpen = false)} />
 
 	<div class={$isSidebar ? `flex flex-row w-full` : `hidden`}>
