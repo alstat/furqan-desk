@@ -25,7 +25,9 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app"],
+    "targets": [
+      "app"
+    ],
     "resources": [
       "data/quran-uthmani.sql",
       "data/quranic-corpus-morphology-0.4 2.txt",
@@ -46,7 +48,8 @@
       "data/translation/tr/dar-al-salam-center-simple.json",
       "data/translation/ur/bayan-ul-quran-simple.json",
       "data/transliteration/english-transliteration-tajweed-simple.json",
-      "data/word-by-word/english-wbw-translation.json"
+      "data/word-by-word/english-wbw-translation.json",
+      "data/manuscripts/demo/*"
     ],
     "icon": [
       "icons/32x32.png",
@@ -57,7 +60,9 @@
     ],
     "fileAssociations": [
       {
-        "ext": ["lexical"],
+        "ext": [
+          "lexical"
+        ],
         "name": "Furqan Desk Document",
         "description": "Furqan Desk Lexical editor file",
         "role": "Editor"

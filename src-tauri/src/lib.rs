@@ -22,6 +22,8 @@ pub fn run() {
 
             std::fs::create_dir_all(&app_data_dir)
                 .expect("Failed to create app data directory");
+            std::fs::create_dir_all(app_data_dir.join("manuscript-images"))
+                .expect("Failed to create manuscript-images directory");
 
             let db_path   = app_data_dir.join("quran.db");
             let sql_path  = resource_dir.join("data/quran-uthmani.sql");
@@ -126,6 +128,12 @@ pub fn run() {
             terminal::send_terminal_input,
             terminal::close_terminal,
             commands::search_quran,
+            commands::get_manuscript_detail,
+            commands::save_manuscript_to_downloads,
+            commands::get_manuscript_list,
+            commands::get_manuscript_image,
+            commands::clear_manuscript_cache,
+            commands::get_manuscript_demo_image,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
