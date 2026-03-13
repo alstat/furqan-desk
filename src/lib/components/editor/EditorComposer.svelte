@@ -25,7 +25,10 @@
         CheckListPlugin,
         HorizontalRulePlugin,
         ImagePlugin,
+        TablePlugin,
+        TableActionMenuPlugin,
     } from "../lexical";
+    import TableCellResizerPlugin from "$lexical/core/plugins/Table/TableCellResizerPlugin.svelte";
     import {
         HeadingNode,
         QuoteNode,
@@ -33,6 +36,9 @@
         ListItemNode,
         HorizontalRuleNode,
         ImageNode,
+        TableNode,
+        TableRowNode,
+        TableCellNode,
     } from "../lexical";
     import { editorTheme as PlaygroundEditorTheme } from "../lexical";
     import {
@@ -49,6 +55,8 @@
     const historyState = createEmptyHistoryState();
     lexicalHistoryState.set(historyState);
 
+    let editorShell = $state<HTMLDivElement | null>(null);
+
     const initialConfig = {
         namespace: "Editor",
         theme: PlaygroundEditorTheme,
@@ -61,6 +69,9 @@
             ImageNode,
             EquationNode,
             CodeNode,
+            TableNode,
+            TableRowNode,
+            TableCellNode,
         ],
         onError: (error: Error) => {
             throw error;
@@ -76,7 +87,7 @@
 </script>
 
 <Composer {initialConfig}>
-    <div class="editor-shell p-2 relative overflow-visible">
+    <div class="editor-shell p-2 relative overflow-visible" bind:this={editorShell}>
         <ToolbarRichText />
         <div class="editor-container flex flex-col justify-stretch">
             <div class="editor-scroller">
@@ -94,6 +105,11 @@
             </ImagePlugin>
             <EquationPlugin />
             <CodePlugin />
+            <TablePlugin />
+            <TableCellResizerPlugin />
+            {#if editorShell}
+                <TableActionMenuPlugin anchorElem={editorShell} cellMerge={true} />
+            {/if}
             <EditorStorePlugin />
         </div>
     </div>

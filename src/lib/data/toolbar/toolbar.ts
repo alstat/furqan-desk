@@ -35,6 +35,7 @@ export let icons = {
   image: "fluent:image-add-20-regular",
   insert: "gg:insert-after-r",
   math: "tabler:math",
+  table: "fluent:table-add-20-regular",
   // ai-btns
   toc: "carbon:table-of-contents",
   info: "icon-park-outline:info",

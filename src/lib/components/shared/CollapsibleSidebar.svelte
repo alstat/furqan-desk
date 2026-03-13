@@ -4,6 +4,10 @@
 	import type { TransitionConfig } from 'svelte/transition';
 	import { hideSurahPage, isSidebar, surahOrientation } from '$lib/stores/quran.svelte';
 	import { typstMode } from '$lib/stores/editor.store';
+	import FeedbackDialog from './FeedbackDialog.svelte';
+	import Icon from '@iconify/svelte';
+
+	let feedbackOpen = $state(false);
 
 	let { children, roundRight = true } = $props();
 
@@ -58,6 +62,7 @@
 </script>
 
 <div id="tour-sidebar" class={`relative flex justify-right overflow-visible font-base text-slate-900 dark:text-[#c6d0f5] ${sidebarWidth}`}>
+	<!-- Sidebar toggle (top) -->
 	<button
 		class={`${$hideSurahPage() ? 'hidden ' : ''} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} top-4 z-3 rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559]`}
 		onclick={toggleSidebar}
@@ -74,6 +79,19 @@
 			<path d="M15 19l-7-7 7-7" />
 		</svg>
 	</button>
+
+	<!-- Feedback button (bottom) — same strip as toggle, aligned vertically at bottom -->
+	<button
+		class={`${$hideSurahPage() ? 'hidden ' : ''} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} bottom-4 z-3 rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559]`}
+		onclick={() => (feedbackOpen = true)}
+		aria-label="Send feedback"
+		title="Send feedback"
+	>
+		<Icon icon="solar:chat-round-dots-bold-duotone" class="h-4 w-4" />
+	</button>
+
+	<FeedbackDialog open={feedbackOpen} onClose={() => (feedbackOpen = false)} />
+
 	<div class={$isSidebar ? `flex flex-row w-full` : `hidden`}>
 		<!-- Sidebar Content -->
 		<!-- {#if isOpen} -->

@@ -1,6 +1,4 @@
 <script lang="ts">
-  import {run} from 'svelte/legacy';
-
   import {
     $getTableCellNodeFromLexicalNode as getTableCellNodeFromLexicalNode,
     TableCellNode,
@@ -82,11 +80,14 @@
     });
   });
 
-  run(() => {
+  $effect(() => {
     const menuButtonDOM = menuButtonRef as HTMLButtonElement | null;
+    const currentTableCellNode = $tableCellNode;
 
-    if (menuButtonDOM != null && $tableCellNode != null) {
-      const tableCellNodeDOM = editor.getElementByKey($tableCellNode.getKey());
+    if (menuButtonDOM != null && currentTableCellNode != null) {
+      const tableCellNodeDOM = editor.getElementByKey(
+        currentTableCellNode.getKey(),
+      );
 
       if (tableCellNodeDOM != null) {
         const tableCellRect = tableCellNodeDOM.getBoundingClientRect();
@@ -106,14 +107,14 @@
     }
   });
 
-  let prevTableCellDOM = $state($tableCellNode);
-
-  run(() => {
-    if (prevTableCellDOM !== $tableCellNode) {
+  // Close menu when the active cell changes (non-reactive prev avoids recursive loop)
+  let prevTableCellNode: TableCellNode | null = null;
+  $effect(() => {
+    const current = $tableCellNode;
+    if (prevTableCellNode !== current) {
       $isMenuOpen = false;
+      prevTableCellNode = current;
     }
-
-    prevTableCellDOM = $tableCellNode;
   });
 </script>
 

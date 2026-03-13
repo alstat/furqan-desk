@@ -94,6 +94,10 @@ const theme = {
   rtl: 'SL_Theme__rtl',
   specialText: 'SL_Theme__specialText',
   table: 'SL_Theme__table',
+  tableAlignment: {
+    center: 'SL_Theme__tableAlignCenter',
+    right: 'SL_Theme__tableAlignRight',
+  },
   tableCell: 'SL_Theme__tableCell',
   tableCellActionButton: 'SL_Theme__tableCellActionButton',
   tableCellActionButtonContainer: 'SL_Theme__tableCellActionButtonContainer',

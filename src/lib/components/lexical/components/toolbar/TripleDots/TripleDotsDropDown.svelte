@@ -6,10 +6,12 @@
     import UnderlineButton from "../UnderlineButton.svelte";
     import StrikethroughButton from "../StrikethroughButton.svelte";
     import FormatCodeButton from "../FormatCodeButton.svelte";
+    import FontColorButton from "../FontColorButton.svelte";
     import InsertDropDown from "../InsertDropDown/InsertDropDown.svelte";
     import InsertHRDropDownItem from "../InsertDropDown/InsertHRDropDownItem.svelte";
     import InsertImageDropDownItem from "../InsertDropDown/InsertImageDropDownItem.svelte";
     import InsertEquationDropDownItem from "../InsertDropDown/InsertEquationDropDownItem.svelte";
+    import InsertTableDialog from "../dialogs/InsertTableDialog.svelte";
     import DropDownAlign from "../DropDownAlign.svelte";
     import Indent from "../Indent.svelte";
     import Outdent from "../Outdent.svelte";
@@ -36,6 +38,7 @@
     let { windowWidth, onInsertImageClick, onInsertEquationClick } = $props();
 
     let isOpen = $state(false);
+    let showTableModal = $state(false);
     let dropdownRef: HTMLDivElement;
     let buttonRef = $state<HTMLButtonElement | undefined>();
     let panelRef = $state<HTMLDivElement | undefined>();
@@ -155,7 +158,7 @@
                     <!-- LG breakpoint items (show when width < lg) -->
                     {#if windowWidth < 1024}
                         <div class="px-2 py-1">
-                            <div class="flex items-center">
+                            <div class="flex items-center flex-wrap gap-0.5">
                                 <!-- MD breakpoint items (show when width < md) -->
                                 {#if windowWidth < 768}
                                     <BoldButton />
@@ -164,6 +167,7 @@
                                 <UnderlineButton />
                                 <StrikethroughButton />
                                 <FormatCodeButton />
+                                <FontColorButton />
                             </div>
                         </div>
                         <hr class="my-1 border-brand-sand-200" />
@@ -230,6 +234,22 @@
                                         <div>Equation</div>
                                     </div>
                                 </button>
+                                <button
+                                    class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-lg hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100"
+                                    onclick={() => { showTableModal = true; isOpen = false; }}
+                                >
+                                    <div
+                                        class="flex w-32 flex-row items-center"
+                                    >
+                                        <div class="pr-2">
+                                            <Icon
+                                                icon={icons["table"]}
+                                                width="1rem"
+                                            />
+                                        </div>
+                                        <div>Table</div>
+                                    </div>
+                                </button>
                             </div>
                         </div>
                         <hr class="my-1 border-brand-sand-200" />
@@ -277,4 +297,5 @@
             </div>
         </Portal>
     {/if}
+    <InsertTableDialog bind:showModal={showTableModal} />
 </div>
