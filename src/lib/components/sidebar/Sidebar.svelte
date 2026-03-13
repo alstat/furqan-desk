@@ -8,6 +8,7 @@
 	import EditorTabs from '$lib/components/editor/EditorTabs.svelte';
 	import ActionBar from '$lib/components/lexical/components/actionbar/ActionBar.svelte';
 	import FileExplorer from '$lib/components/shared/FileExplorer.svelte';
+	import JuliaPlotViewer from '$lib/components/shared/JuliaPlotViewer.svelte';
 	import { lexicalEditorInstance, lexicalHistoryState, typstSource } from '$lib/stores/editor.store';
 	import { tabs, activeTab, activeTabId, createTab } from '$lib/stores/tabs.store';
 	import { hideSurahPage } from '$lib/stores/quran.svelte';
@@ -127,8 +128,10 @@
 
 <CollapsibleSidebar roundRight={!juliaMode}>
 	<div class="relative h-full flex flex-col overflow-visible">
-		<!-- File Explorer button sits outside the editor on the left (LTR) or right (RTL), panel slides into the parchment area -->
+		<!-- File Explorer button: outside editor on the left/right, same height as sidebar toggle -->
 		<FileExplorer />
+		<!-- Julia Plot Viewer button: same strip, aligned with donation/feedback buttons at the bottom -->
+		<JuliaPlotViewer />
 		<ActionBar />
 		{#if $activeTab}
 			{@const ft = fileTypeInfo($activeTab)}

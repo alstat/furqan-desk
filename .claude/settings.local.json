@@ -108,7 +108,10 @@
       "Bash(find ~/Library -name \"quran.db\" 2>/dev/null\nfind ~/Library -path \"*furqan*\" 2>/dev/null | head -10)",
       "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src -name \"*Tab*\" -o -name \"*File*\" -o -name \"*Browser*\" 2>/dev/null | grep -E \"\\\\.\\(svelte|ts\\)$\" | head -20)",
       "Bash(grep -A 1 \"^#\\\\[tauri::command\\\\]\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/src/commands.rs | grep \"^pub fn\" | sed 's/pub fn //' | sed 's/\\(.*$//')",
-      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src -type f \\\\\\( -name \"*browser*\" -o -name \"*explorer*\" -o -name \"*folder*\" -o -name \"*FileBrowser*\" \\\\\\) 2>/dev/null | grep -i svelte)"
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src -type f \\\\\\( -name \"*browser*\" -o -name \"*explorer*\" -o -name \"*folder*\" -o -name \"*FileBrowser*\" \\\\\\) 2>/dev/null | grep -i svelte)",
+      "WebSearch",
+      "Bash(grep -r \"tauri.*window\\\\|window.*tauri\\\\|appWindow\\\\|WebviewWindow\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src --include=\"*.ts\" --include=\"*.js\" --include=\"*.svelte\" 2>/dev/null | head -30)",
+      "Bash(grep -r \"markTabSaved\\\\|setTabContent\\\\|isDirty\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src --include=\"*.svelte\" --include=\"*.ts\" 2>/dev/null | head -40)"
     ]
   }
 }

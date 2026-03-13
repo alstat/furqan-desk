@@ -350,6 +350,7 @@ pub async fn install_julia(app: AppHandle) -> Result<(), String> {
 // Boot script sent to the Julia process via -e
 const BOOT_SCRIPT: &str = r#"
 try; import REPL; catch; end
+import Base64
 module AL
   struct SurahRef; surahs::Vector{Int}; end
   struct AyahRef; surahs::Vector{Int}; ayahs::Vector{Int}; end
@@ -381,6 +382,67 @@ module AL
       print(io, "[", join(a.ayahs, ", "), "])")
   end
 end
+# ── Plot display backend ──────────────────────────────────────────────────────
+# Re-entrancy guard: prevents recursive display calls (e.g. when a show method
+# internally calls display(), which would loop back here).
+const _al_rendering = Ref(false)
+# Returns :ok (rendered), :skip (re-entrant — caller does nothing),
+#         or :text (no image support — caller may use text display).
+# Does NOT use showable(): CairoMakie defines show for Figure but not always
+# for FigureAxisPlot, so showable() returns false even when rendering works.
+# Instead we attempt show() directly and treat MethodError as "not an image".
+function _al_try_plot(x)
+  _al_rendering[] && return :skip
+  _al_rendering[] = true
+  ret = :text
+  # Try x directly, then x.figure (FigureAxisPlot → Figure fallback for CairoMakie
+  # versions where show(MIME"image/png") is only defined on Figure/Scene)
+  local cands = Any[x]
+  try; hasproperty(x, :figure) && push!(cands, x.figure); catch; end
+  try
+    for obj in cands
+      io = IOBuffer()
+      ok = try; show(io, MIME("image/png"), obj); true; catch; false; end
+      if ok && position(io) > 0
+        b64 = Base64.base64encode(take!(io))
+        println(stdout, "__AL_CMD__:{\"type\":\"plot\",\"format\":\"png\",\"data\":\"" * b64 * "\"}")
+        flush(stdout)
+        ret = :ok
+        break
+      end
+    end
+    if ret === :text
+      for obj in cands
+        io = IOBuffer()
+        ok = try; show(io, MIME("image/svg+xml"), obj); true; catch; false; end
+        if ok && position(io) > 0
+          b64 = Base64.base64encode(String(take!(io)))
+          println(stdout, "__AL_CMD__:{\"type\":\"plot\",\"format\":\"svg\",\"data\":\"" * b64 * "\"}")
+          flush(stdout)
+          ret = :ok
+          break
+        end
+      end
+    end
+  finally
+    _al_rendering[] = false
+  end
+  ret
+end
+struct _ALDisplay <: AbstractDisplay end
+function Base.display(::_ALDisplay, x)
+  r = _al_try_plot(x)
+  r === :text || return  # :ok rendered or :skip re-entrant — nothing more to do
+  # Only reach here for non-image types; guard with summary() in case text
+  # repr itself overflows (e.g. deeply-nested objects without custom show).
+  lim = IOContext(stdout, :limit => true, :compact => true)
+  try; show(lim, MIME("text/plain"), x); println(stdout)
+  catch; println(stdout, summary(x)); end
+end
+Base.displayable(::_ALDisplay, ::MIME"image/png") = true
+Base.displayable(::_ALDisplay, ::MIME"image/svg+xml") = true
+pushdisplay(_ALDisplay())
+# ─────────────────────────────────────────────────────────────────────────────
 while true
   local buf = IOBuffer()
   while true
@@ -406,7 +468,20 @@ while true
       for expr in parsed.args
         result = Core.eval(Main, expr)
       end
-      result !== nothing && (show(stdout, MIME("text/plain"), result); println(stdout))
+      if result !== nothing
+        # Always attempt image rendering first — do NOT use showable() as a gate
+        # because CairoMakie's FigureAxisPlot returns false for showable() even
+        # though show(io, MIME"image/png", x) works. Only fall back to text when
+        # _al_try_plot confirms no image method exists (:text), and protect even
+        # the text fallback with a summary() catch to prevent stack overflows on
+        # deeply-nested objects like Makie scenes.
+        r = _al_try_plot(result)
+        if r === :text
+          lim = IOContext(stdout, :limit => true, :compact => true)
+          try; show(lim, MIME("text/plain"), result); println(stdout)
+          catch; println(stdout, summary(result)); end
+        end
+      end
     catch e
       println(stderr, sprint(showerror, e))
     end

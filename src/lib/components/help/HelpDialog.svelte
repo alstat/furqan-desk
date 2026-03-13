@@ -140,7 +140,8 @@
         <!-- Header / drag handle -->
         <div
             class="flex items-center justify-between px-4 py-3 shrink-0
-                   border-b border-slate-100 dark:border-[#414559]
+                   border-b border-brand-gold-200 dark:border-[#414559]
+                   bg-brand-gold-100 dark:bg-[#292c3c]
                    select-none rounded-t-2xl
                    {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
             onpointerdown={startDrag}
@@ -149,7 +150,7 @@
             <div class="flex items-center gap-2">
                 <Icon icon="solar:question-circle-bold-duotone" width="1.1rem"
                       class="text-brand-gold-500" />
-                <span class="text-sm font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">
+                <span class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
                     Help & User Guide
                 </span>
             </div>

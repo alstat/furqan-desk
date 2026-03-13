@@ -158,7 +158,7 @@
         >
         {#if effectiveTab}
             <div
-                class="flex-1 min-h-0 rounded-md mx-2 border border-brand-sand-200 overflow-hidden focus-within:ring-2 focus-within:ring-brand-gold-100 focus-within:border-brand-gold-400 {isFlashing
+                class="flex-1 min-h-0 rounded-md mx-2 border border-brand-sand-200 overflow-hidden {isFlashing
                     ? 'flash-border-anim'
                     : ''} {hideRepl ? 'mb-3' : ''}"
             >
