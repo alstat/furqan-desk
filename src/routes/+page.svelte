@@ -10,6 +10,8 @@
     import TourOverlay from "$lib/components/tour/TourOverlay.svelte";
     import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
     import HelpDialog from "$lib/components/help/HelpDialog.svelte";
+    import ManuscriptViewer from "$lib/components/manuscripts/ManuscriptViewer.svelte";
+    import { manuscriptViewerOpen, manuscriptDemoOpen } from "$lib/stores/manuscripts.store";
     import {
         isSidebar,
         surahOrientation,
@@ -88,3 +90,5 @@
 <TourOverlay />
 <SettingsDialog open={showSettings} onClose={() => (showSettings = false)} onOpenHelp={() => (showHelp = true)} />
 <HelpDialog open={showHelp} onClose={() => (showHelp = false)} />
+<ManuscriptViewer open={$manuscriptViewerOpen} onClose={() => manuscriptViewerOpen.set(false)} />
+<ManuscriptViewer open={$manuscriptDemoOpen} onClose={() => manuscriptDemoOpen.set(false)} demoMode={true} />

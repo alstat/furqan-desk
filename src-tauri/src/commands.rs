@@ -1268,6 +1268,219 @@ pub fn compile_typst_pdf(source: String) -> Result<Vec<u8>, String> {
         .map_err(|e| format!("{e:?}"))
 }
 
+// ── Manuscript commands ───────────────────────────────────────────────────────
+
+/// Fetch full metadata for a single manuscript (date, material, script, etc.)
+#[tauri::command]
+pub async fn get_manuscript_detail(manuscript_id: u32) -> Result<String, String> {
+    let url = format!(
+        "https://api.corpuscoranicum.de/api/data/manuscripts/{}",
+        manuscript_id
+    );
+    let client = reqwest::Client::new();
+    let response = client
+        .get(&url)
+        .header("Accept", "application/json")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    response.text().await.map_err(|e| e.to_string())
+}
+
+/// Download full-resolution manuscript image and save it to the user's Downloads folder.
+/// Returns the absolute path of the saved file.
+#[tauri::command]
+pub async fn save_manuscript_to_downloads(
+    image_url: String,
+    filename: String,
+) -> Result<String, String> {
+    // Build a high-res URL by keeping only the fn= param and adding dw=1200
+    let fn_param: Option<String> = image_url
+        .split(|c| c == '?' || c == '&')
+        .find_map(|seg| {
+            let s = seg.trim_start_matches('?');
+            if s.starts_with("fn=") { Some(s.to_string()) } else { None }
+        });
+
+    let fetch_url = match fn_param {
+        Some(ref fp) => format!(
+            "https://corpuscoranicum.de/digitallibrary/servlet/Scaler?{}&dw=1200",
+            fp
+        ),
+        None => image_url.clone(),
+    };
+
+    let client = reqwest::Client::new();
+    let bytes = client
+        .get(&fetch_url)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?
+        .bytes()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let downloads_dir = dirs::download_dir()
+        .ok_or_else(|| "Cannot locate Downloads folder".to_string())?;
+
+    // Sanitise filename
+    let safe: String = filename
+        .chars()
+        .map(|c| if c.is_alphanumeric() || matches!(c, '-' | '_' | '.') { c } else { '_' })
+        .collect();
+    let save_path = downloads_dir.join(if safe.is_empty() { "manuscript.jpg".into() } else { safe });
+
+    tokio::fs::write(&save_path, &bytes)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(save_path.to_string_lossy().into_owned())
+}
+
+/// Fetch manuscript list for a given surah/ayah from the Corpus Coranicum API.
+/// Returns the raw JSON string for the frontend to parse.
+#[tauri::command]
+pub async fn get_manuscript_list(surah: u32, ayah: u32) -> Result<String, String> {
+    let url = format!(
+        "https://api.corpuscoranicum.de/api/data/manuscripts/sura/{}/verse/{}",
+        surah, ayah
+    );
+    let client = reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::limited(10))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let response = client
+        .get(&url)
+        .header("Accept", "application/json")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    response.text().await.map_err(|e| e.to_string())
+}
+
+/// Extract a safe relative cache path from the `fn=` parameter embedded in a
+/// Corpus Coranicum Scaler URL.  Returns e.g.
+///   "manuscript/1247/<uuid>/manuscript-1247-page-41341-image-26904_t.jpg"
+fn manuscript_cache_rel(image_url: &str, thumbnail: bool) -> std::path::PathBuf {
+    // Pull out fn=... value (ends at next '&' or end-of-string)
+    let fn_value = image_url
+        .split(|c| c == '?' || c == '&')
+        .find_map(|seg| seg.strip_prefix("fn="))
+        .unwrap_or(image_url);
+
+    // Strip the static prefix that every CC image shares
+    let rel = fn_value
+        .trim_start_matches('/')
+        .trim_start_matches("projects/corpus-coranicum/")
+        .trim_start_matches('/');
+
+    // Build a safe PathBuf component-by-component
+    let mut path = std::path::PathBuf::new();
+    for component in rel.split('/') {
+        if !component.is_empty() && component != ".." && component != "." {
+            path.push(component);
+        }
+    }
+
+    // Normalise extension to .jpg (Scaler always returns JPEG)
+    let stem = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("img")
+        .to_string();
+    let parent = path.parent().map(|p| p.to_path_buf()).unwrap_or_default();
+    let filename = if thumbnail {
+        format!("{}_t.jpg", stem)
+    } else {
+        format!("{}.jpg", stem)
+    };
+    parent.join(filename)
+}
+
+/// Download (and locally cache) a manuscript page image.
+///
+/// `image_url` is the complete Scaler thumbnail URL returned by the API
+/// (e.g. `…Scaler?fn=…&dw=800&dh=800&mo=q1,jpg`).
+/// When `thumbnail=false` the size params are swapped for a higher-res version.
+#[tauri::command]
+pub async fn get_manuscript_image(
+    app: AppHandle,
+    image_url: String,
+    thumbnail: bool,
+) -> Result<Vec<u8>, String> {
+    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+
+    let cache_rel = manuscript_cache_rel(&image_url, thumbnail);
+    let cache_path = app_data_dir.join("manuscript-images").join(&cache_rel);
+
+    // Serve from cache when available
+    if cache_path.exists() {
+        return tokio::fs::read(&cache_path).await.map_err(|e| e.to_string());
+    }
+
+    // Build the fetch URL: thumbnail uses the API URL as-is; full-res strips
+    // the size constraints so Scaler returns the original resolution.
+    let fetch_url = if thumbnail {
+        image_url.clone()
+    } else {
+        // Replace the thumbnail size params with a larger width only
+        let base = image_url
+            .split('&')
+            .next()
+            .unwrap_or(&image_url);
+        let fn_param = base
+            .split('?')
+            .nth(1)
+            .map(|q| q.to_string())
+            .unwrap_or_default();
+        format!(
+            "https://corpuscoranicum.de/digitallibrary/servlet/Scaler?{}&dw=1200",
+            fn_param
+        )
+    };
+
+    let client = reqwest::Client::new();
+    let bytes = client
+        .get(&fetch_url)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?
+        .bytes()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if let Some(parent) = cache_path.parent() {
+        tokio::fs::create_dir_all(parent).await.map_err(|e| e.to_string())?;
+    }
+    tokio::fs::write(&cache_path, &bytes).await.map_err(|e| e.to_string())?;
+
+    Ok(bytes.to_vec())
+}
+
+#[tauri::command]
+pub async fn clear_manuscript_cache(app: AppHandle) -> Result<(), String> {
+    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let cache_dir = app_data_dir.join("manuscript-images");
+    if cache_dir.exists() {
+        tokio::fs::remove_dir_all(&cache_dir).await.map_err(|e| e.to_string())?;
+        tokio::fs::create_dir_all(&cache_dir).await.map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// Serve a bundled demo manuscript image (index 0-2) from resources — used by
+/// the first-run tour so images display offline without network calls.
+#[tauri::command]
+pub async fn get_manuscript_demo_image(app: AppHandle, index: usize) -> Result<Vec<u8>, String> {
+    if index > 2 {
+        return Err("index out of range".into());
+    }
+    let resource_dir = app.path().resource_dir().map_err(|e| e.to_string())?;
+    let filename = format!("demo-{}.jpg", index);
+    let path = resource_dir.join("data/manuscripts/demo").join(&filename);
+    tokio::fs::read(&path).await.map_err(|e| format!("Failed to read demo image {}: {}", filename, e))
+}
+
 // ── Quranic search ────────────────────────────────────────────────────────────
 #[derive(Serialize)]
 pub struct AyahMatch {

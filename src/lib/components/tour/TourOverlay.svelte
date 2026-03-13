@@ -1,20 +1,23 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { tourActive, completeTour } from "$lib/stores/tour.store";
+    import { manuscriptDemoOpen } from "$lib/stores/manuscripts.store";
+
+    const MANUSCRIPT_STEP = 6; // index of the manuscript step
 
     const steps = [
         {
             targetId: null,
             title: "Welcome to AyahLab",
             description:
-                "Your Quran study & writing workspace — jot down leisure notes with Lexical, produce professional publications with Typst, and run scientific computations with Julia, all alongside the Quran reader.",
+                "Your all-in-one Quran study and research workspace — explore the text with full morphology, examine original manuscripts, compose publications with Typst, and run scientific computations with Julia.",
             position: "center" as const,
         },
         {
             targetId: "tour-parchment",
             title: "The Quran Reader",
             description:
-                "Interactive Quran text with full morphology. Click any word to explore its linguistic details.",
+                "Interactive Quran text with full morphology. Click any word to explore its root, grammar, and linguistic details.",
             position: "right" as const,
         },
         {
@@ -44,6 +47,13 @@
             description:
                 "Multi-tab workspace with three editor types: Lexical for quick rich-text notes, Typst for beautifully typeset documents and research papers, and Julia for interactive scientific computing — with built-in APIs like AL.surah and AL.ayah to programmatically control the Quran reader.",
             position: "left" as const,
+        },
+        {
+            targetId: null,
+            title: "📜 Manuscript Viewer",
+            description:
+                "Hover any ayah number in the reader and click the scroll icon (📜) to open the Manuscript Viewer. Browse early Quranic manuscripts from world archives, view folio images, inspect dating and script details, zoom in for detail, and save high-resolution images. Live preview below — Surah Al-Ikhlas (112), Ayah 2:",
+            position: "center" as const,
         },
         {
             targetId: "tour-editor-toolbar",
@@ -81,7 +91,10 @@
     });
 
     $effect(() => {
-        if (!$tourActive) return;
+        if (!$tourActive) {
+            manuscriptDemoOpen.set(false);
+            return;
+        }
         function onResize() {
             updateSpotlight();
         }
@@ -89,30 +102,48 @@
         return () => window.removeEventListener("resize", onResize);
     });
 
+    function applyManuscriptDemo(step: number) {
+        if (step === MANUSCRIPT_STEP) {
+            manuscriptDemoOpen.set(true);
+        } else {
+            manuscriptDemoOpen.set(false);
+        }
+    }
+
     function next() {
         if (currentStep === steps.length - 1) {
+            manuscriptDemoOpen.set(false);
             completeTour();
             currentStep = 0;
         } else {
             currentStep++;
+            applyManuscriptDemo(currentStep);
         }
     }
 
     function prev() {
-        if (currentStep > 0) currentStep--;
+        if (currentStep > 0) {
+            currentStep--;
+            applyManuscriptDemo(currentStep);
+        }
     }
 
     function skip() {
+        manuscriptDemoOpen.set(false);
         completeTour();
         currentStep = 0;
     }
 
-    const TOOLTIP_W = 288; // w-72
     const TOOLTIP_H = 200;
     const PAD = 8;
 
-    function getTooltipStyle(rect: DOMRect | null, position: string): string {
+    function getTooltipStyle(rect: DOMRect | null, position: string, step: number): string {
+        const tooltipW = step === MANUSCRIPT_STEP ? 320 : 288; // w-80 vs w-72
         if (!rect || position === "center") {
+            if (step === MANUSCRIPT_STEP) {
+                // Place below center so the demo viewer behind is visible
+                return "left: 50%; top: 12px; transform: translateX(-50%);";
+            }
             return "left: 50%; top: 50%; transform: translate(-50%, -50%);";
         }
         const vw = window.innerWidth;
@@ -121,11 +152,11 @@
         let top: number;
         switch (position) {
             case "bottom":
-                left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
+                left = rect.left + rect.width / 2 - tooltipW / 2;
                 top = rect.bottom + 16;
                 break;
             case "top":
-                left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
+                left = rect.left + rect.width / 2 - tooltipW / 2;
                 top = rect.top - TOOLTIP_H - 16;
                 break;
             case "right":
@@ -133,19 +164,19 @@
                 top = rect.top + rect.height / 2 - TOOLTIP_H / 2;
                 break;
             case "left":
-                left = rect.left - TOOLTIP_W - 16;
+                left = rect.left - tooltipW - 16;
                 top = rect.top + rect.height / 2 - TOOLTIP_H / 2;
                 break;
             default:
                 return "left: 50%; top: 50%; transform: translate(-50%, -50%);";
         }
-        left = Math.max(PAD, Math.min(vw - TOOLTIP_W - PAD, left));
+        left = Math.max(PAD, Math.min(vw - tooltipW - PAD, left));
         top = Math.max(PAD, Math.min(vh - TOOLTIP_H - PAD, top));
         return `left: ${left}px; top: ${top}px;`;
     }
 
     const tooltipStyle = $derived(
-        getTooltipStyle(spotlightRect, steps[currentStep].position),
+        getTooltipStyle(spotlightRect, steps[currentStep].position, currentStep),
     );
 
     const primaryBtn =
@@ -177,7 +208,8 @@
 
     <!-- Tooltip card -->
     <div
-        class="fixed z-[9999] w-72 rounded-xl bg-white dark:bg-[#303446] shadow-2xl p-5 border border-slate-100 dark:border-[#414559]"
+        class="fixed z-[9999] rounded-xl bg-white dark:bg-[#303446] shadow-2xl p-5 border border-slate-100 dark:border-[#414559]
+               {currentStep === MANUSCRIPT_STEP ? 'w-80' : 'w-72'}"
         style={tooltipStyle}
     >
         <!-- Step dots -->
@@ -193,19 +225,21 @@
         </div>
 
         <!-- Title -->
-        {#if currentStep === 0 || currentStep === steps.length - 1}
+        {#if currentStep === 0 || currentStep === steps.length - 1 || currentStep === MANUSCRIPT_STEP}
             <div class="flex items-center gap-2 mb-1">
                 <Icon
                     icon={currentStep === 0
                         ? "solar:graduation-cap-bold-duotone"
-                        : "solar:star-bold-duotone"}
+                        : currentStep === MANUSCRIPT_STEP
+                          ? "solar:document-text-bold-duotone"
+                          : "solar:star-bold-duotone"}
                     class="text-brand-gold-400 shrink-0"
                     width="1.1rem"
                 />
                 <h3
                     class="text-sm font-semibold text-slate-700 dark:text-[#c6d0f5]"
                 >
-                    {steps[currentStep].title}
+                    {currentStep === MANUSCRIPT_STEP ? "Manuscript Viewer" : steps[currentStep].title}
                 </h3>
             </div>
         {:else}
