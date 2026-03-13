@@ -7,11 +7,9 @@
 	import ControlCard from '../cards/ControlCard.svelte';
 	import GroupCards from '../cards/GroupCards.svelte';
 	import { typstRecompile, editorTheme, cmFontSize, appDarkMode, type EditorTheme } from '$lib/stores/editor.store';
-	import { openOrFocusTab, openPreviewTab, createTab, tabs, activeTabId, openFolderPath, isFlatFile } from '$lib/stores/tabs.store';
+	import { createTab, tabs, activeTabId } from '$lib/stores/tabs.store';
 	import { isSidebar, surahOrientation } from '$lib/stores/quran.svelte';
 	import { rotateSpring } from '$lib/stores/animation';
-	import { readDir, readTextFile } from '@tauri-apps/plugin-fs';
-
 	// ── ilm package state ──────────────────────────────────────────────────────
 	const ILM_NS      = 'preview';
 	const ILM_NAME    = 'ilm';
@@ -42,38 +40,6 @@
 			$isSidebar = true;
 			rotateSpring.set($surahOrientation() === 'flex-row-reverse' ? 180 : 0);
 		}
-	}
-
-	// ── file browser state ─────────────────────────────────────────────────────
-	let dirFiles = $state<string[]>([]);
-
-	$effect(() => {
-		const folder = $openFolderPath;
-		if (!folder) { dirFiles = []; return; }
-		readDir(folder)
-			.then(entries => {
-				dirFiles = entries
-					.filter(e => !e.isDirectory && e.name && isFlatFile(e.name))
-					.map(e => e.name!)
-					.sort();
-			})
-			.catch(() => { dirFiles = []; });
-	});
-
-	// Single-click: preview (italic tab, replaced by next single-click)
-	async function previewFile(filename: string) {
-		if (!$openFolderPath) return;
-		const path = `${$openFolderPath}/${filename}`;
-		const content = await readTextFile(path);
-		openPreviewTab(path, content);
-	}
-
-	// Double-click: open permanently
-	async function openFile(filename: string) {
-		if (!$openFolderPath) return;
-		const path = `${$openFolderPath}/${filename}`;
-		const content = await readTextFile(path);
-		openOrFocusTab(path, content);
 	}
 
 	async function installJulia() {
@@ -437,33 +403,6 @@
 				{/if}
 			{/if}
 		</div>
-
-		{#if $openFolderPath}
-			<!-- Divider -->
-			<div class="border-t border-brand-sand-200"></div>
-
-			<!-- File Browser -->
-			<div>
-				<span class={labelClass}>Files</span>
-				<p class="text-[9px] text-brand-charcoal-300 mb-1 truncate" title={$openFolderPath}>
-					{$openFolderPath.split('/').pop()}
-				</p>
-				<div class="max-h-64 min-h-0 overflow-y-auto pr-1">
-					{#each dirFiles as file}
-						<button
-							onclick={() => previewFile(file)}
-							ondblclick={() => openFile(file)}
-							class="block w-full text-left text-[11px] text-brand-charcoal-500 hover:text-brand-gold-500
-							       px-1 py-1 rounded truncate font-mono transition-colors"
-							title="Click to preview · Double-click to open"
-						>{file}</button>
-					{/each}
-					{#if dirFiles.length === 0}
-						<p class="text-[10px] text-brand-charcoal-300 italic">No files</p>
-					{/if}
-				</div>
-			</div>
-		{/if}
 
 	</div>
 {/snippet}

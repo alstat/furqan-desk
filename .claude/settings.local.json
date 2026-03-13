@@ -105,7 +105,10 @@
       "Bash(python3 -c \"\nimport json\nwith open\\('/Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/tafsir/ar/ar-tafsir-ibn-kathir.json'\\) as f:\n    data = json.load\\(f\\)\nsample = list\\(data.items\\(\\)\\)[:2]\nfor k, v in sample:\n    print\\(k, list\\(v.keys\\(\\)\\), 'ayah_keys' in v\\)\nprint\\('Total:', len\\(data\\)\\)\n\")",
       "Bash(python3 -c \"\nimport json\nwith open\\('/Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/tauri.conf.json'\\) as f:\n    conf = json.load\\(f\\)\nresources = conf.get\\('bundle', {}\\).get\\('resources', []\\)\nprint\\(json.dumps\\(resources, indent=2\\)\\)\n\")",
       "Read(//Users/al-ahmadgaidasaad/Library/**)",
-      "Bash(find ~/Library -name \"quran.db\" 2>/dev/null\nfind ~/Library -path \"*furqan*\" 2>/dev/null | head -10)"
+      "Bash(find ~/Library -name \"quran.db\" 2>/dev/null\nfind ~/Library -path \"*furqan*\" 2>/dev/null | head -10)",
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src -name \"*Tab*\" -o -name \"*File*\" -o -name \"*Browser*\" 2>/dev/null | grep -E \"\\\\.\\(svelte|ts\\)$\" | head -20)",
+      "Bash(grep -A 1 \"^#\\\\[tauri::command\\\\]\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/src/commands.rs | grep \"^pub fn\" | sed 's/pub fn //' | sed 's/\\(.*$//')",
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src -type f \\\\\\( -name \"*browser*\" -o -name \"*explorer*\" -o -name \"*folder*\" -o -name \"*FileBrowser*\" \\\\\\) 2>/dev/null | grep -i svelte)"
     ]
   }
 }
