@@ -575,35 +575,36 @@ select.font-family {
 }
 
 .dropdown {
-    z-index: 5;
+    z-index: 100;
     display: block;
-    position: absolute;
+    position: fixed;
     box-shadow:
-        0 12px 28px 0 rgba(0, 0, 0, 0.2),
-        0 2px 4px 0 rgba(0, 0, 0, 0.1),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
-    border-radius: 8px;
-    min-width: 100px;
+        0 8px 24px 0 rgba(0, 0, 0, 0.15),
+        0 2px 4px 0 rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    min-width: 180px;
     min-height: 40px;
-    background-color: #fff;
+    background-color: var(--color-brand-sand-50);
+    border: 1px solid var(--color-brand-sand-200);
+    padding: 4px 0;
 }
 
 .dropdown .item {
-    margin: 0 8px 0 8px;
-    padding: 8px;
-    color: #050505;
+    margin: 0 4px;
+    padding: 6px 10px;
+    color: var(--color-brand-charcoal-900);
     cursor: pointer;
     line-height: 16px;
-    font-size: 10px;
+    font-size: 11px;
     display: flex;
-    align-content: center;
+    align-items: center;
     flex-direction: row;
     flex-shrink: 0;
-    justify-content: space-between;
-    background-color: #fff;
-    border-radius: 8px;
+    background-color: transparent;
+    border-radius: 6px;
     border: 0;
-    max-width: 250px;
+    width: calc(100% - 8px);
+    text-align: left;
 }
 
 .dropdown .item .active {
@@ -614,15 +615,15 @@ select.font-family {
 }
 
 .dropdown .item:first-child {
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
 .dropdown .item:last-child {
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .dropdown .item:hover {
-    background-color: #eee;
+    background-color: var(--color-brand-sand-100);
 }
 
 .dropdown .item .text {
@@ -642,11 +643,13 @@ select.font-family {
     background-size: contain;
 }
 
+.dropdown hr,
 .dropdown .divider {
     width: auto;
-    background-color: #eee;
+    background-color: var(--color-brand-sand-200);
     margin: 4px 8px;
     height: 1px;
+    border: none;
 }
 
 @media screen and (max-width: 1000px) {
@@ -811,71 +814,99 @@ select.font-family {
 .editor-shell .editor-image .image-caption-button {
     display: block;
     position: absolute;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    width: 30%;
-    padding: 10px;
-    margin: 0 auto;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 5px;
-    background-color: rgba(0, 0, 0, 0.5);
-    min-width: 100px;
-    color: #fff;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    padding: 4px 12px;
+    border: 1px solid var(--color-brand-gold-400);
+    border-radius: 9999px;
+    background-color: var(--color-brand-sand-50);
+    color: var(--color-brand-gold-600);
+    font-size: 11px;
+    font-weight: 600;
     cursor: pointer;
     user-select: none;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    transition: background-color 0.15s, color 0.15s;
+}
+.editor-shell .editor-image .image-caption-button:hover {
+    background-color: var(--color-brand-gold-100);
+    color: var(--color-brand-gold-600);
+}
+html.dark .editor-shell .editor-image .image-caption-button {
+    background-color: #292c3c;
+    border-color: #e5c890;
+    color: #e5c890;
+}
+html.dark .editor-shell .editor-image .image-caption-button:hover {
+    background-color: #363a4f;
 }
 
-.editor-shell .editor-image .image-caption-button:hover {
-    background-color: rgba(60, 132, 244, 0.5);
+/* Image control wrapper: overlay the image, no flow impact */
+.editor-shell .editor-image .image-control-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+.editor-shell .editor-image .image-control-wrapper > div {
+    pointer-events: auto;
 }
 
 .editor-shell .editor-image .image-resizer-sw {
     display: block;
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     position: absolute;
-    bottom: -2px;
-    left: -6px;
-    background-color: rgb(60, 132, 244);
-    border: 1px solid #fff;
+    bottom: -4px;
+    left: -4px;
+    background-color: var(--color-brand-gold-400);
+    border: 1.5px solid #fff;
+    border-radius: 2px;
     cursor: sw-resize;
 }
 
 .editor-shell .editor-image .image-resizer-ne {
     display: block;
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     position: absolute;
-    top: -6px;
-    right: -6px;
-    background-color: rgb(60, 132, 244);
-    border: 1px solid #fff;
+    top: -4px;
+    right: -4px;
+    background-color: var(--color-brand-gold-400);
+    border: 1.5px solid #fff;
+    border-radius: 2px;
     cursor: ne-resize;
 }
 
 .editor-shell .editor-image .image-resizer-nw {
     display: block;
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     position: absolute;
-    top: -6px;
-    left: -6px;
-    background-color: rgb(60, 132, 244);
-    border: 1px solid #fff;
+    top: -4px;
+    left: -4px;
+    background-color: var(--color-brand-gold-400);
+    border: 1.5px solid #fff;
+    border-radius: 2px;
     cursor: nw-resize;
 }
 
 .editor-shell .editor-image .image-resizer-se {
     display: block;
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     position: absolute;
-    bottom: -2px;
-    right: -6px;
-    background-color: rgb(60, 132, 244);
-    border: 1px solid #fff;
-    cursor: nwse-resize;
+    bottom: -4px;
+    right: -4px;
+    background-color: var(--color-brand-gold-400);
+    border: 1.5px solid #fff;
+    border-radius: 2px;
+    cursor: se-resize;
 }
 
 .emoji {
@@ -990,19 +1021,30 @@ select.font-family {
 
 .table-cell-action-button-container {
     position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 4;
+    opacity: 0;
 }
 
 .table-cell-action-button {
-    background-color: none;
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 0;
-    position: relative;
-    border-radius: 15px;
-    color: #222;
-    display: inline-block;
+    border: 1px solid var(--color-brand-sand-200);
+    border-radius: 6px;
+    background-color: var(--color-brand-sand-50);
+    color: var(--color-brand-charcoal-500);
+    width: 18px;
+    height: 18px;
     cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    transition: background-color 0.12s;
+}
+
+.table-cell-action-button:hover {
+    background-color: var(--color-brand-sand-100);
+    color: var(--color-brand-charcoal-900);
 }
 
 i.chevron-down {
@@ -1353,4 +1395,155 @@ i.chevron-down {
 .excalidraw-button.selected {
     outline: 2px solid rgb(60, 132, 244);
     user-select: none;
+}
+
+/* ============================================================
+   Code block <pre> container
+   ============================================================ */
+.editor-shell pre {
+    margin: 8px 0;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: Menlo, Consolas, Monaco, monospace;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* ============================================================
+   Ayu Light — highlight.js theme (default / light mode)
+   ============================================================ */
+.editor-shell pre code.hljs {
+    display: block;
+    padding: 1em;
+    background: #fafafa;
+    color: #5c6773;
+}
+.editor-shell code.hljs {
+    padding: 3px 5px;
+    background: #fafafa;
+    color: #5c6773;
+}
+.editor-shell .hljs-comment,
+.editor-shell .hljs-quote {
+    color: #abb0b6;
+    font-style: italic;
+}
+.editor-shell .hljs-keyword,
+.editor-shell .hljs-selector-tag,
+.editor-shell .hljs-section,
+.editor-shell .hljs-link {
+    color: #fa8d3e;
+    font-weight: bold;
+}
+.editor-shell .hljs-built_in,
+.editor-shell .hljs-addition,
+.editor-shell .hljs-bullet {
+    color: #f07171;
+}
+.editor-shell .hljs-string,
+.editor-shell .hljs-meta .hljs-string {
+    color: #86b300;
+}
+.editor-shell .hljs-number,
+.editor-shell .hljs-regexp,
+.editor-shell .hljs-symbol,
+.editor-shell .hljs-variable,
+.editor-shell .hljs-template-variable {
+    color: #a37acc;
+}
+.editor-shell .hljs-title,
+.editor-shell .hljs-title.function_ {
+    color: #f07171;
+}
+.editor-shell .hljs-type,
+.editor-shell .hljs-title.class_,
+.editor-shell .hljs-class .hljs-title {
+    color: #399ee6;
+}
+.editor-shell .hljs-operator,
+.editor-shell .hljs-meta {
+    color: #ed9366;
+}
+.editor-shell .hljs-punctuation {
+    color: #575f66;
+}
+.editor-shell .hljs-attr {
+    color: #f07171;
+}
+.editor-shell .hljs-deletion {
+    color: #f07171;
+}
+.editor-shell .hljs-emphasis {
+    font-style: italic;
+}
+.editor-shell .hljs-strong {
+    font-weight: bold;
+}
+
+/* ============================================================
+   Ayu Mirage — highlight.js theme (dark mode)
+   ============================================================ */
+html.dark .editor-shell pre code.hljs {
+    background: #1f2430;
+    color: #cbccc6;
+}
+html.dark .editor-shell code.hljs {
+    background: #1f2430;
+    color: #cbccc6;
+}
+html.dark .editor-shell .hljs-comment,
+html.dark .editor-shell .hljs-quote {
+    color: #5c6773;
+    font-style: italic;
+}
+html.dark .editor-shell .hljs-keyword,
+html.dark .editor-shell .hljs-selector-tag,
+html.dark .editor-shell .hljs-section,
+html.dark .editor-shell .hljs-link {
+    color: #ffa759;
+    font-weight: bold;
+}
+html.dark .editor-shell .hljs-built_in,
+html.dark .editor-shell .hljs-addition,
+html.dark .editor-shell .hljs-bullet {
+    color: #ffd580;
+}
+html.dark .editor-shell .hljs-string,
+html.dark .editor-shell .hljs-meta .hljs-string {
+    color: #bae67e;
+}
+html.dark .editor-shell .hljs-number,
+html.dark .editor-shell .hljs-regexp,
+html.dark .editor-shell .hljs-symbol,
+html.dark .editor-shell .hljs-variable,
+html.dark .editor-shell .hljs-template-variable {
+    color: #ffcc66;
+}
+html.dark .editor-shell .hljs-title,
+html.dark .editor-shell .hljs-title.function_ {
+    color: #ffd580;
+}
+html.dark .editor-shell .hljs-type,
+html.dark .editor-shell .hljs-title.class_,
+html.dark .editor-shell .hljs-class .hljs-title {
+    color: #5ccfe6;
+}
+html.dark .editor-shell .hljs-operator,
+html.dark .editor-shell .hljs-meta {
+    color: #f29e74;
+}
+html.dark .editor-shell .hljs-punctuation {
+    color: #cbccc6;
+}
+html.dark .editor-shell .hljs-attr {
+    color: #ffd580;
+}
+html.dark .editor-shell .hljs-deletion {
+    color: #f07171;
+}
+html.dark .editor-shell .hljs-emphasis {
+    font-style: italic;
+}
+html.dark .editor-shell .hljs-strong {
+    font-weight: bold;
 }

@@ -1,85 +1,114 @@
 <script lang="ts">
-  import {run} from 'svelte/legacy';
+    import { getEditor } from '$lexical/core/composerContext.js';
+    import { INSERT_TABLE_COMMAND } from '@lexical/table';
+    import { getCommands } from '$lexical/core/commands.js';
+    import { tick } from 'svelte';
+    import Icon from '@iconify/svelte';
 
-  import {getActiveEditor} from '$lexical/core/composerContext.js';
-  import {INSERT_TABLE_COMMAND} from '@lexical/table';
-  import ModalDialog from '../../generic/dialog/ModalDialog.svelte';
-  import {getCommands} from '$lexical/core/commands.js';
-  import NumberInput from '$lexical/components/generic/input/NumberInput.svelte';
-  import CloseCircleButton from '$lexical/components/generic/button/CloseCircleButton.svelte';
-  import {tick} from 'svelte';
+    let rows = $state('5');
+    let columns = $state('5');
+    let isDisabled = $derived((() => {
+        const row = Number(rows);
+        const column = Number(columns);
+        return !(row > 0 && row <= 500 && column > 0 && column <= 50);
+    })());
 
-  let rows = $state('5');
-  let columns = $state('5');
-  let isDisabled = $state(true);
+    const editor = getEditor();
 
-  run(() => {
-    const row = Number(rows);
-    const column = Number(columns);
-    if (row && row > 0 && row <= 500 && column && column > 0 && column <= 50) {
-      isDisabled = false;
-    } else {
-      isDisabled = true;
+    interface Props {
+        showModal?: boolean;
     }
-  });
 
-  const activeEditor = getActiveEditor();
+    let { showModal = $bindable(false) }: Props = $props();
 
-  interface Props {
-    showModal?: boolean;
-  }
+    export function open() {
+        showModal = true;
+    }
 
-  let {showModal = $bindable(false)}: Props = $props();
-  export function open() {
-    showModal = true;
-  }
+    async function close() {
+        showModal = false;
+        await tick();
+        getCommands().FocusEditor.execute(editor);
+    }
 
-  async function close() {
-    showModal = false;
-    await tick();
-    getCommands().FocusEditor.execute($activeEditor);
-  }
+    function onConfirm() {
+        editor.dispatchCommand(INSERT_TABLE_COMMAND, { columns, rows, includeHeaders: { rows: true, columns: false } });
+        close();
+    }
 
-  const onClick = () => {
-    $activeEditor.dispatchCommand(INSERT_TABLE_COMMAND, {
-      columns,
-      rows,
-    });
-
-    close();
-  };
+    function portal(node: HTMLElement) {
+        document.body.appendChild(node);
+        return { destroy() { node.remove(); } };
+    }
 </script>
 
-<ModalDialog bind:showModal>
-  <CloseCircleButton on:click={close} />
-  <div class="modal">
-    <h2 class="Modal__title">Insert Table</h2>
-    <div class="Modal__content">
-      <NumberInput
-        placeholder={'# of rows (1-500)'}
-        label="Rows"
-        bind:value={rows}
-        dataTestId="table-modal-rows" />
-      <NumberInput
-        placeholder={'# of columns (1-50)'}
-        label="Columns"
-        bind:value={columns}
-        dataTestId="table-modal-columns" />
-      <div class="DialogActions" data-test-id="table-model-confirm-insert">
-        <button
-          disabled={isDisabled}
-          class="Button__root"
-          class:Button__disabled={isDisabled}
-          onclick={onClick}>
-          Confirm
-        </button>
-      </div>
-    </div>
-  </div>
-</ModalDialog>
+{#if showModal}
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+    <div
+        use:portal
+        class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
+        onclick={(e) => { if (e.target === e.currentTarget) close(); }}
+    >
+        <div class="flex w-full max-w-sm flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]">
+                            <Icon icon="solar:table-bold-duotone" class="text-brand-gold-600" width="1rem" />
+                        </div>
+                        <h2 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">Insert Table</h2>
+                    </div>
+                    <button
+                        onclick={close}
+                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                    >
+                        <Icon icon="solar:close-circle-bold" width="1rem" />
+                    </button>
+                </div>
+            </div>
 
-<style>
-  .modal {
-    width: 20em;
-  }
-</style>
+            <!-- Body -->
+            <div class="px-5 py-4 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3">
+                <!-- Rows -->
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300">Rows</label>
+                    <input
+                        type="number"
+                        bind:value={rows}
+                        placeholder="# of rows (1–500)"
+                        min="1"
+                        max="500"
+                        data-test-id="table-modal-rows"
+                        class="h-9 w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                    />
+                </div>
+
+                <!-- Columns -->
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300">Columns</label>
+                    <input
+                        type="number"
+                        bind:value={columns}
+                        placeholder="# of columns (1–50)"
+                        min="1"
+                        max="50"
+                        data-test-id="table-modal-columns"
+                        class="h-9 w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                    />
+                </div>
+
+                <!-- Action -->
+                <button
+                    disabled={isDisabled}
+                    onclick={onConfirm}
+                    data-test-id="table-model-confirm-insert"
+                    class="h-9 cursor-pointer flex items-center justify-center gap-1.5 rounded-xl bg-brand-gold-400 py-2 text-xs font-semibold text-white hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
+                >
+                    <Icon icon="solar:table-bold" width="0.8rem" />
+                    Insert Table
+                </button>
+            </div>
+        </div>
+    </div>
+{/if}

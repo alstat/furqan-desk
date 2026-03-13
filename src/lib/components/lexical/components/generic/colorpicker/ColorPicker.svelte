@@ -8,8 +8,8 @@
   import MoveWrapper from './MoveWrapper.svelte';
   import TextInput from '../input/TextInput.svelte';
 
-  const WIDTH = 214;
-  const HEIGHT = 150;
+  const WIDTH = 240;
+  const HEIGHT = 160;
 
   interface Props {
     color: string;
@@ -20,7 +20,6 @@
 
   let selfColor = $state(transformColor('hex', color));
   let inputColor = $state(color);
-  let innerDivRef: HTMLDivElement | null = $state(null);
 
   let saturationPosition = $derived({
     x: (selfColor.hsv.s / 100) * WIDTH,
@@ -31,11 +30,13 @@
     x: (selfColor.hsv.h / 360) * WIDTH,
   });
 
+  // Call onChange from each interaction — never on mount (avoids auto-applying on open)
   const onSetHex = (hex: string) => {
     inputColor = hex;
     if (/^#[0-9A-Fa-f]{6}$/i.test(hex)) {
       const newColor = transformColor('hex', hex);
       selfColor = newColor;
+      onChange?.(newColor.hex, false);
     }
   };
 
@@ -48,51 +49,39 @@
     const newColor = transformColor('hsv', newHsv);
     selfColor = newColor;
     inputColor = newColor.hex;
+    onChange?.(newColor.hex, $skipAddingToHistoryStack);
   };
 
   const onMoveHue = ({x}: Position) => {
     const newHsv = {...selfColor.hsv, h: (x / WIDTH) * 360};
     const newColor = transformColor('hsv', newHsv);
-
     selfColor = newColor;
     inputColor = newColor.hex;
+    onChange?.(newColor.hex, $skipAddingToHistoryStack);
   };
 
-  // Check if the dropdown is actually active
-  $effect(() => {
-    if (innerDivRef !== null && onChange) {
-      onChange(selfColor.hex, $skipAddingToHistoryStack);
-      inputColor = selfColor.hex;
-    }
-  });
-
-  // run(() => {
-  //   if (color) {
-  //     const newColor = transformColor('hex', color);
-  //     selfColor = newColor;
-  //     inputColor = newColor.hex;
-  //   }
-  // });
+  const onPickBasicColor = (basicColor: string) => {
+    inputColor = basicColor;
+    selfColor = transformColor('hex', basicColor);
+    onChange?.(basicColor, false);
+  };
 </script>
 
-<div
-  class="color-picker-wrapper"
-  style="width: {WIDTH}px"
-  bind:this={innerDivRef}>
-  <TextInput label="Hex" onChange={onSetHex} value={inputColor} width="120px" />
+<div class="color-picker-wrapper" style="width: {WIDTH}px">
+  <!-- Quick color swatches -->
   <div class="color-picker-basic-color">
     {#each basicColors as basicColor}
       <!-- svelte-ignore a11y_consider_explicit_label -->
       <button
-        class={basicColor === selfColor.hex ? ' active' : ''}
+        type="button"
+        class={basicColor === selfColor.hex ? 'active' : ''}
         style="background-color: {basicColor}"
-        onclick={() => {
-          inputColor = basicColor;
-          selfColor = transformColor('hex', basicColor);
-        }}>
+        onclick={() => onPickBasicColor(basicColor)}>
       </button>
     {/each}
   </div>
+
+  <!-- Saturation / value gradient -->
   <MoveWrapper
     className="color-picker-saturation"
     style="background-color: hsl({selfColor.hsv.h}, 100%, 50%)"
@@ -102,68 +91,88 @@
       style="background-color: {selfColor.hex}; left: {saturationPosition.x}px; top: {saturationPosition.y}px">
     </div>
   </MoveWrapper>
+
+  <!-- Hue slider -->
   <MoveWrapper className="color-picker-hue" onChange={onMoveHue}>
     <div
       class="color-picker-hue_cursor"
-      style="background-color: hsl({selfColor.hsv
-        .h}, 100%, 50%); left: {huePosition.x}px">
+      style="background-color: hsl({selfColor.hsv.h}, 100%, 50%); left: {huePosition.x}px">
     </div>
   </MoveWrapper>
-  <div class="color-picker-color" style="background-color: {selfColor.hex}">
+
+  <!-- Preview + hex row -->
+  <div class="color-picker-bottom">
+    <div class="color-picker-color" style="background-color: {selfColor.hex}"></div>
+    <TextInput label="Hex" onChange={onSetHex} value={inputColor} width="110px" />
   </div>
 </div>
 
 <style>
   .color-picker-wrapper {
-    padding: 20px;
+    padding: 16px 20px 8px;
   }
 
   .color-picker-basic-color {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin: 0;
+    gap: 7px;
+    margin: 0 0 14px;
     padding: 0;
   }
 
   .color-picker-basic-color button {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    height: 16px;
-    width: 16px;
+    border: 1px solid var(--color-brand-sand-200, #e8dcc8);
+    border-radius: 5px;
+    height: 20px;
+    width: 20px;
     cursor: pointer;
     list-style-type: none;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .color-picker-basic-color button:hover {
+    transform: scale(1.18);
   }
 
   .color-picker-basic-color button.active {
-    box-shadow: 0px 0px 2px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 2.5px var(--color-brand-gold-400, #e8a844);
+    border-color: transparent;
   }
 
   .color-picker-saturation_cursor {
     position: absolute;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     border: 2px solid #ffffff;
     border-radius: 50%;
-    box-shadow: 0 0 15px #00000026;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.35);
     box-sizing: border-box;
-    transform: translate(-10px, -10px);
+    transform: translate(-8px, -8px);
   }
+
   .color-picker-hue_cursor {
     position: absolute;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     border: 2px solid #ffffff;
     border-radius: 50%;
-    box-shadow: #0003 0 0 0 0.5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
     box-sizing: border-box;
-    transform: translate(-10px, -4px);
+    transform: translate(-8px, -2px);
+  }
+
+  .color-picker-bottom {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
   }
 
   .color-picker-color {
-    border: 1px solid #ccc;
-    margin-top: 15px;
-    width: 100%;
-    height: 20px;
+    border: 1px solid var(--color-brand-sand-200, #e8dcc8);
+    border-radius: 8px;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
   }
 </style>

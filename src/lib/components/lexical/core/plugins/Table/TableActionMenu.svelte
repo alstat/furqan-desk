@@ -1,6 +1,4 @@
 <script lang="ts">
-  import {run} from 'svelte/legacy';
-
   import ColorPickerDialog from '$lexical/components/generic/colorpicker/ColorPickerDialog.svelte';
   import {getEditor} from '$lexical/core/composerContext.js';
   import {
@@ -40,6 +38,8 @@
   import {mergeRegister} from '@lexical/utils';
   import {writable} from 'svelte/store';
   import Portal from '$lexical/components/generic/portal/Portal.svelte';
+  import Icon from '@iconify/svelte';
+
   interface Props {
     onClose: () => void;
     _tableCellNode: TableCellNode;
@@ -127,14 +127,12 @@
   onMount(() => {
     editor.getEditorState().read(() => {
       const selection = getSelection();
-      // Merge cells
       if (isTableSelection(selection)) {
         const currentSelectionCounts = computeSelectionCount(selection);
         selectionCounts = computeSelectionCount(selection);
         canMergeCells =
           currentSelectionCounts.columns > 1 || currentSelectionCounts.rows > 1;
       }
-      // Unmerge cell
       canUnmergeCell = canUnmerge();
     });
 
@@ -157,7 +155,8 @@
     );
   });
 
-  run(() => {
+  // Position the dropdown next to the trigger button (fixed positioning = viewport coords)
+  $effect(() => {
     const menuButtonElement = contextRef;
     const dropDownElement = dropDownRef;
     const rootElement = editor.getRootElement();
@@ -179,16 +178,16 @@
       ) {
         const position =
           menuButtonRect.left - dropDownElementRect.width - margin;
-        leftPosition = (position < 0 ? margin : position) + window.pageXOffset;
+        leftPosition = position < 0 ? margin : position;
       }
-      dropDownElement.style.left = `${leftPosition + window.pageXOffset}px`;
+      dropDownElement.style.left = `${leftPosition}px`;
 
       let topPosition = menuButtonRect.top;
       if (topPosition + dropDownElementRect.height > window.innerHeight) {
         const position = menuButtonRect.bottom - dropDownElementRect.height;
-        topPosition = (position < 0 ? margin : position) + window.pageYOffset;
+        topPosition = position < 0 ? margin : position;
       }
-      dropDownElement.style.top = `${topPosition + +window.pageYOffset}px`;
+      dropDownElement.style.top = `${topPosition}px`;
     }
   });
 
@@ -223,7 +222,7 @@
 
         const tableObserver = getTableObserverFromTableElement(tableElement);
         if (tableObserver !== null) {
-          tableObserver.clearHighlight();
+          tableObserver.$clearHighlight();
         }
 
         tableNode.markDirty();
@@ -378,7 +377,6 @@
 
         const tableCells = tableRow.getChildren();
         if (tableColumnIndex >= tableCells.length) {
-          // if cell is outside of bounds for the current row (for example various merge cell cases) we shouldn't highlight it
           continue;
         }
 
@@ -417,144 +415,137 @@
       }
     });
   };
+
+  const isRowHeader = $derived(
+    (tableCellNode.__headerState & TableCellHeaderStates.ROW) ===
+      TableCellHeaderStates.ROW,
+  );
+  const isColumnHeader = $derived(
+    (tableCellNode.__headerState & TableCellHeaderStates.COLUMN) ===
+      TableCellHeaderStates.COLUMN,
+  );
 </script>
 
 <Portal>
-  <!-- eslint-disable-next-line jsx-a11y/no-static-element-interactions -->
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div
-    class="dropdown"
     bind:this={dropDownRef}
-    onclick={(e) => {
-      e.stopPropagation();
-    }}>
+    onclick={(e) => e.stopPropagation()}
+    class="fixed z-[9999] min-w-[190px] rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] shadow-xl py-1.5 opacity-0"
+    style="left: -10000px; top: -10000px;">
+
     {#if cellMerge}
       {#if canMergeCells}
         <button
           type="button"
-          class="item"
           onclick={() => mergeTableCellsAtSelection()}
-          data-test-id="table-merge-cells">
+          data-test-id="table-merge-cells"
+          class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors">
+          <Icon icon="mdi:table-merge-cells" width="14" class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]" />
           Merge cells
         </button>
       {:else if canUnmergeCell}
         <button
           type="button"
-          class="item"
           onclick={() => unmergeTableCellsAtSelection()}
-          data-test-id="table-unmerge-cells">
+          data-test-id="table-unmerge-cells"
+          class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors">
+          <Icon icon="mdi:table-split-cell" width="14" class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]" />
           Unmerge cells
         </button>
       {/if}
     {/if}
+
     <button
       type="button"
-      class="item"
-      onclick={() => {
-        colorPicker.open(handleCellBackgroundColor);
-      }}
-      data-test-id="table-background-color">
-      <span class="text">Background color</span>
+      onclick={() => colorPicker.open(handleCellBackgroundColor)}
+      data-test-id="table-background-color"
+      class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors">
+      <Icon icon="fluent:paint-bucket-16-filled" width="14" class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]" />
+      Cell background color
     </button>
-    <hr />
+
+    <div class="my-1 mx-2 h-px bg-brand-sand-200 dark:bg-[#414559]"></div>
+
     <button
       type="button"
-      class="item"
       onclick={() => insertTableRowAtSelection(false)}
-      data-test-id="table-insert-row-above">
-      <span class="text">
-        Insert{' '}
-        {selectionCounts.rows === 1
-          ? 'row'
-          : `${selectionCounts.rows} rows`}{' '}
-        above
-      </span>
+      data-test-id="table-insert-row-above"
+      class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors">
+      <Icon icon="tabler:row-insert-top" width="14" class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]" />
+      Insert {selectionCounts.rows === 1 ? 'row' : `${selectionCounts.rows} rows`} above
     </button>
     <button
       type="button"
-      class="item"
       onclick={() => insertTableRowAtSelection(true)}
-      data-test-id="table-insert-row-below">
-      <span class="text">
-        Insert{' '}
-        {selectionCounts.rows === 1
-          ? 'row'
-          : `${selectionCounts.rows} rows`}{' '}
-        below
-      </span>
+      data-test-id="table-insert-row-below"
+      class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors">
+      <Icon icon="tabler:row-insert-bottom" width="14" class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]" />
+      Insert {selectionCounts.rows === 1 ? 'row' : `${selectionCounts.rows} rows`} below
     </button>
-    <hr />
+
+    <div class="my-1 mx-2 h-px bg-brand-sand-200 dark:bg-[#414559]"></div>
+
     <button
       type="button"
-      class="item"
       onclick={() => insertTableColumnAtSelection(false)}
-      data-test-id="table-insert-column-before">
-      <span class="text">
-        Insert{' '}
-        {selectionCounts.columns === 1
-          ? 'column'
-          : `${selectionCounts.columns} columns`}{' '}
-        left
-      </span>
+      data-test-id="table-insert-column-before"
+      class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors">
+      <Icon icon="tabler:column-insert-left" width="14" class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]" />
+      Insert {selectionCounts.columns === 1 ? 'column' : `${selectionCounts.columns} columns`} left
     </button>
     <button
       type="button"
-      class="item"
       onclick={() => insertTableColumnAtSelection(true)}
-      data-test-id="table-insert-column-after">
-      <span class="text">
-        Insert{' '}
-        {selectionCounts.columns === 1
-          ? 'column'
-          : `${selectionCounts.columns} columns`}{' '}
-        right
-      </span>
+      data-test-id="table-insert-column-after"
+      class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors">
+      <Icon icon="tabler:column-insert-right" width="14" class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]" />
+      Insert {selectionCounts.columns === 1 ? 'column' : `${selectionCounts.columns} columns`} right
     </button>
-    <hr />
+
+    <div class="my-1 mx-2 h-px bg-brand-sand-200 dark:bg-[#414559]"></div>
+
     <button
       type="button"
-      class="item"
       onclick={() => deleteTableColumnAtSelection()}
-      data-test-id="table-delete-columns">
-      <span class="text">Delete column</span>
+      data-test-id="table-delete-columns"
+      class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-red-500 dark:text-red-400 hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors">
+      <Icon icon="tabler:column-remove" width="14" class="shrink-0" />
+      Delete column
     </button>
     <button
       type="button"
-      class="item"
       onclick={() => deleteTableRowAtSelection()}
-      data-test-id="table-delete-rows">
-      <span class="text">Delete row</span>
+      data-test-id="table-delete-rows"
+      class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-red-500 dark:text-red-400 hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors">
+      <Icon icon="tabler:row-remove" width="14" class="shrink-0" />
+      Delete row
     </button>
     <button
       type="button"
-      class="item"
       onclick={() => deleteTableAtSelection()}
-      data-test-id="table-delete">
-      <span class="text">Delete table</span>
+      data-test-id="table-delete"
+      class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-red-500 dark:text-red-400 hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors">
+      <Icon icon="tabler:trash" width="14" class="shrink-0" />
+      Delete table
     </button>
-    <hr />
-    <button type="button" class="item" onclick={() => toggleTableRowIsHeader()}>
-      <span class="text">
-        {(tableCellNode.__headerState & TableCellHeaderStates.ROW) ===
-        TableCellHeaderStates.ROW
-          ? 'Remove'
-          : 'Add'}{' '}
-        row header
-      </span>
+
+    <div class="my-1 mx-2 h-px bg-brand-sand-200 dark:bg-[#414559]"></div>
+
+    <button
+      type="button"
+      onclick={() => toggleTableRowIsHeader()}
+      class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors">
+      <Icon icon="tabler:layout-rows" width="14" class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]" />
+      {isRowHeader ? 'Remove' : 'Add'} row header
     </button>
     <button
       type="button"
-      class="item"
       onclick={() => toggleTableColumnIsHeader()}
-      data-test-id="table-column-header">
-      <span class="text">
-        {(tableCellNode.__headerState & TableCellHeaderStates.COLUMN) ===
-        TableCellHeaderStates.COLUMN
-          ? 'Remove'
-          : 'Add'}{' '}
-        column header
-      </span>
+      data-test-id="table-column-header"
+      class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors">
+      <Icon icon="tabler:layout-columns" width="14" class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]" />
+      {isColumnHeader ? 'Remove' : 'Add'} column header
     </button>
   </div>
 </Portal>
