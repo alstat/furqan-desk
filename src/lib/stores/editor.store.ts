@@ -64,7 +64,7 @@ export const editorTheme = {
     },
 };
 
-export interface ReplLine { text: string; kind: 'input' | 'output' | 'error' }
+export interface ReplLine { text: string; kind: 'input' | 'output' | 'error' | 'warn' }
 /** Shared REPL output lines for all Julia tabs */
 export const juliaReplHistory: Writable<ReplLine[]> = writable([]);
 export const juliaReplStarted: Writable<boolean> = writable(false);

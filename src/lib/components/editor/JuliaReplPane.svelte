@@ -81,6 +81,26 @@
         }
     }
 
+    function classifyOutput(text: string, isStderr: boolean): 'error' | 'warn' | 'output' {
+        if (!isStderr) return 'output';
+        const infoPatterns = [
+            /^\s*\[ (Info|Warning|Debug)/,
+            /^\s*┌ (Info|Warning|Debug)/,
+            /^\s*│/,
+            /^\s*└/,
+            /^\s*Resolving /,
+            /^\s*Installed /,
+            /^\s*Updating /,
+            /^\s*Precompiling /,
+            /^\s*Progress /,
+            /^\s*\d+ dependenc/,
+            /^\s*[✓⌛●○]/,
+            /^\s*\[[\d=>\s]+\]/,
+        ];
+        if (infoPatterns.some(p => p.test(text))) return 'warn';
+        return 'error';
+    }
+
     function clearRepl() {
         juliaReplHistory.set([]);
     }
@@ -291,7 +311,7 @@
                 if (displayChunk) {
                     juliaReplHistory.update((h) => [
                         ...h,
-                        { text: displayChunk, kind: error ? "error" : "output" },
+                        { text: displayChunk, kind: classifyOutput(displayChunk, error !== null) },
                     ]);
                 }
             }
@@ -379,10 +399,18 @@
             >
             {#if ts.activePanel === "julia"}
                 {#if isRunning}
-                    <span
-                        class="text-[10px] italic text-brand-gold-400 pr-2 select-none"
-                        >Running…</span
-                    >
+                    <span class="flex items-center gap-1 pr-2 select-none text-brand-gold-400">
+                        <svg
+                            class="animate-spin h-3 w-3 shrink-0"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <span class="text-[10px] italic">Running…</span>
+                    </span>
                 {/if}
                 <button
                     onclick={(e) => {
@@ -464,6 +492,10 @@
                             <div
                                 class="pl-[3.2rem] text-red-400 whitespace-pre-wrap"
                             >
+                                {line.text}
+                            </div>
+                        {:else if line.kind === "warn"}
+                            <div class="pl-[3.2rem] text-amber-400 dark:text-amber-300 whitespace-pre-wrap">
                                 {line.text}
                             </div>
                         {:else}
