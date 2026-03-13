@@ -15,15 +15,15 @@
 	import { multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap } from '$lib/stores/translation.store';
 	import { morphFontFamily, morphFontSize } from '$lib/stores/morphology.store';
 	import { loadMorphologySurah, loadBasmallahMorphology } from '$lib/functions/widgets/surahWidget';
-	import { availableTranslators, activeTranslatorId, transliterationEnabled, wordByWordEnabled } from '$lib/stores/translation.store';
+	import { availableTranslators, activeTranslatorId, transliterationEnabled, wordByWordEnabled, tafsirEnabled, activeTafsirId, availableTafsirAuthors } from '$lib/stores/translation.store';
 	import { invoke } from '@tauri-apps/api/core';
-	import type { TranslatorInfo } from '$lib/stores/translation.store';
+	import type { TranslatorInfo, TafsirAuthorInfo } from '$lib/stores/translation.store';
 	import { onMount } from 'svelte';
 
 	const LANG_NAMES: Record<string, string> = {
 		AR: 'Arabic', BN: 'Bengali', EN: 'English', FA: 'Persian',
 		HA: 'Hausa',  HI: 'Hindi',  ID: 'Indonesian', MS: 'Malay',
-		PA: 'Punjabi', PS: 'Pashto', SW: 'Swahili', TL: 'Tagalog',
+		PA: 'Punjabi', PS: 'Pashto', RU: 'Russian', SW: 'Swahili', TL: 'Tagalog',
 		TR: 'Turkish', UR: 'Urdu',
 	};
 
@@ -33,6 +33,8 @@
 	let selectedTranslatorId: string = $state('');
 	let translitEnabled: boolean = $state(false);
 	let wbwEnabled: boolean = $state(false);
+	let tafsirOn: boolean = $state(false);
+	let selectedTafsirId: string = $state('');
 
 	onMount(async () => {
 		loadBasmallahMorphology();
@@ -46,6 +48,15 @@
 		if (saved !== null) selectedTranslatorId = String(saved);
 		translitEnabled = $transliterationEnabled;
 		wbwEnabled = $wordByWordEnabled;
+		try {
+			const tafsirAuthors = await invoke<TafsirAuthorInfo[]>('get_tafsir_authors');
+			availableTafsirAuthors.set(tafsirAuthors);
+		} catch (e) {
+			console.error('Failed to load tafsir authors', e);
+		}
+		const savedTafsir = $activeTafsirId;
+		if (savedTafsir !== null) selectedTafsirId = String(savedTafsir);
+		tafsirOn = $tafsirEnabled;
 	});
 
 	$effect(() => { morphFontFamily.set(font); });
@@ -64,6 +75,10 @@
 
 	$effect(() => { transliterationEnabled.set(translitEnabled); });
 	$effect(() => { wordByWordEnabled.set(wbwEnabled); });
+	$effect(() => { tafsirEnabled.set(tafsirOn); });
+	$effect(() => {
+		activeTafsirId.set(selectedTafsirId ? parseInt(selectedTafsirId) : null);
+	});
 
 	function onSurahChange(event: Event) {
 		const idx = parseInt((event.target as HTMLSelectElement).value);
@@ -192,6 +207,40 @@
 			>
 				<span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {wbwEnabled ? 'translate-x-4' : 'translate-x-1'}"></span>
 			</button>
+		</div>
+		<div class="border-t border-brand-sand-100 dark:border-[#414559] pt-3">
+			<div class="flex items-center justify-between mb-2">
+				<span class={labelClass}>Tafsir</span>
+				<button
+					role="switch"
+					aria-checked={tafsirOn}
+					onclick={() => { tafsirOn = !tafsirOn; }}
+					class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {tafsirOn ? 'bg-brand-gold-400' : 'bg-brand-charcoal-100'}"
+				>
+					<span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {tafsirOn ? 'translate-x-4' : 'translate-x-1'}"></span>
+				</button>
+			</div>
+			{#if tafsirOn}
+				<div class="relative">
+					<select
+						id="tafsir-select"
+						bind:value={selectedTafsirId}
+						class={selectClass}
+					>
+						<option value="">None</option>
+						{#each [...new Set($availableTafsirAuthors.map(a => a.lang))] as lang}
+							<optgroup label={LANG_NAMES[lang] ?? lang}>
+								{#each $availableTafsirAuthors.filter(a => a.lang === lang) as a}
+									<option value={String(a.id)}>{a.name}</option>
+								{/each}
+							</optgroup>
+						{/each}
+					</select>
+					<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+						<Icon icon="charm:chevron-down" width="0.75rem" />
+					</span>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/snippet}

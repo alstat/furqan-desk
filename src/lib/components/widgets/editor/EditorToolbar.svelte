@@ -183,7 +183,7 @@
 					class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
 						${$editorTheme === 'ayu-light'
 							? 'bg-brand-gold-400 text-white border-brand-gold-400'
-							: 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
+							: 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
 				>
 					Ayu Light
 				</button>
@@ -192,7 +192,7 @@
 					class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
 						${$editorTheme === 'ayu-mirage'
 							? 'bg-[#1f2430] text-[#ffa759] border-[#ffa759]'
-							: 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500'}`}
+							: 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
 				>
 					Ayu Mirage
 				</button>

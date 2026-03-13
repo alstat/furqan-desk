@@ -45,3 +45,31 @@ export const surahWordByWord = writable<Map<string, string> | null>(null);
 export const multiSurahTranslationMap = writable<Map<number, Map<number, AyahTranslation>> | null>(null);
 export const multiSurahTransliterationMap = writable<Map<number, Map<number, string>> | null>(null);
 export const multiSurahWordByWordMap = writable<Map<number, Map<string, string>> | null>(null);
+
+export interface TafsirAuthorInfo {
+    id: number;
+    lang: string;
+    name: string;
+}
+
+export interface AyahTafsir {
+    ayah: number;
+    text: string;
+}
+
+export const tafsirEnabled = writable<boolean>(
+    browser ? localStorage.getItem('tafsirEnabled') === 'true' : false
+);
+tafsirEnabled.subscribe(v => {
+    if (browser) localStorage.setItem('tafsirEnabled', String(v));
+});
+
+export const activeTafsirId = writable<number | null>(
+    browser ? JSON.parse(localStorage.getItem('tafsirId') ?? 'null') : null
+);
+activeTafsirId.subscribe(v => {
+    if (browser) localStorage.setItem('tafsirId', JSON.stringify(v));
+});
+
+export const availableTafsirAuthors = writable<TafsirAuthorInfo[]>([]);
+export const surahTafsir = writable<AyahTafsir[] | null>(null);

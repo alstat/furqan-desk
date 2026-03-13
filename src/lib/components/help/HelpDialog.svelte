@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onDestroy } from 'svelte';
     import Icon from '@iconify/svelte';
+    import { openUrl } from '@tauri-apps/plugin-opener';
 
     interface Props {
         open: boolean;
@@ -37,6 +38,8 @@
         { id: 'help-typst',         label: 'Typst — Publishing' },
         { id: 'help-julia',         label: 'Julia — Computing' },
         { id: 'help-settings',      label: 'Settings & Tour' },
+        { id: 'help-privacy',       label: 'Privacy' },
+        { id: 'help-data-sources',  label: 'Data Sources' },
     ];
 
     $effect(() => {
@@ -152,8 +155,7 @@
             </div>
             <button
                 onclick={onClose}
-                class="cursor-pointer p-1 rounded-full text-brand-charcoal-300 dark:text-[#8caaee]
-                       hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+                class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                 aria-label="Close help"
             >
                 <Icon icon="solar:close-circle-bold-duotone" width="1.1rem" />
@@ -315,7 +317,7 @@
                 </section>
 
                 <!-- 11. Settings & Tour -->
-                <section id="help-settings" class="mb-4">
+                <section id="help-settings" class="mb-8">
                     <h2 class="text-base font-bold mb-2 text-brand-charcoal-500 dark:text-[#e5c890]">Settings & Tour</h2>
                     <p class="mb-2">Open <strong>Editor Tools → Settings</strong> to:</p>
                     <ul class="list-disc pl-4 space-y-1 text-[12.5px]">
@@ -324,6 +326,55 @@
                         <li>Re-open this <strong>Help panel</strong>.</li>
                         <li>Toggle the <strong>Manuscript Viewer</strong> on or off, and clear the local image cache.</li>
                     </ul>
+                </section>
+
+                <!-- 12. Privacy -->
+                <section id="help-privacy" class="mb-8">
+                    <h2 class="text-base font-bold mb-2 text-brand-charcoal-500 dark:text-[#e5c890]">Privacy</h2>
+                    <div class="rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] px-4 py-3 flex gap-3 items-start">
+                        <Icon icon="solar:shield-check-bold-duotone" class="text-brand-gold-500 shrink-0 mt-0.5" width="1.2rem" />
+                        <div class="space-y-1.5 text-[12.5px]">
+                            <p class="font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">Your data never leaves your device.</p>
+                            <p class="text-brand-charcoal-300 dark:text-[#838ba7] leading-relaxed">
+                                AyahLab is a fully offline desktop application. There are no accounts, no telemetry, and no analytics of any kind.
+                                Your notes, bookmarks, and settings are stored entirely on your local device.
+                                The author has absolutely no way to see, access, or collect any of your data.
+                            </p>
+                            <p class="text-brand-charcoal-300 dark:text-[#838ba7] leading-relaxed">
+                                The only network requests the app makes are: fetching manuscript images from the Corpus Coranicum public API (on demand, when you open the Manuscript Viewer), and downloading recitation audio files when you explicitly request them. No personal information is included in these requests.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 13. Data Sources -->
+                <section id="help-data-sources" class="mb-4">
+                    <h2 class="text-base font-bold mb-2 text-brand-charcoal-500 dark:text-[#e5c890]">Data Sources</h2>
+                    <p class="text-[12.5px] text-brand-charcoal-300 dark:text-[#838ba7] mb-3">AyahLab is built on open, scholarly datasets. All data is bundled locally with the app.</p>
+                    <div class="space-y-2">
+                        {#each [
+                            { icon: 'solar:book-bold-duotone', label: 'Qur\'an Text & Morphology', desc: 'Quranic Arabic Corpus', url: 'https://corpus.quran.com' },
+                            { icon: 'solar:translation-bold-duotone', label: 'Translation, Transliteration & Tafsir', desc: 'Tarteel AI — Open Quran Data', url: 'https://qul.tarteel.ai/' },
+                            { icon: 'solar:document-text-bold-duotone', label: 'Early Manuscripts', desc: 'Corpus Coranicum, Berlin-Brandenburg Academy of Sciences', url: 'https://corpuscoranicum.de/' },
+                        ] as src}
+                            <div class="flex items-center justify-between gap-3 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-3.5 py-2.5">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <Icon icon={src.icon} class="text-brand-gold-400 shrink-0" width="1rem" />
+                                    <div class="min-w-0">
+                                        <p class="text-[11.5px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">{src.label}</p>
+                                        <p class="text-[10.5px] text-brand-charcoal-300 dark:text-[#838ba7] truncate">{src.desc}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onclick={() => openUrl(src.url)}
+                                    class="cursor-pointer shrink-0 flex items-center gap-1 rounded-lg bg-brand-gold-200 dark:bg-[#414559] px-2.5 py-1 text-[10.5px] font-semibold text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-300 dark:hover:bg-[#51576d] transition-colors"
+                                >
+                                    <Icon icon="solar:arrow-right-up-linear" width="0.65rem" />
+                                    Visit
+                                </button>
+                            </div>
+                        {/each}
+                    </div>
                 </section>
             </div>
         </div>

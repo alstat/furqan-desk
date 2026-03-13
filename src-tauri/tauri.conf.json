@@ -47,6 +47,11 @@
       "data/translation/tl/dar-al-salam-center-tagalog-simple.json",
       "data/translation/tr/dar-al-salam-center-simple.json",
       "data/translation/ur/bayan-ul-quran-simple.json",
+      "data/translation/ru/quran-ru-kuliev-simple.json",
+      "data/tafsir/ar/ar-tafsir-ibn-kathir.json",
+      "data/tafsir/ar/ar-tafsir-al-tabari.json",
+      "data/tafsir/en/en-tafisr-ibn-kathir.json",
+      "data/tafsir/tl/tagalog-Al-Mukhtasar.json",
       "data/transliteration/english-transliteration-tajweed-simple.json",
       "data/word-by-word/english-wbw-translation.json",
       "data/manuscripts/demo/*"

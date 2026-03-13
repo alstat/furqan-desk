@@ -89,6 +89,19 @@
             </div>
         </div>
 
+        <!-- Privacy -->
+        <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
+            <p class={sectionLabel}>Privacy</p>
+            <div class="flex items-start gap-2 rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-100 dark:border-[#414559] px-3 py-2.5">
+                <Icon icon="solar:shield-check-bold-duotone" class="text-brand-gold-400 shrink-0 mt-0.5" width="0.9rem" />
+                <p class="text-[11px] text-brand-charcoal-400 dark:text-[#838ba7] leading-relaxed">
+                    AyahLab is fully offline. No accounts, no telemetry, no analytics.
+                    Your notes, bookmarks, and settings stay on your device only —
+                    the author has no way to access your data.
+                </p>
+            </div>
+        </div>
+
         <!-- Appearance -->
         <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
             <p class={sectionLabel}>Appearance</p>

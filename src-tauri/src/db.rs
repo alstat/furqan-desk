@@ -14,6 +14,7 @@ impl Database {
         morph_path: PathBuf,
         recitation_paths: Vec<(i64, PathBuf)>,
         translation_paths: Vec<(String, String, PathBuf)>,
+        tafsir_paths: Vec<(String, String, PathBuf)>,
         transliteration_path: PathBuf,
         word_by_word_path: PathBuf,
     ) -> Result<Self> {
@@ -25,6 +26,7 @@ impl Database {
         Self::init_user_data_tables(&conn)?;
         Self::init_recitation_tables(&conn, &recitation_paths)?;
         Self::init_translation_tables(&conn, &translation_paths)?;
+        Self::init_tafsir_tables(&conn, &tafsir_paths)?;
         Self::init_transliteration_table(&conn, &transliteration_path)?;
         Self::init_word_by_word_table(&conn, &word_by_word_path)?;
         Ok(Database(Mutex::new(conn)))
@@ -384,22 +386,21 @@ impl Database {
             CREATE INDEX IF NOT EXISTS idx_trans_surah ON translations(translator_id, surah);",
         )?;
 
-        let count: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM translators",
+        // Fix any stale translator names from earlier imports
+        conn.execute(
+            "UPDATE translators SET name = 'Abdel Haleem' WHERE lang = 'EN' AND name IN ('Haleem', 'Abdul Haleem')",
             [],
-            |row| row.get(0),
         )?;
 
-        if count > 0 {
-            // Fix any stale translator names from earlier imports
-            conn.execute(
-                "UPDATE translators SET name = 'Abdul Haleem' WHERE lang = 'EN' AND name = 'Haleem'",
-                [],
-            )?;
-            return Ok(());
-        }
-
         for (lang, name, path) in paths {
+            // Skip if this translator is already imported
+            let exists: i64 = conn.query_row(
+                "SELECT COUNT(*) FROM translators WHERE lang = ?1 AND name = ?2",
+                rusqlite::params![lang, name],
+                |row| row.get(0),
+            )?;
+            if exists > 0 { continue; }
+
             if !path.exists() {
                 eprintln!("Translation file not found: {:?}", path);
                 continue;
@@ -671,6 +672,102 @@ impl Database {
             "Successfully loaded {} morphology records",
             insert_count
         );
+
+        Ok(())
+    }
+
+    fn init_tafsir_tables(conn: &Connection, paths: &[(String, String, PathBuf)]) -> Result<()> {
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS tafsir_authors (
+                id    INTEGER PRIMARY KEY AUTOINCREMENT,
+                lang  TEXT NOT NULL,
+                name  TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS tafsirs (
+                author_id  INTEGER NOT NULL,
+                surah      INTEGER NOT NULL,
+                ayah       INTEGER NOT NULL,
+                text       TEXT    NOT NULL,
+                PRIMARY KEY (author_id, surah, ayah)
+            );
+            CREATE INDEX IF NOT EXISTS idx_tafsir_surah ON tafsirs(author_id, surah);",
+        )?;
+
+        for (lang, name, path) in paths {
+            // Skip if this tafsir author is already imported
+            let exists: i64 = conn.query_row(
+                "SELECT COUNT(*) FROM tafsir_authors WHERE lang = ?1 AND name = ?2",
+                rusqlite::params![lang, name],
+                |row| row.get(0),
+            )?;
+            if exists > 0 { continue; }
+
+            if !path.exists() {
+                eprintln!("Tafsir file not found: {:?}", path);
+                continue;
+            }
+
+            conn.execute(
+                "INSERT INTO tafsir_authors (lang, name) VALUES (?1, ?2)",
+                rusqlite::params![lang, name],
+            )?;
+            let author_id = conn.last_insert_rowid();
+
+            let content = fs::read_to_string(path).map_err(|e| {
+                rusqlite::Error::ToSqlConversionFailure(Box::new(e))
+            })?;
+
+            let json: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
+                rusqlite::Error::ToSqlConversionFailure(Box::new(e))
+            })?;
+
+            let obj = match json.as_object() {
+                Some(o) => o,
+                None => continue,
+            };
+
+            let tx = conn.unchecked_transaction()?;
+            {
+                let mut stmt = conn.prepare(
+                    "INSERT OR IGNORE INTO tafsirs (author_id, surah, ayah, text) VALUES (?1, ?2, ?3, ?4)",
+                )?;
+
+                for (key, val) in obj {
+                    let text = val.get("text").and_then(|v| v.as_str()).unwrap_or("");
+                    if text.is_empty() { continue; }
+
+                    // If ayah_keys present, insert for each referenced ayah
+                    let inserted = if let Some(ayah_keys) = val.get("ayah_keys").and_then(|v| v.as_array()) {
+                        let mut any = false;
+                        for ak in ayah_keys {
+                            let ak_str = ak.as_str().unwrap_or("");
+                            let parts: Vec<&str> = ak_str.split(':').collect();
+                            if parts.len() != 2 { continue; }
+                            let s: i64 = parts[0].parse().unwrap_or(0);
+                            let a: i64 = parts[1].parse().unwrap_or(0);
+                            if s == 0 || a == 0 { continue; }
+                            stmt.execute(rusqlite::params![author_id, s, a, text])?;
+                            any = true;
+                        }
+                        any
+                    } else {
+                        false
+                    };
+
+                    if !inserted {
+                        // Fall back to primary key
+                        let parts: Vec<&str> = key.split(':').collect();
+                        if parts.len() != 2 { continue; }
+                        let s: i64 = parts[0].parse().unwrap_or(0);
+                        let a: i64 = parts[1].parse().unwrap_or(0);
+                        if s == 0 || a == 0 { continue; }
+                        stmt.execute(rusqlite::params![author_id, s, a, text])?;
+                    }
+                }
+            }
+            tx.commit()?;
+            println!("Imported tafsir for {} - {}", lang, name);
+        }
 
         Ok(())
     }

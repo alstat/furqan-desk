@@ -96,7 +96,16 @@
       "Bash(grep -n \"\\\\$findMatchingParent\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/node_modules/lexical/Lexical.dev.js | head -5)",
       "Bash(grep -r \"TableCellResizer\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src --include=\"*.svelte\" --include=\"*.ts\" --include=\"*.js\" 2>/dev/null | head -20)",
       "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/node_modules/@lexical/table/src -name \"*.ts\" 2>/dev/null | head -5; ls /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/node_modules/@lexical/table/ 2>/dev/null | head -20)",
-      "Bash(cat /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/tauri.conf.json | python3 -m json.tool 2>/dev/null | grep -A 20 \"csp\\\\|security\\\\|allowlist\\\\|connect\")"
+      "Bash(cat /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/tauri.conf.json | python3 -m json.tool 2>/dev/null | grep -A 20 \"csp\\\\|security\\\\|allowlist\\\\|connect\")",
+      "Bash(cat /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/tafsir/ar/ar-tafsir-ibn-kathir.json | python3 -m json.tool | head -100)",
+      "Bash(cat /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/translation/ru/quran-ru-kuliev-simple.json | python3 -m json.tool 2>/dev/null | head -100)",
+      "Bash(cat /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/tafsir/en/en-tafisr-ibn-kathir.json | python3 -m json.tool 2>/dev/null | head -150)",
+      "Bash(cat /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/tafsir/tl/tagalog-Al-Mukhtasar.json | python3 -m json.tool 2>/dev/null | head -100)",
+      "Bash(python3 -c \"\nimport json\nwith open\\('/Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/tafsir/en/en-tafisr-ibn-kathir.json'\\) as f:\n    data = json.load\\(f\\)\nkeys = list\\(data.keys\\(\\)\\)[:5]\nprint\\('Top-level keys sample:', keys\\)\nentry = data[keys[0]]\nprint\\('Entry keys:', list\\(entry.keys\\(\\)\\)\\)\nprint\\('Has ayah_keys?', 'ayah_keys' in entry\\)\nprint\\('Total entries:', len\\(data\\)\\)\n\")",
+      "Bash(python3 -c \"\nimport json\nwith open\\('/Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/tafsir/ar/ar-tafsir-ibn-kathir.json'\\) as f:\n    data = json.load\\(f\\)\nsample = list\\(data.items\\(\\)\\)[:2]\nfor k, v in sample:\n    print\\(k, list\\(v.keys\\(\\)\\), 'ayah_keys' in v\\)\nprint\\('Total:', len\\(data\\)\\)\n\")",
+      "Bash(python3 -c \"\nimport json\nwith open\\('/Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/tauri.conf.json'\\) as f:\n    conf = json.load\\(f\\)\nresources = conf.get\\('bundle', {}\\).get\\('resources', []\\)\nprint\\(json.dumps\\(resources, indent=2\\)\\)\n\")",
+      "Read(//Users/al-ahmadgaidasaad/Library/**)",
+      "Bash(find ~/Library -name \"quran.db\" 2>/dev/null\nfind ~/Library -path \"*furqan*\" 2>/dev/null | head -10)"
     ]
   }
 }
