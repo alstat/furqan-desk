@@ -9,6 +9,7 @@
     "dialog:allow-save",
     "dialog:allow-open",
     "dialog:allow-confirm",
+    "dialog:allow-ask",
     "fs:allow-write-text-file",
     "fs:allow-write-file",
     "fs:allow-read-file",
