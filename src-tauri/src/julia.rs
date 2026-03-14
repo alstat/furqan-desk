@@ -442,6 +442,23 @@ end
 Base.displayable(::_ALDisplay, ::MIME"image/png") = true
 Base.displayable(::_ALDisplay, ::MIME"image/svg+xml") = true
 pushdisplay(_ALDisplay())
+# ── Semicolon suppression (mirrors Julia REPL behaviour) ─────────────────────
+# Checks the last non-empty, non-comment line of the submitted code block.
+# If it ends with ';', the result of the expression is not displayed.
+function _al_ends_with_semicolon(code::String)
+  for line in Iterators.reverse(split(code, '\n'))
+    stripped = rstrip(line)
+    isempty(stripped) && continue
+    # Remove trailing line comment (naive but sufficient for common cases)
+    ci = findfirst('#', stripped)
+    if ci !== nothing
+      stripped = rstrip(stripped[begin:prevind(stripped, ci)])
+    end
+    isempty(stripped) && continue
+    return last(stripped) == ';'
+  end
+  return false
+end
 # ─────────────────────────────────────────────────────────────────────────────
 while true
   local buf = IOBuffer()
@@ -468,19 +485,12 @@ while true
       for expr in parsed.args
         result = Core.eval(Main, expr)
       end
-      if result !== nothing
-        # Always attempt image rendering first — do NOT use showable() as a gate
-        # because CairoMakie's FigureAxisPlot returns false for showable() even
-        # though show(io, MIME"image/png", x) works. Only fall back to text when
-        # _al_try_plot confirms no image method exists (:text), and protect even
-        # the text fallback with a summary() catch to prevent stack overflows on
-        # deeply-nested objects like Makie scenes.
-        r = _al_try_plot(result)
-        if r === :text
-          lim = IOContext(stdout, :limit => true, :compact => true)
-          try; show(lim, MIME("text/plain"), result); println(stdout)
-          catch; println(stdout, summary(result)); end
-        end
+      # Display result unless the code block ended with ';' (REPL suppression)
+      if result !== nothing && !_al_ends_with_semicolon(code)
+        # Route through display() so Julia's full display stack is used.
+        # _ALDisplay (top of stack) handles plots via PNG/SVG and falls back
+        # to show(MIME"text/plain") for everything else (DataFrames, etc.).
+        display(result)
       end
     catch e
       println(stderr, sprint(showerror, e))
