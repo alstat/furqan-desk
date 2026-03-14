@@ -20,7 +20,7 @@ jobs:
             args: --bundles appimage,deb
             rust-targets: ''
           - platform: windows-latest
-            args: --bundles msix
+            args: --bundles nsis,msi
             rust-targets: ''
 
     runs-on: ${{ matrix.platform }}
@@ -90,7 +90,7 @@ jobs:
 
             | Platform | File |
             |----------|------|
-            | Windows  | `.msix` (Microsoft Store) |
+            | Windows  | `.exe` (NSIS installer) or `.msi` |
             | macOS | `.app` |
             | Linux | `.AppImage` or `.deb` |
 
