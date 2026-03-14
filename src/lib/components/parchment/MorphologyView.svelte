@@ -1,5 +1,5 @@
 <script lang="ts">
-    // update
+    // update this
     import { convertToArabicNumbers } from "$lib/functions/utils/utils";
     import {
         surahMorphology,
