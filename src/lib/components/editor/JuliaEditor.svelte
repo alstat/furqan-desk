@@ -37,6 +37,8 @@
     const labelClass =
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
 
+    let lineWrap = $state(true);
+
     // ── Effective tab (primary uses $activeTab; secondary uses tabId prop) ─────
 
     let effectiveTab = $derived(
@@ -153,9 +155,24 @@
 <div class="relative overflow-visible flex flex-col h-full">
     <!-- Editor area -->
     <div class="flex-1 flex flex-col min-h-0" style="min-height: 120px">
-        <span class="{labelClass} px-2 pt-1"
-            >{effectiveTab?.name ?? "Julia Editor"}</span
-        >
+        <div class="flex items-center justify-between px-2 pt-1 mb-1.5">
+            <span class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
+                >{effectiveTab?.name ?? "Julia Editor"}</span
+            >
+            <button
+                onclick={() => (lineWrap = !lineWrap)}
+                title={lineWrap ? "Disable line wrap" : "Enable line wrap"}
+                class="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors
+                       {lineWrap
+                           ? 'bg-brand-sand-200 text-brand-charcoal-400 hover:bg-brand-sand-300'
+                           : 'bg-brand-gold-100 text-brand-gold-600 hover:bg-brand-gold-200'}"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 21 6"/><path d="M3 12h15a3 3 0 0 1 0 6h-4"/><polyline points="8 15 5 18 8 21"/>
+                </svg>
+                {lineWrap ? "Wrap" : "No Wrap"}
+            </button>
+        </div>
         {#if effectiveTab}
             <div
                 class="flex-1 min-h-0 rounded-md mx-2 border border-brand-sand-200 overflow-hidden {isFlashing
@@ -167,6 +184,7 @@
                     language="julia"
                     extraKeymap={juliaKeymap}
                     extensions={[juliaCompletionExtension]}
+                    {lineWrap}
                     onchange={handleInput}
                     class="h-full font-mono"
                 />

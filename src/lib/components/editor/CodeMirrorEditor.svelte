@@ -38,6 +38,7 @@
         extraKeymap = [],
         extensions: extraExtensions = [],
         class: className = '',
+        lineWrap = true,
         onchange,
     }: {
         value?: string;
@@ -45,6 +46,7 @@
         extraKeymap?: KeyBinding[];
         extensions?: Extension[];
         class?: string;
+        lineWrap?: boolean;
         onchange?: (newValue: string) => void;
     } = $props();
 
@@ -307,6 +309,7 @@
 
     const themeComp = new Compartment();
     const langComp  = new Compartment();
+    const wrapComp  = new Compartment();
 
     let container: HTMLDivElement;
     let view: EditorView;
@@ -321,7 +324,7 @@
                 history(),
                 bracketMatching(),
                 indentOnInput(),
-                EditorView.lineWrapping,
+                wrapComp.of(lineWrap ? EditorView.lineWrapping : []),
                 scrollPastEnd(),
                 search({ top: true }),
                 keymap.of([
@@ -380,6 +383,12 @@
         const theme = $editorTheme;
         if (!view) return;
         view.dispatch({ effects: themeComp.reconfigure(getThemeExt(theme)) });
+    });
+
+    // Sync line-wrap changes
+    $effect(() => {
+        if (!view) return;
+        view.dispatch({ effects: wrapComp.reconfigure(lineWrap ? EditorView.lineWrapping : []) });
     });
 
     // Remeasure layout after font-size change so line numbers stay aligned
