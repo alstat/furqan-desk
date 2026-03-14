@@ -130,20 +130,11 @@
         $state(null);
     let popoverPosition = $state({ x: 0, y: 0, placement: 'below' as 'above' | 'below' });
 
-    // ── Sliding-window rendering ──────────────────────────────────────────────────
-    // Instead of rendering the whole surah progressively (which stuffs thousands of
-    // spans into the DOM), we keep at most MAX_RENDERED ayahs in the DOM at any time.
-    // More ayahs load as the user scrolls toward the sentinel at the bottom; when the
-    // window overflows MAX_RENDERED we trim from the top and compensate with padding
-    // so the scroll position appears unchanged.  On navigation the DOM therefore never
-    // holds more than MAX_RENDERED × ~25 spans — making teardown fast regardless of
-    // how deep into a surah the user was.
-
+    // Progressive rendering
     const CHUNK_SIZE = 30;
     let renderedAyahCount = $state(CHUNK_SIZE);
     let renderRafId: number | null = null;
 
-    // Reset the window whenever the surah changes.
     $effect(() => {
         if (renderRafId !== null) { cancelAnimationFrame(renderRafId); renderRafId = null; }
 
@@ -161,103 +152,10 @@
             if (renderedAyahCount < total) {
                 renderRafId = requestAnimationFrame(renderMore);
             }
+        }
+        renderRafId = requestAnimationFrame(renderMore);
 
-            if (cancelled) return;
-
-            // Register newly rendered spans with the tajweed highlight observer.
-            if (tajweedObserver) {
-                for (const span of document.querySelectorAll<HTMLElement>('.morph-word[data-arabic]')) {
-                    tajweedObserver.observe(span);
-                }
-            }
-        };
-
-        const obs = new IntersectionObserver(async ([entry]) => {
-            if (!entry.isIntersecting) return;
-
-            // Loop instead of a single load so fast scrolling doesn't leave a gap:
-            // after each chunk we re-check whether the sentinel is still near the
-            // viewport and keep going if so.
-            while (!cancelled && renderEnd < total) {
-                await loadNextChunk();
-                if (cancelled) break;
-
-                const scrollEl       = el.closest('[data-scroll-container]') as HTMLElement | null;
-                const containerBottom = scrollEl
-                    ? scrollEl.getBoundingClientRect().bottom
-                    : window.innerHeight;
-
-                // Stop when the sentinel has moved well below the visible area.
-                if (el.getBoundingClientRect().top > containerBottom + 400) break;
-            }
-        }, { rootMargin: '600px 0px', threshold: 0 });
-
-        obs.observe(el);
-        return () => { cancelled = true; obs.disconnect(); };
-    });
-
-    // Top sentinel: when it enters view the user has scrolled back up into the spacer
-    // area — restore the previous chunk and trim from the bottom to maintain MAX_RENDERED.
-    $effect(() => {
-        const el = topSentinelEl;
-        if (!el) return;
-
-        let cancelled = false;
-
-        const loadPrevChunk = async () => {
-            if (cancelled || renderStart <= 0) return;
-
-            const newStart = Math.max(0, renderStart - CHUNK_SIZE);
-            const scrollEl = el.closest('[data-scroll-container]') as HTMLElement | null;
-            const prevH    = scrollEl?.scrollHeight ?? 0;
-
-            renderStart = newStart;         // Phase 1 — add top ayahs
-            await tick();
-            if (cancelled) return;
-
-            const heightAdded = (scrollEl?.scrollHeight ?? 0) - prevH;
-            // Reduce spacer by the height of newly rendered content (content replaced spacer).
-            // Browser scroll-anchoring keeps the viewport stable during the content addition;
-            // reducing the spacer by the same amount keeps scrollHeight and positions unchanged.
-            topSpacerPx = Math.max(0, topSpacerPx - heightAdded);
-
-            // Trim from bottom if window now exceeds MAX_RENDERED
-            const windowSize = renderEnd - newStart;
-            if (windowSize > MAX_RENDERED) {
-                const trimCount = windowSize - MAX_RENDERED;
-                const prevH2    = scrollEl?.scrollHeight ?? 0;
-
-                renderEnd -= trimCount;     // Phase 2 — remove bottom ayahs
-                await tick();
-                if (cancelled) return;
-
-                bottomSpacerPx += Math.max(0, prevH2 - (scrollEl?.scrollHeight ?? 0));
-            }
-
-            if (tajweedObserver) {
-                for (const span of document.querySelectorAll<HTMLElement>('.morph-word[data-arabic]')) {
-                    tajweedObserver.observe(span);
-                }
-            }
-        };
-
-        const obs = new IntersectionObserver(async ([entry]) => {
-            if (!entry.isIntersecting) return;
-
-            while (!cancelled && renderStart > 0) {
-                await loadPrevChunk();
-                if (cancelled) break;
-
-                const scrollEl    = el.closest('[data-scroll-container]') as HTMLElement | null;
-                const containerTop = scrollEl ? scrollEl.getBoundingClientRect().top : 0;
-
-                // Stop when the sentinel has moved well above the visible area.
-                if (el.getBoundingClientRect().bottom < containerTop - 400) break;
-            }
-        }, { rootMargin: '600px 0px', threshold: 0 });
-
-        obs.observe(el);
-        return () => { cancelled = true; obs.disconnect(); };
+        return () => { if (renderRafId !== null) { cancelAnimationFrame(renderRafId); renderRafId = null; } };
     });
 
     function getWordColor(word: MorphWord): string {
@@ -293,15 +191,15 @@
 
         const rect = (event.target as HTMLElement).getBoundingClientRect();
         const viewportHeight = window.innerHeight;
-        const viewportWidth  = window.innerWidth;
+        const viewportWidth = window.innerWidth;
 
         let x = rect.left;
         if (x + POPOVER_WIDTH > viewportWidth) x = viewportWidth - POPOVER_WIDTH - 8;
         if (x < 8) x = 8;
 
         const spaceBelow = viewportHeight - rect.bottom;
-        const placement  = spaceBelow >= POPOVER_MIN_HEIGHT ? 'below' : 'above';
-        const y          = placement === 'below' ? rect.bottom : rect.top;
+        const placement = spaceBelow >= POPOVER_MIN_HEIGHT ? 'below' : 'above';
+        const y = placement === 'below' ? rect.bottom : rect.top;
 
         popoverPosition = { x, y, placement };
         selectedWord = { word, ayahNum };
@@ -315,7 +213,7 @@
     function handleClickOutside(event: MouseEvent) {
         const clickedElement = event.target as HTMLElement;
         const isPopoverClick = clickedElement.closest(".ayah-tooltip");
-        const isWordClick    = clickedElement.closest(".morph-word");
+        const isWordClick = clickedElement.closest(".morph-word");
 
         if (selectedWord !== null && !isPopoverClick && !isWordClick) {
             selectedWord = null;
