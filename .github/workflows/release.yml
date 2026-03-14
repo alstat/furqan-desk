@@ -14,11 +14,8 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
-            args: --bundles dmg,app --target aarch64-apple-darwin
-            rust-targets: aarch64-apple-darwin
-          - platform: macos-13
-            args: --bundles dmg,app --target x86_64-apple-darwin
-            rust-targets: x86_64-apple-darwin
+            args: --bundles dmg,app
+            rust-targets: ''
           - platform: ubuntu-22.04
             args: --bundles appimage,deb
             rust-targets: ''
@@ -73,8 +70,7 @@ jobs:
             | Platform | File |
             |----------|------|
             | Windows  | `.exe` (NSIS installer) or `.msi` |
-            | macOS (Apple Silicon) | `.dmg` (aarch64) |
-            | macOS (Intel) | `.dmg` (x86_64) |
+            | macOS | `.dmg` |
             | Linux | `.AppImage` or `.deb` |
 
             See the assets below to download and install.
