@@ -24,16 +24,19 @@
 	import InsertImageDropDownItem from '../toolbar/InsertDropDown/InsertImageDropDownItem.svelte';
 	import Indent from '../toolbar/Indent.svelte';
 	import Outdent from '../toolbar/Outdent.svelte';
-	import ActionBar from '../actionbar/ActionBar.svelte';
 	import CodeDropDownItem from '../toolbar/BlockFormatDropDown/CodeDropDownItem.svelte';
 	import InsertEquationDropDownItem from '../toolbar/InsertDropDown/InsertEquationDropDownItem.svelte';
 	import InsertEquationDialog from '../toolbar/dialogs/InsertEquationDialog.svelte';
+	import InsertTableDialog from '../toolbar/dialogs/InsertTableDialog.svelte';
+	import InsertTableDropDownItem from '../toolbar/InsertDropDown/InsertTableDropDownItem.svelte';
 	import EquationShortcutButton from '$lexical/core/plugins/Equation/EquationShortcutButton.svelte';
 	import TripleDotsDropDown from '../toolbar/TripleDots/TripleDotsDropDown.svelte';
     import TripleDotsDropDownSmall from '../toolbar/TripleDots/TripleDotsDropDownSmall.svelte';
+	import FontColorButton from '../toolbar/FontColorButton.svelte';
 
 	let imageDialog = $state<InsertImageDialog | undefined>(undefined);
 	let equationDialog = $state<InsertEquationDialog | undefined>(undefined);
+	let tableDialog = $state<InsertTableDialog | undefined>(undefined);
 	let windowWidth = $state(0);
 </script>
 
@@ -62,6 +65,7 @@
 		<UnderlineButton />
 		<StrikethroughButton />
 		<FormatCodeButton />
+		<FontColorButton />
 
 		{#if windowWidth > 1380}
 			<Divider />
@@ -69,6 +73,7 @@
 				<InsertHRDropDownItem />
 				<InsertImageDropDownItem onclick={() => imageDialog?.open()} />
 				<InsertEquationDropDownItem onclick={() => equationDialog?.open()} />
+				<InsertTableDropDownItem onclick={() => tableDialog?.open()} />
 			</InsertDropDown>
             <DropDownAlign />
 			<Divider />
@@ -91,12 +96,10 @@
 			/>
 		{/if}
 
-		<!-- action bar -->
-		<ActionBar />
-
 		<!-- dialogs -->
 		<InsertImageDialog bind:this={imageDialog} />
 		<InsertEquationDialog bind:this={equationDialog} />
+		<InsertTableDialog bind:this={tableDialog} />
 		<EquationShortcutButton onTrigger={() => equationDialog?.open()} />
 	{/snippet}
 </Toolbar>

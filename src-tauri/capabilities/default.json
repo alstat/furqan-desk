@@ -5,9 +5,18 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
+    "core:window:allow-destroy",
     "opener:default",
     "dialog:allow-save",
+    "dialog:allow-open",
+    "dialog:allow-confirm",
+    "dialog:allow-ask",
     "fs:allow-write-text-file",
-    "fs:allow-exists"
+    "fs:allow-write-file",
+    "fs:allow-read-file",
+    "fs:allow-read-text-file",
+    "fs:allow-read-dir",
+    "fs:allow-exists",
+    "fs:scope-home-recursive"
   ]
 }

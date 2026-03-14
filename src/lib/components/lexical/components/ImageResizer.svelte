@@ -252,17 +252,7 @@
   };
 </script>
 
-<div bind:this={controlWrapperRef}>
-  {#if !showCaption && captionsEnabled}
-    <button
-      class="image-caption-button"
-      bind:this={$buttonRef}
-      onclick={() => {
-        setShowCaption(!showCaption);
-      }}>
-      Add Caption
-    </button>
-  {/if}
+<div class="image-control-wrapper" bind:this={controlWrapperRef}>
   <div
     class="image-resizer image-resizer-n"
     onpointerdown={(event) => {

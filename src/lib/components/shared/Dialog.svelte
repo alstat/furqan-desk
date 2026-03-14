@@ -19,16 +19,16 @@
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
         onclick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-        <div class="relative mx-4 w-full max-w-md rounded-xl bg-white shadow-2xl flex flex-col max-h-[80vh]">
+        <div class="relative mx-4 w-full max-w-md rounded-xl bg-white dark:bg-[#303446] shadow-2xl flex flex-col max-h-[80vh]">
             <!-- Header -->
-            <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                <h2 class="text-sm font-semibold text-slate-700">{title}</h2>
+            <div class="flex items-center justify-between border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 bg-brand-gold-100 dark:bg-[#292c3c] rounded-t-xl">
+                <h2 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">{title}</h2>
                 <button
                     onclick={onClose}
-                    class="cursor-pointer rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                    class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     aria-label="Close"
                 >
-                    <Icon icon="solar:close-circle-linear" width="1.1rem" />
+                    <Icon icon="solar:close-circle-bold-duotone" width="1.1rem" />
                 </button>
             </div>
 
@@ -39,7 +39,7 @@
 
             <!-- Footer (optional) -->
             {#if footer}
-                <div class="border-t border-slate-100 px-5 py-3">
+                <div class="border-t border-slate-100 dark:border-[#414559] px-5 py-3">
                     {@render footer()}
                 </div>
             {/if}

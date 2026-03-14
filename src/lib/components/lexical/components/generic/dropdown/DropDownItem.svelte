@@ -32,7 +32,7 @@
 </script>
 
 <button
-  class={'cursor-pointer flex flex-row justify-start p-1 m-1 text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200 ' + className}
+  class={'cursor-pointer flex flex-row justify-start p-1 m-1 text-sm rounded-lg text-brand-charcoal-500 hover:bg-brand-sand-200 hover:text-brand-charcoal-900 active:bg-brand-sand-400 ' + className}
   {onclick}
   bind:this={ref}
   {title}

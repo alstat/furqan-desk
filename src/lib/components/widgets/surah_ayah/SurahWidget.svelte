@@ -6,87 +6,62 @@
 		selectedSurahIdx,
 		selectedSurahName,
 		surahLabels,
+		hideSurahPage,
+		isSidebar,
+		morphologyAyahFilter,
+		morphologyMultiSurahList,
 	} from '$lib/stores/quran.svelte';
-	import { morphFontFamily, morphFontSize, tajweedEnabled } from '$lib/stores/morphology.store';
+	import { recitationPlaylist } from '$lib/stores/recitation.store';
+	import { multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap } from '$lib/stores/translation.store';
+	import { morphFontFamily, morphFontSize } from '$lib/stores/morphology.store';
 	import { loadMorphologySurah, loadBasmallahMorphology } from '$lib/functions/widgets/surahWidget';
-	import { TAJWEED_COLORS } from '$lib/functions/utils/tajweed';
-	import Dialog from '$lib/components/shared/Dialog.svelte';
+	import { availableTranslators, activeTranslatorId, transliterationEnabled, wordByWordEnabled, tafsirEnabled, activeTafsirId, availableTafsirAuthors } from '$lib/stores/translation.store';
+	import { invoke } from '@tauri-apps/api/core';
+	import type { TranslatorInfo, TafsirAuthorInfo } from '$lib/stores/translation.store';
 	import { onMount } from 'svelte';
+
+	const LANG_NAMES: Record<string, string> = {
+		AR: 'Arabic', BN: 'Bengali', EN: 'English', FA: 'Persian',
+		HA: 'Hausa',  HI: 'Hindi',  ID: 'Indonesian', MS: 'Malay',
+		PA: 'Punjabi', PS: 'Pashto', RU: 'Russian', SW: 'Swahili', TL: 'Tagalog',
+		TR: 'Turkish', UR: 'Urdu',
+	};
 
 	let font: string = $state('font-scheherazade');
 	let textSize: string = $state('text-xl');
-	let tajweedDialogOpen = $state(false);
+	let hideSurah: boolean = $state(false);
+	let selectedTranslatorId: string = $state('');
+	let translitEnabled: boolean = $state(false);
+	let wbwEnabled: boolean = $state(false);
+	let tafsirOn: boolean = $state(false);
+	let selectedTafsirId: string = $state('');
 
-	const tajweedRules = [
-		{
-			key: 'ghunnah',
-			color: TAJWEED_COLORS.ghunnah,
-			name: 'Ghunnah (غُنَّة)',
-			arabic: 'نّ / مّ',
-			desc: 'Noon or Meem with Shadda — nasalization held for 2 counts.',
-		},
-		{
-			key: 'qalqalah',
-			color: TAJWEED_COLORS.qalqalah,
-			name: 'Qalqalah (قَلْقَلَة)',
-			arabic: 'ق ط ب ج د',
-			desc: 'Echo/bounce on the five Qalqalah letters when they carry Sukun.',
-		},
-		{
-			key: 'ikhfa',
-			color: TAJWEED_COLORS.ikhfa,
-			name: 'Ikhfa (إِخْفَاء)',
-			arabic: 'ن sakin / تنوين + 15 letters',
-			desc: 'Noon Sakin or Tanwin followed by one of the 15 Ikhfa letters — partial concealment with ghunnah.',
-		},
-		{
-			key: 'idgham_ghunnah',
-			color: TAJWEED_COLORS.idgham_ghunnah,
-			name: 'Idgham with Ghunnah (إِدْغَام بِغُنَّة)',
-			arabic: 'ي ن م و',
-			desc: 'Noon Sakin or Tanwin merges into ي ن م و with nasalization.',
-		},
-		{
-			key: 'idgham_no_ghunnah',
-			color: TAJWEED_COLORS.idgham_no_ghunnah,
-			name: 'Idgham without Ghunnah (إِدْغَام بِلَا غُنَّة)',
-			arabic: 'ر ل',
-			desc: 'Noon Sakin or Tanwin merges into ر or ل without nasalization.',
-		},
-		{
-			key: 'iqlab',
-			color: TAJWEED_COLORS.iqlab,
-			name: 'Iqlab (إِقْلَاب)',
-			arabic: 'ن sakin / تنوين + ب',
-			desc: 'Noon Sakin or Tanwin before ب — the Noon sound changes to Meem.',
-		},
-		{
-			key: 'izhar',
-			color: TAJWEED_COLORS.izhar,
-			name: 'Izhar (إِظْهَار)',
-			arabic: 'ء ه ع ح غ خ',
-			desc: 'Noon Sakin or Tanwin before a throat letter — clear, distinct pronunciation.',
-		},
-		{
-			key: 'madd',
-			color: TAJWEED_COLORS.madd,
-			name: 'Madd (مَدّ)',
-			arabic: 'ا و ي',
-			desc: 'Elongation letters (Alef, Waw Sakin, Ya Sakin, Alef Madda) — prolonged 2–6 counts depending on context.',
-		},
-		{
-			key: 'lam_jalalah',
-			color: TAJWEED_COLORS.lam_jalalah,
-			name: 'Lam Jalalah (لَام الجَلَالَة)',
-			arabic: 'الله',
-			desc: 'The Lam in the word "Allah" — heavy pronunciation (tafkheem) when preceded by a Fatha or Damma.',
-		},
-	];
-
-	onMount(() => { loadBasmallahMorphology(); });
+	onMount(async () => {
+		loadBasmallahMorphology();
+		try {
+			const translators = await invoke<TranslatorInfo[]>('get_translators');
+			availableTranslators.set(translators);
+		} catch (e) {
+			console.error('Failed to load translators', e);
+		}
+		const saved = $activeTranslatorId;
+		if (saved !== null) selectedTranslatorId = String(saved);
+		translitEnabled = $transliterationEnabled;
+		wbwEnabled = $wordByWordEnabled;
+		try {
+			const tafsirAuthors = await invoke<TafsirAuthorInfo[]>('get_tafsir_authors');
+			availableTafsirAuthors.set(tafsirAuthors);
+		} catch (e) {
+			console.error('Failed to load tafsir authors', e);
+		}
+		const savedTafsir = $activeTafsirId;
+		if (savedTafsir !== null) selectedTafsirId = String(savedTafsir);
+		tafsirOn = $tafsirEnabled;
+	});
 
 	$effect(() => { morphFontFamily.set(font); });
 	$effect(() => { morphFontSize.set(textSize); });
+	$effect(() => { hideSurahPage.set(() => hideSurah); });
 
 	$effect(() => {
 		const idx = $selectedSurahIdx;
@@ -94,70 +69,206 @@
 		loadMorphologySurah(idx);
 	});
 
+	$effect(() => {
+		activeTranslatorId.set(selectedTranslatorId ? parseInt(selectedTranslatorId) : null);
+	});
+
+	$effect(() => { transliterationEnabled.set(translitEnabled); });
+	$effect(() => { wordByWordEnabled.set(wbwEnabled); });
+	$effect(() => { tafsirEnabled.set(tafsirOn); });
+	$effect(() => {
+		activeTafsirId.set(selectedTafsirId ? parseInt(selectedTafsirId) : null);
+	});
+
 	function onSurahChange(event: Event) {
 		const idx = parseInt((event.target as HTMLSelectElement).value);
 		selectedSurahIdx.set(idx);
+		morphologyAyahFilter.set(null);
+		morphologyMultiSurahList.set(null);
+		recitationPlaylist.set(null);
+		multiSurahTranslationMap.set(null);
+		multiSurahTransliterationMap.set(null);
+		multiSurahWordByWordMap.set(null);
 	}
 
-	const selectClass = 'w-full cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm transition-colors hover:border-slate-300 focus:border-slate-300 focus:outline-none';
+	const SURAH_EN = [
+		"The Opening", "The Cow", "The Family of 'Imran", "Women", "The Feast",
+		"Livestock", "The Heights", "Battle Gains", "Repentance", "Jonah",
+		"Hud", "Joseph", "Thunder", "Abraham", "Al-Hijr", "The Bee", "The Night Journey",
+		"The Cave", "Mary", "Ta Ha", "The Prophets", "The Pilgrimage", "The Believers",
+		"The Light", "The Differentiator", "The Poets", "The Ants", "The Story", "The Spider",
+		"The Byzantines", "Luqman", "Bowing Down In Worship", "The Joint Forces",
+		"Sheba", "The Creator", "Ya Sin", "Ranged In Rows", "Saad", "The Throngs",
+		"The Foregiver", "[Verses] Made Clear", "Consultation", "Ornaments Of Gold",
+		"Smoke", "Kneeling", "The Sand Dunes", "Muhammad", "Triumph", "The Private Rooms",
+		"Qaaf", "Scattering [Winds]", "The Mountain", "The Star", "The Moon", "The Lord Of Mercy",
+		"That Which Is Coming", "Iron", "The Dispute", "The Gathering [Of Forces]", "The Women Tested",
+		"Solid Lines", "The Day of Congregation", "The Hypocrites", "Mutual Neglect",
+		"Divorce", "Prohibition", "Control", "The Pen", "The Inevitable Hour", "The Ways Of Ascent",
+		"Noah", "The Jinn", "Enfolded", "Wrapped In His Cloak", "The Resurrection", "Man",
+		"[Winds] Sent Forth", "The Announcement", "The Forceful Chargers", "He Frowned",
+		"The Rolling Up", "The Breaking", "Those Who Give Short Measure", "The Cracking",
+		"The Towering Constellations", "The Night-Comer", "The Most High", "The Overwhelming Event",
+		"Daybreak", "The City", "The Sun", "The Night", "The Morning Brightness", "Relief",
+		"The Fig", "The Clinging Form", "The Night Of Glory", "Clear Evidence", "The Earthquake",
+		"The Charging Steeds", "The Crashing Blow", "Competing For More", "The Fading Day",
+		"The Backbiter", "The Elephant", "Quraysh", "Common Kindness", "Abundance", "The Disbelievers",
+		"Help", "Palm Fibre", "Purity of Faith", "Daybreak", "People",
+	];
+
+	const selectClass = 'w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 transition-all focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100';
+	const labelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300';
 </script>
 
 {#snippet surahCardBody()}
 	<div class="px-4 py-3">
-		<label for="surah-idx" class="mb-1.5 block text-xs font-medium text-slate-400">Surah</label>
-		<select
-			id="surah-idx"
-			onchange={onSurahChange}
-			class="{selectClass} text-center font-scheherazade"
-			dir="rtl"
-		>
-			{#each $surahLabels as label, i}
-				<option value={`${i + 1}`} title={label.en} selected={$selectedSurahIdx - 1 === i}>
-					{label.ar}
-				</option>
-			{/each}
-		</select>
+		<label for="surah-idx" class={labelClass}>Surah</label>
+		<div class="relative">
+			<select
+				id="surah-idx"
+				onchange={onSurahChange}
+				class="{selectClass} pl-8"
+			>
+				{#each $surahLabels as label, i}
+					<option value={`${i + 1}`} selected={$selectedSurahIdx - 1 === i}>
+						{label.ar} — {SURAH_EN[i]}
+					</option>
+				{/each}
+			</select>
+			<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+				<Icon icon="charm:chevron-down" width="0.75rem" />
+			</span>
+		</div>
 	</div>
 {/snippet}
 
 {#snippet fontBody()}
-	<div class="flex flex-col gap-3 px-4 py-3">
+	<div class="flex flex-col gap-3.5 px-4 py-3">
 		<div>
-			<label for="surah-font-family" class="mb-1.5 block text-xs font-medium text-slate-400">Font Family</label>
-			<select id="surah-font-family" bind:value={font} class={selectClass}>
-				<option value="font-scheherazade">Scheherazade New</option>
-				<option value="font-amiri">Amiri Qur'an</option>
-			</select>
+			<label for="surah-font-family" class={labelClass}>Font Family</label>
+			<div class="relative">
+				<select id="surah-font-family" bind:value={font} class={selectClass}>
+					<option value="font-scheherazade">Scheherazade New</option>
+					<option value="font-amiri">Amiri Qur'an</option>
+				</select>
+				<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+					<Icon icon="charm:chevron-down" width="0.75rem" />
+				</span>
+			</div>
 		</div>
 		<div>
-			<label for="surah-font-size" class="mb-1.5 block text-xs font-medium text-slate-400">Font Size</label>
-			<select id="surah-font-size" bind:value={textSize} class={selectClass}>
-				<option value="text-base">Small</option>
-				<option value="text-xl">Medium</option>
-				<option value="text-3xl">Large</option>
-			</select>
+			<label for="surah-font-size" class={labelClass}>Font Size</label>
+			<div class="relative">
+				<select id="surah-font-size" bind:value={textSize} class={selectClass}>
+					<option value="text-base">Small</option>
+					<option value="text-xl">Medium</option>
+					<option value="text-3xl">Large</option>
+				</select>
+				<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+					<Icon icon="charm:chevron-down" width="0.75rem" />
+				</span>
+			</div>
 		</div>
 		<div class="flex items-center justify-between">
-			<div class="flex items-center gap-1">
-				<label for="tajweed-toggle" class="text-xs font-medium text-slate-400">Tajweed Colors</label>
-				<button
-					onclick={() => (tajweedDialogOpen = true)}
-					class="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors"
-					title="Tajweed rules guide"
-					aria-label="Open tajweed rules guide"
+			<span class={labelClass}>Hide Surah Page</span>
+			<button
+				role="switch"
+				aria-checked={hideSurah}
+				aria-label="Hide Surah Page"
+				onclick={() => {
+				hideSurah = !hideSurah;
+				if (hideSurah && !$isSidebar) $isSidebar = true;
+			}}
+				class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {hideSurah ? 'bg-brand-gold-400' : 'bg-brand-charcoal-100'}"
+			>
+				<span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {hideSurah ? 'translate-x-4' : 'translate-x-1'}"></span>
+			</button>
+		</div>
+	</div>
+{/snippet}
+
+{#snippet translationBody()}
+	<div class="flex flex-col gap-3.5 px-4 py-3">
+		<div>
+			<label for="translator-select" class={labelClass}>Translator</label>
+			<div class="relative">
+				<select
+					id="translator-select"
+					bind:value={selectedTranslatorId}
+					class={selectClass}
 				>
-					<Icon icon="solar:info-circle-linear" width="0.9rem" />
+					<option value="">None</option>
+					{#each [...new Set($availableTranslators.map(t => t.lang))] as lang}
+						<optgroup label={LANG_NAMES[lang] ?? lang}>
+							{#each $availableTranslators.filter(t => t.lang === lang) as t}
+								<option value={String(t.id)}>{t.name}</option>
+							{/each}
+						</optgroup>
+					{/each}
+				</select>
+				<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+					<Icon icon="charm:chevron-down" width="0.75rem" />
+				</span>
+			</div>
+		</div>
+		<div class="flex items-center justify-between">
+			<span class={labelClass}>Transliteration</span>
+			<button
+				role="switch"
+				aria-checked={translitEnabled}
+				aria-label="Transliteration"
+				onclick={() => { translitEnabled = !translitEnabled; }}
+				class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {translitEnabled ? 'bg-brand-gold-400' : 'bg-brand-charcoal-100'}"
+			>
+				<span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {translitEnabled ? 'translate-x-4' : 'translate-x-1'}"></span>
+			</button>
+		</div>
+		<div class="flex items-center justify-between">
+			<span class={labelClass}>Word by Word</span>
+			<button
+				role="switch"
+				aria-checked={wbwEnabled}
+				aria-label="Word by Word"
+				onclick={() => { wbwEnabled = !wbwEnabled; }}
+				class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {wbwEnabled ? 'bg-brand-gold-400' : 'bg-brand-charcoal-100'}"
+			>
+				<span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {wbwEnabled ? 'translate-x-4' : 'translate-x-1'}"></span>
+			</button>
+		</div>
+		<div class="border-t border-brand-sand-100 dark:border-[#414559] pt-3">
+			<div class="flex items-center justify-between mb-2">
+				<span class={labelClass}>Tafsir</span>
+				<button
+					role="switch"
+					aria-checked={tafsirOn}
+					aria-label="Tafsir"
+					onclick={() => { tafsirOn = !tafsirOn; }}
+					class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {tafsirOn ? 'bg-brand-gold-400' : 'bg-brand-charcoal-100'}"
+				>
+					<span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {tafsirOn ? 'translate-x-4' : 'translate-x-1'}"></span>
 				</button>
 			</div>
-			<button
-				id="tajweed-toggle"
-				role="switch"
-				aria-checked={$tajweedEnabled}
-				onclick={() => tajweedEnabled.update(v => !v)}
-				class="relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full transition-colors {$tajweedEnabled ? 'bg-green-500' : 'bg-slate-300'}"
-			>
-				<span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {$tajweedEnabled ? 'translate-x-4' : 'translate-x-1'}"></span>
-			</button>
+			{#if tafsirOn}
+				<div class="relative">
+					<select
+						id="tafsir-select"
+						bind:value={selectedTafsirId}
+						class={selectClass}
+					>
+						<option value="">None</option>
+						{#each [...new Set($availableTafsirAuthors.map(a => a.lang))] as lang}
+							<optgroup label={LANG_NAMES[lang] ?? lang}>
+								{#each $availableTafsirAuthors.filter(a => a.lang === lang) as a}
+									<option value={String(a.id)}>{a.name}</option>
+								{/each}
+							</optgroup>
+						{/each}
+					</select>
+					<span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+						<Icon icon="charm:chevron-down" width="0.75rem" />
+					</span>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/snippet}
@@ -168,41 +279,10 @@
 
 {#snippet controlCard()}
 	<div class="space-y-2">
-		<ControlCard cardTitle={'Surah'} cardBody={surahCardBody} />
 		<ControlCard cardTitle={'Display'} cardBody={fontBody} />
+		<ControlCard cardTitle={'Translation'} cardBody={translationBody} />
+		<ControlCard cardTitle={'Surah'} cardBody={surahCardBody} />
 	</div>
 {/snippet}
 
-<GroupCards {controlCard} {collapsedIcon} xPosition={'right'} />
-
-<Dialog
-	open={tajweedDialogOpen}
-	title="Tajweed Color Guide"
-	onClose={() => (tajweedDialogOpen = false)}
->
-	{#snippet children()}
-		<div class="space-y-3">
-			{#each tajweedRules as rule}
-				<div class="flex gap-3 items-start">
-					<span
-						class="mt-0.5 shrink-0 h-3.5 w-3.5 rounded-full border border-black/10"
-						style="background-color: {rule.color};"
-					></span>
-					<div class="min-w-0">
-						<div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-							<span class="text-xs font-semibold text-slate-700">{rule.name}</span>
-							<span class="font-scheherazade text-sm" style="color: {rule.color};">{rule.arabic}</span>
-						</div>
-						<p class="mt-0.5 text-xs text-slate-500 leading-relaxed">{rule.desc}</p>
-					</div>
-				</div>
-			{/each}
-		</div>
-	{/snippet}
-
-	{#snippet footer()}
-		<p class="text-[10px] text-slate-400 leading-relaxed">
-			Colors highlight individual characters using the CSS Custom Highlight API, preserving Arabic calligraphy and ligatures.
-		</p>
-	{/snippet}
-</Dialog>
+<GroupCards {controlCard} {collapsedIcon} xPosition={'right'} id="tour-surah-widget" />
