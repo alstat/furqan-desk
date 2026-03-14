@@ -18,6 +18,7 @@
         undoDepth,
         redoDepth,
     } from '@codemirror/commands';
+    import { search, searchKeymap } from '@codemirror/search';
     import {
         syntaxHighlighting,
         HighlightStyle,
@@ -72,6 +73,15 @@
         '.cm-completionLabel': { color: '#5c6773' },
         '.cm-completionDetail': { color: '#aab0b6', fontSize: '0.8em', marginLeft: '6px' },
         '.cm-completionMatchedText': { color: '#ff9940', fontWeight: '600', textDecoration: 'none' },
+        // Search panel
+        '.cm-search': { padding: '4px 8px', background: '#f3f4f5', borderBottom: '1px solid #e8eaed', flexWrap: 'wrap', gap: '4px' },
+        '.cm-search input': { background: '#fff', border: '1px solid #e8eaed', borderRadius: '4px', padding: '2px 6px', color: '#5c6773', outline: 'none' },
+        '.cm-search input:focus': { borderColor: '#399ee6' },
+        '.cm-search button': { background: '#e8eaed', border: 'none', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer', color: '#5c6773' },
+        '.cm-search button:hover': { background: '#d8dde3' },
+        '.cm-search label': { color: '#5c6773', fontSize: '0.8em' },
+        '.cm-searchMatch': { backgroundColor: '#c3dcee', outline: '1px solid #399ee6' },
+        '.cm-searchMatch.cm-searchMatch-selected': { backgroundColor: '#ff994066' },
     }, { dark: false });
 
     const ayuLightHighlight = HighlightStyle.define([
@@ -140,6 +150,15 @@
         '.cm-completionLabel': { color: '#cbccc6' },
         '.cm-completionDetail': { color: '#707a8c', fontSize: '0.8em', marginLeft: '6px' },
         '.cm-completionMatchedText': { color: '#ffcc66', fontWeight: '600', textDecoration: 'none' },
+        // Search panel
+        '.cm-search': { padding: '4px 8px', background: '#242936', borderBottom: '1px solid #2d3343', flexWrap: 'wrap', gap: '4px' },
+        '.cm-search input': { background: '#1f2430', border: '1px solid #2d3343', borderRadius: '4px', padding: '2px 6px', color: '#cbccc6', outline: 'none' },
+        '.cm-search input:focus': { borderColor: '#5ccfe6' },
+        '.cm-search button': { background: '#2d3343', border: 'none', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer', color: '#cbccc6' },
+        '.cm-search button:hover': { background: '#384050' },
+        '.cm-search label': { color: '#cbccc6', fontSize: '0.8em' },
+        '.cm-searchMatch': { backgroundColor: '#2d4466', outline: '1px solid #5ccfe6' },
+        '.cm-searchMatch.cm-searchMatch-selected': { backgroundColor: '#ffcc6640' },
     }, { dark: true });
 
     const ayuMirageHighlight = HighlightStyle.define([
@@ -304,10 +323,12 @@
                 indentOnInput(),
                 EditorView.lineWrapping,
                 scrollPastEnd(),
+                search({ top: true }),
                 keymap.of([
                     ...extraKeymap,
                     indentWithTab,
                     ...historyKeymap,
+                    ...searchKeymap,
                     ...defaultKeymap,
                 ]),
                 themeComp.of(getThemeExt($editorTheme)),

@@ -174,6 +174,7 @@
 			<button
 				role="switch"
 				aria-checked={hideSurah}
+				aria-label="Hide Surah Page"
 				onclick={() => {
 				hideSurah = !hideSurah;
 				if (hideSurah && !$isSidebar) $isSidebar = true;
@@ -215,6 +216,7 @@
 			<button
 				role="switch"
 				aria-checked={translitEnabled}
+				aria-label="Transliteration"
 				onclick={() => { translitEnabled = !translitEnabled; }}
 				class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {translitEnabled ? 'bg-brand-gold-400' : 'bg-brand-charcoal-100'}"
 			>
@@ -226,6 +228,7 @@
 			<button
 				role="switch"
 				aria-checked={wbwEnabled}
+				aria-label="Word by Word"
 				onclick={() => { wbwEnabled = !wbwEnabled; }}
 				class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {wbwEnabled ? 'bg-brand-gold-400' : 'bg-brand-charcoal-100'}"
 			>
@@ -238,6 +241,7 @@
 				<button
 					role="switch"
 					aria-checked={tafsirOn}
+					aria-label="Tafsir"
 					onclick={() => { tafsirOn = !tafsirOn; }}
 					class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {tafsirOn ? 'bg-brand-gold-400' : 'bg-brand-charcoal-100'}"
 				>

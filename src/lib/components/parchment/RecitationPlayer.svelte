@@ -380,7 +380,7 @@
         <div class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"></div>
 
         <!-- Ayah counter -->
-        <span class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] tabular-nums px-1 min-w-[3.5rem] text-center">
+        <span class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] tabular-nums px-1 min-w-14 text-center">
             {#if inPlaylist}
                 {playlistIdx + 1} / {playlistLen}
             {:else}

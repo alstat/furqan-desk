@@ -192,25 +192,27 @@
 
 <!-- Fullscreen overlay -->
 {#if zoomed && currentPlot}
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Plot fullscreen view"
+        tabindex="-1"
         class="fixed inset-0 z-[530] bg-black/92 flex items-center justify-center cursor-zoom-out"
         onclick={() => zoomed = false}
         onkeydown={e => e.key === 'Escape' && (zoomed = false)}
     >
         {#if currentPlot.format === 'svg'}
-            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-            <div class="max-w-[94vw] max-h-[94vh] overflow-auto" onclick={e => e.stopPropagation()}>
+            <div role="presentation" class="max-w-[94vw] max-h-[94vh] overflow-auto" onclick={e => e.stopPropagation()} onkeydown={e => e.stopPropagation()}>
                 <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                 {@html atob(currentPlot.data)}
             </div>
         {:else}
-            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
             <img
                 src="data:image/png;base64,{currentPlot.data}"
                 alt="Julia plot fullscreen"
                 class="max-w-[94vw] max-h-[94vh] object-contain rounded-xl shadow-2xl"
                 onclick={e => e.stopPropagation()}
+                onkeydown={e => e.stopPropagation()}
             />
         {/if}
         <button
@@ -227,14 +229,13 @@
 {#if isOpen}
     <div
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-        class="fixed z-[200] flex flex-col overflow-hidden rounded-lg
+        class="fixed z-200 flex flex-col overflow-hidden rounded-lg
                bg-white dark:bg-[#292c3c]
                border border-stone-200 dark:border-[#414559]
                shadow-xl shadow-slate-200/60 dark:shadow-black/40"
         style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px;"
     >
         <!-- Header -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
             class="shrink-0 px-3 py-2 border-b border-stone-200 dark:border-[#414559]
 		            bg-brand-sand-50 dark:bg-[#232634] flex items-center justify-between gap-2
@@ -314,6 +315,8 @@
             {:else if currentPlot}
                 <!-- Image viewport -->
                 <div
+                    role="img"
+                    aria-label="Julia plot viewer"
                     class="flex-1 min-h-0 overflow-hidden flex items-center justify-center relative
 			            bg-white dark:bg-[#1e2030] p-2
 			            {currentPlot && imgScale > 1 ? 'cursor-grab' : 'cursor-default'}"
@@ -415,6 +418,7 @@
                                     Math.max(0, currentIndex - 3) + dotOffset}
                                 <button
                                     onclick={() => (currentIndex = dotIdx)}
+                                    aria-label="Go to plot {dotIdx + 1}"
                                     class="cursor-pointer w-1.5 h-1.5 rounded-full transition-colors
 								       {dotIdx === currentIndex
                                         ? 'bg-brand-gold-500 dark:bg-[#e5c890]'
@@ -443,14 +447,14 @@
         </div>
 
         <!-- Resize handles -->
-        <div class="resize-handle resize-n"  onpointerdown={e => startResize(e, {n:true,  s:false, e:false, w:false})}></div>
-        <div class="resize-handle resize-s"  onpointerdown={e => startResize(e, {n:false, s:true,  e:false, w:false})}></div>
-        <div class="resize-handle resize-e"  onpointerdown={e => startResize(e, {n:false, s:false, e:true,  w:false})}></div>
-        <div class="resize-handle resize-w"  onpointerdown={e => startResize(e, {n:false, s:false, e:false, w:true })}></div>
-        <div class="resize-handle resize-ne" onpointerdown={e => startResize(e, {n:true,  s:false, e:true,  w:false})}></div>
-        <div class="resize-handle resize-se" onpointerdown={e => startResize(e, {n:false, s:true,  e:true,  w:false})}></div>
-        <div class="resize-handle resize-sw" onpointerdown={e => startResize(e, {n:false, s:true,  e:false, w:true })}></div>
-        <div class="resize-handle resize-nw" onpointerdown={e => startResize(e, {n:true,  s:false, e:false, w:true })}></div>
+        <div aria-hidden="true" class="resize-handle resize-n"  onpointerdown={e => startResize(e, {n:true,  s:false, e:false, w:false})}></div>
+        <div aria-hidden="true" class="resize-handle resize-s"  onpointerdown={e => startResize(e, {n:false, s:true,  e:false, w:false})}></div>
+        <div aria-hidden="true" class="resize-handle resize-e"  onpointerdown={e => startResize(e, {n:false, s:false, e:true,  w:false})}></div>
+        <div aria-hidden="true" class="resize-handle resize-w"  onpointerdown={e => startResize(e, {n:false, s:false, e:false, w:true })}></div>
+        <div aria-hidden="true" class="resize-handle resize-ne" onpointerdown={e => startResize(e, {n:true,  s:false, e:true,  w:false})}></div>
+        <div aria-hidden="true" class="resize-handle resize-se" onpointerdown={e => startResize(e, {n:false, s:true,  e:true,  w:false})}></div>
+        <div aria-hidden="true" class="resize-handle resize-sw" onpointerdown={e => startResize(e, {n:false, s:true,  e:false, w:true })}></div>
+        <div aria-hidden="true" class="resize-handle resize-nw" onpointerdown={e => startResize(e, {n:true,  s:false, e:false, w:true })}></div>
     </div>
 {/if}
 

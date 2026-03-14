@@ -23,7 +23,7 @@
             const doc = serializedDocumentFromEditorState(
                 editor.getEditorState(),
                 {
-                    source: "Furqan Desk",
+                    source: "AyahLab",
                 },
             );
             const path = await saveDialog({

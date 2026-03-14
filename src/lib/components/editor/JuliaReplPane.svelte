@@ -510,10 +510,12 @@
             </div>
 
             <!-- Input -->
-            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
             <div
+                role="group"
+                aria-label="REPL input"
                 class="flex items-start gap-2 px-3 py-1.5 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-400 dark:border-[#414559] shrink-0"
                 onclick={() => replInputEl?.focus()}
+                onkeydown={(e) => { if (e.key === 'Enter') replInputEl?.focus(); }}
             >
                 <span
                     class="text-brand-gold-600 shrink-0 select-none font-semibold font-mono repl-mono leading-relaxed pt-px"
@@ -590,10 +592,12 @@
                 </div>
 
                 <!-- Input -->
-                <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
                 <div
+                    role="group"
+                    aria-label="Terminal input"
                     class="flex items-center gap-2 px-3 py-1.5 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-400 dark:border-[#414559] shrink-0"
                     onclick={() => termInputEl?.focus()}
+                    onkeydown={(e) => { if (e.key === 'Enter') termInputEl?.focus(); }}
                 >
                     <span
                         class="text-brand-gold-600 shrink-0 select-none font-semibold font-mono repl-mono"

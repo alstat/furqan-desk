@@ -415,7 +415,7 @@
                                     {expandedTafsirAyahs.has(ayahData.ayah) ? 'Hide Tafsir' : 'Show Tafsir'}
                                 </button>
                                 {#if expandedTafsirAyahs.has(ayahData.ayah)}
-                                    <div dir="ltr" class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-400 dark:text-[#a5adce]">
+                                    <div dir="auto" class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]">
                                         {@html tafsirMap.get(ayahData.ayah)}
                                     </div>
                                 {/if}
@@ -439,7 +439,7 @@
                 >{word.combined_arabic}&nbsp;</span>{/each}<span id="ayah-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayAyah.set(ayahData.ayah)} title="Play ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: $surahMorphology!.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title="View manuscripts for ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}</span></span>{/each}</div>
         {/if}
     {:else}
-        <div class="py-8 text-center text-gray-500 dark:text-[#838ba7] h-full min-h-[300px]">
+        <div class="py-8 text-center text-gray-500 dark:text-[#838ba7] h-full min-h-75">
             Loading morphology data...
         </div>
     {/if}

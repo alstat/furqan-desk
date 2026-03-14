@@ -1550,13 +1550,11 @@ html.dark .editor-shell .hljs-strong {
 
 /* ── Tafsir HTML content ─────────────────────────────────────────────────── */
 .tafsir-content {
-    direction: ltr;
-    text-align: left;
     unicode-bidi: isolate;
 }
 .tafsir-content p {
     margin-bottom: 0.5rem;
-    text-align: left;
+    text-align: start;
 }
 .tafsir-content h2,
 .tafsir-content h3 {
@@ -1578,9 +1576,9 @@ html.dark .tafsir-content h3 {
     text-align: right;
     display: block;
     line-height: 1.9;
-    color: #444;
+    color: #707070; /* brand-charcoal-500 */
 }
 html.dark .tafsir-content [lang="ar"],
 html.dark .tafsir-content .ar {
-    color: #c6d0f5;
+    color: #b5bfe2; /* brand-charcoal-100 */
 }
