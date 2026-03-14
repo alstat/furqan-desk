@@ -68,6 +68,13 @@
         "description": "AyahLab Lexical editor file",
         "role": "Editor"
       }
-    ]
+    ],
+    "windows": {
+      "packageIdentity": {
+        "name": "AyahLabDev.AyahLab",
+        "publisher": "CN=53318C28-42D0-41F2-8729-A6F97B520E8F",
+        "publisherDisplayName": "AyahLab Dev"
+      }
+    }
   }
 }
