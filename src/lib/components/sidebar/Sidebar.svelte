@@ -8,6 +8,7 @@
 	import EditorTabs from '$lib/components/editor/EditorTabs.svelte';
 	import ActionBar from '$lib/components/lexical/components/actionbar/ActionBar.svelte';
 	import FileExplorer from '$lib/components/shared/FileExplorer.svelte';
+	import GlobalSearch from '$lib/components/shared/GlobalSearch.svelte';
 	import JuliaPlotViewer from '$lib/components/shared/JuliaPlotViewer.svelte';
 	import { lexicalEditorInstance, lexicalHistoryState, typstSource } from '$lib/stores/editor.store';
 	import { tabs, activeTab, activeTabId, createTab } from '$lib/stores/tabs.store';
@@ -32,61 +33,84 @@
 	const lexicalTabHistories = new Map<string, HistorySnapshot>();
 
 	// When active tab changes: sync editor state
-	let prevTabId: string | null = null;
-	$effect(() => {
+	// Effect A: runs BEFORE DOM mutations so the lexical editor is still alive when saving
+	let prevTabIdPre: string | null = null;
+	$effect.pre(() => {
 		const tab = $activeTab;
-		if (!tab || tab.id === prevTabId) return;
+		if (!tab || tab.id === prevTabIdPre) return;
 
-		// Save departing lexical tab state + history
-		if (prevTabId) {
-			const prevTab = get(tabs).find(t => t.id === prevTabId);
+		// Save departing lexical tab state + history before the editor unmounts
+		if (prevTabIdPre) {
+			const prevTab = get(tabs).find(t => t.id === prevTabIdPre);
 			if (prevTab?.type === 'lexical') {
 				const editor = get(lexicalEditorInstance);
 				if (editor) {
 					const json = JSON.stringify(editor.getEditorState().toJSON());
-					tabs.update(ts => ts.map(t => (t.id === prevTabId ? { ...t, content: json } : t)));
+					tabs.update(ts => ts.map(t => (t.id === prevTabIdPre ? { ...t, content: json } : t)));
 				}
 				const hs = get(lexicalHistoryState);
 				if (hs) {
-					lexicalTabHistories.set(prevTabId, {
+					lexicalTabHistories.set(prevTabIdPre, {
 						undoStack: [...hs.undoStack],
 						redoStack: [...hs.redoStack],
 					});
 				}
 			}
 		}
+		prevTabIdPre = tab.id;
+	});
+
+	// Effect B: restore non-lexical tab state after DOM updates
+	let prevTabId: string | null = null;
+	$effect(() => {
+		const tab = $activeTab;
+		if (!tab || tab.id === prevTabId) return;
 		prevTabId = tab.id;
 
-		// Restore arriving tab state
 		if (tab.type === 'typst' || tab.type === 'text') {
 			typstSource.set(tab.content);
-		} else if (tab.type === 'julia') {
-			/* REPL history is managed via juliaReplHistory store */
-		} else if (tab.type === 'lexical') {
-			const editor = get(lexicalEditorInstance);
-			if (editor) {
-				if (tab.content) {
-					try {
-						const parsed = JSON.parse(tab.content);
-						const stateData = parsed.editorState ?? parsed;
-						editor.setEditorState(editor.parseEditorState(JSON.stringify(stateData)));
-					} catch {
-						/* fall through to clear on parse failure */
-					}
-				} else {
-					const emptyState = '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"type":"root","version":1}}';
-					editor.setEditorState(editor.parseEditorState(emptyState));
-				}
+		}
+		// Lexical restore is handled by Effect C below (waits for editor instance)
+	});
 
-				const hs = get(lexicalHistoryState);
-				if (hs) {
-					const saved = lexicalTabHistories.get(tab.id);
-					hs.undoStack  = saved ? [...saved.undoStack]  : [];
-					hs.redoStack  = saved ? [...saved.redoStack]  : [];
-					editor.dispatchCommand(CAN_UNDO_COMMAND, hs.undoStack.length > 0);
-					editor.dispatchCommand(CAN_REDO_COMMAND, hs.redoStack.length > 0);
-				}
+	// Effect C: restore lexical tab state once the editor instance is available.
+	// Fires whenever $lexicalEditorInstance or $activeTab changes, so it works
+	// both on first mount and after remount from a tab switch.
+	const emptyLexicalState = '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"type":"root","version":1}}';
+	let lastRestoredForTabId: string | null = null;
+	$effect(() => {
+		const editor = $lexicalEditorInstance;
+		const tab = $activeTab;
+
+		if (!editor) {
+			// Editor unmounted; reset so the next mount triggers restore
+			lastRestoredForTabId = null;
+			return;
+		}
+		if (!tab || tab.type !== 'lexical') return;
+		if (lastRestoredForTabId === tab.id) return; // already restored for this tab
+
+		lastRestoredForTabId = tab.id;
+
+		if (tab.content) {
+			try {
+				const parsed = JSON.parse(tab.content);
+				const stateData = parsed.editorState ?? parsed;
+				editor.setEditorState(editor.parseEditorState(JSON.stringify(stateData)));
+			} catch {
+				/* ignore parse errors — leave editor as-is */
 			}
+		} else {
+			editor.setEditorState(editor.parseEditorState(emptyLexicalState));
+		}
+
+		const hs = get(lexicalHistoryState);
+		if (hs) {
+			const saved = lexicalTabHistories.get(tab.id);
+			hs.undoStack = saved ? [...saved.undoStack] : [];
+			hs.redoStack = saved ? [...saved.redoStack] : [];
+			editor.dispatchCommand(CAN_UNDO_COMMAND, hs.undoStack.length > 0);
+			editor.dispatchCommand(CAN_REDO_COMMAND, hs.redoStack.length > 0);
 		}
 	});
 
@@ -130,6 +154,8 @@
 	<div class="relative h-full flex flex-col overflow-visible">
 		<!-- File Explorer button: outside editor on the left/right, same height as sidebar toggle -->
 		<FileExplorer />
+		<!-- Global Search button: just below File Explorer -->
+		<GlobalSearch />
 		<!-- Julia Plot Viewer button: same strip, aligned with donation/feedback buttons at the bottom -->
 		<JuliaPlotViewer />
 		<ActionBar />

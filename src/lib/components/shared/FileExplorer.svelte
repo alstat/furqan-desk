@@ -166,7 +166,7 @@
 
 <!-- Backdrop -->
 {#if isOpen}
-	<div class="fixed inset-0 z-10" onclick={() => (isOpen = false)}></div>
+	<div role="presentation" class="fixed inset-0 z-10" onclick={() => (isOpen = false)} onkeydown={() => {}}></div>
 {/if}
 
 <!-- Floating panel — opens to the left (LTR) or right (RTL) of the editor, ~1/3 height -->

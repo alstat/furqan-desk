@@ -90,12 +90,16 @@
 </script>
 
 {#if open}
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
-        class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Send Feedback"
+        tabindex="-1"
+        class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
         onclick={(e) => {
             if (e.target === e.currentTarget) handleClose();
         }}
+        onkeydown={(e) => { if (e.key === 'Escape') handleClose(); }}
     >
         <div
             class="flex w-full max-w-md flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden"
@@ -131,6 +135,7 @@
                     </div>
                     <button
                         onclick={handleClose}
+                        aria-label="Close"
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
                         <Icon icon="solar:close-circle-bold" width="1rem" />
@@ -184,6 +189,7 @@
                     <!-- ── Your email (optional) ── -->
                     <div class="flex flex-col gap-1.5">
                         <label
+                            for="feedback-email"
                             class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#8087a2]"
                         >
                             Your email <span class="normal-case font-normal"
@@ -199,6 +205,7 @@
                                 width="0.85rem"
                             />
                             <input
+                                id="feedback-email"
                                 type="email"
                                 bind:value={fromEmail}
                                 placeholder="your@email.com"
@@ -210,6 +217,7 @@
                     <!-- ── Subject ── -->
                     <div class="flex flex-col gap-1.5">
                         <label
+                            for="feedback-subject"
                             class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#8087a2]"
                         >
                             Subject <span class="text-red-400">*</span>
@@ -223,6 +231,7 @@
                                 width="0.85rem"
                             />
                             <input
+                                id="feedback-subject"
                                 type="text"
                                 bind:value={subject}
                                 placeholder="Bug report, feature request, question…"
@@ -234,11 +243,13 @@
                     <!-- ── Message ── -->
                     <div class="flex flex-col gap-1.5">
                         <label
+                            for="feedback-message"
                             class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#8087a2]"
                         >
                             Message <span class="text-red-400">*</span>
                         </label>
                         <textarea
+                            id="feedback-message"
                             bind:value={message}
                             rows="5"
                             placeholder="Describe your feedback, bug, or idea in detail…"

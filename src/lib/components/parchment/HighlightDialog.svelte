@@ -30,12 +30,16 @@
 </script>
 
 {#if open}
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
-        class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Highlights"
+        tabindex="-1"
+        class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
         onclick={(e) => {
             if (e.target === e.currentTarget) onClose();
         }}
+        onkeydown={(e) => { if (e.key === 'Escape') onClose(); }}
     >
         <div
             class="flex w-full max-w-md flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden"
@@ -69,6 +73,7 @@
                     </div>
                     <button
                         onclick={onClose}
+                        aria-label="Close"
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
                         <Icon icon="solar:close-circle-bold" width="1rem" />

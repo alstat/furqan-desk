@@ -144,6 +144,13 @@
                             e.stopPropagation();
                             handleSplitClick(tab.id, e);
                         }}
+                        onkeydown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleSplitClick(tab.id, e as unknown as MouseEvent);
+                            }
+                        }}
                         class="opacity-0 group-hover:opacity-50 hover:opacity-100! transition-opacity leading-none"
                         title="Split view"
                     ><Icon icon="solar:copy-bold-duotone" width="0.85rem" /></span>
@@ -191,7 +198,7 @@
         <div
             data-picker-dropdown
             style="position: fixed; left: {pickerPos.x}px; top: {pickerPos.y}px; transform: translateY(calc(-100% - 4px)); z-index: 9999;"
-            class="bg-white dark:bg-[#303446] border border-stone-200 dark:border-[#414559] rounded shadow-lg py-1 min-w-[10rem]"
+            class="bg-white dark:bg-[#303446] border border-stone-200 dark:border-[#414559] rounded shadow-lg py-1 min-w-40"
         >
             {#each pickerPartners as partner}
                 <button

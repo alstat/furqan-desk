@@ -3,6 +3,31 @@
 version = 4
 
 [[package]]
+name = "AyahLab"
+version = "0.1.0"
+dependencies = [
+ "dirs 5.0.1",
+ "flate2",
+ "fontdb",
+ "once_cell",
+ "reqwest 0.12.28",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-fs",
+ "tauri-plugin-opener",
+ "tokio",
+ "typst",
+ "typst-assets",
+ "typst-pdf",
+ "typst-svg",
+]
+
+[[package]]
 name = "adler2"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1436,31 +1461,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb4cb245038516f5f85277875cdaa4f7d2c9a0fa0468de06ed190163b1581fcf"
 dependencies = [
  "percent-encoding",
-]
-
-[[package]]
-name = "furqan-desk"
-version = "0.1.0"
-dependencies = [
- "dirs 5.0.1",
- "flate2",
- "fontdb",
- "once_cell",
- "reqwest 0.12.28",
- "rusqlite",
- "serde",
- "serde_json",
- "tar",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-fs",
- "tauri-plugin-opener",
- "tokio",
- "typst",
- "typst-assets",
- "typst-pdf",
- "typst-svg",
 ]
 
 [[package]]

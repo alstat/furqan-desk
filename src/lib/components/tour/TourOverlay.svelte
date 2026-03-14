@@ -194,8 +194,7 @@
 
 {#if $tourActive}
     <!-- Click blocker -->
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-    <div class="fixed inset-0 z-[9997]" onclick={() => {}}></div>
+    <div class="fixed inset-0 z-9997" aria-hidden="true"></div>
 
     <!-- Spotlight (targeted steps) or solid overlay (centered steps) -->
     {#if spotlightRect}
@@ -209,13 +208,13 @@
         ></div>
     {:else}
         <div
-            class="fixed inset-0 z-[9997] bg-black/65 pointer-events-none"
+            class="fixed inset-0 z-9997 bg-black/65 pointer-events-none"
         ></div>
     {/if}
 
     <!-- Tooltip card -->
     <div
-        class="fixed z-[9999] rounded-xl bg-white dark:bg-[#303446] shadow-2xl p-5 border border-slate-100 dark:border-[#414559]
+        class="fixed z-9999 rounded-xl bg-white dark:bg-[#303446] shadow-2xl p-5 border border-slate-100 dark:border-[#414559]
                {(currentStep === MANUSCRIPT_STEP || currentStep === AUTHOR_STEP) ? 'w-80' : 'w-72'}"
         style={tooltipStyle}
     >
