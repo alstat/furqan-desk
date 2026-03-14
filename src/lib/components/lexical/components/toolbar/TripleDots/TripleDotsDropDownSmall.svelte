@@ -17,7 +17,11 @@
     import Divider from "../Divider.svelte";
     import Portal from "../../generic/portal/Portal.svelte";
     import Icon from "@iconify/svelte";
-    import { icons } from "$lib/data/toolbar/toolbar";
+    import {
+        icons,
+        toolBarBtnStyle,
+        activeBtnStyle,
+    } from "$lib/data/toolbar/toolbar";
     import {
         getActiveEditor,
         getEditor,
@@ -33,16 +37,19 @@
 
     let isOpen = $state(false);
     let dropdownRef: HTMLDivElement;
-    let buttonRect: DOMRect | null = $state(null);
+    let buttonRef = $state<HTMLButtonElement | undefined>();
+    let panelRef = $state<HTMLDivElement | undefined>();
     let portalContent: HTMLElement | null = $state(null);
     const activeEditor = getActiveEditor();
     const editor = getEditor();
     const lineHeight = getContext<Readable<string>>("lineHeight");
 
+    // Same positioning logic as DropDown.svelte — read from the button, not the wrapper
     $effect(() => {
-        windowWidth; // reactive dependency — runs whenever windowWidth changes
-        if (isOpen && dropdownRef) {
-            buttonRect = dropdownRef.getBoundingClientRect();
+        if (isOpen && buttonRef && panelRef) {
+            const { top, left } = buttonRef.getBoundingClientRect();
+            panelRef.style.top = `${top + 34}px`;
+            panelRef.style.left = `${Math.min(left, window.innerWidth - panelRef.offsetWidth - 20)}px`;
         }
     });
 
@@ -51,10 +58,6 @@
     let zIndexStyle: HTMLStyleElement | null = $state(null);
 
     function toggleDropdown() {
-        if (!isOpen) {
-            // Capture button position when opening
-            buttonRect = dropdownRef.getBoundingClientRect();
-        }
         isOpen = !isOpen;
     }
 
@@ -132,41 +135,20 @@
 
 <div class="relative" bind:this={dropdownRef}>
     <button
+        bind:this={buttonRef}
         onclick={toggleDropdown}
-        class="flex h-8 w-8 cursor-pointer items-center justify-center rounded hover:bg-gray-100"
+        class={"p-1 " + toolBarBtnStyle + (isOpen ? " " + activeBtnStyle : "")}
         aria-label="More options"
     >
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        >
-            <circle cx="12" cy="12" r="1"></circle>
-            <circle cx="19" cy="12" r="1"></circle>
-            <circle cx="5" cy="12" r="1"></circle>
-        </svg>
+        <Icon icon={icons["tripleDots"]} height="1rem" />
     </button>
 
-    {#if isOpen && buttonRect}
+    {#if isOpen}
         <Portal>
             <div
-                class="portal-dropdown-content fixed z-50 rounded-md border border-slate-200 bg-slate-100 bg-opacity-80 shadow-2xl backdrop-blur-sm"
-                style="top: {buttonRect.bottom +
-                    14 +
-                    (typeof window !== 'undefined'
-                        ? window.scrollY
-                        : 0)}px; left: {Math.max(
-                    0,
-                    buttonRect.right -
-                        192 +
-                        (typeof window !== 'undefined' ? window.scrollX : 0),
-                )}px; width: 12rem;"
+                class="portal-dropdown-content absolute z-50 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm"
+                style="width: 12rem;"
+                bind:this={panelRef}
                 use:handlePortalMount
             >
                 <div class="py-1">
@@ -184,7 +166,7 @@
                                 <FormatCodeButton />
                             </div>
                         </div>
-                        <hr class="my-1 border-gray-200" />
+                        <hr class="my-1 border-brand-sand-200" />
                     {/if}
 
                     <!-- XL breakpoint items (show when width < xl) -->
@@ -194,17 +176,17 @@
                             <Indent />
                             <Outdent />
                         </div>
-                        <hr class="my-1 border-gray-200" />
+                        <hr class="my-1 border-brand-sand-200" />
                         <div class="px-2 py-1">
-                            <span class="text-sm font-medium text-gray-700"
+                            <span class="text-sm font-medium text-brand-charcoal-500"
                                 >Line Spacing</span
                             >
                             <div class="mt-1 flex flex-col space-y-1">
                                 {#each [{ label: "Single", value: "1" }, { label: "1.5 Lines", value: "1.5" }, { label: "Double", value: "2" }] as spacing}
                                     <button
-                                        class="cursor-pointer px-2 py-1 text-left text-sm rounded-lg hover:bg-slate-300 hover:text-slate-700 active:bg-slate-200 {$lineHeight ===
+                                        class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-lg hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100 {$lineHeight ===
                                         spacing.value
-                                            ? 'bg-slate-300 text-slate-900 font-semibold'
+                                            ? 'bg-brand-sand-200 text-brand-charcoal-900 font-semibold'
                                             : ''}"
                                         onclick={() =>
                                             applyLineSpacing(spacing.value)}

@@ -42,7 +42,7 @@
 	run(() => {
 		if (showDropDown && buttonRef && dropDownRef) {
 			const { top, left } = buttonRef.getBoundingClientRect();
-			dropDownRef.style.top = `${top + 42}px`;
+			dropDownRef.style.top = `${top + 34}px`;
 			dropDownRef.style.left = `${Math.min(
 				left,
 				window.innerWidth - dropDownRef.offsetWidth - 20
@@ -55,7 +55,7 @@
 		if (stopCloseOnClickSelf) {
 			if (dropDownRef && dropDownRef.contains(target as Node)) return;
 		}
-		if (!buttonRef.contains(target as Node)) {
+		if (!buttonRef || !buttonRef.contains(target as Node)) {
 			showDropDown = false;
 		}
 	};
@@ -87,11 +87,11 @@
 			<div class="my-1 flex-1 px-2 font-sans text-xs font-medium">{buttonLabel}</div>
 		{:else if buttonIconClassName}
 			<div class="my-1 flex-1 mx-2 pr-2">
-				<Icon icon={icons[buttonIconClassName]} width=1rem/>
+				<Icon icon={icons[buttonIconClassName as keyof typeof icons]} width=1rem/>
 			</div>
 		{/if}
 		<div
-			class="absolute right-0 bg-gradient-to-l from-slate-50/70 via-slate-50/70 to-transparent text-red-800 hover:from-slate-200/70 hover:via-slate-200/70 hover:to-transparent"
+			class="absolute right-0 bg-linear-to-l from-brand-sand-50/80 via-brand-sand-50/80 to-transparent text-brand-charcoal-300 hover:from-brand-sand-100/80 hover:via-brand-sand-100/80 hover:to-transparent"
 		>
 			<Icon icon={icons['dropdown']} />
 		</div>

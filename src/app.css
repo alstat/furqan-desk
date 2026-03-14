@@ -1,9 +1,162 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: applies dark: variants when html has .dark class */
+@variant dark (&:where(.dark, .dark *));
+
+/* Always apply hover styles regardless of pointer type (fixes touchscreen laptops) */
+@variant hover (&:hover);
+
 @theme {
     --font-scheherazade: "Scheherazade New", serif;
     --font-amiri: "Amiri", serif;
     --font-reem: "Reem Kufi Ink", sans-serif;
+
+    /* ── Brand palette ─────────────────────────────────────────────────────── */
+    /* Pastel tints derived from the brand hues below.                          */
+    /* Base hues (for reference): Deep Emerald #0F4D3F · Muted Teal #3C8C8C   */
+    /*   Warm Sand #E8DCC8 · Soft Gold #C8A96A · Charcoal Gray #2F2F2F         */
+
+    /* Deep Emerald */
+    --color-brand-emerald-50:  #EBF5F3;
+    --color-brand-emerald-100: #CEEAE3;
+    --color-brand-emerald-200: #9DD4C8;
+    --color-brand-emerald-400: #3D9B86;
+    --color-brand-emerald-600: #1A6B57;
+    --color-brand-emerald-900: #0F4D3F;
+
+    /* Muted Teal */
+    --color-brand-teal-50:  #EAF4F4;
+    --color-brand-teal-100: #C8E6E6;
+    --color-brand-teal-200: #92CCCC;
+    --color-brand-teal-400: #5AABAB;
+    --color-brand-teal-600: #3C8C8C;
+
+    /* Warm Sand */
+    --color-brand-sand-50:  #FAF7F2;
+    --color-brand-sand-100: #F5EFE4;
+    --color-brand-sand-200: #EDE2CE;
+    --color-brand-sand-400: #D4C0A0;
+
+    /* Soft Gold */
+    --color-brand-gold-50:  #FBF5E8;
+    --color-brand-gold-100: #F3E5C0;
+    --color-brand-gold-200: #E5CC90;
+    --color-brand-gold-400: #C8A96A;
+    --color-brand-gold-500: #B89558;
+    --color-brand-gold-600: #9A7A40;
+
+    /* Charcoal */
+    --color-brand-charcoal-50:  #F2F2F2;
+    --color-brand-charcoal-100: #E0E0E0;
+    --color-brand-charcoal-300: #ABABAB;
+    --color-brand-charcoal-500: #707070;
+    --color-brand-charcoal-900: #2F2F2F;
+}
+
+/* ── App dark theme (Catppuccin Frappe) ──────────────────────────────────────── */
+/* Frappe palette reference:
+   Crust #232634 · Mantle #292c3c · Base #303446
+   Surface0 #414559 · Surface1 #51576d · Surface2 #626880
+   Overlay0 #737994 · Overlay1 #838ba7 · Overlay2 #949cbb
+   Subtext0 #a5adce · Subtext1 #b5bfe2 · Text #c6d0f5
+   Yellow #e5c890 · Peach #ef9f76 · Green #a6d189 · Blue #8caaee */
+html.dark {
+    /* Sand → Frappe surfaces (lightest = Base, not Crust) */
+    --color-brand-sand-50:  #303446;  /* Base  — editor/REPL backgrounds */
+    --color-brand-sand-100: #292c3c;  /* Mantle — panel backgrounds */
+    --color-brand-sand-200: #414559;  /* Surface0 — dividers, headers */
+    --color-brand-sand-400: #626880;  /* Surface2 — borders */
+
+    /* Gold → Frappe yellow/peach accent */
+    --color-brand-gold-50:  #2a2740;
+    --color-brand-gold-100: #3b3757;
+    --color-brand-gold-200: #534e70;
+    --color-brand-gold-400: #e5c890;  /* Frappe Yellow — main accent */
+    --color-brand-gold-500: #d4b57f;
+    --color-brand-gold-600: #c4a26e;
+
+    /* Charcoal → Frappe text scale */
+    --color-brand-charcoal-50:  #c6d0f5;  /* Text */
+    --color-brand-charcoal-100: #b5bfe2;  /* Subtext1 */
+    --color-brand-charcoal-300: #838ba7;  /* Overlay1 — labels, muted */
+    --color-brand-charcoal-500: #a5adce;  /* Subtext0 — body text */
+    --color-brand-charcoal-900: #e8edff;  /* near-white headings */
+}
+
+html.dark body,
+html.dark .bg-gradient-radial {
+    background-color: #232634; /* Frappe Crust — outer app background */
+}
+
+/* ── Dark mode scrollbars ─────────────────────────────────────────────────── */
+/* Firefox */
+html.dark * {
+    scrollbar-color: #626880 #303446;
+    scrollbar-width: thin;
+}
+
+/* WebKit (Chrome/Safari/Tauri WebView on Windows) */
+html.dark ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+html.dark ::-webkit-scrollbar-track {
+    background: #303446;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+    background-color: #626880;
+    border-radius: 4px;
+    border: 2px solid #303446;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background-color: #838ba7;
+}
+
+html.dark ::-webkit-scrollbar-corner {
+    background: #303446;
+}
+
+/* Active dropdown item (currently selected value) */
+.dropdown-item-active {
+    background-color: var(--color-brand-gold-100);
+    color: var(--color-brand-gold-600);
+    font-weight: 600;
+}
+
+/* Editor pane flash (grouped tab click) */
+@keyframes flash-border {
+    0%   { box-shadow: 0 0 0 3px var(--color-brand-gold-400); }
+    60%  { box-shadow: 0 0 0 3px var(--color-brand-gold-400); }
+    100% { box-shadow: 0 0 0 0px transparent; }
+}
+
+.flash-border-anim {
+    animation: flash-border 1.5s ease-out forwards;
+}
+
+/* Ayah jump highlight */
+@keyframes ayah-flash {
+    0%   { background-color: transparent; border-radius: 4px; }
+    15%  { background-color: var(--color-brand-gold-100); border-radius: 4px; }
+    70%  { background-color: var(--color-brand-gold-100); border-radius: 4px; }
+    100% { background-color: transparent; border-radius: 4px; }
+}
+
+.ayah-highlight {
+    animation: ayah-flash 2.4s ease-in-out forwards;
+}
+
+/* Recitation playback — persistent highlight on currently playing ayah */
+.ayah-playing {
+    background-color: var(--color-brand-gold-50);
+    border-radius: 4px;
+}
+
+html.dark .ayah-playing {
+    background-color: color-mix(in srgb, var(--color-brand-gold-400) 12%, transparent);
 }
 
 .default-scroll {
@@ -322,6 +475,12 @@ i.equation {
     cursor: pointer;
 }
 
+.link-editor div.link-cancel,
+.link-editor div.link-confirm,
+.link-editor div.link-trash {
+    cursor: pointer;
+}
+
 .link-editor .link-input a {
     color: rgb(33, 111, 219);
     text-decoration: none;
@@ -416,35 +575,36 @@ select.font-family {
 }
 
 .dropdown {
-    z-index: 5;
+    z-index: 100;
     display: block;
-    position: absolute;
+    position: fixed;
     box-shadow:
-        0 12px 28px 0 rgba(0, 0, 0, 0.2),
-        0 2px 4px 0 rgba(0, 0, 0, 0.1),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
-    border-radius: 8px;
-    min-width: 100px;
+        0 8px 24px 0 rgba(0, 0, 0, 0.15),
+        0 2px 4px 0 rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    min-width: 180px;
     min-height: 40px;
-    background-color: #fff;
+    background-color: var(--color-brand-sand-50);
+    border: 1px solid var(--color-brand-sand-200);
+    padding: 4px 0;
 }
 
 .dropdown .item {
-    margin: 0 8px 0 8px;
-    padding: 8px;
-    color: #050505;
+    margin: 0 4px;
+    padding: 6px 10px;
+    color: var(--color-brand-charcoal-900);
     cursor: pointer;
     line-height: 16px;
-    font-size: 10px;
+    font-size: 11px;
     display: flex;
-    align-content: center;
+    align-items: center;
     flex-direction: row;
     flex-shrink: 0;
-    justify-content: space-between;
-    background-color: #fff;
-    border-radius: 8px;
+    background-color: transparent;
+    border-radius: 6px;
     border: 0;
-    max-width: 250px;
+    width: calc(100% - 8px);
+    text-align: left;
 }
 
 .dropdown .item .active {
@@ -455,15 +615,15 @@ select.font-family {
 }
 
 .dropdown .item:first-child {
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
 .dropdown .item:last-child {
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .dropdown .item:hover {
-    background-color: #eee;
+    background-color: var(--color-brand-sand-100);
 }
 
 .dropdown .item .text {
@@ -483,11 +643,13 @@ select.font-family {
     background-size: contain;
 }
 
+.dropdown hr,
 .dropdown .divider {
     width: auto;
-    background-color: #eee;
+    background-color: var(--color-brand-sand-200);
     margin: 4px 8px;
     height: 1px;
+    border: none;
 }
 
 @media screen and (max-width: 1000px) {
@@ -652,71 +814,99 @@ select.font-family {
 .editor-shell .editor-image .image-caption-button {
     display: block;
     position: absolute;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    width: 30%;
-    padding: 10px;
-    margin: 0 auto;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 5px;
-    background-color: rgba(0, 0, 0, 0.5);
-    min-width: 100px;
-    color: #fff;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    padding: 4px 12px;
+    border: 1px solid var(--color-brand-gold-400);
+    border-radius: 9999px;
+    background-color: var(--color-brand-sand-50);
+    color: var(--color-brand-gold-600);
+    font-size: 11px;
+    font-weight: 600;
     cursor: pointer;
     user-select: none;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    transition: background-color 0.15s, color 0.15s;
+}
+.editor-shell .editor-image .image-caption-button:hover {
+    background-color: var(--color-brand-gold-100);
+    color: var(--color-brand-gold-600);
+}
+html.dark .editor-shell .editor-image .image-caption-button {
+    background-color: #292c3c;
+    border-color: #e5c890;
+    color: #e5c890;
+}
+html.dark .editor-shell .editor-image .image-caption-button:hover {
+    background-color: #363a4f;
 }
 
-.editor-shell .editor-image .image-caption-button:hover {
-    background-color: rgba(60, 132, 244, 0.5);
+/* Image control wrapper: overlay the image, no flow impact */
+.editor-shell .editor-image .image-control-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+.editor-shell .editor-image .image-control-wrapper > div {
+    pointer-events: auto;
 }
 
 .editor-shell .editor-image .image-resizer-sw {
     display: block;
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     position: absolute;
-    bottom: -2px;
-    left: -6px;
-    background-color: rgb(60, 132, 244);
-    border: 1px solid #fff;
+    bottom: -4px;
+    left: -4px;
+    background-color: var(--color-brand-gold-400);
+    border: 1.5px solid #fff;
+    border-radius: 2px;
     cursor: sw-resize;
 }
 
 .editor-shell .editor-image .image-resizer-ne {
     display: block;
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     position: absolute;
-    top: -6px;
-    right: -6px;
-    background-color: rgb(60, 132, 244);
-    border: 1px solid #fff;
+    top: -4px;
+    right: -4px;
+    background-color: var(--color-brand-gold-400);
+    border: 1.5px solid #fff;
+    border-radius: 2px;
     cursor: ne-resize;
 }
 
 .editor-shell .editor-image .image-resizer-nw {
     display: block;
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     position: absolute;
-    top: -6px;
-    left: -6px;
-    background-color: rgb(60, 132, 244);
-    border: 1px solid #fff;
+    top: -4px;
+    left: -4px;
+    background-color: var(--color-brand-gold-400);
+    border: 1.5px solid #fff;
+    border-radius: 2px;
     cursor: nw-resize;
 }
 
 .editor-shell .editor-image .image-resizer-se {
     display: block;
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     position: absolute;
-    bottom: -2px;
-    right: -6px;
-    background-color: rgb(60, 132, 244);
-    border: 1px solid #fff;
-    cursor: nwse-resize;
+    bottom: -4px;
+    right: -4px;
+    background-color: var(--color-brand-gold-400);
+    border: 1.5px solid #fff;
+    border-radius: 2px;
+    cursor: se-resize;
 }
 
 .emoji {
@@ -831,19 +1021,30 @@ select.font-family {
 
 .table-cell-action-button-container {
     position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 4;
+    opacity: 0;
 }
 
 .table-cell-action-button {
-    background-color: none;
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 0;
-    position: relative;
-    border-radius: 15px;
-    color: #222;
-    display: inline-block;
+    border: 1px solid var(--color-brand-sand-200);
+    border-radius: 6px;
+    background-color: var(--color-brand-sand-50);
+    color: var(--color-brand-charcoal-500);
+    width: 18px;
+    height: 18px;
     cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    transition: background-color 0.12s;
+}
+
+.table-cell-action-button:hover {
+    background-color: var(--color-brand-sand-100);
+    color: var(--color-brand-charcoal-900);
 }
 
 i.chevron-down {
@@ -1194,4 +1395,190 @@ i.chevron-down {
 .excalidraw-button.selected {
     outline: 2px solid rgb(60, 132, 244);
     user-select: none;
+}
+
+/* ============================================================
+   Code block <pre> container
+   ============================================================ */
+.editor-shell pre {
+    margin: 8px 0;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: Menlo, Consolas, Monaco, monospace;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* ============================================================
+   Ayu Light — highlight.js theme (default / light mode)
+   ============================================================ */
+.editor-shell pre code.hljs {
+    display: block;
+    padding: 1em;
+    background: #fafafa;
+    color: #5c6773;
+}
+.editor-shell code.hljs {
+    padding: 3px 5px;
+    background: #fafafa;
+    color: #5c6773;
+}
+.editor-shell .hljs-comment,
+.editor-shell .hljs-quote {
+    color: #abb0b6;
+    font-style: italic;
+}
+.editor-shell .hljs-keyword,
+.editor-shell .hljs-selector-tag,
+.editor-shell .hljs-section,
+.editor-shell .hljs-link {
+    color: #fa8d3e;
+    font-weight: bold;
+}
+.editor-shell .hljs-built_in,
+.editor-shell .hljs-addition,
+.editor-shell .hljs-bullet {
+    color: #f07171;
+}
+.editor-shell .hljs-string,
+.editor-shell .hljs-meta .hljs-string {
+    color: #86b300;
+}
+.editor-shell .hljs-number,
+.editor-shell .hljs-regexp,
+.editor-shell .hljs-symbol,
+.editor-shell .hljs-variable,
+.editor-shell .hljs-template-variable {
+    color: #a37acc;
+}
+.editor-shell .hljs-title,
+.editor-shell .hljs-title.function_ {
+    color: #f07171;
+}
+.editor-shell .hljs-type,
+.editor-shell .hljs-title.class_,
+.editor-shell .hljs-class .hljs-title {
+    color: #399ee6;
+}
+.editor-shell .hljs-operator,
+.editor-shell .hljs-meta {
+    color: #ed9366;
+}
+.editor-shell .hljs-punctuation {
+    color: #575f66;
+}
+.editor-shell .hljs-attr {
+    color: #f07171;
+}
+.editor-shell .hljs-deletion {
+    color: #f07171;
+}
+.editor-shell .hljs-emphasis {
+    font-style: italic;
+}
+.editor-shell .hljs-strong {
+    font-weight: bold;
+}
+
+/* ============================================================
+   Ayu Mirage — highlight.js theme (dark mode)
+   ============================================================ */
+html.dark .editor-shell pre code.hljs {
+    background: #1f2430;
+    color: #cbccc6;
+}
+html.dark .editor-shell code.hljs {
+    background: #1f2430;
+    color: #cbccc6;
+}
+html.dark .editor-shell .hljs-comment,
+html.dark .editor-shell .hljs-quote {
+    color: #5c6773;
+    font-style: italic;
+}
+html.dark .editor-shell .hljs-keyword,
+html.dark .editor-shell .hljs-selector-tag,
+html.dark .editor-shell .hljs-section,
+html.dark .editor-shell .hljs-link {
+    color: #ffa759;
+    font-weight: bold;
+}
+html.dark .editor-shell .hljs-built_in,
+html.dark .editor-shell .hljs-addition,
+html.dark .editor-shell .hljs-bullet {
+    color: #ffd580;
+}
+html.dark .editor-shell .hljs-string,
+html.dark .editor-shell .hljs-meta .hljs-string {
+    color: #bae67e;
+}
+html.dark .editor-shell .hljs-number,
+html.dark .editor-shell .hljs-regexp,
+html.dark .editor-shell .hljs-symbol,
+html.dark .editor-shell .hljs-variable,
+html.dark .editor-shell .hljs-template-variable {
+    color: #ffcc66;
+}
+html.dark .editor-shell .hljs-title,
+html.dark .editor-shell .hljs-title.function_ {
+    color: #ffd580;
+}
+html.dark .editor-shell .hljs-type,
+html.dark .editor-shell .hljs-title.class_,
+html.dark .editor-shell .hljs-class .hljs-title {
+    color: #5ccfe6;
+}
+html.dark .editor-shell .hljs-operator,
+html.dark .editor-shell .hljs-meta {
+    color: #f29e74;
+}
+html.dark .editor-shell .hljs-punctuation {
+    color: #cbccc6;
+}
+html.dark .editor-shell .hljs-attr {
+    color: #ffd580;
+}
+html.dark .editor-shell .hljs-deletion {
+    color: #f07171;
+}
+html.dark .editor-shell .hljs-emphasis {
+    font-style: italic;
+}
+html.dark .editor-shell .hljs-strong {
+    font-weight: bold;
+}
+
+/* ── Tafsir HTML content ─────────────────────────────────────────────────── */
+.tafsir-content {
+    unicode-bidi: isolate;
+}
+.tafsir-content p {
+    margin-bottom: 0.5rem;
+    text-align: start;
+}
+.tafsir-content h2,
+.tafsir-content h3 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-top: 0.75rem;
+    margin-bottom: 0.25rem;
+    color: #7a6539;
+}
+html.dark .tafsir-content h2,
+html.dark .tafsir-content h3 {
+    color: #e5c890;
+}
+.tafsir-content [lang="ar"],
+.tafsir-content .ar {
+    font-family: 'Scheherazade New', serif;
+    font-size: 1rem;
+    direction: rtl;
+    text-align: right;
+    display: block;
+    line-height: 1.9;
+    color: #707070; /* brand-charcoal-500 */
+}
+html.dark .tafsir-content [lang="ar"],
+html.dark .tafsir-content .ar {
+    color: #b5bfe2; /* brand-charcoal-100 */
 }

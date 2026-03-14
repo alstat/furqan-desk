@@ -1,43 +1,54 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
-	import { actionBtnStyle, icons, toolBarBtnStyle } from '$lib/data/toolbar/toolbar';
 	import { CAN_REDO_COMMAND, REDO_COMMAND, COMMAND_PRIORITY_CRITICAL } from 'lexical';
-	import { onMount } from 'svelte';
-	import { getEditor, getIsEditable, getActiveEditor } from '$lexical/core/composerContext.js';
 	import { IS_APPLE } from '@lexical/utils';
+	import { redo } from '@codemirror/commands';
+	import { actionBtnStyle, icons } from '$lib/data/toolbar/toolbar';
+	import { lexicalEditorInstance, codeMirrorViewInstance, codeMirrorCanRedo } from '$lib/stores/editor.store';
+	import { activeTab } from '$lib/stores/tabs.store';
+	import { get } from 'svelte/store';
 
-	const editor = getEditor();
-	const activeEditor = getActiveEditor();
-	const isEditable = getIsEditable();
+	let lexicalCanRedo = $state(false);
+	let unregister: (() => boolean) | null = null;
 
-	let canRedo = $state(false);
-
-	// unregisters onDestroy through returned callback
-	onMount(() => {
-		return editor.registerCommand(
-			CAN_REDO_COMMAND,
-			(payload) => {
-				canRedo = payload;
-				return false;
-			},
-			COMMAND_PRIORITY_CRITICAL
-		);
+	$effect(() => {
+		unregister?.();
+		unregister = null;
+		const editor = $lexicalEditorInstance;
+		if (editor) {
+			unregister = editor.registerCommand(
+				CAN_REDO_COMMAND,
+				(payload) => { lexicalCanRedo = payload; return false; },
+				COMMAND_PRIORITY_CRITICAL
+			);
+		} else {
+			lexicalCanRedo = false;
+		}
 	});
+
+	const canRedo = $derived(
+		$activeTab?.type === 'lexical' ? lexicalCanRedo : $codeMirrorCanRedo
+	);
+
+	function handleRedo() {
+		if ($activeTab?.type === 'lexical') {
+			get(lexicalEditorInstance)?.dispatchCommand(REDO_COMMAND, undefined);
+		} else {
+			const view = get(codeMirrorViewInstance);
+			if (view) redo(view);
+		}
+	}
 </script>
 
 <button
-	disabled={!canRedo || !$isEditable}
-	onclick={() => {
-        console.log('here is the activeEditor')
-        console.log(activeEditor)
-		$activeEditor.dispatchCommand(REDO_COMMAND, undefined);
-	}}
-	title={IS_APPLE ? 'Redo (⌘Y)' : 'Redo (Ctrl+Y)'}
+	disabled={!canRedo}
+	onclick={handleRedo}
+	title={IS_APPLE ? 'Redo (⌘⇧Z)' : 'Redo (Ctrl+Y)'}
 	type="button"
 	class={actionBtnStyle + ' p-1'}
 	aria-label="Redo"
 >
-	{#if !canRedo || !$isEditable}
+	{#if !canRedo}
 		<span class="text-slate-300"><Icon icon={icons['redo']} width="1rem" /></span>
 	{:else}
 		<Icon icon={icons['redo']} width="1rem" />

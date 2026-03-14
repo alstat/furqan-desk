@@ -1,6 +1,7 @@
 .ContentEditable__root {
   border: 0;
   font-size: 15px;
+  font-family: 'EB Garamond', serif;
   display: block;
   position: relative;
   tab-size: 1;

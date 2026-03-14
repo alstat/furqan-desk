@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    furqan_desk_lib::run()
+    ayahlab_desk_lib::run()
 }

@@ -29,9 +29,15 @@
   import {
     $createParagraphNode as createParagraphNode,
     $getNodeByKey as getNodeByKey,
+    $getSelection as getSelection,
+    $isRangeSelection as isRangeSelection,
     $isTextNode as isTextNode,
     COMMAND_PRIORITY_EDITOR,
+    COMMAND_PRIORITY_LOW,
+    FORMAT_ELEMENT_COMMAND,
+    type ElementFormatType,
   } from 'lexical';
+  import { $findMatchingParent as findMatchingParent } from '@lexical/utils';
   import {onMount} from 'svelte';
   import {getEditor} from '../../composerContext.js';
 
@@ -75,6 +81,22 @@
         },
         COMMAND_PRIORITY_EDITOR,
       );
+    const unregisterAlignCmd = editor.registerCommand<ElementFormatType>(
+      FORMAT_ELEMENT_COMMAND,
+      (formatType) => {
+        const selection = getSelection();
+        if (!isRangeSelection(selection)) return false;
+        const anchorNode = selection.anchor.getNode();
+        const tableNode = findMatchingParent(anchorNode, isTableNode);
+        if (tableNode) {
+          tableNode.setFormat(formatType);
+          return true;
+        }
+        return false;
+      },
+      COMMAND_PRIORITY_LOW,
+    );
+
     const unregisterMutationListener = editor.registerNodeTransform(
       TableNode,
       (node) => {
@@ -113,6 +135,7 @@
     const unregisterTableSelections = setupTableSelections();
     return mergeRegister(
       unregisterTableInsertCmd,
+      unregisterAlignCmd,
       unregisterMutationListener,
       unregisterTableSelections,
       unregisterUnmergeCellsNodeTransform,

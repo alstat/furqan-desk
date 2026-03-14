@@ -75,11 +75,23 @@ export class CodeNode extends DecoratorNode<DecoratorCodeType> {
         return this.__code!;
     }
 
+    setLanguage(language: string): void {
+        const writable = this.getWritable();
+        writable.__language = language;
+    }
+
+    getLanguage(): string {
+        return this.__language!;
+    }
+
     decorate(): DecoratorCodeType {
         return {
             componentClass: CodeComponent,
             updateProps: (props) => {
                 props.codeDOM = this.__preDOM!;
+                props.code = this.__code!;
+                props.language = this.__language!;
+                props.nodeKey = this.__key;
             }
         }
     }

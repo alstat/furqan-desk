@@ -1,49 +1,53 @@
 import { modifyText } from "$lib/functions/toolbar/toolBarFunctions";
 import { activeClass } from "../config";
 
-export let actionBtnStyle = 'cursor-pointer rounded-full bg-slate-100 hover:bg-slate-400 active:text-slate-50 active:bg-slate-500 text-slate-700 p-2 shadow-md'
-export let toolBarBtnStyle = 'cursor-pointer hover:bg-slate-200 active:text-slate-50 active:bg-slate-300 text-slate-700 rounded-md'
-export let activeBtnStyle = 'bg-slate-300 rounded-md'
-export let selectBtnStyle = 'border-1 block cursor-pointer rounded-md border border-slate-300 bg-slate-100 p-1 text-center text-sm text-lime-700'
+export let actionBtnStyle =
+  "cursor-pointer rounded-full bg-brand-sand-100 hover:bg-brand-sand-200 active:bg-brand-sand-400 text-brand-charcoal-500 p-2 shadow-sm";
+export let toolBarBtnStyle =
+  "cursor-pointer hover:bg-brand-sand-100 active:bg-brand-sand-200 text-brand-charcoal-500 rounded-md";
+export let activeBtnStyle = "bg-brand-sand-200 rounded-md";
+export let selectBtnStyle =
+  "border-1 block cursor-pointer rounded-md border border-brand-sand-200 bg-brand-sand-100 p-1 text-center text-sm text-brand-gold-600";
 export let icons = {
-	undo: 'fluent:arrow-undo-16-filled',
-	redo: 'fluent:arrow-redo-16-filled',
-	// format
-	bold: 'fluent:text-bold-16-filled',
-	italic: 'fluent:text-italic-16-filled',
-	underline: 'fluent:text-underline-16-filled',
-	strikethrough: 'fluent:text-strikethrough-16-filled',
-	// alignment
-	left: 'icon-park-outline:align-text-left',
-	center: 'icon-park-outline:align-text-center',
-	right: 'icon-park-outline:align-text-right',
-	justify: 'icon-park-outline:align-text-both',
-	// indent/outdent
-	indent: 'icon-park-outline:indent-right',
-	outdent: 'icon-park-outline:indent-left',
-	//
-	dropdown: 'gridicons:dropdown',
-	bullet: 'fluent:text-bullet-list-16-filled',
-	list: 'fluent:text-number-list-16-filled',
-    tripleDots: 'tabler:dots',
-	//
-	fontFamily: 'radix-icons:font-family',
-	hr: 'fluent:line-horizontal-1-16-filled',
-	image: 'fluent:image-add-20-regular',
-	insert: 'gg:insert-after-r',
-	math: 'tabler:math',
-	// ai-btns
-	toc: 'carbon:table-of-contents',
-	info: 'icon-park-outline:info',
-	comment: 'iconamoon:comment-dots',
-	ideas: 'ri:ai-generate',
-	// format block
-	paragraph: 'mdi:format-paragraph',
-	heading: 'dashicons:heading',
-	checklist: 'ic:round-checklist',
-	quote: 'fluent:text-quote-16-filled',
-	code: 'fluent:code-16-filled',
-	lineSpacing: 'material-symbols:format-line-spacing'
+  undo: "fluent:arrow-undo-16-filled",
+  redo: "fluent:arrow-redo-16-filled",
+  // format
+  bold: "fluent:text-bold-16-filled",
+  italic: "fluent:text-italic-16-filled",
+  underline: "fluent:text-underline-16-filled",
+  strikethrough: "fluent:text-strikethrough-16-filled",
+  // alignment
+  left: "icon-park-outline:align-text-left",
+  center: "icon-park-outline:align-text-center",
+  right: "icon-park-outline:align-text-right",
+  justify: "icon-park-outline:align-text-both",
+  // indent/outdent
+  indent: "icon-park-outline:indent-right",
+  outdent: "icon-park-outline:indent-left",
+  //
+  dropdown: "gridicons:dropdown",
+  bullet: "fluent:text-bullet-list-16-filled",
+  list: "fluent:text-number-list-16-filled",
+  tripleDots: "tabler:dots",
+  //
+  fontFamily: "radix-icons:font-family",
+  hr: "fluent:line-horizontal-1-16-filled",
+  image: "fluent:image-add-20-regular",
+  insert: "gg:insert-after-r",
+  math: "tabler:math",
+  table: "fluent:table-add-20-regular",
+  // ai-btns
+  toc: "carbon:table-of-contents",
+  info: "icon-park-outline:info",
+  comment: "iconamoon:comment-dots",
+  ideas: "ri:ai-generate",
+  // format block
+  paragraph: "mdi:format-paragraph",
+  heading: "dashicons:heading",
+  checklist: "ic:round-checklist",
+  quote: "fluent:text-quote-16-filled",
+  code: "fluent:code-16-filled",
+  lineSpacing: "material-symbols:format-line-spacing",
 };
 
 // export interface Tool {

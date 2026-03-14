@@ -19,14 +19,16 @@
         Composer,
         ContentEditable,
         ToolbarRichText,
-        ActionBar,
         RichTextPlugin,
         HistoryPlugin,
         ListPlugin,
         CheckListPlugin,
         HorizontalRulePlugin,
         ImagePlugin,
+        TablePlugin,
+        TableActionMenuPlugin,
     } from "../lexical";
+    import TableCellResizerPlugin from "$lexical/core/plugins/Table/TableCellResizerPlugin.svelte";
     import {
         HeadingNode,
         QuoteNode,
@@ -34,6 +36,9 @@
         ListItemNode,
         HorizontalRuleNode,
         ImageNode,
+        TableNode,
+        TableRowNode,
+        TableCellNode,
     } from "../lexical";
     import { editorTheme as PlaygroundEditorTheme } from "../lexical";
     import {
@@ -43,6 +48,14 @@
     } from "../lexical";
 
     import CaptionEditorHistoryPlugin from "$lexical/core/plugins/Image/CaptionEditorHistoryPlugin.svelte";
+    import EditorStorePlugin from "./EditorStorePlugin.svelte";
+    import { createEmptyHistoryState } from "@lexical/history";
+    import { lexicalHistoryState } from "$lib/stores/editor.store";
+
+    const historyState = createEmptyHistoryState();
+    lexicalHistoryState.set(historyState);
+
+    let editorShell = $state<HTMLDivElement | null>(null);
 
     const initialConfig = {
         namespace: "Editor",
@@ -56,6 +69,9 @@
             ImageNode,
             EquationNode,
             CodeNode,
+            TableNode,
+            TableRowNode,
+            TableCellNode,
         ],
         onError: (error: Error) => {
             throw error;
@@ -71,7 +87,7 @@
 </script>
 
 <Composer {initialConfig}>
-    <div class="editor-shell p-2">
+    <div class="editor-shell p-2 relative overflow-visible" bind:this={editorShell}>
         <ToolbarRichText />
         <div class="editor-container flex flex-col justify-stretch">
             <div class="editor-scroller">
@@ -80,7 +96,7 @@
                 </div>
             </div>
             <RichTextPlugin />
-            <HistoryPlugin />
+            <HistoryPlugin externalHistoryState={historyState} />
             <ListPlugin />
             <CheckListPlugin />
             <HorizontalRulePlugin />
@@ -89,6 +105,12 @@
             </ImagePlugin>
             <EquationPlugin />
             <CodePlugin />
+            <TablePlugin />
+            <TableCellResizerPlugin />
+            {#if editorShell}
+                <TableActionMenuPlugin anchorElem={editorShell} cellMerge={true} />
+            {/if}
+            <EditorStorePlugin />
         </div>
     </div>
 </Composer>

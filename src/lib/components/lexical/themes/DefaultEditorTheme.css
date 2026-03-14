@@ -147,38 +147,48 @@
 }
 .SL_Theme__tableScrollableWrapper {
   overflow-x: auto;
-  margin: 0px 25px 30px 0px;
+  margin: 0 0 24px 0;
 }
 .SL_Theme__tableScrollableWrapper > .SL_Theme__table {
-  /* Remove the table's margin and put it on the wrapper */
+  /* margin lives on table via alignment classes or defaults */
   margin: 0;
 }
 .SL_Theme__table {
   border-collapse: collapse;
   border-spacing: 0;
-  overflow-y: scroll;
-  overflow-x: scroll;
   table-layout: fixed;
   width: fit-content;
-  margin: 0px 25px 30px 0px;
 }
+
+/* ── Table alignment classes (applied by alignTableElement to the <table>) ── */
+.SL_Theme__tableAlignCenter {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.SL_Theme__tableAlignRight {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
 .SL_Theme__tableRowStriping tr:nth-child(even) {
-  background-color: #f2f5fb;
+  background-color: var(--color-brand-sand-50);
 }
 .SL_Theme__tableSelection *::selection {
   background-color: transparent;
 }
 .SL_Theme__tableSelected {
-  outline: 2px solid rgb(60, 132, 244);
+  outline: 2px solid var(--color-brand-gold-400);
 }
 .SL_Theme__tableCell {
-  border: 1px solid #bbb;
+  border: 1px solid var(--color-brand-sand-200);
   width: 75px;
   vertical-align: top;
   text-align: start;
   padding: 6px 8px;
   position: relative;
   outline: none;
+  color: var(--color-brand-charcoal-900);
+  background-color: var(--color-brand-sand-50);
 }
 .SL_Theme__tableCellResizer {
   position: absolute;
@@ -190,8 +200,10 @@
   top: 0;
 }
 .SL_Theme__tableCellHeader {
-  background-color: #f2f3f5;
+  background-color: var(--color-brand-sand-100);
+  border-color: var(--color-brand-sand-200);
   text-align: start;
+  font-weight: 600;
 }
 .SL_Theme__tableCellSelected {
   caret-color: transparent;
@@ -202,14 +214,14 @@
   right: 0;
   bottom: 0;
   top: 0;
-  background-color: highlight;
+  background-color: var(--color-brand-gold-200);
   mix-blend-mode: multiply;
   content: '';
   pointer-events: none;
 }
 .SL_Theme__tableAddColumns {
   position: absolute;
-  background-color: #eee;
+  background-color: var(--color-brand-sand-100);
   height: 100%;
   animation: table-controls 0.2s ease;
   border: 0;
@@ -231,12 +243,12 @@
 }
 .SL_Theme__tableAddColumns:hover,
 .SL_Theme__tableAddRows:hover {
-  background-color: #c9dbf0;
+  background-color: var(--color-brand-sand-200);
 }
 .SL_Theme__tableAddRows {
   position: absolute;
   width: calc(100% - 25px);
-  background-color: #eee;
+  background-color: var(--color-brand-sand-100);
   animation: table-controls 0.2s ease;
   border: 0;
   cursor: pointer;
@@ -267,7 +279,7 @@
   display: block;
   position: absolute;
   width: 1px;
-  background-color: rgb(60, 132, 244);
+  background-color: var(--color-brand-gold-400);
   height: 100%;
   top: 0;
 }
@@ -281,17 +293,17 @@
   height: 20px;
 }
 .SL_Theme__tableCellActionButton {
-  background-color: #eee;
+  background-color: var(--color-brand-sand-100);
   display: block;
   border: 0;
   border-radius: 20px;
   width: 20px;
   height: 20px;
-  color: #222;
+  color: var(--color-brand-charcoal-900);
   cursor: pointer;
 }
 .SL_Theme__tableCellActionButton:hover {
-  background-color: #ddd;
+  background-color: var(--color-brand-sand-200);
 }
 .SL_Theme__characterLimit {
   display: inline;

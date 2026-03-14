@@ -1,7 +1,328 @@
 use crate::db::Database;
+use crate::typst_world::get_world;
 use serde::Serialize;
 use std::collections::BTreeMap;
-use tauri::State;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
+use tauri::{AppHandle, Emitter, Manager, State};
+
+// ── Download state ────────────────────────────────────────────────────────────
+pub struct DownloadState {
+    pub cancel: Arc<AtomicBool>,
+}
+
+// ── Recitation structs ───────────────────────────────────────────────────────
+#[derive(Serialize)]
+pub struct RecitationAyah {
+    pub audio_url: String,
+    pub duration: Option<i64>,
+    pub segments: Option<String>,
+    pub is_local: bool,
+}
+
+#[tauri::command]
+pub fn get_recitation_ayah(
+    app: AppHandle,
+    state: State<Database>,
+    surah: i64,
+    ayah: i64,
+    reciter_id: i64,
+) -> Result<Option<RecitationAyah>, String> {
+    // Check if a locally downloaded file exists first
+    let local_path = app.path().app_data_dir().ok().map(|d| {
+        d.join("recitation")
+            .join(reciter_id.to_string())
+            .join(surah.to_string())
+            .join(format!("{ayah}.mp3"))
+    });
+    let is_local = local_path.as_ref().map(|p| p.exists()).unwrap_or(false);
+
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT audio_url, duration, segments FROM recitations
+             WHERE reciter_id = ?1 AND surah_number = ?2 AND ayah_number = ?3",
+        )
+        .map_err(|e| e.to_string())?;
+    let mut rows = stmt
+        .query_map(rusqlite::params![reciter_id, surah, ayah], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, Option<i64>>(1)?,
+                row.get::<_, Option<String>>(2)?,
+            ))
+        })
+        .map_err(|e| e.to_string())?;
+    match rows.next() {
+        Some(r) => {
+            let (remote_url, duration, segments) = r.map_err(|e| e.to_string())?;
+            let audio_url = if is_local {
+                local_path.unwrap().to_string_lossy().into_owned()
+            } else {
+                remote_url
+            };
+            Ok(Some(RecitationAyah { audio_url, duration, segments, is_local }))
+        }
+        None => Ok(None),
+    }
+}
+
+// ── Download progress payload ─────────────────────────────────────────────────
+#[derive(Serialize, Clone)]
+pub struct DownloadProgressPayload {
+    pub reciter_id: i64,
+    pub surah: i64,
+    pub ayah: i64,
+    pub downloaded: usize,
+    pub total: usize,
+    pub done: bool,
+    pub failed: bool,
+}
+
+#[tauri::command]
+pub fn get_downloaded_surahs(
+    app: AppHandle,
+    state: State<Database>,
+    reciter_id: i64,
+) -> Result<Vec<i64>, String> {
+    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+
+    // Get expected ayah counts per surah in one query
+    let expected_counts: Vec<(i64, i64)> = {
+        let conn = state.0.lock().map_err(|e| e.to_string())?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT surah_number, COUNT(*) FROM recitations
+                 WHERE reciter_id = ?1 GROUP BY surah_number",
+            )
+            .map_err(|e| e.to_string())?;
+        let result = stmt.query_map(rusqlite::params![reciter_id], |row| {
+            Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+        result
+    };
+
+    let mut downloaded = Vec::new();
+    for (surah, expected) in expected_counts {
+        let surah_dir = data_dir
+            .join("recitation")
+            .join(reciter_id.to_string())
+            .join(surah.to_string());
+        if surah_dir.exists() {
+            let actual = std::fs::read_dir(&surah_dir)
+                .map(|rd| rd.filter_map(|e| e.ok()).count() as i64)
+                .unwrap_or(0);
+            if actual >= expected {
+                downloaded.push(surah);
+            }
+        }
+    }
+
+    Ok(downloaded)
+}
+
+#[tauri::command]
+pub async fn download_recitation(
+    app: AppHandle,
+    state: State<'_, Database>,
+    dl_state: State<'_, DownloadState>,
+    reciter_id: i64,
+    surah_filter: Option<i64>,
+) -> Result<(), String> {
+    dl_state.cancel.store(false, Ordering::Relaxed);
+
+    // Collect all rows before releasing the DB lock
+    let rows: Vec<(i64, i64, String)> = {
+        let conn = state.0.lock().map_err(|e| e.to_string())?;
+        if let Some(sf) = surah_filter {
+            let mut stmt = conn
+                .prepare(
+                    "SELECT surah_number, ayah_number, audio_url FROM recitations
+                     WHERE reciter_id = ?1 AND surah_number = ?2
+                     ORDER BY surah_number, ayah_number",
+                )
+                .map_err(|e| e.to_string())?;
+            let result = stmt.query_map(rusqlite::params![reciter_id, sf], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, i64>(1)?,
+                    row.get::<_, String>(2)?,
+                ))
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+            result
+        } else {
+            let mut stmt = conn
+                .prepare(
+                    "SELECT surah_number, ayah_number, audio_url FROM recitations
+                     WHERE reciter_id = ?1
+                     ORDER BY surah_number, ayah_number",
+                )
+                .map_err(|e| e.to_string())?;
+            let result = stmt.query_map(rusqlite::params![reciter_id], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, i64>(1)?,
+                    row.get::<_, String>(2)?,
+                ))
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+            result
+        }
+    }; // DB lock released here
+
+    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let total = rows.len();
+    let mut downloaded_count: usize = 0;
+    let client = reqwest::Client::new();
+
+    for (surah, ayah, url) in &rows {
+        if dl_state.cancel.load(Ordering::Relaxed) {
+            break;
+        }
+
+        let file_path = data_dir
+            .join("recitation")
+            .join(reciter_id.to_string())
+            .join(surah.to_string())
+            .join(format!("{ayah}.mp3"));
+
+        if file_path.exists() {
+            downloaded_count += 1;
+            let _ = app.emit(
+                "recitation-download-progress",
+                DownloadProgressPayload {
+                    reciter_id,
+                    surah: *surah,
+                    ayah: *ayah,
+                    downloaded: downloaded_count,
+                    total,
+                    done: false,
+                    failed: false,
+                },
+            );
+            continue;
+        }
+
+        if let Some(parent) = file_path.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+
+        let result = async {
+            let resp = client.get(url.as_str()).send().await?;
+            resp.bytes().await
+        }
+        .await;
+
+        match result {
+            Ok(bytes) => {
+                if let Err(e) = std::fs::write(&file_path, &bytes) {
+                    let _ = app.emit(
+                        "recitation-download-progress",
+                        DownloadProgressPayload {
+                            reciter_id,
+                            surah: *surah,
+                            ayah: *ayah,
+                            downloaded: downloaded_count,
+                            total,
+                            done: false,
+                            failed: true,
+                        },
+                    );
+                    return Err(e.to_string());
+                }
+                downloaded_count += 1;
+                let _ = app.emit(
+                    "recitation-download-progress",
+                    DownloadProgressPayload {
+                        reciter_id,
+                        surah: *surah,
+                        ayah: *ayah,
+                        downloaded: downloaded_count,
+                        total,
+                        done: false,
+                        failed: false,
+                    },
+                );
+            }
+            Err(_) => {
+                let _ = app.emit(
+                    "recitation-download-progress",
+                    DownloadProgressPayload {
+                        reciter_id,
+                        surah: *surah,
+                        ayah: *ayah,
+                        downloaded: downloaded_count,
+                        total,
+                        done: false,
+                        failed: true,
+                    },
+                );
+            }
+        }
+    }
+
+    let _ = app.emit(
+        "recitation-download-progress",
+        DownloadProgressPayload {
+            reciter_id,
+            surah: 0,
+            ayah: 0,
+            downloaded: downloaded_count,
+            total,
+            done: true,
+            failed: false,
+        },
+    );
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn cancel_recitation_download(dl_state: State<'_, DownloadState>) -> Result<(), String> {
+    dl_state.cancel.store(true, Ordering::Relaxed);
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn read_audio_bytes(path: String) -> Result<Vec<u8>, String> {
+    tokio::fs::read(&path).await.map_err(|e| e.to_string())
+}
+
+// ── User-data structs ────────────────────────────────────────────────────────
+#[derive(Serialize)]
+pub struct Bookmark {
+    pub id: i64,
+    pub surah: i64,
+    pub ayah: i64,
+    pub note: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Serialize)]
+pub struct LastRead {
+    pub surah: i64,
+    pub ayah: i64,
+    pub updated_at: String,
+}
+
+#[derive(Serialize)]
+pub struct Highlight {
+    pub id: i64,
+    pub surah: i64,
+    pub ayah: i64,
+    pub text: String,
+    pub created_at: String,
+}
 
 #[derive(Serialize)]
 pub struct Ayah {
@@ -516,4 +837,900 @@ pub fn get_word_morphology(
         tokens,
         combined_arabic,
     })
+}
+
+// ── Bookmark commands ────────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn add_bookmark(
+    db: State<Database>,
+    surah: i64,
+    ayah: i64,
+    note: Option<String>,
+) -> Result<Bookmark, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO bookmarks (surah, ayah, note) VALUES (?1, ?2, ?3)",
+        rusqlite::params![surah, ayah, note],
+    )
+    .map_err(|e| e.to_string())?;
+    let id = conn.last_insert_rowid();
+    conn.query_row(
+        "SELECT id, surah, ayah, note, created_at FROM bookmarks WHERE id = ?1",
+        [id],
+        |r| Ok(Bookmark { id: r.get(0)?, surah: r.get(1)?, ayah: r.get(2)?, note: r.get(3)?, created_at: r.get(4)? }),
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_bookmarks(db: State<Database>) -> Result<Vec<Bookmark>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare("SELECT id, surah, ayah, note, created_at FROM bookmarks ORDER BY created_at DESC")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt.query_map([], |r| Ok(Bookmark {
+        id: r.get(0)?, surah: r.get(1)?, ayah: r.get(2)?, note: r.get(3)?, created_at: r.get(4)?,
+    }))
+    .map_err(|e| e.to_string())?
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| e.to_string());
+    rows
+}
+
+#[tauri::command]
+pub fn delete_bookmark(db: State<Database>, id: i64) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM bookmarks WHERE id = ?1", [id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// ── Last-read commands ───────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn set_last_read(db: State<Database>, surah: i64, ayah: i64) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO last_read (id, surah, ayah, updated_at) VALUES (1, ?1, ?2, datetime('now'))
+         ON CONFLICT(id) DO UPDATE SET surah = ?1, ayah = ?2, updated_at = datetime('now')",
+        rusqlite::params![surah, ayah],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_last_read(db: State<Database>) -> Result<Option<LastRead>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    match conn.query_row(
+        "SELECT surah, ayah, updated_at FROM last_read WHERE id = 1",
+        [],
+        |r| Ok(LastRead { surah: r.get(0)?, ayah: r.get(1)?, updated_at: r.get(2)? }),
+    ) {
+        Ok(lr) => Ok(Some(lr)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+// ── Highlight commands ───────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn add_highlight(
+    db: State<Database>,
+    surah: i64,
+    ayah: i64,
+    text: String,
+) -> Result<Highlight, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO highlights (surah, ayah, text) VALUES (?1, ?2, ?3)",
+        rusqlite::params![surah, ayah, text],
+    )
+    .map_err(|e| e.to_string())?;
+    let id = conn.last_insert_rowid();
+    conn.query_row(
+        "SELECT id, surah, ayah, text, created_at FROM highlights WHERE id = ?1",
+        [id],
+        |r| Ok(Highlight { id: r.get(0)?, surah: r.get(1)?, ayah: r.get(2)?, text: r.get(3)?, created_at: r.get(4)? }),
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_highlights(db: State<Database>) -> Result<Vec<Highlight>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare("SELECT id, surah, ayah, text, created_at FROM highlights ORDER BY created_at DESC")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt.query_map([], |r| Ok(Highlight {
+        id: r.get(0)?, surah: r.get(1)?, ayah: r.get(2)?, text: r.get(3)?, created_at: r.get(4)?,
+    }))
+    .map_err(|e| e.to_string())?
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| e.to_string());
+    rows
+}
+
+#[tauri::command]
+pub fn delete_highlight(db: State<Database>, id: i64) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM highlights WHERE id = ?1", [id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// ── Translation commands ──────────────────────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct TranslatorInfo {
+    pub id: i64,
+    pub lang: String,
+    pub name: String,
+}
+
+#[derive(Serialize)]
+pub struct AyahTranslation {
+    pub ayah: i64,
+    pub text: String,
+    pub footnotes: Option<String>,
+}
+
+#[tauri::command]
+pub fn get_translators(db: State<Database>) -> Result<Vec<TranslatorInfo>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare("SELECT id, lang, name FROM translators ORDER BY lang, name")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(TranslatorInfo {
+                id: row.get(0)?,
+                lang: row.get(1)?,
+                name: row.get(2)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+#[tauri::command]
+pub fn get_surah_translation(
+    db: State<Database>,
+    surah: i64,
+    translator_id: i64,
+) -> Result<Vec<AyahTranslation>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT ayah, text, footnotes FROM translations
+             WHERE translator_id = ?1 AND surah = ?2
+             ORDER BY ayah",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![translator_id, surah], |row| {
+            Ok(AyahTranslation {
+                ayah: row.get(0)?,
+                text: row.get(1)?,
+                footnotes: row.get(2)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+// ── Transliteration commands ──────────────────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct AyahTransliteration {
+    pub ayah: i64,
+    pub text: String,
+}
+
+#[tauri::command]
+pub fn get_surah_transliteration(
+    db: State<Database>,
+    surah: i64,
+) -> Result<Vec<AyahTransliteration>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT ayah, text FROM transliterations WHERE surah = ?1 ORDER BY ayah",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![surah], |row| {
+            Ok(AyahTransliteration {
+                ayah: row.get(0)?,
+                text: row.get(1)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+// ── Word-by-word commands ─────────────────────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct WordTranslation {
+    pub ayah: i64,
+    pub word: i64,
+    pub text: String,
+}
+
+#[tauri::command]
+pub fn get_surah_word_by_word(
+    db: State<Database>,
+    surah: i64,
+) -> Result<Vec<WordTranslation>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT ayah, word, text FROM word_by_word WHERE surah = ?1 ORDER BY ayah, word",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![surah], |row| {
+            Ok(WordTranslation {
+                ayah: row.get(0)?,
+                word: row.get(1)?,
+                text: row.get(2)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+// ── Typst package management commands ────────────────────────────────────────
+
+/// Returns true if the package is already present in the local typst cache.
+/// Runs on a blocking thread so the filesystem check doesn't stall the async
+/// runtime on startup (particularly slow on Windows/network drives).
+#[tauri::command]
+pub async fn check_typst_package(namespace: String, name: String, version: String) -> bool {
+    tokio::task::spawn_blocking(move || {
+        dirs::data_dir()
+            .map(|d| {
+                d.join("typst")
+                    .join("packages")
+                    .join(&namespace)
+                    .join(&name)
+                    .join(&version)
+                    .join("typst.toml")
+                    .exists()
+            })
+            .unwrap_or(false)
+    })
+    .await
+    .unwrap_or(false)
+}
+
+/// Download a package from the typst registry and extract it into the local
+/// cache at `<data_dir>/typst/packages/<namespace>/<name>/<version>/`.
+///
+/// The typst package registry tarballs are flat (no wrapping directory):
+///   typst.toml, lib.typ, … land directly at the archive root.
+/// This matches what typst-cli does: `archive.unpack(package_dir)`.
+#[tauri::command]
+pub async fn install_typst_package(
+    namespace: String,
+    name: String,
+    version: String,
+) -> Result<(), String> {
+    use flate2::read::GzDecoder;
+    use tar::Archive;
+
+    let url = format!(
+        "https://packages.typst.org/{}/{}-{}.tar.gz",
+        namespace, name, version
+    );
+
+    // Download the tarball bytes.
+    let response = reqwest::get(&url)
+        .await
+        .map_err(|e| format!("Network error: {e}"))?;
+
+    if !response.status().is_success() {
+        return Err(format!(
+            "Package not found on registry (HTTP {}). Check the namespace/name/version.",
+            response.status()
+        ));
+    }
+
+    let bytes = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read response: {e}"))?;
+
+    // Destination: <data_dir>/typst/packages/<namespace>/<name>/<version>/
+    let pkg_dir = dirs::data_dir()
+        .ok_or("Cannot locate the system data directory")?
+        .join("typst")
+        .join("packages")
+        .join(&namespace)
+        .join(&name)
+        .join(&version);
+
+    // Wipe any previous (partial) install so we start clean.
+    if pkg_dir.exists() {
+        std::fs::remove_dir_all(&pkg_dir)
+            .map_err(|e| format!("Failed to remove old install: {e}"))?;
+    }
+    std::fs::create_dir_all(&pkg_dir)
+        .map_err(|e| format!("Failed to create package directory: {e}"))?;
+
+    // The registry tarball is flat — files are at the archive root with no
+    // wrapping directory.  Unpack them directly into pkg_dir.
+    let gz = GzDecoder::new(bytes.as_ref());
+    let mut archive = Archive::new(gz);
+    archive
+        .unpack(&pkg_dir)
+        .map_err(|e| format!("Failed to extract package: {e}"))?;
+
+    Ok(())
+}
+
+// ── Typst font installation commands ─────────────────────────────────────────
+
+/// Platform-specific directory where user fonts can be installed.
+fn typst_user_fonts_dir() -> Option<std::path::PathBuf> {
+    #[cfg(target_os = "macos")]
+    return dirs::home_dir().map(|h| h.join("Library").join("Fonts"));
+    #[cfg(target_os = "linux")]
+    return dirs::home_dir().map(|h| h.join(".local").join("share").join("fonts"));
+    #[cfg(target_os = "windows")]
+    return dirs::font_dir();
+    #[allow(unreachable_code)]
+    None
+}
+
+/// Returns true when typst's bundled fonts have been installed to the system.
+#[tauri::command]
+pub async fn check_typst_fonts() -> bool {
+    tokio::task::spawn_blocking(|| {
+        typst_user_fonts_dir()
+            .map(|d| d.join(".typst-fonts-installed").exists())
+            .unwrap_or(false)
+    })
+    .await
+    .unwrap_or(false)
+}
+
+/// Install typst's bundled fonts (New Computer Modern, Linux Libertine, DejaVu, …)
+/// into the user's system font directory so they are available outside the app too.
+#[tauri::command]
+pub fn install_typst_fonts() -> Result<(), String> {
+    use typst::foundations::Bytes;
+    use typst::text::{Font, FontStyle};
+
+    let fonts_dir = typst_user_fonts_dir()
+        .ok_or_else(|| "Cannot locate user fonts directory".to_string())?;
+    std::fs::create_dir_all(&fonts_dir)
+        .map_err(|e| format!("Cannot create fonts directory: {e}"))?;
+
+    for (i, font_data) in typst_assets::fonts().enumerate() {
+        let ext = if font_data.starts_with(b"OTTO") { "otf" } else { "ttf" };
+        let stem = Font::new(Bytes::new(font_data), 0)
+            .map(|f| {
+                let info = f.info();
+                let style = match info.variant.style {
+                    FontStyle::Normal => "Regular",
+                    FontStyle::Italic => "Italic",
+                    FontStyle::Oblique => "Oblique",
+                };
+                format!("{}-{}_{i}", info.family.replace([' ', '/'], ""), style)
+            })
+            .unwrap_or_else(|| format!("TypstFont_{i}"));
+
+        let path = fonts_dir.join(format!("{stem}.{ext}"));
+        if !path.exists() {
+            std::fs::write(&path, font_data)
+                .map_err(|e| format!("Failed to write {stem}.{ext}: {e}"))?;
+        }
+    }
+
+    std::fs::write(fonts_dir.join(".typst-fonts-installed"), b"")
+        .map_err(|e| format!("Failed to write marker: {e}"))?;
+
+    Ok(())
+}
+
+// ── Typst compile commands ────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn compile_typst_svg(source: String) -> Result<Vec<String>, String> {
+    let world = get_world();
+    world.set_source(source);
+    let doc = typst::compile::<typst::layout::PagedDocument>(world)
+        .output
+        .map_err(|e| format!("{e:?}"))?;
+    Ok(doc.pages.iter().map(|p| typst_svg::svg(p)).collect())
+}
+
+#[tauri::command]
+pub fn compile_typst_pdf(source: String) -> Result<Vec<u8>, String> {
+    let world = get_world();
+    world.set_source(source);
+    let doc = typst::compile::<typst::layout::PagedDocument>(world)
+        .output
+        .map_err(|e| format!("{e:?}"))?;
+    typst_pdf::pdf(&doc, &typst_pdf::PdfOptions::default())
+        .map_err(|e| format!("{e:?}"))
+}
+
+// ── Manuscript commands ───────────────────────────────────────────────────────
+
+/// Fetch full metadata for a single manuscript (date, material, script, etc.)
+#[tauri::command]
+pub async fn get_manuscript_detail(manuscript_id: u32) -> Result<String, String> {
+    let url = format!(
+        "https://api.corpuscoranicum.de/api/data/manuscripts/{}",
+        manuscript_id
+    );
+    let client = reqwest::Client::new();
+    let response = client
+        .get(&url)
+        .header("Accept", "application/json")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    response.text().await.map_err(|e| e.to_string())
+}
+
+/// Download full-resolution manuscript image and save it to the user's Downloads folder.
+/// Returns the absolute path of the saved file.
+#[tauri::command]
+pub async fn save_manuscript_to_downloads(
+    image_url: String,
+    filename: String,
+) -> Result<String, String> {
+    // Build a high-res URL by keeping only the fn= param and adding dw=1200
+    let fn_param: Option<String> = image_url
+        .split(|c| c == '?' || c == '&')
+        .find_map(|seg| {
+            let s = seg.trim_start_matches('?');
+            if s.starts_with("fn=") { Some(s.to_string()) } else { None }
+        });
+
+    let fetch_url = match fn_param {
+        Some(ref fp) => format!(
+            "https://corpuscoranicum.de/digitallibrary/servlet/Scaler?{}&dw=1200",
+            fp
+        ),
+        None => image_url.clone(),
+    };
+
+    let client = reqwest::Client::new();
+    let bytes = client
+        .get(&fetch_url)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?
+        .bytes()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let downloads_dir = dirs::download_dir()
+        .ok_or_else(|| "Cannot locate Downloads folder".to_string())?;
+
+    // Sanitise filename
+    let safe: String = filename
+        .chars()
+        .map(|c| if c.is_alphanumeric() || matches!(c, '-' | '_' | '.') { c } else { '_' })
+        .collect();
+    let save_path = downloads_dir.join(if safe.is_empty() { "manuscript.jpg".into() } else { safe });
+
+    tokio::fs::write(&save_path, &bytes)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(save_path.to_string_lossy().into_owned())
+}
+
+/// Fetch manuscript list for a given surah/ayah from the Corpus Coranicum API.
+/// Returns the raw JSON string for the frontend to parse.
+#[tauri::command]
+pub async fn get_manuscript_list(surah: u32, ayah: u32) -> Result<String, String> {
+    let url = format!(
+        "https://api.corpuscoranicum.de/api/data/manuscripts/sura/{}/verse/{}",
+        surah, ayah
+    );
+    let client = reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::limited(10))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let response = client
+        .get(&url)
+        .header("Accept", "application/json")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    response.text().await.map_err(|e| e.to_string())
+}
+
+/// Extract a safe relative cache path from the `fn=` parameter embedded in a
+/// Corpus Coranicum Scaler URL.  Returns e.g.
+///   "manuscript/1247/<uuid>/manuscript-1247-page-41341-image-26904_t.jpg"
+fn manuscript_cache_rel(image_url: &str, thumbnail: bool) -> std::path::PathBuf {
+    // Pull out fn=... value (ends at next '&' or end-of-string)
+    let fn_value = image_url
+        .split(|c| c == '?' || c == '&')
+        .find_map(|seg| seg.strip_prefix("fn="))
+        .unwrap_or(image_url);
+
+    // Strip the static prefix that every CC image shares
+    let rel = fn_value
+        .trim_start_matches('/')
+        .trim_start_matches("projects/corpus-coranicum/")
+        .trim_start_matches('/');
+
+    // Build a safe PathBuf component-by-component
+    let mut path = std::path::PathBuf::new();
+    for component in rel.split('/') {
+        if !component.is_empty() && component != ".." && component != "." {
+            path.push(component);
+        }
+    }
+
+    // Normalise extension to .jpg (Scaler always returns JPEG)
+    let stem = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("img")
+        .to_string();
+    let parent = path.parent().map(|p| p.to_path_buf()).unwrap_or_default();
+    let filename = if thumbnail {
+        format!("{}_t.jpg", stem)
+    } else {
+        format!("{}.jpg", stem)
+    };
+    parent.join(filename)
+}
+
+/// Download (and locally cache) a manuscript page image.
+///
+/// `image_url` is the complete Scaler thumbnail URL returned by the API
+/// (e.g. `…Scaler?fn=…&dw=800&dh=800&mo=q1,jpg`).
+/// When `thumbnail=false` the size params are swapped for a higher-res version.
+#[tauri::command]
+pub async fn get_manuscript_image(
+    app: AppHandle,
+    image_url: String,
+    thumbnail: bool,
+) -> Result<Vec<u8>, String> {
+    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+
+    let cache_rel = manuscript_cache_rel(&image_url, thumbnail);
+    let cache_path = app_data_dir.join("manuscript-images").join(&cache_rel);
+
+    // Serve from cache when available
+    if cache_path.exists() {
+        return tokio::fs::read(&cache_path).await.map_err(|e| e.to_string());
+    }
+
+    // Build the fetch URL: thumbnail uses the API URL as-is; full-res strips
+    // the size constraints so Scaler returns the original resolution.
+    let fetch_url = if thumbnail {
+        image_url.clone()
+    } else {
+        // Replace the thumbnail size params with a larger width only
+        let base = image_url
+            .split('&')
+            .next()
+            .unwrap_or(&image_url);
+        let fn_param = base
+            .split('?')
+            .nth(1)
+            .map(|q| q.to_string())
+            .unwrap_or_default();
+        format!(
+            "https://corpuscoranicum.de/digitallibrary/servlet/Scaler?{}&dw=1200",
+            fn_param
+        )
+    };
+
+    let client = reqwest::Client::new();
+    let bytes = client
+        .get(&fetch_url)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?
+        .bytes()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if let Some(parent) = cache_path.parent() {
+        tokio::fs::create_dir_all(parent).await.map_err(|e| e.to_string())?;
+    }
+    tokio::fs::write(&cache_path, &bytes).await.map_err(|e| e.to_string())?;
+
+    Ok(bytes.to_vec())
+}
+
+#[tauri::command]
+pub async fn clear_manuscript_cache(app: AppHandle) -> Result<(), String> {
+    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let cache_dir = app_data_dir.join("manuscript-images");
+    if cache_dir.exists() {
+        tokio::fs::remove_dir_all(&cache_dir).await.map_err(|e| e.to_string())?;
+        tokio::fs::create_dir_all(&cache_dir).await.map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// Serve a bundled demo manuscript image (index 0-2) from resources — used by
+/// the first-run tour so images display offline without network calls.
+#[tauri::command]
+pub async fn get_manuscript_demo_image(app: AppHandle, index: usize) -> Result<Vec<u8>, String> {
+    if index > 2 {
+        return Err("index out of range".into());
+    }
+    let resource_dir = app.path().resource_dir().map_err(|e| e.to_string())?;
+    let filename = format!("demo-{}.jpg", index);
+    let path = resource_dir.join("data/manuscripts/demo").join(&filename);
+    tokio::fs::read(&path).await.map_err(|e| format!("Failed to read demo image {}: {}", filename, e))
+}
+
+// ── Quranic search ────────────────────────────────────────────────────────────
+#[derive(Serialize)]
+pub struct AyahMatch {
+    pub surah: i64,
+    pub ayah: i64,
+}
+
+/// Strip Arabic diacritics (harakat + Quranic annotation marks) so consonant-only
+/// queries match fully-vowelised stored text.
+fn strip_arabic_diacritics(s: &str) -> String {
+    s.chars()
+        .filter(|&c| {
+            !matches!(c,
+                '\u{064B}'..='\u{065F}' // fathatan … wavy hamza below
+                | '\u{0610}'..='\u{061A}' // extended Arabic marks
+                | '\u{0670}'              // superscript alef
+                | '\u{06D6}'..='\u{06DC}' // Quranic annotation signs
+                | '\u{06DF}'..='\u{06E4}'
+                | '\u{06E7}'..='\u{06E8}'
+                | '\u{06EA}'..='\u{06ED}'
+            )
+        })
+        .collect()
+}
+
+/// Languages (ISO codes stored in `translators.lang`) whose translation text is
+/// written in Arabic script and therefore benefits from consonantal search.
+const ARABIC_SCRIPT_LANGS: &[&str] = &["FA", "HA", "MS", "PA", "PS", "UR"];
+
+/// Return true if `word` appears in `text` as a whole token (split on whitespace).
+fn is_whole_word(text: &str, word: &str) -> bool {
+    text.split_whitespace().any(|t| t == word)
+}
+
+/// Check all `words` against `text`. The last word uses whole-word matching when
+/// `last_whole_word` is true; all other words use substring matching.
+fn words_match(text: &str, words: &[String], last_whole_word: bool) -> bool {
+    let last = words.len().saturating_sub(1);
+    words.iter().enumerate().all(|(i, w)| {
+        if i == last && last_whole_word {
+            is_whole_word(text, w.as_str())
+        } else {
+            text.contains(w.as_str())
+        }
+    })
+}
+
+/// Fetch all (surah, ayah, text) rows from `translations` for a given translator,
+/// then filter in Rust using consonantal, multi-word AND matching.
+fn consonantal_translation_search(
+    conn: &rusqlite::Connection,
+    tid: i64,
+    words: &[String],
+    last_whole_word: bool,
+) -> Result<Vec<AyahMatch>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT surah, ayah, text FROM translations
+             WHERE translator_id = ?1 ORDER BY surah, ayah",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![tid], |row| {
+            Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, String>(2)?))
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    let results = rows
+        .into_iter()
+        .filter_map(|(surah, ayah, text)| {
+            let stripped = strip_arabic_diacritics(&text);
+            if words_match(&stripped, words, last_whole_word) {
+                Some(AyahMatch { surah, ayah })
+            } else {
+                None
+            }
+        })
+        .collect();
+    Ok(results)
+}
+
+#[tauri::command]
+pub fn search_quran(
+    db: State<Database>,
+    query: String,
+    translator_id: Option<i64>,
+) -> Result<Vec<AyahMatch>, String> {
+    if query.trim().is_empty() {
+        return Ok(vec![]);
+    }
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+
+    // Detect Arabic script in the query
+    let is_arabic = query.chars().any(|c| ('\u{0600}'..='\u{06FF}').contains(&c));
+
+    // Trailing whitespace in the query means the user wants the last word matched
+    // as a standalone token (whole-word boundary), not as a prefix of another word.
+    let last_whole_word = query.ends_with(|c: char| c.is_whitespace());
+
+    if is_arabic {
+        // Strip diacritics from the query and split into words for AND matching
+        let stripped_query = strip_arabic_diacritics(query.trim());
+        let words: Vec<String> = stripped_query
+            .split_whitespace()
+            .map(|w| w.to_string())
+            .collect();
+
+        // If an Arabic-script translator is active, search that translation table.
+        // Otherwise search the Quran text directly.
+        if let Some(tid) = translator_id {
+            let lang: Option<String> = conn
+                .query_row(
+                    "SELECT lang FROM translators WHERE id = ?1",
+                    rusqlite::params![tid],
+                    |row| row.get(0),
+                )
+                .ok();
+            if lang.as_deref().map(|l| ARABIC_SCRIPT_LANGS.contains(&l)).unwrap_or(false) {
+                return consonantal_translation_search(&conn, tid, &words, last_whole_word);
+            }
+        }
+
+        // Default: search quran_text consonantally
+        let mut stmt = conn
+            .prepare("SELECT sura, aya, text FROM quran_text ORDER BY sura, aya")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map([], |row| {
+                Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, String>(2)?))
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        let results = rows
+            .into_iter()
+            .filter_map(|(sura, aya, text)| {
+                let stripped = strip_arabic_diacritics(&text);
+                if words_match(&stripped, &words, last_whole_word) {
+                    Some(AyahMatch { surah: sura, ayah: aya })
+                } else {
+                    None
+                }
+            })
+            .collect();
+        Ok(results)
+    } else {
+        // Latin/Roman query — multi-word AND search against the active translation.
+        // Diacritics are stripped from the stored text too, covering Arabic-script
+        // translations that the user might query via romanised input.
+        let tid = translator_id.unwrap_or(1);
+        let words: Vec<String> = query
+            .trim()
+            .split_whitespace()
+            .map(|w| w.to_lowercase())
+            .collect();
+        if words.is_empty() {
+            return Ok(vec![]);
+        }
+
+        // Pre-filter in SQL on the first word to reduce in-memory work, then
+        // apply the remaining words and diacritic stripping in Rust.
+        let first_pattern = format!("%{}%", words[0]);
+        let mut stmt = conn
+            .prepare(
+                "SELECT surah, ayah, text FROM translations
+                 WHERE translator_id = ?1 AND text LIKE ?2
+                 ORDER BY surah, ayah",
+            )
+            .map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(rusqlite::params![tid, first_pattern], |row| {
+                Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, String>(2)?))
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        let results = rows
+            .into_iter()
+            .filter_map(|(surah, ayah, text)| {
+                let normalised = strip_arabic_diacritics(&text).to_lowercase();
+                if words_match(&normalised, &words, last_whole_word) {
+                    Some(AyahMatch { surah, ayah })
+                } else {
+                    None
+                }
+            })
+            .collect();
+        Ok(results)
+    }
+}
+
+// ── Tafsir commands ───────────────────────────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct TafsirAuthorInfo {
+    pub id: i64,
+    pub lang: String,
+    pub name: String,
+}
+
+#[derive(Serialize)]
+pub struct AyahTafsir {
+    pub ayah: i64,
+    pub text: String,
+}
+
+#[tauri::command]
+pub fn get_tafsir_authors(db: State<Database>) -> Result<Vec<TafsirAuthorInfo>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare("SELECT id, lang, name FROM tafsir_authors ORDER BY lang, name")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(TafsirAuthorInfo {
+                id: row.get(0)?,
+                lang: row.get(1)?,
+                name: row.get(2)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+#[tauri::command]
+pub fn get_surah_tafsir(
+    db: State<Database>,
+    surah: i64,
+    author_id: i64,
+) -> Result<Vec<AyahTafsir>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT ayah, text FROM tafsirs
+             WHERE author_id = ?1 AND surah = ?2
+             ORDER BY ayah",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![author_id, surah], |row| {
+            Ok(AyahTafsir {
+                ayah: row.get(0)?,
+                text: row.get(1)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
 }
