@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { get } from "svelte/store";
-    import { invoke } from "@tauri-apps/api/core";
     import { listen } from "@tauri-apps/api/event";
     import { IS_APPLE } from "@lexical/utils";
     import {
@@ -11,11 +10,26 @@
         type TermLine,
         type TermTab,
     } from "$lib/stores/julia-terminal.store";
-    import { juliaReplHistory, juliaPlots, cmFontSize, type ReplLine } from "$lib/stores/editor.store";
-    import { selectedSurahIdx, morphologyAyahFilter, morphologyMultiSurahList } from '$lib/stores/quran.svelte';
-    import type { SurahMorphology } from '$lib/types/morphology';
-    import { recitationPlaylist } from '$lib/stores/recitation.store';
-    import { multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap } from '$lib/stores/translation.store';
+    import {
+        juliaReplHistory,
+        juliaPlots,
+        cmFontSize,
+        juliaReplStarted,
+        type ReplLine,
+    } from "$lib/stores/editor.store";
+    import { invoke } from "@tauri-apps/api/core";
+    import {
+        selectedSurahIdx,
+        morphologyAyahFilter,
+        morphologyMultiSurahList,
+    } from "$lib/stores/quran.svelte";
+    import type { SurahMorphology } from "$lib/types/morphology";
+    import { recitationPlaylist } from "$lib/stores/recitation.store";
+    import {
+        multiSurahTranslationMap,
+        multiSurahTransliterationMap,
+        multiSurahWordByWordMap,
+    } from "$lib/stores/translation.store";
 
     // ── Terminal state (shared across all Julia tabs) ─────────────────────────
 
@@ -81,8 +95,11 @@
         }
     }
 
-    function classifyOutput(text: string, isStderr: boolean): 'error' | 'warn' | 'output' {
-        if (!isStderr) return 'output';
+    function classifyOutput(
+        text: string,
+        isStderr: boolean,
+    ): "error" | "warn" | "output" {
+        if (!isStderr) return "output";
         const infoPatterns = [
             /^\s*\[ (Info|Warning|Debug)/,
             /^\s*┌ (Info|Warning|Debug)/,
@@ -97,11 +114,22 @@
             /^\s*[✓⌛●○]/,
             /^\s*\[[\d=>\s]+\]/,
         ];
-        if (infoPatterns.some(p => p.test(text))) return 'warn';
-        return 'error';
+        if (infoPatterns.some((p) => p.test(text))) return "warn";
+        return "error";
     }
 
     function clearRepl() {
+        juliaReplHistory.set([]);
+    }
+
+    async function restartRepl() {
+        juliaIsRunning.set(false);
+        try {
+            await invoke("stop_julia_repl");
+        } catch {
+            /* ignore */
+        }
+        juliaReplStarted.set(false);
         juliaReplHistory.set([]);
     }
 
@@ -230,22 +258,34 @@
         }>("julia-output", (event) => {
             const { chunk, is_done, error } = event.payload;
             if (chunk) {
-                const lines = chunk.split('\n');
-                const alLines = lines.filter(l => l.startsWith('__AL_CMD__:'));
-                const restLines = lines.filter(l => !l.startsWith('__AL_CMD__:'));
+                const lines = chunk.split("\n");
+                const alLines = lines.filter((l) =>
+                    l.startsWith("__AL_CMD__:"),
+                );
+                const restLines = lines.filter(
+                    (l) => !l.startsWith("__AL_CMD__:"),
+                );
 
                 for (const cmdLine of alLines) {
                     try {
-                        const cmd = JSON.parse(cmdLine.slice('__AL_CMD__:'.length));
-                        if (cmd.type === 'plot') {
-                            const { format, data } = cmd as { format: 'png' | 'svg'; data: string };
-                            juliaPlots.update(plots => [...plots, {
-                                id: crypto.randomUUID(),
-                                format,
-                                data,
-                                timestamp: Date.now(),
-                            }]);
-                        } else if (cmd.type === 'display') {
+                        const cmd = JSON.parse(
+                            cmdLine.slice("__AL_CMD__:".length),
+                        );
+                        if (cmd.type === "plot") {
+                            const { format, data } = cmd as {
+                                format: "png" | "svg";
+                                data: string;
+                            };
+                            juliaPlots.update((plots) => [
+                                ...plots,
+                                {
+                                    id: crypto.randomUUID(),
+                                    format,
+                                    data,
+                                    timestamp: Date.now(),
+                                },
+                            ]);
+                        } else if (cmd.type === "display") {
                             const surahs: number[] = cmd.surahs;
                             const ayahs: number[] | null = cmd.ayahs;
 
@@ -265,53 +305,88 @@
                                     const loaded: SurahMorphology[] = [];
                                     for (const surahNum of surahs) {
                                         try {
-                                            const data = await invoke<SurahMorphology>('get_surah_morphology', { surahNumber: surahNum });
+                                            const data =
+                                                await invoke<SurahMorphology>(
+                                                    "get_surah_morphology",
+                                                    { surahNumber: surahNum },
+                                                );
                                             if (ayahFilter !== null) {
-                                                const maxAyah = Math.max(...data.ayahs.map(a => a.ayah));
-                                                const missing = ayahFilter.filter(n => n > maxAyah);
+                                                const maxAyah = Math.max(
+                                                    ...data.ayahs.map(
+                                                        (a) => a.ayah,
+                                                    ),
+                                                );
+                                                const missing =
+                                                    ayahFilter.filter(
+                                                        (n) => n > maxAyah,
+                                                    );
                                                 if (missing.length > 0) {
-                                                    juliaReplHistory.update(h => [...h, {
-                                                        text: `Surah ${surahNum} has only ${maxAyah} ayahs — requested: ${missing.join(', ')}`,
-                                                        kind: 'error' as const,
-                                                    }]);
+                                                    juliaReplHistory.update(
+                                                        (h) => [
+                                                            ...h,
+                                                            {
+                                                                text: `Surah ${surahNum} has only ${maxAyah} ayahs — requested: ${missing.join(", ")}`,
+                                                                kind: "error" as const,
+                                                            },
+                                                        ],
+                                                    );
                                                     scrollReplToBottom();
                                                 }
                                             }
                                             loaded.push(data);
                                         } catch (e) {
-                                            juliaReplHistory.update(h => [...h, {
-                                                text: `Failed to load surah ${surahNum}: ${e}`,
-                                                kind: 'error' as const,
-                                            }]);
+                                            juliaReplHistory.update((h) => [
+                                                ...h,
+                                                {
+                                                    text: `Failed to load surah ${surahNum}: ${e}`,
+                                                    kind: "error" as const,
+                                                },
+                                            ]);
                                             scrollReplToBottom();
                                         }
                                     }
                                     if (loaded.length === 0) return;
                                     morphologyMultiSurahList.set(loaded);
                                     morphologyAyahFilter.set(ayahFilter);
-                                    if (surahs.length === 1) selectedSurahIdx.set(surahs[0]);
+                                    if (surahs.length === 1)
+                                        selectedSurahIdx.set(surahs[0]);
                                     // Build ordered playlist from displayed ayahs
-                                    const playlist: { surah: number; ayah: number }[] = [];
+                                    const playlist: {
+                                        surah: number;
+                                        ayah: number;
+                                    }[] = [];
                                     for (const surahData of loaded) {
                                         const surahAyahs = ayahFilter
-                                            ? surahData.ayahs.filter(a => ayahFilter.includes(a.ayah))
+                                            ? surahData.ayahs.filter((a) =>
+                                                  ayahFilter.includes(a.ayah),
+                                              )
                                             : surahData.ayahs;
                                         for (const a of surahAyahs) {
-                                            playlist.push({ surah: surahData.surah, ayah: a.ayah });
+                                            playlist.push({
+                                                surah: surahData.surah,
+                                                ayah: a.ayah,
+                                            });
                                         }
                                     }
-                                    recitationPlaylist.set(playlist.length > 0 ? playlist : null);
+                                    recitationPlaylist.set(
+                                        playlist.length > 0 ? playlist : null,
+                                    );
                                 })();
                             }
                         }
-                    } catch { /* ignore malformed */ }
+                    } catch {
+                        /* ignore malformed */
+                    }
                 }
 
-                const displayChunk = restLines.join('\n');
+                const displayChunk = restLines.join("\n");
                 if (displayChunk) {
                     juliaReplHistory.update((h) => [
                         ...h,
-                        { text: displayChunk, kind: classifyOutput(displayChunk, error !== null) },
+                        {
+                            text: displayChunk,
+                            kind: classifyOutput(displayChunk, error !== null),
+                        },
                     ]);
                 }
             }
@@ -368,12 +443,6 @@
     });
 </script>
 
-<style>
-    :global(.repl-mono) {
-        font-size: var(--repl-font-size, 11px);
-    }
-</style>
-
 <div
     class="flex-1 flex flex-col rounded-md overflow-hidden border border-brand-sand-400 dark:border-[#414559] shadow-sm min-h-0 h-full"
     style="--repl-font-size: {$cmFontSize}px"
@@ -399,15 +468,28 @@
             >
             {#if ts.activePanel === "julia"}
                 {#if isRunning}
-                    <span class="flex items-center gap-1 pr-2 select-none text-brand-gold-400">
+                    <span
+                        class="flex items-center gap-1 pr-2 select-none text-brand-gold-400"
+                    >
                         <svg
                             class="animate-spin h-3 w-3 shrink-0"
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
                         >
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            <circle
+                                class="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                stroke-width="4"
+                            ></circle>
+                            <path
+                                class="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                            ></path>
                         </svg>
                         <span class="text-[10px] italic">Running…</span>
                     </span>
@@ -417,9 +499,35 @@
                         e.stopPropagation();
                         clearRepl();
                     }}
-                    class="cursor-pointer pr-2 text-[10px] font-medium text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] transition-colors select-none"
+                    class="cursor-pointer pr-1 text-[10px] font-medium text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] transition-colors select-none"
                     title="Clear REPL output">Clear</button
                 >
+                <button
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        restartRepl();
+                    }}
+                    class="cursor-pointer px-2 flex items-center gap-0.5 text-[10px] font-medium text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 dark:hover:text-red-400 transition-colors select-none"
+                    title="Kill and restart Julia REPL"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path
+                            d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+                        />
+                        <path d="M3 3v5h5" />
+                    </svg>
+                    Restart
+                </button>
             {/if}
         </div>
 
@@ -495,7 +603,9 @@
                                 {line.text}
                             </div>
                         {:else if line.kind === "warn"}
-                            <div class="pl-[3.2rem] text-amber-400 dark:text-amber-300 whitespace-pre-wrap">
+                            <div
+                                class="pl-[3.2rem] text-amber-400 dark:text-amber-300 whitespace-pre-wrap"
+                            >
                                 {line.text}
                             </div>
                         {:else}
@@ -515,7 +625,9 @@
                 aria-label="REPL input"
                 class="flex items-start gap-2 px-3 py-1.5 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-400 dark:border-[#414559] shrink-0"
                 onclick={() => replInputEl?.focus()}
-                onkeydown={(e) => { if (e.key === 'Enter') replInputEl?.focus(); }}
+                onkeydown={(e) => {
+                    if (e.key === "Enter") replInputEl?.focus();
+                }}
             >
                 <span
                     class="text-brand-gold-600 shrink-0 select-none font-semibold font-mono repl-mono leading-relaxed pt-px"
@@ -597,7 +709,9 @@
                     aria-label="Terminal input"
                     class="flex items-center gap-2 px-3 py-1.5 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-400 dark:border-[#414559] shrink-0"
                     onclick={() => termInputEl?.focus()}
-                    onkeydown={(e) => { if (e.key === 'Enter') termInputEl?.focus(); }}
+                    onkeydown={(e) => {
+                        if (e.key === "Enter") termInputEl?.focus();
+                    }}
                 >
                     <span
                         class="text-brand-gold-600 shrink-0 select-none font-semibold font-mono repl-mono"
@@ -624,3 +738,9 @@
         {/if}
     {/each}
 </div>
+
+<style>
+    :global(.repl-mono) {
+        font-size: var(--repl-font-size, 11px);
+    }
+</style>
