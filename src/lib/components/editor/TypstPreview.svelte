@@ -30,7 +30,7 @@
 
 <!-- Outer: matches Parchment's outer wrapper exactly -->
 <div
-    class="relative z-1 flex flex-col items-center bg-white dark:bg-[#303446] sm:w-full md:w-9/12 lg:w-6/12 sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"
+    class="relative z-1 flex flex-col items-center bg-white dark:bg-[#303446] rounded-r-md sm:w-full md:w-9/12 lg:w-6/12 sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"
 >
     <!-- Inner: matches Parchment's inner scrollable div (border + rounded-r-md) -->
     <div
