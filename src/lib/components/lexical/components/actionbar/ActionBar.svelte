@@ -10,7 +10,7 @@
 </script>
 
 <div
-    class="absolute {topOffset} left-1/2 -translate-x-1/2 flex flex-row justify-stretch"
+    class="absolute {topOffset} left-1/2 z-50 -translate-x-1/2 flex flex-row justify-stretch"
 >
     <div class="mr-4">
         <UndoButton />
