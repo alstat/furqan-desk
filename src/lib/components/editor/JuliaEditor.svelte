@@ -157,7 +157,7 @@
 <div class="relative overflow-visible flex flex-col h-full">
     <!-- Editor area -->
     <div class="flex-1 flex flex-col min-h-0" style="min-height: 120px">
-        <div class="flex items-center justify-between px-2 pt-1 mb-1.5">
+        <div class="flex items-center justify-between px-2 pt-1 mb-1">
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
                 >{effectiveTab?.name ?? "Julia Editor"}</span
