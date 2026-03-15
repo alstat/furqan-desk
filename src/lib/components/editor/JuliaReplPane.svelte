@@ -572,7 +572,7 @@
             <!-- Output -->
             <div
                 bind:this={replOutputEl}
-                class="flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono repl-mono leading-relaxed"
+                class="default-scroll flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono repl-mono leading-relaxed"
                 role="log"
                 aria-label="REPL output"
             >
@@ -657,7 +657,7 @@
                 <!-- Output -->
                 <div
                     bind:this={termOutputEl}
-                    class="flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono repl-mono leading-relaxed"
+                    class="default-scroll flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono repl-mono leading-relaxed"
                     role="log"
                     aria-label="Terminal output"
                 >
