@@ -87,7 +87,7 @@
 <svelte:window onpointerdown={onWindowPointerDown} />
 
 <div
-    class="flex flex-row absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] overflow-x-auto rounded-full border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30"
+    class="tabs-scroll flex flex-row absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] rounded-full border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30"
 >
     {#each $tabs as tab, i (tab.id)}
         {@const nextTab = $tabs[i + 1]}
@@ -188,6 +188,35 @@
         </div>
     {/each}
 </div>
+
+<style>
+    /* Overlay scrollbar: floats over content, doesn't affect layout height */
+    .tabs-scroll {
+        overflow-x: overlay;
+    }
+
+    .tabs-scroll::-webkit-scrollbar {
+        height: 3px;
+    }
+
+    .tabs-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .tabs-scroll::-webkit-scrollbar-thumb {
+        background: transparent;
+        border-radius: 9999px;
+        transition: background 0.3s ease;
+    }
+
+    .tabs-scroll:hover::-webkit-scrollbar-thumb {
+        background: rgba(120, 120, 120, 0.35);
+    }
+
+    .tabs-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(120, 120, 120, 0.6);
+    }
+</style>
 
 <!-- Partner picker — rendered outside scroll container via fixed positioning -->
 {#if pickerForTabId !== null && pickerPos !== null}
