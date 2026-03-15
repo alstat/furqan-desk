@@ -402,7 +402,7 @@ function _al_try_plot(x)
   try
     for obj in cands
       io = IOBuffer()
-      ok = try; show(io, MIME("image/png"), obj); true; catch; false; end
+      ok = try; Base.invokelatest(show, io, MIME("image/png"), obj); true; catch; false; end
       if ok && position(io) > 0
         b64 = Base64.base64encode(take!(io))
         println(stdout, "__AL_CMD__:{\"type\":\"plot\",\"format\":\"png\",\"data\":\"" * b64 * "\"}")
@@ -414,7 +414,7 @@ function _al_try_plot(x)
     if ret === :text
       for obj in cands
         io = IOBuffer()
-        ok = try; show(io, MIME("image/svg+xml"), obj); true; catch; false; end
+        ok = try; Base.invokelatest(show, io, MIME("image/svg+xml"), obj); true; catch; false; end
         if ok && position(io) > 0
           b64 = Base64.base64encode(String(take!(io)))
           println(stdout, "__AL_CMD__:{\"type\":\"plot\",\"format\":\"svg\",\"data\":\"" * b64 * "\"}")
@@ -483,14 +483,14 @@ while true
       parsed = Meta.parseall(code)
       result = nothing
       for expr in parsed.args
-        result = Core.eval(Main, expr)
+        result = Base.invokelatest(Core.eval, Main, expr)
       end
       # Display result unless the code block ended with ';' (REPL suppression)
       if result !== nothing && !_al_ends_with_semicolon(code)
         # Route through display() so Julia's full display stack is used.
         # _ALDisplay (top of stack) handles plots via PNG/SVG and falls back
         # to show(MIME"text/plain") for everything else (DataFrames, etc.).
-        display(result)
+        Base.invokelatest(display, result)
       end
     catch e
       println(stderr, sprint(showerror, e))
