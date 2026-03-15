@@ -4,10 +4,24 @@
 
     let { controlCard, collapsedIcon, xPosition = 'left', yPosition = 'bottom', id = undefined } = $props();
     let isExpanded = $state(false);
+    let container: HTMLElement | undefined = $state();
 
     function toggleExpand() {
         isExpanded = !isExpanded;
     }
+
+    $effect(() => {
+        if (!isExpanded) return;
+
+        function handlePointerDown(e: PointerEvent) {
+            if (container && !container.contains(e.target as Node)) {
+                isExpanded = false;
+            }
+        }
+
+        document.addEventListener('pointerdown', handlePointerDown);
+        return () => document.removeEventListener('pointerdown', handlePointerDown);
+    });
 
     const _ = ['sm:bottom-6.75', 'sm:top-6.75', 'sm:left-2.5', 'sm:right-2.5',
         'bottom-2.5', 'top-2.5', 'left-2.5', 'right-2.5'
@@ -23,7 +37,7 @@
     The expanded panel is absolutely positioned out of flow so it never
     changes the container's dimensions and causes the button to drift.
 -->
-<div {id} class={`absolute ${yPosition}-2.5 ${xPosition}-2.5 sm:${yPosition}-2.5 sm:${xPosition}-2.5 z-20 h-10 w-10`}>
+<div bind:this={container} {id} class={`absolute ${yPosition}-2.5 ${xPosition}-2.5 sm:${yPosition}-2.5 sm:${xPosition}-2.5 z-20 h-10 w-10`}>
 
     {#if isExpanded}
         <div
