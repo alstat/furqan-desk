@@ -178,7 +178,7 @@
     {#if $activeTab?.type === "typst" && !sideBySide}
         <div class="flex-none h-54 flex flex-col p-2">
             <span class={labelClass}>Preview</span>
-            <div class="flex-1 overflow-auto min-h-0">
+            <div class="default-scroll flex-1 overflow-auto min-h-0">
                 {#if $typstIsCompiling}
                     <p class="text-xs text-brand-charcoal-300 italic">
                         Compiling…

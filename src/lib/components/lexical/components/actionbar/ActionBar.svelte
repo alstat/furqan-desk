@@ -18,7 +18,6 @@
     </div>
     <div class="ml-4">
         <ImportButton />
-        <OpenFolderButton />
         <ExportButton />
         <SaveAsButton />
     </div>

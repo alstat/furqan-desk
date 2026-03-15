@@ -34,7 +34,7 @@
 >
     <!-- Inner: matches Parchment's inner scrollable div (border + rounded-r-md) -->
     <div
-        class="border border-stone-200 dark:border-[#414559] w-full flex-1 overflow-y-auto rounded-r-md flex flex-col min-h-0"
+        class="default-scroll border border-stone-200 dark:border-[#414559] w-full flex-1 overflow-y-auto rounded-r-md flex flex-col min-h-0"
     >
         <!-- Toolbar inside the border -->
         <div
@@ -69,7 +69,7 @@
         </div>
 
         <!-- Pages -->
-        <div class="flex-1 overflow-y-auto px-6 pt-4 mb-7">
+        <div class="default-scroll flex-1 overflow-y-auto px-6 pt-4 mb-7">
             {#if $typstCompileError}
                 <pre
                     class="text-xs text-red-500 whitespace-pre-wrap">{$typstCompileError}</pre>
