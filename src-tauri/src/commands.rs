@@ -1468,6 +1468,117 @@ pub async fn clear_manuscript_cache(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+// ── Version queries ───────────────────────────────────────────────────────────
+
+const TYPST_BUNDLED_VERSION: &str = "0.14"; // update when bumping Cargo.toml
+
+/// Return the bundled Typst version (sync, no I/O).
+#[tauri::command]
+pub fn get_typst_version() -> String {
+    TYPST_BUNDLED_VERSION.to_string()
+}
+
+/// Fetch the latest stable Typst release tag from GitHub.
+#[tauri::command]
+pub async fn get_latest_typst_version() -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let resp = client
+        .get("https://api.github.com/repos/typst/typst/releases/latest")
+        .header("User-Agent", "AyahLab/1.0")
+        .send()
+        .await
+        .map_err(|e| format!("Network error: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("GitHub API error (HTTP {})", resp.status()));
+    }
+    let text = resp.text().await.map_err(|e| format!("Failed to read response: {e}"))?;
+    let json: serde_json::Value =
+        serde_json::from_str(&text).map_err(|e| format!("JSON parse error: {e}"))?;
+
+    // Safety net: fall back to listing releases if latest is a pre-release
+    if json.get("prerelease").and_then(|v| v.as_bool()).unwrap_or(false) {
+        return get_latest_stable_typst_release().await;
+    }
+
+    let tag = json
+        .get("tag_name")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "Missing tag_name in response".to_string())?;
+    Ok(tag.trim_start_matches('v').to_string())
+}
+
+async fn get_latest_stable_typst_release() -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let resp = client
+        .get("https://api.github.com/repos/typst/typst/releases")
+        .header("User-Agent", "AyahLab/1.0")
+        .send()
+        .await
+        .map_err(|e| format!("Network error: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("GitHub API error (HTTP {})", resp.status()));
+    }
+    let text = resp.text().await.map_err(|e| format!("Failed to read response: {e}"))?;
+    let json: serde_json::Value =
+        serde_json::from_str(&text).map_err(|e| format!("JSON parse error: {e}"))?;
+    let releases = json.as_array().ok_or("Expected array of releases")?;
+    for release in releases {
+        if !release
+            .get("prerelease")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true)
+        {
+            if let Some(tag) = release.get("tag_name").and_then(|v| v.as_str()) {
+                return Ok(tag.trim_start_matches('v').to_string());
+            }
+        }
+    }
+    Err("No stable Typst release found".to_string())
+}
+
+fn format_bytes(bytes: u64) -> String {
+    if bytes < 1024 {
+        format!("{} B", bytes)
+    } else if bytes < 1024 * 1024 {
+        format!("{:.1} KB", bytes as f64 / 1024.0)
+    } else if bytes < 1024 * 1024 * 1024 {
+        format!("{:.1} MB", bytes as f64 / (1024.0 * 1024.0))
+    } else {
+        format!("{:.2} GB", bytes as f64 / (1024.0 * 1024.0 * 1024.0))
+    }
+}
+
+async fn walk_dir_size(dir: std::path::PathBuf) -> u64 {
+    let mut total = 0u64;
+    let mut stack = vec![dir];
+    while let Some(current) = stack.pop() {
+        let mut rd = match tokio::fs::read_dir(&current).await {
+            Ok(rd) => rd,
+            Err(_) => continue,
+        };
+        while let Ok(Some(entry)) = rd.next_entry().await {
+            let path = entry.path();
+            if path.is_dir() {
+                stack.push(path);
+            } else if let Ok(meta) = tokio::fs::metadata(&path).await {
+                total += meta.len();
+            }
+        }
+    }
+    total
+}
+
+/// Return the total size of the manuscript image cache as a human-readable string.
+#[tauri::command]
+pub async fn get_manuscript_cache_size(app: AppHandle) -> Result<String, String> {
+    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let cache_dir = app_data_dir.join("manuscript-images");
+    if !cache_dir.exists() {
+        return Ok("0 B".to_string());
+    }
+    Ok(format_bytes(walk_dir_size(cache_dir).await))
+}
+
 /// Serve a bundled demo manuscript image (index 0-2) from resources — used by
 /// the first-run tour so images display offline without network calls.
 #[tauri::command]

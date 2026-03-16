@@ -66,7 +66,7 @@
 <div id="tour-sidebar" class={`relative flex justify-right overflow-visible font-base text-slate-900 dark:text-[#c6d0f5] ${sidebarWidth}`}>
 	<!-- Sidebar toggle (top) -->
 	<button
-		class={`${$hideSurahPage() ? 'hidden ' : ''} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} top-4 z-[200] rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559]`}
+		class={`${$hideSurahPage() ? 'hidden ' : ''} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} top-4 z-200 rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559]`}
 		onclick={toggleSidebar}
 		aria-label={$isSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
 	>
