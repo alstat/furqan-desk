@@ -681,6 +681,10 @@
                     </button>
                 </div>
 
+            {:else if loading}
+                <div class="flex-1 flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-full border-2 border-brand-gold-400 border-t-transparent animate-spin"></div>
+                </div>
             {:else if !loading && !error}
                 <div class="flex-1 flex items-center justify-center text-xs text-brand-charcoal-300 dark:text-[#838ba7]">
                     Select a manuscript to view

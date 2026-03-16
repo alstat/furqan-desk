@@ -719,3 +719,153 @@ pub async fn stop_julia_repl(state: State<'_, JuliaState>) -> Result<(), String>
 
     Ok(())
 }
+
+/// Return the currently installed Julia version as a bare semver string (e.g. "1.10.4").
+/// Runs `julia --version` on a blocking thread to avoid stalling the async runtime.
+#[tauri::command]
+pub async fn get_julia_version(state: State<'_, JuliaState>) -> Result<String, String> {
+    let custom = state.custom_path.lock().ok().and_then(|g| g.clone());
+    tokio::task::spawn_blocking(move || {
+        let julia = julia_binary_path(custom.as_deref())
+            .ok_or_else(|| "Julia is not installed".to_string())?;
+        let mut cmd = std::process::Command::new(&julia);
+        cmd.arg("--version")
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::null());
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+        }
+        let output = cmd.output().map_err(|e| format!("Failed to run julia: {e}"))?;
+        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        // "julia version 1.10.0" → "1.10.0"
+        Ok(stdout.strip_prefix("julia version ").unwrap_or(&stdout).to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Fetch the latest stable Julia release tag from GitHub.
+/// Falls back to listing all releases if `/releases/latest` returns a pre-release.
+#[tauri::command]
+pub async fn get_latest_julia_version() -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let resp = client
+        .get("https://api.github.com/repos/JuliaLang/julia/releases/latest")
+        .header("User-Agent", "AyahLab/1.0")
+        .send()
+        .await
+        .map_err(|e| format!("Network error: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("GitHub API error (HTTP {})", resp.status()));
+    }
+    let text = resp.text().await.map_err(|e| format!("Failed to read response: {e}"))?;
+    let json: serde_json::Value =
+        serde_json::from_str(&text).map_err(|e| format!("JSON parse error: {e}"))?;
+
+    // Safety net: if endpoint returns a pre-release, fall back to listing
+    if json.get("prerelease").and_then(|v| v.as_bool()).unwrap_or(false) {
+        return get_latest_stable_release("JuliaLang/julia").await;
+    }
+
+    let tag = json
+        .get("tag_name")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "Missing tag_name in response".to_string())?;
+    Ok(tag.trim_start_matches('v').to_string())
+}
+
+/// Helper: list all releases for `owner/repo` and return the first non-pre-release tag.
+async fn get_latest_stable_release(repo: &str) -> Result<String, String> {
+    let url = format!("https://api.github.com/repos/{repo}/releases");
+    let client = reqwest::Client::new();
+    let resp = client
+        .get(&url)
+        .header("User-Agent", "AyahLab/1.0")
+        .send()
+        .await
+        .map_err(|e| format!("Network error: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("GitHub API error (HTTP {})", resp.status()));
+    }
+    let text = resp.text().await.map_err(|e| format!("Failed to read response: {e}"))?;
+    let json: serde_json::Value =
+        serde_json::from_str(&text).map_err(|e| format!("JSON parse error: {e}"))?;
+    let releases = json.as_array().ok_or("Expected array of releases")?;
+    for release in releases {
+        if !release
+            .get("prerelease")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true)
+        {
+            if let Some(tag) = release.get("tag_name").and_then(|v| v.as_str()) {
+                return Ok(tag.trim_start_matches('v').to_string());
+            }
+        }
+    }
+    Err(format!("No stable release found for {repo}"))
+}
+
+/// Run `juliaup update`, emitting progress on `julia-install-progress`.
+/// Searches `app_data_dir/juliaup` first, then falls back to PATH.
+#[tauri::command]
+pub async fn update_julia(app: AppHandle) -> Result<(), String> {
+    let emit = |msg: &str| {
+        let _ = app.emit(
+            "julia-install-progress",
+            InstallProgress { message: msg.to_string() },
+        );
+    };
+
+    let juliaup = {
+        // Prefer the system juliaup (the one that actually manages the Julia
+        // installation) over our bundled copy, which was only used for first-run
+        // install and may not share the same channel/install configuration.
+        let from_path = {
+            let path_var = std::env::var_os("PATH");
+            let mut found = None;
+            if let Some(path_var) = path_var {
+                for dir in std::env::split_paths(&path_var) {
+                    #[cfg(windows)]
+                    let candidate = dir.join("juliaup.exe");
+                    #[cfg(not(windows))]
+                    let candidate = dir.join("juliaup");
+                    if candidate.exists() {
+                        found = Some(candidate);
+                        break;
+                    }
+                }
+            }
+            found
+        };
+        if let Some(p) = from_path {
+            p
+        } else {
+            // Fall back to the binary we bundled for installation
+            let app_data = app.path().app_data_dir().map_err(|e| e.to_string())?;
+            let bundled = app_data.join("juliaup");
+            if bundled.exists() {
+                bundled
+            } else {
+                return Err("juliaup not found in PATH or app data".to_string());
+            }
+        }
+    };
+
+    emit("Updating Julia via juliaup…");
+
+    let mut cmd = std::process::Command::new(&juliaup);
+    cmd.arg("update");
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+    let status = cmd.status().map_err(|e| format!("Failed to run juliaup: {e}"))?;
+    if !status.success() {
+        return Err("juliaup update failed".to_string());
+    }
+    emit("Julia updated successfully.");
+    Ok(())
+}
