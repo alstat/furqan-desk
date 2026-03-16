@@ -114,7 +114,13 @@
       "Bash(grep -r \"markTabSaved\\\\|setTabContent\\\\|isDirty\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src --include=\"*.svelte\" --include=\"*.ts\" 2>/dev/null | head -40)",
       "Bash(git checkout:*)",
       "Bash(git commit:*)",
-      "WebFetch(domain:developer.microsoft.com)"
+      "WebFetch(domain:developer.microsoft.com)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "WebFetch(domain:v2.tauri.app)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:github.com)",
+      "Bash(security find-identity:*)"
     ]
   }
 }
