@@ -90,6 +90,7 @@ export interface JuliaPlot {
 }
 
 export const juliaPlots: Writable<JuliaPlot[]> = writable([]);
+export const juliaViewerOpen: Writable<boolean> = writable(false);
 
 /** Shared compile output — written by TypstEditor, read by TypstPreview. */
 export const typstSvgPages:     Writable<string[]> = writable([]);

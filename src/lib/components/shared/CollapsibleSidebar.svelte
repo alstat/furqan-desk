@@ -3,11 +3,12 @@
 	import { rotateSpring } from '$lib/stores/animation';
 	import type { TransitionConfig } from 'svelte/transition';
 	import { hideSurahPage, isSidebar, surahOrientation } from '$lib/stores/quran.svelte';
-	import { typstMode } from '$lib/stores/editor.store';
+	import { typstMode, juliaViewerOpen, juliaPlots } from '$lib/stores/editor.store';
 	import FeedbackDialog from './FeedbackDialog.svelte';
 	import DonationDialog from './DonationDialog.svelte';
 	import Icon from '@iconify/svelte';
 	import { donationOpen } from '$lib/stores/tour.store';
+    import { actionBtnStyle } from '$lib/data/toolbar/toolbar';
 
 	let feedbackOpen = $state(false);
 
@@ -82,9 +83,29 @@
 		</svg>
 	</button>
 
+	<!-- Julia Plot Viewer button -->
+	<button
+		class={`${$hideSurahPage() ? 'hidden ' : ''} ${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} bottom-26 z-3 rounded-full
+		       ${$juliaViewerOpen ? 'bg-brand-gold-400 dark:bg-[#363a4f]' : ''}`}
+		onclick={() => ($juliaViewerOpen = !$juliaViewerOpen)}
+		aria-label="Julia Plot Viewer"
+		title="Julia Plot Viewer"
+	>
+		<Icon icon="solar:chart-bold-duotone" class="h-4 w-4" />
+		{#if $juliaPlots.length > 0}
+			<span
+				class="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center
+				       rounded-full bg-brand-gold-500 dark:bg-[#e5c890] text-white dark:text-[#1a1d2e]
+				       text-[8px] font-bold leading-none"
+			>
+				{$juliaPlots.length > 9 ? "9+" : $juliaPlots.length}
+			</span>
+		{/if}
+	</button>
+
 	<!-- Donation button (above feedback) -->
 	<button
-		class={`${$hideSurahPage() ? 'hidden ' : ''} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} bottom-15 z-3 rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559]`}
+		class={`${$hideSurahPage() ? 'hidden ' : ''} ${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} bottom-15 z-3 `}
 		onclick={() => ($donationOpen = true)}
 		aria-label="Support AyahLab"
 		title="Donate / Support"
@@ -94,7 +115,7 @@
 
 	<!-- Feedback button (bottom) — same strip as toggle, aligned vertically at bottom -->
 	<button
-		class={`${$hideSurahPage() ? 'hidden ' : ''} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} bottom-4 z-3 rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559]`}
+		class={`${$hideSurahPage() ? 'hidden ' : ''} ${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} bottom-4 z-3 `}
 		onclick={() => (feedbackOpen = true)}
 		aria-label="Send feedback"
 		title="Send feedback"

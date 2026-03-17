@@ -5,6 +5,7 @@
 	import Icon from '@iconify/svelte';
 	import { openFolderPath, openPreviewTab, openOrFocusTab, isFlatFile } from '$lib/stores/tabs.store';
 	import { surahOrientation } from '$lib/stores/quran.svelte';
+    import { actionBtnStyle } from '$lib/data/toolbar/toolbar';
 
 	interface FileTreeNode {
 		name: string;
@@ -156,7 +157,7 @@
 
 <!-- File Explorer button — outside the editor content div on the left (LTR) or right (RTL), same vertical level as CollapsibleSidebar toggle -->
 <button
-	class="cursor-pointer absolute -left-5 top-1/3 z-3 rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559] {isOpen ? 'bg-brand-gold-400 dark:bg-[#363a4f]' : ''}"
+	class="cursor-pointer absolute -left-5 top-1/3 z-3 {actionBtnStyle} {isOpen ? 'bg-brand-gold-400 dark:bg-[#363a4f]' : ''}"
 	onclick={() => (isOpen = !isOpen)}
 	aria-label="File Explorer"
 	title="File Explorer"
