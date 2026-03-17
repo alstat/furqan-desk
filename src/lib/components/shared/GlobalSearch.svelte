@@ -11,6 +11,7 @@
     import { get } from "svelte/store";
     import { EditorSelection } from "@codemirror/state";
     import { EditorView } from "@codemirror/view";
+    import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
 
     interface MatchLine {
         lineNumber: number;
@@ -192,7 +193,7 @@
 
 <!-- Global Search button — sits just outside the editor on the left, below the FileExplorer button -->
 <button
-    class="cursor-pointer absolute -left-5 top-1/2 z-3 rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559] {isOpen
+    class="cursor-pointer absolute -left-5 top-1/2 z-3 rounded-full {actionBtnStyle} {isOpen
         ? 'bg-brand-gold-400 dark:bg-[#363a4f]'
         : ''}"
     onclick={() => {

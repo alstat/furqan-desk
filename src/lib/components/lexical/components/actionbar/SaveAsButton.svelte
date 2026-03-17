@@ -65,7 +65,7 @@
 </script>
 
 <button
-    class={actionBtnStyle + " p-1"}
+    class={actionBtnStyle}
     onclick={saveAs}
     title={IS_APPLE ? "Save As (⌘⇧S)" : "Save As (Ctrl+Shift+S)"}
     aria-label="Save As"

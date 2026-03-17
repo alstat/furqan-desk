@@ -48,7 +48,7 @@
 
 <div
     id="tour-action-bar"
-    class="absolute -top-5 inset-x-0 flex items-center justify-center gap-2"
+    class="absolute -top-5 inset-x-0 flex items-center justify-center space-x-2"
     dir="ltr"
 >
     <button

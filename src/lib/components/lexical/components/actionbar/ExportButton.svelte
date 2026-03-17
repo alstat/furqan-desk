@@ -90,7 +90,7 @@
 </script>
 
 <button
-    class={actionBtnStyle + " p-1"}
+    class={actionBtnStyle}
     onclick={saveFile}
     title={IS_APPLE ? "Save (⌘S)" : "Save (Ctrl+S)"}
     aria-label="Save file"
