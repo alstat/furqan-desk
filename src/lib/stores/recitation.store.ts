@@ -17,6 +17,8 @@ export const isPlaying = writable(false);
 export const totalAyahsInSurah = writable(0);
 // Set to an ayah number to request playback from outside the player
 export const requestPlayAyah = writable<number | null>(null);
+// Set to a surah number to request basmallah playback (audio = surah 1:1, displayed as ayah 0)
+export const requestPlayBasmallah = writable<number | null>(null);
 
 // Ordered playlist for multi-surah / filtered AL playback. null = standard single-surah mode.
 export const recitationPlaylist = writable<{ surah: number; ayah: number }[] | null>(null);
@@ -38,3 +40,6 @@ export type DownloadProgress = {
 } | null;
 
 export const downloadProgress = writable<DownloadProgress>(null);
+
+// Controls visibility of the RecitationDownloadDialog (rendered outside parchment stacking context)
+export const recitationDownloadDialogOpen = writable(false);

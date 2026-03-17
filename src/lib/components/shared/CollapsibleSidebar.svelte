@@ -3,7 +3,7 @@
 	import { rotateSpring } from '$lib/stores/animation';
 	import type { TransitionConfig } from 'svelte/transition';
 	import { hideSurahPage, isSidebar, surahOrientation } from '$lib/stores/quran.svelte';
-	import { typstMode, juliaViewerOpen, juliaPlots } from '$lib/stores/editor.store';
+	import { typstMode, juliaMode, juliaViewerOpen, juliaPlots } from '$lib/stores/editor.store';
 	import FeedbackDialog from './FeedbackDialog.svelte';
 	import DonationDialog from './DonationDialog.svelte';
 	import Icon from '@iconify/svelte';
@@ -84,24 +84,26 @@
 	</button>
 
 	<!-- Julia Plot Viewer button -->
-	<button
-		class={`${$hideSurahPage() ? 'hidden ' : ''} ${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} bottom-26 z-3 rounded-full
-		       ${$juliaViewerOpen ? 'bg-brand-gold-400 dark:bg-[#363a4f]' : ''}`}
-		onclick={() => ($juliaViewerOpen = !$juliaViewerOpen)}
-		aria-label="Julia Plot Viewer"
-		title="Julia Plot Viewer"
-	>
-		<Icon icon="solar:chart-bold-duotone" class="h-4 w-4" />
-		{#if $juliaPlots.length > 0}
-			<span
-				class="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center
-				       rounded-full bg-brand-gold-500 dark:bg-[#e5c890] text-white dark:text-[#1a1d2e]
-				       text-[8px] font-bold leading-none"
-			>
-				{$juliaPlots.length > 9 ? "9+" : $juliaPlots.length}
-			</span>
-		{/if}
-	</button>
+	{#if $juliaMode || $juliaViewerOpen}
+		<button
+			class={`${$hideSurahPage() ? 'hidden ' : ''} ${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == 'flex-row-reverse' ? 'sm:-right-4 -right-10' : 'sm:-left-4 left-2'} bottom-26 z-3 rounded-full
+			       ${$juliaViewerOpen ? 'bg-brand-gold-400 dark:bg-[#363a4f]' : ''}`}
+			onclick={() => ($juliaViewerOpen = !$juliaViewerOpen)}
+			aria-label="Julia Plot Viewer"
+			title="Julia Plot Viewer"
+		>
+			<Icon icon="solar:chart-bold-duotone" class="h-4 w-4" />
+			{#if $juliaPlots.length > 0}
+				<span
+					class="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center
+					       rounded-full bg-brand-gold-500 dark:bg-[#e5c890] text-white dark:text-[#1a1d2e]
+					       text-[8px] font-bold leading-none"
+				>
+					{$juliaPlots.length > 9 ? "9+" : $juliaPlots.length}
+				</span>
+			{/if}
+		</button>
+	{/if}
 
 	<!-- Donation button (above feedback) -->
 	<button

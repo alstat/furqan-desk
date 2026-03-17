@@ -70,6 +70,7 @@ export const juliaReplHistory: Writable<ReplLine[]> = writable([]);
 export const juliaReplStarted: Writable<boolean> = writable(false);
 
 export const typstMode = derived(activeTab, $t => $t?.type === 'typst' || $t?.type === 'text');
+export const juliaMode = derived(activeTab, $t => $t?.type === 'julia');
 export const typstSource:           Writable<string>             = writable('');
 export const lexicalSnapshot:       Writable<string | null>      = writable(null);
 export const lexicalEditorInstance: Writable<LexicalEditor | null> = writable(null);

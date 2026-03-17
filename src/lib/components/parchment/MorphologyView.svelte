@@ -14,9 +14,9 @@
     import { setLastRead } from "$lib/functions/bookmarks";
     import { currentReadingAyah } from "$lib/stores/bookmarks.store";
     import Icon from "@iconify/svelte";
-    import { requestPlayAyah, requestPlayPosition } from "$lib/stores/recitation.store";
+    import { requestPlayAyah, requestPlayPosition, requestPlayBasmallah } from "$lib/stores/recitation.store";
     import { invoke } from '@tauri-apps/api/core';
-    import { activeTranslatorId, surahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir } from '$lib/stores/translation.store';
+    import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir } from '$lib/stores/translation.store';
     import type { AyahTranslation, AyahTafsir } from '$lib/stores/translation.store';
     import { manuscriptsEnabled, manuscriptAyah, manuscriptViewerOpen } from '$lib/stores/manuscripts.store';
 
@@ -27,6 +27,14 @@
         invoke<AyahTranslation[]>('get_surah_translation', { surah, translatorId: tid })
             .then(rows => surahTranslation.set(rows))
             .catch(() => surahTranslation.set(null));
+    });
+
+    $effect(() => {
+        const tid = $activeTranslatorId;
+        if (!tid) { basmallahTranslation.set(null); return; }
+        invoke<AyahTranslation[]>('get_surah_translation', { surah: 1, translatorId: tid })
+            .then(rows => basmallahTranslation.set(rows.find(r => r.ayah === 1) ?? null))
+            .catch(() => basmallahTranslation.set(null));
     });
 
     $effect(() => {
@@ -272,7 +280,7 @@
             {@const hasExtras = multiTrans !== null || multiTranslit !== null || multiWbw !== null}
             {@render surahNameHeader(multiName, 'mb-6')}
             {#if surahData.surah !== 1 && surahData.surah !== 9 && $basmallahMorphology}
-                <div class="relative mb-6">
+                <div id="ayah-{surahData.surah}-0" class="relative mb-6">
                     <div class="relative px-6 py-1">
                         <div class="relative text-center wrap-break-word leading-loose">
                             {#each $basmallahMorphology.words as word}<span
@@ -283,9 +291,14 @@
                                     class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === 0 ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                                     onclick={(e) => handleWordClick(e, word, 0)}
                                     onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, 0)}
-                                >{word.combined_arabic}&nbsp;</span>{/each}
+                                >{word.combined_arabic}&nbsp;</span>{/each}<span class="group/ayah-num relative inline-block whitespace-nowrap"><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayBasmallah.set(surahData.surah)} title="Play Basmallah" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button></span></span>
                         </div>
                     </div>
+                    {#if $basmallahTranslation && multiTrans !== null}
+                        <div dir="ltr" class="mt-1.5 px-6 text-sm leading-relaxed text-center text-brand-charcoal-500 dark:text-[#a5adce]">
+                            <p dir="ltr">{$basmallahTranslation.text}</p>
+                        </div>
+                    {/if}
                 </div>
             {/if}
             {#if hasExtras}
@@ -349,7 +362,7 @@
 
     {#if $surahMorphology}
         {#if $surahMorphology.surah !== 1 && $surahMorphology.surah !== 9 && $basmallahMorphology}
-            <div class="relative mb-8">
+            <div id="ayah-0" class="relative mb-8">
 
                 <!-- Basmallah text with subtle tint, no frame -->
                 <div class="relative px-6 py-1">
@@ -362,9 +375,15 @@
                                 class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === 0 ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                                 onclick={(e) => handleWordClick(e, word, 0)}
                                 onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, 0)}
-                            >{word.combined_arabic}&nbsp;</span>{/each}
+                            >{word.combined_arabic}&nbsp;</span>{/each}<span class="group/ayah-num relative inline-block whitespace-nowrap"><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayBasmallah.set($surahMorphology!.surah)} title="Play Basmallah" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button></span></span>
                     </div>
                 </div>
+
+                {#if $basmallahTranslation && translationMap !== null}
+                    <div dir="ltr" class="mt-1.5 px-6 text-sm leading-relaxed text-center text-brand-charcoal-500 dark:text-[#a5adce]">
+                        <p dir="ltr">{$basmallahTranslation.text}</p>
+                    </div>
+                {/if}
 
             </div>
         {/if}

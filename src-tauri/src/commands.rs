@@ -147,7 +147,7 @@ pub async fn download_recitation(
                      ORDER BY surah_number, ayah_number",
                 )
                 .map_err(|e| e.to_string())?;
-            let result = stmt.query_map(rusqlite::params![reciter_id, sf], |row| {
+            let mut rows = stmt.query_map(rusqlite::params![reciter_id, sf], |row| {
                 Ok((
                     row.get::<_, i64>(0)?,
                     row.get::<_, i64>(1)?,
@@ -157,7 +157,24 @@ pub async fn download_recitation(
             .map_err(|e| e.to_string())?
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| e.to_string())?;
-            result
+            // Also include surah 1 (basmallah) if this surah needs one
+            if sf != 1 && sf != 9 {
+                let mut stmt1 = conn.prepare(
+                    "SELECT surah_number, ayah_number, audio_url FROM recitations
+                     WHERE reciter_id = ?1 AND surah_number = 1
+                     ORDER BY ayah_number",
+                ).map_err(|e| e.to_string())?;
+                let surah1_rows = stmt1.query_map(rusqlite::params![reciter_id], |row| {
+                    Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, String>(2)?))
+                })
+                .map_err(|e| e.to_string())?
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| e.to_string())?;
+                let mut combined = surah1_rows;
+                combined.extend(rows);
+                rows = combined;
+            }
+            rows
         } else {
             let mut stmt = conn
                 .prepare(
