@@ -7,6 +7,7 @@
     import { manuscriptsEnabled } from '$lib/stores/manuscripts.store';
     import { onMount } from 'svelte';
     import { listen } from '@tauri-apps/api/event';
+    import { openUrl } from '@tauri-apps/plugin-opener';
 
     interface Props {
         open: boolean;
@@ -229,6 +230,20 @@
                     Your notes, bookmarks, and settings stay on your device only —
                     the author has no way to access your data.
                 </p>
+            </div>
+        </div>
+
+        <!-- Website -->
+        <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
+            <p class={sectionLabel}>Website</p>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <Icon icon="solar:global-bold-duotone" class="text-brand-gold-400" width="0.9rem" />
+                    <span class={rowLabel}>ayahlab.com</span>
+                </div>
+                <button class={actionBtn} onclick={() => openUrl('https://www.ayahlab.com/')}>
+                    Visit
+                </button>
             </div>
         </div>
     {/snippet}

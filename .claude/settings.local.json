@@ -120,7 +120,8 @@
       "WebFetch(domain:v2.tauri.app)",
       "WebFetch(domain:dev.to)",
       "WebFetch(domain:github.com)",
-      "Bash(security find-identity:*)"
+      "Bash(security find-identity:*)",
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src -name *.svg -o -name *.png)"
     ]
   }
 }

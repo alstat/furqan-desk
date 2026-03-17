@@ -8,6 +8,7 @@
     import EditorToolbar from "$lib/components/widgets/editor/EditorToolbar.svelte";
     import Sidebar from "$lib/components/sidebar/Sidebar.svelte";
     import TourOverlay from "$lib/components/tour/TourOverlay.svelte";
+    import SplashScreen from "$lib/components/shared/SplashScreen.svelte";
     import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
     import HelpDialog from "$lib/components/help/HelpDialog.svelte";
     import ManuscriptViewer from "$lib/components/manuscripts/ManuscriptViewer.svelte";
@@ -27,10 +28,14 @@
     let height: number = $state(typeof window !== 'undefined' ? window.innerHeight : 600);
     let showSettings = $state(false);
     let showHelp = $state(false);
+    let isLoading = $state(true);
 
     onMount(async () => {
         try {
-            const labels = await invoke<SurahLabel[]>("get_surah_labels");
+            const [labels] = await Promise.all([
+                invoke<SurahLabel[]>("get_surah_labels"),
+                new Promise<void>(resolve => setTimeout(resolve, 1400)),
+            ]);
             surahLabels.set(labels);
             selectedSurahName.set(labels[0]?.ar ?? "");
         } catch (error) {
@@ -38,6 +43,8 @@
                 "Failed to load surah labels:",
                 error instanceof Error ? error.message : error,
             );
+        } finally {
+            isLoading = false;
         }
         checkFirstRun();
     });
@@ -92,3 +99,4 @@
 <HelpDialog open={showHelp} onClose={() => (showHelp = false)} />
 <ManuscriptViewer open={$manuscriptViewerOpen} onClose={() => manuscriptViewerOpen.set(false)} />
 <ManuscriptViewer open={$manuscriptDemoOpen} onClose={() => manuscriptDemoOpen.set(false)} demoMode={true} />
+<SplashScreen visible={isLoading} />
