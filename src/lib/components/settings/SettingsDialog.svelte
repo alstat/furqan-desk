@@ -8,6 +8,7 @@
     import { onMount } from 'svelte';
     import { listen } from '@tauri-apps/api/event';
     import { openUrl } from '@tauri-apps/plugin-opener';
+    import { getVersion } from '@tauri-apps/api/app';
 
     interface Props {
         open: boolean;
@@ -35,6 +36,12 @@
             manuscriptCacheSize = await invoke<string>('get_manuscript_cache_size');
         } catch {}
     }
+
+    // ── App version state ─────────────────────────────────────────────────────
+    let appVersion       = $state<string | null>(null);
+    let latestAppVersion = $state<string | null>(null);
+    let appCheckState    = $state<'idle' | 'checking' | 'error'>('idle');
+    let appCheckError    = $state('');
 
     // ── Julia version state ───────────────────────────────────────────────────
     let juliaInstalledVersion = $state<string | null>(null);
@@ -81,6 +88,7 @@
     }
 
     onMount(async () => {
+        try { appVersion = await getVersion(); } catch {}
         try { juliaInstalledVersion = await invoke<string>('get_julia_version'); } catch {}
         await refreshCacheSize();
 
@@ -220,6 +228,71 @@
             {/if}
         </div>
 
+        <!-- Website -->
+        <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
+            <p class={sectionLabel}>Website</p>
+
+            <!-- Row 1: current version + check button -->
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <Icon icon="solar:global-bold-duotone" class="text-brand-gold-400" width="0.9rem" />
+                    <span class={rowLabel}>
+                        ayahlab.com
+                        {#if appVersion}
+                            <span class="ml-1 font-mono text-brand-charcoal-300 dark:text-[#838ba7]">v{appVersion}</span>
+                        {/if}
+                    </span>
+                </div>
+                <button
+                    class={actionBtn}
+                    disabled={appCheckState === 'checking'}
+                    onclick={async () => {
+                        appCheckState = 'checking';
+                        appCheckError = '';
+                        latestAppVersion = null;
+                        try {
+                            latestAppVersion = await invoke<string>('get_latest_ayahlab_version');
+                            appCheckState = 'idle';
+                        } catch (e) {
+                            appCheckError = String(e).slice(0, 180);
+                            appCheckState = 'error';
+                        }
+                    }}
+                >
+                    {#if appCheckState === 'checking'}
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin" />
+                        Checking…
+                    {:else}
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" />
+                        Check for updates
+                    {/if}
+                </button>
+            </div>
+
+            <!-- Row 2: latest version result + action -->
+            {#if latestAppVersion && appVersion}
+                <div class="flex items-center justify-between mt-1">
+                    <span class={rowLabel}>
+                        Latest version
+                        <span class="ml-1 font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]">v{latestAppVersion}</span>
+                    </span>
+                    {#if isNewer(latestAppVersion, appVersion)}
+                        <button class={actionBtn} onclick={() => openUrl('https://www.ayahlab.com/')}>
+                            <Icon icon="solar:download-bold-duotone" width="0.85rem" />
+                            Download update
+                        </button>
+                    {:else}
+                        <span class="text-xs text-brand-charcoal-300 dark:text-[#838ba7]">Up to date</span>
+                    {/if}
+                </div>
+            {/if}
+
+            <!-- Error display -->
+            {#if appCheckState === 'error'}
+                <p class="mt-1 text-[11px] text-red-500 dark:text-red-400 break-all">{appCheckError}</p>
+            {/if}
+        </div>
+
         <!-- Privacy -->
         <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
             <p class={sectionLabel}>Privacy</p>
@@ -230,20 +303,6 @@
                     Your notes, bookmarks, and settings stay on your device only —
                     the author has no way to access your data.
                 </p>
-            </div>
-        </div>
-
-        <!-- Website -->
-        <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
-            <p class={sectionLabel}>Website</p>
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <Icon icon="solar:global-bold-duotone" class="text-brand-gold-400" width="0.9rem" />
-                    <span class={rowLabel}>ayahlab.com</span>
-                </div>
-                <button class={actionBtn} onclick={() => openUrl('https://www.ayahlab.com/')}>
-                    Visit
-                </button>
             </div>
         </div>
     {/snippet}

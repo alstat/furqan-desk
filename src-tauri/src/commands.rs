@@ -1524,6 +1524,29 @@ pub async fn get_latest_typst_version() -> Result<String, String> {
     Ok(tag.trim_start_matches('v').to_string())
 }
 
+/// Fetch the latest AyahLab version from the public versions.txt file.
+#[tauri::command]
+pub async fn get_latest_ayahlab_version() -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let resp = client
+        .get("https://raw.githubusercontent.com/alstat/ayahlab-versions/refs/heads/main/versions.txt")
+        .header("User-Agent", "AyahLab/1.0")
+        .send()
+        .await
+        .map_err(|e| format!("Network error: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("HTTP error ({})", resp.status()));
+    }
+    let text = resp.text().await.map_err(|e| format!("Failed to read response: {e}"))?;
+    let version = text
+        .lines()
+        .next()
+        .map(|l| l.trim().trim_start_matches('v').to_string())
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| "versions.txt is empty".to_string())?;
+    Ok(version)
+}
+
 async fn get_latest_stable_typst_release() -> Result<String, String> {
     let client = reqwest::Client::new();
     let resp = client
