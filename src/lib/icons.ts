@@ -107,6 +107,7 @@ addCollection(pick(solarData, [
     'trash-bin-minimalistic-bold-duotone',
     'trash-bin-trash-bold-duotone',
     'unlink-bold',
+    'upload-bold-duotone',
     'wifi-router-minimalistic-bold-duotone',
 ]));
 
@@ -116,6 +117,7 @@ addCollection(pick(fluentData, [
     'arrow-redo-16-filled',
     'arrow-undo-16-filled',
     'code-16-filled',
+    'paint-bucket-16-filled',
     'text-bold-16-filled',
     'text-bullet-list-16-filled',
     'text-italic-16-filled',
@@ -185,6 +187,8 @@ import mdiData from '@iconify-json/mdi/icons.json';
 addCollection(pick(mdiData, [
     'close',
     'format-paragraph',
+    'table-merge-cells',
+    'table-split-cell',
 ]));
 
 // ── ph ─────────────────────────────────────────────────────────────────────
@@ -208,8 +212,17 @@ addCollection(pick(riData, [
 // ── tabler ─────────────────────────────────────────────────────────────────
 import tablerData from '@iconify-json/tabler/icons.json';
 addCollection(pick(tablerData, [
+    'column-insert-left',
+    'column-insert-right',
+    'column-remove',
     'dots',
+    'layout-columns',
+    'layout-rows',
     'math',
+    'row-insert-bottom',
+    'row-insert-top',
+    'row-remove',
+    'trash',
 ]));
 
 // ── carbon ─────────────────────────────────────────────────────────────────
