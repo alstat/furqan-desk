@@ -32,7 +32,11 @@ export const cmFontSize = {
 // ── App dark mode ─────────────────────────────────────────────────────────────
 
 function loadAppDarkMode(): boolean {
-    try { return localStorage.getItem('app-dark-mode') === 'true'; } catch { /* ignore */ }
+    try {
+        const stored = localStorage.getItem('app-dark-mode');
+        if (stored !== null) return stored === 'true';
+    } catch { /* ignore */ }
+    try { return window.matchMedia('(prefers-color-scheme: dark)').matches; } catch { /* ignore */ }
     return false;
 }
 
