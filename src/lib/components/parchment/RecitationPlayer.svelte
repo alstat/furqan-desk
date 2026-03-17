@@ -14,17 +14,18 @@
         downloadProgress,
         recitationPlaylist,
         requestPlayPosition,
+        requestPlayBasmallah,
+        recitationDownloadDialogOpen,
     } from "$lib/stores/recitation.store";
-    import RecitationDownloadDialog from "./RecitationDownloadDialog.svelte";
 
     let { scrollContainer }: { scrollContainer: HTMLElement | null } = $props();
 
     let audioEl = $state<HTMLAudioElement | null>(null);
     let noInternetToast = $state(false);
     let toastTimer: ReturnType<typeof setTimeout> | null = null;
-    let showDownloadDialog = $state(false);
     // Tracks whether the currently loaded audio is a local file (not network)
     let isCurrentLocal = $state(false);
+    let isPlayingBasmallah = $state(false);
     // Blob URL for the current local audio file; revoked when moving to the next ayah
     let currentBlobUrl: string | null = null;
     // Playlist mode state
@@ -41,7 +42,8 @@
     }
 
     let currentSurahDownloaded = $derived(
-        $downloadedSurahs[$activeReciterId]?.includes($selectedSurahIdx) ?? false
+        $downloadedSurahs[$activeReciterId]?.includes($selectedSurahIdx) ??
+            false,
     );
 
     // Populate downloaded-surahs store on startup so the button state is correct immediately
@@ -95,7 +97,11 @@
         currentPlayingSurah = null;
     }
 
-    async function playAyahOfSurah(surah: number, ayahNum: number) {
+    async function playAyahOfSurah(
+        surah: number,
+        ayahNum: number,
+        displayAyah?: number,
+    ) {
         if (!audioEl) return;
         const reciterId = $activeReciterId;
         try {
@@ -104,7 +110,11 @@
                 duration: number | null;
                 segments: string | null;
                 is_local: boolean;
-            } | null>("get_recitation_ayah", { surah, ayah: ayahNum, reciterId });
+            } | null>("get_recitation_ayah", {
+                surah,
+                ayah: ayahNum,
+                reciterId,
+            });
 
             if (!result) return;
 
@@ -112,15 +122,19 @@
             revokeBlobUrl();
 
             if (result.is_local) {
-                const bytes = await invoke<number[]>("read_audio_bytes", { path: result.audio_url });
-                const blob = new Blob([new Uint8Array(bytes)], { type: "audio/mpeg" });
+                const bytes = await invoke<number[]>("read_audio_bytes", {
+                    path: result.audio_url,
+                });
+                const blob = new Blob([new Uint8Array(bytes)], {
+                    type: "audio/mpeg",
+                });
                 currentBlobUrl = URL.createObjectURL(blob);
                 audioEl.src = currentBlobUrl;
             } else {
                 audioEl.src = result.audio_url;
             }
             audioEl.load();
-            currentPlayingAyah.set(ayahNum);
+            currentPlayingAyah.set(displayAyah ?? ayahNum);
             isPlaying.set(true);
             await audioEl.play();
         } catch (e: unknown) {
@@ -139,6 +153,12 @@
         await playAyahOfSurah($selectedSurahIdx, ayahNum);
     }
 
+    async function playBasmallah(forSurah: number) {
+        isPlayingBasmallah = true;
+        currentPlayingSurah = forSurah;
+        await playAyahOfSurah(1, 1, 0); // fetch surah 1:1 audio, display as ayah 0
+    }
+
     async function playAtPlaylistIdx(idx: number) {
         const playlist = $recitationPlaylist;
         if (!playlist || !audioEl) return;
@@ -153,14 +173,14 @@
     $effect(() => {
         const p = $downloadProgress;
         if (p?.done) {
-            invoke<number[]>("get_downloaded_surahs", { reciterId: p.reciter_id }).then(
-                (surahs) => {
-                    downloadedSurahs.update((prev) => ({
-                        ...prev,
-                        [p.reciter_id]: surahs,
-                    }));
-                }
-            );
+            invoke<number[]>("get_downloaded_surahs", {
+                reciterId: p.reciter_id,
+            }).then((surahs) => {
+                downloadedSurahs.update((prev) => ({
+                    ...prev,
+                    [p.reciter_id]: surahs,
+                }));
+            });
         }
     });
 
@@ -178,6 +198,14 @@
         playAyah(n);
     });
 
+    // Watch for basmallah play requests
+    $effect(() => {
+        const surah = $requestPlayBasmallah;
+        if (surah === null) return;
+        requestPlayBasmallah.set(null);
+        playBasmallah(surah);
+    });
+
     // Watch for position-based play requests from multi-surah view
     $effect(() => {
         const pos = $requestPlayPosition;
@@ -185,11 +213,24 @@
         requestPlayPosition.set(null);
         const playlist = $recitationPlaylist;
         if (!playlist) return;
-        const idx = playlist.findIndex(p => p.surah === pos.surah && p.ayah === pos.ayah);
+        const idx = playlist.findIndex(
+            (p) => p.surah === pos.surah && p.ayah === pos.ayah,
+        );
         if (idx >= 0) playAtPlaylistIdx(idx);
     });
 
     function handleEnded() {
+        if (isPlayingBasmallah) {
+            isPlayingBasmallah = false;
+            if (!$recitationPlaylist) {
+                playAyah(1); // single-surah: auto-advance to ayah 1
+            } else {
+                isPlaying.set(false);
+                currentPlayingAyah.set(null);
+                currentPlayingSurah = null;
+            }
+            return;
+        }
         if ($recitationPlaylist) {
             const nextIdx = playlistIdx + 1;
             if (nextIdx < $recitationPlaylist.length) {
@@ -222,7 +263,11 @@
             } else if ($recitationPlaylist) {
                 playAtPlaylistIdx(0);
             } else {
-                playAyah(1);
+                if ($selectedSurahIdx !== 1 && $selectedSurahIdx !== 9) {
+                    playBasmallah($selectedSurahIdx);
+                } else {
+                    playAyah(1);
+                }
             }
         }
     }
@@ -238,7 +283,8 @@
 
     function nextAyah() {
         if ($recitationPlaylist) {
-            if (playlistIdx < $recitationPlaylist.length - 1) playAtPlaylistIdx(playlistIdx + 1);
+            if (playlistIdx < $recitationPlaylist.length - 1)
+                playAtPlaylistIdx(playlistIdx + 1);
         } else {
             const cur = $currentPlayingAyah ?? 0;
             if (cur < $totalAyahsInSurah) playAyah(cur + 1);
@@ -262,9 +308,12 @@
         const elemSelector = inPlaylist
             ? `[data-surah="${surah}"][data-ayah="${ayah}"], #ayah-${surah}-${ayah}`
             : `[data-ayah="${ayah}"], #ayah-${ayah}`;
-        const anchorSelector = inPlaylist ? `#ayah-${surah}-${ayah}` : `#ayah-${ayah}`;
+        const anchorSelector = inPlaylist
+            ? `#ayah-${surah}-${ayah}`
+            : `#ayah-${ayah}`;
 
-        document.querySelectorAll<HTMLElement>(elemSelector)
+        document
+            .querySelectorAll<HTMLElement>(elemSelector)
             .forEach((el) => el.classList.add("ayah-playing"));
 
         // Auto-scroll if ayah is near bottom 20% of viewport
@@ -273,9 +322,13 @@
             if (anchor) {
                 const rect = anchor.getBoundingClientRect();
                 const containerRect = scrollContainer.getBoundingClientRect();
-                const threshold = containerRect.bottom - containerRect.height * 0.2;
+                const threshold =
+                    containerRect.bottom - containerRect.height * 0.2;
                 if (rect.bottom > threshold) {
-                    anchor.scrollIntoView({ behavior: "smooth", block: "center" });
+                    anchor.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                    });
                 }
             }
         }
@@ -307,7 +360,7 @@
     }
 </script>
 
-<div id="tour-recitation" class="flex flex-col items-center gap-2">
+<div id="tour-recitation" class="flex flex-col items-center gap-2 z-300">
     <!-- No internet toast -->
     {#if noInternetToast}
         <div
@@ -320,7 +373,11 @@
                    text-xs text-red-500 dark:text-red-400
                    select-none"
         >
-            <Icon icon="solar:wifi-router-minimalistic-bold-duotone" width="1rem" class="shrink-0" />
+            <Icon
+                icon="solar:wifi-router-minimalistic-bold-duotone"
+                width="1rem"
+                class="shrink-0"
+            />
             Internet connection required to stream recitation.
         </div>
     {/if}
@@ -338,7 +395,9 @@
         <!-- Prev -->
         <button
             onclick={prevAyah}
-            disabled={inPlaylist ? playlistIdx <= 0 : (!$currentPlayingAyah || $currentPlayingAyah <= 1)}
+            disabled={inPlaylist
+                ? playlistIdx <= 0
+                : !$currentPlayingAyah || $currentPlayingAyah <= 1}
             aria-label="Previous ayah"
             class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
                    hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
@@ -358,7 +417,9 @@
                    transition-all"
         >
             <Icon
-                icon={$isPlaying ? "solar:pause-circle-bold-duotone" : "solar:play-circle-bold-duotone"}
+                icon={$isPlaying
+                    ? "solar:pause-circle-bold-duotone"
+                    : "solar:play-circle-bold-duotone"}
                 width="1.5rem"
             />
         </button>
@@ -366,7 +427,10 @@
         <!-- Next -->
         <button
             onclick={nextAyah}
-            disabled={inPlaylist ? playlistIdx >= playlistLen - 1 : ($currentPlayingAyah !== null && $currentPlayingAyah >= $totalAyahsInSurah)}
+            disabled={inPlaylist
+                ? playlistIdx >= playlistLen - 1
+                : $currentPlayingAyah !== null &&
+                  $currentPlayingAyah >= $totalAyahsInSurah}
             aria-label="Next ayah"
             class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
                    hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
@@ -377,10 +441,14 @@
         </button>
 
         <!-- Divider -->
-        <div class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"></div>
+        <div
+            class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"
+        ></div>
 
         <!-- Ayah counter -->
-        <span class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] tabular-nums px-1 min-w-14 text-center">
+        <span
+            class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] tabular-nums px-1 min-w-14 text-center"
+        >
             {#if inPlaylist}
                 {playlistIdx + 1} / {playlistLen}
             {:else}
@@ -389,27 +457,41 @@
         </span>
 
         <!-- Divider -->
-        <div class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"></div>
+        <div
+            class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"
+        ></div>
 
         <!-- Download / spinner — only rendered when relevant; trailing divider included -->
         {#if $isDownloading || !currentSurahDownloaded}
             {#if $isDownloading}
-                <div class="p-1.5 text-brand-gold-500 dark:text-[#e5c890]" title="Downloading…">
-                    <Icon icon="solar:refresh-bold-duotone" width="1rem" class="animate-spin" />
+                <div
+                    class="p-1.5 text-brand-gold-500 dark:text-[#e5c890]"
+                    title="Downloading…"
+                >
+                    <Icon
+                        icon="solar:refresh-bold-duotone"
+                        width="1rem"
+                        class="animate-spin"
+                    />
                 </div>
             {:else}
                 <button
-                    onclick={() => (showDownloadDialog = true)}
+                    onclick={() => recitationDownloadDialogOpen.set(true)}
                     aria-label="Download recitation"
                     class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
                            hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
                            hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
                            transition-all"
                 >
-                    <Icon icon="solar:download-minimalistic-bold" width="1rem" />
+                    <Icon
+                        icon="solar:download-minimalistic-bold"
+                        width="1rem"
+                    />
                 </button>
             {/if}
-            <div class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"></div>
+            <div
+                class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"
+            ></div>
         {/if}
 
         <!-- Reciter toggle -->
@@ -439,11 +521,9 @@
 </div>
 
 <!-- Hidden audio element -->
-<audio bind:this={audioEl} onended={handleEnded} onerror={handleAudioError} preload="none"></audio>
-
-{#if showDownloadDialog}
-    <RecitationDownloadDialog
-        open={showDownloadDialog}
-        onClose={() => (showDownloadDialog = false)}
-    />
-{/if}
+<audio
+    bind:this={audioEl}
+    onended={handleEnded}
+    onerror={handleAudioError}
+    preload="none"
+></audio>

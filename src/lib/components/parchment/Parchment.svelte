@@ -18,7 +18,8 @@
     import MorphologyView from "./MorphologyView.svelte";
     import { addHighlight } from "$lib/functions/bookmarks";
     import { pendingJumpAyah } from "$lib/stores/bookmarks.store";
-    import { totalAyahsInSurah, recitationPlaylist } from "$lib/stores/recitation.store";
+    import { totalAyahsInSurah, recitationPlaylist, recitationDownloadDialogOpen } from "$lib/stores/recitation.store";
+    import RecitationDownloadDialog from "./RecitationDownloadDialog.svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { activeTranslatorId } from "$lib/stores/translation.store";
 
@@ -209,7 +210,7 @@
     </div>
 
     <div
-        class="absolute bottom-7 inset-x-6 z-10 flex justify-center pointer-events-none"
+        class="absolute bottom-7 inset-x-6 z-30 flex justify-center pointer-events-none"
     >
         <div class="pointer-events-auto">
             <RecitationPlayer {scrollContainer} />
@@ -223,6 +224,10 @@
 <HighlightDialog
     open={showHighlights}
     onClose={() => (showHighlights = false)}
+/>
+<RecitationDownloadDialog
+    open={$recitationDownloadDialogOpen}
+    onClose={() => recitationDownloadDialogOpen.set(false)}
 />
 
 <!-- Floating Save Highlight button -->

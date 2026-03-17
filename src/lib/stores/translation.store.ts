@@ -22,6 +22,7 @@ activeTranslatorId.subscribe(v => {
 
 export const availableTranslators = writable<TranslatorInfo[]>([]);
 export const surahTranslation = writable<AyahTranslation[] | null>(null);
+export const basmallahTranslation = writable<AyahTranslation | null>(null);
 
 export const transliterationEnabled = writable<boolean>(
     browser ? localStorage.getItem('transliterationEnabled') === 'true' : false
