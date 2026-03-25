@@ -491,9 +491,11 @@
 .SL_Theme__hr:after {
   content: '';
   display: block;
-  height: 2px;
-  background-color: #ccc;
-  line-height: 2px;
+  height: 1px;
+  background-color: #d1d5db;
+}
+.dark .SL_Theme__hr:after {
+  background-color: #414559;
 }
 .SL_Theme__hr.selected {
   outline: 2px solid rgb(60, 132, 244);

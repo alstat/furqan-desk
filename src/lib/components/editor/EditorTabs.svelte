@@ -330,6 +330,7 @@
             : null}
 
         <div
+            role="tab"
             class="relative {isBeingDragged(tab.id) ? 'opacity-40' : ''}"
             data-tab-id={tab.id}
             data-picker-anchor
@@ -339,9 +340,9 @@
             onpointerdown={(e) => handleTabPointerDown(e, tab.id)}
         >
             {#if dropTargetId === tab.id && dropSide === "before"}
-                <div aria-hidden="true" class="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-400 z-50 pointer-events-none rounded-full"></div>
+                <div aria-hidden="true" class="absolute left-0 top-0 bottom-0 w-0.5 bg-amber-400 z-50 pointer-events-none rounded-full"></div>
             {:else if dropTargetId === tab.id && dropSide === "after"}
-                <div aria-hidden="true" class="absolute right-0 top-0 bottom-0 w-0.5 bg-blue-400 z-50 pointer-events-none rounded-full"></div>
+                <div aria-hidden="true" class="absolute right-0 top-0 bottom-0 w-0.5 bg-amber-400 z-50 pointer-events-none rounded-full"></div>
             {/if}
             <button
                 onclick={() => {
