@@ -16,7 +16,7 @@
     import Icon from "@iconify/svelte";
     import { requestPlayAyah, requestPlayPosition, requestPlayBasmallah } from "$lib/stores/recitation.store";
     import { invoke } from '@tauri-apps/api/core';
-    import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir } from '$lib/stores/translation.store';
+    import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir, multiSurahTafsirMap } from '$lib/stores/translation.store';
     import type { AyahTranslation, AyahTafsir } from '$lib/stores/translation.store';
     import { manuscriptsEnabled, manuscriptAyah, manuscriptViewerOpen } from '$lib/stores/manuscripts.store';
 
@@ -104,6 +104,18 @@
         )).then(entries => multiSurahWordByWordMap.set(new Map(entries)));
     });
 
+    $effect(() => {
+        const list = $morphologyMultiSurahList;
+        const tid = $activeTafsirId;
+        const enabled = $tafsirEnabled;
+        if (!list || !tid || !enabled) { multiSurahTafsirMap.set(null); return; }
+        Promise.all(list.map(s =>
+            invoke<AyahTafsir[]>('get_surah_tafsir', { surah: s.surah, authorId: tid })
+                .then(rows => [s.surah, new Map(rows.map(r => [r.ayah, r.text]))] as const)
+                .catch(() => [s.surah, new Map<number, string>()] as const)
+        )).then(entries => multiSurahTafsirMap.set(new Map(entries)));
+    });
+
     const translationMap = $derived(
         $surahTranslation
             ? new Map($surahTranslation.map(r => [r.ayah, r]))
@@ -122,6 +134,16 @@
         const next = new Set(expandedTafsirAyahs);
         if (next.has(ayah)) { next.delete(ayah); } else { next.add(ayah); }
         expandedTafsirAyahs = next;
+    }
+
+    // Compound key set for multi-surah tafsir expand/collapse (avoids collisions across surahs)
+    let expandedMultiTafsirKeys = $state(new Set<string>());
+
+    function toggleMultiTafsir(surah: number, ayah: number) {
+        const key = `${surah}-${ayah}`;
+        const next = new Set(expandedMultiTafsirKeys);
+        if (next.has(key)) { next.delete(key); } else { next.add(key); }
+        expandedMultiTafsirKeys = next;
     }
 
     const displayAyahs = $derived(
@@ -277,7 +299,8 @@
             {@const multiTrans = $multiSurahTranslationMap?.get(surahData.surah) ?? null}
             {@const multiTranslit = $multiSurahTransliterationMap?.get(surahData.surah) ?? null}
             {@const multiWbw = $multiSurahWordByWordMap?.get(surahData.surah) ?? null}
-            {@const hasExtras = multiTrans !== null || multiTranslit !== null || multiWbw !== null}
+            {@const multiTafsir = $multiSurahTafsirMap?.get(surahData.surah) ?? null}
+            {@const hasExtras = multiTrans !== null || multiTranslit !== null || multiWbw !== null || multiTafsir !== null}
             {@render surahNameHeader(multiName, 'mb-6')}
             {#if surahData.surah !== 1 && surahData.surah !== 9 && $basmallahMorphology}
                 <div id="ayah-{surahData.surah}-0" class="relative mb-6">
@@ -343,6 +366,22 @@
                                                 <li><span class="font-medium">[{num}]</span> {ftxt}</li>
                                             {/each}
                                         </ol>
+                                    {/if}
+                                </div>
+                            {/if}
+                            {#if multiTafsir?.has(ayahData.ayah)}
+                                <div dir="ltr" class="mt-2 border-t border-brand-sand-100 dark:border-[#414559]/60 pt-2">
+                                    <button
+                                        onclick={() => toggleMultiTafsir(surahData.surah, ayahData.ayah)}
+                                        class="cursor-pointer flex items-center gap-1.5 text-[10.5px] font-semibold text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890] transition-colors mb-1"
+                                    >
+                                        <Icon icon={expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`) ? 'solar:alt-arrow-up-bold' : 'solar:alt-arrow-down-bold'} width="0.65rem" />
+                                        {expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`) ? 'Hide Tafsir' : 'Show Tafsir'}
+                                    </button>
+                                    {#if expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`)}
+                                        <div dir="auto" class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]">
+                                            {@html multiTafsir.get(ayahData.ayah)}
+                                        </div>
                                     {/if}
                                 </div>
                             {/if}
