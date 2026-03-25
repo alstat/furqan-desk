@@ -16,6 +16,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+dotenvy = "0.15"
 
 [dependencies]
 tauri = { version = "2", features = [] }
@@ -32,7 +33,7 @@ typst-assets = { version = "0.14", features = ["fonts"] }
 fontdb    = "0.23"
 once_cell = "1"
 dirs      = "5"
-reqwest   = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+reqwest   = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
 flate2    = "1"
 tar       = "0.4"
 tokio     = { version = "1", features = ["process", "io-util", "sync", "rt", "macros", "time", "fs"] }

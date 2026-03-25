@@ -1,6 +1,7 @@
 mod buckwalter;
 mod commands;
 mod db;
+mod feedback;
 mod julia;
 mod terminal;
 mod typst_world;
@@ -156,6 +157,7 @@ pub fn run() {
             commands::get_manuscript_image,
             commands::clear_manuscript_cache,
             commands::get_manuscript_demo_image,
+            feedback::send_feedback,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
