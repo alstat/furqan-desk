@@ -46,6 +46,8 @@ export const surahWordByWord = writable<Map<string, string> | null>(null);
 export const multiSurahTranslationMap = writable<Map<number, Map<number, AyahTranslation>> | null>(null);
 export const multiSurahTransliterationMap = writable<Map<number, Map<number, string>> | null>(null);
 export const multiSurahWordByWordMap = writable<Map<number, Map<string, string>> | null>(null);
+// Map: surah number → Map<ayah number, tafsir text>
+export const multiSurahTafsirMap = writable<Map<number, Map<number, string>> | null>(null);
 
 export interface TafsirAuthorInfo {
     id: number;
