@@ -39,8 +39,10 @@
         [56, { id: 56, call_number: '"Saray Medina 1a" (Gotthelf Bergsträßer archives)', dimensions: "240 × 320", date: "700 - 800", carbon_dating: "", writing_surface: "Parchment", line_min: "15", line_max: "22", number_of_folios: 391, script_styles: ["ḥiǧāzī", "kūfī"], codicology: null, paleography: null, catalogue_entry: null, bibliography: [] }],
     ]);
 
-    const PANEL_W = 660;
-    const PANEL_H = 560;
+    let panelW = $state(660);
+    let panelH = $state(560);
+    const MIN_W = 380;
+    const MIN_H = 300;
 
     // ── Drag ─────────────────────────────────────────────────────────────────
     let x = $state(0);
@@ -48,6 +50,44 @@
     let isDragging = $state(false);
     let dragStartX = 0, dragStartY = 0, startX = 0, startY = 0;
     let initialized = false;
+
+    // ── Resize ────────────────────────────────────────────────────────────────
+    type ResizeDir = { e: boolean; w: boolean; n: boolean; s: boolean };
+    let isResizing = $state(false);
+    let resizeDir: ResizeDir = { e: false, w: false, n: false, s: false };
+    let resizeStartX = 0, resizeStartY = 0;
+    let resizeStartW = 0, resizeStartH = 0;
+    let resizeStartPanelX = 0, resizeStartPanelY = 0;
+
+    function startResize(e: PointerEvent, dir: ResizeDir) {
+        e.preventDefault(); e.stopPropagation();
+        isResizing = true;
+        resizeDir = dir;
+        resizeStartX = e.clientX; resizeStartY = e.clientY;
+        resizeStartW = panelW; resizeStartH = panelH;
+        resizeStartPanelX = x; resizeStartPanelY = y;
+        document.body.style.userSelect = 'none';
+        window.addEventListener('pointermove', onResize);
+        window.addEventListener('pointerup', stopResize, { once: true });
+    }
+    function onResize(e: PointerEvent) {
+        const dx = e.clientX - resizeStartX;
+        const dy = e.clientY - resizeStartY;
+        let newW = resizeStartW, newH = resizeStartH;
+        let newX = resizeStartPanelX, newY = resizeStartPanelY;
+        if (resizeDir.e) newW = Math.max(MIN_W, resizeStartW + dx);
+        if (resizeDir.s) newH = Math.max(MIN_H, resizeStartH + dy);
+        if (resizeDir.w) { newW = Math.max(MIN_W, resizeStartW - dx); newX = resizeStartPanelX + (resizeStartW - newW); }
+        if (resizeDir.n) { newH = Math.max(MIN_H, resizeStartH - dy); newY = resizeStartPanelY + (resizeStartH - newH); }
+        panelW = newW; panelH = newH;
+        x = Math.max(0, Math.min(window.innerWidth - MIN_W, newX));
+        y = Math.max(0, Math.min(window.innerHeight - 60, newY));
+    }
+    function stopResize() {
+        isResizing = false;
+        document.body.style.userSelect = '';
+        window.removeEventListener('pointermove', onResize);
+    }
 
     // ── API types ─────────────────────────────────────────────────────────────
     interface ManuscriptImage {
@@ -271,11 +311,11 @@
         if (typeof window === 'undefined') return;
         if (open) {
             if (!initialized) {
-                x = Math.max(0, (window.innerWidth  - PANEL_W) / 2);
+                x = Math.max(0, (window.innerWidth  - panelW) / 2);
                 // In demo mode, shift down so the tour tooltip at top-12px has room
                 y = demoMode
-                    ? Math.min(window.innerHeight - PANEL_H - 8, 140)
-                    : Math.max(0, (window.innerHeight - PANEL_H) / 2);
+                    ? Math.min(window.innerHeight - panelH - 8, 140)
+                    : Math.max(0, (window.innerHeight - panelH) / 2);
                 initialized = true;
             }
             window.addEventListener('keydown', handleKeydown);
@@ -299,14 +339,15 @@
         window.addEventListener('pointerup', stopDrag, { once: true });
     }
     function onDrag(e: PointerEvent) {
-        x = Math.max(0, Math.min(window.innerWidth  - PANEL_W, startX + (e.clientX - dragStartX)));
-        y = Math.max(0, Math.min(window.innerHeight - 60,      startY + (e.clientY - dragStartY)));
+        x = Math.max(0, Math.min(window.innerWidth  - panelW, startX + (e.clientX - dragStartX)));
+        y = Math.max(0, Math.min(window.innerHeight - 60,     startY + (e.clientY - dragStartY)));
     }
     function stopDrag() { isDragging = false; window.removeEventListener('pointermove', onDrag); }
 
     onDestroy(() => {
         if (typeof window !== 'undefined') {
             window.removeEventListener('pointermove', onDrag);
+            window.removeEventListener('pointermove', onResize);
             window.removeEventListener('keydown', handleKeydown);
         }
         revokeAll();
@@ -344,7 +385,7 @@
            bg-white dark:bg-[#303446]
            border border-slate-100 dark:border-[#414559]
            {demoMode ? 'z-[9998]' : 'z-[510]'}"
-    style="width:{PANEL_W}px; height:{PANEL_H}px; left:{x}px; top:{y}px;"
+    style="width:{panelW}px; height:{panelH}px; left:{x}px; top:{y}px;"
 >
     <!-- Header / drag handle -->
     <div
@@ -692,5 +733,34 @@
             {/if}
         </div>
     </div>
+
+    <!-- Resize handles -->
+    <div aria-hidden="true" class="resize-handle resize-n"  onpointerdown={(e) => startResize(e, {n:true,  s:false, e:false, w:false})}></div>
+    <div aria-hidden="true" class="resize-handle resize-s"  onpointerdown={(e) => startResize(e, {n:false, s:true,  e:false, w:false})}></div>
+    <div aria-hidden="true" class="resize-handle resize-e"  onpointerdown={(e) => startResize(e, {n:false, s:false, e:true,  w:false})}></div>
+    <div aria-hidden="true" class="resize-handle resize-w"  onpointerdown={(e) => startResize(e, {n:false, s:false, e:false, w:true })}></div>
+    <div aria-hidden="true" class="resize-handle resize-ne" onpointerdown={(e) => startResize(e, {n:true,  s:false, e:true,  w:false})}></div>
+    <div aria-hidden="true" class="resize-handle resize-se" onpointerdown={(e) => startResize(e, {n:false, s:true,  e:true,  w:false})}></div>
+    <div aria-hidden="true" class="resize-handle resize-sw" onpointerdown={(e) => startResize(e, {n:false, s:true,  e:false, w:true })}></div>
+    <div aria-hidden="true" class="resize-handle resize-nw" onpointerdown={(e) => startResize(e, {n:true,  s:false, e:false, w:true })}></div>
 </div>
 {/if}
+
+<style>
+.resize-handle { position: absolute; z-index: 10; }
+.resize-n  { top: 0;    left: 6px;  right: 6px;  height: 6px;  cursor: n-resize;  }
+.resize-s  { bottom: 0; left: 6px;  right: 6px;  height: 6px;  cursor: s-resize;  }
+.resize-e  { top: 6px;  right: 0;   bottom: 6px; width: 6px;   cursor: e-resize;  }
+.resize-w  { top: 6px;  left: 0;    bottom: 6px; width: 6px;   cursor: w-resize;  }
+.resize-ne { top: 0;    right: 0;   width: 12px; height: 12px; cursor: ne-resize; }
+.resize-se { bottom: 0; right: 0;   width: 12px; height: 12px; cursor: se-resize; }
+.resize-sw { bottom: 0; left: 0;    width: 12px; height: 12px; cursor: sw-resize; }
+.resize-nw { top: 0;    left: 0;    width: 12px; height: 12px; cursor: nw-resize; }
+.resize-se::after {
+    content: ''; position: absolute;
+    bottom: 4px; right: 4px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: rgba(130, 130, 130, 0.35);
+}
+</style>

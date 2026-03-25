@@ -124,7 +124,12 @@
       "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src -name *.svg -o -name *.png)",
       "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -maxdepth 2 -name *iconify* -o -name .iconifyrc* -o -name iconify.config.*)",
       "Bash(xargs ls:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -type f -name *orch*.svelte -o -name *Store*.ts -o -name *store*.ts)",
+      "Bash(grep -r \"emit\\\\|julia\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/src/*.rs)",
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -name *.jl -o -name *AL* -type f)",
+      "Bash(grep -E \"\\\\.\\(jl|julia\\)$\")",
+      "Bash(grep -r \"get_surah_morphology\\\\|SurahMorphology\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/src --include=*.rs)"
     ]
   }
 }
