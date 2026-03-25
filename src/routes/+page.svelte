@@ -2,7 +2,6 @@
     import { onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
     import Parchment from "$lib/components/parchment/Parchment.svelte";
-    import TypstPreview from "$lib/components/editor/TypstPreview.svelte";
     import JuliaReplPane from "$lib/components/editor/JuliaReplPane.svelte";
     import SurahWidget from "$lib/components/widgets/surah_ayah/SurahWidget.svelte";
     import EditorToolbar from "$lib/components/widgets/editor/EditorToolbar.svelte";
@@ -21,7 +20,6 @@
         hideSurahPage,
     } from "$lib/stores/quran.svelte";
     import type { SurahLabel } from "$lib/stores/quran.svelte";
-    import { typstMode } from "$lib/stores/editor.store";
     import { activeTab } from "$lib/stores/tabs.store";
     import { checkFirstRun } from "$lib/stores/tour.store";
 
@@ -84,8 +82,6 @@
                     <JuliaReplPane />
                 </div>
             </div>
-        {:else if $hideSurahPage() && $typstMode}
-            <TypstPreview />
         {:else}
             <Parchment />
         {/if}
