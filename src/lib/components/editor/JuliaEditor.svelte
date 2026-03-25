@@ -111,6 +111,7 @@
     let replHeight = $state(256);
     let dragStartY = 0;
     let dragStartHeight = 0;
+    let containerEl: HTMLDivElement;
 
     function startDrag(e: PointerEvent) {
         dragStartY = e.clientY;
@@ -120,7 +121,10 @@
     }
     function onDrag(e: PointerEvent) {
         const delta = dragStartY - e.clientY;
-        replHeight = Math.max(120, dragStartHeight + delta);
+        const maxH = containerEl
+            ? Math.max(120, containerEl.offsetHeight - 120 - 6)
+            : dragStartHeight * 2;
+        replHeight = Math.max(120, Math.min(maxH, dragStartHeight + delta));
     }
     function stopDrag() {
         window.removeEventListener("pointermove", onDrag);
@@ -154,7 +158,7 @@
     ];
 </script>
 
-<div class="relative overflow-visible flex flex-col h-full">
+<div bind:this={containerEl} class="relative overflow-visible flex flex-col h-full">
     <!-- Editor area -->
     <div class="flex-1 flex flex-col min-h-0" style="min-height: 120px">
         <div class="flex items-center justify-between px-2 pt-1 mb-1">

@@ -3,6 +3,7 @@
     import Icon from "@iconify/svelte";
     import { buckwalterToArabic } from "$lib/functions/utils/utils";
     import { fly } from "svelte/transition";
+    import { onDestroy } from "svelte";
 
     interface Props {
         word: MorphWord;
@@ -16,6 +17,40 @@
         document.body.appendChild(node);
         return { destroy() { node.remove(); } };
     }
+
+    // ── Drag ─────────────────────────────────────────────────────────────────
+    let dragX = $state(0);
+    let dragY = $state(0);
+    let isDragging = $state(false);
+    let _dragStartX = 0, _dragStartY = 0, _startDragX = 0, _startDragY = 0;
+
+    // Reset drag offset whenever the anchor position changes (new word clicked)
+    $effect(() => {
+        void position;
+        dragX = 0;
+        dragY = 0;
+    });
+
+    function startDrag(e: PointerEvent): void {
+        if ((e.target as HTMLElement).closest('button')) return;
+        isDragging = true;
+        _dragStartX = e.clientX; _dragStartY = e.clientY;
+        _startDragX = dragX;    _startDragY = dragY;
+        window.addEventListener('pointermove', onDragMove);
+        window.addEventListener('pointerup', stopDrag, { once: true });
+    }
+    function onDragMove(e: PointerEvent): void {
+        dragX = _startDragX + (e.clientX - _dragStartX);
+        dragY = _startDragY + (e.clientY - _dragStartY);
+    }
+    function stopDrag(): void {
+        isDragging = false;
+        window.removeEventListener('pointermove', onDragMove);
+    }
+
+    onDestroy(() => {
+        window.removeEventListener('pointermove', onDragMove);
+    });
 
     type TokenStyle = {
         bg: string;
@@ -171,12 +206,16 @@
     use:portal
     class="ayah-tooltip fixed z-9999 flex w-88 max-h-[76vh] flex-col overflow-hidden rounded-2xl border border-slate-200/70 dark:border-[#414559] bg-white/98 dark:bg-[#292c3c] shadow-2xl backdrop-blur-sm"
     style={position.placement === "below"
-        ? `left: ${position.x}px; top: ${position.y + 8}px;`
-        : `left: ${position.x}px; bottom: calc(100vh - ${position.y}px + 8px);`}
+        ? `left: ${position.x + dragX}px; top: ${position.y + 8 + dragY}px;`
+        : `left: ${position.x + dragX}px; bottom: calc(100vh - ${position.y}px + 8px - ${dragY}px);`}
     transition:fly={{ y: position.placement === "below" ? 6 : -6, duration: 160, opacity: 0 }}
 >
     <!-- Header -->
-    <div class="flex shrink-0 items-center justify-between bg-linear-to-b from-slate-50 to-white dark:from-[#232634] dark:to-[#292c3c] px-4 py-3.5 border-b border-slate-100 dark:border-[#414559]">
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+        class="flex shrink-0 items-center justify-between bg-linear-to-b from-slate-50 to-white dark:from-[#232634] dark:to-[#292c3c] px-4 py-3.5 border-b border-slate-100 dark:border-[#414559] select-none {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
+        onpointerdown={startDrag}
+    >
         <div dir="rtl" class="flex flex-col gap-1">
             <span class="font-scheherazade text-3xl leading-none text-slate-800 dark:text-[#c6d0f5]">
                 {word.combined_arabic}
