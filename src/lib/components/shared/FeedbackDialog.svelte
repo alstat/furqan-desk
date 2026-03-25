@@ -1,19 +1,5 @@
 <script lang="ts">
-    /**
-     * Feedback dialog — sends to ayahlabteam@gmail.com via Resend API.
-     *
-     * Setup (one-time, free — 3,000 emails/month, blocked not charged after):
-     *   1. Sign up at https://resend.com (free plan, no credit card)
-     *   2. Go to API Keys → Create API Key (restricted: "Sending access" only)
-     *   3. Add & verify a sending domain OR use Resend's shared domain (resend.dev)
-     *      for testing — for production add a domain you own.
-     *   4. Paste the API key below as RESEND_API_KEY.
-     *   5. Set RESEND_FROM to the verified sender address, e.g. "feedback@yourdomain.com"
-     *      or "AyahLab <onboarding@resend.dev>" for the shared test domain.
-     */
-    const RESEND_API_KEY = "re_U7ngfEvs_ALa598p27YEaJm7JeVjwSQfH";
-    const RESEND_FROM = "AyahLab Feedback <no-reply@ayahlab.com>";
-
+    import { invoke } from "@tauri-apps/api/core";
     import Icon from "@iconify/svelte";
 
     interface Props {
@@ -53,36 +39,17 @@
 
         sending = true;
         try {
-            const replyTo = fromEmail.trim() || undefined;
-            const bodyText =
-                (replyTo ? `From: ${replyTo}\n\n` : "") + message.trim();
-
-            const res = await fetch("https://api.resend.com/emails", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${RESEND_API_KEY}`,
-                },
-                body: JSON.stringify({
-                    from: RESEND_FROM,
-                    to: ["ayahlabteam@gmail.com"],
-                    reply_to: replyTo,
-                    subject: `[AyahLab Feedback] ${subject.trim()}`,
-                    text: bodyText,
-                }),
+            await invoke("send_feedback", {
+                subject: subject.trim(),
+                message: message.trim(),
+                fromEmail: fromEmail.trim() || null,
             });
-
-            if (res.ok) {
-                sent = true;
-            } else {
-                const data = await res.json().catch(() => ({}));
-                error =
-                    (data as any).message ??
-                    `Error ${res.status}. Please try again.`;
-            }
-        } catch {
+            sent = true;
+        } catch (e) {
             error =
-                "Network error — please check your connection and try again.";
+                typeof e === "string"
+                    ? e
+                    : "Network error — please check your connection and try again.";
         } finally {
             sending = false;
         }
@@ -99,7 +66,9 @@
         onclick={(e) => {
             if (e.target === e.currentTarget) handleClose();
         }}
-        onkeydown={(e) => { if (e.key === 'Escape') handleClose(); }}
+        onkeydown={(e) => {
+            if (e.key === "Escape") handleClose();
+        }}
     >
         <div
             class="flex w-full max-w-md flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden"
