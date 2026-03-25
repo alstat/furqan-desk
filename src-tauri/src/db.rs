@@ -71,11 +71,7 @@ impl Database {
         )?;
 
         // Check if table is already populated
-        let count: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM quran_text",
-            [],
-            |row| row.get(0),
-        )?;
+        let count: i64 = conn.query_row("SELECT COUNT(*) FROM quran_text", [], |row| row.get(0))?;
 
         if count > 0 {
             // Data already exists, skip loading
@@ -92,11 +88,10 @@ impl Database {
         println!("Loading Quran data from SQL file...");
 
         // Read the SQL file
-        let sql_content = fs::read_to_string(sql_path)
-            .map_err(|e| {
-                eprintln!("Failed to read SQL file: {}", e);
-                rusqlite::Error::ToSqlConversionFailure(Box::new(e))
-            })?;
+        let sql_content = fs::read_to_string(sql_path).map_err(|e| {
+            eprintln!("Failed to read SQL file: {}", e);
+            rusqlite::Error::ToSqlConversionFailure(Box::new(e))
+        })?;
 
         println!("SQL file loaded, parsing and inserting data...");
 
@@ -118,7 +113,8 @@ impl Database {
                 || trimmed.starts_with("CREATE DATABASE")
                 || trimmed.starts_with("USE ")
                 || trimmed.starts_with("DROP TABLE")
-                || trimmed.starts_with("SET ") {
+                || trimmed.starts_with("SET ")
+            {
                 continue;
             }
 
@@ -212,7 +208,10 @@ impl Database {
         Ok(())
     }
 
-    fn init_recitation_tables(conn: &Connection, recitation_paths: &[(i64, PathBuf)]) -> Result<()> {
+    fn init_recitation_tables(
+        conn: &Connection,
+        recitation_paths: &[(i64, PathBuf)],
+    ) -> Result<()> {
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS recitations (
                 reciter_id    INTEGER NOT NULL,
@@ -225,11 +224,8 @@ impl Database {
             );",
         )?;
 
-        let count: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM recitations",
-            [],
-            |row| row.get(0),
-        )?;
+        let count: i64 =
+            conn.query_row("SELECT COUNT(*) FROM recitations", [], |row| row.get(0))?;
 
         if count > 0 {
             // Check if ayah_number was incorrectly imported as global (surah 2 should start at 1)
@@ -277,7 +273,9 @@ impl Database {
                 })?;
                 for row in rows {
                     let (surah, ayah, url, duration, segments) = row?;
-                    ins.execute(rusqlite::params![reciter_id, surah, ayah, url, duration, segments])?;
+                    ins.execute(rusqlite::params![
+                        reciter_id, surah, ayah, url, duration, segments
+                    ])?;
                 }
             }
             tx.commit()?;
@@ -368,7 +366,10 @@ impl Database {
         (result, footnotes_json)
     }
 
-    fn init_translation_tables(conn: &Connection, paths: &[(String, String, PathBuf)]) -> Result<()> {
+    fn init_translation_tables(
+        conn: &Connection,
+        paths: &[(String, String, PathBuf)],
+    ) -> Result<()> {
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS translators (
                 id    INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -399,7 +400,9 @@ impl Database {
                 rusqlite::params![lang, name],
                 |row| row.get(0),
             )?;
-            if exists > 0 { continue; }
+            if exists > 0 {
+                continue;
+            }
 
             if !path.exists() {
                 eprintln!("Translation file not found: {:?}", path);
@@ -412,13 +415,11 @@ impl Database {
             )?;
             let translator_id = conn.last_insert_rowid();
 
-            let content = fs::read_to_string(path).map_err(|e| {
-                rusqlite::Error::ToSqlConversionFailure(Box::new(e))
-            })?;
+            let content = fs::read_to_string(path)
+                .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
 
-            let json: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
-                rusqlite::Error::ToSqlConversionFailure(Box::new(e))
-            })?;
+            let json: serde_json::Value = serde_json::from_str(&content)
+                .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
 
             let obj = match json.as_object() {
                 Some(o) => o,
@@ -433,14 +434,19 @@ impl Database {
 
                 for (key, val) in obj {
                     let parts: Vec<&str> = key.split(':').collect();
-                    if parts.len() != 2 { continue; }
+                    if parts.len() != 2 {
+                        continue;
+                    }
                     let surah: i64 = parts[0].parse().unwrap_or(0);
                     let ayah: i64 = parts[1].parse().unwrap_or(0);
-                    if surah == 0 || ayah == 0 { continue; }
+                    if surah == 0 || ayah == 0 {
+                        continue;
+                    }
 
                     let t = val.get("t").and_then(|v| v.as_str()).unwrap_or("");
                     let empty_map = serde_json::Map::new();
-                    let f_map = val.get("f")
+                    let f_map = val
+                        .get("f")
                         .and_then(|v| v.as_object())
                         .unwrap_or(&empty_map);
 
@@ -473,11 +479,9 @@ impl Database {
             CREATE INDEX IF NOT EXISTS idx_translit_surah ON transliterations(surah);",
         )?;
 
-        let count: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM transliterations",
-            [],
-            |row| row.get(0),
-        )?;
+        let count: i64 = conn.query_row("SELECT COUNT(*) FROM transliterations", [], |row| {
+            row.get(0)
+        })?;
 
         if count > 0 {
             return Ok(());
@@ -488,13 +492,11 @@ impl Database {
             return Ok(());
         }
 
-        let content = fs::read_to_string(path).map_err(|e| {
-            rusqlite::Error::ToSqlConversionFailure(Box::new(e))
-        })?;
+        let content = fs::read_to_string(path)
+            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
 
-        let json: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
-            rusqlite::Error::ToSqlConversionFailure(Box::new(e))
-        })?;
+        let json: serde_json::Value = serde_json::from_str(&content)
+            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
 
         let obj = match json.as_object() {
             Some(o) => o,
@@ -503,16 +505,19 @@ impl Database {
 
         let tx = conn.unchecked_transaction()?;
         {
-            let mut stmt = conn.prepare(
-                "INSERT INTO transliterations (surah, ayah, text) VALUES (?1, ?2, ?3)",
-            )?;
+            let mut stmt = conn
+                .prepare("INSERT INTO transliterations (surah, ayah, text) VALUES (?1, ?2, ?3)")?;
 
             for (key, val) in obj {
                 let parts: Vec<&str> = key.split(':').collect();
-                if parts.len() != 2 { continue; }
+                if parts.len() != 2 {
+                    continue;
+                }
                 let surah: i64 = parts[0].parse().unwrap_or(0);
                 let ayah: i64 = parts[1].parse().unwrap_or(0);
-                if surah == 0 || ayah == 0 { continue; }
+                if surah == 0 || ayah == 0 {
+                    continue;
+                }
 
                 let text = val.get("t").and_then(|v| v.as_str()).unwrap_or("");
                 stmt.execute(rusqlite::params![surah, ayah, text])?;
@@ -535,11 +540,8 @@ impl Database {
             );",
         )?;
 
-        let count: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM word_by_word",
-            [],
-            |row| row.get(0),
-        )?;
+        let count: i64 =
+            conn.query_row("SELECT COUNT(*) FROM word_by_word", [], |row| row.get(0))?;
 
         if count > 0 {
             return Ok(());
@@ -550,13 +552,11 @@ impl Database {
             return Ok(());
         }
 
-        let content = fs::read_to_string(path).map_err(|e| {
-            rusqlite::Error::ToSqlConversionFailure(Box::new(e))
-        })?;
+        let content = fs::read_to_string(path)
+            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
 
-        let json: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
-            rusqlite::Error::ToSqlConversionFailure(Box::new(e))
-        })?;
+        let json: serde_json::Value = serde_json::from_str(&content)
+            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
 
         let obj = match json.as_object() {
             Some(o) => o,
@@ -571,11 +571,15 @@ impl Database {
 
             for (key, val) in obj {
                 let parts: Vec<&str> = key.split(':').collect();
-                if parts.len() != 3 { continue; }
+                if parts.len() != 3 {
+                    continue;
+                }
                 let surah: i64 = parts[0].parse().unwrap_or(0);
                 let ayah: i64 = parts[1].parse().unwrap_or(0);
                 let word: i64 = parts[2].parse().unwrap_or(0);
-                if surah == 0 || ayah == 0 || word == 0 { continue; }
+                if surah == 0 || ayah == 0 || word == 0 {
+                    continue;
+                }
 
                 let text = val.as_str().unwrap_or("");
                 stmt.execute(rusqlite::params![surah, ayah, word, text])?;
@@ -591,12 +595,10 @@ impl Database {
         println!("Loading morphology data from corpus file...");
 
         // Read the morphology file
-        let content = fs::read_to_string(morph_path).map_err(
-            |e| {
-                eprintln!("Failed to read morphology file: {}", e);
-                rusqlite::Error::ToSqlConversionFailure(Box::new(e))
-            },
-        )?;
+        let content = fs::read_to_string(morph_path).map_err(|e| {
+            eprintln!("Failed to read morphology file: {}", e);
+            rusqlite::Error::ToSqlConversionFailure(Box::new(e))
+        })?;
 
         println!("Morphology file loaded, parsing and inserting data...");
 
@@ -614,10 +616,7 @@ impl Database {
             let trimmed = line.trim();
 
             // Skip comments, header, and empty lines
-            if trimmed.is_empty()
-                || trimmed.starts_with('#')
-                || trimmed.starts_with("LOCATION")
-            {
+            if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with("LOCATION") {
                 continue;
             }
 
@@ -668,10 +667,7 @@ impl Database {
         // Commit transaction
         conn.execute("COMMIT", [])?;
 
-        println!(
-            "Successfully loaded {} morphology records",
-            insert_count
-        );
+        println!("Successfully loaded {} morphology records", insert_count);
 
         Ok(())
     }
@@ -700,7 +696,9 @@ impl Database {
                 rusqlite::params![lang, name],
                 |row| row.get(0),
             )?;
-            if exists > 0 { continue; }
+            if exists > 0 {
+                continue;
+            }
 
             if !path.exists() {
                 eprintln!("Tafsir file not found: {:?}", path);
@@ -713,13 +711,11 @@ impl Database {
             )?;
             let author_id = conn.last_insert_rowid();
 
-            let content = fs::read_to_string(path).map_err(|e| {
-                rusqlite::Error::ToSqlConversionFailure(Box::new(e))
-            })?;
+            let content = fs::read_to_string(path)
+                .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
 
-            let json: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
-                rusqlite::Error::ToSqlConversionFailure(Box::new(e))
-            })?;
+            let json: serde_json::Value = serde_json::from_str(&content)
+                .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
 
             let obj = match json.as_object() {
                 Some(o) => o,
@@ -734,33 +730,44 @@ impl Database {
 
                 for (key, val) in obj {
                     let text = val.get("text").and_then(|v| v.as_str()).unwrap_or("");
-                    if text.is_empty() { continue; }
+                    if text.is_empty() {
+                        continue;
+                    }
 
                     // If ayah_keys present, insert for each referenced ayah
-                    let inserted = if let Some(ayah_keys) = val.get("ayah_keys").and_then(|v| v.as_array()) {
-                        let mut any = false;
-                        for ak in ayah_keys {
-                            let ak_str = ak.as_str().unwrap_or("");
-                            let parts: Vec<&str> = ak_str.split(':').collect();
-                            if parts.len() != 2 { continue; }
-                            let s: i64 = parts[0].parse().unwrap_or(0);
-                            let a: i64 = parts[1].parse().unwrap_or(0);
-                            if s == 0 || a == 0 { continue; }
-                            stmt.execute(rusqlite::params![author_id, s, a, text])?;
-                            any = true;
-                        }
-                        any
-                    } else {
-                        false
-                    };
+                    let inserted =
+                        if let Some(ayah_keys) = val.get("ayah_keys").and_then(|v| v.as_array()) {
+                            let mut any = false;
+                            for ak in ayah_keys {
+                                let ak_str = ak.as_str().unwrap_or("");
+                                let parts: Vec<&str> = ak_str.split(':').collect();
+                                if parts.len() != 2 {
+                                    continue;
+                                }
+                                let s: i64 = parts[0].parse().unwrap_or(0);
+                                let a: i64 = parts[1].parse().unwrap_or(0);
+                                if s == 0 || a == 0 {
+                                    continue;
+                                }
+                                stmt.execute(rusqlite::params![author_id, s, a, text])?;
+                                any = true;
+                            }
+                            any
+                        } else {
+                            false
+                        };
 
                     if !inserted {
                         // Fall back to primary key
                         let parts: Vec<&str> = key.split(':').collect();
-                        if parts.len() != 2 { continue; }
+                        if parts.len() != 2 {
+                            continue;
+                        }
                         let s: i64 = parts[0].parse().unwrap_or(0);
                         let a: i64 = parts[1].parse().unwrap_or(0);
-                        if s == 0 || a == 0 { continue; }
+                        if s == 0 || a == 0 {
+                            continue;
+                        }
                         stmt.execute(rusqlite::params![author_id, s, a, text])?;
                     }
                 }
