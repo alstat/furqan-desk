@@ -123,7 +123,8 @@
       "Bash(security find-identity:*)",
       "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src -name *.svg -o -name *.png)",
       "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -maxdepth 2 -name *iconify* -o -name .iconifyrc* -o -name iconify.config.*)",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "Bash(node:*)"
     ]
   }
 }
