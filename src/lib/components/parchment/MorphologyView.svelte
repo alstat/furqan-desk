@@ -305,7 +305,15 @@
                 <!-- Block mode: one ayah per row with translation/transliteration/wbw -->
                 <div dir="rtl" class="w-full min-w-0 mb-10" style="contain: style;">
                     {#each multiAyahs as ayahData, i}
-                        <div class="{i > 0 ? 'border-t border-brand-sand-200/40 dark:border-[#414559]/40' : ''} pt-2 pb-4">
+                        {#if i > 0 && ayahData.ayah !== multiAyahs[i - 1].ayah + 1}
+                            <div dir="ltr" class="flex items-center justify-center gap-2 py-3 select-none" aria-hidden="true">
+                                <span class="font-scheherazade text-lime-700/60 dark:text-lime-600/60">&#x2060;﴾&#x2060;{convertToArabicNumbers(ayahData.ayah - 1)}&#x2060;﴿&#x2060;</span>
+                                <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                                <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                                <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                            </div>
+                        {/if}
+                        <div class="{i > 0 && ayahData.ayah === multiAyahs[i - 1].ayah + 1 ? 'border-t border-brand-sand-200/40 dark:border-[#414559]/40' : ''} pt-2 pb-4">
                             <div class="{multiWbw ? 'text-right' : 'leading-loose text-right'} wrap-break-word"
                                 >{#each ayahData.words as word}<span
                                     dir="rtl"
@@ -344,7 +352,7 @@
             {:else}
                 <!-- Inline mode: continuous flow -->
                 <div dir="rtl" class="leading-loose w-full text-center wrap-break-word mb-10" style="contain: style;"
-                    >{#each multiAyahs as ayahData}{#each ayahData.words as word}<span
+                    >{#each multiAyahs as ayahData, i}{#if i > 0 && ayahData.ayah !== multiAyahs[i - 1].ayah + 1}<span dir="ltr" class="inline-block px-2 select-none" aria-hidden="true"><span class="font-scheherazade text-lime-700/60 dark:text-lime-600/60">&#x2060;﴾&#x2060;{convertToArabicNumbers(ayahData.ayah - 1)}&#x2060;﴿&#x2060;</span><span class="text-brand-charcoal-300/60 dark:text-[#626880]/60 pl-2"> • • • </span></span>{/if}{#each ayahData.words as word}<span
                         dir="rtl"
                         role="button"
                         tabindex="0"
@@ -391,7 +399,15 @@
             <!-- Block mode: one ayah per row, right-justified, divider between ayahs -->
             <div dir="rtl" class="w-full min-w-0" style="contain: style;">
                 {#each displayAyahs.slice(0, renderedAyahCount) as ayahData, i}
-                    <div class="{i > 0 ? 'border-t border-brand-sand-200/40 dark:border-[#414559]/40' : ''} pt-2 pb-4">
+                    {#if i > 0 && ayahData.ayah !== displayAyahs[i - 1].ayah + 1}
+                        <div dir="ltr" class="flex items-center justify-center gap-2 py-3 select-none" aria-hidden="true">
+                            <span class="font-scheherazade text-lime-700/60 dark:text-lime-600/60">&#x2060;﴾&#x2060;{convertToArabicNumbers(ayahData.ayah - 1)}&#x2060;﴿&#x2060;</span>
+                            <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                            <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                            <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                        </div>
+                    {/if}
+                    <div class="{i > 0 && ayahData.ayah === displayAyahs[i - 1].ayah + 1 ? 'border-t border-brand-sand-200/40 dark:border-[#414559]/40' : ''} pt-2 pb-4">
                         <div class="{$surahWordByWord ? 'text-right' : 'leading-loose text-right'} wrap-break-word"
                             >{#each ayahData.words as word}<span
                                 dir="rtl"
@@ -446,7 +462,7 @@
         {:else}
             <!-- Inline mode: continuous flow like original -->
             <div dir="rtl" class="leading-loose w-full text-center wrap-break-word" style="contain: style;"
-                >{#each displayAyahs.slice(0, renderedAyahCount) as ayahData}{#each ayahData.words as word}<span
+                >{#each displayAyahs.slice(0, renderedAyahCount) as ayahData, i}{#if i > 0 && ayahData.ayah !== displayAyahs[i - 1].ayah + 1}<span dir="ltr" class="inline-block px-2 select-none" aria-hidden="true"><span class="text-brand-charcoal-300/60 dark:text-[#626880]/60"> • • • </span><span class="font-scheherazade text-lime-700/60 dark:text-lime-600/60">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah - 1)}&#x2060;﴾&#x2060;</span></span>{/if}{#each ayahData.words as word}<span
                     dir="rtl"
                     role="button"
                     tabindex="0"
