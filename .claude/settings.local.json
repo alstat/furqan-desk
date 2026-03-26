@@ -129,7 +129,9 @@
       "Bash(grep -r \"emit\\\\|julia\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/src/*.rs)",
       "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -name *.jl -o -name *AL* -type f)",
       "Bash(grep -E \"\\\\.\\(jl|julia\\)$\")",
-      "Bash(grep -r \"get_surah_morphology\\\\|SurahMorphology\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/src --include=*.rs)"
+      "Bash(grep -r \"get_surah_morphology\\\\|SurahMorphology\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/src --include=*.rs)",
+      "Bash(grep:*)",
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -name *ntent*editable* -o -name *ditable*)"
     ]
   }
 }

@@ -454,7 +454,7 @@
                             <optgroup label={LANG_NAMES[lang] ?? lang}>
                                 {#each $availableTafsirAuthors.filter((a) => a.lang === lang) as a}
                                     <option value={String(a.id)}
-                                        >{a.name}</option
+                                        >{a.name.replace(/ \([^)]+\)$/, '')}</option
                                     >
                                 {/each}
                             </optgroup>
