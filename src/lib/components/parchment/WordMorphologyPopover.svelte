@@ -22,6 +22,7 @@
     let dragX = $state(0);
     let dragY = $state(0);
     let isDragging = $state(false);
+    let isNearBorder = $state(false);
     let _dragStartX = 0, _dragStartY = 0, _startDragX = 0, _startDragY = 0;
 
     // Reset drag offset whenever the anchor position changes (new word clicked)
@@ -51,6 +52,25 @@
     onDestroy(() => {
         window.removeEventListener('pointermove', onDragMove);
     });
+
+    function isInBorderZone(e: PointerEvent, el: HTMLElement): boolean {
+        const rect = el.getBoundingClientRect();
+        const zone = 8;
+        return (
+            e.clientX - rect.left < zone ||
+            rect.right - e.clientX < zone ||
+            e.clientY - rect.top < zone ||
+            rect.bottom - e.clientY < zone
+        );
+    }
+
+    function startDragFromBorder(e: PointerEvent): void {
+        if (isInBorderZone(e, e.currentTarget as HTMLElement)) startDrag(e);
+    }
+
+    function updateBorderCursor(e: PointerEvent): void {
+        isNearBorder = isInBorderZone(e, e.currentTarget as HTMLElement);
+    }
 
     type TokenStyle = {
         bg: string;
@@ -202,12 +222,17 @@
     ];
 </script>
 
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     use:portal
     class="ayah-tooltip fixed z-9999 flex w-88 max-h-[76vh] flex-col overflow-hidden rounded-2xl border border-slate-200/70 dark:border-[#414559] bg-white/98 dark:bg-[#292c3c] shadow-2xl backdrop-blur-sm"
-    style={position.placement === "below"
+    onpointerdown={startDragFromBorder}
+    onpointermove={updateBorderCursor}
+    onpointerleave={() => { isNearBorder = false; }}
+    style={`${position.placement === "below"
         ? `left: ${position.x + dragX}px; top: ${position.y + 8 + dragY}px;`
-        : `left: ${position.x + dragX}px; bottom: calc(100vh - ${position.y}px + 8px - ${dragY}px);`}
+        : `left: ${position.x + dragX}px; bottom: calc(100vh - ${position.y}px + 8px - ${dragY}px);`
+    }${isNearBorder || isDragging ? `; cursor: ${isDragging ? 'grabbing' : 'grab'}` : ''}`}
     transition:fly={{ y: position.placement === "below" ? 6 : -6, duration: 160, opacity: 0 }}
 >
     <!-- Header -->
