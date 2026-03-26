@@ -5,7 +5,7 @@
     import { restartTour } from '$lib/stores/tour.store';
     import { invoke } from '@tauri-apps/api/core';
     import { manuscriptsEnabled } from '$lib/stores/manuscripts.store';
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
     import { listen } from '@tauri-apps/api/event';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { getVersion } from '@tauri-apps/api/app';
@@ -87,15 +87,20 @@
         }
     }
 
+    let _unlisten: (() => void) | null = null;
+
     onMount(async () => {
         try { appVersion = await getVersion(); } catch {}
         try { juliaInstalledVersion = await invoke<string>('get_julia_version'); } catch {}
         await refreshCacheSize();
 
-        const unlisten = await listen<{ message: string }>('julia-install-progress', (e) => {
+        _unlisten = await listen<{ message: string }>('julia-install-progress', (e) => {
             juliaUpdateMessage = e.payload.message;
         });
-        return unlisten;
+    });
+
+    onDestroy(() => {
+        _unlisten?.();
     });
 </script>
 

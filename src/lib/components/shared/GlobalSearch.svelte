@@ -308,7 +308,7 @@
                 <div
                     class="px-3 py-4 text-center text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
-                    Open a folder to search files
+                    <i>Open a folder to search files</i>
                 </div>
             {:else if query.trim() === ""}
                 <div

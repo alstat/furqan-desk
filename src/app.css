@@ -10,6 +10,7 @@
     --font-scheherazade: "Scheherazade New", serif;
     --font-amiri: "Amiri", serif;
     --font-reem: "Reem Kufi Ink", sans-serif;
+    --font-garamond: "EB Garamond", serif;
 
     /* ── Brand palette ─────────────────────────────────────────────────────── */
     /* Pastel tints derived from the brand hues below.                          */
@@ -17,40 +18,40 @@
     /*   Warm Sand #E8DCC8 · Soft Gold #C8A96A · Charcoal Gray #2F2F2F         */
 
     /* Deep Emerald */
-    --color-brand-emerald-50:  #EBF5F3;
-    --color-brand-emerald-100: #CEEAE3;
-    --color-brand-emerald-200: #9DD4C8;
-    --color-brand-emerald-400: #3D9B86;
-    --color-brand-emerald-600: #1A6B57;
-    --color-brand-emerald-900: #0F4D3F;
+    --color-brand-emerald-50: #ebf5f3;
+    --color-brand-emerald-100: #ceeae3;
+    --color-brand-emerald-200: #9dd4c8;
+    --color-brand-emerald-400: #3d9b86;
+    --color-brand-emerald-600: #1a6b57;
+    --color-brand-emerald-900: #0f4d3f;
 
     /* Muted Teal */
-    --color-brand-teal-50:  #EAF4F4;
-    --color-brand-teal-100: #C8E6E6;
-    --color-brand-teal-200: #92CCCC;
-    --color-brand-teal-400: #5AABAB;
-    --color-brand-teal-600: #3C8C8C;
+    --color-brand-teal-50: #eaf4f4;
+    --color-brand-teal-100: #c8e6e6;
+    --color-brand-teal-200: #92cccc;
+    --color-brand-teal-400: #5aabab;
+    --color-brand-teal-600: #3c8c8c;
 
     /* Warm Sand */
-    --color-brand-sand-50:  #FAF7F2;
-    --color-brand-sand-100: #F5EFE4;
-    --color-brand-sand-200: #EDE2CE;
-    --color-brand-sand-400: #D4C0A0;
+    --color-brand-sand-50: #faf7f2;
+    --color-brand-sand-100: #f5efe4;
+    --color-brand-sand-200: #ede2ce;
+    --color-brand-sand-400: #d4c0a0;
 
     /* Soft Gold */
-    --color-brand-gold-50:  #FBF5E8;
-    --color-brand-gold-100: #F3E5C0;
-    --color-brand-gold-200: #E5CC90;
-    --color-brand-gold-400: #C8A96A;
-    --color-brand-gold-500: #B89558;
-    --color-brand-gold-600: #9A7A40;
+    --color-brand-gold-50: #fbf5e8;
+    --color-brand-gold-100: #f3e5c0;
+    --color-brand-gold-200: #e5cc90;
+    --color-brand-gold-400: #c8a96a;
+    --color-brand-gold-500: #b89558;
+    --color-brand-gold-600: #9a7a40;
 
     /* Charcoal */
-    --color-brand-charcoal-50:  #F2F2F2;
-    --color-brand-charcoal-100: #E0E0E0;
-    --color-brand-charcoal-300: #ABABAB;
+    --color-brand-charcoal-50: #f2f2f2;
+    --color-brand-charcoal-100: #e0e0e0;
+    --color-brand-charcoal-300: #ababab;
     --color-brand-charcoal-500: #707070;
-    --color-brand-charcoal-900: #2F2F2F;
+    --color-brand-charcoal-900: #2f2f2f;
 }
 
 /* ── App dark theme (Catppuccin Frappe) ──────────────────────────────────────── */
@@ -62,25 +63,25 @@
    Yellow #e5c890 · Peach #ef9f76 · Green #a6d189 · Blue #8caaee */
 html.dark {
     /* Sand → Frappe surfaces (lightest = Base, not Crust) */
-    --color-brand-sand-50:  #303446;  /* Base  — editor/REPL backgrounds */
-    --color-brand-sand-100: #292c3c;  /* Mantle — panel backgrounds */
-    --color-brand-sand-200: #414559;  /* Surface0 — dividers, headers */
-    --color-brand-sand-400: #626880;  /* Surface2 — borders */
+    --color-brand-sand-50: #303446; /* Base  — editor/REPL backgrounds */
+    --color-brand-sand-100: #292c3c; /* Mantle — panel backgrounds */
+    --color-brand-sand-200: #414559; /* Surface0 — dividers, headers */
+    --color-brand-sand-400: #626880; /* Surface2 — borders */
 
     /* Gold → Frappe yellow/peach accent */
-    --color-brand-gold-50:  #2a2740;
+    --color-brand-gold-50: #2a2740;
     --color-brand-gold-100: #3b3757;
     --color-brand-gold-200: #534e70;
-    --color-brand-gold-400: #e5c890;  /* Frappe Yellow — main accent */
+    --color-brand-gold-400: #e5c890; /* Frappe Yellow — main accent */
     --color-brand-gold-500: #d4b57f;
     --color-brand-gold-600: #c4a26e;
 
     /* Charcoal → Frappe text scale */
-    --color-brand-charcoal-50:  #c6d0f5;  /* Text */
-    --color-brand-charcoal-100: #b5bfe2;  /* Subtext1 */
-    --color-brand-charcoal-300: #838ba7;  /* Overlay1 — labels, muted */
-    --color-brand-charcoal-500: #a5adce;  /* Subtext0 — body text */
-    --color-brand-charcoal-900: #e8edff;  /* near-white headings */
+    --color-brand-charcoal-50: #c6d0f5; /* Text */
+    --color-brand-charcoal-100: #b5bfe2; /* Subtext1 */
+    --color-brand-charcoal-300: #838ba7; /* Overlay1 — labels, muted */
+    --color-brand-charcoal-500: #a5adce; /* Subtext0 — body text */
+    --color-brand-charcoal-900: #e8edff; /* near-white headings */
 }
 
 html.dark body,
@@ -160,9 +161,15 @@ html.dark .tabs-scroll::-webkit-scrollbar-thumb:hover {
 
 /* Editor pane flash (grouped tab click) */
 @keyframes flash-border {
-    0%   { box-shadow: 0 0 0 3px var(--color-brand-gold-400); }
-    60%  { box-shadow: 0 0 0 3px var(--color-brand-gold-400); }
-    100% { box-shadow: 0 0 0 0px transparent; }
+    0% {
+        box-shadow: 0 0 0 3px var(--color-brand-gold-400);
+    }
+    60% {
+        box-shadow: 0 0 0 3px var(--color-brand-gold-400);
+    }
+    100% {
+        box-shadow: 0 0 0 0px transparent;
+    }
 }
 
 .flash-border-anim {
@@ -171,10 +178,22 @@ html.dark .tabs-scroll::-webkit-scrollbar-thumb:hover {
 
 /* Ayah jump highlight */
 @keyframes ayah-flash {
-    0%   { background-color: transparent; border-radius: 4px; }
-    15%  { background-color: var(--color-brand-gold-100); border-radius: 4px; }
-    70%  { background-color: var(--color-brand-gold-100); border-radius: 4px; }
-    100% { background-color: transparent; border-radius: 4px; }
+    0% {
+        background-color: transparent;
+        border-radius: 4px;
+    }
+    15% {
+        background-color: var(--color-brand-gold-100);
+        border-radius: 4px;
+    }
+    70% {
+        background-color: var(--color-brand-gold-100);
+        border-radius: 4px;
+    }
+    100% {
+        background-color: transparent;
+        border-radius: 4px;
+    }
 }
 
 .ayah-highlight {
@@ -188,7 +207,11 @@ html.dark .tabs-scroll::-webkit-scrollbar-thumb:hover {
 }
 
 html.dark .ayah-playing {
-    background-color: color-mix(in srgb, var(--color-brand-gold-400) 12%, transparent);
+    background-color: color-mix(
+        in srgb,
+        var(--color-brand-gold-400) 12%,
+        transparent
+    );
 }
 
 .default-scroll {
@@ -855,15 +878,20 @@ select.font-family {
     cursor: default;
     display: inline-block;
     position: relative;
+    vertical-align: top;
 }
 
 .editor-shell .editor-image img {
     max-width: 100%;
+    display: block;
 }
 
 .editor-shell .editor-image img.focused {
-    outline: 2px solid rgb(60, 132, 244);
+    outline: 2px solid #4d7c0f;
     user-select: none;
+}
+html.dark .editor-shell .editor-image img.focused {
+    outline: 2px solid #65a30d;
 }
 
 .editor-shell .editor-image .image-caption-container .tree-view-output {
@@ -903,8 +931,10 @@ select.font-family {
     cursor: pointer;
     user-select: none;
     white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-    transition: background-color 0.15s, color 0.15s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition:
+        background-color 0.15s,
+        color 0.15s;
 }
 .editor-shell .editor-image .image-caption-button:hover {
     background-color: var(--color-brand-gold-100);
@@ -939,7 +969,7 @@ html.dark .editor-shell .editor-image .image-caption-button:hover {
     position: absolute;
     bottom: -4px;
     left: -4px;
-    background-color: var(--color-brand-gold-400);
+    background-color: #4d7c0f;
     border: 1.5px solid #fff;
     border-radius: 2px;
     cursor: sw-resize;
@@ -952,7 +982,7 @@ html.dark .editor-shell .editor-image .image-caption-button:hover {
     position: absolute;
     top: -4px;
     right: -4px;
-    background-color: var(--color-brand-gold-400);
+    background-color: #4d7c0f;
     border: 1.5px solid #fff;
     border-radius: 2px;
     cursor: ne-resize;
@@ -965,7 +995,7 @@ html.dark .editor-shell .editor-image .image-caption-button:hover {
     position: absolute;
     top: -4px;
     left: -4px;
-    background-color: var(--color-brand-gold-400);
+    background-color: #4d7c0f;
     border: 1.5px solid #fff;
     border-radius: 2px;
     cursor: nw-resize;
@@ -978,10 +1008,17 @@ html.dark .editor-shell .editor-image .image-caption-button:hover {
     position: absolute;
     bottom: -4px;
     right: -4px;
-    background-color: var(--color-brand-gold-400);
+    background-color: #4d7c0f;
     border: 1.5px solid #fff;
     border-radius: 2px;
     cursor: se-resize;
+}
+
+html.dark .editor-shell .editor-image .image-resizer-sw,
+html.dark .editor-shell .editor-image .image-resizer-ne,
+html.dark .editor-shell .editor-image .image-resizer-nw,
+html.dark .editor-shell .editor-image .image-resizer-se {
+    background-color: #65a30d;
 }
 
 .emoji {
@@ -1113,7 +1150,7 @@ html.dark .editor-shell .editor-image .image-caption-button:hover {
     width: 18px;
     height: 18px;
     cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
     transition: background-color 0.12s;
 }
 
@@ -1123,12 +1160,18 @@ html.dark .editor-shell .editor-image .image-caption-button:hover {
 }
 
 i.chevron-down {
-    background-color: transparent;
-    background-size: contain;
     display: inline-block;
     height: 8px;
     width: 8px;
-    background-image: url(images/icons/chevron-down.svg);
+    background-color: var(--color-brand-charcoal-300);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
 }
 
 .action-button {
@@ -1645,7 +1688,7 @@ html.dark .tafsir-content h3 {
 }
 .tafsir-content [lang="ar"],
 .tafsir-content .ar {
-    font-family: 'Scheherazade New', serif;
+    font-family: "Scheherazade New", serif;
     font-size: 1rem;
     direction: rtl;
     text-align: right;

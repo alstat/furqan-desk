@@ -17,7 +17,7 @@
     import { get } from "svelte/store";
 
     let lexicalCanRedo = $state(false);
-    let unregister: (() => boolean) | null = null;
+    let unregister: (() => void) | null = null;
 
     $effect(() => {
         unregister?.();

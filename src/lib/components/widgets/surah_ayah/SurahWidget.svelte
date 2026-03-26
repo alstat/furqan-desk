@@ -303,6 +303,7 @@
                 >
                     <option value="font-scheherazade">Scheherazade New</option>
                     <option value="font-amiri">Amiri Qur'an</option>
+                    <option value="font-garamond">EB Garamond</option>
                 </select>
                 <span
                     class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300"
@@ -454,7 +455,7 @@
                             <optgroup label={LANG_NAMES[lang] ?? lang}>
                                 {#each $availableTafsirAuthors.filter((a) => a.lang === lang) as a}
                                     <option value={String(a.id)}
-                                        >{a.name}</option
+                                        >{a.name.replace(/ \([^)]+\)$/, '')}</option
                                     >
                                 {/each}
                             </optgroup>

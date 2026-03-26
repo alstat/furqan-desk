@@ -16,7 +16,7 @@
     import Icon from "@iconify/svelte";
     import { requestPlayAyah, requestPlayPosition, requestPlayBasmallah } from "$lib/stores/recitation.store";
     import { invoke } from '@tauri-apps/api/core';
-    import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir } from '$lib/stores/translation.store';
+    import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir, multiSurahTafsirMap } from '$lib/stores/translation.store';
     import type { AyahTranslation, AyahTafsir } from '$lib/stores/translation.store';
     import { manuscriptsEnabled, manuscriptAyah, manuscriptViewerOpen } from '$lib/stores/manuscripts.store';
 
@@ -25,7 +25,7 @@
         const surah = $surahMorphology?.surah;
         if (!tid || !surah) { surahTranslation.set(null); return; }
         invoke<AyahTranslation[]>('get_surah_translation', { surah, translatorId: tid })
-            .then(rows => surahTranslation.set(rows))
+            .then(rows => { if ($surahMorphology?.surah === surah) surahTranslation.set(rows); })
             .catch(() => surahTranslation.set(null));
     });
 
@@ -42,7 +42,7 @@
         const surah = $surahMorphology?.surah;
         if (!enabled || !surah) { surahTransliteration.set(null); return; }
         invoke<Array<{ayah: number; text: string}>>('get_surah_transliteration', { surah })
-            .then(rows => surahTransliteration.set(new Map(rows.map(r => [r.ayah, r.text]))))
+            .then(rows => { if ($surahMorphology?.surah === surah) surahTransliteration.set(new Map(rows.map(r => [r.ayah, r.text]))); })
             .catch(() => surahTransliteration.set(null));
     });
 
@@ -52,6 +52,7 @@
         if (!enabled || !surah) { surahWordByWord.set(null); return; }
         invoke<Array<{ayah: number; word: number; text: string}>>('get_surah_word_by_word', { surah })
             .then(rows => {
+                if ($surahMorphology?.surah !== surah) return;
                 console.log(`[WBW] loaded ${rows.length} entries for surah ${surah}`);
                 surahWordByWord.set(new Map(rows.map(r => [`${r.ayah}:${r.word}`, r.text])));
             })
@@ -66,7 +67,7 @@
         const surah = $surahMorphology?.surah;
         if (!tid || !surah || !$tafsirEnabled) { surahTafsir.set(null); return; }
         invoke<AyahTafsir[]>('get_surah_tafsir', { surah, authorId: tid })
-            .then(rows => surahTafsir.set(rows))
+            .then(rows => { if ($surahMorphology?.surah === surah) surahTafsir.set(rows); })
             .catch(() => surahTafsir.set(null));
     });
 
@@ -104,6 +105,18 @@
         )).then(entries => multiSurahWordByWordMap.set(new Map(entries)));
     });
 
+    $effect(() => {
+        const list = $morphologyMultiSurahList;
+        const tid = $activeTafsirId;
+        const enabled = $tafsirEnabled;
+        if (!list || !tid || !enabled) { multiSurahTafsirMap.set(null); return; }
+        Promise.all(list.map(s =>
+            invoke<AyahTafsir[]>('get_surah_tafsir', { surah: s.surah, authorId: tid })
+                .then(rows => [s.surah, new Map(rows.map(r => [r.ayah, r.text]))] as const)
+                .catch(() => [s.surah, new Map<number, string>()] as const)
+        )).then(entries => multiSurahTafsirMap.set(new Map(entries)));
+    });
+
     const translationMap = $derived(
         $surahTranslation
             ? new Map($surahTranslation.map(r => [r.ayah, r]))
@@ -124,6 +137,16 @@
         expandedTafsirAyahs = next;
     }
 
+    // Compound key set for multi-surah tafsir expand/collapse (avoids collisions across surahs)
+    let expandedMultiTafsirKeys = $state(new Set<string>());
+
+    function toggleMultiTafsir(surah: number, ayah: number) {
+        const key = `${surah}-${ayah}`;
+        const next = new Set(expandedMultiTafsirKeys);
+        if (next.has(key)) { next.delete(key); } else { next.add(key); }
+        expandedMultiTafsirKeys = next;
+    }
+
     const displayAyahs = $derived(
         $surahMorphology
             ? ($morphologyAyahFilter
@@ -137,10 +160,12 @@
         $state(null);
     let popoverPosition = $state({ x: 0, y: 0, placement: 'below' as 'above' | 'below' });
 
-    // Progressive rendering
-    const CHUNK_SIZE = 30;
-    let renderedAyahCount = $state(CHUNK_SIZE);
+    // Progressive rendering — exponential chunk growth so large surahs fill fast
+    const INITIAL_CHUNK = 30;
+    const MAX_CHUNK = 120;
+    let renderedAyahCount = $state(INITIAL_CHUNK);
     let renderRafId: number | null = null;
+    let currentChunkSize = INITIAL_CHUNK;
 
     $effect(() => {
         if (renderRafId !== null) { cancelAnimationFrame(renderRafId); renderRafId = null; }
@@ -148,14 +173,15 @@
         if ($morphologyMultiSurahList !== null) return;
 
         const total = displayAyahs.length;
+        currentChunkSize = INITIAL_CHUNK;
+        renderedAyahCount = Math.min(INITIAL_CHUNK, total);
 
-        renderedAyahCount = Math.min(CHUNK_SIZE, total);
-
-        if (total <= CHUNK_SIZE) return;
+        if (total <= INITIAL_CHUNK) return;
 
         function renderMore() {
             renderRafId = null;
-            renderedAyahCount = Math.min(renderedAyahCount + CHUNK_SIZE, total);
+            currentChunkSize = Math.min(currentChunkSize * 2, MAX_CHUNK);
+            renderedAyahCount = Math.min(renderedAyahCount + currentChunkSize, total);
             if (renderedAyahCount < total) {
                 renderRafId = requestAnimationFrame(renderMore);
             }
@@ -277,7 +303,8 @@
             {@const multiTrans = $multiSurahTranslationMap?.get(surahData.surah) ?? null}
             {@const multiTranslit = $multiSurahTransliterationMap?.get(surahData.surah) ?? null}
             {@const multiWbw = $multiSurahWordByWordMap?.get(surahData.surah) ?? null}
-            {@const hasExtras = multiTrans !== null || multiTranslit !== null || multiWbw !== null}
+            {@const multiTafsir = $multiSurahTafsirMap?.get(surahData.surah) ?? null}
+            {@const hasExtras = multiTrans !== null || multiTranslit !== null || multiWbw !== null || multiTafsir !== null}
             {@render surahNameHeader(multiName, 'mb-6')}
             {#if surahData.surah !== 1 && surahData.surah !== 9 && $basmallahMorphology}
                 <div id="ayah-{surahData.surah}-0" class="relative mb-6">
@@ -288,7 +315,7 @@
                                     tabindex="0"
                                     data-surah={surahData.surah}
                                     data-ayah={0}
-                                    class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === 0 ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
+                                    class="morph-word {$morphFontFamily} cursor-pointer rounded inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === 0 ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                                     onclick={(e) => handleWordClick(e, word, 0)}
                                     onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, 0)}
                                 >{word.combined_arabic}&nbsp;</span>{/each}<span class="group/ayah-num relative inline-block whitespace-nowrap"><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayBasmallah.set(surahData.surah)} title="Play Basmallah" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button></span></span>
@@ -304,8 +331,24 @@
             {#if hasExtras}
                 <!-- Block mode: one ayah per row with translation/transliteration/wbw -->
                 <div dir="rtl" class="w-full min-w-0 mb-10" style="contain: style;">
+                    {#if multiAyahs.length > 0 && multiAyahs[0].ayah > 1}
+                        <div dir="ltr" class="flex items-center justify-center gap-2 py-3 select-none" aria-hidden="true">
+                            <span class="font-scheherazade text-lime-700/60 dark:text-lime-600/60">&#x2060;﴾&#x2060;{convertToArabicNumbers(multiAyahs[0].ayah - 1)}&#x2060;﴿&#x2060;</span>
+                            <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                            <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                            <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                        </div>
+                    {/if}
                     {#each multiAyahs as ayahData, i}
-                        <div class="{i > 0 ? 'border-t border-brand-sand-200/40 dark:border-[#414559]/40' : ''} pt-2 pb-4">
+                        {#if i > 0 && ayahData.ayah !== multiAyahs[i - 1].ayah + 1}
+                            <div dir="ltr" class="flex items-center justify-center gap-2 py-3 select-none" aria-hidden="true">
+                                <span class="font-scheherazade text-lime-700/60 dark:text-lime-600/60">&#x2060;﴾&#x2060;{convertToArabicNumbers(ayahData.ayah - 1)}&#x2060;﴿&#x2060;</span>
+                                <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                                <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                                <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                            </div>
+                        {/if}
+                        <div class="{i > 0 && ayahData.ayah === multiAyahs[i - 1].ayah + 1 ? 'border-t border-brand-sand-200/40 dark:border-[#414559]/40' : ''} pt-2 pb-4">
                             <div class="{multiWbw ? 'text-right' : 'leading-loose text-right'} wrap-break-word"
                                 >{#each ayahData.words as word}<span
                                     dir="rtl"
@@ -313,7 +356,7 @@
                                     tabindex="0"
                                     data-surah={surahData.surah}
                                     data-ayah={ayahData.ayah}
-                                    class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors {multiWbw ? 'inline-flex flex-col items-center gap-1 align-top px-1.5 py-2 min-w-[3.5rem]' : 'inline-block'} {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === ayahData.ayah ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
+                                    class="morph-word {$morphFontFamily} cursor-pointer rounded {multiWbw ? 'inline-flex flex-col items-center gap-1 align-top px-1.5 py-2 min-w-[3.5rem]' : 'inline-block'} {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === ayahData.ayah ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                                     onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                                     onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
                                 >{#if multiWbw}<span>{word.combined_arabic}</span><span dir="ltr" class="text-[9px] leading-snug text-brand-charcoal-400 dark:text-[#838ba7] font-sans w-full text-center break-words whitespace-normal">{multiWbw.get(`${ayahData.ayah}:${word.word}`) ?? ''}</span>{:else}{word.combined_arabic}&nbsp;{/if}</span>{/each}<span id="ayah-{surahData.surah}-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayPosition.set({ surah: surahData.surah, ayah: ayahData.ayah })} title="Play ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: surahData.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title="View manuscripts for ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}</span></span></div>
@@ -338,22 +381,45 @@
                                     {/if}
                                 </div>
                             {/if}
+                            {#if multiTafsir?.has(ayahData.ayah)}
+                                <div dir="ltr" class="mt-2 border-t border-brand-sand-100 dark:border-[#414559]/60 pt-2">
+                                    <button
+                                        onclick={() => toggleMultiTafsir(surahData.surah, ayahData.ayah)}
+                                        class="cursor-pointer flex items-center gap-1.5 text-[10.5px] font-semibold text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890] transition-colors mb-1"
+                                    >
+                                        <Icon icon={expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`) ? 'solar:alt-arrow-up-bold' : 'solar:alt-arrow-down-bold'} width="0.65rem" />
+                                        {expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`) ? 'Hide Tafsir' : 'Show Tafsir'}
+                                    </button>
+                                    {#if expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`)}
+                                        <div dir="auto" class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]">
+                                            {@html multiTafsir.get(ayahData.ayah)}
+                                        </div>
+                                    {/if}
+                                </div>
+                            {/if}
                         </div>
                     {/each}
+                    {#if multiAyahs.length > 0 && multiAyahs[multiAyahs.length - 1].ayah < (surahData.ayahs.at(-1)?.ayah ?? 0)}
+                        <div dir="ltr" class="flex items-center justify-center gap-2 py-3 select-none" aria-hidden="true">
+                            <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                            <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                            <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                        </div>
+                    {/if}
                 </div>
             {:else}
                 <!-- Inline mode: continuous flow -->
                 <div dir="rtl" class="leading-loose w-full text-center wrap-break-word mb-10" style="contain: style;"
-                    >{#each multiAyahs as ayahData}{#each ayahData.words as word}<span
+                    >{#if multiAyahs.length > 0 && multiAyahs[0].ayah > 1}<span dir="ltr" class="inline-block px-2 select-none" aria-hidden="true"><span class="font-scheherazade text-lime-700/60 dark:text-lime-600/60">&#x2060;﴾&#x2060;{convertToArabicNumbers(multiAyahs[0].ayah - 1)}&#x2060;﴿&#x2060;</span><span class="text-brand-charcoal-300/60 dark:text-[#626880]/60 pl-2"> • • • </span></span>{/if}{#each multiAyahs as ayahData, i}{#if i > 0 && ayahData.ayah !== multiAyahs[i - 1].ayah + 1}<span dir="ltr" class="inline-block px-2 select-none" aria-hidden="true"><span class="font-scheherazade text-lime-700/60 dark:text-lime-600/60">&#x2060;﴾&#x2060;{convertToArabicNumbers(ayahData.ayah - 1)}&#x2060;﴿&#x2060;</span><span class="text-brand-charcoal-300/60 dark:text-[#626880]/60 pl-2"> • • • </span></span>{/if}{#each ayahData.words as word}<span
                         dir="rtl"
                         role="button"
                         tabindex="0"
                         data-surah={surahData.surah}
                         data-ayah={ayahData.ayah}
-                        class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === ayahData.ayah ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
+                        class="morph-word {$morphFontFamily} cursor-pointer rounded inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === ayahData.ayah ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                         onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                         onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
-                    >{word.combined_arabic}&nbsp;</span>{/each}<span id="ayah-{surahData.surah}-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayPosition.set({ surah: surahData.surah, ayah: ayahData.ayah })} title="Play ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: surahData.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title="View manuscripts for ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}</span></span>{/each}</div>
+                    >{word.combined_arabic}&nbsp;</span>{/each}<span id="ayah-{surahData.surah}-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayPosition.set({ surah: surahData.surah, ayah: ayahData.ayah })} title="Play ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: surahData.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title="View manuscripts for ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}</span></span>{/each}{#if multiAyahs.length > 0 && multiAyahs[multiAyahs.length - 1].ayah < (surahData.ayahs.at(-1)?.ayah ?? 0)}<span dir="ltr" class="inline-block px-2 select-none" aria-hidden="true"><span class="text-brand-charcoal-300/60 dark:text-[#626880]/60 pl-2"> • • • </span></span>{/if}</div>
             {/if}
         {/each}
     {:else}
@@ -372,7 +438,7 @@
                                 tabindex="0"
                                 data-surah={$surahMorphology.surah}
                                 data-ayah={0}
-                                class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === 0 ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
+                                class="morph-word {$morphFontFamily} cursor-pointer rounded inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === 0 ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                                 onclick={(e) => handleWordClick(e, word, 0)}
                                 onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, 0)}
                             >{word.combined_arabic}&nbsp;</span>{/each}<span class="group/ayah-num relative inline-block whitespace-nowrap"><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayBasmallah.set($surahMorphology!.surah)} title="Play Basmallah" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button></span></span>
@@ -390,8 +456,24 @@
         {#if translationMap !== null || $surahTransliteration !== null || $surahWordByWord !== null || tafsirMap !== null}
             <!-- Block mode: one ayah per row, right-justified, divider between ayahs -->
             <div dir="rtl" class="w-full min-w-0" style="contain: style;">
+                {#if displayAyahs.length > 0 && displayAyahs[0].ayah > 1}
+                    <div dir="ltr" class="flex items-center justify-center gap-2 py-3 select-none" aria-hidden="true">
+                        <span class="font-scheherazade text-lime-700/60 dark:text-lime-600/60">&#x2060;﴾&#x2060;{convertToArabicNumbers(displayAyahs[0].ayah - 1)}&#x2060;﴿&#x2060;</span>
+                        <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                        <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                        <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                    </div>
+                {/if}
                 {#each displayAyahs.slice(0, renderedAyahCount) as ayahData, i}
-                    <div class="{i > 0 ? 'border-t border-brand-sand-200/40 dark:border-[#414559]/40' : ''} pt-2 pb-4">
+                    {#if i > 0 && ayahData.ayah !== displayAyahs[i - 1].ayah + 1}
+                        <div dir="ltr" class="flex items-center justify-center gap-2 py-3 select-none" aria-hidden="true">
+                            <span class="font-scheherazade text-lime-700/60 dark:text-lime-600/60">&#x2060;﴾&#x2060;{convertToArabicNumbers(ayahData.ayah - 1)}&#x2060;﴿&#x2060;</span>
+                            <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                            <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                            <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                        </div>
+                    {/if}
+                    <div class="{i > 0 && ayahData.ayah === displayAyahs[i - 1].ayah + 1 ? 'border-t border-brand-sand-200/40 dark:border-[#414559]/40' : ''} pt-2 pb-4">
                         <div class="{$surahWordByWord ? 'text-right' : 'leading-loose text-right'} wrap-break-word"
                             >{#each ayahData.words as word}<span
                                 dir="rtl"
@@ -399,7 +481,7 @@
                                 tabindex="0"
                                 data-surah={$surahMorphology.surah}
                                 data-ayah={ayahData.ayah}
-                                class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors {$surahWordByWord ? 'inline-flex flex-col items-center gap-1 align-top px-1.5 py-2 min-w-[3.5rem]' : 'inline-block'} {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === ayahData.ayah ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
+                                class="morph-word {$morphFontFamily} cursor-pointer rounded {$surahWordByWord ? 'inline-flex flex-col items-center gap-1 align-top px-1.5 py-2 min-w-[3.5rem]' : 'inline-block'} {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === ayahData.ayah ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                                 onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                                 onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
                             >{#if $surahWordByWord}<span>{word.combined_arabic}</span><span dir="ltr" class="text-[9px] leading-snug text-brand-charcoal-400 dark:text-[#838ba7] font-sans w-full text-center break-words whitespace-normal">{$surahWordByWord.get(`${ayahData.ayah}:${word.word}`) ?? ''}</span>{:else}{word.combined_arabic}&nbsp;{/if}</span>{/each}<span id="ayah-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayAyah.set(ayahData.ayah)} title="Play ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: $surahMorphology!.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title="View manuscripts for ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}</span></span></div>
@@ -442,20 +524,27 @@
                         {/if}
                     </div>
                 {/each}
+                {#if displayAyahs.length > 0 && displayAyahs[displayAyahs.length - 1].ayah < ($surahMorphology?.ayahs.at(-1)?.ayah ?? 0)}
+                    <div dir="ltr" class="flex items-center justify-center gap-2 py-3 select-none" aria-hidden="true">
+                        <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                        <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                        <span class="text-xs text-brand-charcoal-300/60 dark:text-[#626880]/60">•</span>
+                    </div>
+                {/if}
             </div>
         {:else}
             <!-- Inline mode: continuous flow like original -->
             <div dir="rtl" class="leading-loose w-full text-center wrap-break-word" style="contain: style;"
-                >{#each displayAyahs.slice(0, renderedAyahCount) as ayahData}{#each ayahData.words as word}<span
+                >{#if displayAyahs.length > 0 && displayAyahs[0].ayah > 1}<span dir="ltr" class="inline-block px-2 select-none" aria-hidden="true"><span class="text-brand-charcoal-300/60 dark:text-[#626880]/60"> • • • </span><span class="font-scheherazade text-lime-700/60 dark:text-lime-600/60">&#x2060;﴿&#x2060;{convertToArabicNumbers(displayAyahs[0].ayah - 1)}&#x2060;﴾&#x2060;</span></span>{/if}{#each displayAyahs.slice(0, renderedAyahCount) as ayahData, i}{#if i > 0 && ayahData.ayah !== displayAyahs[i-1].ayah + 1}<span dir="ltr" class="inline-block px-2 select-none" aria-hidden="true"><span class="text-brand-charcoal-300/60 dark:text-[#626880]/60"> • • • </span><span class="font-scheherazade text-lime-700/60 dark:text-lime-600/60">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah - 1)}&#x2060;﴾&#x2060;</span></span>{/if}{#each ayahData.words as word}<span
                     dir="rtl"
                     role="button"
                     tabindex="0"
                     data-surah={$surahMorphology.surah}
                     data-ayah={ayahData.ayah}
-                    class="morph-word {$morphFontFamily} cursor-pointer rounded transition-colors inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === ayahData.ayah ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
+                    class="morph-word {$morphFontFamily} cursor-pointer rounded inline-block {getWordColor(word)} {selectedWord?.word === word && selectedWord?.ayahNum === ayahData.ayah ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                     onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                     onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
-                >{word.combined_arabic}&nbsp;</span>{/each}<span id="ayah-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayAyah.set(ayahData.ayah)} title="Play ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: $surahMorphology!.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title="View manuscripts for ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}</span></span>{/each}</div>
+                >{word.combined_arabic}&nbsp;</span>{/each}<span id="ayah-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayAyah.set(ayahData.ayah)} title="Play ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: $surahMorphology!.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title="View manuscripts for ayah {ayahData.ayah}" class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}</span></span>{/each}{#if displayAyahs.length > 0 && displayAyahs[displayAyahs.length - 1].ayah < ($surahMorphology?.ayahs.at(-1)?.ayah ?? 0)}<span dir="ltr" class="inline-block px-2 select-none" aria-hidden="true"><span class="text-brand-charcoal-300/60 dark:text-[#626880]/60 pl-2"> • • • </span></span>{/if}</div>
         {/if}
     {:else}
         <div class="py-8 text-center text-gray-500 dark:text-[#838ba7] h-full min-h-75">
