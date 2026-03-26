@@ -109,7 +109,7 @@
 
 <style>
   .color-picker-wrapper {
-    padding: 16px 20px 8px;
+    padding: 10px 12px 6px;
   }
 
   .color-picker-basic-color {
