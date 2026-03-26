@@ -652,7 +652,7 @@
                 {:else if $manuscriptAyah}
                     <span
                         class="text-[10px] font-semibold uppercase tracking-wide
-			             text-brand-charcoal-300 dark:text-[#838ba7]"
+			             text-brand-charcoal-500 dark:text-[#838ba7]"
                     >
                         Manuscripts — Surah {$manuscriptAyah.surah}, Ayah {$manuscriptAyah.ayah}
                     </span>
