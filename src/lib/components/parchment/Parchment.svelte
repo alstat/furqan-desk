@@ -233,26 +233,26 @@
 <!-- Floating Save Highlight button -->
 {#if selectionInfo}
     <div
-        class="fixed z-40 flex items-center gap-1.5 rounded-lg border border-lime-200 dark:border-[#a6d189]/40 bg-white dark:bg-[#414559] px-3 py-1.5 shadow-lg"
+        class="fixed z-40 flex items-center gap-1.5 rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] px-3 py-1.5 shadow-lg"
         style="left: {selectionInfo.x}px; top: {selectionInfo.y -
             48}px; transform: translateX(-50%);"
     >
         <Icon
             icon="solar:magic-stick-3-bold-duotone"
-            class="shrink-0 text-lime-600"
+            class="shrink-0 text-brand-gold-500 dark:text-[#e5c890]"
             width="0.9rem"
         />
         <button
             onclick={saveHighlight}
             disabled={savingHighlight}
-            class="cursor-pointer text-xs font-medium text-slate-700 dark:text-[#c6d0f5] hover:text-lime-700 dark:hover:text-[#a6d189] disabled:opacity-50 transition-colors"
+            class="cursor-pointer text-xs font-medium text-brand-charcoal-900 dark:text-[#c6d0f5] hover:text-brand-gold-500 dark:hover:text-[#e5c890] disabled:opacity-50 transition-colors"
         >
             {savingHighlight ? "Saving…" : "Save Highlight"}
         </button>
         <button
             onclick={() => (selectionInfo = null)}
             aria-label="Dismiss"
-            class="cursor-pointer ml-0.5 text-slate-400 dark:text-[#838ba7] hover:text-slate-600 dark:hover:text-[#949cbb] transition-colors"
+            class="cursor-pointer ml-0.5 text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-500 dark:hover:text-[#c6d0f5] transition-colors"
         >
             <Icon icon="solar:close-circle-linear" width="0.85rem" />
         </button>
