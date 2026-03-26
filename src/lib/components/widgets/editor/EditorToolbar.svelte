@@ -3,6 +3,7 @@
     import { invoke } from "@tauri-apps/api/core";
     import { listen } from "@tauri-apps/api/event";
     import { open as openDialog } from "@tauri-apps/plugin-dialog";
+    import { openUrl } from "@tauri-apps/plugin-opener";
     import Icon from "@iconify/svelte";
     import ControlCard from "../cards/ControlCard.svelte";
     import GroupCards from "../cards/GroupCards.svelte";
@@ -21,10 +22,18 @@
     const ILM_NAME = "ilm";
     const ILM_VERSION = "1.4.2";
 
+    // ── diatypst package state ─────────────────────────────────────────────────
+    const DIATYPST_NS = "preview";
+    const DIATYPST_NAME = "diatypst";
+    const DIATYPST_VERSION = "0.9.1";
+
     type InstallStatus = "unknown" | "installed" | "installing" | "error";
 
     let installStatus: InstallStatus = $state("unknown");
     let installError = $state("");
+
+    let diatypstStatus: InstallStatus = $state("unknown");
+    let diatypstError = $state("");
 
     // ── Julia install state ────────────────────────────────────────────────────
     let juliaStatus: InstallStatus = $state("unknown");
@@ -99,6 +108,14 @@
         installStatus = installed ? "installed" : "error";
         if (installed) installError = "";
 
+        const diatypstInstalled = await invoke<boolean>("check_typst_package", {
+            namespace: DIATYPST_NS,
+            name: DIATYPST_NAME,
+            version: DIATYPST_VERSION,
+        });
+        diatypstStatus = diatypstInstalled ? "installed" : "error";
+        if (diatypstInstalled) diatypstError = "";
+
         // Load any persisted custom Julia path, then check
         juliaCustomPath = await invoke<string>("get_julia_path");
         const juliaResult = await invoke<string>("check_julia");
@@ -124,6 +141,23 @@
         } catch (e) {
             installStatus = "error";
             installError = String(e);
+        }
+    }
+
+    async function installDiatypst() {
+        diatypstStatus = "installing";
+        diatypstError = "";
+        try {
+            await invoke("install_typst_package", {
+                namespace: DIATYPST_NS,
+                name: DIATYPST_NAME,
+                version: DIATYPST_VERSION,
+            });
+            diatypstStatus = "installed";
+            typstRecompile.update((n: number) => n + 1);
+        } catch (e) {
+            diatypstStatus = "error";
+            diatypstError = String(e);
         }
     }
 
@@ -298,56 +332,77 @@
         <!-- Divider -->
         <div class="border-t border-brand-sand-200"></div>
 
-        <!-- ilm package installer -->
-        <div>
+        <!-- Typst package installers -->
+        <div class="flex flex-col gap-2">
             <span class={labelClass}>Typst Packages</span>
+
+            <!-- ilm -->
             <div class="flex items-center justify-between gap-2">
-                <span class="text-xs text-brand-charcoal-500 font-mono"
-                    >ilm {ILM_VERSION}</span
-                >
+                <button
+                    onclick={() => openUrl("https://github.com/talal/ilm")}
+                    class="cursor-pointer text-xs font-mono text-brand-charcoal-500 hover:text-brand-gold-500 transition-colors"
+                    title="View ilm on GitHub"
+                >ilm {ILM_VERSION}</button>
 
                 {#if installStatus === "unknown"}
-                    <span class="text-xs text-brand-charcoal-300 italic"
-                        >Checking…</span
-                    >
+                    <span class="text-xs text-brand-charcoal-300 italic">Checking…</span>
                 {:else if installStatus === "installed"}
-                    <span
-                        class="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400"
-                    >
+                    <span class="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
                         <Icon icon="solar:check-circle-bold" width="0.9rem" />
                         Installed
                     </span>
                 {:else if installStatus === "installing"}
-                    <span
-                        class="flex items-center gap-1 text-xs text-brand-charcoal-400 italic"
-                    >
-                        <Icon
-                            icon="solar:refresh-bold"
-                            width="0.9rem"
-                            class="animate-spin"
-                        />
+                    <span class="flex items-center gap-1 text-xs text-brand-charcoal-400 italic">
+                        <Icon icon="solar:refresh-bold" width="0.9rem" class="animate-spin" />
                         Installing…
                     </span>
                 {:else}
-                    <!-- not installed or previous error -->
                     <button
                         onclick={installIlm}
                         class="cursor-pointer px-2.5 py-0.5 text-[11px] font-semibold rounded-full
-							   bg-brand-gold-400 text-white hover:bg-brand-gold-500 transition-colors"
-                    >
-                        Install
-                    </button>
+                               bg-brand-gold-400 text-white hover:bg-brand-gold-500 transition-colors"
+                    >Install</button>
                 {/if}
             </div>
-
             {#if installError && installStatus === "error"}
-                <p
-                    class="mt-1 text-[10px] text-red-500 leading-snug break-all"
-                    title={installError}
-                >
-                    {installError.slice(0, 120)}{installError.length > 120
-                        ? "…"
-                        : ""}
+                <p class="text-[10px] text-red-500 leading-snug break-all" title={installError}>
+                    {installError.slice(0, 120)}{installError.length > 120 ? "…" : ""}
+                </p>
+            {/if}
+
+            <!-- <div class="h-px bg-brand-sand-200 dark:bg-[#414559]"></div> -->
+
+            <!-- diatypst -->
+            <div class="flex items-center justify-between gap-2">
+                <button
+                    onclick={() => openUrl("https://github.com/skriptum/Diatypst")}
+                    class="cursor-pointer text-xs font-mono text-brand-charcoal-500 hover:text-brand-gold-500 transition-colors"
+                    title="View Diatypst on GitHub"
+                >diatypst {DIATYPST_VERSION}</button>
+
+                {#if diatypstStatus === "unknown"}
+                    <span class="text-xs text-brand-charcoal-300 italic">Checking…</span>
+                {:else if diatypstStatus === "installed"}
+                    <span class="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
+                        <Icon icon="solar:check-circle-bold" width="0.9rem" />
+                        Installed
+                    </span>
+                {:else if diatypstStatus === "installing"}
+                    <span class="flex items-center gap-1 text-xs text-brand-charcoal-400 italic">
+                        <Icon icon="solar:refresh-bold" width="0.9rem" class="animate-spin" />
+                        Installing…
+                    </span>
+                {:else}
+                    <button
+                        onclick={installDiatypst}
+                        class="cursor-pointer px-2.5 py-0.5 text-[11px] font-semibold rounded-full
+                               bg-brand-gold-400 text-white hover:bg-brand-gold-500 transition-colors"
+                    >Install</button>
+                {/if}
+            </div>
+            {#if diatypstError && diatypstStatus === "error"}
+                <p class="text-[10px] text-red-500 leading-snug break-all" title={diatypstError}>
+                    {diatypstError.slice(0, 120)}{diatypstError.length > 120 ? "…" : ""}
                 </p>
             {/if}
         </div>

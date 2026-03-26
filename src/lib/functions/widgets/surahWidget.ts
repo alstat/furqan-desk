@@ -3,11 +3,16 @@ import { get } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
 import type { AyahMorphology, SurahMorphology } from '$lib/types/morphology';
 
+let loadGeneration = 0;
+
 export async function loadMorphologySurah(surahNumber: number): Promise<void> {
+    const gen = ++loadGeneration;
     try {
         const data = await invoke<SurahMorphology>('get_surah_morphology', { surahNumber });
+        if (gen !== loadGeneration) return;
         surahMorphology.set(data);
     } catch (error) {
+        if (gen !== loadGeneration) return;
         console.error('Error loading morphology:', error instanceof Error ? error.message : 'Unknown error');
     }
 }

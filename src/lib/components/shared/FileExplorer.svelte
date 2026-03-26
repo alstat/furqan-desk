@@ -249,7 +249,7 @@
 					Loading…
 				</p>
 			{:else if !$openFolderPath}
-				<p class="text-[10px] italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2">
+				<p class="text-[11px] text-center italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2">
 					No folder open
 				</p>
 			{:else if !loadError && rootNodes.length === 0}

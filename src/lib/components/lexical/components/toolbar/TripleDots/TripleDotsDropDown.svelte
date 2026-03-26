@@ -177,7 +177,8 @@
                     <!-- {#if windowWidth < 1380} -->
                     <div class="">
                         <div class="mb-2 px-2 py-1">
-                            <span class="text-sm font-medium text-brand-charcoal-500"
+                            <span
+                                class="text-xs font-medium text-brand-charcoal-500"
                                 >Insert</span
                             >
                             <div class="mt-1 flex flex-col space-y-1">
@@ -236,7 +237,10 @@
                                 </button>
                                 <button
                                     class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-lg hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100"
-                                    onclick={() => { showTableModal = true; isOpen = false; }}
+                                    onclick={() => {
+                                        showTableModal = true;
+                                        isOpen = false;
+                                    }}
                                 >
                                     <div
                                         class="flex w-32 flex-row items-center"
@@ -263,7 +267,8 @@
                         </div>
                         <hr class="my-1 border-brand-sand-200" />
                         <div class="px-2 py-1">
-                            <span class="text-sm font-medium text-brand-charcoal-500"
+                            <span
+                                class="text-xs font-medium text-brand-charcoal-500"
                                 >Line Spacing</span
                             >
                             <div class="mt-1 flex flex-col space-y-1">

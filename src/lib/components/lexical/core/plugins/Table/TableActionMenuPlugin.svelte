@@ -10,6 +10,7 @@
 
   import {onMount} from 'svelte';
   import TableActionMenu from './TableActionMenu.svelte';
+  import ColorPickerDialog from '$lexical/components/generic/colorpicker/ColorPickerDialog.svelte';
   import {writable, type Writable} from 'svelte/store';
   import {getEditor, getIsEditable} from '$lexical/core/composerContext.js';
 
@@ -26,6 +27,17 @@
   let menuButtonRef: HTMLElement | null = $state(null);
   let menuRootRef: HTMLButtonElement | null = $state(null);
   const isMenuOpen = writable(false);
+
+  let colorPickerDialog: ColorPickerDialog;
+  let cellPickerColor = $state('');
+
+  function openCellColorPicker(
+    cb: (value: string, skipHistoryStack: boolean) => void,
+    color: string,
+  ) {
+    cellPickerColor = color;
+    colorPickerDialog.open(cb);
+  }
 
   const tableCellNode: Writable<TableCellNode | null> = writable(null);
 
@@ -138,8 +150,15 @@
           setIsMenuOpen={(val) => ($isMenuOpen = val)}
           onClose={() => ($isMenuOpen = false)}
           _tableCellNode={$tableCellNode}
-          {cellMerge} />
+          {cellMerge}
+          onOpenColorPicker={openCellColorPicker} />
       {/if}
     {/if}
   </div>
+
+  <!-- Rendered outside {#if $isMenuOpen} so dragging the picker doesn't destroy it -->
+  <ColorPickerDialog
+    title="Cell background color"
+    color={cellPickerColor}
+    bind:this={colorPickerDialog} />
 {/if}

@@ -2,7 +2,11 @@
     import { fly } from "svelte/transition";
     import { onDestroy } from "svelte";
     import Icon from "@iconify/svelte";
-    import { juliaPlots, juliaViewerOpen, type JuliaPlot } from "$lib/stores/editor.store";
+    import {
+        juliaPlots,
+        juliaViewerOpen,
+        type JuliaPlot,
+    } from "$lib/stores/editor.store";
 
     let currentIndex = $state(0);
 
@@ -269,26 +273,35 @@
     >
         <!-- Header -->
         <div
-            class="shrink-0 px-3 py-2 border-b border-stone-200 dark:border-[#414559]
-		            bg-brand-sand-50 dark:bg-[#232634] flex items-center justify-between gap-2
-		            select-none rounded-t-lg
-		            {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
+            class="flex items-center justify-between px-4 py-1.5 shrink-0
+               border-b border-brand-gold-200 dark:border-[#414559]
+               bg-brand-gold-100 dark:bg-[#292c3c]
+               select-none rounded-t-lg
+               {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
             onpointerdown={startDrag}
             role="banner"
         >
-            <span
-                class="text-[10px] font-semibold uppercase tracking-wide
+            <div class="flex items-center gap-2">
+                <Icon
+                    icon="solar:chart-bold-duotone"
+                    width="1.1rem"
+                    class="text-brand-gold-500"
+                />
+                <span
+                    class="text-[10px] font-semibold uppercase tracking-wide
 			             text-brand-charcoal-300 dark:text-[#838ba7]"
-            >
-                Julia Plots
-                {#if hasPlots}
-                    <span
-                        class="ml-1 text-brand-charcoal-400 dark:text-[#626880] normal-case"
-                    >
-                        ({currentIndex + 1} / {plots.length})
-                    </span>
-                {/if}
-            </span>
+                >
+                    Julia Plots
+                    {#if hasPlots}
+                        <span
+                            class="ml-1 text-brand-charcoal-400 dark:text-[#626880] normal-case"
+                        >
+                            ({currentIndex + 1} / {plots.length})
+                        </span>
+                    {/if}
+                </span>
+            </div>
+
             <div class="flex items-center gap-2">
                 {#if hasPlots}
                     <button
