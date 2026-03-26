@@ -10,6 +10,7 @@
     --font-scheherazade: "Scheherazade New", serif;
     --font-amiri: "Amiri", serif;
     --font-reem: "Reem Kufi Ink", sans-serif;
+    --font-garamond: "EB Garamond", serif;
 
     /* ── Brand palette ─────────────────────────────────────────────────────── */
     /* Pastel tints derived from the brand hues below.                          */
@@ -1159,12 +1160,18 @@ html.dark .editor-shell .editor-image .image-resizer-se {
 }
 
 i.chevron-down {
-    background-color: transparent;
-    background-size: contain;
     display: inline-block;
     height: 8px;
     width: 8px;
-    background-image: url(images/icons/chevron-down.svg);
+    background-color: var(--color-brand-charcoal-300);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
 }
 
 .action-button {

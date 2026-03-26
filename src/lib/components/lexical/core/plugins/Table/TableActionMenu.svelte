@@ -1,5 +1,4 @@
 <script lang="ts">
-    import ColorPickerDialog from "$lexical/components/generic/colorpicker/ColorPickerDialog.svelte";
     import { getEditor } from "$lexical/core/composerContext.js";
     import {
         $unmergeCell as unmergeCell,
@@ -16,6 +15,7 @@
     } from "@lexical/table";
     import {
         $getSelection as getSelection,
+        $getNodeByKey as getNodeByKey,
         $isRangeSelection as isRangeSelection,
         type LexicalEditor,
         $getRoot as getRoot,
@@ -46,6 +46,7 @@
         setIsMenuOpen: (isOpen: boolean) => void;
         contextRef: null | HTMLElement;
         cellMerge: boolean;
+        onOpenColorPicker: (cb: (value: string, skipHistoryStack: boolean) => void, currentColor: string) => void;
     }
 
     let {
@@ -54,9 +55,8 @@
         setIsMenuOpen,
         contextRef,
         cellMerge,
+        onOpenColorPicker,
     }: Props = $props();
-
-    let colorPicker: ColorPickerDialog;
 
     const editor = getEditor();
     let dropDownRef: HTMLDivElement | null = $state(null);
@@ -411,28 +411,41 @@
         });
     };
 
-    const handleCellBackgroundColor = (value: string) => {
-        editor.update(() => {
+    function openColorPickerForSelection() {
+        // Snapshot target cell keys now, while selection is still in the table cell.
+        // The color picker callback fires later (possibly after editor loses focus),
+        // so we must not rely on getSelection() inside editor.update().
+        const cellKeys: string[] = [];
+        editor.getEditorState().read(() => {
             const selection = getSelection();
             if (isRangeSelection(selection) || isTableSelection(selection)) {
-                const [cell] = getNodeTriplet(selection.anchor);
-                if (isTableCellNode(cell)) {
-                    cell.setBackgroundColor(value);
-                }
-
+                try {
+                    const [cell] = getNodeTriplet(selection.anchor);
+                    if (isTableCellNode(cell)) cellKeys.push(cell.getKey());
+                } catch { /* anchor not in a table cell */ }
                 if (isTableSelection(selection)) {
-                    const nodes = selection.getNodes();
-
-                    for (let i = 0; i < nodes.length; i++) {
-                        const node = nodes[i];
-                        if (isTableCellNode(node)) {
-                            node.setBackgroundColor(value);
+                    for (const node of selection.getNodes()) {
+                        if (isTableCellNode(node) && !cellKeys.includes(node.getKey())) {
+                            cellKeys.push(node.getKey());
                         }
                     }
                 }
             }
         });
-    };
+        // Fallback: use the cell this menu was opened for
+        if (cellKeys.length === 0) cellKeys.push(tableCellNode.getKey());
+
+        function applyColor(value: string) {
+            editor.update(() => {
+                for (const key of cellKeys) {
+                    const node = getNodeByKey(key);
+                    if (isTableCellNode(node)) node.setBackgroundColor(value);
+                }
+            });
+        }
+
+        onOpenColorPicker(applyColor, $backgroundColor);
+    }
 
     const isRowHeader = $derived(
         (tableCellNode.__headerState & TableCellHeaderStates.ROW) ===
@@ -445,10 +458,11 @@
 </script>
 
 <Portal>
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
         bind:this={dropDownRef}
+        role="menu"
         onclick={(e) => e.stopPropagation()}
+        onkeydown={(e) => e.stopPropagation()}
         class="fixed z-[9999] min-w-[190px] rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] shadow-xl py-1.5 opacity-0"
         style="left: -10000px; top: -10000px;"
     >
@@ -458,7 +472,7 @@
                     type="button"
                     onclick={() => mergeTableCellsAtSelection()}
                     data-test-id="table-merge-cells"
-                    class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+                    class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
                 >
                     <Icon
                         icon="mdi:table-merge-cells"
@@ -472,7 +486,7 @@
                     type="button"
                     onclick={() => unmergeTableCellsAtSelection()}
                     data-test-id="table-unmerge-cells"
-                    class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+                    class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
                 >
                     <Icon
                         icon="mdi:table-split-cell"
@@ -486,9 +500,9 @@
 
         <button
             type="button"
-            onclick={() => colorPicker.open(handleCellBackgroundColor)}
+            onclick={openColorPickerForSelection}
             data-test-id="table-background-color"
-            class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
         >
             <Icon
                 icon="fluent:paint-bucket-16-filled"
@@ -504,7 +518,7 @@
             type="button"
             onclick={() => insertTableRowAtSelection(false)}
             data-test-id="table-insert-row-above"
-            class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
         >
             <Icon
                 icon="tabler:row-insert-top"
@@ -519,7 +533,7 @@
             type="button"
             onclick={() => insertTableRowAtSelection(true)}
             data-test-id="table-insert-row-below"
-            class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
         >
             <Icon
                 icon="tabler:row-insert-bottom"
@@ -537,7 +551,7 @@
             type="button"
             onclick={() => insertTableColumnAtSelection(false)}
             data-test-id="table-insert-column-before"
-            class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
         >
             <Icon
                 icon="tabler:column-insert-left"
@@ -552,7 +566,7 @@
             type="button"
             onclick={() => insertTableColumnAtSelection(true)}
             data-test-id="table-insert-column-after"
-            class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
         >
             <Icon
                 icon="tabler:column-insert-right"
@@ -570,7 +584,7 @@
             type="button"
             onclick={() => deleteTableColumnAtSelection()}
             data-test-id="table-delete-columns"
-            class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-amber-500 dark:text-amber-400 hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-amber-500 dark:text-amber-400 hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
         >
             <Icon icon="tabler:column-remove" width="14" class="shrink-0" />
             Delete column
@@ -579,7 +593,7 @@
             type="button"
             onclick={() => deleteTableRowAtSelection()}
             data-test-id="table-delete-rows"
-            class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-amber-500 dark:text-amber-400 hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-amber-500 dark:text-amber-400 hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
         >
             <Icon icon="tabler:row-remove" width="14" class="shrink-0" />
             Delete row
@@ -588,7 +602,7 @@
             type="button"
             onclick={() => deleteTableAtSelection()}
             data-test-id="table-delete"
-            class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-amber-500 dark:text-amber-400 hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-amber-500 dark:text-amber-400 hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
         >
             <Icon icon="tabler:trash" width="14" class="shrink-0" />
             Delete table
@@ -599,7 +613,7 @@
         <button
             type="button"
             onclick={() => toggleTableRowIsHeader()}
-            class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
         >
             <Icon
                 icon="tabler:layout-rows"
@@ -612,7 +626,7 @@
             type="button"
             onclick={() => toggleTableColumnIsHeader()}
             data-test-id="table-column-header"
-            class="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
         >
             <Icon
                 icon="tabler:layout-columns"
@@ -624,8 +638,3 @@
     </div>
 </Portal>
 
-<ColorPickerDialog
-    title="Cell background color"
-    color={$backgroundColor}
-    bind:this={colorPicker}
-/>
