@@ -178,7 +178,8 @@
                         </div>
                         <hr class="my-1 border-brand-sand-200" />
                         <div class="px-2 py-1">
-                            <span class="text-sm font-medium text-brand-charcoal-500"
+                            <span
+                                class="text-xs font-medium text-brand-charcoal-500"
                                 >Line Spacing</span
                             >
                             <div class="mt-1 flex flex-col space-y-1">
