@@ -61,14 +61,79 @@
     let savedInput = "";
     let focusReplOnDone = false;
 
-    let replOutputEl: HTMLDivElement;
-    let replInputEl: HTMLTextAreaElement;
+    let replOutputEl: HTMLDivElement | undefined = $state(undefined);
+    let replInputEl: HTMLTextAreaElement | undefined = $state(undefined);
 
     const replInputRows = $derived(
         Math.max(1, (replInput.match(/\n/g) ?? []).length + 1),
     );
 
     let isRunning = $derived($juliaIsRunning);
+    let isStreaming = $state(false);
+    let streamingTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // ── Spinner & precompile progress ─────────────────────────────────────────
+    const SPINNER_FRAMES = ['◒', '◓', '◑', '◐'];
+    let spinnerFrame = $state(0);
+
+    $effect(() => {
+        if (!(isRunning || isStreaming)) return;
+        const interval = setInterval(() => {
+            spinnerFrame = (spinnerFrame + 1) % SPINNER_FRAMES.length;
+        }, 120);
+        return () => clearInterval(interval);
+    });
+
+    function noAutocorrect(node: HTMLElement) {
+        node.setAttribute('autocorrect', 'off');
+        node.setAttribute('autocapitalize', 'off');
+    }
+
+    interface PrecompileState {
+        active: boolean;
+        total: number;      // 0 = unknown
+        done: number;
+        inProgress: string[];
+    }
+
+    let precompile = $state<PrecompileState>({
+        active: false,
+        total: 0,
+        done: 0,
+        inProgress: [],
+    });
+
+    function parsePrecompileChunk(text: string): void {
+        for (const line of text.split('\n')) {
+            if (/^\s*Precompiling/.test(line)) {
+                precompile.active = true;
+                const countMatch = line.match(/(\d+)\s+package/);
+                if (countMatch && precompile.total === 0) {
+                    precompile.total = parseInt(countMatch[1]);
+                }
+            }
+            if (!precompile.active) continue;
+            // In-progress package: ◒ ⌛ ●
+            const inProgressMatch = line.match(/^\s*[◒⌛●]\s+(\S+)/);
+            if (inProgressMatch) {
+                const pkg = inProgressMatch[1];
+                if (!precompile.inProgress.includes(pkg)) {
+                    precompile.inProgress = [...precompile.inProgress, pkg];
+                }
+            }
+            // Completed package: ✓ PackageName
+            const doneMatch = line.match(/✓\s+(\S+)/);
+            if (doneMatch) {
+                precompile.done++;
+                precompile.inProgress = precompile.inProgress.filter(p => p !== doneMatch[1]);
+            }
+            // Total from "done/total" counter
+            const slashMatch = line.match(/(\d+)\/(\d+)/);
+            if (slashMatch && precompile.total === 0) {
+                precompile.total = parseInt(slashMatch[2]);
+            }
+        }
+    }
 
     // ── Terminal output/input DOM refs ────────────────────────────────────────
 
@@ -90,7 +155,7 @@
     function scrollReplToBottom() {
         if (replOutputEl) {
             setTimeout(() => {
-                replOutputEl.scrollTop = replOutputEl.scrollHeight;
+                replOutputEl!.scrollTop = replOutputEl!.scrollHeight;
             }, 0);
         }
     }
@@ -135,7 +200,7 @@
 
     async function runReplInput() {
         const code = replInput.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-        if (!code.trim() || isRunning) return;
+        if (!code.trim() || isRunning || isStreaming) return;
         replInput = "";
         historyIndex = -1;
         savedInput = "";
@@ -149,7 +214,7 @@
             e.preventDefault();
             runReplInput();
         } else if (e.key === "ArrowUp") {
-            const before = replInput.slice(0, replInputEl.selectionStart);
+            const before = replInput.slice(0, replInputEl!.selectionStart);
             if (before.includes("\n")) return;
             e.preventDefault();
             if (replCmdHistory.length === 0) return;
@@ -160,11 +225,11 @@
             );
             replInput = replCmdHistory[historyIndex];
             requestAnimationFrame(() => {
-                replInputEl.selectionStart = replInputEl.selectionEnd =
+                replInputEl!.selectionStart = replInputEl!.selectionEnd =
                     replInput.length;
             });
         } else if (e.key === "ArrowDown") {
-            const after = replInput.slice(replInputEl.selectionEnd);
+            const after = replInput.slice(replInputEl!.selectionEnd);
             if (after.includes("\n")) return;
             e.preventDefault();
             if (historyIndex === -1) return;
@@ -172,7 +237,7 @@
             replInput =
                 historyIndex === -1 ? savedInput : replCmdHistory[historyIndex];
             requestAnimationFrame(() => {
-                replInputEl.selectionStart = replInputEl.selectionEnd =
+                replInputEl!.selectionStart = replInputEl!.selectionEnd =
                     replInput.length;
             });
         }
@@ -388,10 +453,18 @@
                             kind: classifyOutput(displayChunk, error !== null),
                         },
                     ]);
+                    parsePrecompileChunk(displayChunk);
+                    // Keep spinner alive while output is still streaming in
+                    isStreaming = true;
+                    if (streamingTimer) clearTimeout(streamingTimer);
+                    streamingTimer = setTimeout(() => { isStreaming = false; }, 600);
                 }
             }
             if (is_done) {
                 juliaIsRunning.set(false);
+                isStreaming = false;
+                precompile = { active: false, total: 0, done: 0, inProgress: [] };
+                if (streamingTimer) { clearTimeout(streamingTimer); streamingTimer = null; }
                 if (focusReplOnDone) {
                     focusReplOnDone = false;
                     requestAnimationFrame(() => replInputEl?.focus());
@@ -439,6 +512,7 @@
             unlistenTermOut.then((fn) => fn());
             unlistenTermDone.then((fn) => fn());
             unlistenTermExit.then((fn) => fn());
+            if (streamingTimer) clearTimeout(streamingTimer);
         };
     });
 </script>
@@ -467,7 +541,7 @@
                 >REPL</button
             >
             {#if ts.activePanel === "julia"}
-                {#if isRunning}
+                {#if isRunning || isStreaming}
                     <span
                         class="flex items-center gap-1 pr-2 select-none text-brand-gold-400"
                     >
@@ -616,10 +690,47 @@
                             </div>
                         {/if}
                     {/each}
+                    {#if precompile.active}
+                        <div role="status" aria-label="Precompiling packages" aria-live="polite"
+                             class="mt-2 pl-[3.2rem] space-y-1 select-none">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-brand-charcoal-300 dark:text-[#626880]">Precompiling</span>
+                                <div role="progressbar"
+                                     aria-valuenow={precompile.done}
+                                     aria-valuemin={0}
+                                     aria-valuemax={precompile.total > 0 ? precompile.total : undefined}
+                                     class="flex-1 h-1 rounded-full bg-brand-sand-300 dark:bg-[#414559] overflow-hidden">
+                                    {#if precompile.total > 0}
+                                        <div class="h-full bg-brand-gold-400 rounded-full transition-all duration-300"
+                                             style="width: {Math.min(100, Math.round((precompile.done / precompile.total) * 100))}%">
+                                        </div>
+                                    {:else}
+                                        <div class="h-full w-1/3 bg-brand-gold-400 rounded-full animate-pulse"></div>
+                                    {/if}
+                                </div>
+                                <span class="text-[10px] text-brand-charcoal-300 dark:text-[#626880] shrink-0 tabular-nums">
+                                    {precompile.done}{precompile.total > 0 ? `/${precompile.total}` : ''}
+                                </span>
+                            </div>
+                            {#each precompile.inProgress as pkg}
+                                <div class="flex items-center gap-1.5 text-amber-400 dark:text-amber-300">
+                                    <span aria-hidden="true" class="font-mono">{SPINNER_FRAMES[spinnerFrame % SPINNER_FRAMES.length]}</span>
+                                    <span class="text-[11px]">{pkg}</span>
+                                </div>
+                            {/each}
+                        </div>
+                    {:else if isRunning || isStreaming}
+                        <div role="status" aria-label="Running" aria-live="polite"
+                             class="flex items-center gap-1.5 mt-1 select-none pl-[3.2rem]">
+                            <span aria-hidden="true" class="text-brand-gold-500 font-mono">{SPINNER_FRAMES[spinnerFrame]}</span>
+                            <span class="text-[11px] italic text-brand-charcoal-300 dark:text-[#626880]">Running…</span>
+                        </div>
+                    {/if}
                 {/if}
             </div>
 
             <!-- Input -->
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <div
                 role="group"
                 aria-label="REPL input"
@@ -636,12 +747,26 @@
                 <textarea
                     bind:this={replInputEl}
                     bind:value={replInput}
-                    disabled={isRunning}
+                    disabled={isRunning || isStreaming}
                     onkeydown={handleReplKeydown}
+                    oninput={(e) => {
+                        const t = e.currentTarget;
+                        const pos = t.selectionStart;
+                        const fixed = t.value
+                            .replace(/[\u2018\u2019]/g, "'")
+                            .replace(/[\u201C\u201D]/g, '"');
+                        if (fixed !== t.value) {
+                            t.value = fixed;
+                            t.setSelectionRange(pos, pos);
+                            replInput = fixed;
+                        }
+                    }}
                     rows={replInputRows}
-                    placeholder={isRunning
+                    placeholder={isRunning || isStreaming
                         ? "Running…"
                         : "Enter code, Shift+Enter for newline"}
+                    use:noAutocorrect
+                    spellcheck={false}
                     class="flex-1 resize-none bg-transparent font-mono repl-mono text-brand-charcoal-700 dark:text-[#c6d0f5]
                            leading-relaxed outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880]
                            disabled:opacity-40 disabled:cursor-not-allowed"
@@ -704,6 +829,7 @@
                 </div>
 
                 <!-- Input -->
+                <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
                 <div
                     role="group"
                     aria-label="Terminal input"

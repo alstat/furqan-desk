@@ -23,7 +23,7 @@
     let initialized = false;
 
     let activeSection = $state('help-started');
-    let contentPane: HTMLElement | null = null;
+    let contentPane = $state<HTMLElement | null>(null);
     let observer: IntersectionObserver | null = null;
 
     const sections = [

@@ -108,12 +108,13 @@
 </script>
 
 {#if open}
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         class="fixed inset-0 z-500 flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
         onclick={(e) => {
             if (e.target === e.currentTarget) handleClose();
         }}
+        onkeydown={(e) => { if (e.key === 'Escape') handleClose(); }}
     >
         <div
             class="flex w-full max-w-sm flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden"
