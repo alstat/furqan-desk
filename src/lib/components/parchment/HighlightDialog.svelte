@@ -27,7 +27,6 @@
     function navigate(surah: number, ayah: number) {
         selectedSurahIdx.set(surah);
         pendingJumpAyah.set(ayah);
-        onClose();
     }
 
     // ── Drag ────────────────────────────────────────────────────────────────
@@ -96,7 +95,7 @@
         role="dialog"
         aria-modal="true"
         aria-label="Highlights"
-        class="fixed flex flex-col rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+        class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{PANEL_W}px; max-height:85vh; z-index:{zIndex};"
         onpointerdown={() => {
             zIndex = bringToFront();
@@ -161,7 +160,7 @@
                         <p class="text-sm font-medium text-brand-charcoal-500">
                             No highlights yet
                         </p>
-                        <p class="mt-1 text-xs text-brand-charcoal-300">
+                        <p class="mt-1 text-[11px] text-brand-charcoal-300">
                             Select text in the parchment and tap<br />"Save
                             Highlight" to capture it here.
                         </p>
@@ -186,7 +185,7 @@
                             >
                                 <div class="flex items-center gap-1.5 min-w-0">
                                     <span
-                                        class="inline-flex items-center gap-1 rounded-md bg-brand-gold-100 border border-brand-gold-200 px-2 py-0.5 text-[10px] font-medium text-brand-gold-600 shrink-0"
+                                        class="inline-flex items-center gap-1 rounded-md bg-brand-gold-100 border border-brand-gold-200 px-2 py-0.5 text-[11px] font-medium text-brand-gold-600 shrink-0"
                                     >
                                         <Icon
                                             icon="solar:book-bold"
@@ -195,7 +194,7 @@
                                         {surahName(hl.surah)} · {hl.ayah}
                                     </span>
                                     <span
-                                        class="text-[10px] text-brand-charcoal-300 truncate"
+                                        class="text-[11px] text-brand-charcoal-300 truncate"
                                         >{formatDate(hl.created_at)}</span
                                     >
                                 </div>
@@ -203,7 +202,7 @@
                                     <button
                                         onclick={() =>
                                             navigate(hl.surah, hl.ayah)}
-                                        class="cursor-pointer flex items-center gap-1 rounded-lg bg-white dark:bg-[#414559] border border-brand-sand-200 px-2.5 py-1 text-[11px] font-medium text-brand-charcoal-500 hover:bg-brand-gold-100 dark:hover:bg-[#51576d] active:bg-brand-gold-200 transition-colors"
+                                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                                     >
                                         <Icon
                                             icon="solar:arrow-right-up-linear"
