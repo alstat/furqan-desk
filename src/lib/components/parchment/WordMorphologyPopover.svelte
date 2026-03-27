@@ -4,6 +4,7 @@
     import { buckwalterToArabic } from "$lib/functions/utils/utils";
     import { fly } from "svelte/transition";
     import { onDestroy } from "svelte";
+    import { morphGlassEffect } from "$lib/stores/morphology.store";
 
     interface Props {
         word: MorphWord;
@@ -225,7 +226,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     use:portal
-    class="ayah-tooltip fixed z-9999 flex w-88 max-h-[76vh] flex-col overflow-hidden rounded-lg backdrop-blur-sm border border-slate-200/70 dark:border-[#414559]/70 bg-white/50 dark:bg-[#292c3c]/50 shadow-2xl"
+    class={`ayah-tooltip fixed z-9999 flex w-88 max-h-[76vh] flex-col overflow-hidden rounded-lg shadow-2xl border ${$morphGlassEffect ? 'backdrop-blur-sm border-slate-200/70 dark:border-[#414559]/70 bg-white/50 dark:bg-[#292c3c]/50' : 'border-slate-200 dark:border-[#414559] bg-white dark:bg-[#292c3c]'}`}
     onpointerdown={startDragFromBorder}
     onpointermove={updateBorderCursor}
     onpointerleave={() => { isNearBorder = false; }}
@@ -238,7 +239,7 @@
     <!-- Header -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-        class="flex shrink-0 items-center justify-between bg-linear-to-b from-slate-50/50 to-white/50 dark:from-[#232634]/50 dark:to-[#292c3c]/50 px-4 py-3.5 border-b border-slate-100 dark:border-[#414559] select-none {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
+        class={`flex shrink-0 items-center justify-between bg-linear-to-b px-4 py-3.5 border-b border-slate-100 dark:border-[#414559] select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${$morphGlassEffect ? 'from-slate-50/50 to-white/50 dark:from-[#232634]/50 dark:to-[#292c3c]/50' : 'from-slate-50 to-white dark:from-[#232634] dark:to-[#292c3c]'}`}
         onpointerdown={startDrag}
     >
         <div dir="rtl" class="flex flex-col gap-1">

@@ -5,6 +5,7 @@
     import { restartTour } from '$lib/stores/tour.store';
     import { invoke } from '@tauri-apps/api/core';
     import { manuscriptsEnabled } from '$lib/stores/manuscripts.store';
+    import { morphGlassEffect } from '$lib/stores/morphology.store';
     import { onMount, onDestroy } from 'svelte';
     import { listen } from '@tauri-apps/api/event';
     import { openUrl } from '@tauri-apps/plugin-opener';
@@ -127,6 +128,39 @@
                     <Icon icon="solar:play-circle-bold-duotone" width="0.85rem" />
                     Restart Tour
                 </button>
+            </div>
+        </div>
+
+        <!-- Appearance -->
+        <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
+            <p class={sectionLabel}>Appearance</p>
+            <div class="flex items-center justify-between">
+                <div>
+                    <span class={rowLabel}>Morphology popover glass effect</span>
+                    <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        Disable to improve performance
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <button
+                        onclick={() => morphGlassEffect.set(false)}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${!$morphGlassEffect
+                                ? 'bg-brand-gold-400 text-white border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        Disabled
+                    </button>
+                    <button
+                        onclick={() => morphGlassEffect.set(true)}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${$morphGlassEffect
+                                ? 'bg-brand-gold-400 text-white border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        Enabled
+                    </button>
+                </div>
             </div>
         </div>
 

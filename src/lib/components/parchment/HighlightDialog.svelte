@@ -8,6 +8,7 @@
     } from "$lib/functions/bookmarks";
     import { highlights, pendingJumpAyah } from "$lib/stores/bookmarks.store";
     import { surahLabels, selectedSurahIdx } from "$lib/stores/quran.svelte";
+    import { bringToFront } from "$lib/stores/window-manager.store";
 
     interface Props {
         open: boolean;
@@ -34,6 +35,7 @@
 
     let x = $state(0);
     let y = $state(0);
+    let zIndex = $state(500);
     let isDragging = $state(false);
     let dragStartX = 0,
         dragStartY = 0,
@@ -45,6 +47,7 @@
         if (open && !initialized) {
             x = Math.max(0, (window.innerWidth - PANEL_W) / 2);
             y = Math.max(8, (window.innerHeight - 420) * 0.25);
+            zIndex = bringToFront();
             initialized = true;
         }
         if (!open) initialized = false;
@@ -89,21 +92,15 @@
 </script>
 
 {#if open}
-    <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-    <div
-        class="fixed inset-0 z-9998"
-        onclick={onClose}
-        onkeydown={(e) => {
-            if (e.key === "Escape") onClose();
-        }}
-    ></div>
-
     <div
         role="dialog"
         aria-modal="true"
         aria-label="Highlights"
-        class="fixed z-9999 flex flex-col rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
-        style="left:{x}px; top:{y}px; width:{PANEL_W}px; max-height:85vh;"
+        class="fixed flex flex-col rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+        style="left:{x}px; top:{y}px; width:{PANEL_W}px; max-height:85vh; z-index:{zIndex};"
+        onpointerdown={() => {
+            zIndex = bringToFront();
+        }}
     >
         <!-- Header -->
         <div
@@ -140,7 +137,7 @@
                     aria-label="Close"
                     class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                 >
-                    <Icon icon="solar:close-circle-bold" width="1rem" />
+                    <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
                 </button>
             </div>
         </div>

@@ -3,6 +3,7 @@
     import Icon from "@iconify/svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { manuscriptAyah } from "$lib/stores/manuscripts.store";
+    import { bringToFront } from "$lib/stores/window-manager.store";
 
     interface Props {
         open: boolean;
@@ -163,6 +164,7 @@
     // ── Drag ─────────────────────────────────────────────────────────────────
     let x = $state(0);
     let y = $state(0);
+    let zIndex = $state(500);
     let isDragging = $state(false);
     let dragStartX = 0,
         dragStartY = 0,
@@ -529,6 +531,7 @@
                 y = demoMode
                     ? Math.min(window.innerHeight - panelH - 8, 140)
                     : Math.max(0, (window.innerHeight - panelH) / 2);
+                if (!demoMode) zIndex = bringToFront();
                 initialized = true;
             }
             window.addEventListener("keydown", handleKeydown);
@@ -622,8 +625,13 @@
         class="fixed flex flex-col rounded-lg shadow-xl dark:shadow-black/40
            bg-white dark:bg-[#303446]
            border border-brand-sand-200 dark:border-[#414559]
-           {demoMode ? 'z-9998' : 'z-510'}"
-        style="width:{panelW}px; height:{panelH}px; left:{x}px; top:{y}px;"
+           {demoMode ? 'z-9998' : ''}"
+        style="width:{panelW}px; height:{panelH}px; left:{x}px; top:{y}px;{demoMode
+            ? ''
+            : ` z-index:${zIndex};`}"
+        onpointerdown={() => {
+            if (!demoMode) zIndex = bringToFront();
+        }}
     >
         <!-- Header / drag handle -->
         <div
@@ -671,7 +679,7 @@
                 <button
                     onclick={() => (sidebarOpen = !sidebarOpen)}
                     title={sidebarOpen ? "Hide list" : "Show list"}
-                    class="cursor-pointer p-1 rounded-full text-brand-charcoal-300 dark:text-[#8caaee]
+                    class="cursor-pointer p-1 rounded-lg text-brand-charcoal-300 dark:text-[#8caaee]
                        hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
                 >
                     <Icon
@@ -683,12 +691,12 @@
                 </button>
                 <button
                     onclick={onClose}
-                    class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     aria-label="Close manuscripts viewer"
                 >
                     <Icon
                         icon="solar:close-circle-bold-duotone"
-                        width="1.1rem"
+                        width="0.85rem"
                     />
                 </button>
             </div>
