@@ -475,7 +475,7 @@
         tabindex="0"
         onclick={(e) => e.stopPropagation()}
         onkeydown={(e) => e.stopPropagation()}
-        class="fixed z-9999 min-w-47.5 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] shadow-xl py-1.5 opacity-0"
+        class="fixed z-9999 min-w-47.5 rounded-3xl px-3 border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] shadow-xl py-3 opacity-0"
         style="left: -10000px; top: -10000px;"
     >
         {#if cellMerge}

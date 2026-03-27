@@ -9,6 +9,7 @@
     import Icon from "@iconify/svelte";
     import katex from "katex";
     import { bringToFront } from '$lib/stores/window-manager.store';
+    import DialogPanelHeader from '$lib/components/shared/DialogPanelHeader.svelte';
 
     const editor = getEditor();
     const activeEditor = getActiveEditor();
@@ -124,40 +125,13 @@
         onkeydown={(e) => { if (e.key === 'Escape') close(); }}
     >
             <!-- Header -->
-            <div
-                class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 select-none {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
+            <DialogPanelHeader
+                icon="solar:calculator-bold-duotone"
+                title="Insert Equation"
+                {isDragging}
+                onClose={close}
                 onpointerdown={startDrag}
-                role="banner"
-            >
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2.5">
-                        <div
-                            class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]"
-                        >
-                            <Icon
-                                icon="solar:calculator-bold-duotone"
-                                class="text-brand-gold-600"
-                                width="1rem"
-                            />
-                        </div>
-                        <h2
-                            class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
-                        >
-                            Insert Equation
-                        </h2>
-                    </div>
-                    <button
-                        onclick={close}
-                        aria-label="Close"
-                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    >
-                        <Icon
-                            icon="solar:close-circle-bold-duotone"
-                            width="1rem"
-                        />
-                    </button>
-                </div>
-            </div>
+            />
 
             <!-- Body -->
             <div

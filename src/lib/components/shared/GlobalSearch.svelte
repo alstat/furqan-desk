@@ -219,14 +219,14 @@
 {#if isOpen}
     <div
         transition:fly={{ x: -8, duration: 180, opacity: 0 }}
-        class="absolute top-1/2 left-1.5 ml-2 z-50 rounded-lg w-72 max-h-[50vh] bg-white dark:bg-[#292c3c]
+        class="absolute top-1/2 left-1.5 ml-2 z-50 rounded-3xl w-72 max-h-[50vh] bg-white dark:bg-[#292c3c]
 		       border border-stone-200 dark:border-[#414559]
 		       shadow-xl shadow-slate-200/60 dark:shadow-black/40
 		       flex flex-col overflow-hidden"
     >
         <!-- Header -->
         <div
-            class="shrink-0 px-3 py-2 border-b border-stone-200 dark:border-[#414559]
+            class="shrink-0 px-5 py-2 border-b border-stone-200 dark:border-[#414559]
 		            bg-brand-sand-50 dark:bg-[#232634] flex items-center justify-between gap-2"
         >
             <span
@@ -234,21 +234,21 @@
             >
                 Search in Folder
             </span>
-            <button
+            <!-- <button
                 onclick={() => (isOpen = false)}
                 aria-label="Close search"
                 class="cursor-pointer text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-500 dark:hover:text-[#c6d0f5] transition-colors"
             >
                 <Icon icon="solar:close-circle-bold" width="0.85rem" />
-            </button>
+            </button> -->
         </div>
 
         <!-- Search bar -->
         <div
-            class="shrink-0 px-2 py-2 border-b border-stone-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] flex items-center gap-1"
+            class="shrink-0 px-4 py-2 border-b border-stone-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] flex items-center gap-1"
         >
             <div
-                class="flex-1 flex items-center gap-1 rounded-lg border border-stone-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1"
+                class="flex-1 flex items-center gap-1 rounded-xl border border-stone-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1"
             >
                 <Icon
                     icon="solar:magnifer-bold-duotone"

@@ -82,7 +82,7 @@
             <!-- svelte-ignore a11y_consider_explicit_label -->
             <button
                 type="button"
-                class={`rounded-md inset-shadow-2xs size-5 cursor-pointer transition-[transform,box-shadow] duration-100 hover:scale-[1.18] ${
+                class={`rounded-full inset-shadow-2xs size-5 cursor-pointer transition-[transform,box-shadow] duration-100 hover:scale-[1.18] ${
                     basicColor === selfColor.hex
                         ? "shadow-[0_0_0_2.5px_var(--color-brand-gold-400)] border-transparent"
                         : "border-brand-sand-200"
@@ -121,7 +121,7 @@
     <!-- Preview + hex row -->
     <div class="flex justify-between items-center gap-2.5 mt-2.5">
         <div
-            class="border border-brand-sand-200 rounded-lg shrink-0 size-8"
+            class="border border-brand-sand-200 rounded-full shrink-0 size-7"
             style="background-color: {selfColor.hex}"
         ></div>
         <TextInput

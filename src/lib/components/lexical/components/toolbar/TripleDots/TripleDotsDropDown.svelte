@@ -149,7 +149,7 @@
     {#if isOpen}
         <Portal>
             <div
-                class="portal-dropdown-content absolute z-50 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm"
+                class="portal-dropdown-content p-3 absolute z-50 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm"
                 style="width: 12rem;"
                 bind:this={panelRef}
                 use:handlePortalMount
@@ -176,14 +176,14 @@
                     <!-- XL breakpoint items (show when width < xl) -->
                     <!-- {#if windowWidth < 1380} -->
                     <div class="">
-                        <div class="mb-2 px-2 py-1">
+                        <div class="mb-2 px-3 py-1">
                             <span
                                 class="text-xs font-medium text-brand-charcoal-500"
                                 >Insert</span
                             >
                             <div class="mt-1 flex flex-col space-y-1">
                                 <button
-                                    class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-lg hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100"
+                                    class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-full hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100"
                                     onclick={onInsertImageClick}
                                 >
                                     <div
@@ -199,7 +199,7 @@
                                     </div>
                                 </button>
                                 <button
-                                    class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-lg hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100"
+                                    class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-full hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100"
                                     onclick={() => {
                                         $activeEditor.dispatchCommand(
                                             INSERT_HORIZONTAL_RULE_COMMAND,
@@ -220,7 +220,7 @@
                                     </div>
                                 </button>
                                 <button
-                                    class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-lg hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100"
+                                    class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-full hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100"
                                     onclick={onInsertEquationClick}
                                 >
                                     <div
@@ -236,7 +236,7 @@
                                     </div>
                                 </button>
                                 <button
-                                    class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-lg hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100"
+                                    class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-full hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100"
                                     onclick={() => {
                                         showTableModal = true;
                                         isOpen = false;
@@ -274,7 +274,7 @@
                             <div class="mt-1 flex flex-col space-y-1">
                                 {#each [{ label: "Single", value: "1" }, { label: "1.5 Lines", value: "1.5" }, { label: "Double", value: "2" }] as spacing}
                                     <button
-                                        class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-lg hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100 {$lineHeight ===
+                                        class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-full hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100 {$lineHeight ===
                                         spacing.value
                                             ? 'bg-brand-sand-200 text-brand-charcoal-900 font-semibold'
                                             : ''}"
