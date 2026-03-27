@@ -7,6 +7,7 @@
         juliaViewerOpen,
         type JuliaPlot,
     } from "$lib/stores/editor.store";
+    import { bringToFront } from "$lib/stores/window-manager.store";
 
     let currentIndex = $state(0);
 
@@ -17,6 +18,7 @@
     // Panel position (viewport px)
     let x = $state(0);
     let y = $state(0);
+    let zIndex = $state(500);
     let initialized = false;
     let panelW = $state(384);
     let panelH = $state(400);
@@ -115,6 +117,7 @@
         if ($juliaViewerOpen && !initialized && typeof window !== "undefined") {
             x = Math.max(0, (window.innerWidth - panelW) / 2);
             y = Math.max(0, (window.innerHeight - panelH) / 2);
+            zIndex = bringToFront();
             initialized = true;
         }
     });
@@ -228,7 +231,8 @@
         aria-modal="true"
         aria-label="Plot fullscreen view"
         tabindex="-1"
-        class="fixed inset-0 z-530 bg-black/92 flex items-center justify-center cursor-zoom-out"
+        class="fixed inset-0 bg-black/92 flex items-center justify-center cursor-zoom-out"
+        style="z-index: {zIndex + 1};"
         onclick={() => (zoomed = false)}
         onkeydown={(e) => e.key === "Escape" && (zoomed = false)}
     >
@@ -266,11 +270,12 @@
 {#if $juliaViewerOpen}
     <div
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-        class="fixed z-200 flex flex-col overflow-hidden rounded-lg
+        class="fixed flex flex-col overflow-hidden rounded-lg
                bg-white dark:bg-[#292c3c]
                border border-brand-sand-200 dark:border-[#414559]
                shadow-xl dark:shadow-black/40"
-        style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px;"
+        style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
+        onpointerdown={() => { zIndex = bringToFront(); }}
     >
         <!-- Header -->
         <div
