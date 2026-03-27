@@ -270,19 +270,21 @@
 {#if $juliaViewerOpen}
     <div
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-        class="fixed flex flex-col overflow-hidden rounded-lg
+        class="fixed flex flex-col overflow-hidden rounded-3xl
                bg-white dark:bg-[#292c3c]
                border border-brand-sand-200 dark:border-[#414559]
                shadow-xl dark:shadow-black/40"
         style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
-        onpointerdown={() => { zIndex = bringToFront(); }}
+        onpointerdown={() => {
+            zIndex = bringToFront();
+        }}
     >
         <!-- Header -->
         <div
-            class="flex items-center justify-between px-4 py-1.5 shrink-0
+            class="flex items-center justify-between px-4 py-1.75 shrink-0
                border-b border-brand-gold-200 dark:border-[#414559]
                bg-brand-gold-100 dark:bg-[#292c3c]
-               select-none rounded-t-lg
+               select-none rounded-t-3xl
                {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
             onpointerdown={startDrag}
             role="banner"
@@ -294,7 +296,7 @@
                     class="text-brand-gold-500"
                 />
                 <span
-                    class="text-[10px] font-semibold uppercase tracking-wide
+                    class="text-[11px] py-2 font-semibold uppercase tracking-wide
 			             text-brand-charcoal-500 dark:text-[#838ba7]"
                 >
                     Julia Plots
@@ -312,7 +314,7 @@
                 {#if hasPlots}
                     <button
                         onclick={removeCurrent}
-                        class="cursor-pointer text-[10px] font-semibold text-brand-charcoal-300
+                        class="cursor-pointer text-[11px] font-semibold text-brand-charcoal-300
 					       dark:text-[#838ba7] hover:text-red-500 dark:hover:text-red-400
 					       transition-colors"
                         title="Remove this plot"
@@ -324,7 +326,7 @@
                     </button>
                     <button
                         onclick={clearPlots}
-                        class="cursor-pointer text-[10px] font-semibold text-brand-charcoal-300
+                        class="cursor-pointer text-[11px] font-semibold text-brand-charcoal-300
 					       dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 					       transition-colors"
                         title="Clear all plots"

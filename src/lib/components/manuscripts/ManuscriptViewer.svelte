@@ -597,7 +597,7 @@
 {#if zoomed && imageSrc}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-        class="fixed inset-0 z-530 bg-black/92 flex items-center justify-center cursor-zoom-out"
+        class="fixed inset-0 z-9999 bg-black/92 flex items-center justify-center cursor-zoom-out"
         onclick={() => (zoomed = false)}
         onkeydown={(e) => e.key === "Escape" && (zoomed = false)}
     >
@@ -622,7 +622,7 @@
 <!-- ── Main panel ───────────────────────────────────────────────────────── -->
 {#if open}
     <div
-        class="fixed flex flex-col rounded-lg shadow-xl dark:shadow-black/40
+        class="fixed flex flex-col rounded-3xl shadow-xl dark:shadow-black/40
            bg-white dark:bg-[#303446]
            border border-brand-sand-200 dark:border-[#414559]
            {demoMode ? 'z-9998' : ''}"
@@ -638,7 +638,7 @@
             class="flex items-center justify-between px-4 py-1.5 shrink-0
                border-b border-brand-gold-200 dark:border-[#414559]
                bg-brand-gold-100 dark:bg-[#292c3c]
-               select-none rounded-t-lg
+               select-none rounded-t-3xl
                {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
             onpointerdown={startDrag}
             role="banner"
@@ -655,14 +655,14 @@
                     >
                         Manuscripts — Surah 112 (Al-Ikhlas), Ayah 2
                         <span
-                            class="ml-1 text-[10px] font-normal text-brand-gold-500 border border-brand-gold-300 dark:border-[#e5c890]/40 rounded-full px-1.5 py-0.5"
+                            class="ml-1 text-[11px] font-normal text-brand-gold-500 border border-brand-gold-300 dark:border-[#e5c890]/40 rounded-full px-1.5 py-0.5"
                             >demo</span
                         >
                     </span>
                 {:else if $manuscriptAyah}
                     <span
-                        class="text-[10px] font-semibold uppercase tracking-wide
-			             text-brand-charcoal-500 dark:text-[#838ba7]"
+                        class="text-[11px] font-semibold uppercase tracking-wide
+			             text-brand-charcoal-500 dark:text-[#838ba7] py-2"
                     >
                         Manuscripts — Surah {$manuscriptAyah.surah}, Ayah {$manuscriptAyah.ayah}
                     </span>
@@ -732,7 +732,7 @@
                     {:else}
                         <div class="px-3 pb-1.5 pt-0.5">
                             <span
-                                class="text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+                                class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
                                 {results.length} manuscript{results.length !== 1
                                     ? "s"
@@ -777,7 +777,7 @@
                                         </p>
                                         {#if dateStr}
                                             <p
-                                                class="text-[10px] text-brand-gold-500 dark:text-[#e5c890] mt-0.5 font-medium"
+                                                class="text-[11px] text-brand-gold-500 dark:text-[#e5c890] mt-0.5 font-medium"
                                             >
                                                 {dateStr} CE
                                             </p>
@@ -787,12 +787,12 @@
                                             ></span>
                                         {/if}
                                         <p
-                                            class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] leading-tight"
+                                            class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] leading-tight"
                                         >
                                             {ms.archive.name}
                                         </p>
                                         <p
-                                            class="text-[10px] text-brand-charcoal-200 dark:text-[#626880] leading-tight"
+                                            class="text-[11px] text-brand-charcoal-200 dark:text-[#626880] leading-tight"
                                         >
                                             {ms.archive.city}
                                         </p>
@@ -815,7 +815,7 @@
                             {#each selectedManuscript.pages as page, i}
                                 <button
                                     onclick={() => (folioIdx = i)}
-                                    class={`cursor-pointer px-2 py-0.5 text-[10px] font-semibold rounded-full border transition-colors
+                                    class={`cursor-pointer px-2 py-0.5 text-[11px] font-semibold rounded-full border transition-colors
                                     ${
                                         folioIdx === i
                                             ? "bg-brand-gold-400 text-white border-brand-gold-400"
@@ -1084,7 +1084,7 @@
                             {#if selectedDetail.catalogue_entry?.trim()}
                                 <details class="mt-2">
                                     <summary
-                                        class="text-[10px] font-semibold cursor-pointer text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-500 dark:hover:text-[#c6d0f5] select-none"
+                                        class="text-[11px] font-semibold cursor-pointer text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-500 dark:hover:text-[#c6d0f5] select-none"
                                     >
                                         Catalogue entry ▸
                                     </summary>
@@ -1117,7 +1117,7 @@
                         class="shrink-0 flex items-center justify-between gap-2 px-3 py-2 border-t border-slate-100 dark:border-[#414559]"
                     >
                         <span
-                            class="text-[10px] text-brand-charcoal-300 dark:text-[#626880] truncate"
+                            class="text-[11px] text-brand-charcoal-300 dark:text-[#626880] truncate"
                         >
                             {#if downloadMsg}
                                 <span
@@ -1134,7 +1134,7 @@
                         <button
                             onclick={downloadFull}
                             disabled={downloading || !imageSrc}
-                            class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-full border
+                            class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full border
                                border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
                                dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559]
                                text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors

@@ -144,7 +144,7 @@
     <!-- Floating panel -->
     <div
         use:portal
-        class="fixed z-9999 rounded-lg bg-white dark:bg-[#292c3c]
+        class="fixed z-9999 rounded-3xl bg-white dark:bg-[#292c3c]
            border border-stone-200 dark:border-[#414559]
            shadow-xl shadow-slate-200/60 dark:shadow-black/40
            flex flex-col overflow-hidden"
@@ -166,7 +166,7 @@
                     width="0.75rem"
                 />
                 <span
-                    class="text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+                    class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 py-1.5 dark:text-[#838ba7]"
                 >
                     {title}
                 </span>

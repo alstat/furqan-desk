@@ -340,19 +340,19 @@
             <div class="flex items-center justify-between gap-2">
                 <button
                     onclick={() => openUrl("https://github.com/talal/ilm")}
-                    class="cursor-pointer text-xs font-mono text-brand-charcoal-500 hover:text-brand-gold-500 transition-colors"
+                    class="cursor-pointer text-[11px] font-mono text-brand-charcoal-500 hover:text-brand-gold-500 transition-colors"
                     title="View ilm on GitHub"
                 >ilm {ILM_VERSION}</button>
 
                 {#if installStatus === "unknown"}
-                    <span class="text-xs text-brand-charcoal-300 italic">Checking…</span>
+                    <span class="text-[11px] text-brand-charcoal-300 italic">Checking…</span>
                 {:else if installStatus === "installed"}
-                    <span class="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
+                    <span class="flex items-center gap-1 text-[11px] font-medium text-green-600 dark:text-green-400">
                         <Icon icon="solar:check-circle-bold" width="0.9rem" />
                         Installed
                     </span>
                 {:else if installStatus === "installing"}
-                    <span class="flex items-center gap-1 text-xs text-brand-charcoal-400 italic">
+                    <span class="flex items-center gap-1 text-[11px] text-brand-charcoal-400 italic">
                         <Icon icon="solar:refresh-bold" width="0.9rem" class="animate-spin" />
                         Installing…
                     </span>
@@ -376,19 +376,19 @@
             <div class="flex items-center justify-between gap-2">
                 <button
                     onclick={() => openUrl("https://github.com/skriptum/Diatypst")}
-                    class="cursor-pointer text-xs font-mono text-brand-charcoal-500 hover:text-brand-gold-500 transition-colors"
+                    class="cursor-pointer text-[11px] font-mono text-brand-charcoal-500 hover:text-brand-gold-500 transition-colors"
                     title="View Diatypst on GitHub"
                 >diatypst {DIATYPST_VERSION}</button>
 
                 {#if diatypstStatus === "unknown"}
-                    <span class="text-xs text-brand-charcoal-300 italic">Checking…</span>
+                    <span class="text-[11px] text-brand-charcoal-300 italic">Checking…</span>
                 {:else if diatypstStatus === "installed"}
-                    <span class="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
+                    <span class="flex items-center gap-1 text-[11px] font-medium text-green-600 dark:text-green-400">
                         <Icon icon="solar:check-circle-bold" width="0.9rem" />
                         Installed
                     </span>
                 {:else if diatypstStatus === "installing"}
-                    <span class="flex items-center gap-1 text-xs text-brand-charcoal-400 italic">
+                    <span class="flex items-center gap-1 text-[11px] text-brand-charcoal-400 italic">
                         <Icon icon="solar:refresh-bold" width="0.9rem" class="animate-spin" />
                         Installing…
                     </span>
@@ -415,12 +415,12 @@
             <span class={labelClass}>Julia</span>
 
             {#if juliaStatus === "unknown"}
-                <span class="text-xs text-brand-charcoal-300 italic"
+                <span class="text-[11px] text-brand-charcoal-300 italic"
                     >Checking…</span
                 >
             {:else if juliaStatus === "installed"}
                 <span
-                    class="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400"
+                    class="flex items-center gap-1 text-[11px] font-medium text-green-600 dark:text-green-400"
                 >
                     <Icon icon="solar:check-circle-bold" width="0.9rem" />
                     Installed
@@ -434,7 +434,7 @@
                 </span>
             {:else if juliaStatus === "installing"}
                 <span
-                    class="flex flex-col gap-0.5 text-xs text-brand-charcoal-400"
+                    class="flex flex-col gap-0.5 text-[11px] text-brand-charcoal-400"
                 >
                     <span class="flex items-center gap-1 italic">
                         <Icon
@@ -456,7 +456,7 @@
                 <div class="flex flex-col gap-2 mt-0.5">
                     <!-- Auto-install row -->
                     <div class="flex items-center justify-between gap-2">
-                        <span class="text-xs text-brand-charcoal-400"
+                        <span class="text-[11px] text-brand-charcoal-400"
                             >Auto-install</span
                         >
                         <button
@@ -470,7 +470,7 @@
 
                     <!-- Manual path row -->
                     <div class="flex flex-col gap-1">
-                        <span class="text-xs text-brand-charcoal-400"
+                        <span class="text-[11px] text-brand-charcoal-400"
                             >Or set path manually</span
                         >
                         <div class="flex items-center gap-1">

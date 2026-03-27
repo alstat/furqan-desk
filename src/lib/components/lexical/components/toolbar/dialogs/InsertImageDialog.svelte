@@ -148,7 +148,7 @@
         }}
     >
         <div
-            class="flex w-full max-w-sm flex-col rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+            class="flex w-full max-w-sm flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         >
             <!-- Header -->
             <div
@@ -176,18 +176,21 @@
                         aria-label="Close"
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
-                        <Icon icon="solar:close-circle-bold" width="1rem" />
+                        <Icon
+                            icon="solar:close-circle-bold-duotone"
+                            width="1rem"
+                        />
                     </button>
                 </div>
 
                 <!-- Tabs -->
                 <div
-                    class="mt-3 flex gap-1 rounded-xl bg-brand-gold-200/50 dark:bg-[#414559]/50 p-1"
+                    class="mt-3 flex gap-1 rounded-full bg-brand-gold-200/50 dark:bg-[#414559]/50 p-1"
                 >
                     <button
                         onclick={() => (activeTab = "url")}
                         aria-pressed={activeTab === "url"}
-                        class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-[11px] font-semibold transition-colors
+                        class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors
                             {activeTab === 'url'
                             ? 'bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm'
                             : 'text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]'}"
@@ -198,7 +201,7 @@
                     <button
                         onclick={() => (activeTab = "file")}
                         aria-pressed={activeTab === "file"}
-                        class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-[11px] font-semibold transition-colors
+                        class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors
                             {activeTab === 'file'
                             ? 'bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm'
                             : 'text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]'}"
@@ -225,7 +228,7 @@
                             placeholder="https://example.com/image.jpg"
                             bind:value={src}
                             data-test-id="image-modal-url-input"
-                            class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                            class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                         />
                     </div>
                     <div class="flex flex-col gap-1.5">
@@ -238,7 +241,7 @@
                             placeholder="Descriptive alternative text"
                             bind:value={altText}
                             data-test-id="image-modal-alt-text-input"
-                            class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                            class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                         />
                     </div>
                 {:else}
@@ -251,7 +254,7 @@
                         <button
                             onclick={browseFile}
                             disabled={loadingFile}
-                            class="cursor-pointer flex items-center gap-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-xs transition-colors hover:border-brand-gold-400 hover:bg-brand-gold-50 dark:hover:bg-[#292c3c] disabled:opacity-50"
+                            class="cursor-pointer flex items-center gap-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] transition-colors hover:border-brand-gold-400 hover:bg-brand-gold-50 dark:hover:bg-[#292c3c] disabled:opacity-50"
                         >
                             {#if loadingFile}
                                 <Icon
@@ -306,7 +309,9 @@
                     {/if}
 
                     {#if fileError}
-                        <p class="flex items-center gap-1 text-xs text-red-500">
+                        <p
+                            class="flex items-center gap-1 text-[11px] text-red-500"
+                        >
                             <Icon
                                 icon="solar:danger-circle-bold"
                                 width="0.75rem"
@@ -324,7 +329,7 @@
                             placeholder="Descriptive alternative text"
                             bind:value={fileAltText}
                             data-test-id="image-modal-file-alt-text-input"
-                            class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                            class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                         />
                     </div>
                 {/if}
@@ -333,7 +338,7 @@
                     data-test-id="image-modal-confirm-btn"
                     disabled={isDisabled}
                     onclick={insertImage}
-                    class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-gold-400 py-2 text-xs font-semibold text-white hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors mt-1"
+                    class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-2 text-[11px] font-semibold text-white hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors mt-1"
                 >
                     <Icon icon="solar:gallery-add-bold" width="0.8rem" />
                     Insert Image

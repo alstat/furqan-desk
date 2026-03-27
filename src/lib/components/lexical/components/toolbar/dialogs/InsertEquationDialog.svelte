@@ -4,10 +4,11 @@
         getEditor,
         getActiveEditor,
     } from "$lexical/core/composerContext.js";
-    import { tick } from "svelte";
+    import { tick, onDestroy } from "svelte";
     import { INSERT_EQUATION_COMMAND } from "$lexical/core/plugins/Equation/EquationPlugin.svelte";
     import Icon from "@iconify/svelte";
     import katex from "katex";
+    import { bringToFront } from '$lib/stores/window-manager.store';
 
     const editor = getEditor();
     const activeEditor = getActiveEditor();
@@ -64,6 +65,50 @@
         // re-run whenever equation or mathStyle changes and dialog is open
         if (showModal) updatePreview();
     });
+
+    // ── Drag ────────────────────────────────────────────────────────────────
+    const PANEL_W = 384; // matches max-w-sm
+
+    let x = $state(0);
+    let y = $state(0);
+    let zIndex = $state(500);
+    let isDragging = $state(false);
+    let dragStartX = 0, dragStartY = 0, startX = 0, startY = 0;
+    let initialized = false;
+
+    $effect(() => {
+        if (showModal && !initialized) {
+            x = Math.max(0, (window.innerWidth - PANEL_W) / 2);
+            y = Math.max(8, (window.innerHeight - 380) * 0.25);
+            zIndex = bringToFront();
+            initialized = true;
+        }
+        if (!showModal) initialized = false;
+    });
+
+    function startDrag(e: PointerEvent) {
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        startX = x;
+        startY = y;
+        window.addEventListener('pointermove', onDrag);
+        window.addEventListener('pointerup', stopDrag, { once: true });
+    }
+
+    function onDrag(e: PointerEvent) {
+        x = Math.max(0, Math.min(window.innerWidth - PANEL_W, startX + (e.clientX - dragStartX)));
+        y = Math.max(0, Math.min(window.innerHeight - 60, startY + (e.clientY - dragStartY)));
+    }
+
+    function stopDrag() {
+        isDragging = false;
+        window.removeEventListener('pointermove', onDrag);
+    }
+
+    onDestroy(() => {
+        if (typeof window !== 'undefined') window.removeEventListener('pointermove', onDrag);
+    });
 </script>
 
 {#if showModal}
@@ -73,20 +118,16 @@
         aria-modal="true"
         aria-label="Insert Equation"
         tabindex="-1"
-        class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/30 backdrop-blur-sm"
-        onclick={(e) => {
-            if (e.target === e.currentTarget) close();
-        }}
-        onkeydown={(e) => {
-            if (e.key === "Escape") close();
-        }}
+        class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+        style="left:{x}px; top:{y}px; width:{PANEL_W}px; z-index:{zIndex};"
+        onpointerdown={() => { zIndex = bringToFront(); }}
+        onkeydown={(e) => { if (e.key === 'Escape') close(); }}
     >
-        <div
-            class="flex w-full max-w-sm flex-col rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
-        >
             <!-- Header -->
             <div
-                class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4"
+                class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 select-none {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
+                onpointerdown={startDrag}
+                role="banner"
             >
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
@@ -110,14 +151,17 @@
                         aria-label="Close"
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
-                        <Icon icon="solar:close-circle-bold" width="1rem" />
+                        <Icon
+                            icon="solar:close-circle-bold-duotone"
+                            width="1rem"
+                        />
                     </button>
                 </div>
             </div>
 
             <!-- Body -->
             <div
-                class="px-5 pt-5 pb-7 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3"
+                class="px-5 pt-5 pb-6 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3"
             >
                 <div class="flex flex-col gap-1.5">
                     <label
@@ -132,13 +176,13 @@
                         bind:value={equation}
                         oninput={() => updatePreview()}
                         data-test-id="equation-modal-input"
-                        class="w-full resize-none rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                        class="w-full resize-none rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                     ></textarea>
                 </div>
 
                 <!-- Preview -->
                 <div
-                    class="rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 min-h-10 flex items-center justify-center"
+                    class="rounded-xl mb-3 border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 min-h-10 flex items-center justify-center"
                 >
                     <div
                         bind:this={previewEl}
@@ -146,14 +190,14 @@
                     ></div>
                     {#if !equation}
                         <span
-                            class="text-xs text-brand-charcoal-300 dark:text-[#626880]"
+                            class="text-[11px] text-brand-charcoal-300 dark:text-[#626880]"
                             >Preview will appear here</span
                         >
                     {/if}
                 </div>
 
                 {#if error}
-                    <p class="flex items-center gap-1 text-xs text-red-500">
+                    <p class="flex items-center gap-1 text-[11px] text-red-500">
                         <Icon
                             icon="solar:danger-circle-bold"
                             width="0.75rem"
@@ -161,11 +205,11 @@
                     </p>
                 {/if}
 
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 justify-between">
                     <select
                         bind:value={mathStyle}
                         onchange={() => updatePreview()}
-                        class="h-9 rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                        class="h-7 cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                     >
                         <option class="cursor-pointer" value="inline"
                             >Inline</option
@@ -186,15 +230,15 @@
                                     inline: mathStyle === "inline",
                                 },
                             );
-                            close();
+                            equation = "";
+                            error = "";
                         }}
-                        class="h-9 cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-gold-400 py-2 text-xs font-semibold text-white hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
+                        class="cursor-pointer flex px-5 items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-white hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
                     >
                         <Icon icon="solar:calculator-bold" width="0.8rem" />
                         Insert Equation
                     </button>
                 </div>
             </div>
-        </div>
     </div>
 {/if}

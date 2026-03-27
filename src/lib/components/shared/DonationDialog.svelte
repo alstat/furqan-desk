@@ -43,7 +43,7 @@
         onkeydown={(e) => { if (e.key === 'Escape') onClose(); }}
     >
         <div
-            class="flex w-full max-w-sm flex-col rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+            class="flex w-full max-w-sm flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
             style="max-height: 90vh;"
         >
             <!-- Header -->
@@ -90,7 +90,7 @@
             >
                 <!-- Ko-fi card -->
                 <div
-                    class="flex flex-col gap-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-4 py-3"
+                    class="flex flex-col gap-2 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-4 py-3"
                 >
                     <div class="flex items-center gap-2">
                         <Icon
@@ -105,7 +105,7 @@
                     </p>
                     <button
                         onclick={handleKofi}
-                        class="cursor-pointer flex items-center justify-center gap-1.5 rounded-xl bg-brand-gold-400 dark:bg-brand-gold-600 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+                        class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-4 py-1.5 text-[11px] font-semibold text-white hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                     >
                         <Icon icon="solar:heart-bold" width="0.8rem" />
                         Donate on Ko-fi →
@@ -115,15 +115,15 @@
                 <!-- PH Only section -->
                 <div class="flex flex-col gap-3">
                     <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-semibold text-brand-charcoal-500 dark:text-[#8087a2] flex items-center gap-1"><Icon icon="emojione:flag-for-philippines" width="1rem" /> PH Only</span>
+                        <span class="text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#8087a2] flex items-center gap-1"><Icon icon="emojione:flag-for-philippines" width="1rem" /> PH Only</span>
                     </div>
 
                     <!-- Segmented control -->
-                    <div class="flex rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] p-1 gap-1">
+                    <div class="flex rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] p-1 gap-1">
                         {#each (['gcash', 'maya', 'bpi'] as const) as tab}
                             <button
                                 onclick={() => { selectedQR = tab; }}
-                                class="flex-1 rounded-lg py-1.5 text-xs font-semibold transition-colors cursor-pointer
+                                class="flex-1 rounded-full py-1.5 text-[11px] font-semibold transition-colors cursor-pointer
                                     {selectedQR === tab
                                         ? 'bg-brand-gold-400 dark:bg-brand-gold-600 text-white shadow-sm'
                                         : 'text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#292c3c]'}"
@@ -154,7 +154,7 @@
             >
                 <button
                     onclick={onClose}
-                    class="cursor-pointer flex items-center gap-1.5 rounded-xl bg-brand-gold-400 dark:bg-brand-gold-600 px-5 py-2 text-xs font-semibold text-white hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-5 py-1.5 text-[11px] font-semibold text-white hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                 >
                     <Icon icon="solar:close-circle-bold-duotone" width="0.8rem" />
                     Close
