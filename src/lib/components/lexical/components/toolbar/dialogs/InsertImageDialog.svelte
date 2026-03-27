@@ -139,14 +139,16 @@
         aria-modal="true"
         aria-label="Insert Image"
         tabindex="-1"
-        class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
+        class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/30 backdrop-blur-sm"
         onclick={(e) => {
             if (e.target === e.currentTarget) close();
         }}
-        onkeydown={(e) => { if (e.key === 'Escape') close(); }}
+        onkeydown={(e) => {
+            if (e.key === "Escape") close();
+        }}
     >
         <div
-            class="flex w-full max-w-sm flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden"
+            class="flex w-full max-w-sm flex-col rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         >
             <!-- Header -->
             <div
@@ -209,7 +211,7 @@
 
             <!-- Body -->
             <div
-                class="px-5 py-4 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3"
+                class="px-5 pt-5 pb-7 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3"
             >
                 {#if activeTab === "url"}
                     <!-- URL tab -->

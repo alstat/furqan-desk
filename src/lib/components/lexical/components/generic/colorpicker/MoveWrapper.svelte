@@ -69,34 +69,3 @@
 <div bind:this={divRef} class={className} {style} onmousedown={onMouseDown}>
   {@render children?.()}
 </div>
-
-<style>
-  .color-picker-hue {
-    width: 100%;
-    position: relative;
-    margin-top: 15px;
-    height: 12px;
-    background-image: linear-gradient(
-      to right,
-      rgb(255, 0, 0),
-      rgb(255, 255, 0),
-      rgb(0, 255, 0),
-      rgb(0, 255, 255),
-      rgb(0, 0, 255),
-      rgb(255, 0, 255),
-      rgb(255, 0, 0)
-    );
-    user-select: none;
-    border-radius: 12px;
-  }
-
-  .color-picker-saturation {
-    width: 100%;
-    position: relative;
-    margin-top: 15px;
-    height: 150px;
-    background-image: linear-gradient(transparent, black),
-      linear-gradient(to right, white, transparent);
-    user-select: none;
-  }
-</style>

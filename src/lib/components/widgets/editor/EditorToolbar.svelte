@@ -206,7 +206,7 @@
                     class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
 						${
                             $appDarkMode
-                                ? "bg-[#1a1d2e] text-[#c8a96a] border-[#3e4568]"
+                                ? "bg-[#1a1d2e] text-brand-gold-400 border-[#3e4568]"
                                 : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500"
                         }`}
                 >

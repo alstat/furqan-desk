@@ -1,5 +1,6 @@
 <script lang="ts">
     import Icon from '@iconify/svelte';
+    import { onDestroy } from 'svelte';
     import {
         loadBookmarks, addBookmark, deleteBookmark,
         loadLastRead, formatDate,
@@ -53,22 +54,71 @@
         pendingJumpAyah.set(ayah);
         onClose();
     }
+
+    // ── Drag ────────────────────────────────────────────────────────────────
+    const PANEL_W = 440;
+
+    let x = $state(0);
+    let y = $state(0);
+    let isDragging = $state(false);
+    let dragStartX = 0, dragStartY = 0, startX = 0, startY = 0;
+    let initialized = false;
+
+    $effect(() => {
+        if (open && !initialized) {
+            x = Math.max(0, (window.innerWidth - PANEL_W) / 2);
+            y = Math.max(8, (window.innerHeight - 420) * 0.25);
+            initialized = true;
+        }
+        if (!open) initialized = false;
+    });
+
+    function startDrag(e: PointerEvent) {
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        startX = x;
+        startY = y;
+        window.addEventListener('pointermove', onDrag);
+        window.addEventListener('pointerup', stopDrag, { once: true });
+    }
+
+    function onDrag(e: PointerEvent) {
+        x = Math.max(0, Math.min(window.innerWidth - PANEL_W, startX + (e.clientX - dragStartX)));
+        y = Math.max(0, Math.min(window.innerHeight - 60, startY + (e.clientY - dragStartY)));
+    }
+
+    function stopDrag() {
+        isDragging = false;
+        window.removeEventListener('pointermove', onDrag);
+    }
+
+    onDestroy(() => {
+        if (typeof window !== 'undefined') window.removeEventListener('pointermove', onDrag);
+    });
 </script>
 
 {#if open}
+    <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+    <div
+        class="fixed inset-0 z-9998"
+        onclick={onClose}
+        onkeydown={(e) => { if (e.key === 'Escape') onClose(); }}
+    ></div>
+
     <div
         role="dialog"
         aria-modal="true"
         aria-label="Bookmarks"
-        tabindex="-1"
-        class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
-        onclick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-        onkeydown={(e) => { if (e.key === 'Escape') onClose(); }}
+        class="fixed z-9999 flex flex-col rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+        style="left:{x}px; top:{y}px; width:{PANEL_W}px; max-height:85vh;"
     >
-        <div class="flex w-full max-w-md flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden" style="max-height: 85vh;">
-
             <!-- Header -->
-            <div class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4">
+            <div
+                class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 select-none {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
+                onpointerdown={startDrag}
+                role="banner"
+            >
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
                         <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]">
@@ -211,6 +261,5 @@
                     {/if}
                 </div>
             </div>
-        </div>
     </div>
 {/if}

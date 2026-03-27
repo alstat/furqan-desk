@@ -18,7 +18,11 @@
     import MorphologyView from "./MorphologyView.svelte";
     import { addHighlight } from "$lib/functions/bookmarks";
     import { pendingJumpAyah } from "$lib/stores/bookmarks.store";
-    import { totalAyahsInSurah, recitationPlaylist, recitationDownloadDialogOpen } from "$lib/stores/recitation.store";
+    import {
+        totalAyahsInSurah,
+        recitationPlaylist,
+        recitationDownloadDialogOpen,
+    } from "$lib/stores/recitation.store";
     import RecitationDownloadDialog from "./RecitationDownloadDialog.svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { activeTranslatorId } from "$lib/stores/translation.store";
@@ -143,10 +147,13 @@
         }
         isSearching = true;
         try {
-            const matches = await invoke<{ surah: number; ayah: number }[]>('search_quran', {
-                query,
-                translatorId: $activeTranslatorId,
-            });
+            const matches = await invoke<{ surah: number; ayah: number }[]>(
+                "search_quran",
+                {
+                    query,
+                    translatorId: $activeTranslatorId,
+                },
+            );
             if (!matches.length) {
                 morphologyMultiSurahList.set(null);
                 morphologyAyahFilter.set(null);
@@ -164,25 +171,33 @@
             // Load morphology for each surah and filter to matched ayahs
             const surahNums = [...surahAyahMap.keys()].sort((a, b) => a - b);
             const morphResults = await Promise.all(
-                surahNums.map(s => invoke<SurahMorphology>('get_surah_morphology', { surahNumber: s }))
+                surahNums.map((s) =>
+                    invoke<SurahMorphology>("get_surah_morphology", {
+                        surahNumber: s,
+                    }),
+                ),
             );
 
             const filtered: SurahMorphology[] = morphResults.map((morph, i) => {
                 const allowed = new Set(surahAyahMap.get(surahNums[i])!);
-                return { ...morph, ayahs: morph.ayahs.filter(a => allowed.has(a.ayah)) };
+                return {
+                    ...morph,
+                    ayahs: morph.ayahs.filter((a) => allowed.has(a.ayah)),
+                };
             });
 
             // Build recitation playlist
             const playlist: { surah: number; ayah: number }[] = [];
             for (const s of filtered) {
-                for (const a of s.ayahs) playlist.push({ surah: s.surah, ayah: a.ayah });
+                for (const a of s.ayahs)
+                    playlist.push({ surah: s.surah, ayah: a.ayah });
             }
 
             morphologyMultiSurahList.set(filtered);
             morphologyAyahFilter.set(null);
             recitationPlaylist.set(playlist);
         } catch (e) {
-            console.error('Search failed', e);
+            console.error("Search failed", e);
         } finally {
             isSearching = false;
         }
@@ -234,7 +249,7 @@
 <!-- Floating Save Highlight button -->
 {#if selectionInfo}
     <div
-        class="fixed z-40 flex items-center gap-1.5 rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] px-3 py-1.5 shadow-lg"
+        class="fixed z-40 flex items-center gap-1.5 rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/50 backdrop-blur-sm dark:bg-[#292c3c] px-3 py-1.5 shadow-lg"
         style="left: {selectionInfo.x}px; top: {selectionInfo.y -
             48}px; transform: translateX(-50%);"
     >

@@ -228,7 +228,7 @@
         aria-modal="true"
         aria-label="Plot fullscreen view"
         tabindex="-1"
-        class="fixed inset-0 z-[530] bg-black/92 flex items-center justify-center cursor-zoom-out"
+        class="fixed inset-0 z-530 bg-black/92 flex items-center justify-center cursor-zoom-out"
         onclick={() => (zoomed = false)}
         onkeydown={(e) => e.key === "Escape" && (zoomed = false)}
     >
@@ -268,8 +268,8 @@
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         class="fixed z-200 flex flex-col overflow-hidden rounded-lg
                bg-white dark:bg-[#292c3c]
-               border border-stone-200 dark:border-[#414559]
-               shadow-xl shadow-slate-200/60 dark:shadow-black/40"
+               border border-brand-sand-200 dark:border-[#414559]
+               shadow-xl dark:shadow-black/40"
         style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px;"
     >
         <!-- Header -->

@@ -1,10 +1,14 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import { tourActive, completeTour, donationOpen } from "$lib/stores/tour.store";
+    import {
+        tourActive,
+        completeTour,
+        donationOpen,
+    } from "$lib/stores/tour.store";
     import { manuscriptDemoOpen } from "$lib/stores/manuscripts.store";
 
     const MANUSCRIPT_STEP = 6; // index of the manuscript step
-    const AUTHOR_STEP = 8;     // index of the author's note step
+    const AUTHOR_STEP = 8; // index of the author's note step
 
     const steps = [
         {
@@ -144,8 +148,13 @@
     const TOOLTIP_H = 200;
     const PAD = 8;
 
-    function getTooltipStyle(rect: DOMRect | null, position: string, step: number): string {
-        const tooltipW = (step === MANUSCRIPT_STEP || step === AUTHOR_STEP) ? 320 : 288; // w-80 vs w-72
+    function getTooltipStyle(
+        rect: DOMRect | null,
+        position: string,
+        step: number,
+    ): string {
+        const tooltipW =
+            step === MANUSCRIPT_STEP || step === AUTHOR_STEP ? 320 : 288; // w-80 vs w-72
         if (!rect || position === "center") {
             if (step === MANUSCRIPT_STEP) {
                 // Place below center so the demo viewer behind is visible
@@ -183,7 +192,11 @@
     }
 
     const tooltipStyle = $derived(
-        getTooltipStyle(spotlightRect, steps[currentStep].position, currentStep),
+        getTooltipStyle(
+            spotlightRect,
+            steps[currentStep].position,
+            currentStep,
+        ),
     );
 
     const primaryBtn =
@@ -199,7 +212,7 @@
     <!-- Spotlight (targeted steps) or solid overlay (centered steps) -->
     {#if spotlightRect}
         <div
-            class="fixed z-[9998] pointer-events-none transition-all duration-300 rounded-lg"
+            class="fixed z-9998 pointer-events-none transition-all duration-300 rounded-lg"
             style="left:{spotlightRect.left - 8}px; top:{spotlightRect.top -
                 8}px;
                    width:{spotlightRect.width +
@@ -207,15 +220,15 @@
                    box-shadow: 0 0 0 9999px rgba(0,0,0,0.65), 0 0 0 2px rgba(255,255,255,0.15);"
         ></div>
     {:else}
-        <div
-            class="fixed inset-0 z-9997 bg-black/65 pointer-events-none"
-        ></div>
+        <div class="fixed inset-0 z-9997 bg-black/65 pointer-events-none"></div>
     {/if}
 
     <!-- Tooltip card -->
     <div
         class="fixed z-9999 rounded-xl bg-white dark:bg-[#303446] shadow-2xl p-5 border border-slate-100 dark:border-[#414559]
-               {(currentStep === MANUSCRIPT_STEP || currentStep === AUTHOR_STEP) ? 'w-80' : 'w-72'}"
+               {currentStep === MANUSCRIPT_STEP || currentStep === AUTHOR_STEP
+            ? 'w-80'
+            : 'w-72'}"
         style={tooltipStyle}
     >
         <!-- Step dots -->
@@ -247,7 +260,9 @@
                 <h3
                     class="text-sm font-semibold text-slate-700 dark:text-[#c6d0f5]"
                 >
-                    {currentStep === MANUSCRIPT_STEP ? "Manuscript Viewer" : steps[currentStep].title}
+                    {currentStep === MANUSCRIPT_STEP
+                        ? "Manuscript Viewer"
+                        : steps[currentStep].title}
                 </h3>
             </div>
         {:else}
@@ -259,14 +274,25 @@
         {/if}
 
         {#if currentStep === AUTHOR_STEP}
-            <p class="text-xs text-slate-500 dark:text-[#838ba7] leading-relaxed mb-4 space-y-2">
+            <p
+                class="text-xs text-slate-500 dark:text-[#838ba7] leading-relaxed mb-4 space-y-2"
+            >
                 Assalamu 'Alaikum wa Rahmatullahi wa Barakatuh.<br /><br />
-                AyahLab is a passion project built to serve the Quran studies community — and it is, and always will be, free.<br /><br />
-                If this app has benefited you and you are in a position to support it, even a small contribution helps keep it alive and actively developed. If not, sharing it with a friend and keeping me in your du'a means just as much.<br /><br />
+                AyahLab is a passion project built to serve the Quran studies community
+                — and it is, and always will be, free.<br /><br />
+                If this app has benefited you and you are in a position to support
+                it, even a small contribution helps keep it alive and actively developed.
+                If not, sharing it with a friend and keeping me in your du'a means
+                just as much.<br /><br />
                 Jazakallah Khairan Kathiran. —&nbsp;<button
-                    onclick={() => { completeTour(); currentStep = 0; $donationOpen = true; }}
+                    onclick={() => {
+                        completeTour();
+                        currentStep = 0;
+                        $donationOpen = true;
+                    }}
                     class="underline text-brand-gold-500 dark:text-[#e5c890] hover:opacity-80 transition-opacity cursor-pointer"
-                >Al-Ahmadgaid B. Asaad</button>
+                    >Al-Ahmadgaid B. Asaad</button
+                >
             </p>
         {:else}
             <p

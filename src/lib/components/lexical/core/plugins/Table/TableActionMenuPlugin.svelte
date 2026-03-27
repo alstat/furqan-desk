@@ -34,9 +34,10 @@
   function openCellColorPicker(
     cb: (value: string, skipHistoryStack: boolean) => void,
     color: string,
+    anchor?: HTMLElement,
   ) {
     cellPickerColor = color;
-    colorPickerDialog.open(cb);
+    colorPickerDialog.open(cb, anchor);
   }
 
   const tableCellNode: Writable<TableCellNode | null> = writable(null);

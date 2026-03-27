@@ -73,14 +73,16 @@
         aria-modal="true"
         aria-label="Insert Equation"
         tabindex="-1"
-        class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
+        class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/30 backdrop-blur-sm"
         onclick={(e) => {
             if (e.target === e.currentTarget) close();
         }}
-        onkeydown={(e) => { if (e.key === 'Escape') close(); }}
+        onkeydown={(e) => {
+            if (e.key === "Escape") close();
+        }}
     >
         <div
-            class="flex w-full max-w-sm flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden"
+            class="flex w-full max-w-sm flex-col rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         >
             <!-- Header -->
             <div
@@ -115,7 +117,7 @@
 
             <!-- Body -->
             <div
-                class="px-5 py-4 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3"
+                class="px-5 pt-5 pb-7 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3"
             >
                 <div class="flex flex-col gap-1.5">
                     <label
@@ -159,15 +161,20 @@
                     </p>
                 {/if}
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-3">
                     <select
                         bind:value={mathStyle}
                         onchange={() => updatePreview()}
-                        class="h-9 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                        class="h-9 rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                     >
-                        <option value="inline">Inline</option>
-                        <option value="display">Display</option>
+                        <option class="cursor-pointer" value="inline"
+                            >Inline</option
+                        >
+                        <option class="cursor-pointer" value="display"
+                            >Display</option
+                        >
                     </select>
+                    <div></div>
                     <button
                         data-test-id="equation-modal-confirm-btn"
                         disabled={isDisabled}

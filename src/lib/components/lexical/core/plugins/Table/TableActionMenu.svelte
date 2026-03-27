@@ -34,7 +34,7 @@
         type HTMLTableElementWithWithTableSelectionState,
         getTableObserverFromTableElement,
     } from "@lexical/table";
-    import { onMount } from "svelte";
+    import { onMount, untrack } from "svelte";
     import { mergeRegister } from "@lexical/utils";
     import { writable } from "svelte/store";
     import Portal from "$lexical/components/generic/portal/Portal.svelte";
@@ -46,7 +46,11 @@
         setIsMenuOpen: (isOpen: boolean) => void;
         contextRef: null | HTMLElement;
         cellMerge: boolean;
-        onOpenColorPicker: (cb: (value: string, skipHistoryStack: boolean) => void, currentColor: string) => void;
+        onOpenColorPicker: (
+            cb: (value: string, skipHistoryStack: boolean) => void,
+            currentColor: string,
+            anchor?: HTMLElement,
+        ) => void;
     }
 
     let {
@@ -60,7 +64,7 @@
 
     const editor = getEditor();
     let dropDownRef: HTMLDivElement | null = $state(null);
-    let tableCellNode = $state(_tableCellNode);
+    let tableCellNode = $state(untrack(() => _tableCellNode));
     let selectionCounts = $state({
         columns: 1,
         rows: 1,
@@ -411,6 +415,8 @@
         });
     };
 
+    let bgColorBtn: HTMLButtonElement;
+
     function openColorPickerForSelection() {
         // Snapshot target cell keys now, while selection is still in the table cell.
         // The color picker callback fires later (possibly after editor loses focus),
@@ -422,10 +428,15 @@
                 try {
                     const [cell] = getNodeTriplet(selection.anchor);
                     if (isTableCellNode(cell)) cellKeys.push(cell.getKey());
-                } catch { /* anchor not in a table cell */ }
+                } catch {
+                    /* anchor not in a table cell */
+                }
                 if (isTableSelection(selection)) {
                     for (const node of selection.getNodes()) {
-                        if (isTableCellNode(node) && !cellKeys.includes(node.getKey())) {
+                        if (
+                            isTableCellNode(node) &&
+                            !cellKeys.includes(node.getKey())
+                        ) {
                             cellKeys.push(node.getKey());
                         }
                     }
@@ -444,7 +455,7 @@
             });
         }
 
-        onOpenColorPicker(applyColor, $backgroundColor);
+        onOpenColorPicker(applyColor, $backgroundColor, bgColorBtn);
     }
 
     const isRowHeader = $derived(
@@ -461,9 +472,10 @@
     <div
         bind:this={dropDownRef}
         role="menu"
+        tabindex="0"
         onclick={(e) => e.stopPropagation()}
         onkeydown={(e) => e.stopPropagation()}
-        class="fixed z-[9999] min-w-[190px] rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] shadow-xl py-1.5 opacity-0"
+        class="fixed z-9999 min-w-47.5 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] shadow-xl py-1.5 opacity-0"
         style="left: -10000px; top: -10000px;"
     >
         {#if cellMerge}
@@ -500,6 +512,7 @@
 
         <button
             type="button"
+            bind:this={bgColorBtn}
             onclick={openColorPickerForSelection}
             data-test-id="table-background-color"
             class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
@@ -637,4 +650,3 @@
         </button>
     </div>
 </Portal>
-
