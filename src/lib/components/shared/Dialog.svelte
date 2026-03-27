@@ -14,10 +14,11 @@
 </script>
 
 {#if open}
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         class="fixed inset-0 z-300 flex items-center justify-center bg-black/40 backdrop-blur-sm"
         onclick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        onkeydown={(e) => { if (e.key === 'Escape') onClose(); }}
     >
         <div class="relative mx-4 w-full max-w-md rounded-xl bg-white dark:bg-[#303446] shadow-2xl flex flex-col max-h-[80vh]">
             <!-- Header -->

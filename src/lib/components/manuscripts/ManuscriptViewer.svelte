@@ -598,11 +598,13 @@
         onclick={() => (zoomed = false)}
         onkeydown={(e) => e.key === "Escape" && (zoomed = false)}
     >
+        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
         <img
             src={imageSrc}
             alt="Manuscript zoomed"
             class="max-w-[94vw] max-h-[94vh] object-contain rounded-xl shadow-2xl"
             onclick={(e) => e.stopPropagation()}
+            onkeydown={(e) => e.stopPropagation()}
         />
         <button
             onclick={() => (zoomed = false)}

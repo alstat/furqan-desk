@@ -331,6 +331,7 @@
 
         <div
             role="tab"
+            tabindex="0"
             class="relative {isBeingDragged(tab.id) ? 'opacity-40' : ''}"
             data-tab-id={tab.id}
             data-picker-anchor
@@ -415,6 +416,12 @@
                     onclick={(e) => {
                         e.stopPropagation();
                         tryClose(tab.id);
+                    }}
+                    onkeydown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            tryClose(tab.id);
+                        }
                     }}
                     class="opacity-0 group-hover:opacity-40 hover:opacity-100! transition-opacity ml-0.5 leading-none"
                     title="Close"
