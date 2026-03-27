@@ -64,7 +64,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="absolute z-[60] block w-auto rounded-xl border border-brand-sand-200 bg-brand-sand-50 bg-opacity-95 p-2 shadow-xl backdrop-blur-sm"
+	class="absolute z-[60] block w-auto rounded-3xl p-3 border border-brand-sand-200 bg-brand-sand-50 bg-opacity-95 p-2 shadow-xl backdrop-blur-sm"
 	bind:this={dropDownRef}
 	onkeydown={handleKeyDown}
 >

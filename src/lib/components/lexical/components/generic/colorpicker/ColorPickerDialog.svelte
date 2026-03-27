@@ -2,8 +2,9 @@
     import { getCommands } from "$lexical/core/commands.js";
     import { getEditor } from "$lexical/core/composerContext.js";
     import ColorPicker from "./ColorPicker.svelte";
-    import Icon from "@iconify/svelte";
     import { tick, onDestroy } from "svelte";
+    import { bringToFront } from "$lib/stores/window-manager.store";
+    import DialogPanelHeader from "$lib/components/shared/DialogPanelHeader.svelte";
 
     const editor = getEditor();
 
@@ -54,6 +55,7 @@
 
     let x = $state(0);
     let y = $state(0);
+    let zIndex = $state(500);
     let isDragging = $state(false);
     let dragStartX = 0,
         dragStartY = 0,
@@ -89,6 +91,7 @@
                 x = Math.max(0, (window.innerWidth - PANEL_W) / 2);
                 y = Math.max(0, (window.innerHeight - 220) / 2);
             }
+            zIndex = bringToFront();
             initialized = true;
         }
         if (!showModal) {
@@ -137,48 +140,33 @@
 </script>
 
 {#if showModal}
-    <!-- Transparent click-away (no blur, no dim) -->
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-    <div use:portal class="fixed inset-0 z-9998" onclick={close}></div>
-
     <!-- Floating panel -->
     <div
         use:portal
-        class="fixed z-9999 rounded-3xl bg-white dark:bg-[#292c3c]
-           border border-stone-200 dark:border-[#414559]
-           shadow-xl shadow-slate-200/60 dark:shadow-black/40
-           flex flex-col overflow-hidden"
-        style="left:{x}px; top:{y}px; width:{PANEL_W}px;"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        tabindex="-1"
+        class="fixed flex flex-col overflow-hidden rounded-3xl
+               bg-white dark:bg-[#292c3c]
+               border border-brand-sand-200 dark:border-[#414559]
+               shadow-xl dark:shadow-black/40"
+        style="left:{x}px; top:{y}px; width:{PANEL_W}px; z-index:{zIndex};"
+        onpointerdown={() => {
+            zIndex = bringToFront();
+        }}
+        onkeydown={(e) => {
+            if (e.key === "Escape") close();
+        }}
     >
-        <!-- Drag handle header -->
-        <div
-            class="shrink-0 px-3 py-2 border-b border-stone-200 dark:border-[#414559]
-             bg-brand-sand-50 dark:bg-[#232634]
-             flex items-center justify-between gap-2 select-none
-             {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
+        <!-- Header -->
+        <DialogPanelHeader
+            icon="fluent:paint-bucket-16-filled"
+            {title}
+            {isDragging}
+            onClose={close}
             onpointerdown={startDrag}
-            role="banner"
-        >
-            <div class="flex items-center gap-1.5">
-                <Icon
-                    icon="fluent:paint-bucket-16-filled"
-                    class="text-brand-charcoal-300 dark:text-[#838ba7]"
-                    width="0.75rem"
-                />
-                <span
-                    class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 py-1.5 dark:text-[#838ba7]"
-                >
-                    {title}
-                </span>
-            </div>
-            <button
-                onclick={close}
-                aria-label="Close"
-                class="cursor-pointer text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-500 dark:hover:text-[#c6d0f5] transition-colors"
-            >
-                <Icon icon="solar:close-circle-bold" width="0.85rem" />
-            </button>
-        </div>
+        />
 
         <!-- Body -->
         <div class="px-2 py-2 bg-white dark:bg-[#292c3c]">

@@ -74,18 +74,18 @@
     <Portal>
         <div
             bind:this={popupEl}
-            class="fixed z-50 w-36 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] shadow-xl backdrop-blur-sm py-1"
+            class="fixed z-50 w-36 rounded-3xl p-3 border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] shadow-xl backdrop-blur-sm py-1"
         >
             <button
                 onclick={openInline}
-                class="flex cursor-pointer w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559]"
+                class="flex cursor-pointer rounded-full w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559]"
             >
                 <Icon icon="solar:code-bold-duotone" width="0.9rem" />
                 Inline
             </button>
             <button
                 onclick={openBlock}
-                class="flex cursor-pointer w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559]"
+                class="flex rounded-full cursor-pointer w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559]"
             >
                 <Icon icon="solar:code-square-bold-duotone" width="0.9rem" />
                 Block
