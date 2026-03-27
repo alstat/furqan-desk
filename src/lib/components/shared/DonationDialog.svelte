@@ -36,14 +36,14 @@
         aria-modal="true"
         aria-label="Support AyahLab"
         tabindex="-1"
-        class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
+        class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/30 backdrop-blur-sm"
         onclick={(e) => {
             if (e.target === e.currentTarget) onClose();
         }}
         onkeydown={(e) => { if (e.key === 'Escape') onClose(); }}
     >
         <div
-            class="flex w-full max-w-md flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden"
+            class="flex w-full max-w-sm flex-col rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
             style="max-height: 90vh;"
         >
             <!-- Header -->
@@ -79,7 +79,7 @@
                         aria-label="Close"
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
-                        <Icon icon="solar:close-circle-bold" width="1rem" />
+                        <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
                     </button>
                 </div>
             </div>
@@ -115,7 +115,7 @@
                 <!-- PH Only section -->
                 <div class="flex flex-col gap-3">
                     <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-semibold text-brand-charcoal-500 dark:text-[#8087a2]">🇵🇭 PH Only</span>
+                        <span class="text-xs font-semibold text-brand-charcoal-500 dark:text-[#8087a2] flex items-center gap-1"><Icon icon="emojione:flag-for-philippines" width="1rem" /> PH Only</span>
                     </div>
 
                     <!-- Segmented control -->
@@ -156,7 +156,7 @@
                     onclick={onClose}
                     class="cursor-pointer flex items-center gap-1.5 rounded-xl bg-brand-gold-400 dark:bg-brand-gold-600 px-5 py-2 text-xs font-semibold text-white hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                 >
-                    <Icon icon="solar:close-circle-bold" width="0.8rem" />
+                    <Icon icon="solar:close-circle-bold-duotone" width="0.8rem" />
                     Close
                 </button>
             </div>

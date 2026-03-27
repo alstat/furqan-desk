@@ -62,7 +62,7 @@
         aria-modal="true"
         aria-label="Send Feedback"
         tabindex="-1"
-        class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
+        class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/30 backdrop-blur-sm"
         onclick={(e) => {
             if (e.target === e.currentTarget) handleClose();
         }}
@@ -71,7 +71,7 @@
         }}
     >
         <div
-            class="flex w-full max-w-md flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden"
+            class="flex w-full max-w-sm flex-col rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
             style="max-height: 90vh;"
         >
             <!-- Header -->
@@ -107,14 +107,17 @@
                         aria-label="Close"
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
-                        <Icon icon="solar:close-circle-bold" width="1rem" />
+                        <Icon
+                            icon="solar:close-circle-bold-duotone"
+                            width="1rem"
+                        />
                     </button>
                 </div>
             </div>
 
             <!-- Body -->
             <div
-                class="flex-1 overflow-y-auto bg-brand-sand-50 dark:bg-[#232634] px-5 py-4 flex flex-col gap-3"
+                class="flex-1 overflow-y-auto bg-brand-sand-50 dark:bg-[#232634] px-5 py-5 flex flex-col gap-3"
             >
                 {#if sent}
                     <!-- ── Success state ── -->

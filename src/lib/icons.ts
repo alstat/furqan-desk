@@ -66,6 +66,7 @@ addCollection(pick(solarData, [
     'full-screen-bold-duotone',
     'gallery-add-bold',
     'gallery-bold-duotone',
+    'global-bold-duotone',
     'graduation-cap-bold-duotone',
     'heart-bold',
     'heart-bold-duotone',
@@ -229,4 +230,10 @@ addCollection(pick(tablerData, [
 import carbonData from '@iconify-json/carbon/icons.json';
 addCollection(pick(carbonData, [
     'table-of-contents',
+]));
+
+// ── emojione ───────────────────────────────────────────────────────────────
+import emojioneData from '@iconify-json/emojione/icons.json';
+addCollection(pick(emojioneData, [
+    'flag-for-philippines',
 ]));
