@@ -225,7 +225,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     use:portal
-    class="ayah-tooltip fixed z-9999 flex w-88 max-h-[76vh] flex-col overflow-hidden rounded-2xl border border-slate-200/70 dark:border-[#414559] bg-white/98 dark:bg-[#292c3c] shadow-2xl backdrop-blur-sm"
+    class="ayah-tooltip fixed z-9999 flex w-88 max-h-[76vh] flex-col overflow-hidden rounded-lg backdrop-blur-sm border border-slate-200/70 dark:border-[#414559]/70 bg-white/50 dark:bg-[#292c3c]/50 shadow-2xl"
     onpointerdown={startDragFromBorder}
     onpointermove={updateBorderCursor}
     onpointerleave={() => { isNearBorder = false; }}
@@ -238,11 +238,11 @@
     <!-- Header -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-        class="flex shrink-0 items-center justify-between bg-linear-to-b from-slate-50 to-white dark:from-[#232634] dark:to-[#292c3c] px-4 py-3.5 border-b border-slate-100 dark:border-[#414559] select-none {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
+        class="flex shrink-0 items-center justify-between bg-linear-to-b from-slate-50/50 to-white/50 dark:from-[#232634]/50 dark:to-[#292c3c]/50 px-4 py-3.5 border-b border-slate-100 dark:border-[#414559] select-none {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
         onpointerdown={startDrag}
     >
         <div dir="rtl" class="flex flex-col gap-1">
-            <span class="font-scheherazade text-3xl leading-none text-slate-800 dark:text-[#c6d0f5]">
+            <span class="font-scheherazade text-2xl py-1 leading-none text-slate-800/70 dark:text-[#c6d0f5]/70">
                 {word.combined_arabic}
             </span>
             <span class="text-[10px] font-medium text-slate-400 dark:text-[#838ba7]">
@@ -262,7 +262,7 @@
     <div class="flex-1 space-y-2.5 overflow-y-auto p-3">
         {#each word.tokens as token}
             {@const s = getStyle(token.tag)}
-            <div class="overflow-hidden rounded-xl border {s.border} {s.bg}">
+            <div class="overflow-hidden rounded-lg border {s.border} {s.bg}">
 
                 <!-- Colored accent bar -->
                 <div class="h-0.5 w-full {s.accent}"></div>

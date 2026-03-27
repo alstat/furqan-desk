@@ -594,7 +594,7 @@
 {#if zoomed && imageSrc}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-        class="fixed inset-0 z-[530] bg-black/92 flex items-center justify-center cursor-zoom-out"
+        class="fixed inset-0 z-530 bg-black/92 flex items-center justify-center cursor-zoom-out"
         onclick={() => (zoomed = false)}
         onkeydown={(e) => e.key === "Escape" && (zoomed = false)}
     >
@@ -619,10 +619,10 @@
 <!-- ── Main panel ───────────────────────────────────────────────────────── -->
 {#if open}
     <div
-        class="fixed flex flex-col rounded-lg shadow-2xl
+        class="fixed flex flex-col rounded-lg shadow-xl dark:shadow-black/40
            bg-white dark:bg-[#303446]
-           border border-slate-100 dark:border-[#414559]
-           {demoMode ? 'z-[9998]' : 'z-[510]'}"
+           border border-brand-sand-200 dark:border-[#414559]
+           {demoMode ? 'z-9998' : 'z-510'}"
         style="width:{panelW}px; height:{panelH}px; left:{x}px; top:{y}px;"
     >
         <!-- Header / drag handle -->
@@ -699,11 +699,9 @@
             <!-- Left rail (collapsible) -->
             <div
                 class="shrink-0 overflow-hidden
-                   transition-all duration-200 {sidebarOpen
-                    ? 'w-[220px]'
-                    : 'w-0'}"
+                   transition-all duration-200 {sidebarOpen ? 'w-55' : 'w-0'}"
             >
-                <div class="w-[220px] h-full overflow-y-auto py-2">
+                <div class="w-55 h-full overflow-y-auto py-2">
                     {#if loading}
                         <div class="flex justify-center items-center pt-10">
                             <div
@@ -765,7 +763,7 @@
                                     </span>
                                     <div class="min-w-0">
                                         <p
-                                            class="text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] leading-tight break-words"
+                                            class="text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] leading-tight wrap-break-word"
                                         >
                                             {ms.title}
                                         </p>
@@ -967,7 +965,7 @@
                     <!-- Metadata panel -->
                     {#if selectedDetail}
                         <div
-                            class="shrink-0 border-t border-slate-100 dark:border-[#414559] px-3 py-2 overflow-y-auto max-h-[148px]"
+                            class="shrink-0 border-t border-slate-100 dark:border-[#414559] px-3 py-2 overflow-y-auto max-h-37"
                         >
                             <div
                                 class="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[10.5px]"
@@ -1084,7 +1082,7 @@
                                     </summary>
                                     <div
                                         class="mt-1 text-[10.5px] text-brand-charcoal-300 dark:text-[#a5adce] leading-relaxed
-                                            [&_*]:text-inherit [&_a]:text-brand-gold-600 dark:[&_a]:text-[#e5c890]
+                                            **:text-inherit [&_a]:text-brand-gold-600 dark:[&_a]:text-[#e5c890]
                                             [&_a:hover]:text-brand-gold-500 dark:[&_a:hover]:text-[#d4b57f]"
                                     >
                                         {@html selectedDetail.catalogue_entry}

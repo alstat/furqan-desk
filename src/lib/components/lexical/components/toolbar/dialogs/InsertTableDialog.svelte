@@ -1,17 +1,19 @@
 <script lang="ts">
-    import { getEditor } from '$lexical/core/composerContext.js';
-    import { INSERT_TABLE_COMMAND } from '@lexical/table';
-    import { getCommands } from '$lexical/core/commands.js';
-    import { tick } from 'svelte';
-    import Icon from '@iconify/svelte';
+    import { getEditor } from "$lexical/core/composerContext.js";
+    import { INSERT_TABLE_COMMAND } from "@lexical/table";
+    import { getCommands } from "$lexical/core/commands.js";
+    import { tick } from "svelte";
+    import Icon from "@iconify/svelte";
 
-    let rows = $state('5');
-    let columns = $state('5');
-    let isDisabled = $derived((() => {
-        const row = Number(rows);
-        const column = Number(columns);
-        return !(row > 0 && row <= 500 && column > 0 && column <= 50);
-    })());
+    let rows = $state("5");
+    let columns = $state("5");
+    let isDisabled = $derived(
+        (() => {
+            const row = Number(rows);
+            const column = Number(columns);
+            return !(row > 0 && row <= 500 && column > 0 && column <= 50);
+        })(),
+    );
 
     const editor = getEditor();
 
@@ -32,13 +34,21 @@
     }
 
     function onConfirm() {
-        editor.dispatchCommand(INSERT_TABLE_COMMAND, { columns, rows, includeHeaders: { rows: true, columns: false } });
+        editor.dispatchCommand(INSERT_TABLE_COMMAND, {
+            columns,
+            rows,
+            includeHeaders: { rows: true, columns: false },
+        });
         close();
     }
 
     function portal(node: HTMLElement) {
         document.body.appendChild(node);
-        return { destroy() { node.remove(); } };
+        return {
+            destroy() {
+                node.remove();
+            },
+        };
     }
 </script>
 
@@ -46,18 +56,34 @@
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
         use:portal
-        class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
-        onclick={(e) => { if (e.target === e.currentTarget) close(); }}
+        class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/30 backdrop-blur-sm"
+        onclick={(e) => {
+            if (e.target === e.currentTarget) close();
+        }}
     >
-        <div class="flex w-full max-w-sm flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden">
+        <div
+            class="flex w-full max-w-sm flex-col rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+        >
             <!-- Header -->
-            <div class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4">
+            <div
+                class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4"
+            >
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]">
-                            <Icon icon="solar:table-bold-duotone" class="text-brand-gold-600" width="1rem" />
+                        <div
+                            class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]"
+                        >
+                            <Icon
+                                icon="fluent:table-16-filled"
+                                class="text-brand-gold-600"
+                                width="1rem"
+                            />
                         </div>
-                        <h2 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">Insert Table</h2>
+                        <h2
+                            class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                        >
+                            Insert Table
+                        </h2>
                     </div>
                     <button
                         onclick={close}
@@ -69,10 +95,15 @@
             </div>
 
             <!-- Body -->
-            <div class="px-5 py-4 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3">
+            <div
+                class="px-5 pt-5 pb-7 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3"
+            >
                 <!-- Rows -->
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300">Rows</label>
+                    <label
+                        class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                        >Rows</label
+                    >
                     <input
                         type="number"
                         bind:value={rows}
@@ -86,7 +117,10 @@
 
                 <!-- Columns -->
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300">Columns</label>
+                    <label
+                        class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                        >Columns</label
+                    >
                     <input
                         type="number"
                         bind:value={columns}

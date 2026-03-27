@@ -386,7 +386,7 @@
     <div
         class="flex items-center gap-1 px-2 py-1.5
                rounded-2xl
-               bg-white/80 dark:bg-[#292c3c]/85
+               bg-white/50 dark:bg-[#292c3c]/50
                backdrop-blur-md
                border border-stone-200/70 dark:border-[#414559]/60
                shadow-lg shadow-stone-300/30 dark:shadow-black/40
