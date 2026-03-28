@@ -2,34 +2,16 @@
 	import type { Writable } from "svelte/store";
 	import type { blockTypeToBlockName } from "./blockTypeToBlockName";
 	import { getContext } from "svelte";
-	import { getEditor } from "$lexical/core/composerContext";
-	import { $getSelection as getSelection, $isRangeSelection as isRangeSelection } from "lexical";
-    import { $setBlocksType as setBlocksType } from "@lexical/selection";
-	import { $createCodeNode as createCodeNode } from "$lexical/core/plugins/CodeHighlighter/CodeNode";
+	import { getActiveEditor } from "$lexical/core/composerContext";
+	import { INSERT_CODE_COMMAND } from "$lexical/core/plugins/CodeHighlighter/CodePlugin.svelte";
 	import DropDownItem from "$lexical/components/generic/dropdown/DropDownItem.svelte";
 
     const blockType: Writable<keyof typeof blockTypeToBlockName> = getContext('blockType');
-    const editor = getEditor();
+    const activeEditor = getActiveEditor();
 
     const formatCode = () => {
         if ($blockType !== 'code') {
-            editor.update(() => {
-                let selection = getSelection();
-
-                if (selection !== null) {
-                    if (selection.isCollapsed()) {
-                        // A selection is considered "collapsed" when the start and end points are at the same position - essentially when it's just a blinking cursor.
-                        setBlocksType(selection, () => createCodeNode('', 'python'));
-                    } else {
-                        const textContent = selection.getTextContent();
-                        const codeNode = createCodeNode(textContent, 'python');
-                        selection.insertNodes([codeNode]);
-                        selection = getSelection();
-                        if (isRangeSelection(selection))
-                            selection.insertRawText(textContent);
-                    }
-                }
-            });
+            $activeEditor.dispatchCommand(INSERT_CODE_COMMAND, { code: '', language: 'python' });
         }
     }
 </script>
