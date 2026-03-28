@@ -73,7 +73,7 @@
     let streamingTimer: ReturnType<typeof setTimeout> | null = null;
 
     // ── Spinner & precompile progress ─────────────────────────────────────────
-    const SPINNER_FRAMES = ['◒', '◓', '◑', '◐'];
+    const SPINNER_FRAMES = ["◒", "◓", "◑", "◐"];
     let spinnerFrame = $state(0);
 
     $effect(() => {
@@ -85,13 +85,13 @@
     });
 
     function noAutocorrect(node: HTMLElement) {
-        node.setAttribute('autocorrect', 'off');
-        node.setAttribute('autocapitalize', 'off');
+        node.setAttribute("autocorrect", "off");
+        node.setAttribute("autocapitalize", "off");
     }
 
     interface PrecompileState {
         active: boolean;
-        total: number;      // 0 = unknown
+        total: number; // 0 = unknown
         done: number;
         inProgress: string[];
     }
@@ -104,7 +104,7 @@
     });
 
     function parsePrecompileChunk(text: string): void {
-        for (const line of text.split('\n')) {
+        for (const line of text.split("\n")) {
             if (/^\s*Precompiling/.test(line)) {
                 precompile.active = true;
                 const countMatch = line.match(/(\d+)\s+package/);
@@ -125,7 +125,9 @@
             const doneMatch = line.match(/✓\s+(\S+)/);
             if (doneMatch) {
                 precompile.done++;
-                precompile.inProgress = precompile.inProgress.filter(p => p !== doneMatch[1]);
+                precompile.inProgress = precompile.inProgress.filter(
+                    (p) => p !== doneMatch[1],
+                );
             }
             // Total from "done/total" counter
             const slashMatch = line.match(/(\d+)\/(\d+)/);
@@ -457,14 +459,24 @@
                     // Keep spinner alive while output is still streaming in
                     isStreaming = true;
                     if (streamingTimer) clearTimeout(streamingTimer);
-                    streamingTimer = setTimeout(() => { isStreaming = false; }, 600);
+                    streamingTimer = setTimeout(() => {
+                        isStreaming = false;
+                    }, 600);
                 }
             }
             if (is_done) {
                 juliaIsRunning.set(false);
                 isStreaming = false;
-                precompile = { active: false, total: 0, done: 0, inProgress: [] };
-                if (streamingTimer) { clearTimeout(streamingTimer); streamingTimer = null; }
+                precompile = {
+                    active: false,
+                    total: 0,
+                    done: 0,
+                    inProgress: [],
+                };
+                if (streamingTimer) {
+                    clearTimeout(streamingTimer);
+                    streamingTimer = null;
+                }
                 if (focusReplOnDone) {
                     focusReplOnDone = false;
                     requestAnimationFrame(() => replInputEl?.focus());
@@ -527,14 +539,14 @@
     >
         <!-- Julia REPL tab -->
         <div
-            class="flex items-center flex-none border-r border-brand-sand-400 dark:border-[#414559]
+            class="flex items-center flex-none border-r rounded-full mx-2 border-brand-sand-400 dark:border-[#414559]
                     {ts.activePanel === 'julia'
                 ? 'bg-brand-sand-50 dark:bg-[#414559]'
                 : 'hover:bg-brand-sand-100 dark:hover:bg-[#303446]'}"
         >
             <button
                 onclick={() => (ts.activePanel = "julia")}
-                class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none cursor-pointer
+                class="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none cursor-pointer
                        {ts.activePanel === 'julia'
                     ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
                     : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
@@ -608,14 +620,14 @@
         <!-- Terminal tabs -->
         {#each ts.termTabs as tab (tab.id)}
             <div
-                class="flex items-center flex-none border-r border-brand-sand-400 dark:border-[#414559]
+                class="flex items-center flex-none rounded-full border-r border-brand-sand-400 dark:border-[#414559]
                         {ts.activePanel === tab.id
                     ? 'bg-brand-sand-50 dark:bg-[#414559]'
                     : 'hover:bg-brand-sand-100 dark:hover:bg-[#303446]'}"
             >
                 <button
                     onclick={() => (ts.activePanel = tab.id)}
-                    class="cursor-pointer px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none
+                    class="cursor-pointer px-3 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none
                            {ts.activePanel === tab.id
                         ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
                         : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
@@ -691,39 +703,81 @@
                         {/if}
                     {/each}
                     {#if precompile.active}
-                        <div role="status" aria-label="Precompiling packages" aria-live="polite"
-                             class="mt-2 pl-[3.2rem] space-y-1 select-none">
+                        <div
+                            role="status"
+                            aria-label="Precompiling packages"
+                            aria-live="polite"
+                            class="mt-2 pl-[3.2rem] space-y-1 select-none"
+                        >
                             <div class="flex items-center gap-2">
-                                <span class="text-[10px] text-brand-charcoal-300 dark:text-[#626880]">Precompiling</span>
-                                <div role="progressbar"
-                                     aria-valuenow={precompile.done}
-                                     aria-valuemin={0}
-                                     aria-valuemax={precompile.total > 0 ? precompile.total : undefined}
-                                     class="flex-1 h-1 rounded-full bg-brand-sand-300 dark:bg-[#414559] overflow-hidden">
+                                <span
+                                    class="text-[10px] text-brand-charcoal-300 dark:text-[#626880]"
+                                    >Precompiling</span
+                                >
+                                <div
+                                    role="progressbar"
+                                    aria-valuenow={precompile.done}
+                                    aria-valuemin={0}
+                                    aria-valuemax={precompile.total > 0
+                                        ? precompile.total
+                                        : undefined}
+                                    class="flex-1 h-1 rounded-full bg-brand-sand-300 dark:bg-[#414559] overflow-hidden"
+                                >
                                     {#if precompile.total > 0}
-                                        <div class="h-full bg-brand-gold-400 rounded-full transition-all duration-300"
-                                             style="width: {Math.min(100, Math.round((precompile.done / precompile.total) * 100))}%">
-                                        </div>
+                                        <div
+                                            class="h-full bg-brand-gold-400 rounded-full transition-all duration-300"
+                                            style="width: {Math.min(
+                                                100,
+                                                Math.round(
+                                                    (precompile.done /
+                                                        precompile.total) *
+                                                        100,
+                                                ),
+                                            )}%"
+                                        ></div>
                                     {:else}
-                                        <div class="h-full w-1/3 bg-brand-gold-400 rounded-full animate-pulse"></div>
+                                        <div
+                                            class="h-full w-1/3 bg-brand-gold-400 rounded-full animate-pulse"
+                                        ></div>
                                     {/if}
                                 </div>
-                                <span class="text-[10px] text-brand-charcoal-300 dark:text-[#626880] shrink-0 tabular-nums">
-                                    {precompile.done}{precompile.total > 0 ? `/${precompile.total}` : ''}
+                                <span
+                                    class="text-[10px] text-brand-charcoal-300 dark:text-[#626880] shrink-0 tabular-nums"
+                                >
+                                    {precompile.done}{precompile.total > 0
+                                        ? `/${precompile.total}`
+                                        : ""}
                                 </span>
                             </div>
                             {#each precompile.inProgress as pkg}
-                                <div class="flex items-center gap-1.5 text-amber-400 dark:text-amber-300">
-                                    <span aria-hidden="true" class="font-mono">{SPINNER_FRAMES[spinnerFrame % SPINNER_FRAMES.length]}</span>
+                                <div
+                                    class="flex items-center gap-1.5 text-amber-400 dark:text-amber-300"
+                                >
+                                    <span aria-hidden="true" class="font-mono"
+                                        >{SPINNER_FRAMES[
+                                            spinnerFrame % SPINNER_FRAMES.length
+                                        ]}</span
+                                    >
                                     <span class="text-[11px]">{pkg}</span>
                                 </div>
                             {/each}
                         </div>
                     {:else if isRunning || isStreaming}
-                        <div role="status" aria-label="Running" aria-live="polite"
-                             class="flex items-center gap-1.5 mt-1 select-none pl-[3.2rem]">
-                            <span aria-hidden="true" class="text-brand-gold-500 font-mono">{SPINNER_FRAMES[spinnerFrame]}</span>
-                            <span class="text-[11px] italic text-brand-charcoal-300 dark:text-[#626880]">Running…</span>
+                        <div
+                            role="status"
+                            aria-label="Running"
+                            aria-live="polite"
+                            class="flex items-center gap-1.5 mt-1 select-none pl-[3.2rem]"
+                        >
+                            <span
+                                aria-hidden="true"
+                                class="text-brand-gold-500 font-mono"
+                                >{SPINNER_FRAMES[spinnerFrame]}</span
+                            >
+                            <span
+                                class="text-[11px] italic text-brand-charcoal-300 dark:text-[#626880]"
+                                >Running…</span
+                            >
                         </div>
                     {/if}
                 {/if}

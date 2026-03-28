@@ -52,6 +52,8 @@
     --color-brand-charcoal-300: #ababab;
     --color-brand-charcoal-500: #707070;
     --color-brand-charcoal-900: #2f2f2f;
+
+    --ayah-flash-bg: var(--color-brand-gold-100);
 }
 
 /* ── App dark theme (Catppuccin Frappe) ──────────────────────────────────────── */
@@ -82,6 +84,8 @@ html.dark {
     --color-brand-charcoal-300: #838ba7; /* Overlay1 — labels, muted */
     --color-brand-charcoal-500: #a5adce; /* Subtext0 — body text */
     --color-brand-charcoal-900: #e8edff; /* near-white headings */
+
+    --ayah-flash-bg: color-mix(in srgb, var(--color-brand-gold-400) 25%, transparent);
 }
 
 html.dark body,
@@ -183,11 +187,11 @@ html.dark .tabs-scroll::-webkit-scrollbar-thumb:hover {
         border-radius: 4px;
     }
     15% {
-        background-color: var(--color-brand-gold-100);
+        background-color: var(--ayah-flash-bg);
         border-radius: 4px;
     }
     70% {
-        background-color: var(--color-brand-gold-100);
+        background-color: var(--ayah-flash-bg);
         border-radius: 4px;
     }
     100% {

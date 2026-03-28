@@ -8,8 +8,8 @@
     import { INSERT_EQUATION_COMMAND } from "$lexical/core/plugins/Equation/EquationPlugin.svelte";
     import Icon from "@iconify/svelte";
     import katex from "katex";
-    import { bringToFront } from '$lib/stores/window-manager.store';
-    import DialogPanelHeader from '$lib/components/shared/DialogPanelHeader.svelte';
+    import { bringToFront } from "$lib/stores/window-manager.store";
+    import DialogPanelHeader from "$lib/components/shared/DialogPanelHeader.svelte";
 
     const editor = getEditor();
     const activeEditor = getActiveEditor();
@@ -74,7 +74,10 @@
     let y = $state(0);
     let zIndex = $state(500);
     let isDragging = $state(false);
-    let dragStartX = 0, dragStartY = 0, startX = 0, startY = 0;
+    let dragStartX = 0,
+        dragStartY = 0,
+        startX = 0,
+        startY = 0;
     let initialized = false;
 
     $effect(() => {
@@ -93,22 +96,35 @@
         dragStartY = e.clientY;
         startX = x;
         startY = y;
-        window.addEventListener('pointermove', onDrag);
-        window.addEventListener('pointerup', stopDrag, { once: true });
+        window.addEventListener("pointermove", onDrag);
+        window.addEventListener("pointerup", stopDrag, { once: true });
     }
 
     function onDrag(e: PointerEvent) {
-        x = Math.max(0, Math.min(window.innerWidth - PANEL_W, startX + (e.clientX - dragStartX)));
-        y = Math.max(0, Math.min(window.innerHeight - 60, startY + (e.clientY - dragStartY)));
+        x = Math.max(
+            0,
+            Math.min(
+                window.innerWidth - PANEL_W,
+                startX + (e.clientX - dragStartX),
+            ),
+        );
+        y = Math.max(
+            0,
+            Math.min(
+                window.innerHeight - 60,
+                startY + (e.clientY - dragStartY),
+            ),
+        );
     }
 
     function stopDrag() {
         isDragging = false;
-        window.removeEventListener('pointermove', onDrag);
+        window.removeEventListener("pointermove", onDrag);
     }
 
     onDestroy(() => {
-        if (typeof window !== 'undefined') window.removeEventListener('pointermove', onDrag);
+        if (typeof window !== "undefined")
+            window.removeEventListener("pointermove", onDrag);
     });
 </script>
 
@@ -121,69 +137,74 @@
         tabindex="-1"
         class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{PANEL_W}px; z-index:{zIndex};"
-        onpointerdown={() => { zIndex = bringToFront(); }}
-        onkeydown={(e) => { if (e.key === 'Escape') close(); }}
+        onpointerdown={() => {
+            zIndex = bringToFront();
+        }}
+        onkeydown={(e) => {
+            if (e.key === "Escape") close();
+        }}
     >
-            <!-- Header -->
-            <DialogPanelHeader
-                icon="solar:calculator-bold-duotone"
-                title="Insert Equation"
-                {isDragging}
-                onClose={close}
-                onpointerdown={startDrag}
-            />
+        <!-- Header -->
+        <DialogPanelHeader
+            icon="solar:calculator-bold-duotone"
+            title="Insert Equation"
+            {isDragging}
+            onClose={close}
+            onpointerdown={startDrag}
+        />
 
-            <!-- Body -->
-            <div
-                class="px-5 pt-5 pb-6 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3"
-            >
-                <div class="flex flex-col gap-1.5">
-                    <label
-                        for="equation-input"
-                        class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
-                        >LaTeX Equation</label
-                    >
-                    <textarea
-                        id="equation-input"
-                        placeholder="e.g. x^2 + y^2 = z^2"
-                        rows="3"
-                        bind:value={equation}
-                        oninput={() => updatePreview()}
-                        data-test-id="equation-modal-input"
-                        class="w-full resize-none rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
-                    ></textarea>
-                </div>
-
-                <!-- Preview -->
-                <div
-                    class="rounded-xl mb-3 border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 min-h-10 flex items-center justify-center"
+        <!-- Body -->
+        <div
+            class="px-5 py-5 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3"
+        >
+            <div class="flex flex-col gap-1.5">
+                <label
+                    for="equation-input"
+                    class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                    >LaTeX Equation</label
                 >
-                    <div
-                        bind:this={previewEl}
-                        class="text-brand-charcoal-900 dark:text-[#c6d0f5] text-sm"
-                    ></div>
-                    {#if !equation}
-                        <span
-                            class="text-[11px] text-brand-charcoal-300 dark:text-[#626880]"
-                            >Preview will appear here</span
-                        >
-                    {/if}
-                </div>
+                <textarea
+                    id="equation-input"
+                    placeholder="e.g. x^2 + y^2 = z^2"
+                    rows="3"
+                    bind:value={equation}
+                    oninput={() => updatePreview()}
+                    data-test-id="equation-modal-input"
+                    class="w-full resize-none rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                ></textarea>
+            </div>
 
-                {#if error}
-                    <p class="flex items-center gap-1 text-[11px] text-red-500">
-                        <Icon
-                            icon="solar:danger-circle-bold"
-                            width="0.75rem"
-                        />{error}
-                    </p>
+            <!-- Preview -->
+            <div
+                class="rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 min-h-10 flex items-center justify-center"
+            >
+                <div
+                    bind:this={previewEl}
+                    class="text-brand-charcoal-900 dark:text-[#c6d0f5] text-sm"
+                ></div>
+                {#if !equation}
+                    <span
+                        class="text-[11px] text-brand-charcoal-300 dark:text-[#626880]"
+                        >Preview will appear here</span
+                    >
                 {/if}
+            </div>
 
-                <div class="flex items-center gap-3 justify-between">
+            {#if error}
+                <p class="flex items-center gap-1 text-[11px] text-red-500">
+                    <Icon
+                        icon="solar:danger-circle-bold"
+                        width="0.75rem"
+                    />{error}
+                </p>
+            {/if}
+
+            <div class="flex items-center gap-3 justify-between">
+                <div class="relative">
                     <select
                         bind:value={mathStyle}
                         onchange={() => updatePreview()}
-                        class="h-7 cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                        class="appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#1e2030] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100 dark:hover:bg-[#1e2030]"
                     >
                         <option class="cursor-pointer" value="inline"
                             >Inline</option
@@ -192,27 +213,30 @@
                             >Display</option
                         >
                     </select>
-                    <div></div>
-                    <button
-                        data-test-id="equation-modal-confirm-btn"
-                        disabled={isDisabled}
-                        onclick={() => {
-                            $activeEditor.dispatchCommand(
-                                INSERT_EQUATION_COMMAND,
-                                {
-                                    equation,
-                                    inline: mathStyle === "inline",
-                                },
-                            );
-                            equation = "";
-                            error = "";
-                        }}
-                        class="cursor-pointer flex px-5 items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-white hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
+                    <span
+                        class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300 dark:text-[#626880]"
                     >
-                        <Icon icon="solar:calculator-bold" width="0.8rem" />
-                        Insert Equation
-                    </button>
+                        <Icon icon="charm:chevron-down" width="0.75rem" />
+                    </span>
                 </div>
+                <div></div>
+                <button
+                    data-test-id="equation-modal-confirm-btn"
+                    disabled={isDisabled}
+                    onclick={() => {
+                        $activeEditor.dispatchCommand(INSERT_EQUATION_COMMAND, {
+                            equation,
+                            inline: mathStyle === "inline",
+                        });
+                        equation = "";
+                        error = "";
+                    }}
+                    class="cursor-pointer flex px-5 items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-white hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
+                >
+                    <Icon icon="solar:calculator-bold" width="0.8rem" />
+                    Insert Equation
+                </button>
             </div>
+        </div>
     </div>
 {/if}

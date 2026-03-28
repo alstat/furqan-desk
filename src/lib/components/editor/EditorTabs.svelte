@@ -479,7 +479,7 @@
         <div
             data-picker-dropdown
             style="position: fixed; left: {pickerPos.x}px; top: {pickerPos.y}px; transform: translateY(calc(-100% - 4px)); z-index: 9999;"
-            class="bg-white dark:bg-[#303446] border border-stone-200 dark:border-[#414559] rounded shadow-lg py-1 min-w-40"
+            class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-3xl shadow-xl p-3 min-w-40"
         >
             {#each pickerPartners as partner}
                 <button
@@ -489,12 +489,12 @@
                         pickerForTabId = null;
                         pickerPos = null;
                     }}
-                    class="w-full text-left px-3 py-1.5 text-[11px] hover:bg-brand-sand-100 dark:hover:bg-[#414559] flex items-center gap-2"
+                    class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
                 >
                     <Icon
                         icon="solar:code-bold-duotone"
                         width="0.75rem"
-                        class="opacity-60"
+                        class="shrink-0"
                     />
                     {partner.name}
                 </button>
