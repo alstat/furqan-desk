@@ -280,7 +280,7 @@
                 title="Case sensitive"
                 class="cursor-pointer p-1.5 rounded-md text-[10px] font-mono font-bold transition-colors
 				       {caseSensitive
-                    ? 'bg-brand-gold-400 dark:bg-brand-gold-600 text-white'
+                    ? 'bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100'
                     : 'text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#363a4f]'}"
             >
                 Aa
@@ -295,7 +295,7 @@
                 title="Use regular expression"
                 class="cursor-pointer p-1.5 rounded-md text-[10px] font-mono font-bold transition-colors
 				       {useRegex
-                    ? 'bg-brand-gold-400 dark:bg-brand-gold-600 text-white'
+                    ? 'bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100'
                     : 'text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#363a4f]'}"
             >
                 .*

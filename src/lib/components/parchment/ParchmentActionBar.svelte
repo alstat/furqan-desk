@@ -107,7 +107,7 @@
             <button
                 onclick={submitSearch}
                 disabled={isSearching || !searchQuery.trim()}
-                class="cursor-pointer text-brand-charcoal-400 dark:text-[#c6d0f5] hover:text-brand-charcoal-600 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                class="cursor-pointer text-brand-charcoal-400 dark:text-[#c6d0f5] hover:text-brand-charcoal-600 dark:hover:text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 title="Search"
                 aria-label="Submit search"
             >

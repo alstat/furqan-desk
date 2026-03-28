@@ -611,7 +611,7 @@
         />
         <button
             onclick={() => (zoomed = false)}
-            class="absolute top-4 right-4 cursor-pointer text-white/70 hover:text-white transition-colors"
+            class="absolute top-4 right-4 cursor-pointer text-gray-100 dark:text-gray-700 hover:dark:text-gray-100/70 hover:text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 transition-colors"
             aria-label="Close zoom"
         >
             <Icon icon="solar:close-circle-bold-duotone" width="1.8rem" />
@@ -709,7 +709,7 @@
                 class="shrink-0 overflow-hidden
                    transition-all duration-200 {sidebarOpen ? 'w-55' : 'w-0'}"
             >
-                <div class="w-55 h-full overflow-y-auto py-2">
+                <div class="default-scroll w-55 h-full overflow-y-auto py-2">
                     {#if loading}
                         <div class="flex justify-center items-center pt-10">
                             <div
@@ -818,7 +818,7 @@
                                     class={`cursor-pointer px-2 py-0.5 text-[11px] font-semibold rounded-full border transition-colors
                                     ${
                                         folioIdx === i
-                                            ? "bg-brand-gold-400 text-white border-brand-gold-400"
+                                            ? "bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400"
                                             : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]"
                                     }`}>{page.folio}{page.side}</button
                                 >
@@ -956,7 +956,7 @@
                             {#if imgScale > 1}
                                 <span
                                     class="absolute bottom-3 right-3 text-[9px] font-semibold px-1.5 py-0.5 rounded-full
-                                         bg-black/40 text-white/90 backdrop-blur-sm select-none pointer-events-none"
+                                         bg-black/40 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100/90 backdrop-blur-sm select-none pointer-events-none"
                                 >
                                     {Math.round(imgScale * 100)}%
                                 </span>

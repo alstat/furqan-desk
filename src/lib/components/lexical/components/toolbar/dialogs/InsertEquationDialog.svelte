@@ -231,7 +231,7 @@
                         equation = "";
                         error = "";
                     }}
-                    class="cursor-pointer flex px-5 items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-white hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
+                    class="cursor-pointer flex px-5 items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
                 >
                     <Icon icon="solar:calculator-bold" width="0.8rem" />
                     Insert Equation

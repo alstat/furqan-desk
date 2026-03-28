@@ -146,7 +146,7 @@
                         onclick={() => morphGlassEffect.set(false)}
                         class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
                             ${!$morphGlassEffect
-                                ? 'bg-brand-gold-400 text-white border-brand-gold-400'
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                 : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                     >
                         Disabled
@@ -155,7 +155,7 @@
                         onclick={() => morphGlassEffect.set(true)}
                         class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
                             ${$morphGlassEffect
-                                ? 'bg-brand-gold-400 text-white border-brand-gold-400'
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                 : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                     >
                         Enabled
@@ -174,7 +174,7 @@
                         onclick={() => manuscriptsEnabled.set(false)}
                         class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
                             ${!$manuscriptsEnabled
-                                ? 'bg-brand-gold-400 text-white border-brand-gold-400'
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                 : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                     >
                         Disabled
@@ -183,7 +183,7 @@
                         onclick={() => manuscriptsEnabled.set(true)}
                         class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
                             ${$manuscriptsEnabled
-                                ? 'bg-brand-gold-400 text-white border-brand-gold-400'
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                 : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                     >
                         Enabled

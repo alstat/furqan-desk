@@ -26,6 +26,7 @@
     $effect(() => {
         if (open) {
             dialogReciterId = $activeReciterId;
+            downloadProgress.set(null);
             refreshCounts();
         }
     });
@@ -117,13 +118,14 @@
         onkeydown={(e) => { if (e.key === 'Escape') handleClose(); }}
     >
         <div
-            class="flex w-full max-w-sm flex-col rounded-2xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden"
+            class="flex w-full max-w-sm flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         >
             <!-- Header -->
             <div
-                class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4"
+                class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559]"
             >
-                <div class="flex items-center justify-between">
+                <!-- Title row -->
+                <div class="flex items-center justify-between px-5 py-4">
                     <div class="flex items-center gap-2.5">
                         <div
                             class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]"
@@ -155,56 +157,45 @@
                         <Icon icon="solar:close-circle-bold" width="1rem" />
                     </button>
                 </div>
+
+                <!-- Reciter tabs -->
+                <div class="mx-4 mb-2 flex gap-1 rounded-full bg-brand-gold-200/50 dark:bg-[#414559]/50 p-1">
+                    <button
+                        onclick={() => (dialogReciterId = 953)}
+                        disabled={$isDownloading}
+                        class={`flex-1 cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors disabled:cursor-not-allowed ${
+                            dialogReciterId === 953
+                                ? "bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm"
+                                : "text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+                        }`}
+                    >
+                        <Icon icon="solar:play-bold" width="0.75rem" />
+                        Mishary
+                        <span class="opacity-60">({downloadedCount953}/114)</span>
+                    </button>
+                    <button
+                        onclick={() => (dialogReciterId = 954)}
+                        disabled={$isDownloading}
+                        class={`flex-1 cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors disabled:cursor-not-allowed ${
+                            dialogReciterId === 954
+                                ? "bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm"
+                                : "text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+                        }`}
+                    >
+                        <Icon icon="solar:play-bold" width="0.75rem" />
+                        Saad
+                        <span class="opacity-60">({downloadedCount954}/114)</span>
+                    </button>
+                </div>
             </div>
 
-            <div class="px-5 py-4 space-y-4 bg-brand-sand-50 dark:bg-[#303446]">
-                <!-- Reciter selector -->
-                <div>
-                    <p
-                        class="mb-2 text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#838ba7]"
-                    >
-                        Reciter
-                    </p>
-                    <div
-                        class="flex items-center gap-1 p-1 rounded-xl bg-brand-sand-100 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559]"
-                    >
-                        <button
-                            onclick={() => (dialogReciterId = 953)}
-                            disabled={$isDownloading}
-                            class={`flex-1 cursor-pointer px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:cursor-not-allowed ${
-                                dialogReciterId === 953
-                                    ? "bg-brand-gold-100 dark:bg-[#3b3757] text-brand-gold-600 dark:text-[#e5c890] shadow-sm"
-                                    : "text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
-                            }`}
-                        >
-                            Mishary
-                            <span class="ml-1 opacity-60"
-                                >({downloadedCount953}/114)</span
-                            >
-                        </button>
-                        <button
-                            onclick={() => (dialogReciterId = 954)}
-                            disabled={$isDownloading}
-                            class={`flex-1 cursor-pointer px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:cursor-not-allowed ${
-                                dialogReciterId === 954
-                                    ? "bg-brand-gold-100 dark:bg-[#3b3757] text-brand-gold-600 dark:text-[#e5c890] shadow-sm"
-                                    : "text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
-                            }`}
-                        >
-                            Saad
-                            <span class="ml-1 opacity-60"
-                                >({downloadedCount954}/114)</span
-                            >
-                        </button>
-                    </div>
-                </div>
-
+            <div class="px-5 py-4 space-y-4 bg-brand-sand-50 dark:bg-[#232634]">
                 <!-- Action buttons -->
                 <div class="space-y-2">
                     <button
                         onclick={() => startDownload($selectedSurahIdx)}
                         disabled={$isDownloading}
-                        class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] py-2.5 text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] hover:border-brand-gold-200 dark:hover:border-[#51576d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] py-2 text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] hover:border-brand-gold-200 dark:hover:border-[#51576d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                         <Icon
                             icon="solar:download-minimalistic-bold"
@@ -216,7 +207,7 @@
                     <button
                         onclick={() => startDownload(null)}
                         disabled={$isDownloading}
-                        class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gold-400 dark:bg-brand-gold-600 py-2.5 text-xs font-semibold text-white hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full bg-brand-gold-400 py-2 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                         <Icon
                             icon="solar:download-twice-square-bold-duotone"
@@ -272,7 +263,7 @@
                         {#if $isDownloading}
                             <button
                                 onclick={cancelDownload}
-                                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 py-2 text-xs font-medium text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 py-2 text-[11px] font-medium text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                             >
                                 <Icon
                                     icon="solar:stop-circle-bold"

@@ -3,7 +3,7 @@
     import { save } from "@tauri-apps/plugin-dialog";
     import { writeFile } from "@tauri-apps/plugin-fs";
     import { get } from "svelte/store";
-    import { onDestroy } from 'svelte';
+    import { onDestroy } from "svelte";
     import {
         typstSource,
         typstRecompile,
@@ -132,15 +132,15 @@
 
     // ── Resize (preview pane) ─────────────────────────────────────────────────
     let containerEl: HTMLDivElement;
-    let previewHeight = $state(216);  // 54 × 4px = 216px (replaces fixed h-54)
+    let previewHeight = $state(216); // 54 × 4px = 216px (replaces fixed h-54)
     let dragStartY = 0;
     let dragStartHeight = 0;
 
     function startDrag(e: PointerEvent) {
         dragStartY = e.clientY;
         dragStartHeight = previewHeight;
-        window.addEventListener('pointermove', onDrag);
-        window.addEventListener('pointerup', stopDrag, { once: true });
+        window.addEventListener("pointermove", onDrag);
+        window.addEventListener("pointerup", stopDrag, { once: true });
     }
     function onDrag(e: PointerEvent) {
         const delta = dragStartY - e.clientY;
@@ -150,14 +150,17 @@
         previewHeight = Math.max(120, Math.min(maxH, dragStartHeight + delta));
     }
     function stopDrag() {
-        window.removeEventListener('pointermove', onDrag);
+        window.removeEventListener("pointermove", onDrag);
     }
     onDestroy(() => {
-        window.removeEventListener('pointermove', onDrag);
+        window.removeEventListener("pointermove", onDrag);
     });
 </script>
 
-<div bind:this={containerEl} class="relative overflow-visible flex flex-col h-full">
+<div
+    bind:this={containerEl}
+    class="relative overflow-visible flex flex-col h-full"
+>
     <!-- Editor — always visible -->
     <div class="flex-1 flex flex-col min-h-0">
         <div class="flex items-center justify-between px-2 pt-1 mb-1">
@@ -210,10 +213,15 @@
             role="separator"
             aria-orientation="horizontal"
         >
-            <div class="w-8 h-0.5 rounded-full bg-brand-sand-400 dark:bg-[#414559]
-                        group-hover:bg-brand-gold-400 transition-colors"></div>
+            <div
+                class="w-8 h-0.5 rounded-full bg-brand-sand-400 dark:bg-[#414559]
+                        group-hover:bg-brand-gold-400 transition-colors"
+            ></div>
         </div>
-        <div class="flex-none flex flex-col p-2" style:height="{previewHeight}px">
+        <div
+            class="flex-none flex flex-col p-2"
+            style:height="{previewHeight}px"
+        >
             <span class={labelClass}>Preview</span>
             <div class="default-scroll flex-1 overflow-auto min-h-0">
                 {#if $typstIsCompiling}
@@ -252,7 +260,7 @@
             {/if}
             <button
                 onclick={exportPdf}
-                class="cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 text-white hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 transition-colors"
+                class="cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 transition-colors"
             >
                 Export PDF
             </button>

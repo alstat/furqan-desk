@@ -195,7 +195,7 @@
                     class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
 						${
                             !$appDarkMode
-                                ? "bg-brand-gold-400 text-white border-brand-gold-400"
+                                ? "bg-brand-gold-400 text-gray-100 dark:text-white border-brand-gold-400"
                                 : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500"
                         }`}
                 >
@@ -227,7 +227,7 @@
                     class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
 						${
                             $editorTheme === "ayu-light"
-                                ? "bg-brand-gold-400 text-white border-brand-gold-400"
+                                ? "bg-brand-gold-400 text-gray-100 dark:text-white border-brand-gold-400"
                                 : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]"
                         }`}
                 >
@@ -456,13 +456,13 @@
                 <div class="flex flex-col gap-2 mt-0.5">
                     <!-- Auto-install row -->
                     <div class="flex items-center justify-between gap-2">
-                        <span class="text-[11px] text-brand-charcoal-400"
+                        <span class="text-[11px] text-brand-charcoal-500 dark:text-[#838ba7]"
                             >Auto-install</span
                         >
                         <button
                             onclick={installJulia}
                             class="cursor-pointer px-2.5 py-0.5 text-[11px] font-semibold rounded-full
-								   bg-violet-500 text-white hover:bg-violet-600 transition-colors"
+								   bg-brand-gold-400 dark:bg-brand-gold-400 text-white hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 transition-colors"
                         >
                             Install
                         </button>
@@ -470,23 +470,24 @@
 
                     <!-- Manual path row -->
                     <div class="flex flex-col gap-1">
-                        <span class="text-[11px] text-brand-charcoal-400"
+                        <span class="text-[11px] text-brand-charcoal-500 dark:text-[#838ba7]"
                             >Or set path manually</span
                         >
                         <div class="flex items-center gap-1">
                             <input
                                 bind:value={juliaCustomPath}
                                 placeholder="/usr/local/bin/julia"
-                                class="flex-1 min-w-0 px-1.5 py-0.5 text-[10px] font-mono rounded border border-brand-sand-200
-									   bg-brand-sand-50 text-brand-charcoal-600 focus:outline-none focus:ring-1
-									   focus:ring-brand-gold-100 focus:border-brand-gold-400"
+                                class="flex-1 min-w-0 px-2 py-1 text-[10px] font-mono rounded-xl border border-brand-sand-200 dark:border-[#414559]
+									   bg-brand-sand-100 dark:bg-[#1e2030] text-brand-charcoal-900 dark:text-[#c6d0f5]
+									   placeholder-brand-charcoal-300 dark:placeholder-[#626880]
+									   focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30 focus:border-brand-gold-400 transition-colors"
                                 spellcheck="false"
                             />
                             <button
                                 onclick={browseJuliaPath}
                                 title="Browse for julia binary"
-                                class="cursor-pointer shrink-0 p-1 rounded border border-brand-sand-200
-									   bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500
+                                class="cursor-pointer shrink-0 p-1 rounded-full border border-brand-sand-200 dark:border-[#414559]
+									   bg-brand-sand-100 dark:bg-[#292c3c] hover:bg-brand-sand-200 dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7]
 									   transition-colors"
                             >
                                 <Icon
@@ -498,7 +499,7 @@
                                 onclick={applyJuliaPath}
                                 title="Apply this path"
                                 class="cursor-pointer shrink-0 px-2 py-0.5 text-[11px] font-semibold rounded-full
-									   bg-violet-500 text-white hover:bg-violet-600 transition-colors"
+									   bg-brand-gold-400 dark:bg-brand-gold-400 text-white hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 transition-colors"
                             >
                                 Use
                             </button>

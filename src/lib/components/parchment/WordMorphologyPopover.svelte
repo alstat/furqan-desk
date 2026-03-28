@@ -275,7 +275,7 @@
     </div>
 
     <!-- Token list -->
-    <div class="flex-1 space-y-2.5 overflow-y-auto p-3">
+    <div class="default-scroll flex-1 space-y-2.5 overflow-y-auto p-3">
         {#each word.tokens as token}
             {@const s = getStyle(token.tag)}
             <div class="overflow-hidden rounded-xl border {s.border} {s.bg}">

@@ -385,7 +385,7 @@
     <!-- Floating player pill -->
     <div
         class="flex items-center gap-1 px-2 py-1.5
-               rounded-2xl
+               rounded-3xl
                bg-white/50 dark:bg-[#292c3c]/50
                backdrop-blur-md
                border border-stone-200/70 dark:border-[#414559]/60
@@ -498,7 +498,7 @@
         <div class="flex items-center gap-0.5 px-0.5">
             <button
                 onclick={() => setReciter(953)}
-                class={`cursor-pointer px-2 py-0.5 rounded-lg text-xs font-medium transition-all ${
+                class={`cursor-pointer px-2 py-0.5 rounded-full text-xs font-medium transition-all ${
                     $activeReciterId === 953
                         ? "bg-brand-gold-100 dark:bg-[#3b3757] text-brand-gold-600 dark:text-[#e5c890]"
                         : "text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
@@ -508,7 +508,7 @@
             </button>
             <button
                 onclick={() => setReciter(954)}
-                class={`cursor-pointer px-2 py-0.5 rounded-lg text-xs font-medium transition-all ${
+                class={`cursor-pointer px-2 py-0.5 rounded-full text-xs font-medium transition-all ${
                     $activeReciterId === 954
                         ? "bg-brand-gold-100 dark:bg-[#3b3757] text-brand-gold-600 dark:text-[#e5c890]"
                         : "text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"

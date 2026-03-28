@@ -148,7 +148,7 @@
                         </div>
                         <button
                             onclick={handleClose}
-                            class="mt-2 cursor-pointer flex items-center gap-1.5 rounded-xl bg-brand-gold-400 px-5 py-2 text-[11px] font-semibold text-white hover:bg-brand-gold-600 transition-colors"
+                            class="mt-2 cursor-pointer flex items-center gap-1.5 rounded-xl bg-brand-gold-400 px-5 py-2 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 transition-colors"
                         >
                             <Icon
                                 icon="solar:check-circle-bold"
@@ -257,7 +257,7 @@
                     <button
                         onclick={handleSend}
                         disabled={sending || !subject.trim() || !message.trim()}
-                        class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 px-5 py-1.5 text-[11px] font-semibold text-white hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 px-5 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         {#if sending}
                             <Icon
