@@ -495,15 +495,12 @@
                         <button
                             onclick={prev}
                             disabled={currentIndex === 0}
-                            class="cursor-pointer flex items-center gap-1 text-[11px] font-semibold
-						       text-brand-charcoal-400 dark:text-[#838ba7]
+                            class="cursor-pointer flex items-center gap-0.5 text-[11px] font-semibold
+						       text-brand-charcoal-500 dark:text-[#838ba7]
 						       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 						       disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
-                            <Icon
-                                icon="solar:alt-arrow-left-bold-duotone"
-                                width="0.75rem"
-                            />
+                            <Icon icon="charm:chevron-left" width="0.75rem" />
                             Prev
                         </button>
 
@@ -518,7 +515,7 @@
                                     class="cursor-pointer w-1.5 h-1.5 rounded-full transition-colors
 								       {dotIdx === currentIndex
                                         ? 'bg-brand-gold-500 dark:bg-[#e5c890]'
-                                        : 'bg-brand-sand-300 dark:bg-[#414559] hover:bg-brand-gold-400 dark:hover:bg-[#626880]'}"
+                                        : 'bg-brand-sand-400 dark:bg-[#414559] hover:bg-brand-gold-400 dark:hover:bg-[#626880]'}"
                                 ></button>
                             {/each}
                         </div>
@@ -526,16 +523,13 @@
                         <button
                             onclick={next}
                             disabled={currentIndex === plots.length - 1}
-                            class="cursor-pointer flex items-center gap-1 text-[11px] font-semibold
-						       text-brand-charcoal-400 dark:text-[#838ba7]
+                            class="cursor-pointer flex items-center gap-0.5 text-[11px] font-semibold
+						       text-brand-charcoal-500 dark:text-[#838ba7]
 						       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 						       disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
                             Next
-                            <Icon
-                                icon="solar:alt-arrow-right-bold-duotone"
-                                width="0.75rem"
-                            />
+                            <Icon icon="charm:chevron-right" width="0.75rem" />
                         </button>
                     </div>
                 {/if}

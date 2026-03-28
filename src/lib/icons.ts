@@ -145,6 +145,8 @@ addCollection(pick(iconParkData, [
 import charmData from '@iconify-json/charm/icons.json';
 addCollection(pick(charmData, [
     'chevron-down',
+    'chevron-left',
+    'chevron-right',
 ]));
 
 // ── dashicons ──────────────────────────────────────────────────────────────
