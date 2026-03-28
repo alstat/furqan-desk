@@ -81,6 +81,7 @@ addCollection(pick(solarData, [
     'minus-circle-bold-duotone',
     'pallete-bold-duotone',
     'pause-circle-bold-duotone',
+    'pin-bold-duotone',
     'plain-bold-duotone',
     'play-bold',
     'play-circle-bold-duotone',

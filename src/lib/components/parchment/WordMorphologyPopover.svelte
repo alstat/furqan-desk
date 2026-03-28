@@ -5,14 +5,18 @@
     import { fly } from "svelte/transition";
     import { onDestroy } from "svelte";
     import { morphGlassEffect } from "$lib/stores/morphology.store";
+    import { bringToFront } from "$lib/stores/window-manager.store";
 
     interface Props {
         word: MorphWord;
         position: { x: number; y: number; placement: "above" | "below" };
         onClose: () => void;
+        onPin?: () => void;
     }
 
-    let { word, position, onClose }: Props = $props();
+    let { word, position, onClose, onPin }: Props = $props();
+
+    let zIndex = $state(bringToFront());
 
     function portal(node: HTMLElement) {
         document.body.appendChild(node);
@@ -226,11 +230,11 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     use:portal
-    class={`ayah-tooltip fixed z-9999 flex w-88 max-h-[76vh] flex-col overflow-hidden rounded-lg shadow-2xl border ${$morphGlassEffect ? 'backdrop-blur-sm border-slate-200/70 dark:border-[#414559]/70 bg-white/50 dark:bg-[#292c3c]/50' : 'border-slate-200 dark:border-[#414559] bg-white dark:bg-[#292c3c]'}`}
-    onpointerdown={startDragFromBorder}
+    class={`ayah-tooltip fixed flex w-88 max-h-[76vh] flex-col overflow-hidden rounded-3xl shadow-2xl border ${$morphGlassEffect ? 'backdrop-blur-sm border-slate-200/70 dark:border-[#414559]/70 bg-white/50 dark:bg-[#292c3c]/50' : 'border-slate-200 dark:border-[#414559] bg-white dark:bg-[#292c3c]'}`}
+    onpointerdown={(e) => { zIndex = bringToFront(); startDragFromBorder(e); }}
     onpointermove={updateBorderCursor}
     onpointerleave={() => { isNearBorder = false; }}
-    style={`${position.placement === "below"
+    style={`z-index:${zIndex}; ${position.placement === "below"
         ? `left: ${position.x + dragX}px; top: ${position.y + 8 + dragY}px;`
         : `left: ${position.x + dragX}px; bottom: calc(100vh - ${position.y}px + 8px - ${dragY}px);`
     }${isNearBorder || isDragging ? `; cursor: ${isDragging ? 'grabbing' : 'grab'}` : ''}`}
@@ -250,20 +254,31 @@
                 {word.tokens.length} token{word.tokens.length !== 1 ? 's' : ''}
             </span>
         </div>
-        <button
-            onclick={onClose}
-            aria-label="Close"
-            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 dark:text-[#838ba7] transition-all hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-slate-600 dark:hover:text-[#c6d0f5] active:scale-95"
-        >
-            <Icon icon="mdi:close" width="14" />
-        </button>
+        <div class="flex items-center gap-1">
+            {#if onPin}
+                <button
+                    onclick={onPin}
+                    aria-label="Pin"
+                    class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 dark:text-[#838ba7] transition-all hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-slate-600 dark:hover:text-[#c6d0f5] active:scale-95"
+                >
+                    <Icon icon="solar:pin-bold-duotone" width="14" />
+                </button>
+            {/if}
+            <button
+                onclick={onClose}
+                aria-label="Close"
+                class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 dark:text-[#838ba7] transition-all hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-slate-600 dark:hover:text-[#c6d0f5] active:scale-95"
+            >
+                <Icon icon="mdi:close" width="14" />
+            </button>
+        </div>
     </div>
 
     <!-- Token list -->
     <div class="flex-1 space-y-2.5 overflow-y-auto p-3">
         {#each word.tokens as token}
             {@const s = getStyle(token.tag)}
-            <div class="overflow-hidden rounded-lg border {s.border} {s.bg}">
+            <div class="overflow-hidden rounded-xl border {s.border} {s.bg}">
 
                 <!-- Colored accent bar -->
                 <div class="h-0.5 w-full {s.accent}"></div>
@@ -275,7 +290,7 @@
                         {token.tag_name}
                     </span>
                     <div class="flex flex-col items-end gap-1" dir="rtl">
-                        <span class="font-scheherazade text-2xl leading-none {s.text}">
+                        <span class="font-scheherazade text-right text-xl p-1 leading-none {s.text}">
                             {token.form_arabic}
                         </span>
                         <code class="rounded-md bg-slate-100 dark:bg-[#414559] px-1.5 py-0.5 font-mono text-[10px] text-slate-500 dark:text-[#949cbb]" dir="ltr">

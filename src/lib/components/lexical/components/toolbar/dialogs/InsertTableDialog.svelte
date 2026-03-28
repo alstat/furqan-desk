@@ -4,8 +4,8 @@
     import { getCommands } from "$lexical/core/commands.js";
     import { tick, onDestroy } from "svelte";
     import Icon from "@iconify/svelte";
-    import { bringToFront } from '$lib/stores/window-manager.store';
-    import DialogPanelHeader from '$lib/components/shared/DialogPanelHeader.svelte';
+    import { bringToFront } from "$lib/stores/window-manager.store";
+    import DialogPanelHeader from "$lib/components/shared/DialogPanelHeader.svelte";
 
     let rows = $state("5");
     let columns = $state("5");
@@ -61,7 +61,10 @@
     let y = $state(0);
     let zIndex = $state(500);
     let isDragging = $state(false);
-    let dragStartX = 0, dragStartY = 0, startX = 0, startY = 0;
+    let dragStartX = 0,
+        dragStartY = 0,
+        startX = 0,
+        startY = 0;
     let initialized = false;
 
     $effect(() => {
@@ -80,22 +83,35 @@
         dragStartY = e.clientY;
         startX = x;
         startY = y;
-        window.addEventListener('pointermove', onDrag);
-        window.addEventListener('pointerup', stopDrag, { once: true });
+        window.addEventListener("pointermove", onDrag);
+        window.addEventListener("pointerup", stopDrag, { once: true });
     }
 
     function onDrag(e: PointerEvent) {
-        x = Math.max(0, Math.min(window.innerWidth - PANEL_W, startX + (e.clientX - dragStartX)));
-        y = Math.max(0, Math.min(window.innerHeight - 60, startY + (e.clientY - dragStartY)));
+        x = Math.max(
+            0,
+            Math.min(
+                window.innerWidth - PANEL_W,
+                startX + (e.clientX - dragStartX),
+            ),
+        );
+        y = Math.max(
+            0,
+            Math.min(
+                window.innerHeight - 60,
+                startY + (e.clientY - dragStartY),
+            ),
+        );
     }
 
     function stopDrag() {
         isDragging = false;
-        window.removeEventListener('pointermove', onDrag);
+        window.removeEventListener("pointermove", onDrag);
     }
 
     onDestroy(() => {
-        if (typeof window !== 'undefined') window.removeEventListener('pointermove', onDrag);
+        if (typeof window !== "undefined")
+            window.removeEventListener("pointermove", onDrag);
     });
 </script>
 
@@ -108,8 +124,12 @@
         tabindex="-1"
         class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{PANEL_W}px; z-index:{zIndex};"
-        onpointerdown={() => { zIndex = bringToFront(); }}
-        onkeydown={(e) => { if (e.key === 'Escape') close(); }}
+        onpointerdown={() => {
+            zIndex = bringToFront();
+        }}
+        onkeydown={(e) => {
+            if (e.key === "Escape") close();
+        }}
     >
         <!-- Header -->
         <DialogPanelHeader
@@ -122,7 +142,7 @@
 
         <!-- Body -->
         <div
-            class="px-5 pt-5 pb-7 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3"
+            class="px-5 py-5 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3"
         >
             <!-- Rows -->
             <div class="flex flex-col gap-1.5">

@@ -149,7 +149,7 @@
     {#if isOpen}
         <Portal>
             <div
-                class="portal-dropdown-content p-3 absolute z-50 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm"
+                class="portal-dropdown-content absolute z-50 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm"
                 style="width: 12rem;"
                 bind:this={panelRef}
                 use:handlePortalMount
@@ -158,7 +158,7 @@
                     <!-- LG breakpoint items (show when width < lg) -->
                     {#if windowWidth < 1024}
                         <div class="px-2 py-1">
-                            <div class="flex items-center flex-wrap gap-0.5">
+                            <div class="flex items-center">
                                 <!-- MD breakpoint items (show when width < md) -->
                                 {#if windowWidth < 768}
                                     <BoldButton />
@@ -176,7 +176,7 @@
                     <!-- XL breakpoint items (show when width < xl) -->
                     <!-- {#if windowWidth < 1380} -->
                     <div class="">
-                        <div class="mb-2 px-3 py-1">
+                        <div class="mb-2 px-5 py-2">
                             <span
                                 class="text-xs font-medium text-brand-charcoal-500"
                                 >Insert</span
@@ -257,7 +257,7 @@
                             </div>
                         </div>
                         <hr class="my-1 border-brand-sand-200" />
-                        <div class="flex items-center px-2 py-1">
+                        <div class="flex items-center px-5 py-2">
                             <DropDownAlign />
                             {#if windowWidth < 768}
                                 <FontSizeDropDown />
@@ -266,7 +266,7 @@
                             <Outdent />
                         </div>
                         <hr class="my-1 border-brand-sand-200" />
-                        <div class="px-2 py-1">
+                        <div class="px-5 py-2">
                             <span
                                 class="text-xs font-medium text-brand-charcoal-500"
                                 >Line Spacing</span

@@ -475,7 +475,7 @@
         tabindex="0"
         onclick={(e) => e.stopPropagation()}
         onkeydown={(e) => e.stopPropagation()}
-        class="fixed z-9999 min-w-47.5 rounded-3xl px-3 border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] shadow-xl py-3 opacity-0"
+        class="fixed z-9999 min-w-47.5 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] shadow-xl p-3 opacity-0"
         style="left: -10000px; top: -10000px;"
     >
         {#if cellMerge}
@@ -484,13 +484,9 @@
                     type="button"
                     onclick={() => mergeTableCellsAtSelection()}
                     data-test-id="table-merge-cells"
-                    class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+                    class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
                 >
-                    <Icon
-                        icon="mdi:table-merge-cells"
-                        width="14"
-                        class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]"
-                    />
+                    <Icon icon="mdi:table-merge-cells" width="14" class="shrink-0" />
                     Merge cells
                 </button>
             {:else if canUnmergeCell}
@@ -498,13 +494,9 @@
                     type="button"
                     onclick={() => unmergeTableCellsAtSelection()}
                     data-test-id="table-unmerge-cells"
-                    class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+                    class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
                 >
-                    <Icon
-                        icon="mdi:table-split-cell"
-                        width="14"
-                        class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]"
-                    />
+                    <Icon icon="mdi:table-split-cell" width="14" class="shrink-0" />
                     Unmerge cells
                 </button>
             {/if}
@@ -515,13 +507,9 @@
             bind:this={bgColorBtn}
             onclick={openColorPickerForSelection}
             data-test-id="table-background-color"
-            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
         >
-            <Icon
-                icon="fluent:paint-bucket-16-filled"
-                width="14"
-                class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]"
-            />
+            <Icon icon="fluent:paint-bucket-16-filled" width="14" class="shrink-0" />
             Cell background color
         </button>
 
@@ -531,13 +519,9 @@
             type="button"
             onclick={() => insertTableRowAtSelection(false)}
             data-test-id="table-insert-row-above"
-            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
         >
-            <Icon
-                icon="tabler:row-insert-top"
-                width="14"
-                class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]"
-            />
+            <Icon icon="tabler:row-insert-top" width="14" class="shrink-0" />
             Insert {selectionCounts.rows === 1
                 ? "row"
                 : `${selectionCounts.rows} rows`} above
@@ -546,13 +530,9 @@
             type="button"
             onclick={() => insertTableRowAtSelection(true)}
             data-test-id="table-insert-row-below"
-            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
         >
-            <Icon
-                icon="tabler:row-insert-bottom"
-                width="14"
-                class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]"
-            />
+            <Icon icon="tabler:row-insert-bottom" width="14" class="shrink-0" />
             Insert {selectionCounts.rows === 1
                 ? "row"
                 : `${selectionCounts.rows} rows`} below
@@ -564,13 +544,9 @@
             type="button"
             onclick={() => insertTableColumnAtSelection(false)}
             data-test-id="table-insert-column-before"
-            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
         >
-            <Icon
-                icon="tabler:column-insert-left"
-                width="14"
-                class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]"
-            />
+            <Icon icon="tabler:column-insert-left" width="14" class="shrink-0" />
             Insert {selectionCounts.columns === 1
                 ? "column"
                 : `${selectionCounts.columns} columns`} left
@@ -579,13 +555,9 @@
             type="button"
             onclick={() => insertTableColumnAtSelection(true)}
             data-test-id="table-insert-column-after"
-            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
         >
-            <Icon
-                icon="tabler:column-insert-right"
-                width="14"
-                class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]"
-            />
+            <Icon icon="tabler:column-insert-right" width="14" class="shrink-0" />
             Insert {selectionCounts.columns === 1
                 ? "column"
                 : `${selectionCounts.columns} columns`} right
@@ -597,7 +569,7 @@
             type="button"
             onclick={() => deleteTableColumnAtSelection()}
             data-test-id="table-delete-columns"
-            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-amber-500 dark:text-amber-400 hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-amber-500 dark:text-amber-400 hover:bg-brand-sand-200 dark:hover:bg-[#414559] active:bg-brand-sand-400"
         >
             <Icon icon="tabler:column-remove" width="14" class="shrink-0" />
             Delete column
@@ -606,7 +578,7 @@
             type="button"
             onclick={() => deleteTableRowAtSelection()}
             data-test-id="table-delete-rows"
-            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-amber-500 dark:text-amber-400 hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-amber-500 dark:text-amber-400 hover:bg-brand-sand-200 dark:hover:bg-[#414559] active:bg-brand-sand-400"
         >
             <Icon icon="tabler:row-remove" width="14" class="shrink-0" />
             Delete row
@@ -615,7 +587,7 @@
             type="button"
             onclick={() => deleteTableAtSelection()}
             data-test-id="table-delete"
-            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-amber-500 dark:text-amber-400 hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-amber-500 dark:text-amber-400 hover:bg-brand-sand-200 dark:hover:bg-[#414559] active:bg-brand-sand-400"
         >
             <Icon icon="tabler:trash" width="14" class="shrink-0" />
             Delete table
@@ -626,26 +598,18 @@
         <button
             type="button"
             onclick={() => toggleTableRowIsHeader()}
-            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
         >
-            <Icon
-                icon="tabler:layout-rows"
-                width="14"
-                class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]"
-            />
+            <Icon icon="tabler:layout-rows" width="14" class="shrink-0" />
             {isRowHeader ? "Remove" : "Add"} row header
         </button>
         <button
             type="button"
             onclick={() => toggleTableColumnIsHeader()}
             data-test-id="table-column-header"
-            class="cursor-pointer w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] transition-colors"
+            class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
         >
-            <Icon
-                icon="tabler:layout-columns"
-                width="14"
-                class="shrink-0 text-brand-charcoal-400 dark:text-[#8087a2]"
-            />
+            <Icon icon="tabler:layout-columns" width="14" class="shrink-0" />
             {isColumnHeader ? "Remove" : "Add"} column header
         </button>
     </div>

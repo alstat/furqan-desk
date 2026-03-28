@@ -5,7 +5,7 @@
     import { tick, onDestroy } from "svelte";
     import Icon from "@iconify/svelte";
     import { bringToFront } from "$lib/stores/window-manager.store";
-    import DialogPanelHeader from '$lib/components/shared/DialogPanelHeader.svelte';
+    import DialogPanelHeader from "$lib/components/shared/DialogPanelHeader.svelte";
 
     const activeEditor = getActiveEditor();
 
@@ -111,6 +111,8 @@
         if (typeof window !== "undefined")
             window.removeEventListener("pointermove", onDrag);
     });
+    const selectClass =
+        "w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 transition-all focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100";
 </script>
 
 {#if showModal}
@@ -120,7 +122,7 @@
         aria-modal="true"
         aria-label="Insert Code Block"
         tabindex="-1"
-        class="fixed flex flex-col rounded-3xl bg-white dark:bg-[#303446] shadow-2xl overflow-hidden"
+        class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{PANEL_W}px; z-index:{zIndex};"
         onpointerdown={() => {
             zIndex = bringToFront();
@@ -148,16 +150,20 @@
                     class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
                     >Language</label
                 >
-                <select
-                    bind:value={language}
-                    class="h-9 rounded-xl cursor-pointer border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
-                >
-                    {#each languages as lang}
-                        <option class="cursor-pointer" value={lang}
-                            >{lang}</option
-                        >
-                    {/each}
-                </select>
+                <div class="relative">
+                    <select bind:value={language} class={selectClass}>
+                        {#each languages as lang}
+                            <option class="cursor-pointer" value={lang}
+                                >{lang}</option
+                            >
+                        {/each}
+                    </select>
+                    <span
+                        class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300"
+                    >
+                        <Icon icon="charm:chevron-down" width="0.75rem" />
+                    </span>
+                </div>
             </div>
 
             <!-- Code textarea -->

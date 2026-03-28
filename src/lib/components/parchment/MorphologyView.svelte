@@ -160,6 +160,14 @@
         $state(null);
     let popoverPosition = $state({ x: 0, y: 0, placement: 'below' as 'above' | 'below' });
 
+    // Pinned popovers — stay open until manually closed
+    let pinnedPopovers: Array<{
+        id: number;
+        word: MorphWord;
+        position: { x: number; y: number; placement: 'above' | 'below' };
+    }> = $state([]);
+    let pinnedCounter = 0;
+
     // Progressive rendering — exponential chunk growth so large surahs fill fast
     const INITIAL_CHUNK = 30;
     const MAX_CHUNK = 120;
@@ -559,5 +567,23 @@
         word={selectedWord.word}
         position={popoverPosition}
         onClose={() => (selectedWord = null)}
+        onPin={() => {
+            pinnedPopovers = [...pinnedPopovers, {
+                id: pinnedCounter++,
+                word: selectedWord!.word,
+                position: { ...popoverPosition },
+            }];
+            selectedWord = null;
+        }}
     />
 {/if}
+
+{#each pinnedPopovers as pinned (pinned.id)}
+    <WordMorphologyPopover
+        word={pinned.word}
+        position={pinned.position}
+        onClose={() => {
+            pinnedPopovers = pinnedPopovers.filter(p => p.id !== pinned.id);
+        }}
+    />
+{/each}

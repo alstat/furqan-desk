@@ -212,7 +212,7 @@
             {@const ft = fileTypeInfo($activeTab)}
             <div class="absolute -top-4.5 left-3/4 z-50 pointer-events-none">
                 <span
-                    class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] font-semibold
+                    class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold
 							 bg-brand-sand-100/80 border border-brand-sand-200 backdrop-blur-sm
 							 dark:bg-[#292c3c]/80 dark:border-[#414559] {ft.color}"
                 >

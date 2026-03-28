@@ -236,7 +236,7 @@
 
         <!-- Body -->
         <div
-            class="px-5 pt-5 pb-7 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3"
+            class="px-5 py-5 bg-brand-sand-50 dark:bg-[#232634] flex flex-col gap-3"
         >
             {#if activeTab === "url"}
                 <!-- URL tab -->
