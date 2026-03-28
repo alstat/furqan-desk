@@ -258,7 +258,7 @@
         {/if}
         <button
             onclick={() => (zoomed = false)}
-            class="absolute top-4 right-4 cursor-pointer text-white/70 hover:text-white transition-colors"
+            class="absolute top-4 right-4 cursor-pointer text-gray-100 dark:text-gray-700 hover:dark:text-gray-100/70 hover:text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 transition-colors"
             aria-label="Close fullscreen"
         >
             <Icon icon="solar:close-circle-bold-duotone" width="1.8rem" />
@@ -479,7 +479,7 @@
                     {#if imgScale > 1}
                         <span
                             class="absolute bottom-3 right-3 text-[9px] font-semibold px-1.5 py-0.5 rounded-full
-                                     bg-black/40 text-white/90 backdrop-blur-sm select-none pointer-events-none"
+                                     bg-black/40 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100/90 backdrop-blur-sm select-none pointer-events-none"
                         >
                             {Math.round(imgScale * 100)}%
                         </span>

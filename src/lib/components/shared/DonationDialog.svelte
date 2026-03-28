@@ -105,7 +105,7 @@
                     </p>
                     <button
                         onclick={handleKofi}
-                        class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-4 py-1.5 text-[11px] font-semibold text-white hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+                        class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-4 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                     >
                         <Icon icon="solar:heart-bold" width="0.8rem" />
                         Donate on Ko-fi →
@@ -125,7 +125,7 @@
                                 onclick={() => { selectedQR = tab; }}
                                 class="flex-1 rounded-full py-1.5 text-[11px] font-semibold transition-colors cursor-pointer
                                     {selectedQR === tab
-                                        ? 'bg-brand-gold-400 dark:bg-brand-gold-600 text-white shadow-sm'
+                                        ? 'bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 shadow-sm'
                                         : 'text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#292c3c]'}"
                             >
                                 {qrLabels[tab]}
@@ -154,7 +154,7 @@
             >
                 <button
                     onclick={onClose}
-                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-5 py-1.5 text-[11px] font-semibold text-white hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-5 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                 >
                     <Icon icon="solar:close-circle-bold-duotone" width="0.8rem" />
                     Close

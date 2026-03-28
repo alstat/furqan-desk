@@ -70,7 +70,7 @@
             <button
                 data-test-id="image-modal-confirm-btn"
                 disabled={isDisabled}
-                class="cursor-pointer rounded-md bg-brand-sand-200 p-2 font-sans text-sm shadow-md hover:bg-brand-sand-400 active:text-white active:shadow-none text-brand-charcoal-900"
+                class="cursor-pointer rounded-md bg-brand-sand-200 p-2 font-sans text-sm shadow-md hover:bg-brand-sand-400 active:text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 active:shadow-none text-brand-charcoal-900"
                 onclick={() => {
                     console.log("equation: ", equation);
                     console.log("activeEditor: ", $activeEditor);

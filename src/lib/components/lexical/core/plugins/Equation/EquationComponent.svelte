@@ -110,7 +110,7 @@
                     <button
                         onclick={handleSave}
                         title="Save (Enter)"
-                        class="font-sans cursor-pointer flex items-center gap-1 rounded-lg bg-brand-gold-400 dark:bg-brand-gold-600 px-2 py-1 text-[10px] font-semibold text-white hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+                        class="font-sans cursor-pointer flex items-center gap-1 rounded-lg bg-brand-gold-400 dark:bg-brand-gold-600 px-2 py-1 text-[10px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                     >
                         <Icon icon="solar:check-circle-bold" width="0.65rem" />
                         Save

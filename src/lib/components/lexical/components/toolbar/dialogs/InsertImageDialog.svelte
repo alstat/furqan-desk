@@ -360,7 +360,7 @@
                 data-test-id="image-modal-confirm-btn"
                 disabled={isDisabled}
                 onclick={insertImage}
-                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-2 text-[11px] font-semibold text-white hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors mt-1"
+                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-2 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors mt-1"
             >
                 <Icon icon="solar:gallery-add-bold" width="0.8rem" />
                 Insert Image
