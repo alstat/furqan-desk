@@ -131,7 +131,12 @@
       "Bash(grep -E \"\\\\.\\(jl|julia\\)$\")",
       "Bash(grep -r \"get_surah_morphology\\\\|SurahMorphology\" /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/src --include=*.rs)",
       "Bash(grep:*)",
-      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -name *ntent*editable* -o -name *ditable*)"
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -name *ntent*editable* -o -name *ditable*)",
+      "Bash(/tmp/tafsir_summary.txt:*)",
+      "Read(//tmp/**)",
+      "Bash(python3:*)",
+      "Bash(curl -sI \"https://raw.githubusercontent.com/alstat/ayahlab-versions/refs/heads/main/versions.txt\")",
+      "Bash(curl:*)"
     ]
   }
 }

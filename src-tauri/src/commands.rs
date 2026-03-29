@@ -1531,6 +1531,8 @@ pub async fn get_latest_ayahlab_version() -> Result<String, String> {
     let resp = client
         .get("https://raw.githubusercontent.com/alstat/ayahlab-versions/refs/heads/main/versions.txt")
         .header("User-Agent", "AyahLab/1.0")
+        .header("Cache-Control", "no-cache")
+        .header("Pragma", "no-cache")
         .send()
         .await
         .map_err(|e| format!("Network error: {e}"))?;

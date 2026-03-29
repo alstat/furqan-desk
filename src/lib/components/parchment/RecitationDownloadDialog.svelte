@@ -115,7 +115,9 @@
         onclick={(e) => {
             if (e.target === e.currentTarget) handleClose();
         }}
-        onkeydown={(e) => { if (e.key === 'Escape') handleClose(); }}
+        onkeydown={(e) => {
+            if (e.key === "Escape") handleClose();
+        }}
     >
         <div
             class="flex w-full max-w-sm flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
@@ -159,7 +161,9 @@
                 </div>
 
                 <!-- Reciter tabs -->
-                <div class="mx-4 mb-2 flex gap-1 rounded-full bg-brand-gold-200/50 dark:bg-[#414559]/50 p-1">
+                <div
+                    class="mx-4 mb-2 flex gap-1 rounded-full bg-brand-gold-200/50 dark:bg-[#414559]/50 p-1"
+                >
                     <button
                         onclick={() => (dialogReciterId = 953)}
                         disabled={$isDownloading}
@@ -171,7 +175,9 @@
                     >
                         <Icon icon="solar:play-bold" width="0.75rem" />
                         Mishary
-                        <span class="opacity-60">({downloadedCount953}/114)</span>
+                        <span class="opacity-60"
+                            >({downloadedCount953}/114)</span
+                        >
                     </button>
                     <button
                         onclick={() => (dialogReciterId = 954)}
@@ -184,18 +190,20 @@
                     >
                         <Icon icon="solar:play-bold" width="0.75rem" />
                         Saad
-                        <span class="opacity-60">({downloadedCount954}/114)</span>
+                        <span class="opacity-60"
+                            >({downloadedCount954}/114)</span
+                        >
                     </button>
                 </div>
             </div>
 
-            <div class="px-5 py-4 space-y-4 bg-brand-sand-50 dark:bg-[#232634]">
+            <div class="px-5 py-5 space-y-4 bg-brand-sand-50 dark:bg-[#232634]">
                 <!-- Action buttons -->
                 <div class="space-y-2">
                     <button
                         onclick={() => startDownload($selectedSurahIdx)}
                         disabled={$isDownloading}
-                        class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] py-2 text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] hover:border-brand-gold-200 dark:hover:border-[#51576d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] py-1.5 text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] hover:border-brand-gold-200 dark:hover:border-[#51576d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                         <Icon
                             icon="solar:download-minimalistic-bold"
@@ -207,7 +215,7 @@
                     <button
                         onclick={() => startDownload(null)}
                         disabled={$isDownloading}
-                        class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full bg-brand-gold-400 py-2 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                         <Icon
                             icon="solar:download-twice-square-bold-duotone"
@@ -263,7 +271,7 @@
                         {#if $isDownloading}
                             <button
                                 onclick={cancelDownload}
-                                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 py-2 text-[11px] font-medium text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 py-1.5 text-[11px] font-medium text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                             >
                                 <Icon
                                     icon="solar:stop-circle-bold"

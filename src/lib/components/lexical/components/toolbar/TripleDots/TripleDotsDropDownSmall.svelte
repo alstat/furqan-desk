@@ -146,7 +146,7 @@
     {#if isOpen}
         <Portal>
             <div
-                class="portal-dropdown-content absolute z-50 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm"
+                class="absolute z-50 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm"
                 style="width: 12rem;"
                 bind:this={panelRef}
                 use:handlePortalMount
@@ -154,7 +154,7 @@
                 <div class="py-1">
                     <!-- LG breakpoint items (show when width < lg) -->
                     {#if windowWidth < 1024}
-                        <div class="px-2 py-1">
+                        <div class="py-1">
                             <div class="flex items-center">
                                 <!-- MD breakpoint items (show when width < md) -->
                                 {#if windowWidth < 768}
@@ -166,7 +166,9 @@
                                 <FormatCodeButton />
                             </div>
                         </div>
-                        <hr class="my-1 border-brand-sand-200" />
+                        <div
+                            class="my-1 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"
+                        ></div>
                     {/if}
 
                     <!-- XL breakpoint items (show when width < xl) -->
@@ -176,7 +178,9 @@
                             <Indent />
                             <Outdent />
                         </div>
-                        <hr class="my-1 border-brand-sand-200" />
+                        <div
+                            class="my-1 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"
+                        ></div>
                         <div class="py-1">
                             <span
                                 class="text-xs font-medium text-brand-charcoal-500"

@@ -1,6 +1,19 @@
 <script lang="ts">
-    import { fade, fly } from 'svelte/transition';
+    import { fade } from 'svelte/transition';
+    import { cubicOut } from 'svelte/easing';
     import Icon from '@iconify/svelte';
+
+    // Fade in first (first 50%), then fly up (last 50%)
+    function fadeThenFly(node: Element, { y = 8, duration = 300 }: { y?: number; duration?: number } = {}) {
+        return {
+            duration,
+            css: (t: number) => {
+                const opacity = Math.min(t / 0.5, 1);
+                const flyProgress = cubicOut(Math.max((t - 0.5) / 0.5, 0));
+                return `opacity:${opacity}; transform:translateY(${y * (1 - flyProgress)}px);`;
+            },
+        };
+    }
 
     let { controlCard, collapsedIcon, xPosition = 'left', yPosition = 'bottom', id = undefined } = $props();
     let isExpanded = $state(false);
@@ -42,7 +55,8 @@
     {#if isExpanded}
         <div
             class={`absolute ${panelCorner} flex flex-col gap-2 ${panelAlign}`}
-            transition:fly={{ y: 6, duration: 180, opacity: 0 }}
+            in:fadeThenFly={{ y: 8, duration: 300 }}
+            out:fade={{ duration: 180 }}
         >
             {@render controlCard()}
             <button

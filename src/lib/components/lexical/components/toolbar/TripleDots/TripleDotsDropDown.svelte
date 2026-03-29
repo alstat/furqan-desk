@@ -170,7 +170,7 @@
                                 <FontColorButton />
                             </div>
                         </div>
-                        <hr class="my-1 border-brand-sand-200" />
+                        <div class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"></div>
                     {/if}
 
                     <!-- XL breakpoint items (show when width < xl) -->
@@ -256,7 +256,7 @@
                                 </button>
                             </div>
                         </div>
-                        <hr class="my-1 border-brand-sand-200" />
+                        <div class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"></div>
                         <div class="flex items-center px-5 py-2">
                             <DropDownAlign />
                             {#if windowWidth < 768}
@@ -265,7 +265,7 @@
                             <Indent />
                             <Outdent />
                         </div>
-                        <hr class="my-1 border-brand-sand-200" />
+                        <div class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"></div>
                         <div class="px-5 py-2">
                             <span
                                 class="text-xs font-medium text-brand-charcoal-500"

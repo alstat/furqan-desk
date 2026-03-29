@@ -35,6 +35,8 @@
 	import { onMount } from 'svelte';
 	import { mergeRegister } from '@lexical/utils';
 	import ImageResizer from '../../../components/ImageResizer.svelte';
+	import CropImageDialog from './CropImageDialog.svelte';
+	import Icon from '@iconify/svelte';
 	import { $isImageNode as isImageNode } from './ImageNode.js';
 	import { KeywordNode } from '../KeywordNode.js';
 	import { clearSelection, createNodeSelectionStore } from '../../nodeSelectionStore.js';
@@ -83,6 +85,7 @@
 	let buttonRef: Writable<HTMLButtonElement | null> = writable(null);
 	let isSelected = createNodeSelectionStore(editor, nodeKey);
 	let isResizing = $state(false);
+	let showCropDialog = $state(false);
 	let activeEditorRef: LexicalEditor;
 
 	let draggable = $derived($isSelected && isNodeSelection(selection) && !isResizing);
@@ -332,5 +335,20 @@
 		{onResizeStart}
 		{onResizeEnd}
 		{captionsEnabled}
+	/>
+	<button
+		onclick={() => { showCropDialog = true; }}
+		class="absolute shadow-xl dark:shadow-black/40 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 px-7 py-1 rounded-full text-[11px] font-sans font-semibold bg-brand-sand-50/70 dark:bg-[#292c3c]/70 border border-brand-sand-200 dark:border-[#414559] text-brand-charcoal-800 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] cursor-pointer transition-colors whitespace-nowrap backdrop-blur-sm"
+	>
+		<Icon icon="solar:crop-bold" width="0.75rem" class="text-brand-gold-500" />
+		Crop
+	</button>
+{/if}
+{#if showCropDialog}
+	<CropImageDialog
+		{src}
+		{editor}
+		{nodeKey}
+		onClose={() => { showCropDialog = false; }}
 	/>
 {/if}
