@@ -65,6 +65,10 @@ pub fn run() {
                     resource_dir.join("data/translation/ur/bayan-ul-quran-simple.json")),
                 ("RU".into(), "Kuliev".into(),
                     resource_dir.join("data/translation/ru/quran-ru-kuliev-simple.json")),
+                ("DE".into(), "Frank Bubenheim & Nadeem".into(),
+                    resource_dir.join("data/translation/de/de-Frank Bubenheim and Nadeem-simple.json")),
+                ("FR".into(), "Montada Islamic Foundation".into(),
+                    resource_dir.join("data/translation/fr/montada-islamic-foundation-simple.json")),
             ];
 
             let tafsir_paths: Vec<(String, String, std::path::PathBuf)> = vec![

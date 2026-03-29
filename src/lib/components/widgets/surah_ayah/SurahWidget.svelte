@@ -44,8 +44,10 @@
     const LANG_NAMES: Record<string, string> = {
         AR: "Arabic",
         BN: "Bengali",
+        DE: "German",
         EN: "English",
         FA: "Persian",
+        FR: "French",
         HA: "Hausa",
         HI: "Hindi",
         ID: "Indonesian",
