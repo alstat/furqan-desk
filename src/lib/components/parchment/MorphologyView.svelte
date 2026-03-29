@@ -16,7 +16,7 @@
     import Icon from "@iconify/svelte";
     import { requestPlayAyah, requestPlayPosition, requestPlayBasmallah } from "$lib/stores/recitation.store";
     import { invoke } from '@tauri-apps/api/core';
-    import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir, multiSurahTafsirMap } from '$lib/stores/translation.store';
+    import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir, multiSurahTafsirMap, availableTafsirAuthors } from '$lib/stores/translation.store';
     import type { AyahTranslation, AyahTafsir } from '$lib/stores/translation.store';
     import { manuscriptsEnabled, manuscriptAyah, manuscriptViewerOpen } from '$lib/stores/manuscripts.store';
 
@@ -128,6 +128,12 @@
             ? new Map($surahTafsir.map(r => [r.ayah, r.text]))
             : null
     );
+
+    const RTL_TAFSIR_LANGS = new Set(['AR', 'UR', 'PS', 'FA']);
+    const tafsirDir = $derived.by((): 'rtl' | 'ltr' => {
+        const author = $availableTafsirAuthors.find(a => a.id === $activeTafsirId);
+        return author && RTL_TAFSIR_LANGS.has(author.lang) ? 'rtl' : 'ltr';
+    });
 
     let expandedTafsirAyahs = $state(new Set<number>());
 
@@ -260,6 +266,129 @@
             selectedWord = null;
         }
     }
+
+    // Full diacritics (tashkeel) for all 114 surah names, indexed by surah number (1-based)
+    const SURAH_NAMES_TASHKEEL: readonly string[] = [
+        '', // placeholder so index 1 = surah 1
+        'الْفَاتِحَة',
+        'الْبَقَرَة',
+        'آلِ عِمْرَان',
+        'النِّسَاء',
+        'الْمَائِدَة',
+        'الْأَنْعَام',
+        'الْأَعْرَاف',
+        'الْأَنْفَال',
+        'التَّوْبَة',
+        'يُونُس',
+        'هُود',
+        'يُوسُف',
+        'الرَّعْد',
+        'إِبْرَاهِيم',
+        'الْحِجْر',
+        'النَّحْل',
+        'الْإِسْرَاء',
+        'الْكَهْف',
+        'مَرْيَم',
+        'طه',
+        'الْأَنْبِيَاء',
+        'الْحَجّ',
+        'الْمُؤْمِنُون',
+        'النُّور',
+        'الْفُرْقَان',
+        'الشُّعَرَاء',
+        'النَّمْل',
+        'الْقَصَص',
+        'الْعَنْكَبُوت',
+        'الرُّوم',
+        'لُقْمَان',
+        'السَّجْدَة',
+        'الْأَحْزَاب',
+        'سَبَأ',
+        'فَاطِر',
+        'يس',
+        'الصَّافَّات',
+        'ص',
+        'الزُّمَر',
+        'غَافِر',
+        'فُصِّلَت',
+        'الشُّورَى',
+        'الزُّخْرُف',
+        'الدُّخَان',
+        'الْجَاثِيَة',
+        'الْأَحْقَاف',
+        'مُحَمَّد',
+        'الْفَتْح',
+        'الْحُجُرَات',
+        'ق',
+        'الذَّارِيَات',
+        'الطُّور',
+        'النَّجْم',
+        'الْقَمَر',
+        'الرَّحْمَٰن',
+        'الْوَاقِعَة',
+        'الْحَدِيد',
+        'الْمُجَادِلَة',
+        'الْحَشْر',
+        'الْمُمْتَحَنَة',
+        'الصَّفّ',
+        'الْجُمُعَة',
+        'الْمُنَافِقُون',
+        'التَّغَابُن',
+        'الطَّلَاق',
+        'التَّحْرِيم',
+        'الْمُلْك',
+        'الْقَلَم',
+        'الْحَاقَّة',
+        'الْمَعَارِج',
+        'نُوح',
+        'الْجِنّ',
+        'الْمُزَّمِّل',
+        'الْمُدَّثِّر',
+        'الْقِيَامَة',
+        'الْإِنسَان',
+        'الْمُرْسَلَات',
+        'النَّبَأ',
+        'النَّازِعَات',
+        'عَبَسَ',
+        'التَّكْوِير',
+        'الِانْفِطَار',
+        'الْمُطَفِّفِين',
+        'الِانشِقَاق',
+        'الْبُرُوج',
+        'الطَّارِق',
+        'الْأَعْلَى',
+        'الْغَاشِيَة',
+        'الْفَجْر',
+        'الْبَلَد',
+        'الشَّمْس',
+        'اللَّيْل',
+        'الضُّحَى',
+        'الشَّرْح',
+        'التِّين',
+        'الْعَلَق',
+        'الْقَدْر',
+        'الْبَيِّنَة',
+        'الزَّلْزَلَة',
+        'الْعَادِيَات',
+        'الْقَارِعَة',
+        'التَّكَاثُر',
+        'الْعَصْر',
+        'الْهُمَزَة',
+        'الْفِيل',
+        'قُرَيْش',
+        'الْمَاعُون',
+        'الْكَوْثَر',
+        'الْكَافِرُون',
+        'النَّصْر',
+        'الْمَسَد',
+        'الْإِخْلَاص',
+        'الْفَلَق',
+        'النَّاس',
+    ];
+
+    function getSurahNameTashkeel(surahNum: number): string {
+        return SURAH_NAMES_TASHKEEL[surahNum] ?? '';
+    }
 </script>
 
 <svelte:window on:click={handleClickOutside} />
@@ -277,7 +406,7 @@
                 </div>
             </div>
             <!-- Surah name panel -->
-            <div class="relative border border-brand-gold-400/80 dark:border-brand-gold-400/70 bg-linear-to-b from-brand-gold-50/60 to-white/0 dark:from-brand-gold-400/10 dark:to-transparent px-10 py-2.5">
+            <div class="relative border border-brand-gold-400/80 dark:border-brand-gold-400/70 bg-linear-to-b from-brand-gold-50/60 to-white/0 dark:from-brand-gold-400/10 dark:to-transparent px-10 py-4">
                 <div class="pointer-events-none absolute inset-0.75 border border-brand-gold-200/40 dark:border-brand-gold-400/40"></div>
                 <span class="absolute -top-1.25 left-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/90"></span>
                 <span class="absolute -bottom-1.25 left-1/2 inline-block h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/90"></span>
@@ -285,7 +414,7 @@
                 <span class="absolute -right-1 -top-1 inline-block h-2 w-2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/80"></span>
                 <span class="absolute -bottom-1 -left-1 inline-block h-2 w-2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/80"></span>
                 <span class="absolute -bottom-1 -right-1 inline-block h-2 w-2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/80"></span>
-                <span class="relative font-amiri text-2xl leading-none text-slate-800 dark:text-[#c6d0f5]">{name}</span>
+                <span class="relative font-scheherazade text-2xl leading-none text-slate-700 dark:text-[#c6d0f5]">{name}</span>
             </div>
             <!-- Right decorative arm -->
             <div class="flex flex-1 items-center">
@@ -301,10 +430,29 @@
 {/snippet}
 
 <div dir="rtl" class="w-full min-w-0">
+    <div dir="ltr" class="absolute -top-5.5 left-11/12 z-50 pointer-events-none">
+        {#if $morphologyMultiSurahList !== null}
+            <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-1 leading-none
+                         bg-brand-sand-100/80 border border-brand-sand-200 backdrop-blur-sm
+                         dark:bg-[#292c3c]/80 dark:border-[#414559]">
+                <span class="inline-block h-1.5 w-1.5 rounded-full bg-brand-gold-400 dark:bg-[#e5c890]"></span>
+                <span class="inline-block h-1.5 w-1.5 rounded-full bg-brand-gold-400 dark:bg-[#e5c890]"></span>
+            </span>
+        {:else}
+            <span
+                class="inline-flex items-center gap-1 rounded-full px-1.5 py-1 text-[9px] font-semibold leading-none
+                         bg-brand-sand-100/80 border border-brand-sand-200 backdrop-blur-sm
+                         dark:bg-[#292c3c]/80 dark:border-[#414559] text-brand-gold-500 dark:text-[#e5c890]"
+            >
+                <Icon icon="solar:book-bold-duotone" width="0.6rem" />
+                {$surahMorphology?.surah ?? ''}
+            </span>
+        {/if}
+    </div>
     {#if $morphologyMultiSurahList !== null}
         <!-- Multi-surah mode: render each surah stacked -->
         {#each $morphologyMultiSurahList as surahData}
-            {@const multiName = $surahLabels[surahData.surah - 1]?.ar ?? ''}
+            {@const multiName = getSurahNameTashkeel(surahData.surah) || $surahLabels[surahData.surah - 1]?.ar || ''}
             {@const multiAyahs = $morphologyAyahFilter
                 ? surahData.ayahs.filter(a => $morphologyAyahFilter!.includes(a.ayah))
                 : surahData.ayahs}
@@ -399,7 +547,7 @@
                                         {expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`) ? 'Hide Tafsir' : 'Show Tafsir'}
                                     </button>
                                     {#if expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`)}
-                                        <div dir="auto" class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]">
+                                        <div class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]" style:direction={tafsirDir} style:text-align={tafsirDir === 'ltr' ? 'left' : 'right'}>
                                             {@html multiTafsir.get(ayahData.ayah)}
                                         </div>
                                     {/if}
@@ -432,7 +580,7 @@
         {/each}
     {:else}
         <!-- Single-surah mode -->
-        {@render surahNameHeader($selectedSurahName, 'mb-8')}
+        {@render surahNameHeader(getSurahNameTashkeel($surahMorphology?.surah ?? 0) || $selectedSurahName, 'mb-8')}
 
     {#if $surahMorphology}
         {#if $surahMorphology.surah !== 1 && $surahMorphology.surah !== 9 && $basmallahMorphology}
@@ -524,7 +672,7 @@
                                     {expandedTafsirAyahs.has(ayahData.ayah) ? 'Hide Tafsir' : 'Show Tafsir'}
                                 </button>
                                 {#if expandedTafsirAyahs.has(ayahData.ayah)}
-                                    <div dir="auto" class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]">
+                                    <div class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]" style:direction={tafsirDir} style:text-align={tafsirDir === 'ltr' ? 'left' : 'right'}>
                                         {@html tafsirMap.get(ayahData.ayah)}
                                     </div>
                                 {/if}

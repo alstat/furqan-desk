@@ -8,6 +8,7 @@
     import Sidebar from "$lib/components/sidebar/Sidebar.svelte";
     import TourOverlay from "$lib/components/tour/TourOverlay.svelte";
     import SplashScreen from "$lib/components/shared/SplashScreen.svelte";
+    import UpdateToast from "$lib/components/shared/UpdateToast.svelte";
     import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
     import HelpDialog from "$lib/components/help/HelpDialog.svelte";
     import ManuscriptViewer from "$lib/components/manuscripts/ManuscriptViewer.svelte";
@@ -96,3 +97,4 @@
 <ManuscriptViewer open={$manuscriptViewerOpen} onClose={() => manuscriptViewerOpen.set(false)} />
 <ManuscriptViewer open={$manuscriptDemoOpen} onClose={() => manuscriptDemoOpen.set(false)} demoMode={true} />
 <SplashScreen visible={isLoading} />
+<UpdateToast />

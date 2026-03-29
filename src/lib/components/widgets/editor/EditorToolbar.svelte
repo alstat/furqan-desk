@@ -195,7 +195,7 @@
                     class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
 						${
                             !$appDarkMode
-                                ? "bg-brand-gold-400 text-gray-100 dark:text-white border-brand-gold-400"
+                                ? "bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90"
                                 : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500"
                         }`}
                 >
@@ -227,7 +227,7 @@
                     class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
 						${
                             $editorTheme === "ayu-light"
-                                ? "bg-brand-gold-400 text-gray-100 dark:text-white border-brand-gold-400"
+                                ? "bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90"
                                 : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]"
                         }`}
                 >

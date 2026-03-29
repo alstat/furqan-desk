@@ -6,7 +6,13 @@
  * each ICONS array are included in the final bundle.
  */
 
-import { addCollection } from '@iconify/svelte';
+import { addCollection, addAPIProvider } from '@iconify/svelte';
+
+// Disable Iconify's CDN fallback entirely — all icons must be pre-loaded below.
+// Without this, Iconify will attempt to fetch solar.json / fluent.json etc. from
+// api.iconify.design whenever an icon from a partially-registered collection is
+// requested, causing network errors when the app is offline.
+addAPIProvider('', { resources: [] });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function pick(data: any, names: string[]) {
@@ -81,6 +87,8 @@ addCollection(pick(solarData, [
     'minus-circle-bold-duotone',
     'pallete-bold-duotone',
     'pause-circle-bold-duotone',
+    'crop-bold',
+    'crop-bold-duotone',
     'pin-bold-duotone',
     'plain-bold-duotone',
     'play-bold',
@@ -119,13 +127,21 @@ addCollection(pick(fluentData, [
     'arrow-redo-16-filled',
     'arrow-undo-16-filled',
     'code-16-filled',
+    'image-add-20-regular',
+    'line-horizontal-1-16-filled',
+    'link-16-filled',
+    'link-dismiss-16-filled',
     'paint-bucket-16-filled',
+    'table-16-filled',
+    'table-add-20-regular',
     'text-bold-16-filled',
     'text-bullet-list-16-filled',
     'text-italic-16-filled',
     'text-number-list-16-filled',
     'text-quote-16-filled',
     'text-strikethrough-16-filled',
+    'text-subscript-16-filled',
+    'text-superscript-16-filled',
     'text-underline-16-filled',
 ]));
 

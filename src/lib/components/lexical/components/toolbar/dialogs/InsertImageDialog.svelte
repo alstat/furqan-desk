@@ -26,7 +26,7 @@
 
     // ── state ────────────────────────────────────────────────────────────────
     let showModal = $state(false);
-    let activeTab = $state<"url" | "file">("url");
+    let activeTab = $state<"url" | "file">("file");
 
     // URL tab
     let src = $state("");
@@ -55,7 +55,7 @@
         fileName = "";
         fileAltText = "";
         fileError = "";
-        activeTab = "url";
+        activeTab = "file";
         showModal = true;
     }
 
@@ -209,17 +209,6 @@
                     class="mx-4 mb-2 flex gap-1 rounded-full bg-brand-gold-200/50 dark:bg-[#414559]/50 p-1"
                 >
                     <button
-                        onclick={() => (activeTab = "url")}
-                        aria-pressed={activeTab === "url"}
-                        class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors
-                            {activeTab === 'url'
-                            ? 'bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm'
-                            : 'text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]'}"
-                    >
-                        <Icon icon="solar:link-bold" width="0.75rem" />
-                        Web URL
-                    </button>
-                    <button
                         onclick={() => (activeTab = "file")}
                         aria-pressed={activeTab === "file"}
                         class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors
@@ -229,6 +218,17 @@
                     >
                         <Icon icon="solar:folder-open-bold" width="0.75rem" />
                         Local File
+                    </button>
+                    <button
+                        onclick={() => (activeTab = "url")}
+                        aria-pressed={activeTab === "url"}
+                        class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors
+                            {activeTab === 'url'
+                            ? 'bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm'
+                            : 'text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]'}"
+                    >
+                        <Icon icon="solar:link-bold" width="0.75rem" />
+                        Web URL
                     </button>
                 </div>
             {/snippet}
@@ -360,7 +360,7 @@
                 data-test-id="image-modal-confirm-btn"
                 disabled={isDisabled}
                 onclick={insertImage}
-                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-2 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors mt-1"
+                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors mt-1"
             >
                 <Icon icon="solar:gallery-add-bold" width="0.8rem" />
                 Insert Image

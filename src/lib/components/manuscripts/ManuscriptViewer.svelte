@@ -1,9 +1,12 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
+    import { get } from "svelte/store";
     import Icon from "@iconify/svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { manuscriptAyah } from "$lib/stores/manuscripts.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import { lexicalEditorInstance } from "$lib/stores/editor.store";
+    import { INSERT_IMAGE_COMMAND } from "$lib/components/lexical/core/plugins/Image/ImagePlugin.svelte";
 
     interface Props {
         open: boolean;
@@ -305,6 +308,8 @@
     let zoomed = $state(false);
     let downloading = $state(false);
     let downloadMsg = $state("");
+    let inserting = $state(false);
+    let insertMsg = $state("");
 
     // In-container zoom
     let imgScale = $state(1);
@@ -521,6 +526,62 @@
         }
     }
 
+    // ── Insert into Lexical editor ────────────────────────────────────────────
+    function bytesToDataUrl(bytes: number[], mime: string): string {
+        const uint8 = new Uint8Array(bytes);
+        let binary = "";
+        const chunk = 8192;
+        for (let i = 0; i < uint8.length; i += chunk)
+            binary += String.fromCharCode(...uint8.subarray(i, i + chunk));
+        return `data:${mime};base64,${btoa(binary)}`;
+    }
+
+    async function insertToLexical() {
+        const editor = get(lexicalEditorInstance);
+        if (!editor || !imageSrc) return;
+        inserting = true;
+        insertMsg = "";
+        try {
+            let dataUrl: string;
+            if (demoMode) {
+                const demoIdx = DEMO_ENTRIES.findIndex(
+                    (e) =>
+                        e.manuscript_id === selectedManuscript?.manuscript_id,
+                );
+                const bytes = await invoke<number[]>(
+                    "get_manuscript_demo_image",
+                    {
+                        index: demoIdx >= 0 ? demoIdx : 0,
+                    },
+                );
+                dataUrl = bytesToDataUrl(bytes, "image/jpeg");
+            } else {
+                const img = selectedImage;
+                if (!img) return;
+                const bytes = await invoke<number[]>("get_manuscript_image", {
+                    imageUrl: img.image_url,
+                    thumbnail: false,
+                });
+                dataUrl = bytesToDataUrl(bytes, "image/jpeg");
+            }
+            const altText = selectedManuscript
+                ? `${selectedManuscript.title} — Folio ${selectedPage?.folio ?? ""}${selectedPage?.side ?? ""}`
+                : "Manuscript image";
+            editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+                src: dataUrl,
+                altText,
+            });
+            insertMsg = "✓ Inserted";
+        } catch (e) {
+            insertMsg = `✗ Failed: ${String(e).slice(0, 60)}`;
+        } finally {
+            inserting = false;
+            setTimeout(() => {
+                insertMsg = "";
+            }, 3000);
+        }
+    }
+
     // ── Drag + keyboard ───────────────────────────────────────────────────────
     $effect(() => {
         if (typeof window === "undefined") return;
@@ -679,8 +740,8 @@
                 <button
                     onclick={() => (sidebarOpen = !sidebarOpen)}
                     title={sidebarOpen ? "Hide list" : "Show list"}
-                    class="cursor-pointer p-1 rounded-lg text-brand-charcoal-300 dark:text-[#8caaee]
-                       hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+                    class="cursor-pointer p-1 rounded-lg text-brand-charcoal-300 dark:text-[#838ba7]
+                       hover:bg-brand-gold-200 dark:hover:bg-[#414559] transition-colors"
                 >
                     <Icon
                         icon={sidebarOpen
@@ -1114,10 +1175,10 @@
 
                     <!-- Footer: credit + download -->
                     <div
-                        class="shrink-0 flex items-center justify-between gap-2 px-3 py-2 border-t border-slate-100 dark:border-[#414559]"
+                        class="shrink-0 flex items-center justify-between gap-1.5 px-3 py-2 border-t border-slate-100 dark:border-[#414559]"
                     >
                         <span
-                            class="text-[11px] text-brand-charcoal-300 dark:text-[#626880] truncate"
+                            class="text-[11px] text-brand-charcoal-300 dark:text-[#626880] truncate min-w-0"
                         >
                             {#if downloadMsg}
                                 <span
@@ -1131,28 +1192,58 @@
                                 © Corpus Coranicum (BBAW)
                             {/if}
                         </span>
-                        <button
-                            onclick={downloadFull}
-                            disabled={downloading || !imageSrc}
-                            class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full border
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button
+                                onclick={downloadFull}
+                                disabled={downloading || !imageSrc}
+                                class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full border
                                border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
                                dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559]
                                text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors
                                disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {#if downloading}
-                                <span
-                                    class="w-3 h-3 rounded-full border border-brand-charcoal-400 border-t-transparent animate-spin"
-                                ></span>
-                                Downloading…
-                            {:else}
-                                <Icon
-                                    icon="solar:download-bold-duotone"
-                                    width="0.75rem"
-                                />
-                                Download full
-                            {/if}
-                        </button>
+                            >
+                                {#if downloading}
+                                    <span
+                                        class="w-3 h-3 rounded-full border border-brand-charcoal-400 border-t-transparent animate-spin"
+                                    ></span>
+                                    Downloading…
+                                {:else}
+                                    <Icon
+                                        icon="solar:download-bold-duotone"
+                                        width="0.75rem"
+                                    />
+                                    Download full
+                                {/if}
+                            </button>
+                            <button
+                                onclick={insertToLexical}
+                                disabled={inserting ||
+                                    !imageSrc ||
+                                    !$lexicalEditorInstance}
+                                title={!$lexicalEditorInstance
+                                    ? "Open a Lexical document tab first"
+                                    : "Insert image into editor"}
+                                class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full border border-transparent
+                               bg-brand-gold-400 hover:bg-brand-gold-600 active:bg-brand-gold-600/90
+                               text-gray-100 dark:text-gray-700 hover:dark:text-gray-100
+                               transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {#if inserting}
+                                    <span
+                                        class="w-3 h-3 rounded-full border border-gray-100 border-t-transparent animate-spin"
+                                    ></span>
+                                    Inserting…
+                                {:else if insertMsg}
+                                    {insertMsg}
+                                {:else}
+                                    <Icon
+                                        icon="solar:gallery-add-bold"
+                                        width="0.75rem"
+                                    />
+                                    Insert to Lexical
+                                {/if}
+                            </button>
+                        </div>
                     </div>
                 {:else if loading}
                     <div class="flex-1 flex items-center justify-center">

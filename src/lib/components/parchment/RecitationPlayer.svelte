@@ -46,6 +46,10 @@
             false,
     );
 
+    const allSurahsDownloaded = $derived(
+        ($downloadedSurahs[$activeReciterId]?.length ?? 0) >= 114,
+    );
+
     // Populate downloaded-surahs store on startup so the button state is correct immediately
     onMount(async () => {
         try {
@@ -362,7 +366,7 @@
 
 <div id="tour-recitation" class="flex flex-col items-center gap-2 z-300">
     <!-- No internet toast -->
-    {#if noInternetToast}
+    {#if noInternetToast && !allSurahsDownloaded}
         <div
             class="flex items-center gap-2 px-3 py-2
                    rounded-2xl
