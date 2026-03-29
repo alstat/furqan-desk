@@ -55,7 +55,7 @@
     {#if isExpanded}
         <div
             class={`absolute ${panelCorner} flex flex-col gap-2 ${panelAlign}`}
-            in:fadeThenFly={{ y: 8, duration: 300 }}
+            in:fadeThenFly={{ duration: 300 }}
             out:fade={{ duration: 180 }}
         >
             {@render controlCard()}

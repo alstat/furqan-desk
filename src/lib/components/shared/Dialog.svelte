@@ -20,9 +20,9 @@
         onclick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         onkeydown={(e) => { if (e.key === 'Escape') onClose(); }}
     >
-        <div class="relative mx-4 w-full max-w-md rounded-xl bg-white dark:bg-[#303446] shadow-2xl flex flex-col max-h-[80vh]">
+        <div class="relative mx-4 w-full max-w-md rounded-3xl bg-white dark:bg-[#303446] shadow-2xl flex flex-col max-h-[80vh]">
             <!-- Header -->
-            <div class="flex items-center justify-between border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 bg-brand-gold-100 dark:bg-[#292c3c] rounded-t-xl">
+            <div class="flex items-center justify-between border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 bg-brand-gold-100 dark:bg-[#292c3c] rounded-t-3xl">
                 <h2 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">{title}</h2>
                 <button
                     onclick={onClose}

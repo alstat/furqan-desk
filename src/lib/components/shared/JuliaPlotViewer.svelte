@@ -523,7 +523,7 @@
                         <button
                             onclick={next}
                             disabled={currentIndex === plots.length - 1}
-                            class="cursor-pointer flex items-center gap-0.5 text-[11px] font-semibold
+                            class="cursor-pointer flex items-center mr-2 gap-0.5 text-[11px] font-semibold
 						       text-brand-charcoal-500 dark:text-[#838ba7]
 						       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 						       disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -631,8 +631,8 @@
     .resize-se {
         bottom: 0;
         right: 0;
-        width: 12px;
-        height: 12px;
+        width: 20px;
+        height: 20px;
         cursor: se-resize;
     }
     .resize-sw {
@@ -649,14 +649,28 @@
         height: 12px;
         cursor: nw-resize;
     }
+    .resize-se::before {
+        content: "";
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        width: 5px;
+        height: 5px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-bottom-right-radius: 5px;
+        pointer-events: none;
+    }
     .resize-se::after {
         content: "";
         position: absolute;
-        bottom: 4px;
-        right: 4px;
-        width: 4px;
-        height: 4px;
-        border-radius: 50%;
-        background: rgba(130, 130, 130, 0.35);
+        bottom: 8px;
+        right: 8px;
+        width: 9px;
+        height: 9px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-bottom-right-radius: 9px;
+        pointer-events: none;
     }
 </style>

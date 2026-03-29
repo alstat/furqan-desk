@@ -3,6 +3,7 @@
     import { invoke } from "@tauri-apps/api/core";
     import Parchment from "$lib/components/parchment/Parchment.svelte";
     import JuliaReplPane from "$lib/components/editor/JuliaReplPane.svelte";
+    import TypstPreview from "$lib/components/editor/TypstPreview.svelte";
     import SurahWidget from "$lib/components/widgets/surah_ayah/SurahWidget.svelte";
     import EditorToolbar from "$lib/components/widgets/editor/EditorToolbar.svelte";
     import Sidebar from "$lib/components/sidebar/Sidebar.svelte";
@@ -52,6 +53,9 @@
     let juliaReplMode = $derived(
         $hideSurahPage() && $activeTab?.type === "julia",
     );
+    let typstMode = $derived(
+        $hideSurahPage() && $activeTab?.type === "typst",
+    );
 </script>
 
 <svelte:window bind:innerHeight={height} />
@@ -83,6 +87,8 @@
                     <JuliaReplPane />
                 </div>
             </div>
+        {:else if typstMode}
+            <TypstPreview />
         {:else}
             <Parchment />
         {/if}

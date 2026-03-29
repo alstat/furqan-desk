@@ -176,7 +176,7 @@
 		transition:fly={{ x: isRtl ? 8 : -8, duration: 180, opacity: 0 }}
 		class="absolute top-1/3 left-1.5 ml-2 z-50 rounded-3xl w-60 max-h-[33vh] bg-white dark:bg-[#292c3c]
 		       border border-stone-200 dark:border-[#414559]
-		       shadow-xl shadow-slate-200/60 dark:shadow-black/40
+		       shadow-xl shadow-black/15 dark:shadow-black/40
 		       flex flex-col overflow-hidden"
 	>
 		<!-- Panel header -->
