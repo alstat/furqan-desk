@@ -1175,7 +1175,7 @@
 
                     <!-- Footer: credit + download -->
                     <div
-                        class="shrink-0 flex items-center justify-between gap-1.5 px-3 py-2 border-t border-slate-100 dark:border-[#414559]"
+                        class="shrink-0 flex items-center justify-between gap-1.5 px-3 py-3 mr-1 border-t border-slate-100 dark:border-[#414559]"
                     >
                         <span
                             class="text-[11px] text-brand-charcoal-300 dark:text-[#626880] truncate min-w-0"
@@ -1356,8 +1356,8 @@
     .resize-se {
         bottom: 0;
         right: 0;
-        width: 12px;
-        height: 12px;
+        width: 20px;
+        height: 20px;
         cursor: se-resize;
     }
     .resize-sw {
@@ -1374,14 +1374,28 @@
         height: 12px;
         cursor: nw-resize;
     }
+    .resize-se::before {
+        content: "";
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        width: 5px;
+        height: 5px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-bottom-right-radius: 5px;
+        pointer-events: none;
+    }
     .resize-se::after {
         content: "";
         position: absolute;
-        bottom: 4px;
-        right: 4px;
-        width: 4px;
-        height: 4px;
-        border-radius: 50%;
-        background: rgba(130, 130, 130, 0.35);
+        bottom: 8px;
+        right: 8px;
+        width: 9px;
+        height: 9px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-bottom-right-radius: 9px;
+        pointer-events: none;
     }
 </style>
