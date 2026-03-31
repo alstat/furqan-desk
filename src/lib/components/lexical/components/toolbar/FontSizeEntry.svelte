@@ -2,6 +2,7 @@
   import {run} from 'svelte/legacy';
 
   import {$patchStyleText as patchStyleText} from '@lexical/selection';
+  import {$patchListItemFontSize as patchListItemFontSize} from './patchListItemFontSize';
   import {$getSelection as getSelection} from 'lexical';
   import {getActiveEditor, getIsEditable} from '$lexical/core/composerContext.js';
   import {getContext} from 'svelte';
@@ -121,6 +122,7 @@
           patchStyleText(selection, {
             'font-size': newFontSize || getNextFontSize,
           });
+          patchListItemFontSize(selection);
         }
       }
     });

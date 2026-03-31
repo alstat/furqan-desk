@@ -345,11 +345,12 @@
 }
 .SL_Theme__ul {
   list-style: circle;
+  list-style-position: outside;
   padding: 0;
   margin: 0;
 }
 .SL_Theme__listItem {
-  margin: 0 32px;
+  margin: 0 1.5em;
 }
 /* .SL_Theme__ul .SL_Theme__listItem::before {
   content: "•";
@@ -365,8 +366,8 @@
   position: relative;
   margin-left: 8px;
   margin-right: 8px;
-  padding-left: 24px;
-  padding-right: 24px;
+  padding-left: 1.5em;
+  padding-right: 1.5em;
   list-style-type: none;
   outline: none;
 }
@@ -376,9 +377,9 @@
 .SL_Theme__listItemUnchecked:before,
 .SL_Theme__listItemChecked:before {
   content: '';
-  width: 16px;
-  height: 16px;
-  top: 2px;
+  width: 1em;
+  height: 1em;
+  top: 0.125em;
   left: 0;
   cursor: pointer;
   display: block;
@@ -413,11 +414,11 @@
   border-style: solid;
   position: absolute;
   display: block;
-  top: 6px;
-  width: 3px;
-  left: 7px;
-  right: 7px;
-  height: 6px;
+  top: 0.375em;
+  width: 0.1875em;
+  left: 0.4375em;
+  right: 0.4375em;
+  height: 0.375em;
   transform: rotate(45deg);
   border-width: 0 2px 2px 0;
 }
@@ -523,3 +524,4 @@
   background-color: yellow;
   font-weight: bold;
 }
+

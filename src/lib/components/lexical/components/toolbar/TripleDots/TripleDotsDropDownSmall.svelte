@@ -167,7 +167,7 @@
                             </div>
                         </div>
                         <div
-                            class="my-1 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"
+                            class="my-1 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
                         ></div>
                     {/if}
 
@@ -179,7 +179,7 @@
                             <Outdent />
                         </div>
                         <div
-                            class="my-1 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"
+                            class="my-1 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
                         ></div>
                         <div class="py-1">
                             <span

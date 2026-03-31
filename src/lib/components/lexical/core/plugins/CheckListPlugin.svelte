@@ -183,10 +183,12 @@
 
     const rect = target.getBoundingClientRect();
     const pageX = event.pageX / calculateZoomLevel(target);
+    const fontSize = parseFloat(getComputedStyle(target).fontSize) || 16;
+    const hitArea = fontSize * 1.5;
     if (
       target.dir === 'rtl'
-        ? pageX < rect.right && pageX > rect.right - 20
-        : pageX > rect.left && pageX < rect.left + 20
+        ? pageX < rect.right && pageX > rect.right - hitArea
+        : pageX > rect.left && pageX < rect.left + hitArea
     ) {
       callback();
     }
