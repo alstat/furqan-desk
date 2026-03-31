@@ -30,12 +30,12 @@
     });
 
     let saturationPosition = $derived({
-        x: (selfColor.hsv.s / 100) * WIDTH,
-        y: ((100 - selfColor.hsv.v) / 100) * HEIGHT,
+        x: Math.max(0, Math.min(WIDTH, (selfColor.hsv.s / 100) * WIDTH)),
+        y: Math.max(0, Math.min(HEIGHT, ((100 - selfColor.hsv.v) / 100) * HEIGHT)),
     });
 
     let huePosition = $derived({
-        x: (selfColor.hsv.h / 360) * WIDTH,
+        x: Math.max(0, Math.min(WIDTH, (selfColor.hsv.h / 360) * WIDTH)),
     });
 
     // Call onChange from each interaction — never on mount (avoids auto-applying on open)
@@ -75,9 +75,9 @@
     };
 </script>
 
-<div class="pt-2.5 pl-3 pb-0.5" style="width: {WIDTH}px">
+<div class="pt-2.5 pb-0.5" style="width: {WIDTH}px">
     <!-- Quick color swatches -->
-    <div class="grid grid-cols-8 gap-1.75 mb-3.5">
+    <div class="pl-3 grid grid-cols-8 gap-1.75 mb-3.5">
         {#each basicColors as basicColor}
             <!-- svelte-ignore a11y_consider_explicit_label -->
             <button
@@ -108,7 +108,7 @@
 
     <!-- Hue slider -->
     <MoveWrapper
-        className="w-full relative mt-3.75 h-3 bg-[linear-gradient(to_right,rgb(255,0,0),rgb(255,255,0),rgb(0,255,0),rgb(0,255,255),rgb(0,0,255),rgb(255,0,255),rgb(255,0,0))] select-none rounded-xl"
+        className="w-full relative mt-3.75 h-3 bg-[linear-gradient(to_right,rgb(255,0,0),rgb(255,255,0),rgb(0,255,0),rgb(0,255,255),rgb(0,0,255),rgb(255,0,255),rgb(255,0,0))] select-none rounded-xl overflow-hidden"
         onChange={onMoveHue}
     >
         <div
@@ -119,7 +119,7 @@
     </MoveWrapper>
 
     <!-- Preview + hex row -->
-    <div class="flex justify-between items-center gap-2.5 mt-2.5">
+    <div class="pl-3 flex justify-between items-center gap-2.5 mt-2.5">
         <div
             class="border border-brand-sand-200 rounded-full shrink-0 size-7"
             style="background-color: {selfColor.hex}"
