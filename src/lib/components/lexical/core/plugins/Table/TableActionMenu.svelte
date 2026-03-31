@@ -526,7 +526,7 @@
         </button>
 
         <div
-            class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"
+            class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
         ></div>
 
         <button
@@ -553,7 +553,7 @@
         </button>
 
         <div
-            class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"
+            class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
         ></div>
 
         <button
@@ -588,7 +588,7 @@
         </button>
 
         <div
-            class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"
+            class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
         ></div>
 
         <button
@@ -620,7 +620,7 @@
         </button>
 
         <div
-            class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"
+            class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
         ></div>
 
         <button
