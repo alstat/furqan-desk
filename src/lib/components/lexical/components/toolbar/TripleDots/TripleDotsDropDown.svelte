@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy, getContext } from "svelte";
+    import { fly } from "svelte/transition";
     import type { Readable } from "svelte/store";
     import BoldButton from "../BoldButton.svelte";
     import ItalicButton from "../ItalicButton.svelte";
@@ -149,6 +150,7 @@
     {#if isOpen}
         <Portal>
             <div
+                transition:fly={{ y: 8, duration: 180, opacity: 0 }}
                 class="portal-dropdown-content absolute z-50 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm"
                 style="width: 12rem;"
                 bind:this={panelRef}

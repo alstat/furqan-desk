@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
     import { get } from "svelte/store";
+    import { fly } from "svelte/transition";
     import Icon from "@iconify/svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { manuscriptAyah } from "$lib/stores/manuscripts.store";
@@ -683,6 +684,7 @@
 <!-- ── Main panel ───────────────────────────────────────────────────────── -->
 {#if open}
     <div
+        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         class="fixed flex flex-col rounded-3xl shadow-xl dark:shadow-black/40
            bg-white dark:bg-[#303446]
            border border-brand-sand-200 dark:border-[#414559]

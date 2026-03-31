@@ -1,35 +1,136 @@
-use crate::buckwalter::buckwalter_to_arabic;
 use rusqlite::{Connection, Result};
-use std::collections::BTreeMap;
-use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
+
+// ── Platform-specific asset copy ────────────────────────────────────────────
+
+/// On Android, APK assets are not accessible as regular filesystem paths.
+/// Use the Android NDK AssetManager (via JNI) to stream the file into `dest`.
+#[cfg(target_os = "android")]
+fn copy_static_db(
+    _src: &Path,
+    dest: &Path,
+    asset_relative_path: &str,
+) -> Result<()> {
+    use std::io::Write;
+    use jni::{objects::JObject, JavaVM};
+
+    let ctx = ndk_context::android_context();
+    let vm = unsafe { JavaVM::from_raw(ctx.vm().cast()) }
+        .map_err(android_err)?;
+    let mut env = vm.attach_current_thread()
+        .map_err(android_err)?;
+    let activity = unsafe { JObject::from_raw(ctx.context().cast()) };
+
+    // activity.getAssets() -> Java AssetManager object
+    let asset_manager_obj = env
+        .call_method(&activity, "getAssets", "()Landroid/content/res/AssetManager;", &[])
+        .and_then(|v| v.l())
+        .map_err(android_err)?;
+
+    // Bridge the Java AssetManager to the native AAssetManager pointer.
+    // ndk_sys re-exports JNIEnv/jobject from jni_sys, so the types are identical —
+    // no cast needed between jni::sys::* and ndk_sys::* values.
+    let raw_am = unsafe {
+        ndk_sys::AAssetManager_fromJava(
+            env.get_native_interface(),
+            asset_manager_obj.as_raw(),
+        )
+    };
+    let am = unsafe {
+        ndk::asset::AssetManager::from_ptr(
+            std::ptr::NonNull::new(raw_am)
+                .ok_or_else(|| android_err("AAssetManager_fromJava returned null"))?,
+        )
+    };
+
+    let c_path = std::ffi::CString::new(asset_relative_path)
+        .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
+    let mut asset = am.open(&c_path)
+        .ok_or_else(|| rusqlite::Error::ToSqlConversionFailure(Box::new(
+            std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("Android asset not found: {}", asset_relative_path),
+            ),
+        )))?;
+
+    let mut out = std::fs::File::create(dest)
+        .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
+
+    std::io::copy(&mut asset, &mut out)
+        .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
+    out.flush()
+        .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
+    Ok(())
+}
+
+#[cfg(target_os = "android")]
+fn android_err<E: std::fmt::Display>(e: E) -> rusqlite::Error {
+    rusqlite::Error::ToSqlConversionFailure(Box::new(
+        std::io::Error::new(std::io::ErrorKind::Other, e.to_string()),
+    ))
+}
+
+/// On desktop / iOS, the resource directory is a normal filesystem path.
+#[cfg(not(target_os = "android"))]
+fn copy_static_db(src: &Path, dest: &Path, _asset_relative_path: &str) -> Result<()> {
+    std::fs::copy(src, dest)
+        .map(|_| ())
+        .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+}
+
+/// Must match DB_VERSION in src/bin/gen_db.rs.
+/// Increment both when the static dataset changes.
+const DB_VERSION: i64 = 1;
 
 pub struct Database(pub Mutex<Connection>);
 
 impl Database {
-    pub fn new(
-        db_path: PathBuf,
-        sql_path: PathBuf,
-        morph_path: PathBuf,
-        recitation_paths: Vec<(i64, PathBuf)>,
-        translation_paths: Vec<(String, String, PathBuf)>,
-        tafsir_paths: Vec<(String, String, PathBuf)>,
-        transliteration_path: PathBuf,
-        word_by_word_path: PathBuf,
-    ) -> Result<Self> {
-        let conn = Connection::open(&db_path)?;
+    /// Open (or initialise) the runtime database.
+    ///
+    /// On first launch `quran_static.db` is copied from the app bundle into
+    /// `app_data_dir/quran.db`.  On subsequent launches the file already
+    /// exists and we skip straight to opening it.  When the bundled DB has a
+    /// newer version (i.e. a data update shipped with an app update) we
+    /// preserve the user's bookmarks / highlights / last-read position, swap
+    /// in the new static data, and restore those rows.
+    pub fn new(static_db_path: PathBuf, app_data_dir: PathBuf) -> Result<Self> {
+        let db_path = app_data_dir.join("quran.db");
 
-        // Initialize tables and load data
-        Self::init_quran_db(&conn, &sql_path)?;
-        Self::init_morphology_db(&conn, &morph_path)?;
+        if db_path.exists() {
+            let current_version = Self::read_db_version(&db_path).unwrap_or(0);
+            if current_version != DB_VERSION {
+                println!(
+                    "DB version mismatch (have {}, need {}), migrating …",
+                    current_version, DB_VERSION
+                );
+                let user_data = Self::extract_user_data(&db_path)?;
+                copy_static_db(&static_db_path, &db_path, "data/quran_static.db")?;
+                let conn = Connection::open(&db_path)?;
+                Self::init_user_data_tables(&conn)?;
+                Self::restore_user_data(&conn, &user_data)?;
+                return Ok(Database(Mutex::new(conn)));
+            }
+        } else {
+            println!("First launch — copying static database …");
+            copy_static_db(&static_db_path, &db_path, "data/quran_static.db")?;
+        }
+
+        let conn = Connection::open(&db_path)?;
         Self::init_user_data_tables(&conn)?;
-        Self::init_recitation_tables(&conn, &recitation_paths)?;
-        Self::init_translation_tables(&conn, &translation_paths)?;
-        Self::init_tafsir_tables(&conn, &tafsir_paths)?;
-        Self::init_transliteration_table(&conn, &transliteration_path)?;
-        Self::init_word_by_word_table(&conn, &word_by_word_path)?;
         Ok(Database(Mutex::new(conn)))
+    }
+
+    fn read_db_version(db_path: &PathBuf) -> Result<i64> {
+        let conn = Connection::open_with_flags(
+            db_path,
+            rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
+        )?;
+        conn.query_row(
+            "SELECT version FROM db_version LIMIT 1",
+            [],
+            |row| row.get(0),
+        )
     }
 
     fn init_user_data_tables(conn: &Connection) -> Result<()> {
@@ -54,728 +155,99 @@ impl Database {
                 text        TEXT NOT NULL,
                 created_at  TEXT NOT NULL DEFAULT (datetime('now'))
             );",
-        )?;
-        Ok(())
+        )
     }
 
-    fn init_quran_db(conn: &Connection, sql_path: &PathBuf) -> Result<()> {
-        // Create the quran_text table (SQLite syntax)
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS quran_text (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                sura INTEGER NOT NULL,
-                aya INTEGER NOT NULL,
-                text TEXT NOT NULL
-            )",
-            [],
-        )?;
+    // ── User-data migration helpers ─────────────────────────────────────────
 
-        // Check if table is already populated
-        let count: i64 = conn.query_row("SELECT COUNT(*) FROM quran_text", [], |row| row.get(0))?;
+    fn extract_user_data(db_path: &PathBuf) -> Result<UserData> {
+        let conn = Connection::open(db_path)?;
 
-        if count > 0 {
-            // Data already exists, skip loading
-            return Ok(());
-        }
+        let bookmarks = {
+            let mut stmt = conn.prepare(
+                "SELECT surah, ayah, note, created_at FROM bookmarks ORDER BY id",
+            )?;
+            let rows: Vec<_> = stmt.query_map([], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, i64>(1)?,
+                    row.get::<_, Option<String>>(2)?,
+                    row.get::<_, String>(3)?,
+                ))
+            })?
+            .filter_map(|r| r.ok())
+            .collect();
+            rows
+        };
 
-        // Load data from SQL file
-        Self::load_sql_data(conn, sql_path)?;
-
-        Ok(())
-    }
-
-    fn load_sql_data(conn: &Connection, sql_path: &PathBuf) -> Result<()> {
-        println!("Loading Quran data from SQL file...");
-
-        // Read the SQL file
-        let sql_content = fs::read_to_string(sql_path).map_err(|e| {
-            eprintln!("Failed to read SQL file: {}", e);
-            rusqlite::Error::ToSqlConversionFailure(Box::new(e))
-        })?;
-
-        println!("SQL file loaded, parsing and inserting data...");
-
-        // Begin transaction for better performance
-        conn.execute("BEGIN TRANSACTION", [])?;
-
-        // Process the SQL file line by line
-        let mut current_statement = String::new();
-        let mut in_create_table = false;
-        let mut insert_count = 0;
-
-        for line in sql_content.lines() {
-            let trimmed = line.trim();
-
-            // Skip comments and MySQL-specific commands
-            if trimmed.is_empty()
-                || trimmed.starts_with("--")
-                || trimmed.starts_with("#")
-                || trimmed.starts_with("CREATE DATABASE")
-                || trimmed.starts_with("USE ")
-                || trimmed.starts_with("DROP TABLE")
-                || trimmed.starts_with("SET ")
-            {
-                continue;
-            }
-
-            // Skip the CREATE TABLE statement from the SQL file (we already created it)
-            if trimmed.starts_with("CREATE TABLE") {
-                in_create_table = true;
-                continue;
-            }
-
-            if in_create_table {
-                if trimmed.contains(";") {
-                    in_create_table = false;
-                }
-                continue;
-            }
-
-            // Accumulate INSERT statements
-            if trimmed.starts_with("INSERT INTO") || !current_statement.is_empty() {
-                current_statement.push_str(line);
-                current_statement.push('\n');
-
-                // If the statement is complete (ends with semicolon)
-                if trimmed.ends_with(";") {
-                    // Convert MySQL backticks to SQLite (or remove them)
-                    let sqlite_statement = current_statement
-                        .replace("`quran_text`", "quran_text")
-                        .replace("`index`", "id")
-                        .replace("`sura`", "sura")
-                        .replace("`aya`", "aya")
-                        .replace("`text`", "text");
-
-                    // Execute the statement
-                    conn.execute(&sqlite_statement, [])?;
-                    insert_count += 1;
-
-                    if insert_count % 100 == 0 {
-                        println!("Inserted {} statements...", insert_count);
-                    }
-
-                    current_statement.clear();
-                }
-            }
-        }
-
-        // Commit transaction
-        conn.execute("COMMIT", [])?;
-
-        println!("Successfully loaded {} insert statements", insert_count);
-
-        Ok(())
-    }
-
-    fn init_morphology_db(conn: &Connection, morph_path: &PathBuf) -> Result<()> {
-        // Create the morphology table
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS morphology (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                surah INTEGER NOT NULL,
-                ayah INTEGER NOT NULL,
-                word INTEGER NOT NULL,
-                token INTEGER NOT NULL,
-                form_buckwalter TEXT NOT NULL,
-                form_arabic TEXT NOT NULL,
-                tag TEXT NOT NULL,
-                features TEXT NOT NULL
-            )",
-            [],
-        )?;
-
-        // Create indexes for efficient queries
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_morph_surah ON morphology(surah)",
-            [],
-        )?;
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_morph_location ON morphology(surah, ayah, word)",
-            [],
-        )?;
-
-        // Check if table is already populated
-        let count: i64 = conn.query_row("SELECT COUNT(*) FROM morphology", [], |row| row.get(0))?;
-
-        if count > 0 {
-            // Data already exists, skip loading
-            return Ok(());
-        }
-
-        // Load data from morphology file
-        Self::load_morphology_data(conn, morph_path)?;
-
-        Ok(())
-    }
-
-    fn init_recitation_tables(
-        conn: &Connection,
-        recitation_paths: &[(i64, PathBuf)],
-    ) -> Result<()> {
-        conn.execute_batch(
-            "CREATE TABLE IF NOT EXISTS recitations (
-                reciter_id    INTEGER NOT NULL,
-                surah_number  INTEGER NOT NULL,
-                ayah_number   INTEGER NOT NULL,
-                audio_url     TEXT    NOT NULL,
-                duration      INTEGER,
-                segments      TEXT,
-                PRIMARY KEY (reciter_id, surah_number, ayah_number)
-            );",
-        )?;
-
-        let count: i64 =
-            conn.query_row("SELECT COUNT(*) FROM recitations", [], |row| row.get(0))?;
-
-        if count > 0 {
-            // Check if ayah_number was incorrectly imported as global (surah 2 should start at 1)
-            let valid: bool = conn.query_row(
-                "SELECT EXISTS(SELECT 1 FROM recitations WHERE surah_number=2 AND ayah_number=1)",
+        let last_read = conn
+            .query_row(
+                "SELECT surah, ayah, updated_at FROM last_read WHERE id = 1",
                 [],
-                |row| row.get(0),
-            )?;
-            if valid {
-                return Ok(()); // data is correct, skip
-            }
-            // Wrong numbering — wipe and re-import
-            conn.execute("DELETE FROM recitations", [])?;
-            println!("Recitation data had incorrect ayah numbering, clearing for re-import...");
-        }
-
-        for (reciter_id, path) in recitation_paths {
-            if !path.exists() {
-                eprintln!("Recitation DB not found: {:?}", path);
-                continue;
-            }
-            let src = Connection::open(path)?;
-            let mut src_stmt = src.prepare(
-                "SELECT surah_number,
-                        ROW_NUMBER() OVER (PARTITION BY surah_number ORDER BY ayah_number) AS ayah_num,
-                        audio_url, duration, segments
-                 FROM verses
-                 ORDER BY surah_number, ayah_number",
-            )?;
-
-            let tx = conn.unchecked_transaction()?;
-            {
-                let mut ins = conn.prepare(
-                    "INSERT OR IGNORE INTO recitations (reciter_id, surah_number, ayah_number, audio_url, duration, segments)
-                     VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-                )?;
-                let rows = src_stmt.query_map([], |row| {
+                |row| {
                     Ok((
                         row.get::<_, i64>(0)?,
                         row.get::<_, i64>(1)?,
                         row.get::<_, String>(2)?,
-                        row.get::<_, Option<i64>>(3)?,
-                        row.get::<_, Option<String>>(4)?,
                     ))
-                })?;
-                for row in rows {
-                    let (surah, ayah, url, duration, segments) = row?;
-                    ins.execute(rusqlite::params![
-                        reciter_id, surah, ayah, url, duration, segments
-                    ])?;
-                }
-            }
-            tx.commit()?;
-            println!("Imported recitation data for reciter {}", reciter_id);
-        }
+                },
+            )
+            .ok();
 
-        Ok(())
-    }
-
-    fn strip_html_simple(s: &str) -> String {
-        let mut result = String::new();
-        let mut in_tag = false;
-        for c in s.chars() {
-            match c {
-                '<' => in_tag = true,
-                '>' => in_tag = false,
-                _ if !in_tag => result.push(c),
-                _ => {}
-            }
-        }
-        result
-    }
-
-    fn process_translation(
-        text: &str,
-        f_map: &serde_json::Map<String, serde_json::Value>,
-    ) -> (String, Option<String>) {
-        let mut result = String::new();
-        let mut footnotes: BTreeMap<String, String> = BTreeMap::new();
-        let chars: Vec<char> = text.chars().collect();
-        let mut i = 0;
-
-        while i < chars.len() {
-            if chars[i] == '<' {
-                i += 1;
-                let mut tag_content = String::new();
-                while i < chars.len() && chars[i] != '>' {
-                    tag_content.push(chars[i]);
-                    i += 1;
-                }
-                i += 1; // skip '>'
-
-                if tag_content.starts_with("sup foot_note=\"") {
-                    let after_prefix = &tag_content["sup foot_note=\"".len()..];
-                    if let Some(end_quote) = after_prefix.find('"') {
-                        let id = &after_prefix[..end_quote];
-
-                        // Read display number until </sup>
-                        let mut display_num = String::new();
-                        while i < chars.len() {
-                            if chars[i] == '<' {
-                                i += 1;
-                                // skip the closing tag content
-                                while i < chars.len() && chars[i] != '>' {
-                                    i += 1;
-                                }
-                                i += 1; // skip '>'
-                                break;
-                            } else {
-                                display_num.push(chars[i]);
-                                i += 1;
-                            }
-                        }
-
-                        result.push('[');
-                        result.push_str(&display_num);
-                        result.push(']');
-
-                        if let Some(ft) = f_map.get(id) {
-                            let ft_str = ft.as_str().unwrap_or("");
-                            footnotes.insert(display_num, Self::strip_html_simple(ft_str));
-                        }
-                    }
-                }
-                // else: skip other HTML tags
-            } else {
-                result.push(chars[i]);
-                i += 1;
-            }
-        }
-
-        let footnotes_json = if footnotes.is_empty() {
-            None
-        } else {
-            serde_json::to_string(&footnotes).ok()
-        };
-
-        (result, footnotes_json)
-    }
-
-    fn init_translation_tables(
-        conn: &Connection,
-        paths: &[(String, String, PathBuf)],
-    ) -> Result<()> {
-        conn.execute_batch(
-            "CREATE TABLE IF NOT EXISTS translators (
-                id    INTEGER PRIMARY KEY AUTOINCREMENT,
-                lang  TEXT NOT NULL,
-                name  TEXT NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS translations (
-                translator_id  INTEGER NOT NULL,
-                surah          INTEGER NOT NULL,
-                ayah           INTEGER NOT NULL,
-                text           TEXT    NOT NULL,
-                footnotes      TEXT,
-                PRIMARY KEY (translator_id, surah, ayah)
-            );
-            CREATE INDEX IF NOT EXISTS idx_trans_surah ON translations(translator_id, surah);",
-        )?;
-
-        // Fix any stale translator names from earlier imports
-        conn.execute(
-            "UPDATE translators SET name = 'Abdel Haleem' WHERE lang = 'EN' AND name IN ('Haleem', 'Abdul Haleem')",
-            [],
-        )?;
-
-        for (lang, name, path) in paths {
-            // Skip if this translator is already imported
-            let exists: i64 = conn.query_row(
-                "SELECT COUNT(*) FROM translators WHERE lang = ?1 AND name = ?2",
-                rusqlite::params![lang, name],
-                |row| row.get(0),
+        let highlights = {
+            let mut stmt = conn.prepare(
+                "SELECT surah, ayah, text, created_at FROM highlights ORDER BY id",
             )?;
-            if exists > 0 {
-                continue;
-            }
-
-            if !path.exists() {
-                eprintln!("Translation file not found: {:?}", path);
-                continue;
-            }
-
-            conn.execute(
-                "INSERT INTO translators (lang, name) VALUES (?1, ?2)",
-                rusqlite::params![lang, name],
-            )?;
-            let translator_id = conn.last_insert_rowid();
-
-            let content = fs::read_to_string(path)
-                .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
-
-            let json: serde_json::Value = serde_json::from_str(&content)
-                .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
-
-            let obj = match json.as_object() {
-                Some(o) => o,
-                None => continue,
-            };
-
-            let tx = conn.unchecked_transaction()?;
-            {
-                let mut stmt = conn.prepare(
-                    "INSERT INTO translations (translator_id, surah, ayah, text, footnotes) VALUES (?1, ?2, ?3, ?4, ?5)",
-                )?;
-
-                for (key, val) in obj {
-                    let parts: Vec<&str> = key.split(':').collect();
-                    if parts.len() != 2 {
-                        continue;
-                    }
-                    let surah: i64 = parts[0].parse().unwrap_or(0);
-                    let ayah: i64 = parts[1].parse().unwrap_or(0);
-                    if surah == 0 || ayah == 0 {
-                        continue;
-                    }
-
-                    let t = val.get("t").and_then(|v| v.as_str()).unwrap_or("");
-                    let empty_map = serde_json::Map::new();
-                    let f_map = val
-                        .get("f")
-                        .and_then(|v| v.as_object())
-                        .unwrap_or(&empty_map);
-
-                    let (processed_text, footnotes_json) = Self::process_translation(t, f_map);
-
-                    stmt.execute(rusqlite::params![
-                        translator_id,
-                        surah,
-                        ayah,
-                        processed_text,
-                        footnotes_json,
-                    ])?;
-                }
-            }
-            tx.commit()?;
-            println!("Imported translation for {} - {}", lang, name);
-        }
-
-        Ok(())
-    }
-
-    fn init_transliteration_table(conn: &Connection, path: &PathBuf) -> Result<()> {
-        conn.execute_batch(
-            "CREATE TABLE IF NOT EXISTS transliterations (
-                surah  INTEGER NOT NULL,
-                ayah   INTEGER NOT NULL,
-                text   TEXT    NOT NULL,
-                PRIMARY KEY (surah, ayah)
-            );
-            CREATE INDEX IF NOT EXISTS idx_translit_surah ON transliterations(surah);",
-        )?;
-
-        let count: i64 = conn.query_row("SELECT COUNT(*) FROM transliterations", [], |row| {
-            row.get(0)
-        })?;
-
-        if count > 0 {
-            return Ok(());
-        }
-
-        if !path.exists() {
-            eprintln!("Transliteration file not found: {:?}", path);
-            return Ok(());
-        }
-
-        let content = fs::read_to_string(path)
-            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
-
-        let json: serde_json::Value = serde_json::from_str(&content)
-            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
-
-        let obj = match json.as_object() {
-            Some(o) => o,
-            None => return Ok(()),
+            let rows: Vec<_> = stmt.query_map([], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, i64>(1)?,
+                    row.get::<_, String>(2)?,
+                    row.get::<_, String>(3)?,
+                ))
+            })?
+            .filter_map(|r| r.ok())
+            .collect();
+            rows
         };
 
-        let tx = conn.unchecked_transaction()?;
-        {
-            let mut stmt = conn
-                .prepare("INSERT INTO transliterations (surah, ayah, text) VALUES (?1, ?2, ?3)")?;
-
-            for (key, val) in obj {
-                let parts: Vec<&str> = key.split(':').collect();
-                if parts.len() != 2 {
-                    continue;
-                }
-                let surah: i64 = parts[0].parse().unwrap_or(0);
-                let ayah: i64 = parts[1].parse().unwrap_or(0);
-                if surah == 0 || ayah == 0 {
-                    continue;
-                }
-
-                let text = val.get("t").and_then(|v| v.as_str()).unwrap_or("");
-                stmt.execute(rusqlite::params![surah, ayah, text])?;
-            }
-        }
-        tx.commit()?;
-        println!("Imported transliteration data");
-
-        Ok(())
+        Ok(UserData {
+            bookmarks,
+            last_read,
+            highlights,
+        })
     }
 
-    fn init_word_by_word_table(conn: &Connection, path: &PathBuf) -> Result<()> {
-        conn.execute_batch(
-            "CREATE TABLE IF NOT EXISTS word_by_word (
-                surah  INTEGER NOT NULL,
-                ayah   INTEGER NOT NULL,
-                word   INTEGER NOT NULL,
-                text   TEXT    NOT NULL,
-                PRIMARY KEY (surah, ayah, word)
-            );",
-        )?;
-
-        let count: i64 =
-            conn.query_row("SELECT COUNT(*) FROM word_by_word", [], |row| row.get(0))?;
-
-        if count > 0 {
-            return Ok(());
-        }
-
-        if !path.exists() {
-            eprintln!("Word-by-word file not found: {:?}", path);
-            return Ok(());
-        }
-
-        let content = fs::read_to_string(path)
-            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
-
-        let json: serde_json::Value = serde_json::from_str(&content)
-            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
-
-        let obj = match json.as_object() {
-            Some(o) => o,
-            None => return Ok(()),
-        };
-
+    fn restore_user_data(conn: &Connection, data: &UserData) -> Result<()> {
         let tx = conn.unchecked_transaction()?;
         {
             let mut stmt = conn.prepare(
-                "INSERT OR IGNORE INTO word_by_word (surah, ayah, word, text) VALUES (?1, ?2, ?3, ?4)",
+                "INSERT INTO bookmarks (surah, ayah, note, created_at) VALUES (?1, ?2, ?3, ?4)",
             )?;
-
-            for (key, val) in obj {
-                let parts: Vec<&str> = key.split(':').collect();
-                if parts.len() != 3 {
-                    continue;
-                }
-                let surah: i64 = parts[0].parse().unwrap_or(0);
-                let ayah: i64 = parts[1].parse().unwrap_or(0);
-                let word: i64 = parts[2].parse().unwrap_or(0);
-                if surah == 0 || ayah == 0 || word == 0 {
-                    continue;
-                }
-
-                let text = val.as_str().unwrap_or("");
-                stmt.execute(rusqlite::params![surah, ayah, word, text])?;
+            for (surah, ayah, note, created_at) in &data.bookmarks {
+                stmt.execute(rusqlite::params![surah, ayah, note, created_at])?;
             }
         }
-        tx.commit()?;
-        println!("Imported word-by-word translation data");
-
-        Ok(())
-    }
-
-    fn load_morphology_data(conn: &Connection, morph_path: &PathBuf) -> Result<()> {
-        println!("Loading morphology data from corpus file...");
-
-        // Read the morphology file
-        let content = fs::read_to_string(morph_path).map_err(|e| {
-            eprintln!("Failed to read morphology file: {}", e);
-            rusqlite::Error::ToSqlConversionFailure(Box::new(e))
-        })?;
-
-        println!("Morphology file loaded, parsing and inserting data...");
-
-        // Begin transaction for better performance
-        conn.execute("BEGIN TRANSACTION", [])?;
-
-        let mut stmt = conn.prepare(
-            "INSERT INTO morphology (surah, ayah, word, token, form_buckwalter, form_arabic, tag, features)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-        )?;
-
-        let mut insert_count = 0;
-
-        for line in content.lines() {
-            let trimmed = line.trim();
-
-            // Skip comments, header, and empty lines
-            if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with("LOCATION") {
-                continue;
-            }
-
-            let parts: Vec<&str> = trimmed.split('\t').collect();
-            if parts.len() < 4 {
-                continue;
-            }
-
-            // Parse location: (surah:ayah:word:token)
-            let location = parts[0].trim_matches(|c| c == '(' || c == ')');
-            let loc_parts: Vec<&str> = location.split(':').collect();
-            if loc_parts.len() < 4 {
-                continue;
-            }
-
-            let surah: i64 = loc_parts[0].parse().unwrap_or(0);
-            let ayah: i64 = loc_parts[1].parse().unwrap_or(0);
-            let word: i64 = loc_parts[2].parse().unwrap_or(0);
-            let token: i64 = loc_parts[3].parse().unwrap_or(0);
-
-            if surah == 0 || ayah == 0 || word == 0 || token == 0 {
-                continue;
-            }
-
-            let form_bw = parts[1];
-            let form_arabic = buckwalter_to_arabic(form_bw);
-            let tag = parts[2];
-            let features = parts[3];
-
-            stmt.execute(rusqlite::params![
-                surah,
-                ayah,
-                word,
-                token,
-                form_bw,
-                form_arabic,
-                tag,
-                features
-            ])?;
-
-            insert_count += 1;
-
-            if insert_count % 20000 == 0 {
-                println!("Loaded {} morphology records...", insert_count);
-            }
-        }
-
-        // Commit transaction
-        conn.execute("COMMIT", [])?;
-
-        println!("Successfully loaded {} morphology records", insert_count);
-
-        Ok(())
-    }
-
-    fn init_tafsir_tables(conn: &Connection, paths: &[(String, String, PathBuf)]) -> Result<()> {
-        conn.execute_batch(
-            "CREATE TABLE IF NOT EXISTS tafsir_authors (
-                id    INTEGER PRIMARY KEY AUTOINCREMENT,
-                lang  TEXT NOT NULL,
-                name  TEXT NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS tafsirs (
-                author_id  INTEGER NOT NULL,
-                surah      INTEGER NOT NULL,
-                ayah       INTEGER NOT NULL,
-                text       TEXT    NOT NULL,
-                PRIMARY KEY (author_id, surah, ayah)
-            );
-            CREATE INDEX IF NOT EXISTS idx_tafsir_surah ON tafsirs(author_id, surah);",
-        )?;
-
-        for (lang, name, path) in paths {
-            // Skip if this tafsir author is already imported
-            let exists: i64 = conn.query_row(
-                "SELECT COUNT(*) FROM tafsir_authors WHERE lang = ?1 AND name = ?2",
-                rusqlite::params![lang, name],
-                |row| row.get(0),
-            )?;
-            if exists > 0 {
-                continue;
-            }
-
-            if !path.exists() {
-                eprintln!("Tafsir file not found: {:?}", path);
-                continue;
-            }
-
+        if let Some((surah, ayah, updated_at)) = &data.last_read {
             conn.execute(
-                "INSERT INTO tafsir_authors (lang, name) VALUES (?1, ?2)",
-                rusqlite::params![lang, name],
+                "INSERT OR REPLACE INTO last_read (id, surah, ayah, updated_at) VALUES (1, ?1, ?2, ?3)",
+                rusqlite::params![surah, ayah, updated_at],
             )?;
-            let author_id = conn.last_insert_rowid();
-
-            let content = fs::read_to_string(path)
-                .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
-
-            let json: serde_json::Value = serde_json::from_str(&content)
-                .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
-
-            let obj = match json.as_object() {
-                Some(o) => o,
-                None => continue,
-            };
-
-            let tx = conn.unchecked_transaction()?;
-            {
-                let mut stmt = conn.prepare(
-                    "INSERT OR IGNORE INTO tafsirs (author_id, surah, ayah, text) VALUES (?1, ?2, ?3, ?4)",
-                )?;
-
-                for (key, val) in obj {
-                    let text = val.get("text").and_then(|v| v.as_str()).unwrap_or("");
-                    if text.is_empty() {
-                        continue;
-                    }
-
-                    // If ayah_keys present, insert for each referenced ayah
-                    let inserted =
-                        if let Some(ayah_keys) = val.get("ayah_keys").and_then(|v| v.as_array()) {
-                            let mut any = false;
-                            for ak in ayah_keys {
-                                let ak_str = ak.as_str().unwrap_or("");
-                                let parts: Vec<&str> = ak_str.split(':').collect();
-                                if parts.len() != 2 {
-                                    continue;
-                                }
-                                let s: i64 = parts[0].parse().unwrap_or(0);
-                                let a: i64 = parts[1].parse().unwrap_or(0);
-                                if s == 0 || a == 0 {
-                                    continue;
-                                }
-                                stmt.execute(rusqlite::params![author_id, s, a, text])?;
-                                any = true;
-                            }
-                            any
-                        } else {
-                            false
-                        };
-
-                    if !inserted {
-                        // Fall back to primary key
-                        let parts: Vec<&str> = key.split(':').collect();
-                        if parts.len() != 2 {
-                            continue;
-                        }
-                        let s: i64 = parts[0].parse().unwrap_or(0);
-                        let a: i64 = parts[1].parse().unwrap_or(0);
-                        if s == 0 || a == 0 {
-                            continue;
-                        }
-                        stmt.execute(rusqlite::params![author_id, s, a, text])?;
-                    }
-                }
-            }
-            tx.commit()?;
-            println!("Imported tafsir for {} - {}", lang, name);
         }
-
-        Ok(())
+        {
+            let mut stmt = conn.prepare(
+                "INSERT INTO highlights (surah, ayah, text, created_at) VALUES (?1, ?2, ?3, ?4)",
+            )?;
+            for (surah, ayah, text, created_at) in &data.highlights {
+                stmt.execute(rusqlite::params![surah, ayah, text, created_at])?;
+            }
+        }
+        tx.commit()
     }
+}
+
+struct UserData {
+    bookmarks: Vec<(i64, i64, Option<String>, String)>,
+    last_read: Option<(i64, i64, String)>,
+    highlights: Vec<(i64, i64, String, String)>,
 }

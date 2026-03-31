@@ -3,6 +3,7 @@
     import { INSERT_TABLE_COMMAND } from "@lexical/table";
     import { getCommands } from "$lexical/core/commands.js";
     import { tick, onDestroy } from "svelte";
+    import { fly } from "svelte/transition";
     import Icon from "@iconify/svelte";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import DialogPanelHeader from "$lib/components/shared/DialogPanelHeader.svelte";
@@ -118,6 +119,7 @@
 {#if showModal}
     <div
         use:portal
+        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="true"
         aria-label="Insert Table"
