@@ -238,7 +238,7 @@
         ? `left: ${position.x + dragX}px; top: ${position.y + 8 + dragY}px;`
         : `left: ${position.x + dragX}px; bottom: calc(100vh - ${position.y}px + 8px - ${dragY}px);`
     }${isNearBorder || isDragging ? `; cursor: ${isDragging ? 'grabbing' : 'grab'}` : ''}`}
-    transition:fly={{ y: position.placement === "below" ? 6 : -6, duration: 160, opacity: 0 }}
+    transition:fly={{ y: position.placement === "below" ? 8 : -8, duration: 180, opacity: 0 }}
 >
     <!-- Header -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->

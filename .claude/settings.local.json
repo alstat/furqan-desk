@@ -136,7 +136,27 @@
       "Read(//tmp/**)",
       "Bash(python3:*)",
       "Bash(curl -sI \"https://raw.githubusercontent.com/alstat/ayahlab-versions/refs/heads/main/versions.txt\")",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -type d -name ios -o -type d -name android -o -name *.gradle -o -name *.xcodeproj)",
+      "Bash(xcode-select -p)",
+      "Bash(xcrun simctl:*)",
+      "Bash(du -sh /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/static/*)",
+      "Bash(du -sh /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/tafsir/**/*.json /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/translation/**/*.json /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/transliteration/*.json /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/data/word-by-word/*.json)",
+      "Bash(./target/debug/gen-db 2>&1)",
+      "Bash(echo NDK_HOME=$NDK_HOME)",
+      "Read(//Users/al-ahmadgaidasaad/**)",
+      "Bash(test -d \"$NDK_HOME\")",
+      "Bash(echo \"NDK_HOME dir MISSING: $NDK_HOME\")",
+      "Bash(yes)",
+      "Bash(~/Library/Android/sdk/cmdline-tools/bin/sdkmanager --sdk_root=\"$HOME/Library/Android/sdk\" \"ndk;29.0.13846066\")",
+      "Bash(echo \"NDK_HOME exists: $NDK_HOME\")",
+      "Bash(~/Library/Android/sdk/emulator/emulator -list-avds)",
+      "Bash(./gradlew assembleDebug)",
+      "Bash(./gradlew assembleDebug --stacktrace)",
+      "Bash(/usr/libexec/java_home -V 2>&1)",
+      "Bash(./gradlew --stop)",
+      "Bash(git rm:*)",
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -type f -iname *dialog*)"
     ]
   }
 }

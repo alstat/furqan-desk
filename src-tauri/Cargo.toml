@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
+default-run = "AyahLab"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -13,6 +14,10 @@ edition = "2021"
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
 name = "ayahlab_desk_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "gen-db"
+path = "src/bin/gen_db.rs"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -37,3 +42,9 @@ reqwest   = { version = "0.12", default-features = false, features = ["rustls-tl
 flate2    = "1"
 tar       = "0.4"
 tokio     = { version = "1", features = ["process", "io-util", "sync", "rt", "macros", "time", "fs"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+ndk         = "0.9"
+ndk-sys     = "0.6"
+ndk-context = "0.1"
+jni         = { version = "0.21", default-features = false }

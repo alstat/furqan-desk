@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
     import Icon from "@iconify/svelte";
+    import { fly } from "svelte/transition";
     import { openUrl } from "@tauri-apps/plugin-opener";
 
     interface Props {
@@ -144,7 +145,8 @@
 
 {#if open}
     <div
-        class="fixed z-500 flex flex-col rounded-2xl shadow-2xl
+        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
+        class="fixed z-[10000] flex flex-col rounded-2xl shadow-2xl
                bg-white dark:bg-[#303446]
                border border-slate-100 dark:border-[#414559]"
         style="width:{PANEL_W}px; height:{PANEL_H}px; left:{x}px; top:{y}px;"
