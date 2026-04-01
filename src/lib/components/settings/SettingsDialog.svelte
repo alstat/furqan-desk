@@ -1,7 +1,7 @@
 <script lang="ts">
     import Icon from '@iconify/svelte';
     import Dialog from '$lib/components/shared/Dialog.svelte';
-    import { appDarkMode } from '$lib/stores/editor.store';
+    import { appDarkMode, zenMode } from '$lib/stores/editor.store';
     import { restartTour } from '$lib/stores/tour.store';
     import { invoke } from '@tauri-apps/api/core';
     import { manuscriptsEnabled } from '$lib/stores/manuscripts.store';
@@ -114,17 +114,20 @@
             <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] mb-2">
                 {$t('settings.language.desc')}
             </p>
-            <select
-                value={$locale}
-                onchange={(e) => locale.set(e.currentTarget.value as Locale)}
-                class="w-full text-xs rounded-xl border border-brand-sand-200 dark:border-[#414559]
-                       bg-brand-sand-50 dark:bg-[#1e2030] text-brand-charcoal-900 dark:text-[#c6d0f5]
-                       px-3 py-1.5 outline-none cursor-pointer"
-            >
-                {#each Object.entries(LOCALE_NAMES) as [code, name]}
-                    <option value={code}>{name}</option>
-                {/each}
-            </select>
+            <div class="relative">
+                <select
+                    value={$locale}
+                    onchange={(e) => locale.set(e.currentTarget.value as Locale)}
+                    class="w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 transition-all focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100"
+                >
+                    {#each Object.entries(LOCALE_NAMES) as [code, name]}
+                        <option value={code}>{name}</option>
+                    {/each}
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+                    <Icon icon="charm:chevron-down" width="0.75rem" />
+                </span>
+            </div>
         </div>
 
         <!-- Help -->
@@ -175,6 +178,35 @@
                         onclick={() => morphGlassEffect.set(true)}
                         class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
                             ${$morphGlassEffect
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        {$t('common.enabled')}
+                    </button>
+                </div>
+            </div>
+            <!-- Zen Mode -->
+            <div class="flex items-center justify-between mt-3">
+                <div>
+                    <span class={rowLabel}>{$t('settings.zen')}</span>
+                    <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        {$t('settings.zen.desc')}
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <button
+                        onclick={() => zenMode.set(false)}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${!$zenMode
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        {$t('common.disabled')}
+                    </button>
+                    <button
+                        onclick={() => zenMode.set(true)}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${$zenMode
                                 ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                 : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                     >

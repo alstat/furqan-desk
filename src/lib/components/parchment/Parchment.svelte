@@ -26,6 +26,7 @@
     import RecitationDownloadDialog from "./RecitationDownloadDialog.svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { activeTranslatorId } from "$lib/stores/translation.store";
+    import { zenMode, appDarkMode } from "$lib/stores/editor.store";
 
     let scrollContainer = $state<HTMLElement | null>(null);
     let showBookmarks = $state(false);
@@ -206,21 +207,29 @@
 
 <div
     id="tour-parchment"
-    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 h-full flex flex-col items-center rounded-sm bg-white dark:bg-[#303446] sm:w-full md:w-9/12 lg:w-6/12 sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30`}
+    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 h-full flex flex-col items-center rounded-sm bg-white dark:bg-[#303446] sm:w-full md:w-9/12 lg:w-6/12 ${$zenMode ? '' : 'sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30'}`}
 >
-    <ParchmentActionBar
-        onOpenBookmarks={() => (showBookmarks = true)}
-        onOpenHighlights={() => (showHighlights = true)}
-        onSearch={handleSearch}
-        {isSearching}
-    />
+    {#if $zenMode && !$isSidebar}
+        <div
+            class="absolute left-0 top-0 h-full w-px z-10 pointer-events-none"
+            style="background: linear-gradient(to bottom, transparent 0%, {$appDarkMode ? 'rgba(229,200,144,0.25)' : 'rgba(229,200,144,0.55)'} 20%, {$appDarkMode ? 'rgba(229,200,144,0.25)' : 'rgba(229,200,144,0.55)'} 80%, transparent 100%)"
+        ></div>
+    {/if}
+    <div class={$zenMode ? 'opacity-0 hover:opacity-100 transition-opacity duration-300 w-full' : 'w-full'}>
+        <ParchmentActionBar
+            onOpenBookmarks={() => (showBookmarks = true)}
+            onOpenHighlights={() => (showHighlights = true)}
+            onSearch={handleSearch}
+            {isSearching}
+        />
+    </div>
 
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div
         bind:this={scrollContainer}
         role="document"
         onmouseup={handleMouseUp}
-        class={`default-scroll border border-stone-200 dark:border-[#414559] w-full flex-1 min-h-0 overflow-y-auto px-12 pt-10 pb-20 text-right ${$morphFontSize} leading-loose text-slate-600 dark:text-[#c6d0f5] ${$isSidebar ? "rounded-r-md" : "rounded-md"}`}
+        class={`default-scroll w-full flex-1 min-h-0 overflow-y-auto px-12 pt-10 pb-20 text-right ${$morphFontSize} leading-loose text-slate-600 dark:text-[#c6d0f5] ${$isSidebar ? "rounded-r-md" : "rounded-md"} ${$zenMode ? '' : 'border border-stone-200 dark:border-[#414559]'}`}
     >
         <MorphologyView />
     </div>
