@@ -12,7 +12,9 @@
         juliaMode,
         juliaViewerOpen,
         juliaPlots,
+        tocOpen,
     } from "$lib/stores/editor.store";
+    import { activeTab } from "$lib/stores/tabs.store";
     import FeedbackDialog from "./FeedbackDialog.svelte";
     import DonationDialog from "./DonationDialog.svelte";
     import Icon from "@iconify/svelte";
@@ -102,6 +104,18 @@
             <path d="M15 19l-7-7 7-7" />
         </svg>
     </button>
+
+    <!-- Table of Contents button -->
+    {#if $isSidebar && $activeTab?.type === "lexical"}
+        <button
+            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-16 z-3 ${$tocOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""}`}
+            onclick={() => ($tocOpen = !$tocOpen)}
+            aria-label="Table of Contents"
+            title="Table of Contents"
+        >
+            <Icon icon="solar:list-bold-duotone" class="h-4 w-4" />
+        </button>
+    {/if}
 
     <!-- Julia Plot Viewer button -->
     {#if $juliaMode || $juliaViewerOpen}

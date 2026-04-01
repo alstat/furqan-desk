@@ -267,6 +267,35 @@
             {/if}
         </div>
 
+        <!-- Typst Packages -->
+        <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
+            <p class={sectionLabel}>Typst Packages</p>
+            <div class="flex items-center justify-between mb-2">
+                <span class={rowLabel}>ilm
+                    <span class="ml-1 font-mono text-brand-charcoal-300 dark:text-[#838ba7]">v1.4.2</span>
+                </span>
+                <button
+                    onclick={() => openUrl('https://github.com/talal/ilm')}
+                    class={actionBtn}
+                >
+                    <Icon icon="solar:arrow-right-up-bold-duotone" width="0.85rem" />
+                    GitHub
+                </button>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class={rowLabel}>diatypst
+                    <span class="ml-1 font-mono text-brand-charcoal-300 dark:text-[#838ba7]">v0.9.1</span>
+                </span>
+                <button
+                    onclick={() => openUrl('https://github.com/skriptum/Diatypst')}
+                    class={actionBtn}
+                >
+                    <Icon icon="solar:arrow-right-up-bold-duotone" width="0.85rem" />
+                    GitHub
+                </button>
+            </div>
+        </div>
+
         <!-- Website -->
         <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
             <p class={sectionLabel}>Website</p>

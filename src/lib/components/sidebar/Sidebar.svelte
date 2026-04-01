@@ -9,6 +9,7 @@
     import ActionBar from "$lib/components/lexical/components/actionbar/ActionBar.svelte";
     import FileExplorer from "$lib/components/shared/FileExplorer.svelte";
     import GlobalSearch from "$lib/components/shared/GlobalSearch.svelte";
+    import TableOfContents from "$lib/components/editor/TableOfContents.svelte";
     import JuliaPlotViewer from "$lib/components/shared/JuliaPlotViewer.svelte";
     import {
         lexicalEditorInstance,
@@ -205,6 +206,8 @@
         <FileExplorer />
         <!-- Global Search button: just below File Explorer -->
         <GlobalSearch />
+        <!-- Table of Contents panel -->
+        <TableOfContents />
         <!-- Julia Plot Viewer button: same strip, aligned with donation/feedback buttons at the bottom -->
         <JuliaPlotViewer />
         <ActionBar />

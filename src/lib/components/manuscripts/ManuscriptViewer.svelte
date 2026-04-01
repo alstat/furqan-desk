@@ -4,6 +4,7 @@
     import { fly } from "svelte/transition";
     import Icon from "@iconify/svelte";
     import { invoke } from "@tauri-apps/api/core";
+    import { message } from "@tauri-apps/plugin-dialog";
     import { manuscriptAyah } from "$lib/stores/manuscripts.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { lexicalEditorInstance } from "$lib/stores/editor.store";
@@ -537,6 +538,24 @@
         return `data:${mime};base64,${btoa(binary)}`;
     }
 
+    function buildCaptionText(): string {
+        const ms = selectedManuscript;
+        const page = selectedPage;
+        const img = selectedImage;
+        if (!ms) return "";
+
+        const parts: string[] = [ms.title];
+        const folio = `Folio ${page?.folio ?? ""}${page?.side ?? ""}`.trim();
+        if (folio !== "Folio") parts.push(folio);
+        if (ms.archive.name) parts.push(ms.archive.name);
+        if (ms.archive.city) parts.push(ms.archive.city);
+        const date = selectedDetail?.date?.trim() || selectedDetail?.carbon_dating?.trim();
+        if (date) parts.push(date);
+        if (img?.image_source?.trim()) parts.push(img.image_source.trim());
+
+        return parts.join(" · ");
+    }
+
     async function insertToLexical() {
         const editor = get(lexicalEditorInstance);
         if (!editor || !imageSrc) return;
@@ -568,13 +587,18 @@
             const altText = selectedManuscript
                 ? `${selectedManuscript.title} — Folio ${selectedPage?.folio ?? ""}${selectedPage?.side ?? ""}`
                 : "Manuscript image";
+            const captionText = buildCaptionText();
             editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
                 src: dataUrl,
                 altText,
+                captionText,
             });
             insertMsg = "✓ Inserted";
         } catch (e) {
-            insertMsg = `✗ Failed: ${String(e).slice(0, 60)}`;
+            await message(
+                `Could not fetch the manuscript image.\n\n${String(e)}`,
+                { title: "Insert Failed", kind: "error" },
+            );
         } finally {
             inserting = false;
             setTimeout(() => {
