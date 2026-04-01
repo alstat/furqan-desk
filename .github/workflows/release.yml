@@ -55,7 +55,9 @@ jobs:
         run: npm ci
 
       - name: Download quran_static.db
-        run: curl -L -o src-tauri/data/quran_static.db "https://github.com/${{ github.repository }}/releases/download/data/quran_static.db"
+        run: gh release download data --pattern "quran_static.db" --dir src-tauri/data --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and release
         uses: tauri-apps/tauri-action@v0

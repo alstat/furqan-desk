@@ -156,7 +156,8 @@
       "Bash(/usr/libexec/java_home -V 2>&1)",
       "Bash(./gradlew --stop)",
       "Bash(git rm:*)",
-      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -type f -iname *dialog*)"
+      "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -type f -iname *dialog*)",
+      "Bash(ls:*)"
     ]
   }
 }
