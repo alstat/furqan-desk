@@ -464,7 +464,7 @@
                 </button>
             </div>
             {#if tafsirOn}
-                <div class="relative">
+                <div class="relative mb-3">
                     <select
                         id="tafsir-select"
                         bind:value={selectedTafsirId}
