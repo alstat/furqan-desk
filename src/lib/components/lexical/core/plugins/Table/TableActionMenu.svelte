@@ -448,7 +448,27 @@
 
         function applyColor(value: string) {
             editor.update(() => {
-                for (const key of cellKeys) {
+                // Prefer the live selection — handles the case where the user moved
+                // their cursor to a different cell while the picker is still open.
+                const liveKeys: string[] = [];
+                const selection = getSelection();
+                if (isRangeSelection(selection) || isTableSelection(selection)) {
+                    try {
+                        const [cell] = getNodeTriplet(selection.anchor);
+                        if (isTableCellNode(cell)) liveKeys.push(cell.getKey());
+                    } catch { /* anchor not in a table cell */ }
+                    if (isTableSelection(selection)) {
+                        for (const node of selection.getNodes()) {
+                            if (isTableCellNode(node) && !liveKeys.includes(node.getKey())) {
+                                liveKeys.push(node.getKey());
+                            }
+                        }
+                    }
+                }
+                // Fall back to original snapshot if no table cell is currently selected
+                // (e.g. editor lost focus because user is clicking inside the color picker)
+                const keysToApply = liveKeys.length > 0 ? liveKeys : cellKeys;
+                for (const key of keysToApply) {
                     const node = getNodeByKey(key);
                     if (isTableCellNode(node)) node.setBackgroundColor(value);
                 }

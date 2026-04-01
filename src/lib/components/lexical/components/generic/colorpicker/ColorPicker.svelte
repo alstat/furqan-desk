@@ -78,7 +78,7 @@
     };
 </script>
 
-<div class="pt-2.5 ml-1.5 pb-0.5" style="width: {WIDTH}px">
+<div class="pt-2.5 ml-2 mr-1 pb-0.5" style="width: {WIDTH}px">
     <!-- Quick color swatches -->
     <div class="grid grid-cols-8 gap-1.75 mb-3.5">
         {#each basicColors as basicColor}
