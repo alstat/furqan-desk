@@ -104,7 +104,9 @@ impl Database {
                     "DB version mismatch (have {}, need {}), migrating …",
                     current_version, DB_VERSION
                 );
-                let user_data = Self::extract_user_data(&db_path)?;
+                // If the existing DB is corrupted (e.g. from a bad previous install),
+                // fall back to empty user data rather than panicking.
+                let user_data = Self::extract_user_data(&db_path).unwrap_or_default();
                 copy_static_db(&static_db_path, &db_path, "data/quran_static.db")?;
                 let conn = Connection::open(&db_path)?;
                 Self::init_user_data_tables(&conn)?;
@@ -246,6 +248,7 @@ impl Database {
     }
 }
 
+#[derive(Default)]
 struct UserData {
     bookmarks: Vec<(i64, i64, Option<String>, String)>,
     last_read: Option<(i64, i64, String)>,
