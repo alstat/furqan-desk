@@ -15,6 +15,7 @@
     } from "$lib/stores/editor.store";
     import { activeTab } from "$lib/stores/tabs.store";
     import { get } from "svelte/store";
+    import { t } from "$lib/i18n";
 
     let lexicalCanRedo = $state(false);
     let unregister: (() => void) | null = null;
@@ -57,10 +58,10 @@
 <button
     disabled={!canRedo}
     onclick={handleRedo}
-    title={IS_APPLE ? "Redo (⌘⇧Z)" : "Redo (Ctrl+Y)"}
+    title={IS_APPLE ? `${$t('toolbar.redo')} (⌘⇧Z)` : `${$t('toolbar.redo')} (Ctrl+Y)`}
     type="button"
     class={actionBtnStyle}
-    aria-label="Redo"
+    aria-label={$t('toolbar.redo')}
 >
     {#if !canRedo}
         <span class="text-slate-300"

@@ -132,6 +132,24 @@ export const juliaPlots: Writable<JuliaPlot[]> = writable([]);
 export const juliaViewerOpen: Writable<boolean> = writable(false);
 export const tocOpen: Writable<boolean> = writable(false);
 
+// ── Zen Mode ──────────────────────────────────────────────────────────────────
+
+function loadZenMode(): boolean {
+  try {
+    const v = localStorage.getItem('zen-mode');
+    if (v !== null) return v === 'true';
+  } catch { /* ignore */ }
+  return false;
+}
+const _zenMode = writable<boolean>(loadZenMode());
+export const zenMode = {
+  subscribe: _zenMode.subscribe,
+  set(v: boolean) {
+    try { localStorage.setItem('zen-mode', String(v)); } catch { /* ignore */ }
+    _zenMode.set(v);
+  },
+};
+
 /** Shared compile output — written by TypstEditor, read by TypstPreview. */
 export const typstSvgPages: Writable<string[]> = writable([]);
 export const typstCompileError: Writable<string> = writable("");

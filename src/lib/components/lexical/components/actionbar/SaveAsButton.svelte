@@ -12,6 +12,7 @@
         activeTabId,
         markTabSaved,
     } from "$lib/stores/tabs.store";
+    import { t } from "$lib/i18n";
 
     async function saveAs() {
         const tab = get(activeTab);
@@ -67,8 +68,8 @@
 <button
     class={actionBtnStyle}
     onclick={saveAs}
-    title={IS_APPLE ? "Save As (⌘⇧S)" : "Save As (Ctrl+Shift+S)"}
-    aria-label="Save As"
+    title={IS_APPLE ? `${$t('toolbar.save_as')} (⌘⇧S)` : `${$t('toolbar.save_as')} (Ctrl+Shift+S)`}
+    aria-label={$t('toolbar.save_as')}
 >
     <Icon icon="material-symbols:save-as-rounded" width="1rem" />
 </button>

@@ -8,6 +8,7 @@
         typstSvgPages,
         typstCompileError,
         typstIsCompiling,
+        zenMode,
     } from "$lib/stores/editor.store";
     import Icon from "@iconify/svelte";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
@@ -30,15 +31,21 @@
 
 <!-- Outer: matches Parchment's outer wrapper exactly -->
 <div
-    class="relative z-1 flex flex-col items-center bg-white dark:bg-[#303446] rounded-r-md sm:w-full md:w-9/12 lg:w-6/12 sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"
+    class="{$zenMode
+        ? ''
+        : 'sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30'} relative z-1 flex flex-col items-center bg-white dark:bg-[#303446] rounded-r-md sm:w-full md:w-9/12 lg:w-6/12"
 >
     <!-- Inner: matches Parchment's inner scrollable div (border + rounded-r-md) -->
     <div
-        class="default-scroll border border-stone-200 dark:border-[#414559] w-full flex-1 overflow-y-auto rounded-r-md flex flex-col min-h-0"
+        class="{$zenMode
+            ? ''
+            : 'border border-stone-200 dark:border-[#414559]'} default-scroll w-full flex-1 overflow-y-auto rounded-r-md flex flex-col min-h-0"
     >
         <!-- Toolbar inside the border -->
         <div
-            class="flex items-center justify-between px-4 py-1 border-b border-stone-200 dark:border-[#414559] shrink-0"
+            class="{$zenMode
+                ? ''
+                : 'border-b border-stone-200 dark:border-[#414559]'} flex items-center justify-between px-4 py-1 shrink-0"
         >
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
@@ -62,14 +69,21 @@
             </span>
             <button
                 onclick={exportPdf}
-                class={actionBtnStyle + " absolute -top-5 left-11/12"}
+                class={$zenMode
+                    ? actionBtnStyle +
+                      " absolute -top-5 left-11/12 opacity-0 hover:opacity-100 transition-opacity duration-200"
+                    : actionBtnStyle + " absolute -top-5 left-11/12"}
             >
                 <Icon icon="ph:file-pdf-bold" />
             </button>
         </div>
 
         <!-- Pages -->
-        <div class="default-scroll flex-1 overflow-y-auto px-6 pt-4 mb-7">
+        <div
+            class={$zenMode
+                ? "default-scroll flex-1 overflow-y-auto px-6 mb-7"
+                : "default-scroll flex-1 overflow-y-auto px-6 mb-7 pt-4"}
+        >
             {#if $typstCompileError}
                 <pre
                     class="text-xs text-red-500 whitespace-pre-wrap">{$typstCompileError}</pre>

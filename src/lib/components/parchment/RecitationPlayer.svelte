@@ -18,7 +18,7 @@
         recitationDownloadDialogOpen,
     } from "$lib/stores/recitation.store";
 
-    import { t } from '$lib/i18n';
+    import { t } from "$lib/i18n";
 
     let { scrollContainer }: { scrollContainer: HTMLElement | null } = $props();
 
@@ -384,7 +384,7 @@
                 width="1rem"
                 class="shrink-0"
             />
-            {$t('recitation.no_internet')}
+            {$t("recitation.no_internet")}
         </div>
     {/if}
 
@@ -404,7 +404,7 @@
             disabled={inPlaylist
                 ? playlistIdx <= 0
                 : !$currentPlayingAyah || $currentPlayingAyah <= 1}
-            aria-label={$t('recitation.prev')}
+            aria-label={$t("recitation.prev")}
             class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
                    hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
                    hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
@@ -416,7 +416,9 @@
         <!-- Play/Pause — slightly larger, gold accent -->
         <button
             onclick={togglePlay}
-            aria-label={$isPlaying ? $t('recitation.pause') : $t('recitation.play')}
+            aria-label={$isPlaying
+                ? $t("recitation.pause")
+                : $t("recitation.play")}
             class="cursor-pointer p-1.5 rounded-xl
                    text-brand-gold-600 dark:text-[#e5c890]
                    hover:bg-brand-gold-50 dark:hover:bg-[#3b3757]
@@ -437,7 +439,7 @@
                 ? playlistIdx >= playlistLen - 1
                 : $currentPlayingAyah !== null &&
                   $currentPlayingAyah >= $totalAyahsInSurah}
-            aria-label={$t('recitation.next')}
+            aria-label={$t("recitation.next")}
             class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
                    hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
                    hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
@@ -456,9 +458,15 @@
             class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] tabular-nums px-1 min-w-14 text-center"
         >
             {#if inPlaylist}
-                {$t('recitation.counter', { current: String(playlistIdx + 1), total: String(playlistLen) })}
+                {$t("recitation.counter", {
+                    current: String(playlistIdx + 1),
+                    total: String(playlistLen),
+                })}
             {:else}
-                {$t('recitation.counter', { current: String($currentPlayingAyah ?? 1), total: String($totalAyahsInSurah) })}
+                {$t("recitation.counter", {
+                    current: String($currentPlayingAyah ?? 1),
+                    total: String($totalAyahsInSurah),
+                })}
             {/if}
         </span>
 
@@ -472,7 +480,7 @@
             {#if $isDownloading}
                 <div
                     class="p-1.5 text-brand-gold-500 dark:text-[#e5c890]"
-                    title={$t('recitation.downloading')}
+                    title={$t("recitation.downloading")}
                 >
                     <Icon
                         icon="solar:refresh-bold-duotone"
@@ -483,7 +491,7 @@
             {:else}
                 <button
                     onclick={() => recitationDownloadDialogOpen.set(true)}
-                    aria-label={$t('recitation.download')}
+                    aria-label={$t("recitation.download")}
                     class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
                            hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
                            hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]

@@ -7,6 +7,7 @@
 	import { surahOrientation } from '$lib/stores/quran.svelte';
     import { actionBtnStyle } from '$lib/data/toolbar/toolbar';
 	import { t } from '$lib/i18n';
+    import { zenMode } from '$lib/stores/editor.store';
 
 	interface FileTreeNode {
 		name: string;
@@ -158,7 +159,7 @@
 
 <!-- File Explorer button — outside the editor content div on the left (LTR) or right (RTL), same vertical level as CollapsibleSidebar toggle -->
 <button
-	class="cursor-pointer absolute -left-5 top-1/3 z-3 {actionBtnStyle} {isOpen ? 'bg-brand-gold-400 dark:bg-[#363a4f]' : ''}"
+	class="cursor-pointer absolute -left-5 top-1/3 z-3 {actionBtnStyle} {isOpen ? 'bg-brand-gold-400 dark:bg-[#363a4f]' : ''} {$zenMode ? 'opacity-0 hover:opacity-100 transition-opacity duration-200' : ''}"
 	onclick={() => (isOpen = !isOpen)}
 	aria-label="File Explorer"
 	title="File Explorer"

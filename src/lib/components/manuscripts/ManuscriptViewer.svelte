@@ -9,6 +9,7 @@
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { lexicalEditorInstance } from "$lib/stores/editor.store";
     import { INSERT_IMAGE_COMMAND } from "$lib/components/lexical/core/plugins/Image/ImagePlugin.svelte";
+    import { t } from "$lib/i18n";
 
     interface Props {
         open: boolean;
@@ -740,10 +741,10 @@
                     <span
                         class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                     >
-                        Manuscripts — Surah 112 (Al-Ikhlas), Ayah 2
+                        {$t('manuscript.demo_title')}
                         <span
                             class="ml-1 text-[11px] font-normal text-brand-gold-500 border border-brand-gold-300 dark:border-[#e5c890]/40 rounded-full px-1.5 py-0.5"
-                            >demo</span
+                            >{$t('manuscript.demo_badge')}</span
                         >
                     </span>
                 {:else if $manuscriptAyah}
@@ -751,13 +752,13 @@
                         class="text-[11px] font-semibold uppercase tracking-wide
 			             text-brand-charcoal-500 dark:text-[#838ba7] py-2"
                     >
-                        Manuscripts — Surah {$manuscriptAyah.surah}, Ayah {$manuscriptAyah.ayah}
+                        {$t('manuscript.title_ayah', { surah: String($manuscriptAyah.surah), ayah: String($manuscriptAyah.ayah) })}
                     </span>
                 {:else}
                     <span
                         class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                     >
-                        Manuscripts
+                        {$t('manuscript.title')}
                     </span>
                 {/if}
             </div>
@@ -765,7 +766,7 @@
                 <!-- Sidebar toggle -->
                 <button
                     onclick={() => (sidebarOpen = !sidebarOpen)}
-                    title={sidebarOpen ? "Hide list" : "Show list"}
+                    title={sidebarOpen ? $t('manuscript.hide_list') : $t('manuscript.show_list')}
                     class="cursor-pointer p-1 rounded-lg text-brand-charcoal-300 dark:text-[#838ba7]
                        hover:bg-brand-gold-200 dark:hover:bg-[#414559] transition-colors"
                 >
@@ -779,7 +780,7 @@
                 <button
                     onclick={onClose}
                     class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    aria-label="Close manuscripts viewer"
+                    aria-label={$t('manuscript.close')}
                 >
                     <Icon
                         icon="solar:close-circle-bold-duotone"
@@ -807,23 +808,20 @@
                         <div
                             class="px-3 py-4 text-xs text-red-500 dark:text-red-400 text-center leading-relaxed"
                         >
-                            Failed to load manuscripts.<br />Check your
-                            connection.
+                            {$t('manuscript.error').split('\n')[0]}<br />{$t('manuscript.error').split('\n')[1]}
                         </div>
                     {:else if results.length === 0}
                         <div
                             class="px-3 py-4 text-xs text-brand-charcoal-300 dark:text-[#838ba7] text-center"
                         >
-                            No manuscripts found for this ayah.
+                            {$t('manuscript.none')}
                         </div>
                     {:else}
                         <div class="px-3 pb-1.5 pt-0.5">
                             <span
                                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
-                                {results.length} manuscript{results.length !== 1
-                                    ? "s"
-                                    : ""}
+                                {results.length === 1 ? $t('manuscript.count_one') : $t('manuscript.count_many', { n: String(results.length) })}
                             </span>
                         </div>
                         {#each sortedResults as ms}
@@ -947,7 +945,7 @@
                                     width="1.5rem"
                                     class="mx-auto mb-1"
                                 />
-                                Failed to load image
+                                {$t('manuscript.image_error')}
                             </div>
                         {:else if imageSrc}
                             <img
@@ -973,7 +971,7 @@
                                             imgScale * 1.3,
                                         );
                                     }}
-                                    title="Zoom in"
+                                    title={$t('manuscript.zoom_in')}
                                     class="cursor-pointer p-1.5 rounded-full
                                        bg-white/90 dark:bg-[#292c3c]/90 border border-slate-200 dark:border-[#414559]
                                        text-brand-charcoal-400 dark:text-[#8caaee]
@@ -994,7 +992,7 @@
                                         if (imgScale <= MIN_SCALE) resetZoom();
                                     }}
                                     disabled={imgScale <= MIN_SCALE}
-                                    title="Zoom out"
+                                    title={$t('manuscript.zoom_out')}
                                     class="cursor-pointer p-1.5 rounded-full
                                        bg-white/90 dark:bg-[#292c3c]/90 border border-slate-200 dark:border-[#414559]
                                        text-brand-charcoal-400 dark:text-[#8caaee]
@@ -1010,7 +1008,7 @@
                                 {#if imgScale > 1}
                                     <button
                                         onclick={resetZoom}
-                                        title="Reset zoom"
+                                        title={$t('manuscript.zoom_reset')}
                                         class="cursor-pointer p-1.5 rounded-full
                                            bg-white/90 dark:bg-[#292c3c]/90 border border-slate-200 dark:border-[#414559]
                                            text-brand-charcoal-400 dark:text-[#8caaee]
@@ -1027,7 +1025,7 @@
                                     onclick={() => {
                                         zoomed = true;
                                     }}
-                                    title="Fullscreen"
+                                    title={$t('manuscript.fullscreen')}
                                     class="cursor-pointer p-1.5 rounded-full
                                        bg-white/90 dark:bg-[#292c3c]/90 border border-slate-200 dark:border-[#414559]
                                        text-brand-charcoal-400 dark:text-[#8caaee]
@@ -1052,7 +1050,7 @@
                             <div
                                 class="text-xs text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
-                                Loading…
+                                {$t('explorer.loading')}
                             </div>
                         {/if}
                     </div>
@@ -1069,7 +1067,7 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >Date</span
+                                            >{$t('manuscript.meta_date')}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1081,7 +1079,7 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >Radiocarbon</span
+                                            >{$t('manuscript.meta_radiocarbon')}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1093,7 +1091,7 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >Material</span
+                                            >{$t('manuscript.meta_material')}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1105,7 +1103,7 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >Script</span
+                                            >{$t('manuscript.meta_script')}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1119,7 +1117,7 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >Size</span
+                                            >{$t('manuscript.meta_size')}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1131,7 +1129,7 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >Folios</span
+                                            >{$t('manuscript.meta_folios')}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1143,7 +1141,7 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >Call no.</span
+                                            >{$t('manuscript.meta_callno')}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1155,7 +1153,7 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >Lines/page</span
+                                            >{$t('manuscript.meta_lines')}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1173,7 +1171,7 @@
                                     <summary
                                         class="text-[11px] font-semibold cursor-pointer text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-500 dark:hover:text-[#c6d0f5] select-none"
                                     >
-                                        Catalogue entry ▸
+                                        {$t('manuscript.catalogue')}
                                     </summary>
                                     <div
                                         class="mt-1 text-[10.5px] text-brand-charcoal-300 dark:text-[#a5adce] leading-relaxed
@@ -1232,13 +1230,13 @@
                                     <span
                                         class="w-3 h-3 rounded-full border border-brand-charcoal-400 border-t-transparent animate-spin"
                                     ></span>
-                                    Downloading…
+                                    {$t('manuscript.downloading')}
                                 {:else}
                                     <Icon
                                         icon="solar:download-bold-duotone"
                                         width="0.75rem"
                                     />
-                                    Download full
+                                    {$t('manuscript.download')}
                                 {/if}
                             </button>
                             <button
@@ -1247,8 +1245,8 @@
                                     !imageSrc ||
                                     !$lexicalEditorInstance}
                                 title={!$lexicalEditorInstance
-                                    ? "Open a Lexical document tab first"
-                                    : "Insert image into editor"}
+                                    ? $t('manuscript.no_editor')
+                                    : $t('manuscript.insert_tooltip')}
                                 class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full border border-transparent
                                bg-brand-gold-400 hover:bg-brand-gold-600 active:bg-brand-gold-600/90
                                text-gray-100 dark:text-gray-700 hover:dark:text-gray-100
@@ -1258,7 +1256,7 @@
                                     <span
                                         class="w-3 h-3 rounded-full border border-gray-100 border-t-transparent animate-spin"
                                     ></span>
-                                    Inserting…
+                                    {$t('manuscript.inserting')}
                                 {:else if insertMsg}
                                     {insertMsg}
                                 {:else}
@@ -1266,7 +1264,7 @@
                                         icon="solar:gallery-add-bold"
                                         width="0.75rem"
                                     />
-                                    Insert to Lexical
+                                    {$t('manuscript.insert')}
                                 {/if}
                             </button>
                         </div>
@@ -1281,7 +1279,7 @@
                     <div
                         class="flex-1 flex items-center justify-center text-xs text-brand-charcoal-300 dark:text-[#838ba7]"
                     >
-                        Select a manuscript to view
+                        {$t('manuscript.select')}
                     </div>
                 {/if}
             </div>

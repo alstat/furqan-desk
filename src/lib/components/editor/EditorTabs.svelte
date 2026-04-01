@@ -17,6 +17,7 @@
     import type { JuliaGroup } from "$lib/stores/julia-terminal.store";
     import Icon from "@iconify/svelte";
     import { confirm } from "@tauri-apps/plugin-dialog";
+    import { zenMode } from "$lib/stores/editor.store";
 
     const GROUP_COLORS = [
         {
@@ -300,7 +301,7 @@
 />
 
 <div
-    class="tabs-scroll select-none flex flex-row absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] rounded-full border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30 {pointerDragging ? 'cursor-grabbing' : ''}"
+    class="{$zenMode ? 'opacity-0 hover:opacity-100 transition-opacity duration-200' : ''} tabs-scroll select-none flex flex-row absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] rounded-full border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30 {pointerDragging ? 'cursor-grabbing' : ''}"
     role="tablist"
     aria-label="Editor tabs"
 >

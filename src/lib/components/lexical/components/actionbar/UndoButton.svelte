@@ -15,6 +15,7 @@
     } from "$lib/stores/editor.store";
     import { activeTab } from "$lib/stores/tabs.store";
     import { get } from "svelte/store";
+    import { t } from "$lib/i18n";
 
     let lexicalCanUndo = $state(false);
     let unregister: (() => void) | null = null;
@@ -57,10 +58,10 @@
 <button
     disabled={!canUndo}
     onclick={handleUndo}
-    title={IS_APPLE ? "Undo (⌘Z)" : "Undo (Ctrl+Z)"}
+    title={IS_APPLE ? `${$t('toolbar.undo')} (⌘Z)` : `${$t('toolbar.undo')} (Ctrl+Z)`}
     type="button"
     class={actionBtnStyle}
-    aria-label="Undo"
+    aria-label={$t('toolbar.undo')}
 >
     {#if !canUndo}
         <span class="text-slate-300"
