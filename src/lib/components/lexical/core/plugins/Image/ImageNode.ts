@@ -25,6 +25,7 @@ import {Suspense} from 'react';*/
 export interface ImagePayload {
     altText: string;
     caption?: LexicalEditor;
+    captionText?: string;
     height?: number;
     key?: NodeKey;
     maxWidth?: number;

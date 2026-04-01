@@ -17,6 +17,7 @@
 	import {
 		$createParagraphNode as createParagraphNode,
 		$createRangeSelection as createRangeSelection,
+		$createTextNode as createTextNode,
 		$getSelection as getSelection,
 		$insertNodes as insertNodes,
 		$isNodeSelection as isNodeSelection,
@@ -75,6 +76,13 @@
 					insertNodes([imageNode]);
 					if (isRootOrShadowRoot(imageNode.getParentOrThrow())) {
 						wrapNodeInElement(imageNode, createParagraphNode).selectEnd();
+					}
+
+					if (payload.captionText) {
+						const metaParagraph = createParagraphNode();
+						metaParagraph.append(createTextNode(payload.captionText));
+						imageNode.getParentOrThrow().insertAfter(metaParagraph);
+						metaParagraph.selectEnd();
 					}
 
 					return true;

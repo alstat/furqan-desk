@@ -200,7 +200,7 @@
     );
 
     const primaryBtn =
-        "cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 dark:bg-[#1a1d2e] text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 dark:text-[#c8a96a] border border-transparent dark:border-[#3e4568] hover:bg-brand-gold-500 dark:hover:bg-[#252840] transition-colors";
+        "cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 hover:bg-brand-gold-500 active:bg-brand-gold-600 text-gray-100 dark:text-gray-800 border border-transparent transition-colors";
     const secondaryBtn =
         "cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border border-slate-200 dark:border-[#414559] hover:bg-slate-100 dark:hover:bg-[#414559] text-slate-600 dark:text-[#c6d0f5] transition-colors";
 </script>

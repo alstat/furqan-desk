@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { fly } from "svelte/transition";
     import { getCommands } from "$lexical/core/commands.js";
     import { getEditor } from "$lexical/core/composerContext.js";
     import ColorPicker from "./ColorPicker.svelte";
@@ -158,6 +159,7 @@
         onkeydown={(e) => {
             if (e.key === "Escape") close();
         }}
+        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
     >
         <!-- Header -->
         <DialogPanelHeader

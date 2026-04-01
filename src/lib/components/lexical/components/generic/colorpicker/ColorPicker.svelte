@@ -31,7 +31,10 @@
 
     let saturationPosition = $derived({
         x: Math.max(0, Math.min(WIDTH, (selfColor.hsv.s / 100) * WIDTH)),
-        y: Math.max(0, Math.min(HEIGHT, ((100 - selfColor.hsv.v) / 100) * HEIGHT)),
+        y: Math.max(
+            0,
+            Math.min(HEIGHT, ((100 - selfColor.hsv.v) / 100) * HEIGHT),
+        ),
     });
 
     let huePosition = $derived({
@@ -75,9 +78,9 @@
     };
 </script>
 
-<div class="pt-2.5 pb-0.5" style="width: {WIDTH}px">
+<div class="pt-2.5 ml-1.5 pb-0.5" style="width: {WIDTH}px">
     <!-- Quick color swatches -->
-    <div class="pl-3 grid grid-cols-8 gap-1.75 mb-3.5">
+    <div class="grid grid-cols-8 gap-1.75 mb-3.5">
         {#each basicColors as basicColor}
             <!-- svelte-ignore a11y_consider_explicit_label -->
             <button
@@ -119,7 +122,7 @@
     </MoveWrapper>
 
     <!-- Preview + hex row -->
-    <div class="pl-3 flex justify-between items-center gap-2.5 mt-2.5">
+    <div class="flex justify-between items-center gap-2.5 mt-2.5">
         <div
             class="border border-brand-sand-200 rounded-full shrink-0 size-7"
             style="background-color: {selfColor.hex}"
