@@ -108,7 +108,7 @@
         <nav class="flex-1 overflow-y-auto flex flex-col py-2 px-1.5 gap-px">
             {#if headings.length === 0}
                 <p
-                    class="text-[10px] text-brand-charcoal-300 dark:text-[#626880]
+                    class="text-[11px] text-brand-charcoal-300 dark:text-[#626880]
 					       italic text-center px-2 py-4 select-none leading-relaxed"
                 >
                     Add Heading 1–3 blocks<br />to see contents here
@@ -118,7 +118,7 @@
                     {@const isActive = activeKey === key}
                     <button
                         onclick={() => scrollToHeading(key)}
-                        class="group text-left w-full rounded cursor-pointer transition-all duration-150
+                        class="group text-left w-full rounded-full cursor-pointer transition-all duration-150
 						       border-l-2 py-1 pr-2
 						       {isActive
                             ? 'bg-brand-gold-50 dark:bg-brand-gold-100/20 border-brand-gold-400 dark:border-brand-gold-400'
@@ -136,7 +136,7 @@
                                     >◆</span
                                 >
                                 <span
-                                    class="text-[11px] font-semibold truncate transition-colors
+                                    class="text-[13px] font-semibold truncate transition-colors
 									       {isActive
                                         ? 'text-brand-gold-600 dark:text-brand-gold-400'
                                         : 'text-brand-charcoal-900 dark:text-[#c6d0f5] group-hover:text-brand-gold-600 dark:group-hover:text-brand-gold-400'}"
@@ -146,14 +146,14 @@
                         {:else if tag === "h2"}
                             <span class="flex items-center gap-1.5 min-w-0">
                                 <span
-                                    class="shrink-0 text-[9px] font-light leading-none
+                                    class="shrink-0 text-[12px] font-light leading-none
 									       {isActive
                                         ? 'text-brand-gold-400 dark:text-brand-gold-500'
                                         : 'text-brand-charcoal-300 dark:text-[#626880] group-hover:text-brand-gold-400 dark:group-hover:text-brand-gold-500'}"
                                     >›</span
                                 >
                                 <span
-                                    class="text-[10px] font-medium truncate transition-colors
+                                    class="text-[12px] font-medium truncate transition-colors
 									       {isActive
                                         ? 'text-brand-charcoal-900 dark:text-[#c6d0f5]'
                                         : 'text-brand-charcoal-500 dark:text-[#b5bfe2] group-hover:text-brand-charcoal-900 dark:group-hover:text-[#c6d0f5]'}"
@@ -163,14 +163,14 @@
                         {:else}
                             <span class="flex items-center gap-1.5 min-w-0">
                                 <span
-                                    class="shrink-0 text-[10px] leading-none
+                                    class="shrink-0 text-[11px] leading-none
 									       {isActive
                                         ? 'text-brand-charcoal-300 dark:text-[#838ba7]'
                                         : 'text-brand-charcoal-300 dark:text-[#626880] group-hover:text-brand-charcoal-300 dark:group-hover:text-[#838ba7]'}"
                                     >·</span
                                 >
                                 <span
-                                    class="text-[9px] font-normal truncate transition-colors
+                                    class="text-[11px] font-normal truncate transition-colors
 									       {isActive
                                         ? 'text-brand-charcoal-500 dark:text-[#b5bfe2]'
                                         : 'text-brand-charcoal-300 dark:text-[#838ba7] group-hover:text-brand-charcoal-500 dark:group-hover:text-[#b5bfe2]'}"
