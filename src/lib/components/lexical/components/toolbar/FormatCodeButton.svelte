@@ -11,6 +11,7 @@
     import InsertCodeDialog from "./dialogs/InsertCodeDialog.svelte";
     import DropDown from "../generic/dropdown/DropDown.svelte";
     import DropDownItem from "../generic/dropdown/DropDownItem.svelte";
+    import { t } from "$lib/i18n";
 
     const isEditable = getIsEditable();
     const activeEditor = getActiveEditor();
@@ -31,19 +32,19 @@
     disabled={!$isEditable}
     buttonIconClassName="code"
     buttonClassName={$isCode ? activeBtnStyle : ""}
-    buttonAriaLabel="Insert code"
-    title="Insert code"
+    buttonAriaLabel={$t('toolbar.insert_code')}
+    title={$t('toolbar.insert_code')}
 >
     <DropDownItem onclick={openInline} class="item">
         <div class="flex flex-row items-center gap-2 w-28">
             <Icon icon="solar:code-bold-duotone" width="0.9rem" />
-            <div>Inline</div>
+            <div>{$t('insert.code_inline')}</div>
         </div>
     </DropDownItem>
     <DropDownItem onclick={openBlock} class="item">
         <div class="flex flex-row items-center gap-2 w-28">
             <Icon icon="solar:code-square-bold-duotone" width="0.9rem" />
-            <div>Block</div>
+            <div>{$t('insert.code_block')}</div>
         </div>
     </DropDownItem>
 </DropDown>

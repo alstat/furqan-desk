@@ -19,6 +19,7 @@
     import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir, multiSurahTafsirMap, availableTafsirAuthors } from '$lib/stores/translation.store';
     import type { AyahTranslation, AyahTafsir } from '$lib/stores/translation.store';
     import { manuscriptsEnabled, manuscriptAyah, manuscriptViewerOpen } from '$lib/stores/manuscripts.store';
+    import { t } from '$lib/i18n';
 
     $effect(() => {
         const tid = $activeTranslatorId;
@@ -544,7 +545,7 @@
                                         class="cursor-pointer flex items-center gap-1.5 text-[10.5px] font-semibold text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890] transition-colors mb-1"
                                     >
                                         <Icon icon={expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`) ? 'solar:alt-arrow-up-bold' : 'solar:alt-arrow-down-bold'} width="0.65rem" />
-                                        {expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`) ? 'Hide Tafsir' : 'Show Tafsir'}
+                                        {expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`) ? $t('tafsir.hide') : $t('tafsir.show')}
                                     </button>
                                     {#if expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`)}
                                         <div class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]" style:direction={tafsirDir} style:text-align={tafsirDir === 'ltr' ? 'left' : 'right'}>
@@ -669,7 +670,7 @@
                                     class="cursor-pointer flex items-center gap-1.5 text-[10.5px] font-semibold text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890] transition-colors mb-1"
                                 >
                                     <Icon icon={expandedTafsirAyahs.has(ayahData.ayah) ? 'solar:alt-arrow-up-bold' : 'solar:alt-arrow-down-bold'} width="0.65rem" />
-                                    {expandedTafsirAyahs.has(ayahData.ayah) ? 'Hide Tafsir' : 'Show Tafsir'}
+                                    {expandedTafsirAyahs.has(ayahData.ayah) ? $t('tafsir.hide') : $t('tafsir.show')}
                                 </button>
                                 {#if expandedTafsirAyahs.has(ayahData.ayah)}
                                     <div class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]" style:direction={tafsirDir} style:text-align={tafsirDir === 'ltr' ? 'left' : 'right'}>

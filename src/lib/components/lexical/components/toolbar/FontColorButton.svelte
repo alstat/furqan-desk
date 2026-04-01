@@ -6,6 +6,7 @@
     import { $getSelection as getSelection } from "lexical";
     import type { Writable } from "svelte/store";
     import { toolBarBtnStyle } from "$lib/data/toolbar/toolbar";
+    import { t } from "$lib/i18n";
 
     const fontColor = getContext<Writable<string>>("fontColor");
     const activeEditor = getActiveEditor();
@@ -29,10 +30,10 @@
 <button
     type="button"
     class={"p-1 " + toolBarBtnStyle}
-    title="Font color"
+    title={$t('toolbar.font_color')}
     bind:this={buttonEl}
     onclick={() => colorPickerDialog.open(onFontColorSelect, buttonEl)}
-    aria-label="Font color"
+    aria-label={$t('toolbar.font_color')}
 >
     <div class="flex flex-col items-center leading-none" style="width:1rem;">
         <span
@@ -47,7 +48,7 @@
 </button>
 
 <ColorPickerDialog
-    title="Font color"
+    title={$t('toolbar.font_color')}
     color={$fontColor}
     bind:this={colorPickerDialog}
 />

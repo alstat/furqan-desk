@@ -10,6 +10,7 @@
     import { highlights, pendingJumpAyah } from "$lib/stores/bookmarks.store";
     import { surahLabels, selectedSurahIdx } from "$lib/stores/quran.svelte";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import { t, locale } from '$lib/i18n';
 
     interface Props {
         open: boolean;
@@ -96,7 +97,7 @@
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="true"
-        aria-label="Highlights"
+        aria-label={$t('highlight.title')}
         class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{PANEL_W}px; max-height:85vh; z-index:{zIndex};"
         onpointerdown={() => {
@@ -126,16 +127,16 @@
                         <h2
                             class="text-sm font-semibold text-brand-charcoal-900"
                         >
-                            Highlights
+                            {$t('highlight.title')}
                         </h2>
                         <p class="text-[11px] text-brand-charcoal-300">
-                            {$highlights.length} saved
+                            {$t('highlight.n_saved', { n: $highlights.length })}
                         </p>
                     </div>
                 </div>
                 <button
                     onclick={onClose}
-                    aria-label="Close"
+                    aria-label={$t('common.close')}
                     class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                 >
                     <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
@@ -160,11 +161,10 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-brand-charcoal-500">
-                            No highlights yet
+                            {$t('highlight.empty_title')}
                         </p>
                         <p class="mt-1 text-[11px] text-brand-charcoal-300">
-                            Select text in the parchment and tap<br />"Save
-                            Highlight" to capture it here.
+                            {$t('highlight.empty_desc')}
                         </p>
                     </div>
                 </div>
@@ -197,7 +197,7 @@
                                     </span>
                                     <span
                                         class="text-[11px] text-brand-charcoal-300 truncate"
-                                        >{formatDate(hl.created_at)}</span
+                                        >{formatDate(hl.created_at, $locale)}</span
                                     >
                                 </div>
                                 <div class="flex shrink-0 items-center gap-1">
@@ -210,12 +210,12 @@
                                             icon="solar:arrow-right-up-linear"
                                             width="0.7rem"
                                         />
-                                        Go
+                                        {$t('bookmark.go')}
                                     </button>
                                     <button
                                         onclick={() => deleteHighlight(hl.id)}
                                         class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg text-brand-charcoal-300 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-400 active:bg-red-100 dark:active:bg-red-900/50 transition-colors"
-                                        title="Delete"
+                                        title={$t('bookmark.delete')}
                                     >
                                         <Icon
                                             icon="solar:trash-bin-minimalistic-bold"

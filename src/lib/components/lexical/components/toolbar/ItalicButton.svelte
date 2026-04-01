@@ -6,6 +6,7 @@
   import {getContext} from 'svelte';
   import type {Writable} from 'svelte/store';
   import {IS_APPLE} from '@lexical/utils';
+  import { t } from '$lib/i18n';
 
   const activeEditor = getActiveEditor();
   const isEditable = getIsEditable();
@@ -19,10 +20,8 @@
     $activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
   }}
   class={'p-1 ' + toolBarBtnStyle + ($isItalic ? 'active ' + activeBtnStyle : '')}
-  title={IS_APPLE ? 'Italic (⌘I)' : 'Italic (Ctrl+I)'}
+  title={IS_APPLE ? `${$t('toolbar.italic')} (⌘I)` : `${$t('toolbar.italic')} (Ctrl+I)`}
   type="button"
-  aria-label={`Format text as italics. Shortcut: ${
-    IS_APPLE ? '⌘I' : 'Ctrl+I'
-  }`}>
+  aria-label={`${$t('toolbar.italic')}. Shortcut: ${IS_APPLE ? '⌘I' : 'Ctrl+I'}`}>
   <Icon icon={icons['italic']} width=1rem />
 </button>

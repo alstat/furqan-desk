@@ -6,6 +6,7 @@
   import type {Writable} from 'svelte/store';
   import {getActiveEditor, getIsEditable} from '$lexical/core/composerContext.js';
   import {IS_APPLE} from '@lexical/utils';
+  import { t } from '$lib/i18n';
 
   const activeEditor = getActiveEditor();
   const isEditable = getIsEditable();
@@ -19,10 +20,8 @@
     $activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
   }}
   class={'p-1 ' + toolBarBtnStyle + ($isUnderline ? 'active ' + activeBtnStyle : '')}
-  title={IS_APPLE ? 'Underline (⌘U)' : 'Underline (Ctrl+U)'}
+  title={IS_APPLE ? `${$t('toolbar.underline')} (⌘U)` : `${$t('toolbar.underline')} (Ctrl+U)`}
   type="button"
-  aria-label={`Format text to underlined. Shortcut: ${
-    IS_APPLE ? '⌘U' : 'Ctrl+U'
-  }`}>
+  aria-label={`${$t('toolbar.underline')}. Shortcut: ${IS_APPLE ? '⌘U' : 'Ctrl+U'}`}>
   <Icon icon={icons['underline']} width=1rem />
 </button>

@@ -5,6 +5,7 @@
   import {getContext} from 'svelte';
   import type {Writable} from 'svelte/store';
   import {getActiveEditor, getIsEditable} from '$lexical/core/composerContext.js';
+  import { t } from '$lib/i18n';
 
   const activeEditor = getActiveEditor();
   const isEditable = getIsEditable();
@@ -18,8 +19,8 @@
     $activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
   }}
   class={'p-1 ' + toolBarBtnStyle + ($isStrikethrough ? 'active ' + activeBtnStyle : '')}
-  title="Strikethrough"
+  title={$t('toolbar.strikethrough')}
   type="button"
-  aria-label="Format text with a strikethrough">
-  <Icon icon={icons['strikethrough']} width=1rem />  
+  aria-label={$t('toolbar.strikethrough')}>
+  <Icon icon={icons['strikethrough']} width=1rem />
 </button>

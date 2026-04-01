@@ -4,6 +4,7 @@
   import type {Writable} from 'svelte/store';
   import DropDown from '../../generic/dropdown/DropDown.svelte';
   import {blockTypeToBlockName} from './blockTypeToBlockName.js';
+  import { t } from '$lib/i18n';
   interface Props {
     children?: import('svelte').Snippet;
   }
@@ -19,7 +20,7 @@
   disabled={!$isEditable}
   buttonClassName="w-22 "
   buttonIconClassName={'w-22 ' + $blockType}
-  buttonLabel={blockTypeToBlockName[$blockType]}
+  buttonLabel={$t('block.' + $blockType)}
   buttonAriaLabel="Formatting options for text style">
   {@render children?.()}
 </DropDown>
