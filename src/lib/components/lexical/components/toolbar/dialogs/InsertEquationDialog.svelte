@@ -5,6 +5,7 @@
         getActiveEditor,
     } from "$lexical/core/composerContext.js";
     import { tick, onDestroy } from "svelte";
+    import { fly } from "svelte/transition";
     import { INSERT_EQUATION_COMMAND } from "$lexical/core/plugins/Equation/EquationPlugin.svelte";
     import Icon from "@iconify/svelte";
     import katex from "katex";
@@ -131,6 +132,7 @@
 {#if showModal}
     <div
         use:portal
+        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="true"
         aria-label="Insert Equation"

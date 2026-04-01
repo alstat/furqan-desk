@@ -2,6 +2,8 @@
     import { ListItemNode, ListNode } from "@lexical/list";
     import { HeadingNode, QuoteNode } from "@lexical/rich-text";
     import type { EditorThemeClasses, LexicalEditor } from "lexical";
+    import { ParagraphNode } from "lexical";
+    import { ExtendedParagraphNode } from "$lexical/core/ExtendedParagraphNode.js";
 
     import Composer from "$lexical/core/Composer.svelte";
     import ContentEditable from "$lexical/core/ContentEditable.svelte";
@@ -38,6 +40,7 @@
             ListItemNode,
             HorizontalRuleNode,
             ImageNode,
+            { replace: ParagraphNode, with: () => new ExtendedParagraphNode(), withKlass: ExtendedParagraphNode },
         ],
         onError: (error: Error) => {
             throw error;

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { $patchStyleText as patchStyleText } from "@lexical/selection";
+    import { $patchListItemFontSize as patchListItemFontSize } from "./patchListItemFontSize";
     import {
         $getSelection as getSelection,
         $isRangeSelection as isRangeSelection,
@@ -36,6 +37,7 @@
                 patchStyleText(selection, {
                     [style]: option,
                 });
+                patchListItemFontSize(selection);
             }
         });
     };
