@@ -64,6 +64,7 @@
     let font: string = $state("font-scheherazade");
     let textSize: string = $state("text-xl");
     let hideSurah: boolean = $state(false);
+    let fontOptionsOn: boolean = $state(false);
     let selectedTranslatorId: string = $state("");
     let translitEnabled: boolean = $state(false);
     let wbwEnabled: boolean = $state(false);
@@ -293,49 +294,66 @@
 {/snippet}
 
 {#snippet fontBody()}
-    <div class="flex flex-col gap-3.5 px-4 py-3">
-        <div>
-            <label for="surah-font-family" class={labelClass}>Font Family</label
-            >
-            <div class="relative">
-                <select
-                    id="surah-font-family"
-                    bind:value={font}
-                    class={selectClass}
-                >
-                    <option value="font-scheherazade">Scheherazade New</option>
-                    <option value="font-amiri">Amiri Qur'an</option>
-                    <option value="font-garamond">EB Garamond</option>
-                </select>
-                <span
-                    class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300"
-                >
-                    <Icon icon="charm:chevron-down" width="0.75rem" />
-                </span>
+    <div class="flex flex-col px-4 py-3">
+        <!-- Font Options collapsible -->
+        <button
+            onclick={() => { fontOptionsOn = !fontOptionsOn; }}
+            class="cursor-pointer flex items-center justify-between w-full mb-1.5"
+            aria-expanded={fontOptionsOn}
+        >
+            <span class={labelClass + " mb-0"}>Font Options</span>
+            <Icon
+                icon="charm:chevron-down"
+                width="0.75rem"
+                class="text-brand-charcoal-300 mb-1.5 transition-transform duration-200 {fontOptionsOn ? 'rotate-180' : ''}"
+            />
+        </button>
+        {#if fontOptionsOn}
+            <div class="flex flex-col gap-3.5 mb-3.5">
+                <div>
+                    <label for="surah-font-family" class={labelClass}>Font Family</label>
+                    <div class="relative">
+                        <select
+                            id="surah-font-family"
+                            bind:value={font}
+                            class={selectClass}
+                        >
+                            <option value="font-scheherazade">Scheherazade New</option>
+                            <option value="font-amiri">Amiri Qur'an</option>
+                            <option value="font-garamond">EB Garamond</option>
+                        </select>
+                        <span
+                            class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300"
+                        >
+                            <Icon icon="charm:chevron-down" width="0.75rem" />
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <label for="surah-font-size" class={labelClass}>Font Size</label>
+                    <div class="relative">
+                        <select
+                            id="surah-font-size"
+                            bind:value={textSize}
+                            class={selectClass}
+                        >
+                            <option value="text-base">Small</option>
+                            <option value="text-xl">Medium</option>
+                            <option value="text-2xl">Large</option>
+                            <option value="text-3xl">Extra Large</option>
+                        </select>
+                        <span
+                            class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300"
+                        >
+                            <Icon icon="charm:chevron-down" width="0.75rem" />
+                        </span>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div>
-            <label for="surah-font-size" class={labelClass}>Font Size</label>
-            <div class="relative">
-                <select
-                    id="surah-font-size"
-                    bind:value={textSize}
-                    class={selectClass}
-                >
-                    <option value="text-base">Small</option>
-                    <option value="text-xl">Medium</option>
-                    <option value="text-2xl">Large</option>
-                    <option value="text-3xl">Extra Large</option>
-                </select>
-                <span
-                    class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300"
-                >
-                    <Icon icon="charm:chevron-down" width="0.75rem" />
-                </span>
-            </div>
-        </div>
-        <div class="flex items-center justify-between">
-            <span class={labelClass}>Hide Surah Page</span>
+        {/if}
+        <!-- Hide Surah Page -->
+        <div class="flex items-center justify-between border-t border-brand-sand-100 dark:border-[#414559] pt-3">
+            <span class={labelClass + " mb-0"}>Hide Surah Page</span>
             <button
                 role="switch"
                 aria-checked={hideSurah}
@@ -359,7 +377,7 @@
 {/snippet}
 
 {#snippet translationBody()}
-    <div class="flex flex-col gap-3.5 px-4 py-3">
+    <div class="flex flex-col gap-3.5 px-4 pt-3 pb-1.5">
         <div>
             <label for="translator-select" class={labelClass}>Translator</label>
             <div class="relative">
