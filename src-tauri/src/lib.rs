@@ -26,84 +26,8 @@ pub fn run() {
             std::fs::create_dir_all(app_data_dir.join("manuscript-images"))
                 .expect("Failed to create manuscript-images directory");
 
-            let db_path   = app_data_dir.join("quran.db");
-            let sql_path  = resource_dir.join("data/quran-uthmani.sql");
-            let morph_path = resource_dir.join("data/quranic-corpus-morphology-0.4 2.txt");
-            let recitation_paths = vec![
-                (953i64, resource_dir.join("data/recitation/ayah-recitation-mishari-rashid-al-afasy-murattal-hafs-953.db")),
-                (954i64, resource_dir.join("data/recitation/ayah-recitation-saad-al-ghamdi-murattal-hafs-954.db")),
-            ];
-
-            let translation_paths: Vec<(String, String, std::path::PathBuf)> = vec![
-                ("BN".into(), "Dr. Abu Bakr Muhammad Zakaria".into(),
-                    resource_dir.join("data/translation/bn/dr-abu-bakr-muhammad-zakaria-simple.json")),
-                ("EN".into(), "Abdel Haleem".into(),
-                    resource_dir.join("data/translation/en/en-haleem-with-footnote-tags.json")),
-                ("EN".into(), "Sahih International".into(),
-                    resource_dir.join("data/translation/en/en-sahih-international-with-footnote-tags.json")),
-                ("FA".into(), "Hussein Taji".into(),
-                    resource_dir.join("data/translation/fa/fr-hussein-taji-simple.json")),
-                ("HA".into(), "Abubakar Mahmood Jummi".into(),
-                    resource_dir.join("data/translation/ha/abubakar-mahmood-jummi-with-footnote-tags.json")),
-                ("HI".into(), "Maulana Azizul Haque Al-Umari".into(),
-                    resource_dir.join("data/translation/hi/maulana-azizul-haque-al-umari-with-footnote-tags.json")),
-                ("ID".into(), "Quran Indonesia".into(),
-                    resource_dir.join("data/translation/id/quran-id-with-footnote-tags.json")),
-                ("MS".into(), "Abdullah Basamia".into(),
-                    resource_dir.join("data/translation/ms/abdullah-basamia-simple.json")),
-                ("PA".into(), "Bayan ul Quran".into(),
-                    resource_dir.join("data/translation/pa/bayan-ul-quran-simple.json")),
-                ("PS".into(), "Rowwad Translation Center".into(),
-                    resource_dir.join("data/translation/ps/pashto-translation-rowwad-translation-center-simple.json")),
-                ("SW".into(), "Dr. Abdullah Muhammad Abu Bakr & Sheikh Nasir Khamis".into(),
-                    resource_dir.join("data/translation/sw/dr-abdullah-muhammad-abu-bakr-and-sheikh-nasir-khamis-simple.json")),
-                ("TL".into(), "Dar al-Salam Center (Tagalog)".into(),
-                    resource_dir.join("data/translation/tl/dar-al-salam-center-tagalog-simple.json")),
-                ("TR".into(), "Dar al-Salam Center".into(),
-                    resource_dir.join("data/translation/tr/dar-al-salam-center-simple.json")),
-                ("UR".into(), "Bayan ul Quran".into(),
-                    resource_dir.join("data/translation/ur/bayan-ul-quran-simple.json")),
-                ("RU".into(), "Kuliev".into(),
-                    resource_dir.join("data/translation/ru/quran-ru-kuliev-simple.json")),
-                ("DE".into(), "Frank Bubenheim & Nadeem".into(),
-                    resource_dir.join("data/translation/de/de-Frank Bubenheim and Nadeem-simple.json")),
-                ("FR".into(), "Montada Islamic Foundation".into(),
-                    resource_dir.join("data/translation/fr/montada-islamic-foundation-simple.json")),
-            ];
-
-            let tafsir_paths: Vec<(String, String, std::path::PathBuf)> = vec![
-                ("AR".into(), "Ibn Kathir (Arabic)".into(),
-                    resource_dir.join("data/tafsir/ar/ar-tafsir-ibn-kathir.json")),
-                ("AR".into(), "Al-Tabari (Arabic)".into(),
-                    resource_dir.join("data/tafsir/ar/ar-tafsir-al-tabari.json")),
-                ("EN".into(), "Ibn Kathir (English)".into(),
-                    resource_dir.join("data/tafsir/en/en-tafisr-ibn-kathir.json")),
-                ("TL".into(), "Al-Mukhtasar (Tagalog)".into(),
-                    resource_dir.join("data/tafsir/tl/tagalog-Al-Mukhtasar.json")),
-                ("ID".into(), "As-Sa'di (Indonesian)".into(),
-                    resource_dir.join("data/tafsir/id/id-tafsir-as-saadi.json")),
-                ("BN".into(), "Ibn Kathir (Bengali)".into(),
-                    resource_dir.join("data/tafsir/bn/bn-tafseer-ibn-e-kaseer.json")),
-                ("HI".into(), "Al-Mukhtasar (Hindi)".into(),
-                    resource_dir.join("data/tafsir/hi/hindi-mokhtasar.json")),
-                ("PS".into(), "Al-Mukhtasar (Pashto)".into(),
-                    resource_dir.join("data/tafsir/ps/pashto-mokhtasar.json")),
-                ("RU".into(), "Ibn Kathir (Russian)".into(),
-                    resource_dir.join("data/tafsir/ru/ru-tafsir-ibne-kahtir.json")),
-                ("RU".into(), "Al-Mukhtasar (Russian)".into(),
-                    resource_dir.join("data/tafsir/ru/russian-mokhtasar.json")),
-                ("RU".into(), "As-Sa'di (Russian)".into(),
-                    resource_dir.join("data/tafsir/ru/tafsir-as-saadi-russian.json")),
-                ("TR".into(), "Ibn Kathir (Turkish)".into(),
-                    resource_dir.join("data/tafsir/tr/tr-tafsir-ibne-kathir.json")),
-                ("UR".into(), "Ibn Kathir (Urdu)".into(),
-                    resource_dir.join("data/tafsir/ur/tafseer-ibn-e-kaseer-urdu.json")),
-            ];
-
-            let transliteration_path = resource_dir.join("data/transliteration/english-transliteration-tajweed-simple.json");
-            let word_by_word_path = resource_dir.join("data/word-by-word/english-wbw-translation.json");
-
-            let database = db::Database::new(db_path, sql_path, morph_path, recitation_paths, translation_paths, tafsir_paths, transliteration_path, word_by_word_path)
+            let static_db = resource_dir.join("data/quran_static.db");
+            let database = db::Database::new(static_db, app_data_dir.clone())
                 .expect("Failed to initialize database");
             app.manage(database);
             // Load any previously saved custom Julia binary path before managing state

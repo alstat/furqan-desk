@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy, getContext } from "svelte";
+    import { fly } from "svelte/transition";
     import type { Readable } from "svelte/store";
     import BoldButton from "../BoldButton.svelte";
     import ItalicButton from "../ItalicButton.svelte";
@@ -149,6 +150,7 @@
     {#if isOpen}
         <Portal>
             <div
+                transition:fly={{ y: 8, duration: 180, opacity: 0 }}
                 class="portal-dropdown-content absolute z-50 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm"
                 style="width: 12rem;"
                 bind:this={panelRef}
@@ -170,7 +172,9 @@
                                 <FontColorButton />
                             </div>
                         </div>
-                        <div class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"></div>
+                        <div
+                            class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
+                        ></div>
                     {/if}
 
                     <!-- XL breakpoint items (show when width < xl) -->
@@ -256,7 +260,9 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"></div>
+                        <div
+                            class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
+                        ></div>
                         <div class="flex items-center px-5 py-2">
                             <DropDownAlign />
                             {#if windowWidth < 768}
@@ -265,7 +271,9 @@
                             <Indent />
                             <Outdent />
                         </div>
-                        <div class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-400 to-transparent dark:via-[#414559]"></div>
+                        <div
+                            class="my-1 mx-3 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
+                        ></div>
                         <div class="px-5 py-2">
                             <span
                                 class="text-xs font-medium text-brand-charcoal-500"

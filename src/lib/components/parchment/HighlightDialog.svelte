@@ -1,6 +1,7 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { onDestroy } from "svelte";
+    import { fly } from "svelte/transition";
     import {
         loadHighlights,
         deleteHighlight,
@@ -92,6 +93,7 @@
 
 {#if open}
     <div
+        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="true"
         aria-label="Highlights"

@@ -1,6 +1,7 @@
 <script lang="ts">
     import Icon from '@iconify/svelte';
     import type { Snippet } from 'svelte';
+    import { fly } from 'svelte/transition';
 
     interface Props {
         open: boolean;
@@ -16,11 +17,11 @@
 {#if open}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-        class="fixed inset-0 z-300 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
         onclick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         onkeydown={(e) => { if (e.key === 'Escape') onClose(); }}
     >
-        <div class="relative mx-4 w-full max-w-md rounded-3xl bg-white dark:bg-[#303446] shadow-2xl flex flex-col max-h-[80vh]">
+        <div transition:fly={{ y: 8, duration: 180, opacity: 0 }} class="relative mx-4 w-full max-w-md rounded-3xl bg-white dark:bg-[#303446] shadow-2xl flex flex-col max-h-[80vh] overflow-hidden">
             <!-- Header -->
             <div class="flex items-center justify-between border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 bg-brand-gold-100 dark:bg-[#292c3c] rounded-t-3xl">
                 <h2 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">{title}</h2>

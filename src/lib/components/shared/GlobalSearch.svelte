@@ -7,6 +7,9 @@
         openOrFocusTab,
         isFlatFile,
     } from "$lib/stores/tabs.store";
+    import { surahOrientation } from "$lib/stores/quran.svelte";
+
+    let isRtl = $derived($surahOrientation() === "flex-row-reverse");
     import { codeMirrorViewInstance } from "$lib/stores/editor.store";
     import { get } from "svelte/store";
     import { EditorSelection } from "@codemirror/state";
@@ -218,7 +221,7 @@
 <!-- Floating panel -->
 {#if isOpen}
     <div
-        transition:fly={{ x: -8, duration: 180, opacity: 0 }}
+        transition:fly={{ x: isRtl ? 8 : -8, duration: 180, opacity: 0 }}
         class="absolute top-1/2 left-1.5 ml-2 z-50 rounded-3xl w-72 max-h-[50vh] bg-white dark:bg-[#292c3c]
 		       border border-stone-200 dark:border-[#414559]
 		       shadow-xl shadow-black/15 dark:shadow-black/40
