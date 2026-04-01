@@ -6,6 +6,7 @@
 	import { openFolderPath, openPreviewTab, openOrFocusTab, isFlatFile } from '$lib/stores/tabs.store';
 	import { surahOrientation } from '$lib/stores/quran.svelte';
     import { actionBtnStyle } from '$lib/data/toolbar/toolbar';
+	import { t } from '$lib/i18n';
 
 	interface FileTreeNode {
 		name: string;
@@ -196,7 +197,7 @@
 					       dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 					       transition-colors"
 				>
-					Change
+					{$t('explorer.change')}
 				</button>
 			{:else}
 				<button
@@ -208,7 +209,7 @@
 					       flex items-center justify-center gap-1.5"
 				>
 					<Icon icon="solar:folder-with-files-bold-duotone" width="0.85rem" />
-					Open Folder
+					{$t('explorer.open_folder')}
 				</button>
 			{/if}
 		</div>
@@ -219,7 +220,7 @@
 			            bg-red-50 dark:bg-red-900/20 flex items-center gap-2">
 				<Icon icon="solar:lock-bold-duotone" width="0.75rem" class="shrink-0 text-red-400" />
 				<span class="text-[10px] text-red-500 dark:text-red-400 flex-1 truncate">
-					Cannot read folder
+					{$t('explorer.cannot_read')}
 				</span>
 				<button
 					onclick={() => { loadError = ''; openFolderPath.set(null); }}
@@ -228,7 +229,7 @@
 					       transition-colors"
 					title="Clear folder and go back"
 				>
-					Back
+					{$t('explorer.back')}
 				</button>
 				<button
 					onclick={() => $openFolderPath && loadRoot($openFolderPath)}
@@ -237,7 +238,7 @@
 					       transition-colors"
 					title="Retry loading folder"
 				>
-					Retry
+					{$t('explorer.retry')}
 				</button>
 			</div>
 		{/if}
@@ -246,15 +247,15 @@
 		<div class="flex-1 min-h-0 overflow-y-auto py-1 px-1">
 			{#if isLoadingRoot}
 				<p class="text-[10px] italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2">
-					Loading…
+					{$t('explorer.loading')}
 				</p>
 			{:else if !$openFolderPath}
 				<p class="text-[11px] text-center italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2">
-					No folder open
+					{$t('explorer.no_folder')}
 				</p>
 			{:else if !loadError && rootNodes.length === 0}
 				<p class="text-[10px] italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2">
-					No files or folders found
+					{$t('explorer.no_files')}
 				</p>
 			{:else if !loadError}
 				{@render treeNodes(rootNodes, 0)}
@@ -310,7 +311,7 @@
 						class="text-[10px] italic text-brand-charcoal-300 dark:text-[#838ba7]"
 						style="padding-left: {0.5 + (depth + 1) * 0.75}rem"
 					>
-						Empty
+						{$t('explorer.empty')}
 					</p>
 				{:else}
 					{@render treeNodes(node.children, depth + 1)}
@@ -326,7 +327,7 @@
 				       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
 				       rounded transition-colors font-mono text-left"
 				style="padding-left: {0.5 + depth * 0.75}rem; padding-right: 0.5rem"
-				title="Click to preview · Double-click to open"
+				title={$t('explorer.file_hint')}
 			>
 				<Icon
 					icon="solar:file-text-bold-duotone"

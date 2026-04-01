@@ -4,6 +4,7 @@
   import {FORMAT_TEXT_COMMAND} from 'lexical';
   import {getContext} from 'svelte';
   import type {Writable} from 'svelte/store';
+  import { t } from '$lib/i18n';
 
   const activeEditor = getActiveEditor();
 
@@ -15,8 +16,8 @@
     $activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'superscript');
   }}
   class={'item ' + ($isSuperscript ? 'active dropdown-item-active' : '')}
-  title="Superscript"
-  ariaLabel="Format text with a superscript">
+  title={$t('toolbar.superscript')}
+  ariaLabel={$t('toolbar.superscript')}>
   <i class="icon subscript"></i>
-  <span class="text">Superscript</span>
+  <span class="text">{$t('toolbar.superscript')}</span>
 </DropDownItem>

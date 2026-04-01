@@ -15,6 +15,7 @@
     import { EditorSelection } from "@codemirror/state";
     import { EditorView } from "@codemirror/view";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
+    import { t } from "$lib/i18n";
 
     interface MatchLine {
         lineNumber: number;
@@ -235,7 +236,7 @@
             <span
                 class="text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
             >
-                Search in Folder
+                {$t('search.title')}
             </span>
             <!-- <button
                 onclick={() => (isOpen = false)}
@@ -261,7 +262,7 @@
                 <input
                     id="global-search-input"
                     type="text"
-                    placeholder="Search…"
+                    placeholder={$t('search.placeholder')}
                     bind:value={query}
                     class="flex-1 bg-transparent text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#838ba7] outline-none min-w-0"
                 />
@@ -280,7 +281,7 @@
                     scheduleSearch(query);
                 }}
                 aria-pressed={caseSensitive}
-                title="Case sensitive"
+                title={$t('search.case_sensitive')}
                 class="cursor-pointer p-1.5 rounded-md text-[10px] font-mono font-bold transition-colors
 				       {caseSensitive
                     ? 'bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100'
@@ -295,7 +296,7 @@
                     scheduleSearch(query);
                 }}
                 aria-pressed={useRegex}
-                title="Use regular expression"
+                title={$t('search.use_regex')}
                 class="cursor-pointer p-1.5 rounded-md text-[10px] font-mono font-bold transition-colors
 				       {useRegex
                     ? 'bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100'
@@ -311,27 +312,26 @@
                 <div
                     class="px-3 py-4 text-center text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
-                    <i>Open a folder to search files</i>
+                    <i>{$t('search.open_folder')}</i>
                 </div>
             {:else if query.trim() === ""}
                 <div
                     class="px-3 py-4 text-center text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
-                    Type to search…
+                    {$t('search.type_to_search')}
                 </div>
             {:else if !isSearching && results.length === 0}
                 <div
                     class="px-3 py-4 text-center text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
-                    No results found
+                    {$t('search.no_results')}
                 </div>
             {:else}
                 {#if results.length > 0}
                     <div
                         class="px-3 py-1.5 text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] border-b border-stone-100 dark:border-[#363a4f]"
                     >
-                        {totalMatches} result{totalMatches === 1 ? "" : "s"} in {results.length}
-                        file{results.length === 1 ? "" : "s"}
+                        {$t('search.result_count', { count: totalMatches, files: results.length })}
                     </div>
                 {/if}
                 {#each results as result}

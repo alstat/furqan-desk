@@ -1,6 +1,7 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
+    import { t } from '$lib/i18n';
 
     interface Props {
         onOpenBookmarks: () => void;
@@ -54,8 +55,8 @@
     <button
         onclick={onOpenBookmarks}
         class={actionBtnStyle + " p-1 z-50"}
-        title="Bookmarks"
-        aria-label="Open bookmarks"
+        title={$t('parchment.bookmarks')}
+        aria-label={$t('parchment.open_bookmarks')}
     >
         <Icon icon="solar:bookmark-bold-duotone" width="1rem" />
     </button>
@@ -63,8 +64,8 @@
     <button
         onclick={onOpenHighlights}
         class={actionBtnStyle + " p-1 z-50"}
-        title="Highlights"
-        aria-label="Open highlights"
+        title={$t('parchment.highlights')}
+        aria-label={$t('parchment.open_highlights')}
     >
         <Icon icon="solar:magic-stick-3-bold-duotone" width="1rem" />
     </button>
@@ -74,8 +75,8 @@
         class={actionBtnStyle +
             " p-1 z-50 " +
             (showSearch ? "ring-2 ring-brand-gold-300" : "")}
-        title="Search"
-        aria-label="Search quran"
+        title={$t('parchment.search')}
+        aria-label={$t('parchment.search_quran')}
     >
         <Icon icon="solar:magnifer-bold-duotone" width="1rem" />
     </button>
@@ -89,8 +90,8 @@
                 type="text"
                 bind:value={searchQuery}
                 onkeydown={handleKeydown}
-                placeholder="Search Arabic or Translation…"
-                title="For translation, you need to select one first before the app can search the translation."
+                placeholder={$t('parchment.search_placeholder')}
+                title={$t('parchment.search_hint')}
                 class="w-44 bg-transparent text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#838ba7] outline-none"
                 dir="auto"
                 disabled={isSearching}
@@ -99,7 +100,7 @@
                 <button
                     onclick={clearSearch}
                     class="cursor-pointer text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-500 dark:hover:text-[#c6d0f5]"
-                    title="Clear"
+                    title={$t('parchment.clear')}
                 >
                     <Icon icon="solar:close-circle-linear" width="0.75rem" />
                 </button>
@@ -108,8 +109,8 @@
                 onclick={submitSearch}
                 disabled={isSearching || !searchQuery.trim()}
                 class="cursor-pointer text-brand-charcoal-400 dark:text-[#c6d0f5] hover:text-brand-charcoal-600 dark:hover:text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                title="Search"
-                aria-label="Submit search"
+                title={$t('parchment.search')}
+                aria-label={$t('parchment.submit_search')}
             >
                 {#if isSearching}
                     <span class="animate-spin inline-flex">

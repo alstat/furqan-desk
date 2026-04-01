@@ -1,5 +1,6 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
+    import { t } from '$lib/i18n';
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
     import Icon from "@iconify/svelte";
     import { fly } from "svelte/transition";
@@ -144,12 +145,12 @@
                             <h2
                                 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                             >
-                                Offline Recitation
+                                {$t('recitation_dl.title')}
                             </h2>
                             <p
                                 class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
-                                Download for offline playback
+                                {$t('recitation_dl.subtitle')}
                             </p>
                         </div>
                     </div>
@@ -212,7 +213,7 @@
                             width="0.9rem"
                             class="text-brand-gold-500"
                         />
-                        Download Current Surah
+                        {$t('recitation_dl.current_surah')}
                     </button>
                     <button
                         onclick={() => startDownload(null)}
@@ -223,7 +224,7 @@
                             icon="solar:download-twice-square-bold-duotone"
                             width="0.9rem"
                         />
-                        Download All Surahs
+                        {$t('recitation_dl.all_surahs')}
                     </button>
                 </div>
 
@@ -235,21 +236,11 @@
                                 class="text-[11px] text-brand-charcoal-500 dark:text-[#838ba7]"
                             >
                                 {#if $downloadProgress && !$downloadProgress.done}
-                                    Surah {$downloadProgress.surah} — ayah {$downloadProgress.ayah}
-                                    / {$downloadProgress.total > 0
-                                        ? Math.round(
-                                              ($downloadProgress.downloaded /
-                                                  $downloadProgress.total) *
-                                                  ($downloadProgress.surah > 0
-                                                      ? 1
-                                                      : 1),
-                                          )
-                                        : "…"}
+                                    {$t('recitation_dl.progress', { surah: String($downloadProgress.surah), ayah: String($downloadProgress.ayah), total: $downloadProgress.total > 0 ? String(Math.round(($downloadProgress.downloaded / $downloadProgress.total) * ($downloadProgress.surah > 0 ? 1 : 1))) : '…' })}
                                 {:else if $downloadProgress?.done}
-                                    Complete — {$downloadProgress.downloaded} ayahs
-                                    downloaded
+                                    {$t('recitation_dl.complete', { downloaded: String($downloadProgress.downloaded) })}
                                 {:else}
-                                    Starting download…
+                                    {$t('recitation_dl.starting')}
                                 {/if}
                             </p>
                             <p
@@ -279,7 +270,7 @@
                                     icon="solar:stop-circle-bold"
                                     width="0.9rem"
                                 />
-                                Cancel
+                                {$t('recitation_dl.cancel')}
                             </button>
                         {/if}
                     </div>

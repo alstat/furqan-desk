@@ -52,10 +52,10 @@ export async function deleteHighlight(id: number): Promise<void> {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-export function formatDate(dateStr: string): string {
+export function formatDate(dateStr: string, locale = 'en-US'): string {
     try {
         const d = new Date(dateStr.replace(' ', 'T') + 'Z');
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return d.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
     } catch {
         return dateStr;
     }

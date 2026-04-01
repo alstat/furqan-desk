@@ -6,6 +6,7 @@
   import {getContext} from 'svelte';
   import type {Writable} from 'svelte/store';
   import {IS_APPLE} from '@lexical/utils';
+  import { t } from '$lib/i18n';
 
   const activeEditor = getActiveEditor();
   const isEditable = getIsEditable();
@@ -19,8 +20,8 @@
     $activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
   }}
   class={'p-1 ' + toolBarBtnStyle + ($isBold ? 'active ' + activeBtnStyle : '')}
-  title={IS_APPLE ? 'Bold (⌘B)' : 'Bold (Ctrl+B)'}
+  title={IS_APPLE ? `${$t('toolbar.bold')} (⌘B)` : `${$t('toolbar.bold')} (Ctrl+B)`}
   type="button"
-  aria-label={`Format text as bold. Shortcut: ${IS_APPLE ? '⌘B' : 'Ctrl+B'}`}>
+  aria-label={`${$t('toolbar.bold')}. Shortcut: ${IS_APPLE ? '⌘B' : 'Ctrl+B'}`}>
   <Icon icon={icons['bold']}  height=1rem/>
 </button>
