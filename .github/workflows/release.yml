@@ -19,6 +19,9 @@ jobs:
           - platform: windows-latest
             args: --bundles nsis,msi
             rust-targets: ''
+          - platform: macos-13
+            args: --bundles dmg,app --target x86_64-apple-darwin
+            rust-targets: x86_64-apple-darwin
 
     runs-on: ${{ matrix.platform }}
 

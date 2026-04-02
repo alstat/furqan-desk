@@ -160,6 +160,7 @@
                     onkeydown={handleKeydown}
                     autofocus
                     autocorrect="off"
+                    dir="ltr"
                     rows="2"
                     placeholder={$t('editor.equation.placeholder')}
                     class="w-full resize-none rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-2 font-mono text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
