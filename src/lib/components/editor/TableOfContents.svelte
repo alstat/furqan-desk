@@ -2,7 +2,7 @@
     import { fly } from "svelte/transition";
     import { $getRoot as getRoot } from "lexical";
     import { $isHeadingNode as isHeadingNode } from "@lexical/rich-text";
-    import { tocOpen, lexicalEditorInstance } from "$lib/stores/editor.store";
+    import { tocOpen, tocAnchorRect, lexicalEditorInstance } from "$lib/stores/editor.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
     import { activeTab } from "$lib/stores/tabs.store";
     import Icon from "@iconify/svelte";
@@ -66,16 +66,16 @@
     // });
 </script>
 
-<!-- Floating panel -->
-{#if $tocOpen}
+<!-- Floating panel — anchored below the TOC icon button in the sidebar -->
+{#if $tocOpen && $tocAnchorRect}
     <div
         transition:fly={{ y: 9, duration: 180, opacity: 0 }}
-        class="fixed left-1/2 top-48.5 -translate-x-1/2 -translate-y-1/2 z-50
-		       w-52 max-h-[65vh]
+        class="fixed z-50 w-52 max-h-[65vh]
 		       rounded-3xl overflow-hidden flex flex-col
 		       bg-white dark:bg-[#292c3c]
 		       border border-stone-200 dark:border-[#414559]
 		       shadow-md shadow-black/5 dark:shadow-black/20"
+        style="top: {$tocAnchorRect.top}px; left: {$tocAnchorRect.right + 8}px;"
     >
         <!-- Header -->
         <div

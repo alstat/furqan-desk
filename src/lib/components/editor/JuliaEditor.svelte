@@ -41,7 +41,7 @@
     const labelClass =
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
 
-    let lineWrap = $state(true);
+    let lineWrap = $state(false);
 
     // ── Effective tab (primary uses $activeTab; secondary uses tabId prop) ─────
 
