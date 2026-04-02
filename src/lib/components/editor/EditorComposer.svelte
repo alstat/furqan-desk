@@ -53,6 +53,7 @@
     } from "../lexical";
 
     import CaptionEditorHistoryPlugin from "$lexical/core/plugins/Image/CaptionEditorHistoryPlugin.svelte";
+    import SlashCommandPlugin from "$lexical/core/plugins/SlashCommand/SlashCommandPlugin.svelte";
     import EditorStorePlugin from "./EditorStorePlugin.svelte";
     import { createEmptyHistoryState } from "@lexical/history";
     import { lexicalHistoryState } from "$lib/stores/editor.store";
@@ -121,6 +122,7 @@
                 <TableActionMenuPlugin anchorElem={editorShell} cellMerge={true} />
             {/if}
             <MarkdownShortcutPlugin transformers={ALL_TRANSFORMERS} />
+            <SlashCommandPlugin />
             <EditorStorePlugin />
         </div>
     </div>

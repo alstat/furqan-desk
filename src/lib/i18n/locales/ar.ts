@@ -24,7 +24,8 @@ export const ar: Record<string, string> = {
     'settings.website': 'الموقع الإلكتروني',
     'settings.website.download': 'تنزيل التحديث',
     'settings.website.up_to_date': 'محدّث',
-    'settings.zen': 'وضع التركيز',
+    'sukun.show_icons': 'إظهار الأيقونات',
+    'settings.zen': 'وضع السكون',
     'settings.zen.desc': 'تحرير خالٍ من التشتيت — يزيل الحدود والظلال ويخفف الأيقونات',
     'settings.privacy': 'الخصوصية',
     'settings.privacy.text': 'لا يجمع AyahLab أي بيانات شخصية. تستخدم ميزة التغذية الراجعة Resend لإرسال رسالتك مباشرة إلى المطوّر — يُستخدم بريدك الإلكتروني فقط للرد عليك ولا يُخزَّن أو يُشارَك أبداً. لا تحليلات، لا تتبع.',
@@ -268,6 +269,8 @@ export const ar: Record<string, string> = {
     'manuscript.insert': 'إدراج في المحرر',
     'manuscript.insert_tooltip': 'إدراج الصورة في المحرر',
     'manuscript.no_editor': 'افتح مستند Lexical أولاً',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'إدراج الصرف في المحرر',
     'manuscript.meta_date': 'التاريخ',
     'manuscript.meta_radiocarbon': 'التأريخ بالكربون',
     'manuscript.meta_material': 'المادة',

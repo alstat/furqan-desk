@@ -15,8 +15,8 @@ export interface SerializedEquationNode extends SerializedLexicalNode {
     inline: boolean;
 }
 
-export function $createEquationNode(equation: string, inline: boolean): EquationNode {
-    return $applyNodeReplacement(new EquationNode(equation, inline));
+export function $createEquationNode(equation: string, inline: boolean, autoEdit = false): EquationNode {
+    return $applyNodeReplacement(new EquationNode(equation, inline, undefined, autoEdit));
 }
 
 export function $isEquationNode(node: LexicalNode | null | undefined): node is EquationNode {
@@ -26,11 +26,13 @@ export function $isEquationNode(node: LexicalNode | null | undefined): node is E
 export class EquationNode extends DecoratorNode<DecoratorEquationType> {
     __equation: string;
     __inline: boolean;
+    __autoEdit: boolean;
 
-    constructor(equation: string, inline: boolean, key?: NodeKey) {
+    constructor(equation: string, inline: boolean, key?: NodeKey, autoEdit = false) {
         super(key);
         this.__equation = equation;
         this.__inline = inline;
+        this.__autoEdit = autoEdit;
     }
 
     static getType(): string {
@@ -75,6 +77,11 @@ export class EquationNode extends DecoratorNode<DecoratorEquationType> {
         return false;
     }
 
+    setAutoEdit(value: boolean): void {
+        const writable = this.getWritable();
+        writable.__autoEdit = value;
+    }
+
     setEquation(equation: string): void {
         const writable = this.getWritable();
         writable.__equation = equation;
@@ -100,7 +107,8 @@ export class EquationNode extends DecoratorNode<DecoratorEquationType> {
             updateProps: (props) => {
                 props.equation = this.__equation;
                 props.isInline = this.__inline;
-                props.nodeKey = this.__key; // Pass the nodeKey to the component
+                props.nodeKey = this.__key;
+                props.autoEdit = this.__autoEdit;
             }
         }
     }

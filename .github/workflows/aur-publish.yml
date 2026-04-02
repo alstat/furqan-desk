@@ -1,0 +1,67 @@
+name: Publish to AUR
+
+# Triggers automatically when a GitHub release is published (draft → published).
+# Can also be run manually for a specific tag (e.g. v1.3.0).
+#
+# Required repository secrets:
+#   AUR_SSH_PRIVATE_KEY  – SSH private key registered on aur.archlinux.org
+#   AUR_USERNAME         – Git commit author name  (e.g. "al-ahmadgaidasaad")
+#   AUR_EMAIL            – Git commit author email
+#
+# The AUR package "ayahlab-bin" must already exist on aur.archlinux.org
+# before this workflow can push to it.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish (e.g. v1.3.0)"
+        required: true
+
+jobs:
+  publish-aur:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve tag and version
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Download AppImage and compute sha256
+        id: sha
+        run: |
+          VER="${{ steps.ver.outputs.version }}"
+          gh release download "${{ steps.ver.outputs.tag }}" \
+            --pattern "AyahLab_${VER}_amd64.AppImage" \
+            --repo "${{ github.repository }}"
+          echo "sum=$(sha256sum "AyahLab_${VER}_amd64.AppImage" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Stamp PKGBUILD with version and checksum
+        run: |
+          cp .aur/PKGBUILD ./PKGBUILD
+          sed -i "s/VERSION_PLACEHOLDER/${{ steps.ver.outputs.version }}/g" PKGBUILD
+          sed -i "s/SHA256_PLACEHOLDER/${{ steps.sha.outputs.sum }}/g"      PKGBUILD
+
+      - name: Publish to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v2.7.2
+        with:
+          pkgname: ayahlab-bin
+          pkgbuild: ./PKGBUILD
+          commit_username: ${{ secrets.AUR_USERNAME }}
+          commit_email: ${{ secrets.AUR_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Update to ${{ steps.ver.outputs.tag }}"
+          allow_empty_commits: false

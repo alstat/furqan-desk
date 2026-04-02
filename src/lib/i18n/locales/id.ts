@@ -24,7 +24,8 @@ export const id: Record<string, string> = {
     'settings.website': 'Situs Web',
     'settings.website.download': 'Unduh pembaruan',
     'settings.website.up_to_date': 'Sudah terbaru',
-    'settings.zen': 'Mode Zen',
+    'sukun.show_icons': 'Tampilkan Ikon',
+    'settings.zen': 'Mode Sukun',
     'settings.zen.desc': 'Pengeditan tanpa gangguan — menghapus batas, bayangan, dan meredup ikon antarmuka',
     'settings.privacy': 'Privasi',
     'settings.privacy.text': 'AyahLab sepenuhnya offline. Tidak ada akun, tidak ada telemetri, tidak ada analitik. Catatan, bookmark, dan pengaturan Anda hanya tersimpan di perangkat Anda.',
@@ -268,6 +269,8 @@ export const id: Record<string, string> = {
     'manuscript.insert': 'Sisipkan ke Lexical',
     'manuscript.insert_tooltip': 'Sisipkan gambar ke editor',
     'manuscript.no_editor': 'Buka tab dokumen Lexical terlebih dahulu',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'Sisipkan morfologi ke editor',
     'manuscript.meta_date': 'Tanggal',
     'manuscript.meta_radiocarbon': 'Radiokarbon',
     'manuscript.meta_material': 'Material',

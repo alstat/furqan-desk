@@ -13,11 +13,15 @@
         removeJuliaGroup,
         removeJuliaGroupByTab,
         flashingTabId,
+        crossGroups,
+        createCrossGroup,
+        removeCrossGroup,
+        removeCrossGroupByTab,
     } from "$lib/stores/julia-terminal.store";
-    import type { JuliaGroup } from "$lib/stores/julia-terminal.store";
+    import type { JuliaGroup, CrossGroup } from "$lib/stores/julia-terminal.store";
     import Icon from "@iconify/svelte";
     import { confirm } from "@tauri-apps/plugin-dialog";
-    import { zenMode } from "$lib/stores/editor.store";
+    import { zenMode, zenPeek } from "$lib/stores/editor.store";
 
     const GROUP_COLORS = [
         {
@@ -95,6 +99,7 @@
             if (!ok) return;
         }
         removeJuliaGroupByTab(id);
+        removeCrossGroupByTab(id);
         closeTab(id);
     }
 
@@ -111,17 +116,30 @@
     }
 
     function handleSplitClick(tabId: string, e: MouseEvent) {
-        const groupedIds = new Set(
-            $juliaGroups.flatMap((g) => [g.tabA, g.tabB]),
-        );
+        const hostType = $tabs.find(t => t.id === tabId)?.type;
+        const allGroupedIds = new Set([
+            ...$juliaGroups.flatMap((g) => [g.tabA, g.tabB]),
+            ...$crossGroups.flatMap((g) => [g.hostTabId, g.partnerTabId]),
+        ]);
         const available = $tabs.filter(
             (t) =>
-                t.type === "julia" && t.id !== tabId && !groupedIds.has(t.id),
+                (t.type === "julia" || t.type === "typst" || t.type === "lexical") &&
+                t.id !== tabId &&
+                !allGroupedIds.has(t.id) &&
+                // Avoid same-type conflicts for Typst/Lexical (shared global store state)
+                !(hostType === "typst" && t.type === "typst") &&
+                !(hostType === "lexical" && t.type === "lexical"),
         );
         if (available.length === 0) return;
         if (available.length === 1) {
-            createJuliaGroup(tabId, available[0].id);
-            ensureAdjacent(tabId, available[0].id);
+            const p = available[0];
+            // Julia+Julia → existing stacked behaviour; anything else → cross pair
+            if (hostType === "julia" && p.type === "julia") {
+                createJuliaGroup(tabId, p.id);
+            } else {
+                createCrossGroup(tabId, p.id);
+            }
+            ensureAdjacent(tabId, p.id);
             pickerForTabId = null;
             pickerPos = null;
         } else {
@@ -139,9 +157,8 @@
         }
     }
 
-    let canShowSplit = $derived(
-        $hideSurahPage() && $tabs.some((t) => t.type === "julia"),
-    );
+    // Any editor type can show the split icon when the Parchment is hidden
+    let canShowSplit = $derived($hideSurahPage());
 
     function onWindowPointerDown(e: PointerEvent) {
         if (pickerForTabId === null) return;
@@ -175,12 +192,28 @@
         return $juliaGroups.find((g: JuliaGroup) => g.tabA === tabId || g.tabB === tabId) ?? null;
     }
 
+    function getCrossGroupOf(tabId: string): CrossGroup | null {
+        return $crossGroups.find(
+            (g: CrossGroup) => g.hostTabId === tabId || g.partnerTabId === tabId,
+        ) ?? null;
+    }
+
     function getDraggedIds(draggedTabId: string): string[] {
-        const group = getGroupOf(draggedTabId);
-        if (!group) return [draggedTabId];
-        const aIdx = $tabs.findIndex((t: EditorTab) => t.id === group.tabA);
-        const bIdx = $tabs.findIndex((t: EditorTab) => t.id === group.tabB);
-        return aIdx <= bIdx ? [group.tabA, group.tabB] : [group.tabB, group.tabA];
+        const jGroup = getGroupOf(draggedTabId);
+        if (jGroup) {
+            const aIdx = $tabs.findIndex((t: EditorTab) => t.id === jGroup.tabA);
+            const bIdx = $tabs.findIndex((t: EditorTab) => t.id === jGroup.tabB);
+            return aIdx <= bIdx ? [jGroup.tabA, jGroup.tabB] : [jGroup.tabB, jGroup.tabA];
+        }
+        const cGroup = getCrossGroupOf(draggedTabId);
+        if (cGroup) {
+            const jIdx = $tabs.findIndex((t: EditorTab) => t.id === cGroup.hostTabId);
+            const pIdx = $tabs.findIndex((t: EditorTab) => t.id === cGroup.partnerTabId);
+            return jIdx <= pIdx
+                ? [cGroup.hostTabId, cGroup.partnerTabId]
+                : [cGroup.partnerTabId, cGroup.hostTabId];
+        }
+        return [draggedTabId];
     }
 
     function isBeingDragged(tabId: string): boolean {
@@ -193,15 +226,27 @@
         const idx = $tabs.findIndex((t: EditorTab) => t.id === targetId);
         if (rawSide === "after") {
             const next: EditorTab | undefined = $tabs[idx + 1];
-            if (next && $juliaGroups.find((g: JuliaGroup) =>
-                (g.tabA === targetId && g.tabB === next.id) ||
-                (g.tabB === targetId && g.tabA === next.id)
+            if (next && (
+                $juliaGroups.find((g: JuliaGroup) =>
+                    (g.tabA === targetId && g.tabB === next.id) ||
+                    (g.tabB === targetId && g.tabA === next.id)
+                ) ||
+                $crossGroups.find((g: CrossGroup) =>
+                    (g.hostTabId === targetId && g.partnerTabId === next.id) ||
+                    (g.partnerTabId === targetId && g.hostTabId === next.id)
+                )
             )) return { targetId: next.id, side: "after" };
         } else {
             const prev: EditorTab | undefined = idx > 0 ? $tabs[idx - 1] : undefined;
-            if (prev && $juliaGroups.find((g: JuliaGroup) =>
-                (g.tabA === prev.id && g.tabB === targetId) ||
-                (g.tabB === prev.id && g.tabA === targetId)
+            if (prev && (
+                $juliaGroups.find((g: JuliaGroup) =>
+                    (g.tabA === prev.id && g.tabB === targetId) ||
+                    (g.tabB === prev.id && g.tabA === targetId)
+                ) ||
+                $crossGroups.find((g: CrossGroup) =>
+                    (g.hostTabId === prev.id && g.partnerTabId === targetId) ||
+                    (g.partnerTabId === prev.id && g.hostTabId === targetId)
+                )
             )) return { targetId: prev.id, side: "before" };
         }
         return { targetId, side: rawSide };
@@ -209,15 +254,23 @@
 
     function performReorder(draggedTabId: string, targetTabId: string, side: DropSide): void {
         const groups: JuliaGroup[] = $juliaGroups;
+        const cGroups: CrossGroup[] = $crossGroups;
         tabs.update((ts: EditorTab[]) => {
-            const group = groups.find(
+            const jGroup = groups.find(
                 (g: JuliaGroup) => g.tabA === draggedTabId || g.tabB === draggedTabId,
             );
-            const idsToMove: string[] = group
-                ? (ts.findIndex(t => t.id === group.tabA) <= ts.findIndex(t => t.id === group.tabB)
-                    ? [group.tabA, group.tabB]
-                    : [group.tabB, group.tabA])
-                : [draggedTabId];
+            const cGroup = cGroups.find(
+                (g: CrossGroup) => g.hostTabId === draggedTabId || g.partnerTabId === draggedTabId,
+            );
+            const idsToMove: string[] = jGroup
+                ? (ts.findIndex(t => t.id === jGroup.tabA) <= ts.findIndex(t => t.id === jGroup.tabB)
+                    ? [jGroup.tabA, jGroup.tabB]
+                    : [jGroup.tabB, jGroup.tabA])
+                : cGroup
+                    ? (ts.findIndex(t => t.id === cGroup.hostTabId) <= ts.findIndex(t => t.id === cGroup.partnerTabId)
+                        ? [cGroup.hostTabId, cGroup.partnerTabId]
+                        : [cGroup.partnerTabId, cGroup.hostTabId])
+                    : [draggedTabId];
             if (idsToMove.includes(targetTabId)) return ts;
             const tabsToMove: EditorTab[] = idsToMove
                 .map(id => ts.find(t => t.id === id))
@@ -300,35 +353,58 @@
     onpointerup={onWindowPointerUp}
 />
 
+<!-- Outer: clips scrollbar thumb to the rounded-full boundary -->
 <div
-    class="{$zenMode ? 'opacity-0 hover:opacity-100 transition-opacity duration-200' : ''} tabs-scroll select-none flex flex-row absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] rounded-full border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30 {pointerDragging ? 'cursor-grabbing' : ''}"
+    class="{$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''} select-none absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(38rem,90%)] rounded-full border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30 overflow-hidden"
+>
+<!-- Inner: handles horizontal scrolling -->
+<div
+    class="tabs-scroll flex flex-row min-h-8 {pointerDragging ? 'cursor-grabbing' : ''}"
     role="tablist"
     aria-label="Editor tabs"
 >
     {#each $tabs as tab, i (tab.id)}
         {@const nextTab = $tabs[i + 1]}
-        {@const groupIdx = $juliaGroups.findIndex(
+        {@const juliaGroup = $juliaGroups.find(
             (g) => g.tabA === tab.id || g.tabB === tab.id,
-        )}
-        {@const group = groupIdx >= 0 ? $juliaGroups[groupIdx] : null}
+        ) ?? null}
+        {@const crossGroupForTab = $crossGroups.find(
+            (g) => g.hostTabId === tab.id || g.partnerTabId === tab.id,
+        ) ?? null}
+        {@const group = juliaGroup ?? crossGroupForTab}
         {@const color = group
             ? GROUP_COLORS[group.colorIdx % GROUP_COLORS.length]
             : null}
-        {@const groupedIds = new Set(
-            $juliaGroups.flatMap((g) => [g.tabA, g.tabB]),
-        )}
-        {@const isUngroupedJulia = tab.type === "julia" && !group}
+        {@const allGroupedIds = new Set([
+            ...$juliaGroups.flatMap((g) => [g.tabA, g.tabB]),
+            ...$crossGroups.flatMap((g) => [g.hostTabId, g.partnerTabId]),
+        ])}
+        {@const isUngroupedSplittable =
+            (tab.type === "julia" || tab.type === "typst" || tab.type === "lexical") &&
+            !juliaGroup && !crossGroupForTab}
         {@const availablePartners = $tabs.filter(
             (t) =>
-                t.type === "julia" && t.id !== tab.id && !groupedIds.has(t.id),
+                (t.type === "julia" || t.type === "typst" || t.type === "lexical") &&
+                t.id !== tab.id &&
+                !allGroupedIds.has(t.id) &&
+                !(tab.type === "typst" && t.type === "typst") &&
+                !(tab.type === "lexical" && t.type === "lexical"),
         )}
-        {@const adjacentGroup = nextTab
-            ? $juliaGroups.find(
+        {@const adjacentJuliaGroup = nextTab
+            ? ($juliaGroups.find(
                   (g) =>
                       (g.tabA === tab.id && g.tabB === nextTab.id) ||
                       (g.tabB === tab.id && g.tabA === nextTab.id),
-              )
+              ) ?? null)
             : null}
+        {@const adjacentCrossGroup = nextTab
+            ? ($crossGroups.find(
+                  (g) =>
+                      (g.hostTabId === tab.id && g.partnerTabId === nextTab.id) ||
+                      (g.partnerTabId === tab.id && g.hostTabId === nextTab.id),
+              ) ?? null)
+            : null}
+        {@const adjacentGroup = adjacentJuliaGroup ?? adjacentCrossGroup}
 
         <div
             role="tab"
@@ -381,8 +457,8 @@
                     >{tab.name}{tab.isDirty ? " *" : ""}</span
                 >
 
-                <!-- Split button: shown on ungrouped julia tabs when partners are available -->
-                {#if isUngroupedJulia && canShowSplit && availablePartners.length > 0}
+                <!-- Split button: shown on any ungrouped editor tab when partners are available -->
+                {#if isUngroupedSplittable && canShowSplit && availablePartners.length > 0}
                     <span
                         role="button"
                         data-no-drag
@@ -434,7 +510,10 @@
                     GROUP_COLORS[adjacentGroup.colorIdx % GROUP_COLORS.length]}
                 <button
                     data-no-drag
-                    onclick={() => removeJuliaGroup(adjacentGroup.id)}
+                    onclick={() => {
+                        if (adjacentJuliaGroup) removeJuliaGroup(adjacentJuliaGroup.id);
+                        else if (adjacentCrossGroup) removeCrossGroup(adjacentCrossGroup.id);
+                    }}
                     class="group/link absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-20 cursor-pointer px-1"
                     title="Unlink"
                 >
@@ -458,7 +537,8 @@
             {/if}
         </div>
     {/each}
-</div>
+</div><!-- end inner scroll div -->
+</div><!-- end outer clip div -->
 
 <div aria-live="polite" aria-atomic="true" class="sr-only">
     {dragTabId ? "Dragging tab — release to drop" : ""}
@@ -467,14 +547,18 @@
 <!-- Partner picker — rendered outside scroll container via fixed positioning -->
 {#if pickerForTabId !== null && pickerPos !== null}
     {@const pickerTab = $tabs.find((t) => t.id === pickerForTabId)}
-    {@const pickerGroupedIds = new Set(
-        $juliaGroups.flatMap((g) => [g.tabA, g.tabB]),
-    )}
+    {@const pickerAllGroupedIds = new Set([
+        ...$juliaGroups.flatMap((g) => [g.tabA, g.tabB]),
+        ...$crossGroups.flatMap((g) => [g.hostTabId, g.partnerTabId]),
+    ])}
+    {@const pickerHostType = pickerTab?.type}
     {@const pickerPartners = $tabs.filter(
         (t) =>
-            t.type === "julia" &&
+            (t.type === "julia" || t.type === "typst" || t.type === "lexical") &&
             t.id !== pickerForTabId &&
-            !pickerGroupedIds.has(t.id),
+            !pickerAllGroupedIds.has(t.id) &&
+            !(pickerHostType === "typst" && t.type === "typst") &&
+            !(pickerHostType === "lexical" && t.type === "lexical"),
     )}
     {#if pickerTab && pickerPartners.length > 1}
         <div
@@ -485,7 +569,12 @@
             {#each pickerPartners as partner}
                 <button
                     onclick={() => {
-                        createJuliaGroup(pickerForTabId!, partner.id);
+                        const hostType = $tabs.find(t => t.id === pickerForTabId)?.type;
+                        if (hostType === "julia" && partner.type === "julia") {
+                            createJuliaGroup(pickerForTabId!, partner.id);
+                        } else {
+                            createCrossGroup(pickerForTabId!, partner.id);
+                        }
                         ensureAdjacent(pickerForTabId!, partner.id);
                         pickerForTabId = null;
                         pickerPos = null;
@@ -493,7 +582,11 @@
                     class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
                 >
                     <Icon
-                        icon="solar:code-bold-duotone"
+                        icon={partner.type === "typst"
+                            ? "solar:document-text-bold-duotone"
+                            : partner.type === "lexical"
+                              ? "solar:text-bold-duotone"
+                              : "solar:code-bold-duotone"}
                         width="0.75rem"
                         class="shrink-0"
                     />

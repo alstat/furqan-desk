@@ -24,7 +24,8 @@ export const ru: Record<string, string> = {
     'settings.website': 'Веб-сайт',
     'settings.website.download': 'Скачать обновление',
     'settings.website.up_to_date': 'Актуально',
-    'settings.zen': 'Режим Дзен',
+    'sukun.show_icons': 'Показать иконки',
+    'settings.zen': 'Режим Сукун',
     'settings.zen.desc': 'Редактирование без отвлечений — убирает рамки, тени и приглушает иконки',
     'settings.privacy': 'Конфиденциальность',
     'settings.privacy.text': 'AyahLab не собирает персональные данные. Функция обратной связи использует Resend для отправки вашего сообщения напрямую разработчику — ваш email используется только для ответа и никогда не сохраняется и не передаётся третьим лицам. Без аналитики, без отслеживания.',
@@ -268,6 +269,8 @@ export const ru: Record<string, string> = {
     'manuscript.insert': 'Вставить в редактор',
     'manuscript.insert_tooltip': 'Вставить изображение в редактор',
     'manuscript.no_editor': 'Сначала откройте документ Lexical',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'Вставить морфологию в редактор',
     'manuscript.meta_date': 'Дата',
     'manuscript.meta_radiocarbon': 'Радиоуглеродный анализ',
     'manuscript.meta_material': 'Материал',

@@ -24,7 +24,8 @@ export const de: Record<string, string> = {
     'settings.website': 'Website',
     'settings.website.download': 'Update herunterladen',
     'settings.website.up_to_date': 'Aktuell',
-    'settings.zen': 'Zen-Modus',
+    'sukun.show_icons': 'Symbole anzeigen',
+    'settings.zen': 'Sukun-Modus',
     'settings.zen.desc': 'Ablenkungsfreies Arbeiten — entfernt Rahmen, Schatten und blendet Symbole ab',
     'settings.privacy': 'Datenschutz',
     'settings.privacy.text': 'AyahLab sammelt keine persönlichen Daten. Die Feedback-Funktion nutzt Resend, um Ihre Nachricht direkt an den Entwickler zu senden – Ihre E-Mail-Adresse wird nur zur Antwort verwendet und niemals gespeichert oder weitergegeben. Keine Analysen, kein Tracking.',
@@ -268,6 +269,8 @@ export const de: Record<string, string> = {
     'manuscript.insert': 'In Editor einfügen',
     'manuscript.insert_tooltip': 'Bild in Editor einfügen',
     'manuscript.no_editor': 'Lexical-Dokument zuerst öffnen',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'Morphologie in Editor einfügen',
     'manuscript.meta_date': 'Datum',
     'manuscript.meta_radiocarbon': 'Radiokarbondatierung',
     'manuscript.meta_material': 'Material',

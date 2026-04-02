@@ -24,7 +24,8 @@ export const pt: Record<string, string> = {
     'settings.website': 'Site',
     'settings.website.download': 'Baixar atualização',
     'settings.website.up_to_date': 'Atualizado',
-    'settings.zen': 'Modo Zen',
+    'sukun.show_icons': 'Mostrar ícones',
+    'settings.zen': 'Modo Sukun',
     'settings.zen.desc': 'Edição sem distrações — remove bordas, sombras e atenua ícones da interface',
     'settings.privacy': 'Privacidade',
     'settings.privacy.text': 'O AyahLab funciona completamente offline. Sem contas, sem telemetria, sem análises. Suas notas, marcadores e configurações permanecem apenas no seu dispositivo.',
@@ -268,6 +269,8 @@ export const pt: Record<string, string> = {
     'manuscript.insert': 'Inserir no Lexical',
     'manuscript.insert_tooltip': 'Inserir imagem no editor',
     'manuscript.no_editor': 'Abra uma aba de documento Lexical primeiro',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'Inserir morfologia no editor',
     'manuscript.meta_date': 'Data',
     'manuscript.meta_radiocarbon': 'Radiocarbono',
     'manuscript.meta_material': 'Material',

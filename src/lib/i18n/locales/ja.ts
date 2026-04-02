@@ -24,7 +24,8 @@ export const ja: Record<string, string> = {
     'settings.website': 'ウェブサイト',
     'settings.website.download': 'アップデートをダウンロード',
     'settings.website.up_to_date': '最新です',
-    'settings.zen': 'Zen モード',
+    'sukun.show_icons': 'アイコンを表示',
+    'settings.zen': 'Sukun モード',
     'settings.zen.desc': '集中編集 — ボーダー・シャドウを除去しアイコンを暗くします',
     'settings.privacy': 'プライバシー',
     'settings.privacy.text': 'AyahLab は個人データを一切収集しません。フィードバック機能は Resend を使用してメッセージを開発者に直接送信します。メールアドレスは返信にのみ使用され、保存・共有されることはありません。分析なし、追跡なし。',
@@ -268,6 +269,8 @@ export const ja: Record<string, string> = {
     'manuscript.insert': 'エディタに挿入',
     'manuscript.insert_tooltip': 'エディタに画像を挿入',
     'manuscript.no_editor': '先に Lexical ドキュメントを開いてください',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'エディタに形態論を挿入',
     'manuscript.meta_date': '日付',
     'manuscript.meta_radiocarbon': '放射性炭素年代測定',
     'manuscript.meta_material': '素材',

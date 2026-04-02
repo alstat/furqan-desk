@@ -12,13 +12,15 @@
         equation: string;
         isInline: boolean;
         nodeKey: string;
+        autoEdit?: boolean;
     }
 
-    let { equation, isInline, nodeKey }: Props = $props();
+    let { equation, isInline, nodeKey, autoEdit = false }: Props = $props();
 
     let element: HTMLElement | null = $state(null);
     let previewEl: HTMLElement | null = $state(null);
-    let isEditing = $state(false);
+    let textareaEl: HTMLTextAreaElement | null = $state(null);
+    let isEditing = $state(autoEdit);
     let editableValue = $state(equation);
 
     const editor = getEditor();
@@ -66,6 +68,7 @@
     }
 
     function handleKeydown(event: KeyboardEvent) {
+        event.stopPropagation();
         if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
             handleSave();
@@ -91,6 +94,15 @@
 
     onMount(() => {
         renderEquation();
+        if (autoEdit) {
+            editor.update(() => {
+                const node = getNodeByKey(nodeKey);
+                if (node && isEquationNode(node)) {
+                    node.setAutoEdit(false);
+                }
+            });
+            setTimeout(() => textareaEl?.focus(), 0);
+        }
     });
 </script>
 
@@ -143,6 +155,7 @@
             <span class="px-3 pt-2.5 pb-1.5 bg-brand-sand-50 dark:bg-[#232634]">
                 <!-- svelte-ignore a11y_autofocus -->
                 <textarea
+                    bind:this={textareaEl}
                     bind:value={editableValue}
                     onkeydown={handleKeydown}
                     autofocus

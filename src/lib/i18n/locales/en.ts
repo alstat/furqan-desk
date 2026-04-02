@@ -24,7 +24,8 @@ export const en: Record<string, string> = {
     'settings.website': 'Website',
     'settings.website.download': 'Download update',
     'settings.website.up_to_date': 'Up to date',
-    'settings.zen': 'Zen Mode',
+    'sukun.show_icons': 'Show Icons',
+    'settings.zen': 'Sukun Mode',
     'settings.zen.desc': 'Distraction-free editing — removes borders, shadows, and dims interface icons',
     'settings.privacy': 'Privacy',
     'settings.privacy.text': 'AyahLab is fully offline. No accounts, no telemetry, no analytics. Your notes, bookmarks, and settings stay on your device only — the author has no way to access your data.',
@@ -270,6 +271,8 @@ export const en: Record<string, string> = {
     'manuscript.insert': 'Insert to Lexical',
     'manuscript.insert_tooltip': 'Insert image into editor',
     'manuscript.no_editor': 'Open a Lexical document tab first',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'Insert morphology into editor',
     'manuscript.meta_date': 'Date',
     'manuscript.meta_radiocarbon': 'Radiocarbon',
     'manuscript.meta_material': 'Material',

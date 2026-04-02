@@ -9,9 +9,12 @@
         typstCompileError,
         typstIsCompiling,
         zenMode,
+        zenPeek,
     } from "$lib/stores/editor.store";
     import Icon from "@iconify/svelte";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
+
+    let { embedded = false }: { embedded?: boolean } = $props();
 
     async function exportPdf() {
         typstCompileError.set("");
@@ -29,11 +32,14 @@
     }
 </script>
 
-<!-- Outer: matches Parchment's outer wrapper exactly -->
+<!-- Outer: matches Parchment's outer wrapper exactly; stripped when embedded in a split panel -->
 <div
-    class="{$zenMode
-        ? ''
-        : 'sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30  bg-white dark:bg-[#303446]'} relative z-1 flex flex-col items-center rounded-r-md sm:w-full md:w-9/12 lg:w-6/12"
+    class="{embedded
+        ? 'flex-1 flex flex-col min-h-0 w-full'
+        : ($zenMode
+            ? ''
+            : 'sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]') +
+          ' relative z-1 flex flex-col items-center rounded-r-md sm:w-full md:w-9/12 lg:w-6/12'}"
 >
     <!-- Inner: matches Parchment's inner scrollable div (border + rounded-r-md) -->
     <div
@@ -70,8 +76,9 @@
             <button
                 onclick={exportPdf}
                 class={$zenMode
-                    ? actionBtnStyle +
-                      " absolute -top-5 left-11/12 opacity-0 hover:opacity-100 transition-opacity duration-200"
+                    ? actionBtnStyle + ($zenPeek
+                        ? " absolute -top-5 left-11/12 opacity-50 transition-opacity duration-200"
+                        : " absolute -top-5 left-11/12 opacity-0 hover:opacity-100 transition-opacity duration-200")
                     : actionBtnStyle + " absolute -top-5 left-11/12"}
             >
                 <Icon icon="ph:file-pdf-bold" />

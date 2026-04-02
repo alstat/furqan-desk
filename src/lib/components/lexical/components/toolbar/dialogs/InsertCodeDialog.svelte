@@ -189,6 +189,7 @@
                     bind:value={code}
                     onkeydown={handleTabKey}
                     autocorrect="off"
+                    dir="ltr"
                     placeholder={$t('dialog.insert_code.placeholder')}
                     rows="8"
                     class="w-full resize-y rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors font-mono"

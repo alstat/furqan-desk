@@ -24,7 +24,8 @@ export const hi: Record<string, string> = {
     'settings.website': 'वेबसाइट',
     'settings.website.download': 'अपडेट डाउनलोड करें',
     'settings.website.up_to_date': 'अप टू डेट',
-    'settings.zen': 'ज़ेन मोड',
+    'sukun.show_icons': 'आइकन दिखाएं',
+    'settings.zen': 'Sukun मोड',
     'settings.zen.desc': 'ध्यान-मुक्त संपादन — बॉर्डर, छाया हटाता है और इंटरफ़ेस आइकन धुंधले करता है',
     'settings.privacy': 'गोपनीयता',
     'settings.privacy.text': 'AyahLab पूरी तरह ऑफलाइन है। कोई अकाउंट नहीं, कोई टेलीमेट्री नहीं, कोई एनालिटिक्स नहीं। आपके नोट्स, बुकमार्क और सेटिंग्स केवल आपके डिवाइस पर रहते हैं।',
@@ -268,6 +269,8 @@ export const hi: Record<string, string> = {
     'manuscript.insert': 'Lexical में सम्मिलित करें',
     'manuscript.insert_tooltip': 'एडिटर में छवि सम्मिलित करें',
     'manuscript.no_editor': 'पहले एक Lexical दस्तावेज़ टैब खोलें',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'एडिटर में रूपविज्ञान सम्मिलित करें',
     'manuscript.meta_date': 'तारीख',
     'manuscript.meta_radiocarbon': 'रेडियोकार्बन',
     'manuscript.meta_material': 'सामग्री',

@@ -1,0 +1,40 @@
+# Maintainer: al-ahmadgaidasaad <maintainer@example.com>
+pkgname=ayahlab-bin
+pkgver=VERSION_PLACEHOLDER
+pkgrel=1
+pkgdesc="Quran study, annotation and note-taking desktop application"
+arch=('x86_64')
+url="https://github.com/al-ahmadgaidasaad/furqan-desk"
+license=('MIT')
+depends=(
+    'webkit2gtk-4.1'
+    'libayatana-appindicator'
+    'librsvg'
+    'hicolor-icon-theme'
+    'xdg-utils'
+)
+provides=('ayahlab')
+conflicts=('ayahlab')
+options=('!strip')
+source=(
+    "${pkgname}-${pkgver}.AppImage::https://github.com/al-ahmadgaidasaad/furqan-desk/releases/download/v${pkgver}/AyahLab_${pkgver}_amd64.AppImage"
+)
+sha256sums=('SHA256_PLACEHOLDER')
+
+package() {
+    install -Dm755 "${srcdir}/${pkgname}-${pkgver}.AppImage" \
+        "${pkgdir}/usr/bin/ayahlab"
+
+    mkdir -p "${pkgdir}/usr/share/applications"
+    cat > "${pkgdir}/usr/share/applications/ayahlab.desktop" << 'DESKTOP'
+[Desktop Entry]
+Name=AyahLab
+Comment=Quran study, annotation and note-taking
+Exec=ayahlab %U
+Icon=ayahlab
+Type=Application
+Categories=Education;Office;
+MimeType=application/x-lexical;
+StartupNotify=true
+DESKTOP
+}

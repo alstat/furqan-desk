@@ -11,8 +11,9 @@
     import katex from "katex";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import DialogPanelHeader from "$lib/components/shared/DialogPanelHeader.svelte";
-    import { t } from '$lib/i18n';
-    import { get } from 'svelte/store';
+    import { t } from "$lib/i18n";
+    import { get } from "svelte/store";
+    import { icons } from "$lib/data/toolbar/toolbar";
 
     const editor = getEditor();
     const activeEditor = getActiveEditor();
@@ -61,7 +62,10 @@
             });
             error = "";
         } catch (e) {
-            error = e instanceof Error ? e.message : get(t)('dialog.invalid_equation');
+            error =
+                e instanceof Error
+                    ? e.message
+                    : get(t)("dialog.invalid_equation");
         }
     }
 
@@ -137,7 +141,7 @@
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="true"
-        aria-label={$t('dialog.insert_equation')}
+        aria-label={$t("dialog.insert_equation")}
         tabindex="-1"
         class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{PANEL_W}px; z-index:{zIndex};"
@@ -150,8 +154,8 @@
     >
         <!-- Header -->
         <DialogPanelHeader
-            icon="solar:calculator-bold-duotone"
-            title={$t('dialog.insert_equation')}
+            icon={icons["math"]}
+            title={$t("dialog.insert_equation")}
             {isDragging}
             onClose={close}
             onpointerdown={startDrag}
@@ -165,11 +169,11 @@
                 <label
                     for="equation-input"
                     class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
-                    >{$t('dialog.latex_equation')}</label
+                    >{$t("dialog.latex_equation")}</label
                 >
                 <textarea
                     id="equation-input"
-                    placeholder={$t('dialog.equation_placeholder')}
+                    placeholder={$t("dialog.equation_placeholder")}
                     rows="3"
                     bind:value={equation}
                     oninput={() => updatePreview()}
@@ -189,7 +193,7 @@
                 {#if !equation}
                     <span
                         class="text-[11px] text-brand-charcoal-300 dark:text-[#626880]"
-                        >{$t('dialog.preview_placeholder')}</span
+                        >{$t("dialog.preview_placeholder")}</span
                     >
                 {/if}
             </div>
@@ -211,10 +215,10 @@
                         class="appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#1e2030] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100 dark:hover:bg-[#1e2030]"
                     >
                         <option class="cursor-pointer" value="inline"
-                            >{$t('dialog.math_inline')}</option
+                            >{$t("dialog.math_inline")}</option
                         >
                         <option class="cursor-pointer" value="display"
-                            >{$t('dialog.math_display')}</option
+                            >{$t("dialog.math_display")}</option
                         >
                     </select>
                     <span
@@ -237,8 +241,8 @@
                     }}
                     class="cursor-pointer flex px-5 items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
                 >
-                    <Icon icon="solar:calculator-bold" width="0.8rem" />
-                    {$t('dialog.insert_equation')}
+                    <Icon icon={icons["math"]} width="0.8rem" />
+                    {$t("dialog.insert_equation")}
                 </button>
             </div>
         </div>

@@ -11,6 +11,21 @@ use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // WebKitGTK's DMA-BUF renderer fails to initialise EGL on some Linux
+    // configurations (notably Fedora + Mesa ≥ 25 with AMD/Radeon GPUs), which
+    // produces "Could not create default EGL display: EGL_BAD_PARAMETER.
+    // Aborting…" and prevents the app from starting.  Disabling it here makes
+    // WebKit fall back to a software-composited path that works everywhere.
+    // Safe to set unconditionally on Linux; no effect on other platforms.
+    #[cfg(target_os = "linux")]
+    {
+        // Only set if the caller has not already overridden it.
+        if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+            // SAFETY: single-threaded at this point (before Tauri spawns workers).
+            unsafe { std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1") };
+        }
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())

@@ -1,7 +1,7 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { selectedSurahIdx } from "$lib/stores/quran.svelte";
-    import { zenMode } from "$lib/stores/editor.store";
+    import { zenMode, zenPeek } from "$lib/stores/editor.store";
 
     let { position = "block" } = $props();
 
@@ -18,7 +18,9 @@
 <div class={position}>
     <div
         class="{$zenMode
-            ? 'opacity-0 hover:opacity-100 transition-opacity duration-200'
+            ? $zenPeek
+                ? 'opacity-50 transition-opacity duration-200'
+                : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
             : ''} flex flex-row items-center justify-center gap-3"
     >
         {#if $selectedSurahIdx === 114}

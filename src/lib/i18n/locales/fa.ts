@@ -24,7 +24,8 @@ export const fa: Record<string, string> = {
     'settings.website': 'وب‌سایت',
     'settings.website.download': 'دانلود به‌روزرسانی',
     'settings.website.up_to_date': 'به‌روز است',
-    'settings.zen': 'حالت زن',
+    'sukun.show_icons': 'نمایش آیکون‌ها',
+    'settings.zen': 'حالت سکون',
     'settings.zen.desc': 'ویرایش بدون حواس‌پرتی — حذف حاشیه‌ها، سایه‌ها و کم‌رنگ کردن آیکون‌ها',
     'settings.privacy': 'حریم خصوصی',
     'settings.privacy.text': 'AyahLab هیچ داده شخصی جمع‌آوری نمی‌کند. ویژگی بازخورد از Resend برای ارسال مستقیم پیام شما به توسعه‌دهنده استفاده می‌کند — ایمیل شما فقط برای پاسخ به شما استفاده می‌شود و هرگز ذخیره یا به اشتراک گذاشته نمی‌شود. بدون تجزیه‌وتحلیل، بدون ردیابی.',
@@ -268,6 +269,8 @@ export const fa: Record<string, string> = {
     'manuscript.insert': 'درج در ویرایشگر',
     'manuscript.insert_tooltip': 'درج تصویر در ویرایشگر',
     'manuscript.no_editor': 'ابتدا یک سند Lexical باز کنید',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'درج ریخت‌شناسی در ویرایشگر',
     'manuscript.meta_date': 'تاریخ',
     'manuscript.meta_radiocarbon': 'کربن‌سنجی',
     'manuscript.meta_material': 'ماده',
