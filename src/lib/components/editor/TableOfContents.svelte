@@ -4,7 +4,9 @@
     import { $isHeadingNode as isHeadingNode } from "@lexical/rich-text";
     import { tocOpen, lexicalEditorInstance } from "$lib/stores/editor.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
+    import { activeTab } from "$lib/stores/tabs.store";
     import Icon from "@iconify/svelte";
+    import { t } from "$lib/i18n";
 
     interface TocEntry {
         key: string;
@@ -53,15 +55,15 @@
             ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    // When Hide Surah Page is toggled on: auto-open
-    let prevHideSurahPage = false;
-    $effect(() => {
-        const hidden = $hideSurahPage();
-        if (hidden && !prevHideSurahPage) {
-            $tocOpen = true;
-        }
-        prevHideSurahPage = hidden;
-    });
+    // // When Hide Surah Page is toggled on AND the active tab is Lexical: auto-open
+    // let prevHideSurahPage = false;
+    // $effect(() => {
+    //     const hidden = $hideSurahPage();
+    //     if (hidden && !prevHideSurahPage && $activeTab?.type === "lexical") {
+    //         $tocOpen = true;
+    //     }
+    //     prevHideSurahPage = hidden;
+    // });
 </script>
 
 <!-- Floating panel -->
@@ -92,7 +94,7 @@
                 class="flex-1 text-[10px] font-bold uppercase tracking-widest
 				       text-brand-gold-600 dark:text-brand-gold-400 select-none"
             >
-                Contents
+                {$t("toc.title")}
             </span>
             <!-- <button
                 onclick={() => ($tocOpen = false)}
@@ -111,7 +113,9 @@
                     class="text-[11px] text-brand-charcoal-300 dark:text-[#626880]
 					       italic text-center px-2 py-4 select-none leading-relaxed"
                 >
-                    Add Heading 1–3 blocks<br />to see contents here
+                    {$t("toc.empty").split("\n")[0]}<br />{$t(
+                        "toc.empty",
+                    ).split("\n")[1]}
                 </p>
             {:else}
                 {#each headings as { key, text, tag }}

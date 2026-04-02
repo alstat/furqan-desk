@@ -10,6 +10,8 @@
     import Icon from "@iconify/svelte";
     import { open as openDialog } from "@tauri-apps/plugin-dialog";
     import { readFile } from "@tauri-apps/plugin-fs";
+    import { t } from '$lib/i18n';
+    import { get } from 'svelte/store';
     import { bringToFront } from '$lib/stores/window-manager.store';
     import DialogPanelHeader from '$lib/components/shared/DialogPanelHeader.svelte';
 
@@ -100,7 +102,7 @@
     async function browseFile() {
         fileError = "";
         const selected = await openDialog({
-            title: "Select an image",
+            title: get(t)('dialog.select_image_title'),
             filters: [{ name: "Images", extensions: IMAGE_EXTENSIONS }],
             multiple: false,
         });
@@ -190,7 +192,7 @@
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="true"
-        aria-label="Insert Image"
+        aria-label={$t('dialog.insert_image')}
         tabindex="-1"
         class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{PANEL_W}px; z-index:{zIndex};"
@@ -200,7 +202,7 @@
         <!-- Header -->
         <DialogPanelHeader
             icon="solar:gallery-bold-duotone"
-            title="Insert Image"
+            title={$t('dialog.insert_image')}
             {isDragging}
             onClose={close}
             onpointerdown={startDrag}
@@ -219,7 +221,7 @@
                             : 'text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]'}"
                     >
                         <Icon icon="solar:folder-open-bold" width="0.75rem" />
-                        Local File
+                        {$t('dialog.tab_local_file')}
                     </button>
                     <button
                         onclick={() => (activeTab = "url")}
@@ -230,7 +232,7 @@
                             : 'text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]'}"
                     >
                         <Icon icon="solar:link-bold" width="0.75rem" />
-                        Web URL
+                        {$t('dialog.tab_web_url')}
                     </button>
                 </div>
             {/snippet}
@@ -245,7 +247,7 @@
                 <div class="flex flex-col gap-1.5">
                     <label
                         class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
-                        >Image URL</label
+                        >{$t('dialog.image_url')}</label
                     >
                     <input
                         type="url"
@@ -258,11 +260,11 @@
                 <div class="flex flex-col gap-1.5">
                     <label
                         class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
-                        >Alt Text</label
+                        >{$t('dialog.alt_text')}</label
                     >
                     <input
                         type="text"
-                        placeholder="Descriptive alternative text"
+                        placeholder={$t('dialog.alt_text_placeholder')}
                         bind:value={altText}
                         data-test-id="image-modal-alt-text-input"
                         class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
@@ -273,7 +275,7 @@
                 <div class="flex flex-col gap-1.5">
                     <label
                         class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
-                        >Image File</label
+                        >{$t('dialog.image_file')}</label
                     >
                     <button
                         onclick={browseFile}
@@ -288,7 +290,7 @@
                             />
                             <span
                                 class="text-brand-charcoal-400 dark:text-[#838ba7]"
-                                >Loading…</span
+                                >{$t('explorer.loading')}</span
                             >
                         {:else if fileName}
                             <Icon
@@ -302,7 +304,7 @@
                             >
                             <span
                                 class="ml-auto shrink-0 text-brand-charcoal-300 dark:text-[#626880]"
-                                >Change</span
+                                >{$t('explorer.change')}</span
                             >
                         {:else}
                             <Icon
@@ -312,7 +314,7 @@
                             />
                             <span
                                 class="text-brand-charcoal-400 dark:text-[#838ba7]"
-                                >Browse file system…</span
+                                >{$t('dialog.browse_files')}</span
                             >
                         {/if}
                     </button>
@@ -346,11 +348,11 @@
                 <div class="flex flex-col gap-1.5">
                     <label
                         class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
-                        >Alt Text</label
+                        >{$t('dialog.alt_text')}</label
                     >
                     <input
                         type="text"
-                        placeholder="Descriptive alternative text"
+                        placeholder={$t('dialog.alt_text_placeholder')}
                         bind:value={fileAltText}
                         data-test-id="image-modal-file-alt-text-input"
                         class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
@@ -365,7 +367,7 @@
                 class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors mt-1"
             >
                 <Icon icon="solar:gallery-add-bold" width="0.8rem" />
-                Insert Image
+                {$t('dialog.insert_image')}
             </button>
         </div>
     </div>

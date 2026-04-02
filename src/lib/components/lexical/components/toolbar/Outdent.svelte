@@ -6,6 +6,7 @@
 	import { getContext } from 'svelte';
 	import type { Writable } from 'svelte/store';
 	import { IS_APPLE } from '@lexical/utils';
+	import { t } from '$lib/i18n';
 
 	const activeEditor = getActiveEditor();
 	const isEditable = getIsEditable();
@@ -19,9 +20,9 @@
 		$activeEditor.dispatchCommand(OUTDENT_CONTENT_COMMAND, undefined);
 	}}
 	class={'p-1 ' + toolBarBtnStyle + ($isOutdent ? 'active ' + activeBtnStyle : '')}
-	title={IS_APPLE ? 'Outdent' : 'Outdent'}
+	title={$t('toolbar.outdent')}
 	type="button"
-	aria-label={`Removes tab space to the paragraph. Shortcut: ${IS_APPLE ? 'tab' : 'tab'}`}
+	aria-label={$t('toolbar.outdent')}
 >
 	<Icon icon={icons['outdent']} height="1rem" />
 </button>

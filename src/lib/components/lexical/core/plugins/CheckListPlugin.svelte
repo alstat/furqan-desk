@@ -185,8 +185,9 @@
     const pageX = event.pageX / calculateZoomLevel(target);
     const fontSize = parseFloat(getComputedStyle(target).fontSize) || 16;
     const hitArea = fontSize * 1.5;
+    const isRTL = target.dir === 'rtl' || getComputedStyle(target).direction === 'rtl';
     if (
-      target.dir === 'rtl'
+      isRTL
         ? pageX < rect.right && pageX > rect.right - hitArea
         : pageX > rect.left && pageX < rect.left + hitArea
     ) {

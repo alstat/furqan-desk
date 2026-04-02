@@ -5,6 +5,7 @@
 	import { onMount } from 'svelte';
 	import { getEditor, getIsEditable, getActiveEditor } from '$lexical/core/composerContext.js';
 	import { IS_APPLE } from '@lexical/utils';
+	import { t } from '$lib/i18n';
 
 	const editor = getEditor();
 	const activeEditor = getActiveEditor();
@@ -31,10 +32,10 @@
 	onclick={() => {
 		$activeEditor.dispatchCommand(UNDO_COMMAND, undefined);
 	}}
-	title={IS_APPLE ? 'Undo (⌘Z)' : 'Undo (Ctrl+Z)'}
+	title={IS_APPLE ? `${$t('toolbar.undo')} (⌘Z)` : `${$t('toolbar.undo')} (Ctrl+Z)`}
 	type="button"
 	class={toolBarBtnStyle + ' p-1 ' + disabledClass}
-	aria-label="Undo"
+	aria-label={$t('toolbar.undo')}
 >
   {#if !canUndo || !$isEditable}
     <span class="text-brand-charcoal-100 dark:text-[#626880]"><Icon icon={icons['undo']} width=1rem/></span>

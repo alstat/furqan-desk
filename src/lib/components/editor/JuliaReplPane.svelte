@@ -530,12 +530,12 @@
 </script>
 
 <div
-    class="flex-1 flex flex-col rounded-md overflow-hidden border border-brand-sand-400 dark:border-[#414559] shadow-sm min-h-0 h-full"
+    class="flex-1 mt-0.5 flex flex-col rounded-md overflow-hidden border border-brand-sand-200 dark:border-[#414559] min-h-0 h-full"
     style="--repl-font-size: {$cmFontSize}px"
 >
     <!-- Tab bar -->
     <div
-        class="flex items-center bg-brand-sand-200 dark:bg-[#292c3c] border-b border-brand-sand-400 dark:border-[#414559] shrink-0 overflow-x-auto"
+        class="flex items-center bg-brand-sand-100 dark:bg-[#292c3c] border-b border-brand-sand-200 dark:border-[#414559] shrink-0 overflow-x-auto"
     >
         <!-- Julia REPL tab -->
         <div
@@ -620,7 +620,7 @@
         <!-- Terminal tabs -->
         {#each ts.termTabs as tab (tab.id)}
             <div
-                class="flex items-center flex-none rounded-full border-r border-brand-sand-400 dark:border-[#414559]
+                class="flex items-center flex-none mr-2 rounded-full border-r border-brand-sand-400 dark:border-[#414559]
                         {ts.activePanel === tab.id
                     ? 'bg-brand-sand-50 dark:bg-[#414559]'
                     : 'hover:bg-brand-sand-100 dark:hover:bg-[#303446]'}"
@@ -788,7 +788,7 @@
             <div
                 role="group"
                 aria-label="REPL input"
-                class="flex items-start gap-2 px-3 py-1.5 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-400 dark:border-[#414559] shrink-0"
+                class="flex items-start gap-2 px-3 py-1.5 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-200 dark:border-[#414559] shrink-0"
                 onclick={() => replInputEl?.focus()}
                 onkeydown={(e) => {
                     if (e.key === "Enter") replInputEl?.focus();

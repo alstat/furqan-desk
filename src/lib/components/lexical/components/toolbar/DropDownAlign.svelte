@@ -15,6 +15,7 @@
     import type { Writable } from "svelte/store";
     import Icon from "@iconify/svelte";
     import { icons } from "$lib/data/toolbar/toolbar";
+    import { t } from "$lib/i18n";
 
     const activeEditor = getActiveEditor();
     const isRTL: Writable<boolean> = getContext("isRTL");
@@ -35,7 +36,7 @@
     >
         <div class="flex flex-row items-center w-28">
             <div class="pr-2"><Icon icon={icons["left"]} width="1rem" /></div>
-            <div>Left Align</div>
+            <div>{$t('toolbar.left_align')}</div>
         </div>
     </DropDownItem>
     <DropDownItem
@@ -46,7 +47,7 @@
     >
         <div class="flex flex-row items-center w-28">
             <div class="pr-2"><Icon icon={icons["center"]} width="1rem" /></div>
-            <div>Center Align</div>
+            <div>{$t('toolbar.center_align')}</div>
         </div>
     </DropDownItem>
     <DropDownItem
@@ -57,7 +58,7 @@
     >
         <div class="flex flex-row items-center w-28">
             <div class="pr-2"><Icon icon={icons["right"]} width="1rem" /></div>
-            <div>Right Align</div>
+            <div>{$t('toolbar.right_align')}</div>
         </div>
     </DropDownItem>
     <DropDownItem
@@ -70,7 +71,7 @@
             <div class="pr-2">
                 <Icon icon={icons["justify"]} width="1rem" />
             </div>
-            <div>Justify Align</div>
+            <div>{$t('toolbar.justify_align')}</div>
         </div>
     </DropDownItem>
 </DropDown>

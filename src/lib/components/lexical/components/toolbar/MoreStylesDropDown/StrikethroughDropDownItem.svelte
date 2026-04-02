@@ -5,6 +5,7 @@
   import {FORMAT_TEXT_COMMAND} from 'lexical';
   import {getContext} from 'svelte';
   import type {Writable} from 'svelte/store';
+  import { t } from '$lib/i18n';
 
   const activeEditor = getActiveEditor();
 
@@ -16,8 +17,8 @@
     $activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
   }}
   class={'item ' + ($isStrikethrough ? 'active dropdown-item-active' : '')}
-  title="Strikethrough"
-  ariaLabel="Format text with a strikethrough">
+  title={$t('toolbar.strikethrough')}
+  ariaLabel={$t('toolbar.strikethrough')}>
   <i class="icon strikethrough"></i>
-  <span class="text">Strikethrough</span>
+  <span class="text">{$t('toolbar.strikethrough')}</span>
 </DropDownItem>

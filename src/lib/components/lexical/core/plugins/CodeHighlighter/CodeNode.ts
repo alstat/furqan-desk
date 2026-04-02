@@ -1,4 +1,3 @@
-import hljs from 'highlight.js';
 import { $applyNodeReplacement, DecoratorNode, type EditorConfig, type LexicalNode, type NodeKey, type SerializedLexicalNode } from 'lexical';
 import CodeComponent from './CodeComponent.svelte';
 import type { ComponentProps } from 'svelte';
@@ -26,9 +25,8 @@ export function $isCodeNode(node: LexicalNode | null | undefined): node is CodeN
 export class CodeNode extends DecoratorNode<DecoratorCodeType> {
     __code: string | null | undefined;
     __language: string | null | undefined;
-    __preDOM: HTMLElement | null | undefined;
 
-    constructor(code: string | null | undefined, language:string | null | undefined, key?: NodeKey)  {
+    constructor(code: string | null | undefined, language: string | null | undefined, key?: NodeKey) {
         super(key);
         this.__code = code;
         this.__language = language;
@@ -39,7 +37,7 @@ export class CodeNode extends DecoratorNode<DecoratorCodeType> {
     }
 
     static clone(node: CodeNode): CodeNode {
-        return new CodeNode(node.__code, node.__language, node.__key)
+        return new CodeNode(node.__code, node.__language, node.__key);
     }
 
     static importJSON(serializedNode: SerializedCodeNode): CodeNode {
@@ -52,18 +50,19 @@ export class CodeNode extends DecoratorNode<DecoratorCodeType> {
             language: this.__language!,
             type: 'code',
             version: 1,
-        }
+        };
     }
 
-    createDOM(config: EditorConfig): HTMLElement {
-        this.__preDOM = document.createElement('pre');
-        const codeDOM = document.createElement('code');
-        codeDOM.innerHTML = this.__code!;
-        this.__preDOM.classList.add('language-' + this.__language!);
-        console.log('here is the language')
-        console.log('language-' + this.__language!)
-        this.__preDOM.appendChild(codeDOM);
-        return this.__preDOM;
+    createDOM(_config: EditorConfig): HTMLElement {
+        return document.createElement('div');
+    }
+
+    updateDOM(): boolean {
+        return false;
+    }
+
+    isInline(): false {
+        return false;
     }
 
     setCode(code: string): void {
@@ -88,12 +87,10 @@ export class CodeNode extends DecoratorNode<DecoratorCodeType> {
         return {
             componentClass: CodeComponent,
             updateProps: (props) => {
-                props.codeDOM = this.__preDOM!;
                 props.code = this.__code!;
                 props.language = this.__language!;
                 props.nodeKey = this.__key;
             }
-        }
+        };
     }
-
 }

@@ -157,7 +157,10 @@
       "Bash(./gradlew --stop)",
       "Bash(git rm:*)",
       "Bash(find /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk -type f -iname *dialog*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(cargo run:*)",
+      "Bash(gh release:*)"
     ]
   }
 }

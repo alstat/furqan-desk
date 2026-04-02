@@ -10,6 +10,7 @@
         typstSvgPages,
         typstCompileError,
         typstIsCompiling,
+        zenMode,
     } from "$lib/stores/editor.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
     import { activeTab, setActiveTabContent } from "$lib/stores/tabs.store";
@@ -171,7 +172,9 @@
             <button
                 onclick={() => (lineWrap = !lineWrap)}
                 title={lineWrap ? "Disable line wrap" : "Enable line wrap"}
-                class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
+                class="{$zenMode
+                    ? 'opacity-0 hover:opacity-100 transition-opacity duration-200'
+                    : ''} flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                        {lineWrap
                     ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'
                     : 'bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25'}"
@@ -260,7 +263,9 @@
             {/if}
             <button
                 onclick={exportPdf}
-                class="cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 transition-colors"
+                class="{$zenMode
+                    ? 'opacity-25 hover:opacity-100'
+                    : ''} mr-3 cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 transition-colors"
             >
                 Export PDF
             </button>

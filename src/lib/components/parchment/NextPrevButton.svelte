@@ -1,6 +1,7 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { selectedSurahIdx } from "$lib/stores/quran.svelte";
+    import { zenMode } from "$lib/stores/editor.store";
 
     let { position = "block" } = $props();
 
@@ -15,7 +16,11 @@
 </script>
 
 <div class={position}>
-    <div class="flex flex-row items-center justify-center gap-3">
+    <div
+        class="{$zenMode
+            ? 'opacity-0 hover:opacity-100 transition-opacity duration-200'
+            : ''} flex flex-row items-center justify-center gap-3"
+    >
         {#if $selectedSurahIdx === 114}
             <button title="No next surah" disabled class={btnDisabled}>
                 <Icon icon="solar:arrow-left-bold-duotone" width="1rem" />

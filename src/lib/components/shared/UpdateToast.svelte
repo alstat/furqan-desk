@@ -4,6 +4,7 @@
     import { getVersion } from "@tauri-apps/api/app";
     import { openUrl } from "@tauri-apps/plugin-opener";
     import Icon from "@iconify/svelte";
+    import { t } from "$lib/i18n";
 
     let visible = $state(false);
     let latestVersion = $state("");
@@ -53,20 +54,19 @@
             <p
                 class="text-xs font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5]"
             >
-                Update available
+                {$t('update.title')}
             </p>
             <p
                 class="text-[11px] text-brand-charcoal-400 dark:text-[#838ba7] mt-0.5"
             >
-                AyahLab <span class="font-mono">v{latestVersion}</span> is ready to
-                download.
+                {$t('update.message', { version: latestVersion })}
             </p>
             <button
                 class="mt-2 text-[11px] cursor-pointer font-medium text-brand-gold-600 dark:text-[#e5c890]
                        hover:underline"
                 onclick={() => openUrl("https://www.ayahlab.com/")}
             >
-                Download update →
+                {$t('update.download')}
             </button>
         </div>
         <button

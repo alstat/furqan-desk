@@ -4,6 +4,7 @@
 	import { readTextFile } from '@tauri-apps/plugin-fs';
 	import { openOrFocusTab } from '$lib/stores/tabs.store';
 	import { actionBtnStyle } from '$lib/data/toolbar/toolbar';
+	import { t } from '$lib/i18n';
 
 	async function openFile() {
 		const result = await openDialog({
@@ -21,8 +22,8 @@
 <button
 	class={actionBtnStyle}
 	onclick={openFile}
-	title="Open file"
-	aria-label="Open file"
+	title={$t('toolbar.open_file')}
+	aria-label={$t('toolbar.open_file')}
 >
 	<Icon icon="solar:folder-open-bold-duotone" width="1rem" />
 </button>
