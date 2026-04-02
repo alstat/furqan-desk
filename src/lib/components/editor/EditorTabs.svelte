@@ -207,11 +207,11 @@
         }
         const cGroup = getCrossGroupOf(draggedTabId);
         if (cGroup) {
-            const jIdx = $tabs.findIndex((t: EditorTab) => t.id === cGroup.juliaTabId);
+            const jIdx = $tabs.findIndex((t: EditorTab) => t.id === cGroup.hostTabId);
             const pIdx = $tabs.findIndex((t: EditorTab) => t.id === cGroup.partnerTabId);
             return jIdx <= pIdx
-                ? [cGroup.juliaTabId, cGroup.partnerTabId]
-                : [cGroup.partnerTabId, cGroup.juliaTabId];
+                ? [cGroup.hostTabId, cGroup.partnerTabId]
+                : [cGroup.partnerTabId, cGroup.hostTabId];
         }
         return [draggedTabId];
     }
@@ -267,9 +267,9 @@
                     ? [jGroup.tabA, jGroup.tabB]
                     : [jGroup.tabB, jGroup.tabA])
                 : cGroup
-                    ? (ts.findIndex(t => t.id === cGroup.juliaTabId) <= ts.findIndex(t => t.id === cGroup.partnerTabId)
-                        ? [cGroup.juliaTabId, cGroup.partnerTabId]
-                        : [cGroup.partnerTabId, cGroup.juliaTabId])
+                    ? (ts.findIndex(t => t.id === cGroup.hostTabId) <= ts.findIndex(t => t.id === cGroup.partnerTabId)
+                        ? [cGroup.hostTabId, cGroup.partnerTabId]
+                        : [cGroup.partnerTabId, cGroup.hostTabId])
                     : [draggedTabId];
             if (idsToMove.includes(targetTabId)) return ts;
             const tabsToMove: EditorTab[] = idsToMove
@@ -353,8 +353,13 @@
     onpointerup={onWindowPointerUp}
 />
 
+<!-- Outer: clips scrollbar thumb to the rounded-full boundary -->
 <div
-    class="{$zenMode ? 'opacity-0 hover:opacity-100 transition-opacity duration-200' : ''} tabs-scroll select-none flex flex-row absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] rounded-full border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30 {pointerDragging ? 'cursor-grabbing' : ''}"
+    class="{$zenMode ? 'opacity-0 hover:opacity-100 transition-opacity duration-200' : ''} select-none absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(28rem,80%)] rounded-full border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30 overflow-hidden"
+>
+<!-- Inner: handles horizontal scrolling -->
+<div
+    class="tabs-scroll flex flex-row min-h-8 {pointerDragging ? 'cursor-grabbing' : ''}"
     role="tablist"
     aria-label="Editor tabs"
 >
@@ -532,7 +537,8 @@
             {/if}
         </div>
     {/each}
-</div>
+</div><!-- end inner scroll div -->
+</div><!-- end outer clip div -->
 
 <div aria-live="polite" aria-atomic="true" class="sr-only">
     {dragTabId ? "Dragging tab — release to drop" : ""}

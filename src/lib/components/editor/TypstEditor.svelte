@@ -13,7 +13,12 @@
         zenMode,
     } from "$lib/stores/editor.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
-    import { tabs, activeTab, setActiveTabContent, setTabContent } from "$lib/stores/tabs.store";
+    import {
+        tabs,
+        activeTab,
+        setActiveTabContent,
+        setTabContent,
+    } from "$lib/stores/tabs.store";
     import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
     import {
         autocompletion,
@@ -27,7 +32,7 @@
     }: { tabId?: string | null; inCrossHost?: boolean } = $props();
 
     let effectiveTab = $derived(
-        tabId ? ($tabs.find(t => t.id === tabId) ?? null) : $activeTab
+        tabId ? ($tabs.find((t) => t.id === tabId) ?? null) : $activeTab,
     );
 
     // True when the preview is displayed in the Parchment area (side-by-side mode).
