@@ -16,12 +16,16 @@ pub struct DownloadState {
 
 // ── Shared HTTP client ────────────────────────────────────────────────────────
 /// Application-wide HTTP client shared across all commands.
-/// One client = one connection pool; the semaphore caps concurrent manuscript
-/// fetches at 4 so we never exhaust file descriptors when an ayah has many
-/// manuscripts listed in the Corpus Coranicum API.
+///
+/// Two independent semaphores prevent starvation:
+/// - `detail_sem` throttles the burst of metadata fetches (60–90 per ayah).
+/// - `image_sem` is reserved exclusively for image loads so that clicking any
+///   manuscript always acquires a slot immediately, regardless of how many
+///   detail fetches are still queued.
 pub struct HttpClient {
     pub client: reqwest::Client,
-    manuscript_sem: Arc<Semaphore>,
+    detail_sem: Arc<Semaphore>,
+    image_sem: Arc<Semaphore>,
 }
 
 impl HttpClient {
@@ -32,7 +36,8 @@ impl HttpClient {
             .expect("Failed to build shared HTTP client");
         Self {
             client,
-            manuscript_sem: Arc::new(Semaphore::new(4)),
+            detail_sem: Arc::new(Semaphore::new(6)),
+            image_sem: Arc::new(Semaphore::new(2)),
         }
     }
 }
@@ -1317,7 +1322,7 @@ pub async fn get_manuscript_detail(
     http: State<'_, HttpClient>,
     manuscript_id: u32,
 ) -> Result<String, String> {
-    let _permit = http.manuscript_sem.acquire().await.map_err(|e| e.to_string())?;
+    let _permit = http.detail_sem.acquire().await.map_err(|e| e.to_string())?;
     let url = format!(
         "https://api.corpuscoranicum.de/api/data/manuscripts/{}",
         manuscript_id
@@ -1389,7 +1394,7 @@ pub async fn get_manuscript_list(
     surah: u32,
     ayah: u32,
 ) -> Result<String, String> {
-    let _permit = http.manuscript_sem.acquire().await.map_err(|e| e.to_string())?;
+    let _permit = http.detail_sem.acquire().await.map_err(|e| e.to_string())?;
     let url = format!(
         "https://api.corpuscoranicum.de/api/data/manuscripts/sura/{}/verse/{}",
         surah, ayah
@@ -1464,8 +1469,9 @@ pub async fn get_manuscript_image(
         return tokio::fs::read(&cache_path).await.map_err(|e| e.to_string());
     }
 
-    // Acquire permit before opening a network connection
-    let _permit = http.manuscript_sem.acquire().await.map_err(|e| e.to_string())?;
+    // Acquire permit before opening a network connection.
+    // Uses the dedicated image semaphore so this is never blocked by detail fetches.
+    let _permit = http.image_sem.acquire().await.map_err(|e| e.to_string())?;
 
     // Build the fetch URL: thumbnail uses the API URL as-is; full-res strips
     // the size constraints so Scaler returns the original resolution.
