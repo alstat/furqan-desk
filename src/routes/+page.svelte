@@ -138,13 +138,8 @@
                     <!-- Partner=Julia: left = JuliaEditor with embedded REPL -->
                     <JuliaEditor tabId={activeCrossGroup.partnerTabId} hideRepl={false} />
                 {:else if partnerTab?.type === 'typst'}
-                    <!-- Partner=Typst: left = TypstEditor (top) + TypstPreview (bottom) -->
-                    <div class="flex-1 min-h-0 overflow-hidden">
-                        <TypstEditor tabId={activeCrossGroup.partnerTabId} />
-                    </div>
-                    <div class="flex-none overflow-hidden" style="height: 40%">
-                        <TypstPreview embedded={true} />
-                    </div>
+                    <!-- Partner=Typst: use TypstEditor's own resizable inline preview -->
+                    <TypstEditor tabId={activeCrossGroup.partnerTabId} inCrossHost={true} />
                 {:else if partnerTab?.type === 'lexical'}
                     <!-- Partner=Lexical: left = LexicalEditor full-height -->
                     <RichTextEditor />
