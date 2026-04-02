@@ -1,6 +1,5 @@
 import {
   CHECK_LIST,
-  CODE,
   HEADING,
   LINK,
   ORDERED_LIST,
@@ -11,6 +10,12 @@ import {
   type TextMatchTransformer,
   type Transformer,
 } from '@lexical/markdown';
+import { $createParagraphNode as createParagraphNode } from 'lexical';
+import {
+  CodeNode,
+  $createCodeNode as createCodeNode,
+  $isCodeNode as isCodeNode,
+} from '../CodeHighlighter/CodeNode.js';
 import {
   $isHorizontalRuleNode as isHorizontalRuleNode,
   HorizontalRuleNode,
@@ -144,12 +149,39 @@ export const ELEMENT_TRANSFORMERS: Array<ElementTransformer> = [
   ORDERED_LIST,
 ];
 
+export const CODE_BLOCK: ElementTransformer = {
+  dependencies: [CodeNode],
+  export: (node) => {
+    if (!isCodeNode(node)) return null;
+    const lang = node.getLanguage() || '';
+    const code = node.getCode() || '';
+    return '```' + lang + '\n' + code + '\n```';
+  },
+  regExp: /^```(\w{1,10})?\s/,
+  replace: (parentNode, _children, match, isImport) => {
+    const [, language] = match;
+    const codeNode = createCodeNode('', language || 'javascript', true);
+    if (isImport || parentNode.getNextSibling() != null) {
+      parentNode.replace(codeNode);
+    } else {
+      parentNode.insertBefore(codeNode);
+    }
+    // Guarantee a paragraph after the block so the cursor can navigate past it
+    if (codeNode.getNextSibling() === null) {
+      const para = createParagraphNode();
+      codeNode.insertAfter(para);
+    }
+    codeNode.selectNext();
+  },
+  type: 'element',
+};
+
 export const ALL_TRANSFORMERS: Array<Transformer> = [
   HR,
   IMAGE,
   CHECK_LIST,
   LINK,
-  CODE,
+  CODE_BLOCK,
   ...ELEMENT_TRANSFORMERS,
   ...TEXT_FORMAT_TRANSFORMERS,
 ];
