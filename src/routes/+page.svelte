@@ -68,7 +68,8 @@
         $hideSurahPage()
             ? ($crossGroups.find(
                   (g: CrossGroup) =>
-                      g.hostTabId === $activeTabId || g.partnerTabId === $activeTabId,
+                      g.hostTabId === $activeTabId ||
+                      g.partnerTabId === $activeTabId,
               ) ?? null)
             : null,
     );
@@ -91,14 +92,18 @@
         const cg = activeCrossGroup;
         const editor = $lexicalEditorInstance;
         if (!cg || !editor) return;
-        const partnerTab = get(tabs).find(t => t.id === cg.partnerTabId);
-        if (!partnerTab || partnerTab.type !== 'lexical') return;
+        const partnerTab = get(tabs).find((t) => t.id === cg.partnerTabId);
+        if (!partnerTab || partnerTab.type !== "lexical") return;
         if ($activeTabId === cg.partnerTabId) return; // partner is active — Sidebar effects handle it
         try {
             const parsed = JSON.parse(partnerTab.content || emptyLexicalState);
             const stateData = parsed.editorState ?? parsed;
-            editor.setEditorState(editor.parseEditorState(JSON.stringify(stateData)));
-        } catch { /* ignore */ }
+            editor.setEditorState(
+                editor.parseEditorState(JSON.stringify(stateData)),
+            );
+        } catch {
+            /* ignore */
+        }
     });
 
     // Auto-save Lexical partner tab content on every change when host is active
@@ -106,42 +111,56 @@
         const cg = activeCrossGroup;
         const editor = $lexicalEditorInstance;
         if (!cg || !editor) return;
-        const partnerTab = get(tabs).find(t => t.id === cg.partnerTabId);
-        if (!partnerTab || partnerTab.type !== 'lexical') return;
+        const partnerTab = get(tabs).find((t) => t.id === cg.partnerTabId);
+        if (!partnerTab || partnerTab.type !== "lexical") return;
         if ($activeTabId === cg.partnerTabId) return; // partner is active — normal save applies
         const lexicalTabId = cg.partnerTabId;
-        const unregister = editor.registerUpdateListener(({ dirtyElements, dirtyLeaves }) => {
-            if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
-            const json = JSON.stringify(editor.getEditorState().toJSON());
-            tabs.update(ts => ts.map(t =>
-                t.id === lexicalTabId ? { ...t, content: json, isDirty: true } : t
-            ));
-        });
+        const unregister = editor.registerUpdateListener(
+            ({ dirtyElements, dirtyLeaves }) => {
+                if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
+                const json = JSON.stringify(editor.getEditorState().toJSON());
+                tabs.update((ts) =>
+                    ts.map((t) =>
+                        t.id === lexicalTabId
+                            ? { ...t, content: json, isDirty: true }
+                            : t,
+                    ),
+                );
+            },
+        );
         return unregister;
     });
 </script>
 
 <svelte:window bind:innerHeight={height} />
-<div class="w-[95%] rounded-r-md max-w-375 relative mx-auto p-0 sm:py-6">
+<div class="w-[95%] rounded-r-md max-w-375 relative mx-auto sm:py-6">
     <div
         class={`flex rounded-r-md ${$surahOrientation()} ${$isSidebar && !$zenMode ? "bg-white dark:bg-[#232634] " : ""} flex-row justify-center`}
         style:height="{height - 47}px"
     >
         {#if activeCrossGroup}
-            {@const partnerTab = $tabs.find(t => t.id === activeCrossGroup.partnerTabId)}
+            {@const partnerTab = $tabs.find(
+                (t) => t.id === activeCrossGroup.partnerTabId,
+            )}
             <div
-                class="relative z-1 flex flex-col sm:w-full md:w-9/12 lg:w-6/12 rounded-r-md
+                class="relative z-1 px-1 flex flex-col sm:w-full md:w-9/12 lg:w-6/12 rounded-r-md
                         {$zenMode
                     ? ''
                     : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]'}"
             >
-                {#if partnerTab?.type === 'julia'}
+                {#if partnerTab?.type === "julia"}
                     <!-- Partner=Julia: left = JuliaEditor with embedded REPL -->
-                    <JuliaEditor tabId={activeCrossGroup.partnerTabId} hideRepl={false} />
-                {:else if partnerTab?.type === 'typst'}
+                    <JuliaEditor
+                        tabId={activeCrossGroup.partnerTabId}
+                        hideRepl={false}
+                    />
+                {:else if partnerTab?.type === "typst"}
                     <!-- Partner=Typst: use TypstEditor's own resizable inline preview -->
-                    <TypstEditor tabId={activeCrossGroup.partnerTabId} inCrossHost={true} />
-                {:else if partnerTab?.type === 'lexical'}
+                    <TypstEditor
+                        tabId={activeCrossGroup.partnerTabId}
+                        inCrossHost={true}
+                    />
+                {:else if partnerTab?.type === "lexical"}
                     <!-- Partner=Lexical: left = LexicalEditor full-height -->
                     <RichTextEditor />
                 {/if}
