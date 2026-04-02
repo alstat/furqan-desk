@@ -14,8 +14,8 @@ export interface SerializedCodeNode extends SerializedLexicalNode {
     version: 1;
 }
 
-export function $createCodeNode(code: string, language: string): CodeNode {
-    return $applyNodeReplacement(new CodeNode(code, language));
+export function $createCodeNode(code: string, language: string, autoEdit = false): CodeNode {
+    return $applyNodeReplacement(new CodeNode(code, language, undefined, autoEdit));
 }
 
 export function $isCodeNode(node: LexicalNode | null | undefined): node is CodeNode {
@@ -25,11 +25,13 @@ export function $isCodeNode(node: LexicalNode | null | undefined): node is CodeN
 export class CodeNode extends DecoratorNode<DecoratorCodeType> {
     __code: string | null | undefined;
     __language: string | null | undefined;
+    __autoEdit: boolean;
 
-    constructor(code: string | null | undefined, language: string | null | undefined, key?: NodeKey) {
+    constructor(code: string | null | undefined, language: string | null | undefined, key?: NodeKey, autoEdit = false) {
         super(key);
         this.__code = code;
         this.__language = language;
+        this.__autoEdit = autoEdit;
     }
 
     static getType(): string {
@@ -85,6 +87,11 @@ export class CodeNode extends DecoratorNode<DecoratorCodeType> {
         return this.__language!;
     }
 
+    setAutoEdit(value: boolean): void {
+        const writable = this.getWritable();
+        writable.__autoEdit = value;
+    }
+
     decorate(): DecoratorCodeType {
         return {
             componentClass: CodeComponent,
@@ -92,6 +99,7 @@ export class CodeNode extends DecoratorNode<DecoratorCodeType> {
                 props.code = this.__code!;
                 props.language = this.__language!;
                 props.nodeKey = this.__key;
+                props.autoEdit = this.__autoEdit;
             }
         };
     }

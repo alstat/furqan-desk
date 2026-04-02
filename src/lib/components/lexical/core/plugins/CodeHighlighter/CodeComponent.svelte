@@ -24,7 +24,7 @@
     hljs.registerLanguage("yaml", yaml);
     hljs.registerLanguage("bash", bash);
 
-    import { tick } from "svelte";
+    import { tick, onMount } from "svelte";
     import { getEditor } from "$lexical/core/composerContext.js";
     import { $getNodeByKey as getNodeByKey } from "lexical";
     import { $isCodeNode as isCodeNode } from "./CodeNode";
@@ -35,16 +35,18 @@
         code?: string;
         language?: string;
         nodeKey?: string;
+        autoEdit?: boolean;
     }
 
-    let { code = "", language = "javascript", nodeKey = "" }: Props = $props();
+    let { code = "", language = "javascript", nodeKey = "", autoEdit = false }: Props = $props();
 
     const editor = getEditor();
 
-    let isEditing = $state(false);
+    let isEditing = $state(autoEdit);
     let editCode = $state(code);
     let editLanguage = $state(language);
     let codeEl: HTMLElement | null = $state(null);
+    let textareaEl: HTMLTextAreaElement | null = $state(null);
 
     const languages = [
         "javascript",
@@ -88,6 +90,7 @@
     }
 
     function handleKeydown(event: KeyboardEvent) {
+        event.stopPropagation();
         if (event.key === "Escape") {
             event.preventDefault();
             handleCancel();
@@ -103,6 +106,20 @@
             });
         }
     }
+
+    onMount(() => {
+        if (autoEdit) {
+            editor.update(() => {
+                const node = getNodeByKey(nodeKey);
+                if (node && isCodeNode(node)) {
+                    node.setAutoEdit(false);
+                }
+            });
+            // Defer focus until after Lexical finishes processing the key event
+            // that triggered the markdown shortcut, otherwise ContentEditable steals focus
+            setTimeout(() => textareaEl?.focus(), 0);
+        }
+    });
 
     // Re-highlight when code/language props update (e.g. after Lexical commits a save)
     $effect(() => {
@@ -182,6 +199,7 @@
             <span class="px-3 pt-2.5 pb-1.5 bg-brand-sand-50 dark:bg-[#232634]">
                 <!-- svelte-ignore a11y_autofocus -->
                 <textarea
+                    bind:this={textareaEl}
                     bind:value={editCode}
                     onkeydown={handleKeydown}
                     autofocus

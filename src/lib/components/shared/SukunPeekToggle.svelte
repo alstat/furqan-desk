@@ -29,11 +29,12 @@
     <!-- Flame -->
     <svg
         width="8"
-        height="12"
-        viewBox="0 0 8 11"
+        height="16"
+        viewBox="0 -4 8 15"
         fill="none"
-        class="transition-all -mt-4 duration-300 {isPeeking
-            ? 'scale-125 drop-shadow-[0_0_4px_rgba(229,200,144,0.9)]'
+        overflow="visible"
+        class="transition-all -mt-[20px] duration-300 {isPeeking
+            ? 'scale-125 drop-shadow-[0_0_3px_rgba(255,210,60,1)] drop-shadow-[0_0_10px_rgba(229,200,144,0.75)]'
             : 'scale-90 opacity-30'}"
         xmlns="http://www.w3.org/2000/svg"
     >
