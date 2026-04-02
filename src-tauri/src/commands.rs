@@ -7,10 +7,39 @@ use std::sync::{
     Arc,
 };
 use tauri::{AppHandle, Emitter, Manager, State};
+use tokio::sync::Semaphore;
 
 // ── Download state ────────────────────────────────────────────────────────────
 pub struct DownloadState {
     pub cancel: Arc<AtomicBool>,
+}
+
+// ── Shared HTTP client ────────────────────────────────────────────────────────
+/// Application-wide HTTP client shared across all commands.
+///
+/// Two independent semaphores prevent starvation:
+/// - `detail_sem` throttles the burst of metadata fetches (60–90 per ayah).
+/// - `image_sem` is reserved exclusively for image loads so that clicking any
+///   manuscript always acquires a slot immediately, regardless of how many
+///   detail fetches are still queued.
+pub struct HttpClient {
+    pub client: reqwest::Client,
+    detail_sem: Arc<Semaphore>,
+    image_sem: Arc<Semaphore>,
+}
+
+impl HttpClient {
+    pub fn new() -> Self {
+        let client = reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::limited(10))
+            .build()
+            .expect("Failed to build shared HTTP client");
+        Self {
+            client,
+            detail_sem: Arc::new(Semaphore::new(6)),
+            image_sem: Arc::new(Semaphore::new(2)),
+        }
+    }
 }
 
 // ── Recitation structs ───────────────────────────────────────────────────────
@@ -131,6 +160,7 @@ pub async fn download_recitation(
     app: AppHandle,
     state: State<'_, Database>,
     dl_state: State<'_, DownloadState>,
+    http: State<'_, HttpClient>,
     reciter_id: i64,
     surah_filter: Option<i64>,
 ) -> Result<(), String> {
@@ -200,7 +230,6 @@ pub async fn download_recitation(
     let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let total = rows.len();
     let mut downloaded_count: usize = 0;
-    let client = reqwest::Client::new();
 
     for (surah, ayah, url) in &rows {
         if dl_state.cancel.load(Ordering::Relaxed) {
@@ -235,7 +264,7 @@ pub async fn download_recitation(
         }
 
         let result = async {
-            let resp = client.get(url.as_str()).send().await?;
+            let resp = http.client.get(url.as_str()).send().await?;
             resp.bytes().await
         }
         .await;
@@ -1289,13 +1318,16 @@ pub fn compile_typst_pdf(source: String) -> Result<Vec<u8>, String> {
 
 /// Fetch full metadata for a single manuscript (date, material, script, etc.)
 #[tauri::command]
-pub async fn get_manuscript_detail(manuscript_id: u32) -> Result<String, String> {
+pub async fn get_manuscript_detail(
+    http: State<'_, HttpClient>,
+    manuscript_id: u32,
+) -> Result<String, String> {
+    let _permit = http.detail_sem.acquire().await.map_err(|e| e.to_string())?;
     let url = format!(
         "https://api.corpuscoranicum.de/api/data/manuscripts/{}",
         manuscript_id
     );
-    let client = reqwest::Client::new();
-    let response = client
+    let response = http.client
         .get(&url)
         .header("Accept", "application/json")
         .send()
@@ -1308,6 +1340,7 @@ pub async fn get_manuscript_detail(manuscript_id: u32) -> Result<String, String>
 /// Returns the absolute path of the saved file.
 #[tauri::command]
 pub async fn save_manuscript_to_downloads(
+    http: State<'_, HttpClient>,
     image_url: String,
     filename: String,
 ) -> Result<String, String> {
@@ -1327,8 +1360,7 @@ pub async fn save_manuscript_to_downloads(
         None => image_url.clone(),
     };
 
-    let client = reqwest::Client::new();
-    let bytes = client
+    let bytes = http.client
         .get(&fetch_url)
         .send()
         .await
@@ -1357,16 +1389,17 @@ pub async fn save_manuscript_to_downloads(
 /// Fetch manuscript list for a given surah/ayah from the Corpus Coranicum API.
 /// Returns the raw JSON string for the frontend to parse.
 #[tauri::command]
-pub async fn get_manuscript_list(surah: u32, ayah: u32) -> Result<String, String> {
+pub async fn get_manuscript_list(
+    http: State<'_, HttpClient>,
+    surah: u32,
+    ayah: u32,
+) -> Result<String, String> {
+    let _permit = http.detail_sem.acquire().await.map_err(|e| e.to_string())?;
     let url = format!(
         "https://api.corpuscoranicum.de/api/data/manuscripts/sura/{}/verse/{}",
         surah, ayah
     );
-    let client = reqwest::Client::builder()
-        .redirect(reqwest::redirect::Policy::limited(10))
-        .build()
-        .map_err(|e| e.to_string())?;
-    let response = client
+    let response = http.client
         .get(&url)
         .header("Accept", "application/json")
         .send()
@@ -1422,6 +1455,7 @@ fn manuscript_cache_rel(image_url: &str, thumbnail: bool) -> std::path::PathBuf 
 #[tauri::command]
 pub async fn get_manuscript_image(
     app: AppHandle,
+    http: State<'_, HttpClient>,
     image_url: String,
     thumbnail: bool,
 ) -> Result<Vec<u8>, String> {
@@ -1430,10 +1464,14 @@ pub async fn get_manuscript_image(
     let cache_rel = manuscript_cache_rel(&image_url, thumbnail);
     let cache_path = app_data_dir.join("manuscript-images").join(&cache_rel);
 
-    // Serve from cache when available
+    // Serve from cache — no network, no semaphore needed
     if cache_path.exists() {
         return tokio::fs::read(&cache_path).await.map_err(|e| e.to_string());
     }
+
+    // Acquire permit before opening a network connection.
+    // Uses the dedicated image semaphore so this is never blocked by detail fetches.
+    let _permit = http.image_sem.acquire().await.map_err(|e| e.to_string())?;
 
     // Build the fetch URL: thumbnail uses the API URL as-is; full-res strips
     // the size constraints so Scaler returns the original resolution.
@@ -1456,8 +1494,7 @@ pub async fn get_manuscript_image(
         )
     };
 
-    let client = reqwest::Client::new();
-    let bytes = client
+    let bytes = http.client
         .get(&fetch_url)
         .send()
         .await
@@ -1497,9 +1534,8 @@ pub fn get_typst_version() -> String {
 
 /// Fetch the latest stable Typst release tag from GitHub.
 #[tauri::command]
-pub async fn get_latest_typst_version() -> Result<String, String> {
-    let client = reqwest::Client::new();
-    let resp = client
+pub async fn get_latest_typst_version(http: State<'_, HttpClient>) -> Result<String, String> {
+    let resp = http.client
         .get("https://api.github.com/repos/typst/typst/releases/latest")
         .header("User-Agent", "AyahLab/1.0")
         .send()
@@ -1514,7 +1550,7 @@ pub async fn get_latest_typst_version() -> Result<String, String> {
 
     // Safety net: fall back to listing releases if latest is a pre-release
     if json.get("prerelease").and_then(|v| v.as_bool()).unwrap_or(false) {
-        return get_latest_stable_typst_release().await;
+        return get_latest_stable_typst_release(&http.client).await;
     }
 
     let tag = json
@@ -1526,9 +1562,8 @@ pub async fn get_latest_typst_version() -> Result<String, String> {
 
 /// Fetch the latest AyahLab version from the public versions.txt file.
 #[tauri::command]
-pub async fn get_latest_ayahlab_version() -> Result<String, String> {
-    let client = reqwest::Client::new();
-    let resp = client
+pub async fn get_latest_ayahlab_version(http: State<'_, HttpClient>) -> Result<String, String> {
+    let resp = http.client
         .get("https://raw.githubusercontent.com/alstat/ayahlab-versions/refs/heads/main/versions.txt")
         .header("User-Agent", "AyahLab/1.0")
         .header("Cache-Control", "no-cache")
@@ -1549,8 +1584,7 @@ pub async fn get_latest_ayahlab_version() -> Result<String, String> {
     Ok(version)
 }
 
-async fn get_latest_stable_typst_release() -> Result<String, String> {
-    let client = reqwest::Client::new();
+async fn get_latest_stable_typst_release(client: &reqwest::Client) -> Result<String, String> {
     let resp = client
         .get("https://api.github.com/repos/typst/typst/releases")
         .header("User-Agent", "AyahLab/1.0")

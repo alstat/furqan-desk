@@ -52,6 +52,7 @@ pub fn run() {
             app.manage(commands::DownloadState {
                 cancel: Arc::new(AtomicBool::new(false)),
             });
+            app.manage(commands::HttpClient::new());
 
             // Eagerly initialise the Typst world (font scanning) in the background
             // so the first compile is fast.
