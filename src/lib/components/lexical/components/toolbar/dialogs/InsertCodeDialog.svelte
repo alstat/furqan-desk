@@ -26,6 +26,16 @@
         getCommands().FocusEditor.execute($activeEditor);
     }
 
+    function handleTabKey(e: KeyboardEvent) {
+        if (e.key !== 'Tab') return;
+        e.preventDefault();
+        const ta = e.currentTarget as HTMLTextAreaElement;
+        const start = ta.selectionStart;
+        const end = ta.selectionEnd;
+        code = code.substring(0, start) + '    ' + code.substring(end);
+        tick().then(() => { ta.selectionStart = ta.selectionEnd = start + 4; });
+    }
+
     function onConfirm() {
         $activeEditor.dispatchCommand(INSERT_CODE_COMMAND, { code, language });
         code = "";
@@ -177,6 +187,8 @@
                 >
                 <textarea
                     bind:value={code}
+                    onkeydown={handleTabKey}
+                    autocorrect="off"
                     placeholder={$t('dialog.insert_code.placeholder')}
                     rows="8"
                     class="w-full resize-y rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors font-mono"

@@ -11,6 +11,10 @@
     import { bringToFront } from '$lib/stores/window-manager.store';
     import { t, locale } from '$lib/i18n';
     import { get } from 'svelte/store';
+    import { invoke } from '@tauri-apps/api/core';
+    import { lexicalEditorInstance } from '$lib/stores/editor.store';
+    import { $createParagraphNode as createParagraphNode, $createTextNode as createTextNode, $insertNodes as insertNodes } from 'lexical';
+    import type { SurahMorphology } from '$lib/types/morphology';
 
     interface Props { open: boolean; onClose: () => void; }
     let { open, onClose }: Props = $props();
@@ -19,6 +23,7 @@
     let noteInput = $state('');
     let saving    = $state(false);
     let saveError = $state('');
+    let insertingId = $state<number | null>(null);
 
     $effect(() => {
         if (open) {
@@ -56,6 +61,27 @@
     function navigate(surah: number, ayah: number) {
         selectedSurahIdx.set(surah);
         pendingJumpAyah.set(ayah);
+    }
+
+    async function insertBookmarkToLexical(bm: (typeof $bookmarks)[0]) {
+        const editor = get(lexicalEditorInstance);
+        if (!editor) return;
+        insertingId = bm.id;
+        try {
+            const morph = await invoke<SurahMorphology>('get_surah_morphology', { surahNumber: bm.surah });
+            const ayahMorph = morph.ayahs.find(a => a.ayah === bm.ayah);
+            const arabicText = ayahMorph?.words.map(w => w.combined_arabic).join(' ') ?? '';
+            const label = `${surahName(bm.surah)} · ${get(t)('bookmark.ayah')} ${bm.ayah}`;
+            editor.update(() => {
+                const arabicPara = createParagraphNode();
+                arabicPara.append(createTextNode(arabicText));
+                const attrPara = createParagraphNode();
+                attrPara.append(createTextNode(label));
+                insertNodes([arabicPara, attrPara]);
+            });
+        } finally {
+            insertingId = null;
+        }
     }
 
     // ── Drag ────────────────────────────────────────────────────────────────
@@ -231,7 +257,7 @@
                             {#each $bookmarks as bm (bm.id)}
                                 <div class="group flex items-start justify-between gap-3 rounded-xl border border-brand-sand-200 bg-brand-sand-100 px-3.5 py-3 hover:bg-brand-gold-50 dark:hover:bg-[#414559] transition-colors">
                                     <div class="min-w-0 flex-1">
-                                        <p class="text-[11px] font-semibold text-brand-charcoal-900">
+                                        <p class="text-[11px] font-semibold text-brand-charcoal-500">
                                             {surahName(bm.surah)} · {$t('bookmark.ayah')} {bm.ayah}
                                         </p>
                                         {#if bm.note}
@@ -246,6 +272,20 @@
                                         >
                                             <Icon icon="solar:arrow-right-up-linear" width="0.7rem" />
                                             {$t('bookmark.go')}
+                                        </button>
+                                        <button
+                                            onclick={() => insertBookmarkToLexical(bm)}
+                                            disabled={insertingId === bm.id || !$lexicalEditorInstance}
+                                            title={!$lexicalEditorInstance ? $t('manuscript.no_editor') : $t('manuscript.insert_tooltip')}
+                                            class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            {#if insertingId === bm.id}
+                                                <span class="w-3 h-3 rounded-full border border-gray-100 border-t-transparent animate-spin"></span>
+                                                {$t('manuscript.inserting')}
+                                            {:else}
+                                                <Icon icon="solar:pen-new-square-bold" width="0.7rem" />
+                                                {$t('manuscript.insert')}
+                                            {/if}
                                         </button>
                                         <button
                                             onclick={() => deleteBookmark(bm.id)}

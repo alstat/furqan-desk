@@ -33,7 +33,7 @@
 <div
     class="{$zenMode
         ? ''
-        : 'sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30'} relative z-1 flex flex-col items-center bg-white dark:bg-[#303446] rounded-r-md sm:w-full md:w-9/12 lg:w-6/12"
+        : 'sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30  bg-white dark:bg-[#303446]'} relative z-1 flex flex-col items-center rounded-r-md sm:w-full md:w-9/12 lg:w-6/12"
 >
     <!-- Inner: matches Parchment's inner scrollable div (border + rounded-r-md) -->
     <div

@@ -11,12 +11,17 @@
     import { surahLabels, selectedSurahIdx } from "$lib/stores/quran.svelte";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { t, locale } from '$lib/i18n';
+    import { get } from 'svelte/store';
+    import { lexicalEditorInstance } from '$lib/stores/editor.store';
+    import { $createParagraphNode as createParagraphNode, $createTextNode as createTextNode, $insertNodes as insertNodes } from 'lexical';
 
     interface Props {
         open: boolean;
         onClose: () => void;
     }
     let { open, onClose }: Props = $props();
+
+    let insertingId = $state<number | null>(null);
 
     $effect(() => {
         if (open) loadHighlights();
@@ -29,6 +34,21 @@
     function navigate(surah: number, ayah: number) {
         selectedSurahIdx.set(surah);
         pendingJumpAyah.set(ayah);
+    }
+
+    function insertHighlightToLexical(hl: (typeof $highlights)[0]) {
+        const editor = get(lexicalEditorInstance);
+        if (!editor) return;
+        insertingId = hl.id;
+        const label = `${surahName(hl.surah)} · ${get(t)('bookmark.ayah')} ${hl.ayah}`;
+        editor.update(() => {
+            const arabicPara = createParagraphNode();
+            arabicPara.append(createTextNode(hl.text));
+            const attrPara = createParagraphNode();
+            attrPara.append(createTextNode(label));
+            insertNodes([arabicPara, attrPara]);
+        });
+        insertingId = null;
     }
 
     // ── Drag ────────────────────────────────────────────────────────────────
@@ -176,7 +196,7 @@
                         >
                             <!-- Arabic text -->
                             <p
-                                class="mb-2.5 font-scheherazade text-xl leading-loose text-brand-charcoal-900 wrap-break-word overflow-hidden"
+                                class="mb-2.5 font-scheherazade text-lg leading-loose text-brand-charcoal-500 wrap-break-word overflow-hidden"
                                 dir="rtl"
                             >
                                 {hl.text}
@@ -211,6 +231,15 @@
                                             width="0.7rem"
                                         />
                                         {$t('bookmark.go')}
+                                    </button>
+                                    <button
+                                        onclick={() => insertHighlightToLexical(hl)}
+                                        disabled={!$lexicalEditorInstance}
+                                        title={!$lexicalEditorInstance ? $t('manuscript.no_editor') : $t('manuscript.insert_tooltip')}
+                                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <Icon icon="solar:pen-new-square-bold" width="0.7rem" />
+                                        {$t('manuscript.insert')}
                                     </button>
                                     <button
                                         onclick={() => deleteHighlight(hl.id)}

@@ -54,7 +54,7 @@
 >
     <button
         onclick={onOpenBookmarks}
-        class={actionBtnStyle + " p-1 z-50"}
+        class={actionBtnStyle + " p-2 z-50"}
         title={$t('parchment.bookmarks')}
         aria-label={$t('parchment.open_bookmarks')}
     >
@@ -63,7 +63,7 @@
 
     <button
         onclick={onOpenHighlights}
-        class={actionBtnStyle + " p-1 z-50"}
+        class={actionBtnStyle + " p-2 z-50"}
         title={$t('parchment.highlights')}
         aria-label={$t('parchment.open_highlights')}
     >
@@ -73,7 +73,7 @@
     <button
         onclick={toggleSearch}
         class={actionBtnStyle +
-            " p-1 z-50 " +
+            " p-2 z-50 " +
             (showSearch ? "ring-2 ring-brand-gold-300" : "")}
         title={$t('parchment.search')}
         aria-label={$t('parchment.search_quran')}

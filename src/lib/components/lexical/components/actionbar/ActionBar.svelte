@@ -11,7 +11,9 @@
 </script>
 
 <div
-    class="absolute {topOffset} left-1/2 z-50 -translate-x-1/2 flex flex-row justify-stretch {$zenMode ? 'opacity-0 hover:opacity-100 transition-opacity duration-200' : ''}"
+    class="absolute {topOffset} left-1/2 z-50 -translate-x-1/2 flex flex-row justify-stretch {$zenMode
+        ? 'opacity-0 hover:opacity-100 transition-opacity duration-200'
+        : ''}"
 >
     <div class="mr-4 space-x-0.5">
         <UndoButton />

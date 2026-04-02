@@ -71,11 +71,11 @@
         {#if juliaReplMode}
             <!-- Julia REPL panel on the right (or left in RTL layout) — shared by all tabs -->
             <div
-                class="relative z-1 flex flex-col items-center bg-white dark:bg-[#303446]
+                class="relative z-1 flex flex-col items-center
                         sm:w-full md:w-9/12 lg:w-6/12 rounded-r-md
                         {$zenMode
                     ? ''
-                    : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30'}"
+                    : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]'}"
             >
                 <div
                     class=" mb-5
@@ -101,7 +101,11 @@
         {#if $zenMode && $isSidebar}
             <div
                 class="self-stretch flex-shrink-0 w-px"
-                style="background: linear-gradient(to bottom, transparent 0%, {$appDarkMode ? 'rgba(229,200,144,0.25)' : 'rgba(229,200,144,0.55)'} 20%, {$appDarkMode ? 'rgba(229,200,144,0.25)' : 'rgba(229,200,144,0.55)'} 80%, transparent 100%)"
+                style="background: linear-gradient(to bottom, transparent 0%, {$appDarkMode
+                    ? 'rgba(229,200,144,0.25)'
+                    : 'rgba(229,200,144,0.55)'} 20%, {$appDarkMode
+                    ? 'rgba(229,200,144,0.25)'
+                    : 'rgba(229,200,144,0.55)'} 80%, transparent 100%)"
             ></div>
         {/if}
         <Sidebar />

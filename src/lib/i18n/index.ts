@@ -1,7 +1,14 @@
 import { writable, derived } from 'svelte/store';
 import { en } from './locales/en';
 import { ar } from './locales/ar';
+import { bn } from './locales/bn';
 import { fa } from './locales/fa';
+import { hi } from './locales/hi';
+import { id } from './locales/id';
+import { ms } from './locales/ms';
+import { pt } from './locales/pt';
+import { tl } from './locales/tl';
+import { tr } from './locales/tr';
 import { ur } from './locales/ur';
 import { zh } from './locales/zh';
 import { ja } from './locales/ja';
@@ -11,12 +18,19 @@ import { fr } from './locales/fr';
 import { es } from './locales/es';
 import { ru } from './locales/ru';
 
-export type Locale = 'en' | 'ar' | 'fa' | 'ur' | 'zh' | 'ja' | 'ko' | 'de' | 'fr' | 'es' | 'ru';
+export type Locale = 'en' | 'ar' | 'bn' | 'fa' | 'hi' | 'id' | 'ms' | 'pt' | 'tl' | 'tr' | 'ur' | 'zh' | 'ja' | 'ko' | 'de' | 'fr' | 'es' | 'ru';
 
 export const LOCALE_NAMES: Record<Locale, string> = {
     en: 'English',
     ar: 'العربية',
+    bn: 'বাংলা',
     fa: 'فارسی',
+    hi: 'हिन्दी',
+    id: 'Bahasa Indonesia',
+    ms: 'Bahasa Melayu',
+    pt: 'Português',
+    tl: 'Filipino',
+    tr: 'Türkçe',
     ur: 'اردو',
     zh: '中文 (简体)',
     ja: '日本語',
@@ -27,7 +41,7 @@ export const LOCALE_NAMES: Record<Locale, string> = {
     ru: 'Русский',
 };
 
-const locales: Record<Locale, Record<string, string>> = { en, ar, fa, ur, zh, ja, ko, de, fr, es, ru };
+const locales: Record<Locale, Record<string, string>> = { en, ar, bn, fa, hi, id, ms, pt, tl, tr, ur, zh, ja, ko, de, fr, es, ru };
 
 function loadLocale(): Locale {
     try {

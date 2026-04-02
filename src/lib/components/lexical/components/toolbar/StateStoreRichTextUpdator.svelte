@@ -114,7 +114,7 @@
 				}
 			}
 			// Hande buttons
-			$fontColor = getSelectionStyleValueForProperty(selection, 'color', '#000');
+			$fontColor = getSelectionStyleValueForProperty(selection, 'color', '#707070');
 			$bgColor = getSelectionStyleValueForProperty(selection, 'background-color', '#fff');
 			$fontFamily = getSelectionStyleValueForProperty(selection, 'font-family', 'EB Garamond');
 		}

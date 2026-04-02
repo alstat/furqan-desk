@@ -24,11 +24,12 @@
     hljs.registerLanguage("yaml", yaml);
     hljs.registerLanguage("bash", bash);
 
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { getEditor } from "$lexical/core/composerContext.js";
     import { $getNodeByKey as getNodeByKey } from "lexical";
     import { $isCodeNode as isCodeNode } from "./CodeNode";
     import Icon from "@iconify/svelte";
+    import { t } from "$lib/i18n";
 
     interface Props {
         codeDOM: HTMLElement;
@@ -37,7 +38,12 @@
         nodeKey?: string;
     }
 
-    let { codeDOM, code = '', language = 'javascript', nodeKey = '' }: Props = $props();
+    let {
+        codeDOM,
+        code = "",
+        language = "javascript",
+        nodeKey = "",
+    }: Props = $props();
 
     const editor = getEditor();
 
@@ -46,14 +52,23 @@
     let editLanguage = $state(language);
 
     const languages = [
-        'javascript', 'typescript', 'python', 'julia', 'r',
-        'css', 'html', 'sql', 'json', 'yaml', 'bash'
+        "javascript",
+        "typescript",
+        "python",
+        "julia",
+        "r",
+        "css",
+        "html",
+        "sql",
+        "json",
+        "yaml",
+        "bash",
     ];
 
     function highlight() {
-        const codeEl = codeDOM.querySelector('code') ?? codeDOM;
+        const codeEl = codeDOM.querySelector("code") ?? codeDOM;
         // reset so hljs re-highlights on content change
-        codeEl.removeAttribute('data-highlighted');
+        codeEl.removeAttribute("data-highlighted");
         hljs.highlightElement(codeEl as HTMLElement);
     }
 
@@ -69,16 +84,17 @@
             if (node && isCodeNode(node)) {
                 node.setCode(editCode);
                 node.setLanguage(editLanguage);
-                // Update the DOM directly so highlight runs correctly
-                const codeEl = codeDOM.querySelector('code');
-                if (codeEl) {
-                    codeEl.innerHTML = editCode;
-                    codeEl.removeAttribute('data-highlighted');
-                    hljs.highlightElement(codeEl as HTMLElement);
-                }
-                codeDOM.className = 'language-' + editLanguage;
             }
         });
+        // Update DOM outside of editor.update() — mutations inside the callback
+        // conflict with Lexical's reconciler and cause prevChildren length mismatches.
+        const codeEl = codeDOM.querySelector("code");
+        if (codeEl) {
+            codeEl.innerHTML = editCode;
+            codeEl.removeAttribute("data-highlighted");
+            hljs.highlightElement(codeEl as HTMLElement);
+        }
+        codeDOM.className = "language-" + editLanguage;
         isEditing = false;
     }
 
@@ -87,69 +103,113 @@
     }
 
     function handleKeydown(event: KeyboardEvent) {
-        if (event.key === 'Escape') {
+        if (event.key === "Escape") {
             event.preventDefault();
             handleCancel();
+        } else if (event.key === "Tab") {
+            event.preventDefault();
+            const ta = event.currentTarget as HTMLTextAreaElement;
+            const start = ta.selectionStart;
+            const end = ta.selectionEnd;
+            editCode =
+                editCode.substring(0, start) + "    " + editCode.substring(end);
+            tick().then(() => {
+                ta.selectionStart = ta.selectionEnd = start + 4;
+            });
         }
     }
 
+    $effect(() => {
+        codeDOM.title = $t('editor.dblclick_hint');
+    });
+
     onMount(() => {
         highlight();
-        codeDOM.addEventListener('dblclick', handleDoubleClick);
-        codeDOM.style.cursor = 'pointer';
-        codeDOM.title = 'Double-click to edit';
+        codeDOM.addEventListener("dblclick", handleDoubleClick);
+        codeDOM.style.cursor = "pointer";
         return () => {
-            codeDOM.removeEventListener('dblclick', handleDoubleClick);
+            codeDOM.removeEventListener("dblclick", handleDoubleClick);
         };
     });
 </script>
 
 {#if isEditing}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="my-1 rounded-2xl border border-brand-gold-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-lg overflow-hidden">
-        <!-- Header -->
-        <div class="flex items-center justify-between bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-4 py-2.5">
-            <div class="flex items-center gap-2">
-                <div class="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559]">
-                    <Icon icon="solar:code-square-bold-duotone" class="text-brand-gold-600" width="0.75rem" />
-                </div>
-                <span class="text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">Edit Code Block</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-                <select
-                    bind:value={editLanguage}
-                    class="h-7 rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2 text-[10px] text-brand-charcoal-900 dark:text-[#c6d0f5] focus:border-brand-gold-400 focus:outline-none transition-colors"
-                >
-                    {#each languages as lang}
-                        <option value={lang}>{lang}</option>
-                    {/each}
-                </select>
-                <button
-                    onclick={handleSave}
-                    title="Save"
-                    class="cursor-pointer flex items-center gap-1 rounded-lg bg-brand-gold-400 px-2.5 py-1 text-[10px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 transition-colors"
-                >
-                    <Icon icon="solar:check-circle-bold" width="0.65rem" />
-                    Save
-                </button>
-                <button
-                    onclick={handleCancel}
-                    title="Cancel (Esc)"
-                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
-                >
-                    <Icon icon="solar:close-circle-bold" width="0.8rem" />
-                </button>
-            </div>
+    <div class="my-1">
+        <div
+            class="flex flex-col rounded-3xl border border-brand-gold-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-lg overflow-hidden"
+        >
+            <!-- Header -->
+            <span
+                class="flex items-center justify-between bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-3 py-2"
+            >
+                <span class="flex items-center gap-1.5">
+                    <span
+                        class="flex h-5 w-5 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559]"
+                    >
+                        <Icon
+                            icon="solar:code-square-bold-duotone"
+                            class="text-brand-gold-600"
+                            width="0.65rem"
+                        />
+                    </span>
+                    <span
+                        class="font-sans text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                        >{$t('editor.code.edit_title')}</span
+                    >
+                </span>
+                <span class="flex items-center gap-0.5">
+                    <!-- Language select -->
+                    <span class="relative">
+                        <select
+                            bind:value={editLanguage}
+                            class="appearance-none cursor-pointer rounded-xl border border-brand-gold-200 bg-brand-sand-50/80 pl-2 pr-6 py-1 text-[10px] font-sans text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#1e2030]/80 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100 dark:hover:bg-[#292c3c] dark:[color-scheme:dark]"
+                        >
+                            {#each languages as lang}
+                                <option value={lang}>{lang}</option>
+                            {/each}
+                        </select>
+                        <span
+                            class="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-brand-charcoal-300 dark:text-[#626880]"
+                        >
+                            <Icon
+                                icon="charm:chevron-down"
+                                class="mr-2"
+                                width="0.6rem"
+                            />
+                        </span>
+                    </span>
+                    <!-- Save -->
+                    <button
+                        onclick={handleSave}
+                        title={$t('common.save')}
+                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 font-sans active:bg-brand-gold-600/90 transition-colors"
+                    >
+                        {$t('common.save')}
+                    </button>
+                    <!-- Cancel -->
+                    <button
+                        onclick={handleCancel}
+                        title={$t('common.cancel')}
+                        class="cursor-pointer text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900/60 dark:hover:text-[#c6d0f5] transition-colors ml-3 mr-1"
+                    >
+                        <Icon icon="solar:close-circle-bold" width="0.8rem" />
+                    </button>
+                </span>
+            </span>
+            <!-- Textarea -->
+            <span class="px-3 pt-2.5 pb-1.5 bg-brand-sand-50 dark:bg-[#232634]">
+                <!-- svelte-ignore a11y_autofocus -->
+                <textarea
+                    bind:value={editCode}
+                    onkeydown={handleKeydown}
+                    autofocus
+                    autocorrect="off"
+                    rows="10"
+                    placeholder={$t('dialog.insert_code.placeholder')}
+                    class="w-full resize-y rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-2 font-mono text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                ></textarea>
+            </span>
         </div>
-        <!-- Textarea -->
-        <!-- svelte-ignore a11y_autofocus -->
-        <textarea
-            bind:value={editCode}
-            onkeydown={handleKeydown}
-            autofocus
-            rows="10"
-            placeholder="Paste or type your code here..."
-            class="w-full resize-y bg-brand-sand-50 dark:bg-[#232634] px-4 py-3 font-mono text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:outline-none"
-        ></textarea>
     </div>
 {/if}
