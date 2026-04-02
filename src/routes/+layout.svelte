@@ -1,6 +1,5 @@
 <script lang="ts">
 	import '../app.css';
-	import 'highlight.js/styles/github.css';
 	import '$lib/icons';
 	import { appDarkMode } from '$lib/stores/editor.store';
 	import { onMount } from 'svelte';

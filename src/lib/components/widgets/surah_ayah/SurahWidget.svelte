@@ -55,11 +55,15 @@
         MS: "Malay",
         PA: "Punjabi",
         PS: "Pashto",
+        ES: "Spanish",
+        JA: "Japanese",
+        PT: "Portuguese",
         RU: "Russian",
         SW: "Swahili",
         TL: "Tagalog",
         TR: "Turkish",
         UR: "Urdu",
+        ZH: "Chinese",
     };
 
     let font: string = $state("font-scheherazade");

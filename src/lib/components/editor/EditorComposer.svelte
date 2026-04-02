@@ -27,7 +27,10 @@
         ImagePlugin,
         TablePlugin,
         TableActionMenuPlugin,
+        MarkdownShortcutPlugin,
+        ALL_TRANSFORMERS,
     } from "../lexical";
+    import { locale } from '$lib/i18n';
     import TableCellResizerPlugin from "$lexical/core/plugins/Table/TableCellResizerPlugin.svelte";
     import {
         HeadingNode,
@@ -39,6 +42,8 @@
         TableNode,
         TableRowNode,
         TableCellNode,
+        LinkNode,
+        AutoLinkNode,
     } from "../lexical";
     import { editorTheme as PlaygroundEditorTheme } from "../lexical";
     import {
@@ -54,6 +59,9 @@
 
     const historyState = createEmptyHistoryState();
     lexicalHistoryState.set(historyState);
+
+    const RTL_LOCALES = ['ar', 'fa', 'ur'];
+    let editorDir = $derived(RTL_LOCALES.includes($locale) ? 'rtl' as const : 'ltr' as const);
 
     let editorShell = $state<HTMLDivElement | null>(null);
 
@@ -72,6 +80,8 @@
             TableNode,
             TableRowNode,
             TableCellNode,
+            LinkNode,
+            AutoLinkNode,
         ],
         onError: (error: Error) => {
             throw error;
@@ -92,7 +102,7 @@
         <div class="editor-container flex flex-col justify-stretch">
             <div class="editor-scroller">
                 <div class="editor">
-                    <ContentEditable />
+                    <ContentEditable dir={editorDir} />
                 </div>
             </div>
             <RichTextPlugin />
@@ -110,6 +120,7 @@
             {#if editorShell}
                 <TableActionMenuPlugin anchorElem={editorShell} cellMerge={true} />
             {/if}
+            <MarkdownShortcutPlugin transformers={ALL_TRANSFORMERS} />
             <EditorStorePlugin />
         </div>
     </div>

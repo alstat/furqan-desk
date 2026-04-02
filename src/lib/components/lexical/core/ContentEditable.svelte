@@ -33,6 +33,7 @@
 		style?: string | undefined;
 		tabIndex?: number | undefined;
 		testid?: string | undefined;
+		dir?: 'ltr' | 'rtl' | undefined;
 	}
 
 	let {
@@ -48,13 +49,14 @@
 		ariaRequired = undefined,
 		autoCapitalize = undefined,
 		// className = 'ContentEditable__root',
-        className = 'ContentEditable__root relative block top-2 px-4 w-full outline-none border-0 text-surface-800 dark:text-surface-200 default-scroll',
+        className = 'ContentEditable__root relative block top-2 px-4 w-full outline-none border-0 text-brand-charcoal-500 default-scroll',
 		id = undefined,
 		role = 'textbox',
 		spellCheck = true,
 		style = undefined,
 		tabIndex = undefined,
-		testid = undefined
+		testid = undefined,
+		dir = undefined,
 	}: Props = $props();
 
 	let isEditable = $state(false);
@@ -96,6 +98,7 @@
 	class={`${className} overflow-auto text-base cursor-text`}
 	contentEditable={isEditable}
 	data-testid={testid}
+	{dir}
 	{id}
 	bind:this={ref}
 	{role}

@@ -375,7 +375,7 @@
                    bg-white/90 dark:bg-[#292c3c]/95
                    backdrop-blur-md
                    border border-red-200/80 dark:border-red-900/50
-                   shadow-lg shadow-stone-300/30 dark:shadow-black/40
+                   shadow-md shadow-stone-300/20 dark:shadow-black/20
                    text-xs text-red-500 dark:text-red-400
                    select-none"
         >
@@ -395,7 +395,7 @@
                bg-white/50 dark:bg-[#292c3c]/50
                backdrop-blur-md
                border border-stone-200/70 dark:border-[#414559]/60
-               shadow-lg shadow-stone-300/30 dark:shadow-black/40
+               shadow-md shadow-stone-300/20 dark:shadow-black/20
                text-sm select-none"
     >
         <!-- Prev -->

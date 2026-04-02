@@ -21,7 +21,7 @@
     import { donationOpen } from "$lib/stores/tour.store";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
     import { t } from "$lib/i18n";
-    import { zenMode } from "$lib/stores/editor.store";
+    import { zenMode, appDarkMode } from "$lib/stores/editor.store";
 
     let feedbackOpen = $state(false);
 
@@ -187,7 +187,7 @@
                         ? "right"
                         : "left", // or 'left' for left-to-right
             }}
-            class="w-full space-y-2 overflow-visible bg-white dark:bg-[#292c3c] px-1 pb-4 text-xl {$zenMode
+            class="relative w-full space-y-2 overflow-visible {$zenMode && $appDarkMode ? 'bg-transparent' : 'bg-white dark:bg-[#292c3c]'} px-1 pb-4 text-xl {$zenMode
                 ? ''
                 : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/40'} {roundRight &&
             $hideSurahPage() &&
@@ -195,6 +195,12 @@
                 ? 'rounded-md'
                 : 'rounded-l-md'}"
         >
+            {#if $zenMode}
+                <div
+                    class="absolute top-0 right-0 w-1/2 h-px z-10 pointer-events-none"
+                    style="background: linear-gradient(to right, transparent 0%, {$appDarkMode ? 'rgba(229,200,144,0.25)' : 'rgba(229,200,144,0.55)'} 20%, {$appDarkMode ? 'rgba(229,200,144,0.25)' : 'rgba(229,200,144,0.55)'} 80%, transparent 100%)"
+                ></div>
+            {/if}
             {@render children()}
         </div>
         <!-- {/if} -->
