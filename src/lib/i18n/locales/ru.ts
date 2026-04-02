@@ -268,6 +268,8 @@ export const ru: Record<string, string> = {
     'manuscript.insert': 'Вставить в редактор',
     'manuscript.insert_tooltip': 'Вставить изображение в редактор',
     'manuscript.no_editor': 'Сначала откройте документ Lexical',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'Вставить морфологию в редактор',
     'manuscript.meta_date': 'Дата',
     'manuscript.meta_radiocarbon': 'Радиоуглеродный анализ',
     'manuscript.meta_material': 'Материал',

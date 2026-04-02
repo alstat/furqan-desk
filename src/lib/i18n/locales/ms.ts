@@ -268,6 +268,8 @@ export const ms: Record<string, string> = {
     'manuscript.insert': 'Masukkan ke Lexical',
     'manuscript.insert_tooltip': 'Masukkan imej ke editor',
     'manuscript.no_editor': 'Buka tab dokumen Lexical terlebih dahulu',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'Masukkan morfologi ke editor',
     'manuscript.meta_date': 'Tarikh',
     'manuscript.meta_radiocarbon': 'Radiokarbon',
     'manuscript.meta_material': 'Material',

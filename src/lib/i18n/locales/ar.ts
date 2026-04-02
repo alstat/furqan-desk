@@ -268,6 +268,8 @@ export const ar: Record<string, string> = {
     'manuscript.insert': 'إدراج في المحرر',
     'manuscript.insert_tooltip': 'إدراج الصورة في المحرر',
     'manuscript.no_editor': 'افتح مستند Lexical أولاً',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'إدراج الصرف في المحرر',
     'manuscript.meta_date': 'التاريخ',
     'manuscript.meta_radiocarbon': 'التأريخ بالكربون',
     'manuscript.meta_material': 'المادة',
