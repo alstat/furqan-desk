@@ -87,9 +87,15 @@
 }
 .SL_Theme__textCode {
   background-color: rgb(240, 242, 245);
+  color: #1e2030;
   padding: 1px 0.25rem;
+  border-radius: 3px;
   font-family: Menlo, Consolas, Monaco, monospace;
   font-size: 94%;
+}
+.dark .SL_Theme__textCode {
+  background-color: #1e2030;
+  color: #c6d0f5;
 }
 .SL_Theme__hashtag {
   background-color: rgba(88, 144, 255, 0.15);

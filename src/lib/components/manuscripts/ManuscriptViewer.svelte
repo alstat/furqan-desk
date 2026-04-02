@@ -552,7 +552,9 @@
         const img = selectedImage;
         if (!ms) return "";
 
+        const ref = $manuscriptAyah;
         const parts: string[] = [ms.title];
+        if (ref) parts.push(`Surah ${ref.surah}:${ref.ayah}`);
         const folio = `Folio ${page?.folio ?? ""}${page?.side ?? ""}`.trim();
         if (folio !== "Folio") parts.push(folio);
         if (ms.archive.name) parts.push(ms.archive.name);
