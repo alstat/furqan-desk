@@ -111,7 +111,7 @@
     <!-- Table of Contents button -->
     {#if $isSidebar && $activeTab?.type === "lexical"}
         <button
-            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-16 z-3 ${$tocOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? 'opacity-30 hover:opacity-100 transition-opacity duration-200' : ''}`}
+            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-16 z-3 ${$tocOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
             onclick={() => ($tocOpen = !$tocOpen)}
             aria-label={$t('toc.button')}
             title={$t('toc.button')}
@@ -133,7 +133,7 @@
             {#if $juliaPlots.length > 0}
                 <span
                     class="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center
-					       rounded-full bg-brand-gold-500 dark:bg-[#e5c890] text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 dark:text-[#1a1d2e]
+					       rounded-full bg-brand-gold-500 dark:bg-[#e5c890] text-gray-100  hover:dark:text-gray-100 dark:text-[#1a1d2e]
 					       text-[8px] font-bold leading-none"
                 >
                     {$juliaPlots.length > 9 ? "9+" : $juliaPlots.length}

@@ -54,7 +54,7 @@
         ? $zenPeek
             ? 'opacity-50 transition-opacity duration-200'
             : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
-        : ''} absolute -top-5 left-1/2 -translate-x-1/2 flex items-center justify-center space-x-2"
+        : ''} absolute -top-4.5 left-1/2 -translate-x-1/2 flex items-center justify-center space-x-2"
     dir="ltr"
 >
     <button
