@@ -186,6 +186,7 @@
                     onkeydown={handleKeydown}
                     autofocus
                     autocorrect="off"
+                    dir="ltr"
                     rows="10"
                     placeholder={$t('dialog.insert_code.placeholder')}
                     class="w-full resize-y rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-2 font-mono text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
@@ -196,6 +197,7 @@
 {:else}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <pre
+        dir="ltr"
         class="language-{language} cursor-pointer"
         title={$t('editor.dblclick_hint')}
         ondblclick={handleDoubleClick}

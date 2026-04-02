@@ -10,7 +10,11 @@
     import { surahOrientation } from "$lib/stores/quran.svelte";
 
     let isRtl = $derived($surahOrientation() === "flex-row-reverse");
-    import { codeMirrorViewInstance, zenMode } from "$lib/stores/editor.store";
+    import {
+        codeMirrorViewInstance,
+        zenMode,
+        zenPeek,
+    } from "$lib/stores/editor.store";
     import { get } from "svelte/store";
     import { EditorSelection } from "@codemirror/state";
     import { EditorView } from "@codemirror/view";
@@ -201,7 +205,9 @@
     class="cursor-pointer absolute -left-5 top-1/2 z-3 rounded-full {actionBtnStyle} {isOpen
         ? 'bg-brand-gold-400 dark:bg-[#363a4f]'
         : ''} {$zenMode
-        ? 'opacity-0 hover:opacity-100 transition-opacity duration-200'
+        ? $zenPeek
+            ? 'opacity-50 transition-opacity duration-200'
+            : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
         : ''}"
     onclick={() => {
         isOpen = !isOpen;

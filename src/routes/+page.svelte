@@ -35,6 +35,7 @@
     import { get } from "svelte/store";
     import { checkFirstRun } from "$lib/stores/tour.store";
     import { zenMode, appDarkMode } from "$lib/stores/editor.store";
+    import SukunPeekToggle from "$lib/components/shared/SukunPeekToggle.svelte";
 
     let height: number = $state(
         typeof window !== "undefined" ? window.innerHeight : 600,
@@ -177,13 +178,15 @@
         {/if}
         {#if $zenMode && $isSidebar}
             <div
-                class="self-stretch flex-shrink-0 w-px"
+                class="self-stretch flex-shrink-0 w-px relative"
                 style="background: linear-gradient(to bottom, transparent 0%, {$appDarkMode
                     ? 'rgba(229,200,144,0.25)'
                     : 'rgba(229,200,144,0.55)'} 20%, {$appDarkMode
                     ? 'rgba(229,200,144,0.25)'
                     : 'rgba(229,200,144,0.55)'} 80%, transparent 100%)"
-            ></div>
+            >
+                <SukunPeekToggle />
+            </div>
         {/if}
         <Sidebar />
     </div>
