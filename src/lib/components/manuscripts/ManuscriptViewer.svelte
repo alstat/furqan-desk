@@ -282,6 +282,8 @@
     let selectedId = $state<number | null>(null); // track by ID to survive re-sort
     let folioIdx = $state(0);
     let imageSrc = $state<string | null>(null);
+    let thumbnailBytes = $state<number[] | null>(null);
+    let loadedIds = $state(new Set<number>());
     let imageLoading = $state(false);
     let imageError = $state(false);
     let imageSource = $state("");
@@ -407,6 +409,8 @@
         detailMap = new Map();
         revokeAll();
         imageSrc = null;
+        thumbnailBytes = null;
+        loadedIds = new Set();
 
         invoke<string>("get_manuscript_list", {
             surah: ref.surah,
@@ -484,11 +488,14 @@
             return;
         }
 
+        const msId = selectedManuscript?.manuscript_id;
         invoke<number[]>("get_manuscript_image", {
             imageUrl: img.image_url,
             thumbnail: true,
         })
             .then((bytes) => {
+                thumbnailBytes = bytes;
+                if (msId !== undefined) loadedIds = new Set([...loadedIds, msId]);
                 const url = URL.createObjectURL(
                     new Blob([new Uint8Array(bytes)], { type: "image/jpeg" }),
                 );
@@ -579,7 +586,7 @@
             } else {
                 const img = selectedImage;
                 if (!img) return;
-                const bytes = await invoke<number[]>("get_manuscript_image", {
+                const bytes = thumbnailBytes ?? await invoke<number[]>("get_manuscript_image", {
                     imageUrl: img.image_url,
                     thumbnail: false,
                 });
@@ -854,11 +861,17 @@
                                             width="0.7rem"
                                         />
                                     </span>
-                                    <div class="min-w-0">
+                                    <div class="min-w-0 flex-1">
                                         <p
-                                            class="text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] leading-tight wrap-break-word"
+                                            class="text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] leading-tight wrap-break-word flex items-center gap-1"
                                         >
                                             {ms.title}
+                                            {#if loadedIds.has(ms.manuscript_id)}
+                                                <span
+                                                    class="shrink-0 inline-block w-1.5 h-1.5 rounded-full bg-brand-gold-400 dark:bg-[#e5c890]"
+                                                    title="Image loaded"
+                                                ></span>
+                                            {/if}
                                         </p>
                                         {#if dateStr}
                                             <p
