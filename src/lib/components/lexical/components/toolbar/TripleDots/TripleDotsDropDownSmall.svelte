@@ -33,6 +33,7 @@
         $getSelection as getSelection,
         $isRangeSelection as isRangeSelection,
     } from "lexical";
+    import { t } from '$lib/i18n';
 
     let { windowWidth, onInsertImageClick, onInsertEquationClick } = $props();
 
@@ -139,7 +140,7 @@
         bind:this={buttonRef}
         onclick={toggleDropdown}
         class={"p-1 " + toolBarBtnStyle + (isOpen ? " " + activeBtnStyle : "")}
-        aria-label="More options"
+        aria-label={$t('toolbar.more_options')}
     >
         <Icon icon={icons["tripleDots"]} height="1rem" />
     </button>
@@ -186,10 +187,10 @@
                         <div class="py-1">
                             <span
                                 class="text-xs font-medium text-brand-charcoal-500"
-                                >Line Spacing</span
+                                >{$t('toolbar.line_spacing')}</span
                             >
                             <div class="mt-1 flex flex-col space-y-1">
-                                {#each [{ label: "Single", value: "1" }, { label: "1.5 Lines", value: "1.5" }, { label: "Double", value: "2" }] as spacing}
+                                {#each [{ label: $t('toolbar.spacing_single'), value: "1" }, { label: $t('toolbar.spacing_1_5'), value: "1.5" }, { label: $t('toolbar.spacing_double'), value: "2" }] as spacing}
                                     <button
                                         class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-full hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100 {$lineHeight ===
                                         spacing.value

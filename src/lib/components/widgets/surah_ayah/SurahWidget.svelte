@@ -40,6 +40,7 @@
         TafsirAuthorInfo,
     } from "$lib/stores/translation.store";
     import { onMount } from "svelte";
+    import { t } from '$lib/i18n';
 
     const LANG_NAMES: Record<string, string> = {
         AR: "Arabic",
@@ -54,11 +55,15 @@
         MS: "Malay",
         PA: "Punjabi",
         PS: "Pashto",
+        ES: "Spanish",
+        JA: "Japanese",
+        PT: "Portuguese",
         RU: "Russian",
         SW: "Swahili",
         TL: "Tagalog",
         TR: "Turkish",
         UR: "Urdu",
+        ZH: "Chinese",
     };
 
     let font: string = $state("font-scheherazade");
@@ -301,7 +306,7 @@
             class="cursor-pointer flex items-center justify-between w-full mb-1.5"
             aria-expanded={fontOptionsOn}
         >
-            <span class={labelClass + " mb-0"}>Font Options</span>
+            <span class={labelClass + " mb-0"}>{$t('surah.font_options')}</span>
             <Icon
                 icon="charm:chevron-down"
                 width="0.75rem"
@@ -311,7 +316,7 @@
         {#if fontOptionsOn}
             <div class="flex flex-col gap-3.5 mb-3.5">
                 <div>
-                    <label for="surah-font-family" class={labelClass}>Font Family</label>
+                    <label for="surah-font-family" class={labelClass}>{$t('surah.font_family')}</label>
                     <div class="relative">
                         <select
                             id="surah-font-family"
@@ -330,17 +335,17 @@
                     </div>
                 </div>
                 <div>
-                    <label for="surah-font-size" class={labelClass}>Font Size</label>
+                    <label for="surah-font-size" class={labelClass}>{$t('surah.font_size')}</label>
                     <div class="relative">
                         <select
                             id="surah-font-size"
                             bind:value={textSize}
                             class={selectClass}
                         >
-                            <option value="text-base">Small</option>
-                            <option value="text-xl">Medium</option>
-                            <option value="text-2xl">Large</option>
-                            <option value="text-3xl">Extra Large</option>
+                            <option value="text-base">{$t('surah.size_small')}</option>
+                            <option value="text-xl">{$t('surah.size_medium')}</option>
+                            <option value="text-2xl">{$t('surah.size_large')}</option>
+                            <option value="text-3xl">{$t('surah.size_xlarge')}</option>
                         </select>
                         <span
                             class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300"
@@ -353,11 +358,11 @@
         {/if}
         <!-- Hide Surah Page -->
         <div class="flex items-center justify-between border-t border-brand-sand-100 dark:border-[#414559] pt-3">
-            <span class={labelClass + " mb-0"}>Hide Surah Page</span>
+            <span class={labelClass + " mb-0"}>{$t('surah.hide_page')}</span>
             <button
                 role="switch"
                 aria-checked={hideSurah}
-                aria-label="Hide Surah Page"
+                aria-label={$t('surah.hide_page')}
                 onclick={() => {
                     hideSurah = !hideSurah;
                     if (hideSurah && !$isSidebar) $isSidebar = true;
@@ -379,18 +384,18 @@
 {#snippet translationBody()}
     <div class="flex flex-col gap-3.5 px-4 pt-3 pb-1.5">
         <div>
-            <label for="translator-select" class={labelClass}>Translator</label>
+            <label for="translator-select" class={labelClass}>{$t('surah.translator')}</label>
             <div class="relative">
                 <select
                     id="translator-select"
                     bind:value={selectedTranslatorId}
                     class={selectClass}
                 >
-                    <option value="">None</option>
-                    {#each [...new Set($availableTranslators.map((t) => t.lang))] as lang}
+                    <option value="">{$t('surah.none')}</option>
+                    {#each [...new Set($availableTranslators.map((tr) => tr.lang))] as lang}
                         <optgroup label={LANG_NAMES[lang] ?? lang}>
-                            {#each $availableTranslators.filter((t) => t.lang === lang) as t}
-                                <option value={String(t.id)}>{t.name}</option>
+                            {#each $availableTranslators.filter((tr) => tr.lang === lang) as tr}
+                                <option value={String(tr.id)}>{tr.name}</option>
                             {/each}
                         </optgroup>
                     {/each}
@@ -403,11 +408,11 @@
             </div>
         </div>
         <div class="flex items-center justify-between">
-            <span class={labelClass}>Transliteration</span>
+            <span class={labelClass}>{$t('surah.transliteration')}</span>
             <button
                 role="switch"
                 aria-checked={translitEnabled}
-                aria-label="Transliteration"
+                aria-label={$t('surah.transliteration')}
                 onclick={() => {
                     translitEnabled = !translitEnabled;
                 }}
@@ -423,11 +428,11 @@
             </button>
         </div>
         <div class="flex items-center justify-between">
-            <span class={labelClass}>Word by Word</span>
+            <span class={labelClass}>{$t('surah.word_by_word')}</span>
             <button
                 role="switch"
                 aria-checked={wbwEnabled}
-                aria-label="Word by Word"
+                aria-label={$t('surah.word_by_word')}
                 onclick={() => {
                     wbwEnabled = !wbwEnabled;
                 }}
@@ -444,11 +449,11 @@
         </div>
         <div class="border-t border-brand-sand-100 dark:border-[#414559] pt-3">
             <div class="flex items-center justify-between mb-2">
-                <span class={labelClass}>Tafsir</span>
+                <span class={labelClass}>{$t('surah.tafsir')}</span>
                 <button
                     role="switch"
                     aria-checked={tafsirOn}
-                    aria-label="Tafsir"
+                    aria-label={$t('surah.tafsir')}
                     onclick={() => {
                         tafsirOn = !tafsirOn;
                     }}
@@ -470,7 +475,7 @@
                         bind:value={selectedTafsirId}
                         class={selectClass}
                     >
-                        <option value="">None</option>
+                        <option value="">{$t('surah.none')}</option>
                         {#each [...new Set($availableTafsirAuthors.map((a) => a.lang))] as lang}
                             <optgroup label={LANG_NAMES[lang] ?? lang}>
                                 {#each $availableTafsirAuthors.filter((a) => a.lang === lang) as a}
@@ -498,9 +503,9 @@
 
 {#snippet controlCard()}
     <div class="space-y-2">
-        <ControlCard cardTitle={"Display"} cardBody={fontBody} />
-        <ControlCard cardTitle={"Translation"} cardBody={translationBody} />
-        <ControlCard cardTitle={"Surah"} cardBody={surahCardBody} />
+        <ControlCard cardTitle={$t('surah.display_card')} cardBody={fontBody} />
+        <ControlCard cardTitle={$t('surah.translation_card')} cardBody={translationBody} />
+        <ControlCard cardTitle={$t('surah.surah_card')} cardBody={surahCardBody} />
     </div>
 {/snippet}
 

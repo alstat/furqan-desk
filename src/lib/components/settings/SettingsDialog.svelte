@@ -1,7 +1,7 @@
 <script lang="ts">
     import Icon from '@iconify/svelte';
     import Dialog from '$lib/components/shared/Dialog.svelte';
-    import { appDarkMode } from '$lib/stores/editor.store';
+    import { appDarkMode, zenMode } from '$lib/stores/editor.store';
     import { restartTour } from '$lib/stores/tour.store';
     import { invoke } from '@tauri-apps/api/core';
     import { manuscriptsEnabled } from '$lib/stores/manuscripts.store';
@@ -10,6 +10,7 @@
     import { listen } from '@tauri-apps/api/event';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { getVersion } from '@tauri-apps/api/app';
+    import { locale, LOCALE_NAMES, t, type Locale } from '$lib/i18n';
 
     interface Props {
         open: boolean;
@@ -107,14 +108,36 @@
 
 <Dialog {open} title="Settings" {onClose}>
     {#snippet children()}
+        <!-- Language -->
+        <div class="py-2 border-b border-slate-100 dark:border-[#414559]">
+            <p class={sectionLabel}>{$t('settings.language')}</p>
+            <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] mb-2">
+                {$t('settings.language.desc')}
+            </p>
+            <div class="relative">
+                <select
+                    value={$locale}
+                    onchange={(e) => locale.set(e.currentTarget.value as Locale)}
+                    class="w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 transition-all focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100"
+                >
+                    {#each Object.entries(LOCALE_NAMES) as [code, name]}
+                        <option value={code}>{name}</option>
+                    {/each}
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+                    <Icon icon="charm:chevron-down" width="0.75rem" />
+                </span>
+            </div>
+        </div>
+
         <!-- Help -->
         <div class="py-2">
             <p class={sectionLabel}>Help</p>
             <div class="flex items-center justify-between">
-                <span class={rowLabel}>Browse the user guide</span>
+                <span class={rowLabel}>{$t('settings.help.browse')}</span>
                 <button onclick={onOpenHelp} class={actionBtn}>
                     <Icon icon="solar:question-circle-bold-duotone" width="0.85rem" />
-                    Open Help
+                    {$t('settings.help.open')}
                 </button>
             </div>
         </div>
@@ -123,22 +146,22 @@
         <div class="py-2">
             <p class={sectionLabel}>Tutorial</p>
             <div class="flex items-center justify-between">
-                <span class={rowLabel}>Start the app tutorial</span>
+                <span class={rowLabel}>{$t('settings.tutorial.desc')}</span>
                 <button onclick={handleRestartTour} class={actionBtn}>
                     <Icon icon="solar:play-circle-bold-duotone" width="0.85rem" />
-                    Restart Tour
+                    {$t('settings.tutorial.restart')}
                 </button>
             </div>
         </div>
 
         <!-- Appearance -->
         <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
-            <p class={sectionLabel}>Appearance</p>
+            <p class={sectionLabel}>{$t('settings.appearance')}</p>
             <div class="flex items-center justify-between">
                 <div>
-                    <span class={rowLabel}>Morphology popover glass effect</span>
+                    <span class={rowLabel}>{$t('settings.appearance.glass')}</span>
                     <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
-                        Disable to improve performance
+                        {$t('settings.appearance.glass.desc')}
                     </p>
                 </div>
                 <div class="flex gap-2">
@@ -149,7 +172,7 @@
                                 ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                 : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                     >
-                        Disabled
+                        {$t('common.disabled')}
                     </button>
                     <button
                         onclick={() => morphGlassEffect.set(true)}
@@ -158,7 +181,36 @@
                                 ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                 : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                     >
-                        Enabled
+                        {$t('common.enabled')}
+                    </button>
+                </div>
+            </div>
+            <!-- Zen Mode -->
+            <div class="flex items-center justify-between mt-3">
+                <div>
+                    <span class={rowLabel}>{$t('settings.zen')}</span>
+                    <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        {$t('settings.zen.desc')}
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <button
+                        onclick={() => zenMode.set(false)}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${!$zenMode
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        {$t('common.disabled')}
+                    </button>
+                    <button
+                        onclick={() => zenMode.set(true)}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${$zenMode
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        {$t('common.enabled')}
                     </button>
                 </div>
             </div>
@@ -166,9 +218,9 @@
 
         <!-- Manuscripts -->
         <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
-            <p class={sectionLabel}>Manuscripts</p>
+            <p class={sectionLabel}>{$t('settings.manuscripts')}</p>
             <div class="flex items-center justify-between mb-2">
-                <span class={rowLabel}>Browse early Quranic manuscripts</span>
+                <span class={rowLabel}>{$t('settings.manuscripts.browse')}</span>
                 <div class="flex gap-2">
                     <button
                         onclick={() => manuscriptsEnabled.set(false)}
@@ -177,7 +229,7 @@
                                 ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                 : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                     >
-                        Disabled
+                        {$t('common.disabled')}
                     </button>
                     <button
                         onclick={() => manuscriptsEnabled.set(true)}
@@ -186,13 +238,13 @@
                                 ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                 : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                     >
-                        Enabled
+                        {$t('common.enabled')}
                     </button>
                 </div>
             </div>
             <div class="flex items-center justify-between">
                 <span class={rowLabel}>
-                    Clear cached manuscript images
+                    {$t('settings.manuscripts.cache')}
                     {#if manuscriptCacheSize !== null}
                         <span class="ml-1 font-mono text-brand-charcoal-300 dark:text-[#838ba7]">{manuscriptCacheSize}</span>
                     {/if}
@@ -202,7 +254,7 @@
                     class={actionBtn}
                 >
                     <Icon icon="solar:trash-bin-trash-bold-duotone" width="0.85rem" />
-                    Clear Cache
+                    {$t('settings.manuscripts.clear')}
                 </button>
             </div>
         </div>
@@ -212,11 +264,11 @@
             <p class={sectionLabel}>Julia</p>
             <div class="flex items-center justify-between mb-2">
                 <span class={rowLabel}>
-                    Installed version
+                    {$t('settings.julia.installed')}
                     {#if juliaInstalledVersion}
                         <span class="ml-1 font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]">{juliaInstalledVersion}</span>
                     {:else}
-                        <span class="ml-1 text-brand-charcoal-300 dark:text-[#838ba7]">Not installed</span>
+                        <span class="ml-1 text-brand-charcoal-300 dark:text-[#838ba7]">{$t('settings.julia.not_installed')}</span>
                     {/if}
                 </span>
                 <button
@@ -226,10 +278,10 @@
                 >
                     {#if juliaCheckState === 'checking'}
                         <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin" />
-                        Checking…
+                        {$t('settings.julia.checking')}
                     {:else}
                         <Icon icon="solar:refresh-bold-duotone" width="0.85rem" />
-                        Check for updates
+                        {$t('settings.julia.check')}
                     {/if}
                 </button>
             </div>
@@ -244,7 +296,7 @@
             {#if juliaLatestVersion && juliaInstalledVersion}
                 <div class="flex items-center justify-between mt-1">
                     <span class={rowLabel}>
-                        Latest version
+                        {$t('settings.julia.latest')}
                         <span class="ml-1 font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]">{juliaLatestVersion}</span>
                     </span>
                     {#if isNewer(juliaLatestVersion, juliaInstalledVersion)}
@@ -254,10 +306,10 @@
                             class={actionBtn}
                         >
                             <Icon icon="solar:upload-bold-duotone" width="0.85rem" />
-                            Update via juliaup
+                            {$t('settings.julia.update')}
                         </button>
                     {:else}
-                        <span class="text-xs text-brand-charcoal-300 dark:text-[#838ba7]">Julia is up to date</span>
+                        <span class="text-xs text-brand-charcoal-300 dark:text-[#838ba7]">{$t('settings.julia.up_to_date')}</span>
                     {/if}
                 </div>
             {/if}
@@ -269,7 +321,7 @@
 
         <!-- Typst Packages -->
         <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
-            <p class={sectionLabel}>Typst Packages</p>
+            <p class={sectionLabel}>{$t('settings.typst')}</p>
             <div class="flex items-center justify-between mb-2">
                 <span class={rowLabel}>ilm
                     <span class="ml-1 font-mono text-brand-charcoal-300 dark:text-[#838ba7]">v1.4.2</span>
@@ -298,7 +350,7 @@
 
         <!-- Website -->
         <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
-            <p class={sectionLabel}>Website</p>
+            <p class={sectionLabel}>{$t('settings.website')}</p>
 
             <!-- Row 1: current version + check button -->
             <div class="flex items-center justify-between mb-2">
@@ -329,10 +381,10 @@
                 >
                     {#if appCheckState === 'checking'}
                         <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin" />
-                        Checking…
+                        {$t('settings.julia.checking')}
                     {:else}
                         <Icon icon="solar:refresh-bold-duotone" width="0.85rem" />
-                        Check for updates
+                        {$t('settings.julia.check')}
                     {/if}
                 </button>
             </div>
@@ -341,16 +393,16 @@
             {#if latestAppVersion && appVersion}
                 <div class="flex items-center justify-between mt-1">
                     <span class={rowLabel}>
-                        Latest version
+                        {$t('settings.julia.latest')}
                         <span class="ml-1 font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]">v{latestAppVersion}</span>
                     </span>
                     {#if isNewer(latestAppVersion, appVersion)}
                         <button class={actionBtn} onclick={() => openUrl('https://www.ayahlab.com/')}>
                             <Icon icon="solar:download-bold-duotone" width="0.85rem" />
-                            Download update
+                            {$t('settings.website.download')}
                         </button>
                     {:else}
-                        <span class="text-xs text-brand-charcoal-300 dark:text-[#838ba7]">Up to date</span>
+                        <span class="text-xs text-brand-charcoal-300 dark:text-[#838ba7]">{$t('settings.website.up_to_date')}</span>
                     {/if}
                 </div>
             {/if}
@@ -363,13 +415,11 @@
 
         <!-- Privacy -->
         <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
-            <p class={sectionLabel}>Privacy</p>
+            <p class={sectionLabel}>{$t('settings.privacy')}</p>
             <div class="flex items-start gap-2 rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-100 dark:border-[#414559] px-3 py-2.5">
                 <Icon icon="solar:shield-check-bold-duotone" class="text-brand-gold-400 shrink-0 mt-0.5" width="0.9rem" />
                 <p class="text-[11px] text-brand-charcoal-400 dark:text-[#838ba7] leading-relaxed">
-                    AyahLab is fully offline. No accounts, no telemetry, no analytics.
-                    Your notes, bookmarks, and settings stay on your device only —
-                    the author has no way to access your data.
+                    {$t('settings.privacy.text')}
                 </p>
             </div>
         </div>

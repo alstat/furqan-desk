@@ -10,6 +10,7 @@
     import { createTab, tabs, activeTabId } from "$lib/stores/tabs.store";
     import { isSidebar, surahOrientation } from "$lib/stores/quran.svelte";
     import { rotateSpring } from "$lib/stores/animation";
+    import { t } from '$lib/i18n';
 
     // ── create new tab ─────────────────────────────────────────────────────────
     let showNewOptions = $state(false);
@@ -47,7 +48,7 @@
 					   text-brand-charcoal-500 transition-colors flex items-center justify-center gap-1.5"
             >
                 <Icon icon="solar:settings-bold-duotone" width="0.85rem" />
-                Settings
+                {$t('editor.settings')}
             </button>
         </div>
 
@@ -56,7 +57,7 @@
 
         <!-- App Theme -->
         <div>
-            <span class={labelClass}>App Theme</span>
+            <span class={labelClass}>{$t('editor.app_theme')}</span>
             <div class="flex gap-2 mt-1.5">
                 <button
                     onclick={() => appDarkMode.set(false)}
@@ -67,7 +68,7 @@
                                 : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500"
                         }`}
                 >
-                    Light
+                    {$t('editor.theme_light')}
                 </button>
                 <button
                     onclick={() => appDarkMode.set(true)}
@@ -78,7 +79,7 @@
                                 : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500"
                         }`}
                 >
-                    Dark
+                    {$t('editor.theme_dark')}
                 </button>
             </div>
         </div>
@@ -88,7 +89,7 @@
 
         <!-- Editor Theme -->
         <div>
-            <span class={labelClass}>Editor Theme</span>
+            <span class={labelClass}>{$t('editor.editor_theme')}</span>
             <div class="flex gap-2 mt-1.5">
                 <button
                     onclick={() => editorTheme.set("ayu-light")}
@@ -120,7 +121,7 @@
 
         <!-- Code Editor Font Size -->
         <div>
-            <span class={labelClass}>Code Editor Font Size</span>
+            <span class={labelClass}>{$t('editor.font_size')}</span>
             <div class="flex items-center gap-2 mt-1.5">
                 <button
                     onclick={() => cmFontSize.set($cmFontSize - 1)}
@@ -129,7 +130,7 @@
 						   border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
 						   text-brand-charcoal-500 font-semibold text-sm transition-colors
 						   disabled:opacity-40 disabled:cursor-not-allowed"
-                    title="Decrease font size">
+                    title={$t('editor.font_size_decrease')}>
                     <svg width="10" height="2" viewBox="0 0 10 2" fill="none">
                         <line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
@@ -146,7 +147,7 @@
 						   border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
 						   text-brand-charcoal-500 font-semibold text-sm transition-colors
 						   disabled:opacity-40 disabled:cursor-not-allowed"
-                    title="Increase font size">
+                    title={$t('editor.font_size_increase')}>
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                         <line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                         <line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -160,7 +161,7 @@
 
         <!-- Create new file -->
         <div>
-            <span class={labelClass}>New File</span>
+            <span class={labelClass}>{$t('editor.new_file')}</span>
             {#if showNewOptions}
                 <div class="flex gap-2 mt-1.5">
                     <button
@@ -197,7 +198,7 @@
                         icon="solar:add-circle-bold-duotone"
                         width="0.85rem"
                     />
-                    Create New
+                    {$t('editor.create_new')}
                 </button>
             {/if}
         </div>
@@ -210,7 +211,7 @@
 {/snippet}
 
 {#snippet controlCard()}
-    <ControlCard cardTitle={"App Controls"} {cardBody} />
+    <ControlCard cardTitle={$t('editor.app_controls')} {cardBody} />
 {/snippet}
 
 <GroupCards

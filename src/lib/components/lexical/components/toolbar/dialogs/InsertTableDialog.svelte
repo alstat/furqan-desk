@@ -7,6 +7,7 @@
     import Icon from "@iconify/svelte";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import DialogPanelHeader from "$lib/components/shared/DialogPanelHeader.svelte";
+    import { t } from '$lib/i18n';
 
     let rows = $state("5");
     let columns = $state("5");
@@ -122,7 +123,7 @@
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="true"
-        aria-label="Insert Table"
+        aria-label={$t('dialog.insert_table')}
         tabindex="-1"
         class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{PANEL_W}px; z-index:{zIndex};"
@@ -136,7 +137,7 @@
         <!-- Header -->
         <DialogPanelHeader
             icon="fluent:table-16-filled"
-            title="Insert Table"
+            title={$t('dialog.insert_table')}
             {isDragging}
             onClose={close}
             onpointerdown={startDrag}
@@ -150,16 +151,16 @@
             <div class="flex flex-col gap-1.5">
                 <label
                     class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
-                    >Rows</label
+                    >{$t('dialog.rows')}</label
                 >
                 <input
                     type="number"
                     bind:value={rows}
-                    placeholder="# of rows (1–500)"
+                    placeholder={$t('dialog.rows_placeholder')}
                     min="1"
                     max="500"
                     data-test-id="table-modal-rows"
-                    class="h-9 w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                    class="h-9 w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors dark:[color-scheme:dark]"
                 />
             </div>
 
@@ -167,16 +168,16 @@
             <div class="flex flex-col gap-1.5">
                 <label
                     class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
-                    >Columns</label
+                    >{$t('dialog.columns')}</label
                 >
                 <input
                     type="number"
                     bind:value={columns}
-                    placeholder="# of columns (1–50)"
+                    placeholder={$t('dialog.columns_placeholder')}
                     min="1"
                     max="50"
                     data-test-id="table-modal-columns"
-                    class="h-9 w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                    class="h-9 w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors dark:[color-scheme:dark]"
                 />
             </div>
 
@@ -188,7 +189,7 @@
                 class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 bg-brand-gold-400 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
             >
                 <Icon icon="solar:table-bold" width="0.8rem" />
-                Insert Table
+                {$t('dialog.insert_table')}
             </button>
         </div>
     </div>

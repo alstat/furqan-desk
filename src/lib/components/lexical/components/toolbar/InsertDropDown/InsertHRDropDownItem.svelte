@@ -4,6 +4,7 @@
 	import Icon from '@iconify/svelte';
 	import DropDownItem from '../../generic/dropdown/DropDownItem.svelte';
 	import { icons } from '$lib/data/toolbar/toolbar';
+	import { t } from '$lib/i18n';
 
 	const activeEditor = getActiveEditor();
 </script>
@@ -16,6 +17,6 @@
 >
 <div class="flex flex-row items-center w-32">
   <div class="pr-2"><Icon icon={icons['hr']} width=1rem/></div>
-  <div>Horizontal Rule</div>
+  <div>{$t('insert.hr')}</div>
 </div>
 </DropDownItem>

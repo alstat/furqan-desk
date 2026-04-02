@@ -6,6 +6,7 @@
   import {getActiveEditor, getIsEditable} from '$lexical/core/composerContext.js';
   import {COMMAND_PRIORITY_NORMAL, KEY_MODIFIER_COMMAND} from 'lexical';
   import {IS_APPLE} from '@lexical/utils';
+  import { t } from '$lib/i18n';
 
   const activEeditor = getActiveEditor();
   const isEditable = getIsEditable();
@@ -44,8 +45,8 @@
   disabled={!$isEditable}
   onclick={insertLink}
   class={'toolbar-item spaced ' + ($isLink ? 'active' : '')}
-  aria-label="Insert link"
-  title={IS_APPLE ? 'Insert link (⌘K)' : 'Insert link (Ctrl+K)'}
+  aria-label={$t('toolbar.insert_link')}
+  title={IS_APPLE ? `${$t('toolbar.insert_link')} (⌘K)` : `${$t('toolbar.insert_link')} (Ctrl+K)`}
   type="button">
   <i class="format link"></i>
 </button>

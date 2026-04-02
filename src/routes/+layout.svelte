@@ -1,11 +1,11 @@
 <script lang="ts">
 	import '../app.css';
-	import 'highlight.js/styles/github.css';
 	import '$lib/icons';
 	import { appDarkMode } from '$lib/stores/editor.store';
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 	import { tabs } from '$lib/stores/tabs.store';
+	import { t as i18n } from '$lib/i18n';
 
 	let { children } = $props();
 
@@ -27,10 +27,11 @@
 				const dirtyTabs = get(tabs).filter(t => t.isDirty);
 				if (dirtyTabs.length === 0) return;
 				event.preventDefault();
-				const names = dirtyTabs.map(t => `• ${t.name}`).join('\n');
+				const translate = get(i18n);
+				const names = dirtyTabs.map(tab => `• ${tab.name}`).join('\n');
 				const confirmed = await ask(
-					`You have unsaved changes in:\n\n${names}\n\nClose anyway and discard changes?`,
-					{ title: 'Unsaved Changes', kind: 'warning', okLabel: 'Discard & Close', cancelLabel: 'Cancel' }
+					translate('layout.unsaved_message', { names }),
+					{ title: translate('layout.unsaved_title'), kind: 'warning', okLabel: translate('layout.discard_close'), cancelLabel: translate('common.cancel') }
 				);
 				if (confirmed) await appWindow.destroy();
 			});

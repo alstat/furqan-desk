@@ -14,6 +14,7 @@
     $isRangeSelection as isRangeSelection,
     $createParagraphNode as createParagraphNode,
   } from 'lexical';
+  import { t } from '$lib/i18n';
 
   const activeEditor = getActiveEditor();
 
@@ -77,8 +78,8 @@
 <DropDownItem
   onclick={clearFormatting}
   class="item"
-  title="Clear text formatting"
-  ariaLabel="Clear all text formatting">
+  title={$t('toolbar.clear_formatting')}
+  ariaLabel={$t('toolbar.clear_formatting')}>
   <i class="icon clear"></i>
-  <span class="text">Clear Formatting</span>
+  <span class="text">{$t('toolbar.clear_formatting')}</span>
 </DropDownItem>

@@ -20,6 +20,8 @@
     import Icon from "@iconify/svelte";
     import { donationOpen } from "$lib/stores/tour.store";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
+    import { t } from "$lib/i18n";
+    import { zenMode, appDarkMode } from "$lib/stores/editor.store";
 
     let feedbackOpen = $state(false);
 
@@ -89,7 +91,7 @@
 >
     <!-- Sidebar toggle (top) -->
     <button
-        class={`${$hideSurahPage() ? "hidden " : ""} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-4 z-200 rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559]`}
+        class={`${$hideSurahPage() ? "hidden " : ""} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-4 z-200 rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559] ${$zenMode ? 'opacity-30 hover:opacity-100' : ''}`}
         onclick={toggleSidebar}
         aria-label={$isSidebar ? "Collapse sidebar" : "Expand sidebar"}
     >
@@ -108,10 +110,10 @@
     <!-- Table of Contents button -->
     {#if $isSidebar && $activeTab?.type === "lexical"}
         <button
-            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-16 z-3 ${$tocOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""}`}
+            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-16 z-3 ${$tocOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? 'opacity-30 hover:opacity-100 transition-opacity duration-200' : ''}`}
             onclick={() => ($tocOpen = !$tocOpen)}
-            aria-label="Table of Contents"
-            title="Table of Contents"
+            aria-label={$t('toc.button')}
+            title={$t('toc.button')}
         >
             <Icon icon="solar:list-bold-duotone" class="h-4 w-4" />
         </button>
@@ -121,7 +123,7 @@
     {#if $juliaMode || $juliaViewerOpen}
         <button
             class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-26 z-3 rounded-full
-			       ${$juliaViewerOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""}`}
+			       ${$juliaViewerOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? 'opacity-30 hover:opacity-100 transition-opacity duration-200' : ''}`}
             onclick={() => ($juliaViewerOpen = !$juliaViewerOpen)}
             aria-label="Julia Plot Viewer"
             title="Julia Plot Viewer"
@@ -141,7 +143,7 @@
 
     <!-- Donation button (above feedback) -->
     <button
-        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-15 z-3 `}
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-15 z-3 ${$zenMode ? 'opacity-30 hover:opacity-100 transition-opacity duration-200' : ''}`}
         onclick={() => ($donationOpen = true)}
         aria-label="Support AyahLab"
         title="Donate / Support"
@@ -151,7 +153,7 @@
 
     <!-- Feedback button (bottom) — same strip as toggle, aligned vertically at bottom -->
     <button
-        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-4 z-3 `}
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-4 z-3 ${$zenMode ? 'opacity-30 hover:opacity-100 transition-opacity duration-200' : ''}`}
         onclick={() => (feedbackOpen = true)}
         aria-label="Send feedback"
         title="Send feedback"
@@ -185,12 +187,20 @@
                         ? "right"
                         : "left", // or 'left' for left-to-right
             }}
-            class="w-full space-y-2 overflow-visible bg-white dark:bg-[#292c3c] px-1 pb-4 text-xl border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/40 {roundRight &&
+            class="relative w-full space-y-2 overflow-visible {$zenMode && $appDarkMode ? 'bg-transparent' : 'bg-white dark:bg-[#292c3c]'} px-1 pb-4 text-xl {$zenMode
+                ? ''
+                : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/40'} {roundRight &&
             $hideSurahPage() &&
             !$typstMode
                 ? 'rounded-md'
                 : 'rounded-l-md'}"
         >
+            {#if $zenMode}
+                <div
+                    class="absolute top-0 right-0 w-1/2 h-px z-10 pointer-events-none"
+                    style="background: linear-gradient(to right, transparent 0%, {$appDarkMode ? 'rgba(229,200,144,0.25)' : 'rgba(229,200,144,0.55)'} 20%, {$appDarkMode ? 'rgba(229,200,144,0.25)' : 'rgba(229,200,144,0.55)'} 80%, transparent 100%)"
+                ></div>
+            {/if}
             {@render children()}
         </div>
         <!-- {/if} -->

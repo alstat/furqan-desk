@@ -1,5 +1,6 @@
 <script lang="ts">
     import { openUrl } from '@tauri-apps/plugin-opener';
+    import { t } from '$lib/i18n';
     import Icon from '@iconify/svelte';
     import { fly } from 'svelte/transition';
 
@@ -35,7 +36,7 @@
     <div
         role="dialog"
         aria-modal="true"
-        aria-label="Support AyahLab"
+        aria-label={$t('donation.title')}
         tabindex="-1"
         class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/30 backdrop-blur-sm"
         onclick={(e) => {
@@ -67,12 +68,12 @@
                             <h2
                                 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                             >
-                                Support AyahLab
+                                {$t('donation.title')}
                             </h2>
                             <p
                                 class="text-[11px] text-brand-charcoal-300 dark:text-[#8087a2]"
                             >
-                                Keep the app free
+                                {$t('donation.subtitle')}
                             </p>
                         </div>
                     </div>
@@ -110,7 +111,7 @@
                         class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-4 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                     >
                         <Icon icon="solar:heart-bold" width="0.8rem" />
-                        Donate on Ko-fi →
+                        {$t('donation.kofi')}
                     </button>
                 </div>
 
@@ -144,7 +145,7 @@
                             class="border border-brand-sand-200 dark:border-[#414559] shadow"
                         />
                         <p class="text-[11px] text-brand-charcoal-300 dark:text-[#8087a2] text-center">
-                            Scan with {qrLabels[selectedQR]} app
+                            {$t('donation.scan', { app: qrLabels[selectedQR] })}
                         </p>
                     </div>
                 </div>
@@ -159,7 +160,7 @@
                     class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-5 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                 >
                     <Icon icon="solar:close-circle-bold-duotone" width="0.8rem" />
-                    Close
+                    {$t('common.close')}
                 </button>
             </div>
         </div>

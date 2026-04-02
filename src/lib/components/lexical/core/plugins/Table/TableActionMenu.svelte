@@ -39,6 +39,7 @@
     import { writable } from "svelte/store";
     import Portal from "$lexical/components/generic/portal/Portal.svelte";
     import Icon from "@iconify/svelte";
+    import { t } from '$lib/i18n';
 
     interface Props {
         onClose: () => void;
@@ -511,7 +512,7 @@
                         width="14"
                         class="shrink-0"
                     />
-                    Merge cells
+                    {$t('table.merge_cells')}
                 </button>
             {:else if canUnmergeCell}
                 <button
@@ -525,7 +526,7 @@
                         width="14"
                         class="shrink-0"
                     />
-                    Unmerge cells
+                    {$t('table.unmerge_cells')}
                 </button>
             {/if}
         {/if}
@@ -542,7 +543,7 @@
                 width="14"
                 class="shrink-0"
             />
-            Cell background color
+            {$t('table.cell_bg_color')}
         </button>
 
         <div
@@ -556,9 +557,7 @@
             class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
         >
             <Icon icon="tabler:row-insert-top" width="14" class="shrink-0" />
-            Insert {selectionCounts.rows === 1
-                ? "row"
-                : `${selectionCounts.rows} rows`} above
+            {selectionCounts.rows === 1 ? $t('table.insert_row_above_one') : $t('table.insert_row_above_many', { n: selectionCounts.rows })}
         </button>
         <button
             type="button"
@@ -567,9 +566,7 @@
             class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
         >
             <Icon icon="tabler:row-insert-bottom" width="14" class="shrink-0" />
-            Insert {selectionCounts.rows === 1
-                ? "row"
-                : `${selectionCounts.rows} rows`} below
+            {selectionCounts.rows === 1 ? $t('table.insert_row_below_one') : $t('table.insert_row_below_many', { n: selectionCounts.rows })}
         </button>
 
         <div
@@ -587,9 +584,7 @@
                 width="14"
                 class="shrink-0"
             />
-            Insert {selectionCounts.columns === 1
-                ? "column"
-                : `${selectionCounts.columns} columns`} left
+            {selectionCounts.columns === 1 ? $t('table.insert_col_left_one') : $t('table.insert_col_left_many', { n: selectionCounts.columns })}
         </button>
         <button
             type="button"
@@ -602,9 +597,7 @@
                 width="14"
                 class="shrink-0"
             />
-            Insert {selectionCounts.columns === 1
-                ? "column"
-                : `${selectionCounts.columns} columns`} right
+            {selectionCounts.columns === 1 ? $t('table.insert_col_right_one') : $t('table.insert_col_right_many', { n: selectionCounts.columns })}
         </button>
 
         <div
@@ -618,7 +611,7 @@
             class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-amber-500 dark:text-amber-400 hover:bg-brand-sand-200 dark:hover:bg-[#414559] active:bg-brand-sand-400"
         >
             <Icon icon="tabler:column-remove" width="14" class="shrink-0" />
-            Delete column
+            {$t('table.delete_col')}
         </button>
         <button
             type="button"
@@ -627,7 +620,7 @@
             class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-amber-500 dark:text-amber-400 hover:bg-brand-sand-200 dark:hover:bg-[#414559] active:bg-brand-sand-400"
         >
             <Icon icon="tabler:row-remove" width="14" class="shrink-0" />
-            Delete row
+            {$t('table.delete_row')}
         </button>
         <button
             type="button"
@@ -636,7 +629,7 @@
             class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-amber-500 dark:text-amber-400 hover:bg-brand-sand-200 dark:hover:bg-[#414559] active:bg-brand-sand-400"
         >
             <Icon icon="tabler:trash" width="14" class="shrink-0" />
-            Delete table
+            {$t('table.delete_table')}
         </button>
 
         <div
@@ -649,7 +642,7 @@
             class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
         >
             <Icon icon="tabler:layout-rows" width="14" class="shrink-0" />
-            {isRowHeader ? "Remove" : "Add"} row header
+            {isRowHeader ? $t('table.remove_row_header') : $t('table.add_row_header')}
         </button>
         <button
             type="button"
@@ -658,7 +651,7 @@
             class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
         >
             <Icon icon="tabler:layout-columns" width="14" class="shrink-0" />
-            {isColumnHeader ? "Remove" : "Add"} column header
+            {isColumnHeader ? $t('table.remove_col_header') : $t('table.add_col_header')}
         </button>
     </div>
 </Portal>

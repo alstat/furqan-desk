@@ -15,6 +15,7 @@
         lexicalEditorInstance,
         lexicalHistoryState,
         typstSource,
+        zenMode,
     } from "$lib/stores/editor.store";
     import {
         tabs,
@@ -213,7 +214,11 @@
         <ActionBar />
         {#if $activeTab}
             {@const ft = fileTypeInfo($activeTab)}
-            <div class="absolute -top-4.5 left-3/4 z-50 pointer-events-none">
+            <div
+                class="{$zenMode
+                    ? 'opacity-0 hover:opacity-100 transition-opacity duration-200'
+                    : ''} absolute -top-4.5 left-3/4 z-50 pointer-events-none"
+            >
                 <span
                     class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold
 							 bg-brand-sand-100/80 border border-brand-sand-200 backdrop-blur-sm

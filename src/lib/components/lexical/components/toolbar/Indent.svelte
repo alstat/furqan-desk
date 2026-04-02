@@ -6,6 +6,7 @@
 	import { getContext } from 'svelte';
 	import type { Writable } from 'svelte/store';
 	import { IS_APPLE } from '@lexical/utils';
+	import { t } from '$lib/i18n';
 
 	const activeEditor = getActiveEditor();
 	const isEditable = getIsEditable();
@@ -19,9 +20,9 @@
 		$activeEditor.dispatchCommand(INDENT_CONTENT_COMMAND, undefined);
 	}}
 	class={'p-1 ' + toolBarBtnStyle + ($isIndent ? 'active ' + activeBtnStyle : '')}
-	title={IS_APPLE ? 'Indent (tab)' : 'Indent (tab)'}
+	title={`${$t('toolbar.indent')} (tab)`}
 	type="button"
-	aria-label={`Adds tab space to the paragraph. Shortcut: ${IS_APPLE ? 'tab' : 'tab'}`}
+	aria-label={$t('toolbar.indent')}
 >
 	<Icon icon={icons['indent']} height="1rem" />
 </button>

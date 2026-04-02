@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 
 /// Increment this whenever the schema or data changes.
 /// Must match DB_VERSION in db.rs.
-const DB_VERSION: i64 = 1;
+const DB_VERSION: i64 = 3;
 
 fn main() {
     let data_dir = PathBuf::from("data");
@@ -156,6 +156,31 @@ fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
             "Montada Islamic Foundation".into(),
             data_dir.join("translation/fr/montada-islamic-foundation-simple.json"),
         ),
+        (
+            "PT".into(),
+            "Samir".into(),
+            data_dir.join("translation/pt/quran-pt-samir-simple.json"),
+        ),
+        (
+            "ZH".into(),
+            "Muhammad Makin".into(),
+            data_dir.join("translation/zh/muhammad-makin-simple.json"),
+        ),
+        (
+            "ES".into(),
+            "Noor International Center".into(),
+            data_dir.join("translation/es/noor-international-center-simple.json"),
+        ),
+        (
+            "JA".into(),
+            "Saeed Sato".into(),
+            data_dir.join("translation/ja/saeed-sato-simple.json"),
+        ),
+        (
+            "KO".into(),
+            "Hamed Choi".into(),
+            data_dir.join("translation/ko/hamed-choi-simple.json"),
+        ),
     ];
     init_translation_tables(&conn, &translation_paths)?;
 
@@ -204,16 +229,6 @@ fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
             "RU".into(),
             "Ibn Kathir (Russian)".into(),
             data_dir.join("tafsir/ru/ru-tafsir-ibne-kahtir.json"),
-        ),
-        (
-            "RU".into(),
-            "Al-Mukhtasar (Russian)".into(),
-            data_dir.join("tafsir/ru/russian-mokhtasar.json"),
-        ),
-        (
-            "RU".into(),
-            "As-Sa'di (Russian)".into(),
-            data_dir.join("tafsir/ru/tafsir-as-saadi-russian.json"),
         ),
         (
             "TR".into(),

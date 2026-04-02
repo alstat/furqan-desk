@@ -9,6 +9,12 @@
     import { bookmarks, lastRead, currentReadingAyah, pendingJumpAyah } from '$lib/stores/bookmarks.store';
     import { surahLabels, selectedSurahIdx } from '$lib/stores/quran.svelte';
     import { bringToFront } from '$lib/stores/window-manager.store';
+    import { t, locale } from '$lib/i18n';
+    import { get } from 'svelte/store';
+    import { invoke } from '@tauri-apps/api/core';
+    import { lexicalEditorInstance } from '$lib/stores/editor.store';
+    import { $createParagraphNode as createParagraphNode, $createTextNode as createTextNode, $insertNodes as insertNodes } from 'lexical';
+    import type { SurahMorphology } from '$lib/types/morphology';
 
     interface Props { open: boolean; onClose: () => void; }
     let { open, onClose }: Props = $props();
@@ -17,6 +23,7 @@
     let noteInput = $state('');
     let saving    = $state(false);
     let saveError = $state('');
+    let insertingId = $state<number | null>(null);
 
     $effect(() => {
         if (open) {
@@ -38,7 +45,7 @@
     }
 
     async function handleAdd() {
-        if (!ayahInput || ayahInput < 1) { saveError = 'Enter a valid ayah number.'; return; }
+        if (!ayahInput || ayahInput < 1) { saveError = get(t)('bookmark.invalid_ayah'); return; }
         saving = true;
         saveError = '';
         try {
@@ -54,6 +61,27 @@
     function navigate(surah: number, ayah: number) {
         selectedSurahIdx.set(surah);
         pendingJumpAyah.set(ayah);
+    }
+
+    async function insertBookmarkToLexical(bm: (typeof $bookmarks)[0]) {
+        const editor = get(lexicalEditorInstance);
+        if (!editor) return;
+        insertingId = bm.id;
+        try {
+            const morph = await invoke<SurahMorphology>('get_surah_morphology', { surahNumber: bm.surah });
+            const ayahMorph = morph.ayahs.find(a => a.ayah === bm.ayah);
+            const arabicText = ayahMorph?.words.map(w => w.combined_arabic).join(' ') ?? '';
+            const label = `${surahName(bm.surah)} · ${get(t)('bookmark.ayah')} ${bm.ayah}`;
+            editor.update(() => {
+                const arabicPara = createParagraphNode();
+                arabicPara.append(createTextNode(arabicText));
+                const attrPara = createParagraphNode();
+                attrPara.append(createTextNode(label));
+                insertNodes([arabicPara, attrPara]);
+            });
+        } finally {
+            insertingId = null;
+        }
     }
 
     // ── Drag ────────────────────────────────────────────────────────────────
@@ -106,7 +134,7 @@
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="true"
-        aria-label="Bookmarks"
+        aria-label={$t('bookmark.title')}
         class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{PANEL_W}px; max-height:85vh; z-index:{zIndex};"
         onpointerdown={() => { zIndex = bringToFront(); }}
@@ -123,13 +151,13 @@
                             <Icon icon="solar:bookmark-bold-duotone" class="text-brand-gold-500" width="1rem" />
                         </div>
                         <div>
-                            <h2 class="text-sm font-semibold text-brand-charcoal-900">Bookmarks</h2>
-                            <p class="text-[11px] text-brand-charcoal-300">{$bookmarks.length} saved</p>
+                            <h2 class="text-sm font-semibold text-brand-charcoal-900">{$t('bookmark.title')}</h2>
+                            <p class="text-[11px] text-brand-charcoal-300">{$t('bookmark.n_saved', { n: $bookmarks.length })}</p>
                         </div>
                     </div>
                     <button
                         onclick={onClose}
-                        aria-label="Close"
+                        aria-label={$t('common.close')}
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
                         <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
@@ -141,7 +169,7 @@
 
                 <!-- Add bookmark -->
                 <div class="px-5 py-4 border-b border-brand-sand-200">
-                    <p class="mb-3 text-[11px] font-semibold uppercase tracking-widest text-brand-charcoal-300">Add Bookmark</p>
+                    <p class="mb-3 text-[11px] font-semibold uppercase tracking-widest text-brand-charcoal-300">{$t('bookmark.add')}</p>
 
                     <!-- Surah + Ayah row -->
                     <div class="mb-3 flex items-center gap-2">
@@ -150,7 +178,7 @@
                             <span class="text-[11px] font-medium text-brand-charcoal-900 truncate">{surahName($selectedSurahIdx)}</span>
                         </div>
                         <div class="flex items-center gap-2 rounded-xl border border-brand-sand-200 bg-brand-sand-100 px-3 py-2">
-                            <label for="bm-ayah" class="text-[11px] text-brand-charcoal-300 shrink-0">Ayah</label>
+                            <label for="bm-ayah" class="text-[11px] text-brand-charcoal-300 shrink-0">{$t('bookmark.ayah')}</label>
                             <input
                                 id="bm-ayah"
                                 type="number"
@@ -162,7 +190,7 @@
                     </div>
 
                     <textarea
-                        placeholder="Add a note… (optional)"
+                        placeholder={$t('bookmark.note_placeholder')}
                         bind:value={noteInput}
                         rows="2"
                         class="mb-3 w-full resize-none rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 px-3 py-2.5 text-[11px] text-brand-charcoal-900 placeholder-brand-charcoal-300 focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100 transition-all"
@@ -180,14 +208,14 @@
                         class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
                     >
                         <Icon icon="solar:bookmark-bold" width="0.8rem" />
-                        {saving ? 'Saving…' : 'Save Bookmark'}
+                        {saving ? $t('bookmark.saving') : $t('bookmark.save')}
                     </button>
                 </div>
 
                 <!-- Last read -->
                 {#if $lastRead}
                     <div class="px-5 py-4 border-b border-brand-sand-200">
-                        <p class="mb-2.5 text-[11px] font-semibold uppercase tracking-widest text-brand-charcoal-300">Continue Reading</p>
+                        <p class="mb-2.5 text-[11px] font-semibold uppercase tracking-widest text-brand-charcoal-300">{$t('bookmark.continue_reading')}</p>
                         <div class="flex items-center justify-between rounded-xl bg-brand-sand-100 dark:bg-[#303446] border border-brand-sand-200 dark:border-[#414559] px-4 py-3">
                             <div class="flex items-center gap-2.5">
                                 <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-sand-100 dark:bg-[#414559] border border-brand-sand-200 dark:border-[#51576d]">
@@ -195,9 +223,9 @@
                                 </div>
                                 <div>
                                     <p class="text-[11px] font-semibold text-brand-charcoal-900">
-                                        {surahName($lastRead.surah)} · Ayah {$lastRead.ayah}
+                                        {surahName($lastRead.surah)} · {$t('bookmark.ayah')} {$lastRead.ayah}
                                     </p>
-                                    <p class="text-[11px] text-brand-charcoal-300">{formatDate($lastRead.updated_at)}</p>
+                                    <p class="text-[11px] text-brand-charcoal-300">{formatDate($lastRead.updated_at, $locale)}</p>
                                 </div>
                             </div>
                             <button
@@ -205,7 +233,7 @@
                                 class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                             >
                                 <Icon icon="solar:arrow-right-up-linear" width="0.7rem" />
-                                Go
+                                {$t('bookmark.go')}
                             </button>
                         </div>
                     </div>
@@ -214,7 +242,7 @@
                 <!-- Saved bookmarks -->
                 <div class="px-5 py-4">
                     <p class="mb-3 text-[11px] font-semibold uppercase tracking-widest text-brand-charcoal-300">
-                        Saved{$bookmarks.length ? ` · ${$bookmarks.length}` : ''}
+                        {$t('bookmark.saved_section')}{$bookmarks.length ? ` · ${$bookmarks.length}` : ''}
                     </p>
 
                     {#if $bookmarks.length === 0}
@@ -222,20 +250,20 @@
                             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-sand-100">
                                 <Icon icon="solar:bookmark-bold-duotone" class="text-brand-sand-400" width="1.5rem" />
                             </div>
-                            <p class="text-[11px] text-brand-charcoal-300">No bookmarks yet</p>
+                            <p class="text-[11px] text-brand-charcoal-300">{$t('bookmark.empty')}</p>
                         </div>
                     {:else}
                         <div class="space-y-2">
                             {#each $bookmarks as bm (bm.id)}
                                 <div class="group flex items-start justify-between gap-3 rounded-xl border border-brand-sand-200 bg-brand-sand-100 px-3.5 py-3 hover:bg-brand-gold-50 dark:hover:bg-[#414559] transition-colors">
                                     <div class="min-w-0 flex-1">
-                                        <p class="text-[11px] font-semibold text-brand-charcoal-900">
-                                            {surahName(bm.surah)} · Ayah {bm.ayah}
+                                        <p class="text-[11px] font-semibold text-brand-charcoal-500">
+                                            {surahName(bm.surah)} · {$t('bookmark.ayah')} {bm.ayah}
                                         </p>
                                         {#if bm.note}
                                             <p class="mt-0.5 text-[11px] text-brand-charcoal-500 line-clamp-2">{bm.note}</p>
                                         {/if}
-                                        <p class="mt-1 text-[11px] text-brand-charcoal-300">{formatDate(bm.created_at)}</p>
+                                        <p class="mt-1 text-[11px] text-brand-charcoal-300">{formatDate(bm.created_at, $locale)}</p>
                                     </div>
                                     <div class="flex shrink-0 items-center gap-1 pt-0.5">
                                         <button
@@ -243,12 +271,26 @@
                                             class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                                         >
                                             <Icon icon="solar:arrow-right-up-linear" width="0.7rem" />
-                                            Go
+                                            {$t('bookmark.go')}
+                                        </button>
+                                        <button
+                                            onclick={() => insertBookmarkToLexical(bm)}
+                                            disabled={insertingId === bm.id || !$lexicalEditorInstance}
+                                            title={!$lexicalEditorInstance ? $t('manuscript.no_editor') : $t('manuscript.insert_tooltip')}
+                                            class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            {#if insertingId === bm.id}
+                                                <span class="w-3 h-3 rounded-full border border-gray-100 border-t-transparent animate-spin"></span>
+                                                {$t('manuscript.inserting')}
+                                            {:else}
+                                                <Icon icon="solar:pen-new-square-bold" width="0.7rem" />
+                                                {$t('manuscript.insert')}
+                                            {/if}
                                         </button>
                                         <button
                                             onclick={() => deleteBookmark(bm.id)}
                                             class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg text-brand-charcoal-300 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-400 active:bg-red-100 dark:active:bg-red-900/50 transition-colors"
-                                            title="Delete"
+                                            title={$t('bookmark.delete')}
                                         >
                                             <Icon icon="solar:trash-bin-minimalistic-bold" width="0.75rem" />
                                         </button>
