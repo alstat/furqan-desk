@@ -150,6 +150,9 @@ export const zenMode = {
   },
 };
 
+// ── Zen Peek (transient press-and-hold to reveal hidden icons) ────────────────
+export const zenPeek = writable<boolean>(false);
+
 /** Shared compile output — written by TypstEditor, read by TypstPreview. */
 export const typstSvgPages: Writable<string[]> = writable([]);
 export const typstCompileError: Writable<string> = writable("");

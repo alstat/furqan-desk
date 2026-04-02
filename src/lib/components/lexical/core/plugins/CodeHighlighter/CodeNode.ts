@@ -54,7 +54,9 @@ export class CodeNode extends DecoratorNode<DecoratorCodeType> {
     }
 
     createDOM(_config: EditorConfig): HTMLElement {
-        return document.createElement('div');
+        const div = document.createElement('div');
+        div.setAttribute('dir', 'ltr');
+        return div;
     }
 
     updateDOM(): boolean {

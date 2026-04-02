@@ -13,6 +13,7 @@
         juliaViewerOpen,
         juliaPlots,
         tocOpen,
+        zenPeek,
     } from "$lib/stores/editor.store";
     import { activeTab } from "$lib/stores/tabs.store";
     import FeedbackDialog from "./FeedbackDialog.svelte";
@@ -123,7 +124,7 @@
     {#if $juliaMode || $juliaViewerOpen}
         <button
             class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-26 z-3 rounded-full
-			       ${$juliaViewerOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? 'opacity-30 hover:opacity-100 transition-opacity duration-200' : ''}`}
+			       ${$juliaViewerOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
             onclick={() => ($juliaViewerOpen = !$juliaViewerOpen)}
             aria-label="Julia Plot Viewer"
             title="Julia Plot Viewer"
@@ -143,7 +144,7 @@
 
     <!-- Donation button (above feedback) -->
     <button
-        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-15 z-3 ${$zenMode ? 'opacity-30 hover:opacity-100 transition-opacity duration-200' : ''}`}
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-15 z-3 ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
         onclick={() => ($donationOpen = true)}
         aria-label="Support AyahLab"
         title="Donate / Support"
@@ -153,7 +154,7 @@
 
     <!-- Feedback button (bottom) — same strip as toggle, aligned vertically at bottom -->
     <button
-        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-4 z-3 ${$zenMode ? 'opacity-30 hover:opacity-100 transition-opacity duration-200' : ''}`}
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-4 z-3 ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
         onclick={() => (feedbackOpen = true)}
         aria-label="Send feedback"
         title="Send feedback"

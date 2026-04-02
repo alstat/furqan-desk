@@ -20,7 +20,7 @@
     import type { AyahTranslation, AyahTafsir } from '$lib/stores/translation.store';
     import { manuscriptsEnabled, manuscriptAyah, manuscriptViewerOpen } from '$lib/stores/manuscripts.store';
     import { t } from '$lib/i18n';
-    import { zenMode } from "$lib/stores/editor.store";
+    import { zenMode, zenPeek } from "$lib/stores/editor.store";
 
     $effect(() => {
         const tid = $activeTranslatorId;
@@ -432,7 +432,7 @@
 {/snippet}
 
 <div dir="rtl" class="w-full min-w-0">
-    <div dir="ltr" class="{$zenMode ? 'opacity-0 hover:opacity-100 transition-opacity duration-200' : ''} absolute -top-5.5 left-11/12 z-50 pointer-events-none">
+    <div dir="ltr" class="{$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''} absolute -top-5.5 left-11/12 z-50">
         {#if $morphologyMultiSurahList !== null}
             <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-1 leading-none
                          bg-brand-sand-100/80 border border-brand-sand-200 backdrop-blur-sm

@@ -9,6 +9,7 @@
         typstCompileError,
         typstIsCompiling,
         zenMode,
+        zenPeek,
     } from "$lib/stores/editor.store";
     import Icon from "@iconify/svelte";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
@@ -75,8 +76,9 @@
             <button
                 onclick={exportPdf}
                 class={$zenMode
-                    ? actionBtnStyle +
-                      " absolute -top-5 left-11/12 opacity-0 hover:opacity-100 transition-opacity duration-200"
+                    ? actionBtnStyle + ($zenPeek
+                        ? " absolute -top-5 left-11/12 opacity-50 transition-opacity duration-200"
+                        : " absolute -top-5 left-11/12 opacity-0 hover:opacity-100 transition-opacity duration-200")
                     : actionBtnStyle + " absolute -top-5 left-11/12"}
             >
                 <Icon icon="ph:file-pdf-bold" />
