@@ -268,6 +268,8 @@ export const fa: Record<string, string> = {
     'manuscript.insert': 'درج در ویرایشگر',
     'manuscript.insert_tooltip': 'درج تصویر در ویرایشگر',
     'manuscript.no_editor': 'ابتدا یک سند Lexical باز کنید',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'درج ریخت‌شناسی در ویرایشگر',
     'manuscript.meta_date': 'تاریخ',
     'manuscript.meta_radiocarbon': 'کربن‌سنجی',
     'manuscript.meta_material': 'ماده',

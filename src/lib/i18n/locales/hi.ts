@@ -268,6 +268,8 @@ export const hi: Record<string, string> = {
     'manuscript.insert': 'Lexical में सम्मिलित करें',
     'manuscript.insert_tooltip': 'एडिटर में छवि सम्मिलित करें',
     'manuscript.no_editor': 'पहले एक Lexical दस्तावेज़ टैब खोलें',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'एडिटर में रूपविज्ञान सम्मिलित करें',
     'manuscript.meta_date': 'तारीख',
     'manuscript.meta_radiocarbon': 'रेडियोकार्बन',
     'manuscript.meta_material': 'सामग्री',

@@ -268,6 +268,8 @@ export const ur: Record<string, string> = {
     'manuscript.insert': 'ایڈیٹر میں داخل کریں',
     'manuscript.insert_tooltip': 'ایڈیٹر میں تصویر داخل کریں',
     'manuscript.no_editor': 'پہلے Lexical دستاویز کھولیں',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'ایڈیٹر میں صرف و نحو داخل کریں',
     'manuscript.meta_date': 'تاریخ',
     'manuscript.meta_radiocarbon': 'ریڈیوکاربن',
     'manuscript.meta_material': 'مواد',

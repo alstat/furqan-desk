@@ -268,6 +268,8 @@ export const ja: Record<string, string> = {
     'manuscript.insert': 'エディタに挿入',
     'manuscript.insert_tooltip': 'エディタに画像を挿入',
     'manuscript.no_editor': '先に Lexical ドキュメントを開いてください',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'エディタに形態論を挿入',
     'manuscript.meta_date': '日付',
     'manuscript.meta_radiocarbon': '放射性炭素年代測定',
     'manuscript.meta_material': '素材',

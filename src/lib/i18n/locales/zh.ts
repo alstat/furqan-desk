@@ -268,6 +268,8 @@ export const zh: Record<string, string> = {
     'manuscript.insert': '插入编辑器',
     'manuscript.insert_tooltip': '将图片插入编辑器',
     'manuscript.no_editor': '请先打开 Lexical 文档',
+    // Morphology popover
+    'morphology.insert_to_lexical': '将词法分析插入编辑器',
     'manuscript.meta_date': '日期',
     'manuscript.meta_radiocarbon': '放射性碳测年',
     'manuscript.meta_material': '材质',

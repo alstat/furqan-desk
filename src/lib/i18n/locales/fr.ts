@@ -268,6 +268,8 @@ export const fr: Record<string, string> = {
     'manuscript.insert': 'Insérer dans l\'éditeur',
     'manuscript.insert_tooltip': 'Insérer l\'image dans l\'éditeur',
     'manuscript.no_editor': 'Ouvrir d\'abord un document Lexical',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'Insérer la morphologie dans l\'éditeur',
     'manuscript.meta_date': 'Date',
     'manuscript.meta_radiocarbon': 'Radiocarbone',
     'manuscript.meta_material': 'Matériau',

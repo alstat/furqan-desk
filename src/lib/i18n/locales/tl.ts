@@ -268,6 +268,8 @@ export const tl: Record<string, string> = {
     'manuscript.insert': 'Ipasok sa Lexical',
     'manuscript.insert_tooltip': 'Ipasok ang larawan sa editor',
     'manuscript.no_editor': 'Buksan muna ang tab ng dokumento ng Lexical',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'Ipasok ang morpolohiya sa editor',
     'manuscript.meta_date': 'Petsa',
     'manuscript.meta_radiocarbon': 'Radiocarbon',
     'manuscript.meta_material': 'Materyales',

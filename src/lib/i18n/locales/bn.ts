@@ -268,6 +268,8 @@ export const bn: Record<string, string> = {
     'manuscript.insert': 'Lexical-এ সন্নিবেশ করুন',
     'manuscript.insert_tooltip': 'এডিটরে ছবি সন্নিবেশ করুন',
     'manuscript.no_editor': 'প্রথমে একটি Lexical ডকুমেন্ট ট্যাব খুলুন',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'এডিটরে রূপতত্ত্ব সন্নিবেশ করুন',
     'manuscript.meta_date': 'তারিখ',
     'manuscript.meta_radiocarbon': 'রেডিওকার্বন',
     'manuscript.meta_material': 'উপাদান',

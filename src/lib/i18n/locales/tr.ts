@@ -268,6 +268,8 @@ export const tr: Record<string, string> = {
     'manuscript.insert': 'Lexical\'e Ekle',
     'manuscript.insert_tooltip': 'Editöre resim ekle',
     'manuscript.no_editor': 'Önce bir Lexical belge sekmesi açın',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'Morfolojiyi editöre ekle',
     'manuscript.meta_date': 'Tarih',
     'manuscript.meta_radiocarbon': 'Radyokarbon',
     'manuscript.meta_material': 'Malzeme',
