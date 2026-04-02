@@ -24,7 +24,7 @@
     hljs.registerLanguage("yaml", yaml);
     hljs.registerLanguage("bash", bash);
 
-    import { onMount, tick } from "svelte";
+    import { tick } from "svelte";
     import { getEditor } from "$lexical/core/composerContext.js";
     import { $getNodeByKey as getNodeByKey } from "lexical";
     import { $isCodeNode as isCodeNode } from "./CodeNode";
@@ -32,24 +32,19 @@
     import { t } from "$lib/i18n";
 
     interface Props {
-        codeDOM: HTMLElement;
         code?: string;
         language?: string;
         nodeKey?: string;
     }
 
-    let {
-        codeDOM,
-        code = "",
-        language = "javascript",
-        nodeKey = "",
-    }: Props = $props();
+    let { code = "", language = "javascript", nodeKey = "" }: Props = $props();
 
     const editor = getEditor();
 
     let isEditing = $state(false);
     let editCode = $state(code);
     let editLanguage = $state(language);
+    let codeEl: HTMLElement | null = $state(null);
 
     const languages = [
         "javascript",
@@ -65,13 +60,6 @@
         "bash",
     ];
 
-    function highlight() {
-        const codeEl = codeDOM.querySelector("code") ?? codeDOM;
-        // reset so hljs re-highlights on content change
-        codeEl.removeAttribute("data-highlighted");
-        hljs.highlightElement(codeEl as HTMLElement);
-    }
-
     function handleDoubleClick() {
         editCode = code;
         editLanguage = language;
@@ -86,15 +74,12 @@
                 node.setLanguage(editLanguage);
             }
         });
-        // Update DOM outside of editor.update() — mutations inside the callback
-        // conflict with Lexical's reconciler and cause prevChildren length mismatches.
-        const codeEl = codeDOM.querySelector("code");
+        // Immediately update the displayed code before Lexical's async commit
         if (codeEl) {
             codeEl.innerHTML = editCode;
             codeEl.removeAttribute("data-highlighted");
             hljs.highlightElement(codeEl as HTMLElement);
         }
-        codeDOM.className = "language-" + editLanguage;
         isEditing = false;
     }
 
@@ -119,17 +104,13 @@
         }
     }
 
+    // Re-highlight when code/language props update (e.g. after Lexical commits a save)
     $effect(() => {
-        codeDOM.title = $t('editor.dblclick_hint');
-    });
-
-    onMount(() => {
-        highlight();
-        codeDOM.addEventListener("dblclick", handleDoubleClick);
-        codeDOM.style.cursor = "pointer";
-        return () => {
-            codeDOM.removeEventListener("dblclick", handleDoubleClick);
-        };
+        if (!isEditing && codeEl) {
+            codeEl.innerHTML = code;
+            codeEl.removeAttribute("data-highlighted");
+            hljs.highlightElement(codeEl as HTMLElement);
+        }
     });
 </script>
 
@@ -212,4 +193,11 @@
             </span>
         </div>
     </div>
+{:else}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <pre
+        class="language-{language} cursor-pointer"
+        title={$t('editor.dblclick_hint')}
+        ondblclick={handleDoubleClick}
+    ><code bind:this={codeEl}></code></pre>
 {/if}
