@@ -56,6 +56,41 @@ export function removeJuliaGroupByTab(tabId: string): void {
     juliaGroups.update(gs => gs.filter(g => g.tabA !== tabId && g.tabB !== tabId));
 }
 
+/**
+ * A paired group where any editor type (Julia/Typst/Lexical) can be the host.
+ * hostTabId stays in the sidebar; partnerTabId goes to the left panel.
+ */
+export type CrossGroup = {
+    id: string;
+    hostTabId: string;
+    partnerTabId: string;
+    colorIdx: number;
+};
+
+export const crossGroups = writable<CrossGroup[]>([]);
+
+export function createCrossGroup(
+    hostTabId: string,
+    partnerTabId: string,
+): void {
+    crossGroups.update(gs => {
+        const usedColors = new Set(gs.map(g => g.colorIdx));
+        let colorIdx = 0;
+        while (usedColors.has(colorIdx)) colorIdx++;
+        return [...gs, { id: crypto.randomUUID(), hostTabId, partnerTabId, colorIdx }];
+    });
+}
+
+export function removeCrossGroup(groupId: string): void {
+    crossGroups.update(gs => gs.filter(g => g.id !== groupId));
+}
+
+export function removeCrossGroupByTab(tabId: string): void {
+    crossGroups.update(gs =>
+        gs.filter(g => g.hostTabId !== tabId && g.partnerTabId !== tabId)
+    );
+}
+
 /** Whether the Julia REPL is currently busy executing code */
 export const juliaIsRunning  = writable<boolean>(false);
 

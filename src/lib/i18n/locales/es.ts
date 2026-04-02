@@ -24,7 +24,8 @@ export const es: Record<string, string> = {
     'settings.website': 'Sitio web',
     'settings.website.download': 'Descargar actualización',
     'settings.website.up_to_date': 'Actualizado',
-    'settings.zen': 'Modo Zen',
+    'sukun.show_icons': 'Mostrar íconos',
+    'settings.zen': 'Modo Sukun',
     'settings.zen.desc': 'Edición sin distracciones — elimina bordes, sombras y atenúa los iconos',
     'settings.privacy': 'Privacidad',
     'settings.privacy.text': 'AyahLab no recopila ningún dato personal. La función de comentarios usa Resend para enviar tu mensaje directamente al desarrollador — tu correo solo se usa para responderte y nunca se almacena ni comparte. Sin análisis, sin seguimiento.',
@@ -268,6 +269,8 @@ export const es: Record<string, string> = {
     'manuscript.insert': 'Insertar en el editor',
     'manuscript.insert_tooltip': 'Insertar imagen en el editor',
     'manuscript.no_editor': 'Abre primero un documento Lexical',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'Insertar morfología en el editor',
     'manuscript.meta_date': 'Fecha',
     'manuscript.meta_radiocarbon': 'Radiocarbono',
     'manuscript.meta_material': 'Material',

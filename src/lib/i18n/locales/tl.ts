@@ -24,7 +24,8 @@ export const tl: Record<string, string> = {
     'settings.website': 'Website',
     'settings.website.download': 'I-download ang update',
     'settings.website.up_to_date': 'Napapanahon na',
-    'settings.zen': 'Zen Mode',
+    'sukun.show_icons': 'Ipakita ang mga Icon',
+    'settings.zen': 'Sukun Mode',
     'settings.zen.desc': 'Pag-edit nang walang abala — tinatanggal ang mga hangganan, anino, at pinapahina ang mga icon ng interface',
     'settings.privacy': 'Privacy',
     'settings.privacy.text': 'Ang AyahLab ay ganap na offline. Walang mga account, walang telemetry, walang analytics. Ang iyong mga tala, bookmark, at mga setting ay nananatili sa iyong device lamang.',
@@ -268,6 +269,8 @@ export const tl: Record<string, string> = {
     'manuscript.insert': 'Ipasok sa Lexical',
     'manuscript.insert_tooltip': 'Ipasok ang larawan sa editor',
     'manuscript.no_editor': 'Buksan muna ang tab ng dokumento ng Lexical',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'Ipasok ang morpolohiya sa editor',
     'manuscript.meta_date': 'Petsa',
     'manuscript.meta_radiocarbon': 'Radiocarbon',
     'manuscript.meta_material': 'Materyales',

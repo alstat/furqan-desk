@@ -24,7 +24,8 @@ export const bn: Record<string, string> = {
     'settings.website': 'ওয়েবসাইট',
     'settings.website.download': 'আপডেট ডাউনলোড করুন',
     'settings.website.up_to_date': 'আপডেট আছে',
-    'settings.zen': 'জেন মোড',
+    'sukun.show_icons': 'আইকন দেখান',
+    'settings.zen': 'Sukun মোড',
     'settings.zen.desc': 'মনোযোগমুক্ত সম্পাদনা — বর্ডার, ছায়া সরায় এবং ইন্টারফেস আইকন ম্লান করে',
     'settings.privacy': 'গোপনীয়তা',
     'settings.privacy.text': 'AyahLab সম্পূর্ণ অফলাইন। কোনো অ্যাকাউন্ট নেই, কোনো টেলিমেট্রি নেই, কোনো বিশ্লেষণ নেই। আপনার নোট, বুকমার্ক এবং সেটিংস শুধুমাত্র আপনার ডিভাইসে থাকে।',
@@ -268,6 +269,8 @@ export const bn: Record<string, string> = {
     'manuscript.insert': 'Lexical-এ সন্নিবেশ করুন',
     'manuscript.insert_tooltip': 'এডিটরে ছবি সন্নিবেশ করুন',
     'manuscript.no_editor': 'প্রথমে একটি Lexical ডকুমেন্ট ট্যাব খুলুন',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'এডিটরে রূপতত্ত্ব সন্নিবেশ করুন',
     'manuscript.meta_date': 'তারিখ',
     'manuscript.meta_radiocarbon': 'রেডিওকার্বন',
     'manuscript.meta_material': 'উপাদান',

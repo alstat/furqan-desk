@@ -24,7 +24,8 @@ export const tr: Record<string, string> = {
     'settings.website': 'Web Sitesi',
     'settings.website.download': 'Güncellemeyi indir',
     'settings.website.up_to_date': 'Güncel',
-    'settings.zen': 'Zen Modu',
+    'sukun.show_icons': 'Simgeleri Göster',
+    'settings.zen': 'Sukun Modu',
     'settings.zen.desc': 'Dikkat dağıtıcısız düzenleme — kenarlıkları, gölgeleri kaldırır ve arayüz simgelerini soluklaştırır',
     'settings.privacy': 'Gizlilik',
     'settings.privacy.text': 'AyahLab tamamen çevrimdışı çalışır. Hesap yok, telemetri yok, analitik yok. Notlarınız, yer imleriniz ve ayarlarınız yalnızca cihazınızda kalır.',
@@ -268,6 +269,8 @@ export const tr: Record<string, string> = {
     'manuscript.insert': 'Lexical\'e Ekle',
     'manuscript.insert_tooltip': 'Editöre resim ekle',
     'manuscript.no_editor': 'Önce bir Lexical belge sekmesi açın',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'Morfolojiyi editöre ekle',
     'manuscript.meta_date': 'Tarih',
     'manuscript.meta_radiocarbon': 'Radyokarbon',
     'manuscript.meta_material': 'Malzeme',

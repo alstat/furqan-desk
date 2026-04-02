@@ -24,7 +24,8 @@ export const ur: Record<string, string> = {
     'settings.website': 'ویب سائٹ',
     'settings.website.download': 'اپڈیٹ ڈاؤنلوڈ کریں',
     'settings.website.up_to_date': 'اپڈیٹ ہے',
-    'settings.zen': 'زین موڈ',
+    'sukun.show_icons': 'آئیکن دکھائیں',
+    'settings.zen': 'سکون موڈ',
     'settings.zen.desc': 'خلفشار سے پاک ترمیم — حاشیے، سایے ہٹائے اور آئیکن دھندلے کرے',
     'settings.privacy': 'رازداری',
     'settings.privacy.text': 'AyahLab کوئی ذاتی ڈیٹا جمع نہیں کرتا۔ فیڈبیک فیچر Resend کو آپ کا پیغام براہ راست ڈویلپر کو بھیجنے کے لیے استعمال کرتا ہے — آپ کا ای میل صرف جواب دینے کے لیے استعمال ہوتا ہے اور کبھی محفوظ یا شیئر نہیں کیا جاتا۔ کوئی تجزیہ نہیں، کوئی ٹریکنگ نہیں۔',
@@ -268,6 +269,8 @@ export const ur: Record<string, string> = {
     'manuscript.insert': 'ایڈیٹر میں داخل کریں',
     'manuscript.insert_tooltip': 'ایڈیٹر میں تصویر داخل کریں',
     'manuscript.no_editor': 'پہلے Lexical دستاویز کھولیں',
+    // Morphology popover
+    'morphology.insert_to_lexical': 'ایڈیٹر میں صرف و نحو داخل کریں',
     'manuscript.meta_date': 'تاریخ',
     'manuscript.meta_radiocarbon': 'ریڈیوکاربن',
     'manuscript.meta_material': 'مواد',

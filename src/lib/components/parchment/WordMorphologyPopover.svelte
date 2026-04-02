@@ -6,6 +6,20 @@
     import { onDestroy } from "svelte";
     import { morphGlassEffect } from "$lib/stores/morphology.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import { t } from '$lib/i18n';
+    import { get } from 'svelte/store';
+    import { lexicalEditorInstance } from '$lib/stores/editor.store';
+    import {
+        $createTableNode as createTableNode,
+        $createTableRowNode as createTableRowNode,
+        $createTableCellNode as createTableCellNode,
+        TableCellHeaderStates,
+    } from '@lexical/table';
+    import {
+        $createParagraphNode as createParagraphNode,
+        $createTextNode as createTextNode,
+    } from 'lexical';
+    import { $insertNodeToNearestRoot as insertNodeToNearestRoot } from '@lexical/utils';
 
     interface Props {
         word: MorphWord;
@@ -225,6 +239,55 @@
         { key: 'prefix_type', label: 'Prefix',      transform: v => PREFIX_LABELS[v]     ?? v },
         { key: 'suffix_type', label: 'Suffix',      transform: v => SUFFIX_LABELS[v]     ?? v },
     ];
+
+    function insertToLexical(): void {
+        const editor = get(lexicalEditorInstance);
+        if (!editor) return;
+
+        editor.update(() => {
+            const titlePara = createParagraphNode();
+            titlePara.append(createTextNode(word.combined_arabic));
+            insertNodeToNearestRoot(titlePara);
+
+            for (const token of word.tokens) {
+                const table = createTableNode();
+
+                // Header row: tag name | arabic form + buckwalter
+                const headerRow = createTableRowNode();
+                const hCell1 = createTableCellNode(TableCellHeaderStates.ROW);
+                hCell1.append(createParagraphNode().append(createTextNode(token.tag_name)));
+                const hCell2 = createTableCellNode(TableCellHeaderStates.ROW);
+                hCell2.append(createParagraphNode().append(createTextNode(token.form_arabic + '  ' + token.form_buckwalter)));
+                headerRow.append(hCell1, hCell2);
+                table.append(headerRow);
+
+                // Feature rows (non-null only)
+                for (const { key, label, arabic, transform } of FEATURES) {
+                    const val = token.features[key];
+                    if (!val) continue;
+                    const row = createTableRowNode();
+
+                    const labelCell = createTableCellNode(TableCellHeaderStates.NO_STATUS);
+                    labelCell.append(createParagraphNode().append(createTextNode(label)));
+
+                    const rawVal = val as string;
+                    const displayVal = arabic
+                        ? buckwalterToArabic(rawVal)
+                        : transform ? transform(rawVal) : rawVal;
+                    const valueCell = createTableCellNode(TableCellHeaderStates.NO_STATUS);
+                    valueCell.append(createParagraphNode().append(createTextNode(displayVal)));
+
+                    row.append(labelCell, valueCell);
+                    table.append(row);
+                }
+
+                insertNodeToNearestRoot(table);
+            }
+
+            // Trailing paragraph so cursor lands after inserted content
+            insertNodeToNearestRoot(createParagraphNode());
+        });
+    }
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -255,6 +318,15 @@
             </span>
         </div>
         <div class="flex items-center gap-1">
+            <button
+                onclick={insertToLexical}
+                disabled={!$lexicalEditorInstance}
+                aria-label={$t('morphology.insert_to_lexical')}
+                title={$t('morphology.insert_to_lexical')}
+                class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 dark:text-[#838ba7] transition-all hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-slate-600 dark:hover:text-[#c6d0f5] active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+                <Icon icon="solar:add-square-bold-duotone" width="15" />
+            </button>
             {#if onPin}
                 <button
                     onclick={onPin}

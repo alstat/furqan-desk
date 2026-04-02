@@ -26,7 +26,7 @@
     import RecitationDownloadDialog from "./RecitationDownloadDialog.svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { activeTranslatorId } from "$lib/stores/translation.store";
-    import { zenMode, appDarkMode } from "$lib/stores/editor.store";
+    import { zenMode, appDarkMode, zenPeek } from "$lib/stores/editor.store";
 
     let scrollContainer = $state<HTMLElement | null>(null);
     let showBookmarks = $state(false);
@@ -207,7 +207,7 @@
 
 <div
     id="tour-parchment"
-    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 h-full flex flex-col items-center rounded-sm ${$zenMode && $appDarkMode ? 'bg-transparent' : 'bg-white dark:bg-[#303446]'} sm:w-full md:w-9/12 lg:w-6/12 ${$zenMode ? "" : "sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"}`}
+    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 h-full flex flex-col items-center rounded-sm ${$zenMode && $appDarkMode ? "bg-transparent" : "bg-white dark:bg-[#303446]"} sm:w-full md:w-9/12 lg:w-6/12 ${$zenMode ? "" : "sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"}`}
 >
     {#if $zenMode}
         {#if !$isSidebar}
@@ -229,11 +229,8 @@
                 : 'rgba(229,200,144,0.55)'} 80%, transparent 100%)"
         ></div>
     {/if}
-    <div
-        class={$zenMode
-            ? "opacity-0 hover:opacity-100 transition-opacity duration-300 w-full"
-            : "w-full"}
-    >
+
+    <div class="w-full">
         <ParchmentActionBar
             onOpenBookmarks={() => (showBookmarks = true)}
             onOpenHighlights={() => (showHighlights = true)}

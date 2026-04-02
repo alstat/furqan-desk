@@ -70,9 +70,7 @@
 {#if $tocOpen}
     <div
         transition:fly={{ y: 9, duration: 180, opacity: 0 }}
-        class="{$hideSurahPage()
-            ? 'absolute -right-58 top-15.5'
-            : 'fixed left-1/2 top-48.5 -translate-x-1/2 -translate-y-1/2'} z-50
+        class="fixed left-1/2 top-48.5 -translate-x-1/2 -translate-y-1/2 z-50
 		       w-52 max-h-[65vh]
 		       rounded-3xl overflow-hidden flex flex-col
 		       bg-white dark:bg-[#292c3c]
