@@ -13,7 +13,7 @@
         zenMode,
     } from "$lib/stores/editor.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
-    import { activeTab, setActiveTabContent } from "$lib/stores/tabs.store";
+    import { tabs, activeTab, setActiveTabContent, setTabContent } from "$lib/stores/tabs.store";
     import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
     import {
         autocompletion,
@@ -21,22 +21,31 @@
     } from "@codemirror/autocomplete";
     import { TYPST_COMPLETIONS } from "$lib/completions/typst";
 
+    let {
+        tabId = null,
+        inCrossHost = false,
+    }: { tabId?: string | null; inCrossHost?: boolean } = $props();
+
+    let effectiveTab = $derived(
+        tabId ? ($tabs.find(t => t.id === tabId) ?? null) : $activeTab
+    );
+
     // True when the preview is displayed in the Parchment area (side-by-side mode).
-    // In that case we hide the inline preview here to avoid duplication.
-    const sideBySide = $derived($hideSurahPage());
+    // Suppressed when this editor is the host in a cross pair (shows inline preview instead).
+    const sideBySide = $derived($hideSurahPage() && !inCrossHost);
 
     let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
-    // Keep typstSource in sync with active tab content
+    // Keep typstSource in sync with effective tab content
     $effect(() => {
-        if ($activeTab?.type === "typst" || $activeTab?.type === "text") {
-            typstSource.set($activeTab.content);
+        if (effectiveTab?.type === "typst" || effectiveTab?.type === "text") {
+            typstSource.set(effectiveTab.content);
         }
     });
 
     $effect(() => {
         void $typstRecompile;
-        if ($activeTab?.type !== "typst") {
+        if (effectiveTab?.type !== "typst") {
             typstSvgPages.set([]);
             typstCompileError.set("");
             return;
@@ -84,7 +93,8 @@
 
     function handleInput(newContent: string) {
         typstSource.set(newContent);
-        setActiveTabContent(newContent);
+        if (tabId) setTabContent(tabId, newContent);
+        else setActiveTabContent(newContent);
     }
 
     // ── Completion source ─────────────────────────────────────────────────────
@@ -167,7 +177,7 @@
         <div class="flex items-center justify-between px-2 pt-1 mb-1">
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
-                >{$activeTab?.name ?? "Editor"}</span
+                >{effectiveTab?.name ?? "Editor"}</span
             >
             <button
                 onclick={() => (lineWrap = !lineWrap)}
@@ -203,12 +213,12 @@
             extensions={[typstCompletionExtension]}
             {lineWrap}
             onchange={handleInput}
-            class={`${$activeTab?.type !== "typst" ? "mb-4" : ""} ${sideBySide ? "mb-3" : ""} flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 font-mono`}
+            class={`${effectiveTab?.type !== "typst" ? "mb-4" : ""} ${sideBySide ? "mb-3" : ""} flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 font-mono`}
         />
     </div>
 
     <!-- Splitter + resizable preview pane — hidden when preview is in Parchment area -->
-    {#if $activeTab?.type === "typst" && !sideBySide}
+    {#if effectiveTab?.type === "typst" && !sideBySide}
         <div
             class="flex-none h-1.5 cursor-row-resize flex items-center justify-center group
                    hover:bg-brand-gold-100 dark:hover:bg-brand-gold-100/10 transition-colors select-none"
@@ -254,7 +264,7 @@
     {/if}
 
     <!-- Footer — always shown for .typ files -->
-    {#if $activeTab?.type === "typst" && !sideBySide}
+    {#if effectiveTab?.type === "typst" && !sideBySide}
         <div
             class="h-10 flex items-center justify-end px-3 border-t border-brand-sand-200 gap-2"
         >

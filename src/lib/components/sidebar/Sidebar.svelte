@@ -24,7 +24,8 @@
         createTab,
     } from "$lib/stores/tabs.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
-    import { juliaGroups } from "$lib/stores/julia-terminal.store";
+    import { juliaGroups, crossGroups } from "$lib/stores/julia-terminal.store";
+    import type { CrossGroup } from "$lib/stores/julia-terminal.store";
     import Icon from "@iconify/svelte";
     import type { EditorTab } from "$lib/stores/tabs.store";
     import { CAN_UNDO_COMMAND, CAN_REDO_COMMAND } from "lexical";
@@ -135,7 +136,55 @@
     });
 
     // Whether we're in "Julia side-panel" mode: REPL moves to the right side
-    let juliaMode = $derived($hideSurahPage() && $activeTab?.type === "julia");
+    // Excluded when in a cross-type pair (where REPL is embedded in sidebar)
+    let activeCrossGroup = $derived(
+        $hideSurahPage()
+            ? ($crossGroups.find(
+                  (g: CrossGroup) =>
+                      g.hostTabId === $activeTabId || g.partnerTabId === $activeTabId,
+              ) ?? null)
+            : null,
+    );
+    let juliaMode = $derived(
+        $hideSurahPage() && $activeTab?.type === "julia" && !activeCrossGroup
+    );
+
+    // When host=Lexical and the partner tab is active, load and auto-save Lexical host content
+    const emptyLexicalStateCross =
+        '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"type":"root","version":1}}';
+
+    $effect(() => {
+        const cg = activeCrossGroup;
+        const editor = $lexicalEditorInstance;
+        if (!cg || !editor) return;
+        const hostTab = get(tabs).find(t => t.id === cg.hostTabId);
+        if (!hostTab || hostTab.type !== 'lexical') return;
+        if ($activeTabId === cg.hostTabId) return; // host is active — Effect C handles it
+        // Partner is active; load the Lexical host tab's content
+        try {
+            const parsed = JSON.parse(hostTab.content || emptyLexicalStateCross);
+            const stateData = parsed.editorState ?? parsed;
+            editor.setEditorState(editor.parseEditorState(JSON.stringify(stateData)));
+        } catch { /* ignore */ }
+    });
+
+    $effect(() => {
+        const cg = activeCrossGroup;
+        const editor = $lexicalEditorInstance;
+        if (!cg || !editor) return;
+        const hostTab = get(tabs).find(t => t.id === cg.hostTabId);
+        if (!hostTab || hostTab.type !== 'lexical') return;
+        if ($activeTabId === cg.hostTabId) return; // host is active — normal save applies
+        const hostTabId = cg.hostTabId;
+        const unregister = editor.registerUpdateListener(({ dirtyElements, dirtyLeaves }) => {
+            if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
+            const json = JSON.stringify(editor.getEditorState().toJSON());
+            tabs.update(ts => ts.map(t =>
+                t.id === hostTabId ? { ...t, content: json, isDirty: true } : t
+            ));
+        });
+        return unregister;
+    });
 
     // Split tab id (for badge visibility)
     let _activeGroup = $derived(
@@ -201,7 +250,7 @@
     }
 </script>
 
-<CollapsibleSidebar roundRight={!juliaMode}>
+<CollapsibleSidebar roundRight={!juliaMode && !activeCrossGroup}>
     <div class="relative h-full flex flex-col overflow-visible">
         <!-- File Explorer button: outside editor on the left/right, same height as sidebar toggle -->
         <FileExplorer />
@@ -230,7 +279,26 @@
             </div>
         {/if}
         <div class="flex-1 min-h-0 overflow-visible">
-            {#if $activeTab?.type === "typst" || $activeTab?.type === "text"}
+            {#if activeCrossGroup}
+                <!-- Cross pair: sidebar always shows the HOST tab's editor -->
+                {@const hostTabId = activeCrossGroup.hostTabId}
+                {@const hostTab = $tabs.find(t => t.id === hostTabId)}
+                {#if hostTab?.type === "julia"}
+                    <JuliaEditor
+                        tabId={$activeTabId !== hostTabId ? hostTabId : null}
+                        hideRepl={false}
+                    />
+                {:else if hostTab?.type === "typst" || hostTab?.type === "text"}
+                    <!-- inCrossHost=true: shows inline preview instead of side-by-side preview -->
+                    <TypstEditor
+                        tabId={$activeTabId !== hostTabId ? hostTabId : null}
+                        inCrossHost={true}
+                    />
+                {:else}
+                    <!-- host=lexical: RichTextEditor (load/save handled by effects above) -->
+                    <RichTextEditor />
+                {/if}
+            {:else if $activeTab?.type === "typst" || $activeTab?.type === "text"}
                 <TypstEditor />
             {:else if $activeTab?.type === "julia"}
                 {@const activeGroup = $juliaGroups.find(
