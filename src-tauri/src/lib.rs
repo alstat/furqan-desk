@@ -54,12 +54,6 @@ pub fn run() {
             });
             app.manage(commands::HttpClient::new());
 
-            // Eagerly initialise the Typst world (font scanning) in the background
-            // so the first compile is fast.
-            std::thread::spawn(|| {
-                let _ = typst_world::get_world();
-            });
-
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
