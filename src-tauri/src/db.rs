@@ -165,6 +165,14 @@ impl Database {
                 ayah        INTEGER NOT NULL,
                 text        TEXT NOT NULL,
                 created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE TABLE IF NOT EXISTS blog_posts (
+                id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                title    TEXT NOT NULL,
+                date     TEXT NOT NULL,
+                author   TEXT NOT NULL,
+                post_url TEXT NOT NULL,
+                seen_at  TEXT NOT NULL DEFAULT (datetime('now'))
             );",
         )
     }

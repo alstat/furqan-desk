@@ -42,6 +42,15 @@ impl HttpClient {
     }
 }
 
+// ── Blog post struct ──────────────────────────────────────────────────────────
+#[derive(Serialize, Clone)]
+pub struct BlogPost {
+    pub title: String,
+    pub date: String,
+    pub author: String,
+    pub post_url: String,
+}
+
 // ── Recitation structs ───────────────────────────────────────────────────────
 #[derive(Serialize)]
 pub struct RecitationAyah {
@@ -1582,6 +1591,80 @@ pub async fn get_latest_ayahlab_version(http: State<'_, HttpClient>) -> Result<S
         .filter(|s| !s.is_empty())
         .ok_or_else(|| "versions.txt is empty".to_string())?;
     Ok(version)
+}
+
+/// Fetch the latest AyahLab blog post and compare it against the local DB.
+/// Returns the new post if it hasn't been seen yet, or None if up to date.
+#[tauri::command]
+pub async fn check_new_blog_post(
+    http: State<'_, HttpClient>,
+    db: State<'_, Database>,
+) -> Result<Option<BlogPost>, String> {
+    let resp = http.client
+        .get("https://raw.githubusercontent.com/alstat/ayahlab-blog-posts/refs/heads/main/posts-0.json")
+        .header("User-Agent", "AyahLab/1.0")
+        .header("Cache-Control", "no-cache")
+        .send()
+        .await
+        .map_err(|e| format!("Network error: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("HTTP error ({})", resp.status()));
+    }
+    let text = resp.text().await.map_err(|e| format!("Failed to read response: {e}"))?;
+    let posts: Vec<serde_json::Value> =
+        serde_json::from_str(&text).map_err(|e| format!("JSON parse error: {e}"))?;
+
+    let latest = posts.first().ok_or_else(|| "Empty posts list".to_string())?;
+    let title = latest["title"].as_str().unwrap_or("").to_string();
+    let date = latest["date"].as_str().unwrap_or("").to_string();
+    let author = latest["author"].as_str().unwrap_or("").to_string();
+    let post_url = latest["postUrl"].as_str().unwrap_or("").to_string();
+
+    if title.is_empty() || date.is_empty() {
+        return Ok(None);
+    }
+
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let stored: Option<(String, String, String)> = conn.query_row(
+        "SELECT title, date, author FROM blog_posts ORDER BY id DESC LIMIT 1",
+        [],
+        |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+    ).ok();
+
+    let is_new = match stored {
+        None => true,
+        Some((s_title, s_date, s_author)) => {
+            date > s_date || title != s_title || author != s_author
+        }
+    };
+
+    if is_new {
+        Ok(Some(BlogPost { title, date, author, post_url }))
+    } else {
+        Ok(None)
+    }
+}
+
+/// Record that the user has seen a blog post. Inserts it into the local DB
+/// and trims the table to the 2 most recent entries.
+#[tauri::command]
+pub fn mark_blog_post_seen(
+    title: String,
+    date: String,
+    author: String,
+    post_url: String,
+    db: State<'_, Database>,
+) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO blog_posts (title, date, author, post_url) VALUES (?1, ?2, ?3, ?4)",
+        rusqlite::params![title, date, author, post_url],
+    ).map_err(|e| e.to_string())?;
+    conn.execute(
+        "DELETE FROM blog_posts WHERE id NOT IN (SELECT id FROM blog_posts ORDER BY id DESC LIMIT 2)",
+        [],
+    ).map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 async fn get_latest_stable_typst_release(client: &reqwest::Client) -> Result<String, String> {
