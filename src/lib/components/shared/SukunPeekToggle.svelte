@@ -95,42 +95,42 @@
             opacity: 0.3;
         }
         20% {
-            transform: scale(1.7) rotate(-5deg);
+            transform: scale(1.35) rotate(-5deg);
             opacity: 1;
         }
         40% {
-            transform: scale(1.3) rotate(4deg);
+            transform: scale(1.05) rotate(4deg);
         }
         60% {
-            transform: scale(1.5) rotate(-3deg);
+            transform: scale(1.2) rotate(-3deg);
         }
         80% {
-            transform: scale(1.28) rotate(2deg);
+            transform: scale(1.03) rotate(2deg);
         }
         100% {
-            transform: scale(1.25) rotate(0deg);
+            transform: scale(1.0) rotate(0deg);
             opacity: 1;
         }
     }
 
     @keyframes flame-flicker {
         0% {
-            transform: scale(1.25) rotate(0deg);
+            transform: scale(1.0) rotate(0deg);
         }
         20% {
-            transform: scale(1.32) rotate(-3deg);
+            transform: scale(1.07) rotate(-3deg);
         }
         40% {
-            transform: scale(1.2) rotate(3deg);
+            transform: scale(0.95) rotate(3deg);
         }
         65% {
-            transform: scale(1.3) rotate(-2deg);
+            transform: scale(1.05) rotate(-2deg);
         }
         85% {
-            transform: scale(1.22) rotate(2deg);
+            transform: scale(0.97) rotate(2deg);
         }
         100% {
-            transform: scale(1.25) rotate(0deg);
+            transform: scale(1.0) rotate(0deg);
         }
     }
 
