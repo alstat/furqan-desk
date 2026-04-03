@@ -74,6 +74,16 @@ fn android_err<E: std::fmt::Display>(e: E) -> rusqlite::Error {
 /// On desktop / iOS, the resource directory is a normal filesystem path.
 #[cfg(not(target_os = "android"))]
 fn copy_static_db(src: &Path, dest: &Path, _asset_relative_path: &str) -> Result<()> {
+    // Remove any stale WAL / SHM files before overwriting the main DB file.
+    // If the old DB was in WAL mode, leaving these files in place would make
+    // SQLite try to apply an incompatible WAL to the freshly-copied main file,
+    // producing "database disk image is malformed" errors.
+    for suffix in &["-wal", "-shm"] {
+        let side_file = PathBuf::from(format!("{}{}", dest.display(), suffix));
+        if side_file.exists() {
+            let _ = std::fs::remove_file(&side_file); // best-effort
+        }
+    }
     std::fs::copy(src, dest)
         .map(|_| ())
         .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
@@ -81,7 +91,7 @@ fn copy_static_db(src: &Path, dest: &Path, _asset_relative_path: &str) -> Result
 
 /// Must match DB_VERSION in src/bin/gen_db.rs.
 /// Increment both when the static dataset changes.
-const DB_VERSION: i64 = 3;
+const DB_VERSION: i64 = 4;
 
 pub struct Database(pub Mutex<Connection>);
 
@@ -109,6 +119,7 @@ impl Database {
                 let user_data = Self::extract_user_data(&db_path).unwrap_or_default();
                 copy_static_db(&static_db_path, &db_path, "data/quran_static.db")?;
                 let conn = Connection::open(&db_path)?;
+                Self::apply_pragmas(&conn)?;
                 Self::init_user_data_tables(&conn)?;
                 Self::restore_user_data(&conn, &user_data)?;
                 return Ok(Database(Mutex::new(conn)));
@@ -119,8 +130,16 @@ impl Database {
         }
 
         let conn = Connection::open(&db_path)?;
+        Self::apply_pragmas(&conn)?;
         Self::init_user_data_tables(&conn)?;
         Ok(Database(Mutex::new(conn)))
+    }
+
+    fn apply_pragmas(conn: &Connection) -> Result<()> {
+        conn.execute_batch(
+            "PRAGMA journal_mode = WAL;
+             PRAGMA cache_size = -1024;",
+        )
     }
 
     fn read_db_version(db_path: &PathBuf) -> Result<i64> {
@@ -156,6 +175,14 @@ impl Database {
                 ayah        INTEGER NOT NULL,
                 text        TEXT NOT NULL,
                 created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE TABLE IF NOT EXISTS blog_posts (
+                id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                title    TEXT NOT NULL,
+                date     TEXT NOT NULL,
+                author   TEXT NOT NULL,
+                post_url TEXT NOT NULL,
+                seen_at  TEXT NOT NULL DEFAULT (datetime('now'))
             );",
         )
     }

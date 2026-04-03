@@ -25,7 +25,7 @@ export const fr: Record<string, string> = {
     'settings.website.download': 'Télécharger la mise à jour',
     'settings.website.up_to_date': 'À jour',
     'sukun.show_icons': 'Afficher les icônes',
-    'settings.zen': 'Mode Sukun',
+    'settings.zen': 'Mode Sukūn',
     'settings.zen.desc': 'Édition sans distraction — supprime les bordures, ombres et atténue les icônes',
     'settings.privacy': 'Confidentialité',
     'settings.privacy.text': "AyahLab ne collecte aucune donnée personnelle. La fonction de retour utilise Resend pour envoyer votre message directement au développeur — votre adresse e-mail n'est utilisée que pour vous répondre et n'est jamais stockée ni partagée. Pas d'analyses, pas de suivi.",
@@ -76,6 +76,10 @@ export const fr: Record<string, string> = {
     'update.title': 'Mise à jour disponible',
     'update.message': 'AyahLab v{version} est prêt à être téléchargé.',
     'update.download': 'Télécharger la mise à jour →',
+    // Blog post notification
+    'blog.title': 'Nouveau sur le blog AyahLab',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': "Voir l'article →",
     // Layout
     'layout.unsaved_title': 'Modifications non enregistrées',
     'layout.unsaved_message': 'Vous avez des modifications non enregistrées dans :\n\n{names}\n\nFermer quand même et ignorer les modifications ?',
@@ -212,6 +216,18 @@ export const fr: Record<string, string> = {
     'recitation_dl.complete': 'Terminé — {downloaded} versets téléchargés',
     'recitation_dl.progress': 'Sourate {surah} — verset {ayah} / {total}',
     'recitation_dl.cancel': 'Annuler',
+    'recitation_dl.progress_surah': 'Sourate {surah} / {total}',
+    'recitation_dl.complete_surah': 'Terminé — {downloaded} sourate(s) téléchargée(s)',
+    'recitation_dl.current_ayah': 'Télécharger le verset actuel',
+    // Reciter select dialog
+    'reciter_select.title': 'Choisir des Récitants',
+    'reciter_select.subtitle': 'Sélectionnez deux récitants à afficher dans le lecteur',
+    'reciter_select.slot1': 'Position 1',
+    'reciter_select.slot2': 'Position 2',
+    'reciter_select.done': 'Terminé',
+    'reciter_select.manage': 'Gérer les récitants',
+    'reciter_select.seek_badge': 'Streaming uniquement — pas de hors-ligne',
+    'reciter_select.assigned_slot': 'Dans la position {n}',
     // Surah widget
     'surah.font_options': 'Options de police',
     'surah.font_family': 'Famille de police',

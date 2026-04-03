@@ -54,12 +54,6 @@ pub fn run() {
             });
             app.manage(commands::HttpClient::new());
 
-            // Eagerly initialise the Typst world (font scanning) in the background
-            // so the first compile is fast.
-            std::thread::spawn(|| {
-                let _ = typst_world::get_world();
-            });
-
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -86,7 +80,10 @@ pub fn run() {
             commands::get_typst_version,
             commands::get_latest_typst_version,
             commands::get_latest_ayahlab_version,
+            commands::check_new_blog_post,
+            commands::mark_blog_post_seen,
             commands::get_manuscript_cache_size,
+            commands::get_reciters,
             commands::get_recitation_ayah,
             commands::get_downloaded_surahs,
             commands::download_recitation,

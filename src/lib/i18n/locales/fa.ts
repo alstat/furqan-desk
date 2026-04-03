@@ -76,6 +76,10 @@ export const fa: Record<string, string> = {
     'update.title': 'به‌روزرسانی موجود است',
     'update.message': 'AyahLab v{version} آماده دانلود است.',
     'update.download': 'دانلود به‌روزرسانی →',
+    // Blog post notification
+    'blog.title': 'جدید در وبلاگ AyahLab',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'مشاهده مقاله ←',
     // Layout
     'layout.unsaved_title': 'تغییرات ذخیره نشده',
     'layout.unsaved_message': 'تغییرات ذخیره نشده در:\n\n{names}\n\nآیا می‌خواهید ببندید و تغییرات را کنار بگذارید؟',
@@ -212,6 +216,18 @@ export const fa: Record<string, string> = {
     'recitation_dl.complete': 'کامل — {downloaded} آیه دانلود شد',
     'recitation_dl.progress': 'سوره {surah} — آیه {ayah} / {total}',
     'recitation_dl.cancel': 'لغو',
+    'recitation_dl.progress_surah': 'سوره {surah} / {total}',
+    'recitation_dl.complete_surah': 'کامل — {downloaded} سوره دانلود شد',
+    'recitation_dl.current_ayah': 'دانلود آیه فعلی',
+    // Reciter select dialog
+    'reciter_select.title': 'انتخاب قاریان',
+    'reciter_select.subtitle': 'دو قاری برای نمایش در پخش‌کننده انتخاب کنید',
+    'reciter_select.slot1': 'جایگاه ۱',
+    'reciter_select.slot2': 'جایگاه ۲',
+    'reciter_select.done': 'تأیید',
+    'reciter_select.manage': 'مدیریت قاریان',
+    'reciter_select.seek_badge': 'فقط پخش آنلاین — بدون آفلاین',
+    'reciter_select.assigned_slot': 'در جایگاه {n}',
     // Surah widget
     'surah.font_options': 'گزینه‌های فونت',
     'surah.font_family': 'خانواده فونت',

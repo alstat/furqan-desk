@@ -11,8 +11,8 @@
 
     const btnBase =
         "flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition-all cursor-pointer";
-    const btnActive = `${btnBase} border-brand-sand-200 bg-brand-sand-50/90 text-brand-charcoal-500 hover:bg-brand-sand-100 hover:shadow-md hover:text-brand-charcoal-900 active:scale-95 backdrop-blur-sm cursor-pointer`;
-    const btnDisabled = `${btnBase} border-brand-sand-100 bg-brand-sand-50/60 text-brand-charcoal-100 cursor-not-allowed cursor-pointer`;
+    const btnActive = `${btnBase} border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/90 dark:bg-[#292c3c]/90 text-brand-charcoal-500 dark:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:shadow-md hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:scale-95 backdrop-blur-sm cursor-pointer`;
+    const btnDisabled = `${btnBase} border-brand-sand-100 dark:border-[#414559]/40 bg-brand-sand-50/60 dark:bg-[#292c3c]/60 text-brand-charcoal-100 dark:text-[#626880] cursor-not-allowed cursor-pointer`;
 </script>
 
 <div class={position}>

@@ -13,6 +13,7 @@
     import TourOverlay from "$lib/components/tour/TourOverlay.svelte";
     import SplashScreen from "$lib/components/shared/SplashScreen.svelte";
     import UpdateToast from "$lib/components/shared/UpdateToast.svelte";
+    import NewBlogToast from "$lib/components/shared/NewBlogToast.svelte";
     import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
     import HelpDialog from "$lib/components/help/HelpDialog.svelte";
     import ManuscriptViewer from "$lib/components/manuscripts/ManuscriptViewer.svelte";
@@ -230,3 +231,4 @@
 />
 <SplashScreen visible={isLoading} />
 <UpdateToast />
+<NewBlogToast />

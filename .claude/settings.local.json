@@ -160,7 +160,10 @@
       "Bash(ls:*)",
       "Bash(find:*)",
       "Bash(cargo run:*)",
-      "Bash(gh release:*)"
+      "Bash(gh release:*)",
+      "Bash(rustup target:*)",
+      "Bash(codesign -d --entitlements - /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/target/universal-apple-darwin/release/bundle/macos/AyahLab.app)",
+      "Bash(codesign -d --entitlements - /Applications/AyahLab.app)"
     ]
   }
 }
