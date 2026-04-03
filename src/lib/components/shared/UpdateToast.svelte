@@ -40,7 +40,7 @@
 {#if visible}
     <div
         transition:fade={{ duration: 200 }}
-        class="fixed top-6 right-5 z-[9999] flex items-start gap-3 px-4 py-3
+        class="fixed top-6 right-2.5 z-[150] flex items-start gap-3 px-4 py-3
                 rounded-3xl w-2xs
                 bg-white/90 dark:bg-[#292c3c]/95
                 backdrop-blur-md

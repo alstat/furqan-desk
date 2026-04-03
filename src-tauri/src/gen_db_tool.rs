@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 
 /// Increment this whenever the schema or data changes.
 /// Must match DB_VERSION in db.rs.
-const DB_VERSION: i64 = 3;
+const DB_VERSION: i64 = 4;
 
 fn main() {
     let data_dir = PathBuf::from("data");
@@ -34,6 +34,32 @@ fn main() {
         output,
         size as f64 / 1_048_576.0
     );
+
+    // Sync the new DB to Tauri's target resource directories so that the dev
+    // server picks up the updated file without requiring a full `cargo tauri dev`
+    // restart.  These paths mirror where `tauri_build` stages resources during
+    // compilation.
+    let target_candidates = [
+        PathBuf::from("target/debug/data/quran_static.db"),
+        PathBuf::from("target/release/data/quran_static.db"),
+        PathBuf::from("target/x86_64-apple-darwin/release/data/quran_static.db"),
+        PathBuf::from("target/aarch64-apple-darwin/release/data/quran_static.db"),
+    ];
+    let mut synced = 0usize;
+    for dest in &target_candidates {
+        if dest.exists() {
+            match fs::copy(&output, dest) {
+                Ok(_) => {
+                    println!("Synced → {:?}", dest);
+                    synced += 1;
+                }
+                Err(e) => eprintln!("Warning: could not sync to {:?}: {}", dest, e),
+            }
+        }
+    }
+    if synced == 0 {
+        println!("No target data directories found to sync (normal on first build).");
+    }
 }
 
 fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
@@ -50,7 +76,15 @@ fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
     init_quran_db(&conn, &data_dir.join("quran-uthmani.sql"))?;
     init_morphology_db(&conn, &data_dir.join("quranic-corpus-morphology-0.4 2.txt"))?;
 
+    init_reciters_table(&conn)?;
+
     let recitation_paths = vec![
+        (
+            950i64,
+            data_dir.join(
+                "recitation/ayah-recitation-abdul-basit-abdul-samad-murattal-hafs-950.db",
+            ),
+        ),
         (
             953i64,
             data_dir.join(
@@ -61,8 +95,18 @@ fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
             954i64,
             data_dir.join("recitation/ayah-recitation-saad-al-ghamdi-murattal-hafs-954.db"),
         ),
+        (
+            961i64,
+            data_dir.join(
+                "recitation/ayah-recitation-yasser-al-dosari-murattal-hafs-961.db",
+            ),
+        ),
     ];
     init_recitation_tables(&conn, &recitation_paths)?;
+    init_maher_recitation(
+        &conn,
+        &data_dir.join("recitation/surah-recitation-maher-al-muaiqly.db"),
+    )?;
 
     let translation_paths: Vec<(String, String, PathBuf)> = vec![
         (
@@ -258,8 +302,17 @@ fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
          INSERT OR REPLACE INTO db_version VALUES ({DB_VERSION});"
     ))?;
 
+    // Switch back to DELETE journal mode before the final VACUUM so the output
+    // file is NOT in WAL mode.  A WAL-mode file is safe to copy only if no
+    // companion -wal/-shm files exist; switching to DELETE mode first guarantees
+    // the result is a single self-contained file that can always be safely
+    // copied with std::fs::copy.
     println!("Running VACUUM …");
-    conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")?;
+    conn.execute_batch(
+        "PRAGMA journal_mode = DELETE;
+         PRAGMA wal_checkpoint(TRUNCATE);
+         VACUUM;",
+    )?;
 
     Ok(())
 }
@@ -408,6 +461,36 @@ fn init_morphology_db(conn: &Connection, morph_path: &Path) -> Result<()> {
     Ok(())
 }
 
+// ─── Reciters metadata ───────────────────────────────────────────────────────
+
+fn init_reciters_table(conn: &Connection) -> Result<()> {
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS reciters (
+            id         INTEGER PRIMARY KEY,
+            name       TEXT NOT NULL,
+            short_name TEXT NOT NULL,
+            style      TEXT NOT NULL DEFAULT 'ayah'
+        );",
+    )?;
+
+    let reciters: &[(i64, &str, &str, &str)] = &[
+        (950, "Abdul-Basit Abdul-Samad", "Abdul-Basit", "ayah"),
+        (952, "Maher Al-Muaiqly", "Maher", "seek"),
+        (953, "Mishari Rashid Al-Afasy", "Mishary", "ayah"),
+        (954, "Saad Al-Ghamdi", "Saad", "ayah"),
+        (961, "Yasser Al-Dosari", "Yasser", "ayah"),
+    ];
+
+    for (id, name, short_name, style) in reciters {
+        conn.execute(
+            "INSERT OR REPLACE INTO reciters (id, name, short_name, style) VALUES (?1, ?2, ?3, ?4)",
+            rusqlite::params![id, name, short_name, style],
+        )?;
+    }
+    println!("Inserted {} reciter metadata rows", reciters.len());
+    Ok(())
+}
+
 // ─── Recitations ─────────────────────────────────────────────────────────────
 
 fn init_recitation_tables(conn: &Connection, paths: &[(i64, PathBuf)]) -> Result<()> {
@@ -463,6 +546,49 @@ fn init_recitation_tables(conn: &Connection, paths: &[(i64, PathBuf)]) -> Result
         tx.commit()?;
         println!("Imported recitation for reciter {}", reciter_id);
     }
+    Ok(())
+}
+
+fn init_maher_recitation(conn: &Connection, path: &Path) -> Result<()> {
+    if !path.exists() {
+        eprintln!("Maher recitation DB not found: {:?}", path);
+        return Ok(());
+    }
+    let src = Connection::open(path)?;
+    let mut src_stmt = src.prepare(
+        "SELECT sl.surah_number, seg.ayah_number, sl.audio_url,
+                (seg.timestamp_to - seg.timestamp_from) AS duration,
+                seg.timestamp_from, seg.timestamp_to
+         FROM surah_list sl
+         JOIN segments seg ON sl.surah_number = seg.surah_number
+         ORDER BY sl.surah_number, seg.ayah_number",
+    )?;
+
+    let tx = conn.unchecked_transaction()?;
+    {
+        let mut ins = conn.prepare(
+            "INSERT OR IGNORE INTO recitations
+                 (reciter_id, surah_number, ayah_number, audio_url, duration, segments)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        )?;
+        let rows = src_stmt.query_map([], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, i64>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, i64>(3)?,
+                row.get::<_, i64>(4)?,
+                row.get::<_, i64>(5)?,
+            ))
+        })?;
+        for row in rows {
+            let (surah, ayah, url, duration, seek_from, seek_to) = row?;
+            let segments = format!(r#"{{"seek_from":{seek_from},"seek_to":{seek_to}}}"#);
+            ins.execute(rusqlite::params![952i64, surah, ayah, url, duration, segments])?;
+        }
+    }
+    tx.commit()?;
+    println!("Imported recitation for reciter 952 (Maher Al-Muaiqly, seek-style)");
     Ok(())
 }
 

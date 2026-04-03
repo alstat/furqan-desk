@@ -83,6 +83,7 @@ pub fn run() {
             commands::check_new_blog_post,
             commands::mark_blog_post_seen,
             commands::get_manuscript_cache_size,
+            commands::get_reciters,
             commands::get_recitation_ayah,
             commands::get_downloaded_surahs,
             commands::download_recitation,
