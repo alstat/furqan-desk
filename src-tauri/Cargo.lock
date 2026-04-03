@@ -9,7 +9,6 @@ dependencies = [
  "dirs 5.0.1",
  "dotenvy",
  "flate2",
- "fontdb",
  "jni",
  "ndk",
  "ndk-context",

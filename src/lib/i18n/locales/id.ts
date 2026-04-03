@@ -25,7 +25,7 @@ export const id: Record<string, string> = {
     'settings.website.download': 'Unduh pembaruan',
     'settings.website.up_to_date': 'Sudah terbaru',
     'sukun.show_icons': 'Tampilkan Ikon',
-    'settings.zen': 'Mode Sukun',
+    'settings.zen': 'Mode Sukūn',
     'settings.zen.desc': 'Pengeditan tanpa gangguan — menghapus batas, bayangan, dan meredup ikon antarmuka',
     'settings.privacy': 'Privasi',
     'settings.privacy.text': 'AyahLab sepenuhnya offline. Tidak ada akun, tidak ada telemetri, tidak ada analitik. Catatan, bookmark, dan pengaturan Anda hanya tersimpan di perangkat Anda.',
@@ -76,6 +76,10 @@ export const id: Record<string, string> = {
     'update.title': 'Pembaruan tersedia',
     'update.message': 'AyahLab v{version} siap diunduh.',
     'update.download': 'Unduh pembaruan →',
+    // Blog post notification
+    'blog.title': 'Baru di Blog AyahLab',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'Lihat postingan →',
     // Layout
     'layout.unsaved_title': 'Perubahan Belum Tersimpan',
     'layout.unsaved_message': 'Anda memiliki perubahan yang belum tersimpan di:\n\n{names}\n\nTutup saja dan buang perubahan?',
@@ -212,6 +216,18 @@ export const id: Record<string, string> = {
     'recitation_dl.complete': 'Selesai — {downloaded} ayat diunduh',
     'recitation_dl.progress': 'Surah {surah} — ayat {ayah} / {total}',
     'recitation_dl.cancel': 'Batal',
+    'recitation_dl.progress_surah': 'Surah {surah} / {total}',
+    'recitation_dl.complete_surah': 'Selesai — {downloaded} surah diunduh',
+    'recitation_dl.current_ayah': 'Unduh Ayat Saat Ini',
+    // Reciter select dialog
+    'reciter_select.title': 'Pilih Qari',
+    'reciter_select.subtitle': 'Pilih dua qari untuk ditampilkan di pemutar',
+    'reciter_select.slot1': 'Slot 1',
+    'reciter_select.slot2': 'Slot 2',
+    'reciter_select.done': 'Selesai',
+    'reciter_select.manage': 'Kelola qari',
+    'reciter_select.seek_badge': 'Hanya streaming — tidak ada offline',
+    'reciter_select.assigned_slot': 'Di slot {n}',
     // Surah widget
     'surah.font_options': 'Opsi Font',
     'surah.font_family': 'Jenis Font',

@@ -156,6 +156,38 @@ html.dark .tabs-scroll::-webkit-scrollbar-thumb:hover {
     background: rgba(130, 130, 130, 0.65) !important;
 }
 
+/* ── LexicalEditor: scrollbar track matches its bg (#292c3c), not Parchment's (#303446) ── */
+html.dark .editor-shell .ContentEditable__root {
+    scrollbar-color: #626880 #292c3c;
+}
+html.dark .editor-shell ::-webkit-scrollbar-track {
+    background: #292c3c;
+}
+html.dark .editor-shell ::-webkit-scrollbar-thumb {
+    border-color: #292c3c;
+}
+
+/* ── Zen + dark mode: both panels are bg-transparent, so scrollbar track must be too ── */
+html.dark.zen * {
+    scrollbar-color: #626880 transparent;
+}
+html.dark.zen ::-webkit-scrollbar-track {
+    background: transparent;
+}
+html.dark.zen ::-webkit-scrollbar-thumb {
+    border-color: transparent;
+}
+/* LexicalEditor-specific zen override (higher specificity than the non-zen editor rule above) */
+html.dark.zen .editor-shell .ContentEditable__root {
+    scrollbar-color: #626880 transparent;
+}
+html.dark.zen .editor-shell ::-webkit-scrollbar-track {
+    background: transparent;
+}
+html.dark.zen .editor-shell ::-webkit-scrollbar-thumb {
+    border-color: transparent;
+}
+
 /* Active dropdown item (currently selected value) */
 .dropdown-item-active {
     background-color: var(--color-brand-gold-100);

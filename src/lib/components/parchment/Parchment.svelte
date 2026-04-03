@@ -22,8 +22,10 @@
         totalAyahsInSurah,
         recitationPlaylist,
         recitationDownloadDialogOpen,
+        reciterSelectDialogOpen,
     } from "$lib/stores/recitation.store";
     import RecitationDownloadDialog from "./RecitationDownloadDialog.svelte";
+    import ReciterSelectDialog from "./ReciterSelectDialog.svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { activeTranslatorId } from "$lib/stores/translation.store";
     import { zenMode, appDarkMode, zenPeek } from "$lib/stores/editor.store";
@@ -268,6 +270,10 @@
 <RecitationDownloadDialog
     open={$recitationDownloadDialogOpen}
     onClose={() => recitationDownloadDialogOpen.set(false)}
+/>
+<ReciterSelectDialog
+    open={$reciterSelectDialogOpen}
+    onClose={() => reciterSelectDialogOpen.set(false)}
 />
 
 <!-- Floating Save Highlight button -->

@@ -25,7 +25,7 @@ export const zh: Record<string, string> = {
     'settings.website.download': '下载更新',
     'settings.website.up_to_date': '已是最新',
     'sukun.show_icons': '显示图标',
-    'settings.zen': 'Sukun 模式',
+    'settings.zen': 'Sukūn 模式',
     'settings.zen.desc': '无干扰编辑 — 移除边框、阴影并淡化界面图标',
     'settings.privacy': '隐私',
     'settings.privacy.text': 'AyahLab 不收集任何个人数据。反馈功能使用 Resend 将您的消息直接发送给开发者——您的电子邮件仅用于回复您，从不存储或共享。无分析，无追踪。',
@@ -76,6 +76,10 @@ export const zh: Record<string, string> = {
     'update.title': '有可用更新',
     'update.message': 'AyahLab v{version} 已准备好下载。',
     'update.download': '下载更新 →',
+    // Blog post notification
+    'blog.title': 'AyahLab 博客新文章',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': '查看文章 →',
     // Layout
     'layout.unsaved_title': '未保存的更改',
     'layout.unsaved_message': '以下文件有未保存的更改：\n\n{names}\n\n是否关闭并放弃更改？',
@@ -212,6 +216,18 @@ export const zh: Record<string, string> = {
     'recitation_dl.complete': '完成 — 已下载 {downloaded} 节经文',
     'recitation_dl.progress': '第 {surah} 章 — 第 {ayah} / {total} 节',
     'recitation_dl.cancel': '取消',
+    'recitation_dl.progress_surah': '第 {surah} 章 / {total}',
+    'recitation_dl.complete_surah': '完成 — 已下载 {downloaded} 章',
+    'recitation_dl.current_ayah': '下载当前节',
+    // Reciter select dialog
+    'reciter_select.title': '选择诵读者',
+    'reciter_select.subtitle': '选择两位在播放器中显示的诵读者',
+    'reciter_select.slot1': '位置 1',
+    'reciter_select.slot2': '位置 2',
+    'reciter_select.done': '完成',
+    'reciter_select.manage': '管理诵读者',
+    'reciter_select.seek_badge': '仅在线播放 — 无离线模式',
+    'reciter_select.assigned_slot': '在位置 {n}',
     // Surah widget
     'surah.font_options': '字体选项',
     'surah.font_family': '字体系列',

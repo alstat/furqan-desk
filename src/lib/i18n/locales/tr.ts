@@ -25,7 +25,7 @@ export const tr: Record<string, string> = {
     'settings.website.download': 'Güncellemeyi indir',
     'settings.website.up_to_date': 'Güncel',
     'sukun.show_icons': 'Simgeleri Göster',
-    'settings.zen': 'Sukun Modu',
+    'settings.zen': 'Sukūn Modu',
     'settings.zen.desc': 'Dikkat dağıtıcısız düzenleme — kenarlıkları, gölgeleri kaldırır ve arayüz simgelerini soluklaştırır',
     'settings.privacy': 'Gizlilik',
     'settings.privacy.text': 'AyahLab tamamen çevrimdışı çalışır. Hesap yok, telemetri yok, analitik yok. Notlarınız, yer imleriniz ve ayarlarınız yalnızca cihazınızda kalır.',
@@ -76,6 +76,10 @@ export const tr: Record<string, string> = {
     'update.title': 'Güncelleme mevcut',
     'update.message': 'AyahLab v{version} indirmeye hazır.',
     'update.download': 'Güncellemeyi indir →',
+    // Blog post notification
+    'blog.title': 'AyahLab Blogunda Yeni',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'Gönderiyi gör →',
     // Layout
     'layout.unsaved_title': 'Kaydedilmemiş Değişiklikler',
     'layout.unsaved_message': 'Şuralarda kaydedilmemiş değişiklikleriniz var:\n\n{names}\n\nYine de kapat ve değişiklikleri iptal et?',
@@ -212,6 +216,18 @@ export const tr: Record<string, string> = {
     'recitation_dl.complete': 'Tamamlandı — {downloaded} ayet indirildi',
     'recitation_dl.progress': 'Sure {surah} — ayet {ayah} / {total}',
     'recitation_dl.cancel': 'İptal',
+    'recitation_dl.progress_surah': 'Sure {surah} / {total}',
+    'recitation_dl.complete_surah': 'Tamamlandı — {downloaded} sure indirildi',
+    'recitation_dl.current_ayah': 'Mevcut Ayeti İndir',
+    // Reciter select dialog
+    'reciter_select.title': 'Okuyucu Seç',
+    'reciter_select.subtitle': 'Oynatıcıda göstermek için iki okuyucu seçin',
+    'reciter_select.slot1': 'Slot 1',
+    'reciter_select.slot2': 'Slot 2',
+    'reciter_select.done': 'Tamam',
+    'reciter_select.manage': 'Okuyucuları yönet',
+    'reciter_select.seek_badge': 'Yalnızca yayın — çevrimdışı yok',
+    'reciter_select.assigned_slot': '{n}. slotta',
     // Surah widget
     'surah.font_options': 'Yazı Tipi Seçenekleri',
     'surah.font_family': 'Yazı Tipi Ailesi',

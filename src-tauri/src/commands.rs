@@ -42,13 +42,53 @@ impl HttpClient {
     }
 }
 
+// ── Blog post struct ──────────────────────────────────────────────────────────
+#[derive(Serialize, Clone)]
+pub struct BlogPost {
+    pub title: String,
+    pub date: String,
+    pub author: String,
+    pub post_url: String,
+}
+
 // ── Recitation structs ───────────────────────────────────────────────────────
+#[derive(Serialize)]
+pub struct ReciterInfo {
+    pub id: i64,
+    pub name: String,
+    pub short_name: String,
+    pub style: String,
+}
+
+#[tauri::command]
+pub fn get_reciters(state: State<Database>) -> Result<Vec<ReciterInfo>, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare("SELECT id, name, short_name, style FROM reciters ORDER BY id")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(ReciterInfo {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                short_name: row.get(2)?,
+                style: row.get(3)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
 #[derive(Serialize)]
 pub struct RecitationAyah {
     pub audio_url: String,
     pub duration: Option<i64>,
     pub segments: Option<String>,
     pub is_local: bool,
+    pub seek_start: Option<i64>,
+    pub seek_end: Option<i64>,
 }
 
 #[tauri::command]
@@ -59,15 +99,6 @@ pub fn get_recitation_ayah(
     ayah: i64,
     reciter_id: i64,
 ) -> Result<Option<RecitationAyah>, String> {
-    // Check if a locally downloaded file exists first
-    let local_path = app.path().app_data_dir().ok().map(|d| {
-        d.join("recitation")
-            .join(reciter_id.to_string())
-            .join(surah.to_string())
-            .join(format!("{ayah}.mp3"))
-    });
-    let is_local = local_path.as_ref().map(|p| p.exists()).unwrap_or(false);
-
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare(
@@ -87,12 +118,53 @@ pub fn get_recitation_ayah(
     match rows.next() {
         Some(r) => {
             let (remote_url, duration, segments) = r.map_err(|e| e.to_string())?;
+
+            // Detect seek-style entries: segments JSON contains "seek_from"/"seek_to"
+            let (seek_start, seek_end) = if let Some(ref seg) = segments {
+                if let Ok(v) = serde_json::from_str::<serde_json::Value>(seg) {
+                    let from = v.get("seek_from").and_then(|x| x.as_i64());
+                    let to = v.get("seek_to").and_then(|x| x.as_i64());
+                    (from, to)
+                } else {
+                    (None, None)
+                }
+            } else {
+                (None, None)
+            };
+
+            // Determine local file path based on reciter style
+            let is_seek = seek_start.is_some();
+            let local_path = if is_seek {
+                // Seek-style: one MP3 per surah stored flat as {reciter_id}/{surah}.mp3
+                app.path().app_data_dir().ok().map(|d| {
+                    d.join("recitation")
+                        .join(reciter_id.to_string())
+                        .join(format!("{surah}.mp3"))
+                })
+            } else {
+                // Ayah-style: one MP3 per ayah at {reciter_id}/{surah}/{ayah}.mp3
+                app.path().app_data_dir().ok().map(|d| {
+                    d.join("recitation")
+                        .join(reciter_id.to_string())
+                        .join(surah.to_string())
+                        .join(format!("{ayah}.mp3"))
+                })
+            };
+            let is_local = local_path.as_ref().map(|p| p.exists()).unwrap_or(false);
             let audio_url = if is_local {
                 local_path.unwrap().to_string_lossy().into_owned()
             } else {
                 remote_url
             };
-            Ok(Some(RecitationAyah { audio_url, duration, segments, is_local }))
+
+            Ok(Some(RecitationAyah {
+                audio_url,
+                duration,
+                segments,
+                is_local,
+                seek_start,
+                seek_end,
+            }))
         }
         None => Ok(None),
     }
@@ -118,36 +190,54 @@ pub fn get_downloaded_surahs(
 ) -> Result<Vec<i64>, String> {
     let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
 
-    // Get expected ayah counts per surah in one query
-    let expected_counts: Vec<(i64, i64)> = {
+    // Determine reciter style and get per-surah info
+    let (is_seek, surah_rows): (bool, Vec<(i64, i64)>) = {
         let conn = state.0.lock().map_err(|e| e.to_string())?;
+        let style: String = conn
+            .query_row(
+                "SELECT style FROM reciters WHERE id = ?1",
+                rusqlite::params![reciter_id],
+                |row| row.get(0),
+            )
+            .unwrap_or_else(|_| "ayah".to_string());
+        let is_seek = style == "seek";
+
         let mut stmt = conn
             .prepare(
                 "SELECT surah_number, COUNT(*) FROM recitations
                  WHERE reciter_id = ?1 GROUP BY surah_number",
             )
             .map_err(|e| e.to_string())?;
-        let result = stmt.query_map(rusqlite::params![reciter_id], |row| {
-            Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))
-        })
-        .map_err(|e| e.to_string())?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| e.to_string())?;
-        result
+        let rows = stmt
+            .query_map(rusqlite::params![reciter_id], |row| {
+                Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        (is_seek, rows)
     };
 
     let mut downloaded = Vec::new();
-    for (surah, expected) in expected_counts {
-        let surah_dir = data_dir
-            .join("recitation")
-            .join(reciter_id.to_string())
-            .join(surah.to_string());
-        if surah_dir.exists() {
-            let actual = std::fs::read_dir(&surah_dir)
-                .map(|rd| rd.filter_map(|e| e.ok()).count() as i64)
-                .unwrap_or(0);
-            if actual >= expected {
+    let reciter_dir = data_dir.join("recitation").join(reciter_id.to_string());
+
+    for (surah, expected) in surah_rows {
+        if is_seek {
+            // Seek-style: check for flat {reciter_id}/{surah}.mp3 file
+            let file_path = reciter_dir.join(format!("{surah}.mp3"));
+            if file_path.exists() {
                 downloaded.push(surah);
+            }
+        } else {
+            // Ayah-style: check surah directory has all expected ayah files
+            let surah_dir = reciter_dir.join(surah.to_string());
+            if surah_dir.exists() {
+                let actual = std::fs::read_dir(&surah_dir)
+                    .map(|rd| rd.filter_map(|e| e.ok()).count() as i64)
+                    .unwrap_or(0);
+                if actual >= expected {
+                    downloaded.push(surah);
+                }
             }
         }
     }
@@ -163,13 +253,191 @@ pub async fn download_recitation(
     http: State<'_, HttpClient>,
     reciter_id: i64,
     surah_filter: Option<i64>,
+    ayah_filter: Option<i64>,
 ) -> Result<(), String> {
     dl_state.cancel.store(false, Ordering::Relaxed);
 
-    // Collect all rows before releasing the DB lock
-    let rows: Vec<(i64, i64, String)> = {
+    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let reciter_dir = data_dir.join("recitation").join(reciter_id.to_string());
+
+    // Determine reciter style before building the download list
+    let is_seek: bool = {
         let conn = state.0.lock().map_err(|e| e.to_string())?;
-        if let Some(sf) = surah_filter {
+        conn.query_row(
+            "SELECT style FROM reciters WHERE id = ?1",
+            rusqlite::params![reciter_id],
+            |row| row.get::<_, String>(0),
+        )
+        .unwrap_or_else(|_| "ayah".to_string())
+            == "seek"
+    };
+
+    if is_seek {
+        // ── Seek-style: download one MP3 per surah ───────────────────────────
+        // Each ayah row in recitations has the same audio_url per surah;
+        // use DISTINCT to get one URL per surah.
+        let surah_urls: Vec<(i64, String)> = {
+            let conn = state.0.lock().map_err(|e| e.to_string())?;
+            if let Some(sf) = surah_filter {
+                let mut stmt = conn
+                    .prepare(
+                        "SELECT DISTINCT surah_number, audio_url FROM recitations
+                         WHERE reciter_id = ?1 AND surah_number = ?2
+                         ORDER BY surah_number",
+                    )
+                    .map_err(|e| e.to_string())?;
+                let result = stmt
+                    .query_map(rusqlite::params![reciter_id, sf], |row| {
+                        Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?))
+                    })
+                    .map_err(|e| e.to_string())?
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|e| e.to_string())?;
+                result
+            } else {
+                let mut stmt = conn
+                    .prepare(
+                        "SELECT DISTINCT surah_number, audio_url FROM recitations
+                         WHERE reciter_id = ?1
+                         ORDER BY surah_number",
+                    )
+                    .map_err(|e| e.to_string())?;
+                let result = stmt
+                    .query_map(rusqlite::params![reciter_id], |row| {
+                        Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?))
+                    })
+                    .map_err(|e| e.to_string())?
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|e| e.to_string())?;
+                result
+            }
+        };
+
+        std::fs::create_dir_all(&reciter_dir).map_err(|e| e.to_string())?;
+
+        let total = surah_urls.len();
+        let mut downloaded_count: usize = 0;
+
+        for (surah, url) in &surah_urls {
+            if dl_state.cancel.load(Ordering::Relaxed) {
+                break;
+            }
+
+            let file_path = reciter_dir.join(format!("{surah}.mp3"));
+
+            if file_path.exists() {
+                downloaded_count += 1;
+                let _ = app.emit(
+                    "recitation-download-progress",
+                    DownloadProgressPayload {
+                        reciter_id,
+                        surah: *surah,
+                        ayah: 1,
+                        downloaded: downloaded_count,
+                        total,
+                        done: false,
+                        failed: false,
+                    },
+                );
+                continue;
+            }
+
+            let result = async {
+                let resp = http.client.get(url.as_str()).send().await?;
+                resp.bytes().await
+            }
+            .await;
+
+            match result {
+                Ok(bytes) => {
+                    if let Err(e) = std::fs::write(&file_path, &bytes) {
+                        let _ = app.emit(
+                            "recitation-download-progress",
+                            DownloadProgressPayload {
+                                reciter_id,
+                                surah: *surah,
+                                ayah: 1,
+                                downloaded: downloaded_count,
+                                total,
+                                done: false,
+                                failed: true,
+                            },
+                        );
+                        return Err(e.to_string());
+                    }
+                    downloaded_count += 1;
+                    let _ = app.emit(
+                        "recitation-download-progress",
+                        DownloadProgressPayload {
+                            reciter_id,
+                            surah: *surah,
+                            ayah: 1,
+                            downloaded: downloaded_count,
+                            total,
+                            done: false,
+                            failed: false,
+                        },
+                    );
+                }
+                Err(_) => {
+                    let _ = app.emit(
+                        "recitation-download-progress",
+                        DownloadProgressPayload {
+                            reciter_id,
+                            surah: *surah,
+                            ayah: 1,
+                            downloaded: downloaded_count,
+                            total,
+                            done: false,
+                            failed: true,
+                        },
+                    );
+                }
+            }
+        }
+
+        let _ = app.emit(
+            "recitation-download-progress",
+            DownloadProgressPayload {
+                reciter_id,
+                surah: 0,
+                ayah: 0,
+                downloaded: downloaded_count,
+                total,
+                done: true,
+                failed: false,
+            },
+        );
+
+        return Ok(());
+    }
+
+    // ── Ayah-style: download per-ayah MP3s ───────────────────────────────────
+    // silent_rows are downloaded without emitting progress events (e.g. basmallah).
+    let (rows, silent_rows): (Vec<(i64, i64, String)>, Vec<(i64, i64, String)>) = {
+        let conn = state.0.lock().map_err(|e| e.to_string())?;
+        if let Some(af) = ayah_filter {
+            // Single-ayah download
+            let sf = surah_filter.unwrap_or(1);
+            let mut stmt = conn
+                .prepare(
+                    "SELECT surah_number, ayah_number, audio_url FROM recitations
+                     WHERE reciter_id = ?1 AND surah_number = ?2 AND ayah_number = ?3",
+                )
+                .map_err(|e| e.to_string())?;
+            let result = stmt
+                .query_map(rusqlite::params![reciter_id, sf, af], |row| {
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, i64>(1)?,
+                        row.get::<_, String>(2)?,
+                    ))
+                })
+                .map_err(|e| e.to_string())?
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| e.to_string())?;
+            (result, vec![])
+        } else if let Some(sf) = surah_filter {
             let mut stmt = conn
                 .prepare(
                     "SELECT surah_number, ayah_number, audio_url FROM recitations
@@ -177,34 +445,42 @@ pub async fn download_recitation(
                      ORDER BY surah_number, ayah_number",
                 )
                 .map_err(|e| e.to_string())?;
-            let mut rows = stmt.query_map(rusqlite::params![reciter_id, sf], |row| {
-                Ok((
-                    row.get::<_, i64>(0)?,
-                    row.get::<_, i64>(1)?,
-                    row.get::<_, String>(2)?,
-                ))
-            })
-            .map_err(|e| e.to_string())?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| e.to_string())?;
-            // Also include surah 1 (basmallah) if this surah needs one
-            if sf != 1 && sf != 9 {
-                let mut stmt1 = conn.prepare(
-                    "SELECT surah_number, ayah_number, audio_url FROM recitations
-                     WHERE reciter_id = ?1 AND surah_number = 1
-                     ORDER BY ayah_number",
-                ).map_err(|e| e.to_string())?;
-                let surah1_rows = stmt1.query_map(rusqlite::params![reciter_id], |row| {
-                    Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, String>(2)?))
+            let rows = stmt
+                .query_map(rusqlite::params![reciter_id, sf], |row| {
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, i64>(1)?,
+                        row.get::<_, String>(2)?,
+                    ))
                 })
                 .map_err(|e| e.to_string())?
                 .collect::<Result<Vec<_>, _>>()
                 .map_err(|e| e.to_string())?;
-                let mut combined = surah1_rows;
-                combined.extend(rows);
-                rows = combined;
-            }
-            rows
+            // Fetch basmallah (surah 1, ayah 1) silently so offline playback works,
+            // but exclude it from the progress count so users see only the surah's own ayahs.
+            let basmallah = if sf != 1 && sf != 9 {
+                let mut stmt1 = conn
+                    .prepare(
+                        "SELECT surah_number, ayah_number, audio_url FROM recitations
+                         WHERE reciter_id = ?1 AND surah_number = 1 AND ayah_number = 1",
+                    )
+                    .map_err(|e| e.to_string())?;
+                let result = stmt1
+                    .query_map(rusqlite::params![reciter_id], |row| {
+                        Ok((
+                            row.get::<_, i64>(0)?,
+                            row.get::<_, i64>(1)?,
+                            row.get::<_, String>(2)?,
+                        ))
+                    })
+                    .map_err(|e| e.to_string())?
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|e| e.to_string())?;
+                result
+            } else {
+                vec![]
+            };
+            (rows, basmallah)
         } else {
             let mut stmt = conn
                 .prepare(
@@ -213,21 +489,43 @@ pub async fn download_recitation(
                      ORDER BY surah_number, ayah_number",
                 )
                 .map_err(|e| e.to_string())?;
-            let result = stmt.query_map(rusqlite::params![reciter_id], |row| {
-                Ok((
-                    row.get::<_, i64>(0)?,
-                    row.get::<_, i64>(1)?,
-                    row.get::<_, String>(2)?,
-                ))
-            })
-            .map_err(|e| e.to_string())?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| e.to_string())?;
-            result
+            let result = stmt
+                .query_map(rusqlite::params![reciter_id], |row| {
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, i64>(1)?,
+                        row.get::<_, String>(2)?,
+                    ))
+                })
+                .map_err(|e| e.to_string())?
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| e.to_string())?;
+            (result, vec![])
         }
     }; // DB lock released here
 
-    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    // Download basmallah silently (no progress events, not counted in total).
+    for (_, _, url) in &silent_rows {
+        if dl_state.cancel.load(Ordering::Relaxed) {
+            break;
+        }
+        let file_path = reciter_dir.join("1").join("1.mp3");
+        if file_path.exists() {
+            continue;
+        }
+        if let Some(parent) = file_path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        let result = async {
+            let resp = http.client.get(url.as_str()).send().await?;
+            resp.bytes().await
+        }
+        .await;
+        if let Ok(bytes) = result {
+            let _ = std::fs::write(&file_path, &bytes);
+        }
+    }
+
     let total = rows.len();
     let mut downloaded_count: usize = 0;
 
@@ -236,9 +534,7 @@ pub async fn download_recitation(
             break;
         }
 
-        let file_path = data_dir
-            .join("recitation")
-            .join(reciter_id.to_string())
+        let file_path = reciter_dir
             .join(surah.to_string())
             .join(format!("{ayah}.mp3"));
 
@@ -1582,6 +1878,80 @@ pub async fn get_latest_ayahlab_version(http: State<'_, HttpClient>) -> Result<S
         .filter(|s| !s.is_empty())
         .ok_or_else(|| "versions.txt is empty".to_string())?;
     Ok(version)
+}
+
+/// Fetch the latest AyahLab blog post and compare it against the local DB.
+/// Returns the new post if it hasn't been seen yet, or None if up to date.
+#[tauri::command]
+pub async fn check_new_blog_post(
+    http: State<'_, HttpClient>,
+    db: State<'_, Database>,
+) -> Result<Option<BlogPost>, String> {
+    let resp = http.client
+        .get("https://raw.githubusercontent.com/alstat/ayahlab-blog-posts/refs/heads/main/posts-0.json")
+        .header("User-Agent", "AyahLab/1.0")
+        .header("Cache-Control", "no-cache")
+        .send()
+        .await
+        .map_err(|e| format!("Network error: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("HTTP error ({})", resp.status()));
+    }
+    let text = resp.text().await.map_err(|e| format!("Failed to read response: {e}"))?;
+    let posts: Vec<serde_json::Value> =
+        serde_json::from_str(&text).map_err(|e| format!("JSON parse error: {e}"))?;
+
+    let latest = posts.first().ok_or_else(|| "Empty posts list".to_string())?;
+    let title = latest["title"].as_str().unwrap_or("").to_string();
+    let date = latest["date"].as_str().unwrap_or("").to_string();
+    let author = latest["author"].as_str().unwrap_or("").to_string();
+    let post_url = latest["postUrl"].as_str().unwrap_or("").to_string();
+
+    if title.is_empty() || date.is_empty() {
+        return Ok(None);
+    }
+
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let stored: Option<(String, String, String)> = conn.query_row(
+        "SELECT title, date, author FROM blog_posts ORDER BY id DESC LIMIT 1",
+        [],
+        |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+    ).ok();
+
+    let is_new = match stored {
+        None => true,
+        Some((s_title, s_date, s_author)) => {
+            date > s_date || title != s_title || author != s_author
+        }
+    };
+
+    if is_new {
+        Ok(Some(BlogPost { title, date, author, post_url }))
+    } else {
+        Ok(None)
+    }
+}
+
+/// Record that the user has seen a blog post. Inserts it into the local DB
+/// and trims the table to the 2 most recent entries.
+#[tauri::command]
+pub fn mark_blog_post_seen(
+    title: String,
+    date: String,
+    author: String,
+    post_url: String,
+    db: State<'_, Database>,
+) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO blog_posts (title, date, author, post_url) VALUES (?1, ?2, ?3, ?4)",
+        rusqlite::params![title, date, author, post_url],
+    ).map_err(|e| e.to_string())?;
+    conn.execute(
+        "DELETE FROM blog_posts WHERE id NOT IN (SELECT id FROM blog_posts ORDER BY id DESC LIMIT 2)",
+        [],
+    ).map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 async fn get_latest_stable_typst_release(client: &reqwest::Client) -> Result<String, String> {
