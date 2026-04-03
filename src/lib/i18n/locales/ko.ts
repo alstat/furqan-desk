@@ -76,6 +76,10 @@ export const ko: Record<string, string> = {
     'update.title': '업데이트 가능',
     'update.message': 'AyahLab v{version}을 다운로드할 수 있습니다.',
     'update.download': '업데이트 다운로드 →',
+    // Blog post notification
+    'blog.title': 'AyahLab 블로그 새 게시물',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': '게시물 보기 →',
     // Layout
     'layout.unsaved_title': '저장되지 않은 변경 사항',
     'layout.unsaved_message': '다음 파일에 저장되지 않은 변경 사항이 있습니다:\n\n{names}\n\n닫고 변경 사항을 버리겠습니까?',

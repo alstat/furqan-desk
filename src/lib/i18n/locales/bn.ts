@@ -76,6 +76,10 @@ export const bn: Record<string, string> = {
     'update.title': 'আপডেট পাওয়া গেছে',
     'update.message': 'AyahLab v{version} ডাউনলোডের জন্য প্রস্তুত।',
     'update.download': 'আপডেট ডাউনলোড করুন →',
+    // Blog post notification
+    'blog.title': 'AyahLab ব্লগে নতুন',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'পোস্ট দেখুন →',
     // Layout
     'layout.unsaved_title': 'অসংরক্ষিত পরিবর্তন',
     'layout.unsaved_message': 'এতে অসংরক্ষিত পরিবর্তন আছে:\n\n{names}\n\nযাইহোক বন্ধ করবেন এবং পরিবর্তন বাতিল করবেন?',

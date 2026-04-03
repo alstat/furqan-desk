@@ -4,6 +4,7 @@
     import { getVersion } from "@tauri-apps/api/app";
     import { openUrl } from "@tauri-apps/plugin-opener";
     import Icon from "@iconify/svelte";
+    import { fade } from "svelte/transition";
     import { t } from "$lib/i18n";
 
     let visible = $state(false);
@@ -38,8 +39,9 @@
 
 {#if visible}
     <div
+        transition:fade={{ duration: 200 }}
         class="fixed top-6 right-5 z-[9999] flex items-start gap-3 px-4 py-3
-                rounded-3xl max-w-xs
+                rounded-3xl w-2xs
                 bg-white/90 dark:bg-[#292c3c]/95
                 backdrop-blur-md
                 border border-brand-sand-200 dark:border-[#414559]
@@ -54,19 +56,19 @@
             <p
                 class="text-xs font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5]"
             >
-                {$t('update.title')}
+                {$t("update.title")}
             </p>
             <p
                 class="text-[11px] text-brand-charcoal-400 dark:text-[#838ba7] mt-0.5"
             >
-                {$t('update.message', { version: latestVersion })}
+                {$t("update.message", { version: latestVersion })}
             </p>
             <button
                 class="mt-2 text-[11px] cursor-pointer font-medium text-brand-gold-600 dark:text-[#e5c890]
                        hover:underline"
                 onclick={() => openUrl("https://www.ayahlab.com/")}
             >
-                {$t('update.download')}
+                {$t("update.download")}
             </button>
         </div>
         <button

@@ -76,6 +76,10 @@ export const fa: Record<string, string> = {
     'update.title': 'به‌روزرسانی موجود است',
     'update.message': 'AyahLab v{version} آماده دانلود است.',
     'update.download': 'دانلود به‌روزرسانی →',
+    // Blog post notification
+    'blog.title': 'جدید در وبلاگ AyahLab',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'مشاهده مقاله ←',
     // Layout
     'layout.unsaved_title': 'تغییرات ذخیره نشده',
     'layout.unsaved_message': 'تغییرات ذخیره نشده در:\n\n{names}\n\nآیا می‌خواهید ببندید و تغییرات را کنار بگذارید؟',

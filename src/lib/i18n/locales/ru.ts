@@ -76,6 +76,10 @@ export const ru: Record<string, string> = {
     'update.title': 'Доступно обновление',
     'update.message': 'AyahLab v{version} готово к загрузке.',
     'update.download': 'Скачать обновление →',
+    // Blog post notification
+    'blog.title': 'Новое в блоге AyahLab',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'Читать запись →',
     // Layout
     'layout.unsaved_title': 'Несохранённые изменения',
     'layout.unsaved_message': 'У вас есть несохранённые изменения в:\n\n{names}\n\nЗакрыть и отменить изменения?',

@@ -76,6 +76,10 @@ export const zh: Record<string, string> = {
     'update.title': '有可用更新',
     'update.message': 'AyahLab v{version} 已准备好下载。',
     'update.download': '下载更新 →',
+    // Blog post notification
+    'blog.title': 'AyahLab 博客新文章',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': '查看文章 →',
     // Layout
     'layout.unsaved_title': '未保存的更改',
     'layout.unsaved_message': '以下文件有未保存的更改：\n\n{names}\n\n是否关闭并放弃更改？',

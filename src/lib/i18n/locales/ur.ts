@@ -76,6 +76,10 @@ export const ur: Record<string, string> = {
     'update.title': 'اپڈیٹ دستیاب',
     'update.message': 'AyahLab v{version} ڈاؤنلوڈ کے لیے تیار ہے۔',
     'update.download': 'اپڈیٹ ڈاؤنلوڈ کریں →',
+    // Blog post notification
+    'blog.title': 'AyahLab بلاگ پر نیا',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'پوسٹ دیکھیں ←',
     // Layout
     'layout.unsaved_title': 'محفوظ نہ شدہ تبدیلیاں',
     'layout.unsaved_message': 'آپ کے پاس محفوظ نہ شدہ تبدیلیاں ہیں:\n\n{names}\n\nکیا پھر بھی بند کریں اور تبدیلیاں ضائع کریں؟',

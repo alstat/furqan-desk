@@ -76,6 +76,10 @@ export const ar: Record<string, string> = {
     'update.title': 'تحديث متاح',
     'update.message': 'AyahLab v{version} جاهز للتنزيل.',
     'update.download': 'تنزيل التحديث →',
+    // Blog post notification
+    'blog.title': 'جديد في مدونة AyahLab',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'مشاهدة المقالة ←',
     // Layout
     'layout.unsaved_title': 'تغييرات غير محفوظة',
     'layout.unsaved_message': 'لديك تغييرات غير محفوظة في:\n\n{names}\n\nهل تريد الإغلاق وتجاهل التغييرات؟',
