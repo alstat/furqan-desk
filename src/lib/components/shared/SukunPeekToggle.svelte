@@ -3,16 +3,23 @@
     import { t } from "$lib/i18n";
 
     let isPeeking = $state(false);
+    let flameState = $state<"idle" | "burst" | "flicker">("idle");
 
     function onPointerDown(e: PointerEvent) {
         (e.currentTarget as HTMLButtonElement).setPointerCapture(e.pointerId);
         isPeeking = true;
+        flameState = "burst";
         zenPeek.set(true);
     }
 
     function onPointerUp() {
         isPeeking = false;
+        flameState = "idle";
         zenPeek.set(false);
+    }
+
+    function onFlameBurstEnd() {
+        if (isPeeking) flameState = "flicker";
     }
 </script>
 
@@ -33,9 +40,13 @@
         viewBox="0 -4 8 15"
         fill="none"
         overflow="visible"
-        class="transition-all -mt-[20px] duration-300 {isPeeking
-            ? 'scale-125 drop-shadow-[0_0_3px_rgba(255,210,60,1)] drop-shadow-[0_0_10px_rgba(229,200,144,0.75)]'
-            : 'scale-90 opacity-30'}"
+        style="transform-origin: center bottom"
+        class="-mt-[20px] {flameState === 'burst'
+            ? 'flame-burst drop-shadow-[0_0_3px_rgba(255,210,60,1)] drop-shadow-[0_0_10px_rgba(229,200,144,0.75)]'
+            : flameState === 'flicker'
+              ? 'flame-flicker drop-shadow-[0_0_3px_rgba(255,210,60,1)] drop-shadow-[0_0_10px_rgba(229,200,144,0.75)]'
+              : 'flame-idle'}"
+        onanimationend={flameState === "burst" ? onFlameBurstEnd : undefined}
         xmlns="http://www.w3.org/2000/svg"
     >
         <path
@@ -68,3 +79,66 @@
         ></div>
     </div>
 </button>
+
+<style>
+    .flame-idle {
+        transform: scale(0.9);
+        opacity: 0.3;
+        transition:
+            transform 0.3s,
+            opacity 0.3s;
+    }
+
+    @keyframes flame-burst {
+        0% {
+            transform: scale(0.9) rotate(0deg);
+            opacity: 0.3;
+        }
+        20% {
+            transform: scale(1.7) rotate(-5deg);
+            opacity: 1;
+        }
+        40% {
+            transform: scale(1.3) rotate(4deg);
+        }
+        60% {
+            transform: scale(1.5) rotate(-3deg);
+        }
+        80% {
+            transform: scale(1.28) rotate(2deg);
+        }
+        100% {
+            transform: scale(1.25) rotate(0deg);
+            opacity: 1;
+        }
+    }
+
+    @keyframes flame-flicker {
+        0% {
+            transform: scale(1.25) rotate(0deg);
+        }
+        20% {
+            transform: scale(1.32) rotate(-3deg);
+        }
+        40% {
+            transform: scale(1.2) rotate(3deg);
+        }
+        65% {
+            transform: scale(1.3) rotate(-2deg);
+        }
+        85% {
+            transform: scale(1.22) rotate(2deg);
+        }
+        100% {
+            transform: scale(1.25) rotate(0deg);
+        }
+    }
+
+    .flame-burst {
+        animation: flame-burst 0.45s ease-out forwards;
+    }
+
+    .flame-flicker {
+        animation: flame-flicker 0.7s ease-in-out infinite;
+    }
+</style>

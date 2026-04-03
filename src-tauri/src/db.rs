@@ -74,6 +74,16 @@ fn android_err<E: std::fmt::Display>(e: E) -> rusqlite::Error {
 /// On desktop / iOS, the resource directory is a normal filesystem path.
 #[cfg(not(target_os = "android"))]
 fn copy_static_db(src: &Path, dest: &Path, _asset_relative_path: &str) -> Result<()> {
+    // Remove any stale WAL / SHM files before overwriting the main DB file.
+    // If the old DB was in WAL mode, leaving these files in place would make
+    // SQLite try to apply an incompatible WAL to the freshly-copied main file,
+    // producing "database disk image is malformed" errors.
+    for suffix in &["-wal", "-shm"] {
+        let side_file = PathBuf::from(format!("{}{}", dest.display(), suffix));
+        if side_file.exists() {
+            let _ = std::fs::remove_file(&side_file); // best-effort
+        }
+    }
     std::fs::copy(src, dest)
         .map(|_| ())
         .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
@@ -81,7 +91,7 @@ fn copy_static_db(src: &Path, dest: &Path, _asset_relative_path: &str) -> Result
 
 /// Must match DB_VERSION in src/bin/gen_db.rs.
 /// Increment both when the static dataset changes.
-const DB_VERSION: i64 = 3;
+const DB_VERSION: i64 = 4;
 
 pub struct Database(pub Mutex<Connection>);
 

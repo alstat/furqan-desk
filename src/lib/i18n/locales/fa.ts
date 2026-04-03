@@ -216,6 +216,18 @@ export const fa: Record<string, string> = {
     'recitation_dl.complete': 'کامل — {downloaded} آیه دانلود شد',
     'recitation_dl.progress': 'سوره {surah} — آیه {ayah} / {total}',
     'recitation_dl.cancel': 'لغو',
+    'recitation_dl.progress_surah': 'سوره {surah} / {total}',
+    'recitation_dl.complete_surah': 'کامل — {downloaded} سوره دانلود شد',
+    'recitation_dl.current_ayah': 'دانلود آیه فعلی',
+    // Reciter select dialog
+    'reciter_select.title': 'انتخاب قاریان',
+    'reciter_select.subtitle': 'دو قاری برای نمایش در پخش‌کننده انتخاب کنید',
+    'reciter_select.slot1': 'جایگاه ۱',
+    'reciter_select.slot2': 'جایگاه ۲',
+    'reciter_select.done': 'تأیید',
+    'reciter_select.manage': 'مدیریت قاریان',
+    'reciter_select.seek_badge': 'فقط پخش آنلاین — بدون آفلاین',
+    'reciter_select.assigned_slot': 'در جایگاه {n}',
     // Surah widget
     'surah.font_options': 'گزینه‌های فونت',
     'surah.font_family': 'خانواده فونت',

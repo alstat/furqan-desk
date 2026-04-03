@@ -216,6 +216,18 @@ export const ar: Record<string, string> = {
     'recitation_dl.complete': 'اكتمل — تم تنزيل {downloaded} آية',
     'recitation_dl.progress': 'سورة {surah} — آية {ayah} / {total}',
     'recitation_dl.cancel': 'إلغاء',
+    'recitation_dl.progress_surah': 'السورة {surah} / {total}',
+    'recitation_dl.complete_surah': 'اكتمل — تم تنزيل {downloaded} سورة',
+    'recitation_dl.current_ayah': 'تنزيل الآية الحالية',
+    // Reciter select dialog
+    'reciter_select.title': 'اختر القُرَّاء',
+    'reciter_select.subtitle': 'اختر قارِئَين لعرضهما في المشغّل',
+    'reciter_select.slot1': 'الموضع 1',
+    'reciter_select.slot2': 'الموضع 2',
+    'reciter_select.done': 'تم',
+    'reciter_select.manage': 'إدارة القُرَّاء',
+    'reciter_select.seek_badge': 'بث مباشر فقط — لا يوجد وضع دون اتصال',
+    'reciter_select.assigned_slot': 'في الموضع {n}',
     // Surah widget
     'surah.font_options': 'خيارات الخط',
     'surah.font_family': 'نوع الخط',

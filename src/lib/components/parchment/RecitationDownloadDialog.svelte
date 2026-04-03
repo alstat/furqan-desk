@@ -1,6 +1,6 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
-    import { t } from '$lib/i18n';
+    import { t } from "$lib/i18n";
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
     import Icon from "@iconify/svelte";
     import { fly } from "svelte/transition";
@@ -8,10 +8,14 @@
     import { selectedSurahIdx } from "$lib/stores/quran.svelte";
     import {
         activeReciterId,
+        currentPlayingAyah,
         downloadedSurahs,
         isDownloading,
         downloadProgress,
+        selectedReciterSlots,
+        availableReciters,
         type DownloadProgress,
+        type ReciterInfo,
     } from "$lib/stores/recitation.store";
 
     interface Props {
@@ -20,9 +24,15 @@
     }
     let { open, onClose }: Props = $props();
 
-    let dialogReciterId = $state<953 | 954>($activeReciterId);
-    let downloadedCount953 = $state(0);
-    let downloadedCount954 = $state(0);
+    let dialogReciterId = $state<number>($activeReciterId);
+    const downloadedCounts = $derived(
+        Object.fromEntries(
+            $selectedReciterSlots.map((id: number) => [
+                id,
+                $downloadedSurahs[id]?.length ?? 0,
+            ]),
+        ) as Record<number, number>,
+    );
     let unlisten: UnlistenFn | null = null;
 
     $effect(() => {
@@ -35,17 +45,18 @@
 
     async function refreshCounts() {
         try {
-            const [c953, c954] = await Promise.all([
-                invoke<number[]>("get_downloaded_surahs", { reciterId: 953 }),
-                invoke<number[]>("get_downloaded_surahs", { reciterId: 954 }),
-            ]);
-            downloadedSurahs.update((prev) => ({
-                ...prev,
-                953: c953,
-                954: c954,
-            }));
-            downloadedCount953 = c953.length;
-            downloadedCount954 = c954.length;
+            const results = await Promise.all(
+                $selectedReciterSlots.map((id: number) =>
+                    invoke<number[]>("get_downloaded_surahs", {
+                        reciterId: id,
+                    }),
+                ),
+            );
+            const counts: Record<number, number[]> = { ...$downloadedSurahs };
+            $selectedReciterSlots.forEach((id: number, i: number) => {
+                counts[id] = results[i];
+            });
+            downloadedSurahs.set(counts);
         } catch (e) {
             console.error("Failed to get downloaded surahs:", e);
         }
@@ -69,13 +80,17 @@
         unlisten?.();
     });
 
-    async function startDownload(surahFilter: number | null) {
+    async function startDownload(
+        surahFilter: number | null,
+        ayahFilter: number | null,
+    ) {
         isDownloading.set(true);
         downloadProgress.set(null);
         try {
             await invoke("download_recitation", {
                 reciterId: dialogReciterId,
                 surahFilter,
+                ayahFilter,
             });
         } catch (e) {
             console.error("Download failed:", e);
@@ -95,19 +110,16 @@
         if (!$isDownloading) onClose();
     }
 
-    $effect(() => {
-        const p = $downloadProgress;
-        if (p?.reciter_id === 953)
-            downloadedCount953 = $downloadedSurahs[953]?.length ?? 0;
-        if (p?.reciter_id === 954)
-            downloadedCount954 = $downloadedSurahs[954]?.length ?? 0;
-    });
-
     let progressPct = $derived(
         $downloadProgress && $downloadProgress.total > 0
             ? ($downloadProgress.downloaded / $downloadProgress.total) * 100
             : 0,
     );
+
+    const dialogReciterInfo = $derived(
+        $availableReciters.find((r: ReciterInfo) => r.id === dialogReciterId),
+    );
+    const isSeekReciter = $derived(dialogReciterInfo?.style === "seek");
 </script>
 
 {#if open}
@@ -120,6 +132,10 @@
         onkeydown={(e) => {
             if (e.key === "Escape") handleClose();
         }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="recitation-dl-title"
+        tabindex="-1"
     >
         <div
             transition:fly={{ y: 8, duration: 180, opacity: 0 }}
@@ -143,68 +159,79 @@
                         </div>
                         <div>
                             <h2
+                                id="recitation-dl-title"
                                 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                             >
-                                {$t('recitation_dl.title')}
+                                {$t("recitation_dl.title")}
                             </h2>
                             <p
                                 class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
-                                {$t('recitation_dl.subtitle')}
+                                {$t("recitation_dl.subtitle")}
                             </p>
                         </div>
                     </div>
                     <button
                         onclick={handleClose}
                         disabled={$isDownloading}
+                        aria-label={$t("common.close")}
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                         <Icon icon="solar:close-circle-bold" width="1rem" />
                     </button>
                 </div>
 
-                <!-- Reciter tabs -->
+                <!-- Reciter tabs — rendered from selectedReciterSlots -->
                 <div
                     class="mx-4 mb-2 flex gap-1 rounded-full bg-brand-gold-200/50 dark:bg-[#414559]/50 p-1"
                 >
-                    <button
-                        onclick={() => (dialogReciterId = 953)}
-                        disabled={$isDownloading}
-                        class={`flex-1 cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors disabled:cursor-not-allowed ${
-                            dialogReciterId === 953
-                                ? "bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm"
-                                : "text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
-                        }`}
-                    >
-                        <Icon icon="solar:play-bold" width="0.75rem" />
-                        Mishary
-                        <span class="opacity-60"
-                            >({downloadedCount953}/114)</span
+                    {#each $selectedReciterSlots as slotId (slotId)}
+                        {@const info = $availableReciters.find(
+                            (r: ReciterInfo) => r.id === slotId,
+                        )}
+                        <button
+                            onclick={() => (dialogReciterId = slotId)}
+                            disabled={$isDownloading}
+                            class={`flex-1 cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors disabled:cursor-not-allowed ${
+                                dialogReciterId === slotId
+                                    ? "bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm"
+                                    : "text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+                            }`}
                         >
-                    </button>
-                    <button
-                        onclick={() => (dialogReciterId = 954)}
-                        disabled={$isDownloading}
-                        class={`flex-1 cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors disabled:cursor-not-allowed ${
-                            dialogReciterId === 954
-                                ? "bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm"
-                                : "text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
-                        }`}
-                    >
-                        <Icon icon="solar:play-bold" width="0.75rem" />
-                        Saad
-                        <span class="opacity-60"
-                            >({downloadedCount954}/114)</span
-                        >
-                    </button>
+                            <Icon icon="solar:play-bold" width="0.75rem" />
+                            {info?.short_name ?? String(slotId)}
+                            <span class="opacity-60"
+                                >({downloadedCounts[slotId] ?? 0}/114)</span
+                            >
+                        </button>
+                    {/each}
                 </div>
             </div>
 
             <div class="px-5 py-5 space-y-4 bg-brand-sand-50 dark:bg-[#232634]">
                 <!-- Action buttons -->
                 <div class="space-y-2">
+                    {#if !isSeekReciter}
+                        <!-- Ayah-style: per-ayah download -->
+                        <button
+                            onclick={() =>
+                                startDownload(
+                                    $selectedSurahIdx,
+                                    $currentPlayingAyah ?? 1,
+                                )}
+                            disabled={$isDownloading}
+                            class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] py-1.5 text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] hover:border-brand-gold-200 dark:hover:border-[#51576d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        >
+                            <Icon
+                                icon="solar:download-minimalistic-bold"
+                                width="0.9rem"
+                                class="text-brand-gold-500"
+                            />
+                            {$t("recitation_dl.current_ayah")}
+                        </button>
+                    {/if}
                     <button
-                        onclick={() => startDownload($selectedSurahIdx)}
+                        onclick={() => startDownload($selectedSurahIdx, null)}
                         disabled={$isDownloading}
                         class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] py-1.5 text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] hover:border-brand-gold-200 dark:hover:border-[#51576d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
@@ -213,10 +240,10 @@
                             width="0.9rem"
                             class="text-brand-gold-500"
                         />
-                        {$t('recitation_dl.current_surah')}
+                        {$t("recitation_dl.current_surah")}
                     </button>
                     <button
-                        onclick={() => startDownload(null)}
+                        onclick={() => startDownload(null, null)}
                         disabled={$isDownloading}
                         class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
@@ -224,7 +251,7 @@
                             icon="solar:download-twice-square-bold-duotone"
                             width="0.9rem"
                         />
-                        {$t('recitation_dl.all_surahs')}
+                        {$t("recitation_dl.all_surahs")}
                     </button>
                 </div>
 
@@ -236,11 +263,50 @@
                                 class="text-[11px] text-brand-charcoal-500 dark:text-[#838ba7]"
                             >
                                 {#if $downloadProgress && !$downloadProgress.done}
-                                    {$t('recitation_dl.progress', { surah: String($downloadProgress.surah), ayah: String($downloadProgress.ayah), total: $downloadProgress.total > 0 ? String(Math.round(($downloadProgress.downloaded / $downloadProgress.total) * ($downloadProgress.surah > 0 ? 1 : 1))) : '…' })}
+                                    {#if isSeekReciter}
+                                        {$t("recitation_dl.progress_surah", {
+                                            surah: String(
+                                                $downloadProgress.surah,
+                                            ),
+                                            total:
+                                                $downloadProgress.total > 0
+                                                    ? String(
+                                                          $downloadProgress.total,
+                                                      )
+                                                    : "…",
+                                        })}
+                                    {:else}
+                                        {$t("recitation_dl.progress", {
+                                            surah: String(
+                                                $downloadProgress.surah,
+                                            ),
+                                            ayah: String(
+                                                $downloadProgress.ayah,
+                                            ),
+                                            total:
+                                                $downloadProgress.total > 0
+                                                    ? String(
+                                                          $downloadProgress.total,
+                                                      )
+                                                    : "…",
+                                        })}
+                                    {/if}
                                 {:else if $downloadProgress?.done}
-                                    {$t('recitation_dl.complete', { downloaded: String($downloadProgress.downloaded) })}
+                                    {#if isSeekReciter}
+                                        {$t("recitation_dl.complete_surah", {
+                                            downloaded: String(
+                                                $downloadProgress.downloaded,
+                                            ),
+                                        })}
+                                    {:else}
+                                        {$t("recitation_dl.complete", {
+                                            downloaded: String(
+                                                $downloadProgress.downloaded,
+                                            ),
+                                        })}
+                                    {/if}
                                 {:else}
-                                    {$t('recitation_dl.starting')}
+                                    {$t("recitation_dl.starting")}
                                 {/if}
                             </p>
                             <p
@@ -270,7 +336,7 @@
                                     icon="solar:stop-circle-bold"
                                     width="0.9rem"
                                 />
-                                {$t('recitation_dl.cancel')}
+                                {$t("recitation_dl.cancel")}
                             </button>
                         {/if}
                     </div>

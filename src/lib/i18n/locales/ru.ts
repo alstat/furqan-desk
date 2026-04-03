@@ -216,6 +216,18 @@ export const ru: Record<string, string> = {
     'recitation_dl.complete': 'Завершено — загружено {downloaded} аятов',
     'recitation_dl.progress': 'Сура {surah} — аят {ayah} / {total}',
     'recitation_dl.cancel': 'Отмена',
+    'recitation_dl.progress_surah': 'Сура {surah} / {total}',
+    'recitation_dl.complete_surah': 'Завершено — загружено {downloaded} сур(а)',
+    'recitation_dl.current_ayah': 'Скачать текущий аят',
+    // Reciter select dialog
+    'reciter_select.title': 'Выбор чтецов',
+    'reciter_select.subtitle': 'Выберите двух чтецов для отображения в плеере',
+    'reciter_select.slot1': 'Слот 1',
+    'reciter_select.slot2': 'Слот 2',
+    'reciter_select.done': 'Готово',
+    'reciter_select.manage': 'Управление чтецами',
+    'reciter_select.seek_badge': 'Только потоковое — офлайн недоступно',
+    'reciter_select.assigned_slot': 'В слоте {n}',
     // Surah widget
     'surah.font_options': 'Параметры шрифта',
     'surah.font_family': 'Гарнитура',

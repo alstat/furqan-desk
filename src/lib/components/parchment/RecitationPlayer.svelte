@@ -16,6 +16,10 @@
         requestPlayPosition,
         requestPlayBasmallah,
         recitationDownloadDialogOpen,
+        selectedReciterSlots,
+        availableReciters,
+        reciterSelectDialogOpen,
+        type ReciterInfo,
     } from "$lib/stores/recitation.store";
 
     import { t } from "$lib/i18n";
@@ -33,6 +37,12 @@
     // Playlist mode state
     let playlistIdx = $state(0);
     let currentPlayingSurah = $state<number | null>(null);
+    // Seek-mode state for surah-level audio reciters (e.g. Maher)
+    let seekEndMs = $state<number | null>(null);
+    // Monotonically-increasing counter; each playAyahOfSurah call captures its own
+    // value so that stale async continuations can detect they've been superseded.
+    let playGeneration = 0;
+
     const inPlaylist = $derived($recitationPlaylist !== null);
     const playlistLen = $derived($recitationPlaylist?.length ?? 0);
 
@@ -43,6 +53,10 @@
         }
     }
 
+    const activeReciterInfo = $derived(
+        $availableReciters.find((r: ReciterInfo) => r.id === $activeReciterId),
+    );
+
     let currentSurahDownloaded = $derived(
         $downloadedSurahs[$activeReciterId]?.includes($selectedSurahIdx) ??
             false,
@@ -52,16 +66,27 @@
         ($downloadedSurahs[$activeReciterId]?.length ?? 0) >= 114,
     );
 
-    // Populate downloaded-surahs store on startup so the button state is correct immediately
+    // Populate downloaded-surahs store and reciter list on startup
     onMount(async () => {
         try {
-            const [s953, s954] = await Promise.all([
-                invoke<number[]>("get_downloaded_surahs", { reciterId: 953 }),
-                invoke<number[]>("get_downloaded_surahs", { reciterId: 954 }),
-            ]);
-            downloadedSurahs.set({ 953: s953, 954: s954 });
+            const reciters = await invoke<ReciterInfo[]>("get_reciters");
+            availableReciters.set(reciters);
+
+            // Fetch downloaded surahs for all reciters (ayah-style and seek-style)
+            const results = await Promise.all(
+                reciters.map((r) =>
+                    invoke<number[]>("get_downloaded_surahs", {
+                        reciterId: r.id,
+                    }),
+                ),
+            );
+            const counts: Record<number, number[]> = {};
+            reciters.forEach((r, i) => {
+                counts[r.id] = results[i];
+            });
+            downloadedSurahs.set(counts);
         } catch (e) {
-            console.error("Failed to fetch downloaded surahs:", e);
+            console.error("Failed to initialise reciter data:", e);
         }
     });
 
@@ -83,6 +108,18 @@
         }
     }
 
+    function handleTimeUpdate() {
+        if (
+            seekEndMs !== null &&
+            audioEl &&
+            audioEl.currentTime * 1000 >= seekEndMs
+        ) {
+            seekEndMs = null;
+            audioEl.pause(); // prevent the surah MP3 from running to its end and re-triggering onended
+            handleEnded();
+        }
+    }
+
     // Reset player when surah changes
     $effect(() => {
         $selectedSurahIdx; // track
@@ -90,6 +127,7 @@
     });
 
     function stopAndReset() {
+        playGeneration++; // cancel any in-flight playAyahOfSurah
         revokeBlobUrl();
         if (audioEl) {
             audioEl.pause();
@@ -99,6 +137,7 @@
         currentPlayingAyah.set(null);
         isPlaying.set(false);
         isCurrentLocal = false;
+        seekEndMs = null;
         playlistIdx = 0;
         currentPlayingSurah = null;
     }
@@ -109,28 +148,37 @@
         displayAyah?: number,
     ) {
         if (!audioEl) return;
+        // Synchronously stop old audio so handleTimeUpdate can't fire handleEnded and outrun this request
+        seekEndMs = null;
+        audioEl.pause();
         const reciterId = $activeReciterId;
+        const gen = ++playGeneration;
         try {
             const result = await invoke<{
                 audio_url: string;
                 duration: number | null;
                 segments: string | null;
                 is_local: boolean;
+                seek_start: number | null;
+                seek_end: number | null;
             } | null>("get_recitation_ayah", {
                 surah,
                 ayah: ayahNum,
                 reciterId,
             });
 
+            if (gen !== playGeneration) return; // superseded by a newer play request
             if (!result) return;
 
             isCurrentLocal = result.is_local;
             revokeBlobUrl();
 
+            // Set the audio source (blob for local files, URL for remote)
             if (result.is_local) {
                 const bytes = await invoke<number[]>("read_audio_bytes", {
                     path: result.audio_url,
                 });
+                if (gen !== playGeneration) return;
                 const blob = new Blob([new Uint8Array(bytes)], {
                     type: "audio/mpeg",
                 });
@@ -139,7 +187,25 @@
             } else {
                 audioEl.src = result.audio_url;
             }
-            audioEl.load();
+
+            // For seek-style reciters, load + seek to ayah start (local or remote)
+            if (result.seek_start !== null) {
+                audioEl.load();
+                await new Promise<void>((resolve) => {
+                    audioEl!.addEventListener(
+                        "loadedmetadata",
+                        () => resolve(),
+                        { once: true },
+                    );
+                });
+                if (gen !== playGeneration) return;
+                audioEl.currentTime = result.seek_start / 1000;
+                seekEndMs = result.seek_end;
+            } else {
+                seekEndMs = null;
+                audioEl.load();
+            }
+
             currentPlayingAyah.set(displayAyah ?? ayahNum);
             isPlaying.set(true);
             await audioEl.play();
@@ -226,6 +292,7 @@
     });
 
     function handleEnded() {
+        seekEndMs = null;
         if (isPlayingBasmallah) {
             isPlayingBasmallah = false;
             if (!$recitationPlaylist) {
@@ -340,12 +407,13 @@
         }
     });
 
-    function setReciter(id: 953 | 954) {
+    function setReciter(id: number) {
         if (id === $activeReciterId) return;
         const ayah = $currentPlayingAyah;
         const wasPlaying = $isPlaying;
         const savedPlaylistIdx = playlistIdx;
         const inPlaylist = $recitationPlaylist !== null;
+        playGeneration++; // cancel any in-flight playAyahOfSurah before we start a new one
         if (audioEl) {
             audioEl.pause();
             // Do NOT clear audioEl.src here — setting it to "" puts Chromium into
@@ -354,6 +422,7 @@
         }
         revokeBlobUrl();
         isCurrentLocal = false;
+        seekEndMs = null;
         isPlaying.set(false);
         activeReciterId.set(id);
         if (ayah !== null && wasPlaying) {
@@ -481,6 +550,8 @@
                 <div
                     class="p-1.5 text-brand-gold-500 dark:text-[#e5c890]"
                     title={$t("recitation.downloading")}
+                    aria-label={$t("recitation.downloading")}
+                    role="status"
                 >
                     <Icon
                         icon="solar:refresh-bold-duotone"
@@ -510,27 +581,40 @@
 
         <!-- Reciter toggle -->
         <div class="flex items-center gap-0.5 px-0.5">
-            <button
-                onclick={() => setReciter(953)}
-                class={`cursor-pointer px-2 py-0.5 rounded-full text-xs font-medium transition-all ${
-                    $activeReciterId === 953
-                        ? "bg-brand-gold-100 dark:bg-[#3b3757] text-brand-gold-600 dark:text-[#e5c890]"
-                        : "text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
-                }`}
-            >
-                Mishary
-            </button>
-            <button
-                onclick={() => setReciter(954)}
-                class={`cursor-pointer px-2 py-0.5 rounded-full text-xs font-medium transition-all ${
-                    $activeReciterId === 954
-                        ? "bg-brand-gold-100 dark:bg-[#3b3757] text-brand-gold-600 dark:text-[#e5c890]"
-                        : "text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
-                }`}
-            >
-                Saad
-            </button>
+            {#each $selectedReciterSlots as slotId (slotId)}
+                {@const info = $availableReciters.find(
+                    (r: ReciterInfo) => r.id === slotId,
+                )}
+                <button
+                    onclick={() => setReciter(slotId)}
+                    aria-pressed={$activeReciterId === slotId}
+                    class={`cursor-pointer px-2 py-0.5 rounded-full text-xs font-medium transition-all ${
+                        $activeReciterId === slotId
+                            ? "bg-brand-gold-100 dark:bg-[#3b3757] text-brand-gold-600 dark:text-[#e5c890]"
+                            : "text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+                    }`}
+                >
+                    {info?.short_name ?? String(slotId)}
+                </button>
+            {/each}
         </div>
+
+        <!-- Divider -->
+        <div
+            class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"
+        ></div>
+
+        <!-- Manage reciters button -->
+        <button
+            onclick={() => reciterSelectDialogOpen.set(true)}
+            aria-label={$t("reciter_select.manage")}
+            class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
+                   hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
+                   hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
+                   transition-all"
+        >
+            <Icon icon="solar:settings-minimalistic-bold" width="0.9rem" />
+        </button>
     </div>
 </div>
 
@@ -539,5 +623,6 @@
     bind:this={audioEl}
     onended={handleEnded}
     onerror={handleAudioError}
+    ontimeupdate={handleTimeUpdate}
     preload="none"
 ></audio>

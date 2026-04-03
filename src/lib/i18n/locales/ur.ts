@@ -216,6 +216,18 @@ export const ur: Record<string, string> = {
     'recitation_dl.complete': 'مکمل — {downloaded} آیات ڈاؤن لوڈ ہوئیں',
     'recitation_dl.progress': 'سورہ {surah} — آیت {ayah} / {total}',
     'recitation_dl.cancel': 'منسوخ',
+    'recitation_dl.progress_surah': 'سورہ {surah} / {total}',
+    'recitation_dl.complete_surah': 'مکمل — {downloaded} سورتیں ڈاؤن لوڈ ہوئیں',
+    'recitation_dl.current_ayah': 'موجودہ آیت ڈاؤن لوڈ کریں',
+    // Reciter select dialog
+    'reciter_select.title': 'قاریوں کا انتخاب',
+    'reciter_select.subtitle': 'پلیئر میں دکھانے کے لیے دو قاری منتخب کریں',
+    'reciter_select.slot1': 'سلاٹ 1',
+    'reciter_select.slot2': 'سلاٹ 2',
+    'reciter_select.done': 'ہو گیا',
+    'reciter_select.manage': 'قاریوں کا انتظام',
+    'reciter_select.seek_badge': 'صرف اسٹریمنگ — آف لائن نہیں',
+    'reciter_select.assigned_slot': 'سلاٹ {n} میں',
     // Surah widget
     'surah.font_options': 'فونٹ اختیارات',
     'surah.font_family': 'فونٹ فیملی',

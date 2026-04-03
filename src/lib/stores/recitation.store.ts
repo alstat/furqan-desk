@@ -1,16 +1,39 @@
 import { writable } from "svelte/store";
 
+export type ReciterInfo = {
+    id: number;
+    name: string;
+    short_name: string;
+    style: string; // "ayah" | "seek"
+};
+
 const storedReciter =
     typeof localStorage !== "undefined"
-        ? (JSON.parse(localStorage.getItem("reciter") ?? "953") as 953 | 954)
+        ? (JSON.parse(localStorage.getItem("reciter") ?? "953") as number)
         : 953;
 
-export const activeReciterId = writable<953 | 954>(storedReciter);
+export const activeReciterId = writable<number>(storedReciter);
 activeReciterId.subscribe((v) => {
     if (typeof localStorage !== "undefined") {
         localStorage.setItem("reciter", JSON.stringify(v));
     }
 });
+
+const storedSlots =
+    typeof localStorage !== "undefined"
+        ? localStorage.getItem("reciterSlots")
+        : null;
+export const selectedReciterSlots = writable<[number, number]>(
+    storedSlots ? (JSON.parse(storedSlots) as [number, number]) : [953, 954],
+);
+selectedReciterSlots.subscribe((v) => {
+    if (typeof localStorage !== "undefined") {
+        localStorage.setItem("reciterSlots", JSON.stringify(v));
+    }
+});
+
+export const availableReciters = writable<ReciterInfo[]>([]);
+export const reciterSelectDialogOpen = writable(false);
 
 export const currentPlayingAyah = writable<number | null>(null);
 export const isPlaying = writable(false);
@@ -26,7 +49,7 @@ export const recitationPlaylist = writable<{ surah: number; ayah: number }[] | n
 export const requestPlayPosition = writable<{ surah: number; ayah: number } | null>(null);
 
 // ── Offline download ──────────────────────────────────────────────────────────
-export const downloadedSurahs = writable<Record<number, number[]>>({ 953: [], 954: [] });
+export const downloadedSurahs = writable<Record<number, number[]>>({});
 export const isDownloading = writable(false);
 
 export type DownloadProgress = {
