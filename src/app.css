@@ -177,6 +177,16 @@ html.dark.zen ::-webkit-scrollbar-track {
 html.dark.zen ::-webkit-scrollbar-thumb {
     border-color: transparent;
 }
+/* LexicalEditor-specific zen override (higher specificity than the non-zen editor rule above) */
+html.dark.zen .editor-shell .ContentEditable__root {
+    scrollbar-color: #626880 transparent;
+}
+html.dark.zen .editor-shell ::-webkit-scrollbar-track {
+    background: transparent;
+}
+html.dark.zen .editor-shell ::-webkit-scrollbar-thumb {
+    border-color: transparent;
+}
 
 /* Active dropdown item (currently selected value) */
 .dropdown-item-active {
