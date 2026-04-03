@@ -131,7 +131,7 @@ export function setTabContent(id: string, content: string): void {
 	if (!current) return;
 	const stack = undoHistory.get(id) ?? [];
 	stack.push(current.content);
-	if (stack.length > 100) stack.shift();
+	if (stack.length > 50) stack.shift();
 	undoHistory.set(id, stack);
 	redoHistory.set(id, []);
 	tabs.update(ts =>
@@ -148,7 +148,7 @@ export function setActiveTabContent(content: string): void {
 	// Push old content to undo stack (cap at 100)
 	const stack = undoHistory.get(id) ?? [];
 	stack.push(current.content);
-	if (stack.length > 100) stack.shift();
+	if (stack.length > 50) stack.shift();
 	undoHistory.set(id, stack);
 	redoHistory.set(id, []); // clear redo on new edit
 	// Editing a preview tab promotes it to permanent

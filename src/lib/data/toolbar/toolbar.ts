@@ -2,12 +2,12 @@ import { modifyText } from "$lib/functions/toolbar/toolBarFunctions";
 import { activeClass } from "../config";
 
 export let actionBtnStyle =
-  "cursor-pointer rounded-full bg-brand-sand-100 hover:bg-brand-sand-200 active:bg-brand-sand-400 text-brand-charcoal-500 p-2 shadow-sm";
+  "cursor-pointer rounded-full bg-brand-sand-100 dark:bg-[#292c3c] hover:bg-brand-sand-200 dark:hover:bg-[#363a4f] active:bg-brand-sand-400 dark:active:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] p-2 shadow-sm";
 export let toolBarBtnStyle =
-  "cursor-pointer hover:bg-brand-sand-100 active:bg-brand-sand-200 text-brand-charcoal-500 rounded-md";
-export let activeBtnStyle = "bg-brand-sand-200 rounded-md";
+  "cursor-pointer hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] active:bg-brand-sand-200 dark:active:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] rounded-md";
+export let activeBtnStyle = "bg-brand-sand-200 dark:bg-[#414559] rounded-md";
 export let selectBtnStyle =
-  "border-1 block cursor-pointer rounded-md border border-brand-sand-200 bg-brand-sand-100 p-1 text-center text-sm text-brand-gold-600";
+  "border-1 block cursor-pointer rounded-md border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#292c3c] p-1 text-center text-sm text-brand-gold-600 dark:text-[#e5c890]";
 export let icons = {
   undo: "fluent:arrow-undo-16-filled",
   redo: "fluent:arrow-redo-16-filled",

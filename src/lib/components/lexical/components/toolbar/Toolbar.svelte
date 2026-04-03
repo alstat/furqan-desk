@@ -46,7 +46,7 @@
 
 <StateStoreRichTextUpdator />
 <div
-	class="flex flex-row items-center h-8 justify-center space-x-1 rounded-full bg-brand-sand-50 border border-brand-sand-200 px-3 mt-2 mx-3 py-1 backdrop-blur-sm"
+	class="flex flex-row items-center h-8 justify-center space-x-1 rounded-full bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] px-3 mt-2 mx-3 py-1 backdrop-blur-sm"
 >
 	{@render children?.({
 		editor,

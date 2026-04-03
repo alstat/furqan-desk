@@ -109,6 +109,7 @@ impl Database {
                 let user_data = Self::extract_user_data(&db_path).unwrap_or_default();
                 copy_static_db(&static_db_path, &db_path, "data/quran_static.db")?;
                 let conn = Connection::open(&db_path)?;
+                Self::apply_pragmas(&conn)?;
                 Self::init_user_data_tables(&conn)?;
                 Self::restore_user_data(&conn, &user_data)?;
                 return Ok(Database(Mutex::new(conn)));
@@ -119,8 +120,16 @@ impl Database {
         }
 
         let conn = Connection::open(&db_path)?;
+        Self::apply_pragmas(&conn)?;
         Self::init_user_data_tables(&conn)?;
         Ok(Database(Mutex::new(conn)))
+    }
+
+    fn apply_pragmas(conn: &Connection) -> Result<()> {
+        conn.execute_batch(
+            "PRAGMA journal_mode = WAL;
+             PRAGMA cache_size = -1024;",
+        )
     }
 
     fn read_db_version(db_path: &PathBuf) -> Result<i64> {

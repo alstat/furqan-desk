@@ -1,6 +1,4 @@
-use fontdb::Database;
 use once_cell::sync::OnceCell;
-use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use typst::diag::{FileError, FileResult};
@@ -24,40 +22,11 @@ pub struct MinimalWorld {
 
 impl MinimalWorld {
     fn new() -> Self {
-        let mut db = Database::new();
-        db.load_system_fonts();
-
         let mut book = FontBook::new();
         let mut fonts: Vec<Font> = Vec::new();
-        let mut file_cache: HashMap<PathBuf, Bytes> = HashMap::new();
 
-        for face in db.faces() {
-            let path = match &face.source {
-                fontdb::Source::File(p) | fontdb::Source::SharedFile(p, _) => p.clone(),
-                fontdb::Source::Binary(_) => continue,
-            };
-
-            let data = if let Some(cached) = file_cache.get(&path) {
-                cached.clone()
-            } else {
-                match std::fs::read(&path) {
-                    Ok(d) => {
-                        let bytes = Bytes::new(d);
-                        file_cache.insert(path.clone(), bytes.clone());
-                        bytes
-                    }
-                    Err(_) => continue,
-                }
-            };
-
-            if let Some(font) = Font::new(data, face.index) {
-                book.push(font.info().clone());
-                fonts.push(font);
-            }
-        }
-
-        // Load typst's bundled fonts (New Computer Modern, Linux Libertine, etc.)
-        // These are the default fonts used by typst and the ilm package.
+        // Load only typst's bundled fonts (New Computer Modern, Linux Libertine, etc.)
+        // Skipping system fonts avoids loading hundreds of MB of font data at startup.
         for font_data in typst_assets::fonts() {
             let bytes = Bytes::new(font_data);
             let mut i = 0;
