@@ -160,7 +160,8 @@
       "Bash(ls:*)",
       "Bash(find:*)",
       "Bash(cargo run:*)",
-      "Bash(gh release:*)"
+      "Bash(gh release:*)",
+      "Bash(rustup target:*)"
     ]
   }
 }

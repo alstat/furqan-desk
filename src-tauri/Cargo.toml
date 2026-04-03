@@ -15,10 +15,6 @@ default-run = "AyahLab"
 name = "ayahlab_desk_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
-[[bin]]
-name = "gen-db"
-path = "src/bin/gen_db.rs"
-
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 dotenvy = "0.15"
