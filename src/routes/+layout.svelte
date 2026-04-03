@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import '$lib/icons';
-	import { appDarkMode } from '$lib/stores/editor.store';
+	import { appDarkMode, zenMode } from '$lib/stores/editor.store';
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 	import { tabs } from '$lib/stores/tabs.store';
@@ -14,6 +14,14 @@
 			document.documentElement.classList.add('dark');
 		} else {
 			document.documentElement.classList.remove('dark');
+		}
+	});
+
+	$effect(() => {
+		if ($zenMode) {
+			document.documentElement.classList.add('zen');
+		} else {
+			document.documentElement.classList.remove('zen');
 		}
 	});
 
