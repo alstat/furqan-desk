@@ -14,14 +14,11 @@ jobs:
       matrix:
         include:
           - platform: ubuntu-22.04
-            args: --bundles appimage,deb
+            args: --bundles appimage,deb,rpm
             rust-targets: ''
           - platform: windows-latest
             args: --bundles nsis,msi
             rust-targets: ''
-          - platform: macos-latest
-            args: --bundles dmg,app --target universal-apple-darwin
-            rust-targets: aarch64-apple-darwin x86_64-apple-darwin
 
     runs-on: ${{ matrix.platform }}
 
@@ -34,9 +31,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libwebkit2gtk-4.1-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev \
             libappindicator3-dev \
             librsvg2-dev \
-            patchelf
+            patchelf \
+            rpm
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -76,8 +76,7 @@ jobs:
             | Platform | File |
             |----------|------|
             | Windows  | `.exe` (NSIS installer) or `.msi` |
-            | macOS | `.app` |
-            | Linux | `.AppImage` or `.deb` |
+            | Linux | `.AppImage`, `.deb`, or `.rpm` |
 
             See the assets below to download and install.
           releaseDraft: true
