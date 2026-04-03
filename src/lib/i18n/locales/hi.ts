@@ -76,6 +76,10 @@ export const hi: Record<string, string> = {
     'update.title': 'अपडेट उपलब्ध',
     'update.message': 'AyahLab v{version} डाउनलोड के लिए तैयार है।',
     'update.download': 'अपडेट डाउनलोड करें →',
+    // Blog post notification
+    'blog.title': 'AyahLab ब्लॉग पर नया',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'पोस्ट देखें →',
     // Layout
     'layout.unsaved_title': 'असहेजे गए परिवर्तन',
     'layout.unsaved_message': 'इनमें असहेजे गए परिवर्तन हैं:\n\n{names}\n\nफिर भी बंद करें और परिवर्तन छोड़ दें?',

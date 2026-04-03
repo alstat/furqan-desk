@@ -76,6 +76,10 @@ export const es: Record<string, string> = {
     'update.title': 'Actualización disponible',
     'update.message': 'AyahLab v{version} está listo para descargar.',
     'update.download': 'Descargar actualización →',
+    // Blog post notification
+    'blog.title': 'Nuevo en el blog de AyahLab',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'Ver entrada →',
     // Layout
     'layout.unsaved_title': 'Cambios sin guardar',
     'layout.unsaved_message': 'Tienes cambios sin guardar en:\n\n{names}\n\n¿Cerrar de todos modos y descartar los cambios?',

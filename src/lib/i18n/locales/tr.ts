@@ -76,6 +76,10 @@ export const tr: Record<string, string> = {
     'update.title': 'Güncelleme mevcut',
     'update.message': 'AyahLab v{version} indirmeye hazır.',
     'update.download': 'Güncellemeyi indir →',
+    // Blog post notification
+    'blog.title': 'AyahLab Blogunda Yeni',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'Gönderiyi gör →',
     // Layout
     'layout.unsaved_title': 'Kaydedilmemiş Değişiklikler',
     'layout.unsaved_message': 'Şuralarda kaydedilmemiş değişiklikleriniz var:\n\n{names}\n\nYine de kapat ve değişiklikleri iptal et?',

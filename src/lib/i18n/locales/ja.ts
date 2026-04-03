@@ -76,6 +76,10 @@ export const ja: Record<string, string> = {
     'update.title': 'アップデートがあります',
     'update.message': 'AyahLab v{version} をダウンロードできます。',
     'update.download': 'アップデートをダウンロード →',
+    // Blog post notification
+    'blog.title': 'AyahLab ブログの新着記事',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': '記事を見る →',
     // Layout
     'layout.unsaved_title': '未保存の変更',
     'layout.unsaved_message': '次のファイルに未保存の変更があります：\n\n{names}\n\n閉じて変更を破棄しますか？',

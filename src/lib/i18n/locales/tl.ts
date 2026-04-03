@@ -76,6 +76,10 @@ export const tl: Record<string, string> = {
     'update.title': 'May available na update',
     'update.message': 'Handa nang i-download ang AyahLab v{version}.',
     'update.download': 'I-download ang update →',
+    // Blog post notification
+    'blog.title': 'Bago sa AyahLab Blog',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'Tingnan ang post →',
     // Layout
     'layout.unsaved_title': 'Mga Hindi Na-save na Pagbabago',
     'layout.unsaved_message': 'Mayroon kang mga hindi na-save na pagbabago sa:\n\n{names}\n\nIsara pa rin at itapon ang mga pagbabago?',

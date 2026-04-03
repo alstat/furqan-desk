@@ -76,6 +76,10 @@ export const ms: Record<string, string> = {
     'update.title': 'Kemas kini tersedia',
     'update.message': 'AyahLab v{version} sedia untuk dimuat turun.',
     'update.download': 'Muat turun kemas kini →',
+    // Blog post notification
+    'blog.title': 'Baharu di Blog AyahLab',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'Lihat siaran →',
     // Layout
     'layout.unsaved_title': 'Perubahan Belum Disimpan',
     'layout.unsaved_message': 'Anda mempunyai perubahan yang belum disimpan dalam:\n\n{names}\n\nTutup sahaja dan buang perubahan?',

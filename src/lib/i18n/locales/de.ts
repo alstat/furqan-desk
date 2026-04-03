@@ -76,6 +76,10 @@ export const de: Record<string, string> = {
     'update.title': 'Update verfügbar',
     'update.message': 'AyahLab v{version} kann heruntergeladen werden.',
     'update.download': 'Update herunterladen →',
+    // Blog post notification
+    'blog.title': 'Neu im AyahLab-Blog',
+    'blog.message': '{title} — {author}',
+    'blog.see_post': 'Beitrag ansehen →',
     // Layout
     'layout.unsaved_title': 'Ungespeicherte Änderungen',
     'layout.unsaved_message': 'Sie haben ungespeicherte Änderungen in:\n\n{names}\n\nTrotzdem schließen und Änderungen verwerfen?',
