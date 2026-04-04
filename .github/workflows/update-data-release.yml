@@ -24,8 +24,7 @@ jobs:
         run: sudo apt-get install -y libsqlite3-dev
 
       - name: Build quran_static.db
-        working-directory: src-tauri
-        run: cargo run --bin gen-db --release
+        run: cargo run --manifest-path gen-db/Cargo.toml --release
 
       - name: Upload quran_static.db to data release
         run: gh release upload data src-tauri/data/quran_static.db --clobber
