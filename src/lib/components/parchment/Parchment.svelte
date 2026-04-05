@@ -16,8 +16,8 @@
     import type { SurahMorphology } from "$lib/types/morphology";
     import { morphFontSize } from "$lib/stores/morphology.store";
     import MorphologyView from "./MorphologyView.svelte";
-    import { addHighlight } from "$lib/functions/bookmarks";
-    import { pendingJumpAyah } from "$lib/stores/bookmarks.store";
+    import { pendingJumpAyah, pendingHighlight } from "$lib/stores/bookmarks.store";
+    import HighlightSaveDialog from "./HighlightSaveDialog.svelte";
     import {
         totalAyahsInSurah,
         recitationPlaylist,
@@ -77,7 +77,6 @@
         y: number;
     }
     let selectionInfo = $state<SelectionInfo | null>(null);
-    let savingHighlight = $state(false);
 
     function handleMouseUp(event: MouseEvent) {
         const selection = window.getSelection();
@@ -92,14 +91,25 @@
             return;
         }
 
-        // Use startContainer — commonAncestorContainer is the parent div for multi-word selections
         const range = selection.getRangeAt(0);
-        const startNode = range.startContainer;
-        const el =
-            startNode.nodeType === Node.TEXT_NODE
-                ? startNode.parentElement
-                : (startNode as HTMLElement);
-        const wordEl = el?.closest("[data-ayah]") as HTMLElement | null;
+
+        // Try startContainer, endContainer, then commonAncestorContainer in order
+        // to handle selections that start/end on non-word elements (verse numbers, gaps)
+        const candidates = [
+            range.startContainer,
+            range.endContainer,
+            range.commonAncestorContainer,
+        ];
+
+        let wordEl: HTMLElement | null = null;
+        for (const node of candidates) {
+            const el =
+                node.nodeType === Node.TEXT_NODE
+                    ? (node as Text).parentElement
+                    : (node as HTMLElement);
+            wordEl = el?.closest("[data-ayah]") as HTMLElement | null;
+            if (wordEl) break;
+        }
 
         if (!wordEl) {
             selectionInfo = null;
@@ -121,22 +131,6 @@
             x: event.clientX,
             y: event.clientY,
         };
-    }
-
-    async function saveHighlight() {
-        if (!selectionInfo) return;
-        savingHighlight = true;
-        try {
-            await addHighlight(
-                selectionInfo.surah,
-                selectionInfo.ayah,
-                selectionInfo.text,
-            );
-            window.getSelection()?.removeAllRanges();
-            selectionInfo = null;
-        } finally {
-            savingHighlight = false;
-        }
     }
 
     let isSearching = $state(false);
@@ -267,6 +261,7 @@
     open={showHighlights}
     onClose={() => (showHighlights = false)}
 />
+<HighlightSaveDialog />
 <RecitationDownloadDialog
     open={$recitationDownloadDialogOpen}
     onClose={() => recitationDownloadDialogOpen.set(false)}
@@ -289,11 +284,14 @@
             width="0.9rem"
         />
         <button
-            onclick={saveHighlight}
-            disabled={savingHighlight}
-            class="cursor-pointer text-xs font-medium text-brand-charcoal-900 dark:text-[#c6d0f5] hover:text-brand-gold-500 dark:hover:text-[#e5c890] disabled:opacity-50 transition-colors"
+            onclick={() => {
+                pendingHighlight.set(selectionInfo);
+                window.getSelection()?.removeAllRanges();
+                selectionInfo = null;
+            }}
+            class="cursor-pointer text-xs font-medium text-brand-charcoal-900 dark:text-[#c6d0f5] hover:text-brand-gold-500 dark:hover:text-[#e5c890] transition-colors"
         >
-            {savingHighlight ? "Saving…" : "Save Highlight"}
+            Save Highlight
         </button>
         <button
             onclick={() => (selectionInfo = null)}
