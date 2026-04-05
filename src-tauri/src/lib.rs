@@ -24,6 +24,12 @@ pub fn run() {
             // SAFETY: single-threaded at this point (before Tauri spawns workers).
             unsafe { std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1") };
         }
+        // Disable GTK overlay scrollbars so WebKit CSS scrollbar rules take effect.
+        // Without this, Fedora/GNOME renders native GTK scrollbars that ignore
+        // ::-webkit-scrollbar pseudo-elements and the app's dark-mode theme entirely.
+        if std::env::var_os("GTK_OVERLAY_SCROLLING").is_none() {
+            unsafe { std::env::set_var("GTK_OVERLAY_SCROLLING", "0") };
+        }
     }
 
     tauri::Builder::default()

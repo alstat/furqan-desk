@@ -35,7 +35,7 @@
             </div>
 
             <!-- Body -->
-            <div class="overflow-y-auto px-5 py-3">
+            <div class="default-scroll overflow-y-auto px-5 py-3">
                 {@render children()}
             </div>
 
