@@ -7,9 +7,10 @@
     interface Props {
         open: boolean;
         onClose: () => void;
+        initialSection?: string | null;
     }
 
-    let { open, onClose }: Props = $props();
+    let { open, onClose, initialSection = null }: Props = $props();
 
     const PANEL_W = 620;
     const PANEL_H = 500;
@@ -26,10 +27,12 @@
     let activeSection = $state("help-started");
     let contentPane = $state<HTMLElement | null>(null);
     let observer: IntersectionObserver | null = null;
+    let bwActiveLabel = $state<string | null>(null);
 
     const sections = [
         { id: "help-started", label: "Getting Started" },
         { id: "help-reader", label: "The Quran Reader" },
+        { id: "help-buckwalter", label: "Buckwalter Script" },
         { id: "help-manuscripts", label: "Manuscript Viewer" },
         { id: "help-actions", label: "Reader Actions" },
         { id: "help-recitation", label: "Recitation Player" },
@@ -69,6 +72,13 @@
             observer?.disconnect();
             observer = null;
         };
+    });
+
+    $effect(() => {
+        if (open && initialSection) {
+            const section = initialSection;
+            requestAnimationFrame(() => scrollToSection(section));
+        }
     });
 
     function setupObserver() {
@@ -246,14 +256,15 @@
                     >
                         The Quran Reader
                     </h2>
-                    <p class="mb-2">
+                    <p class="mb-2 text-[12.5px]">
                         The reader displays the full Quran with morphological
                         annotations on every word.
                     </p>
-                    <ul class="list-disc pl-4 space-y-1 text-[12.5px]">
+                    <ul class="list-disc pl-4 space-y-1.5 text-[12.5px] mb-3">
                         <li>
-                            Click any <strong>Arabic word</strong> to open a morphology
-                            popup — shows root, part of speech, and grammar details.
+                            Click any <strong>Arabic word</strong> to open its
+                            morphology popover — shows root, lemma, part of speech,
+                            and full grammar details for each token in the word.
                         </li>
                         <li>
                             Use <strong>Prev / Next</strong> buttons at the bottom
@@ -264,9 +275,170 @@
                             Controls widget.
                         </li>
                     </ul>
+
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-400 dark:text-[#838ba7] mb-1.5">Morphology Popover Actions</p>
+                    <p class="mb-2 text-[12.5px]">
+                        The top-right corner of the popover has four action buttons:
+                    </p>
+                    <ul class="list-disc pl-4 space-y-1.5 text-[12.5px] mb-3">
+                        <li>
+                            <strong>Insert to Lexical</strong> (＋ square icon) —
+                            inserts the word's full morphology as a formatted table
+                            into the currently open Lexical editor tab. The button
+                            is dimmed when no Lexical tab is open.
+                        </li>
+                        <li>
+                            <strong>Highlight with note</strong> (magic wand icon) —
+                            opens the Highlight dialog where you can save the word
+                            with a colour tag and an optional note. The note field
+                            is pre-filled with the word's morphology summary.
+                        </li>
+                        <li>
+                            <strong>Pin</strong> (pin icon) — locks the popover open
+                            so it stays on screen when you click other words. You
+                            can pin as many popovers as you like simultaneously and
+                            drag each one freely around the screen.
+                        </li>
+                        <li>
+                            <strong>Close</strong> (✕) — dismisses the popover.
+                            Clicking anywhere outside the popover also closes it
+                            unless it is pinned.
+                        </li>
+                    </ul>
+                    <div class="rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] px-3 py-2 text-[11.5px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                        <span class="font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">Tip:</span>
+                        The Buckwalter form shown in each token is clickable — click it to open the
+                        <em>Buckwalter Script</em> reference section of this guide.
+                    </div>
                 </section>
 
-                <!-- 3. Manuscript Viewer -->
+                <!-- 3. Buckwalter Script -->
+                <section id="help-buckwalter" class="mb-8">
+                    <h2 class="text-base font-bold mb-2 text-brand-charcoal-500 dark:text-[#e5c890]">
+                        Buckwalter Script
+                    </h2>
+                    <p class="mb-3 text-[12.5px]">
+                        The Buckwalter transliteration scheme represents Arabic letters and diacritics using ASCII characters.
+                        It is used in the <strong>Quranic Arabic Corpus</strong> for morphological annotation.
+                        In the morphology popover, the Buckwalter form of each token is shown alongside the Arabic script.
+                    </p>
+
+                    <!-- Consonants table -->
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-400 dark:text-[#838ba7] mb-1.5">Consonants</p>
+                    <div class="grid grid-cols-4 gap-px rounded-xl overflow-hidden border border-slate-200 dark:border-[#414559] text-[11.5px] mb-4">
+                        {#each [
+                            ["'", "ء", "Hamza"],
+                            ["(", "آ", "Alef Madda"],
+                            [">", "أ", "Alef + Hamza above"],
+                            ["&", "ؤ", "Waw + Hamza"],
+                            ["<", "إ", "Alef + Hamza below"],
+                            ["}", "ئ", "Ya + Hamza"],
+                            ["A", "ا", "Alef"],
+                            ["b", "ب", "Ba"],
+                            ["p", "ة", "Ta Marbuta"],
+                            ["t", "ت", "Ta"],
+                            ["v", "ث", "Tha"],
+                            ["j", "ج", "Jeem"],
+                            ["H", "ح", "Ha"],
+                            ["x", "خ", "Kha"],
+                            ["d", "د", "Dal"],
+                            ["*", "ذ", "Thal"],
+                            ["r", "ر", "Ra"],
+                            ["z", "ز", "Zay"],
+                            ["s", "س", "Sin"],
+                            ["$", "ش", "Shin"],
+                            ["S", "ص", "Sad"],
+                            ["D", "ض", "Dad"],
+                            ["T", "ط", "Ta (emphatic)"],
+                            ["Z", "ظ", "Za"],
+                            ["E", "ع", "Ayn"],
+                            ["g", "غ", "Ghayn"],
+                            ["f", "ف", "Fa"],
+                            ["q", "ق", "Qaf"],
+                            ["k", "ك", "Kaf"],
+                            ["l", "ل", "Lam"],
+                            ["m", "م", "Meem"],
+                            ["n", "ن", "Nun"],
+                            ["h", "ه", "Ha"],
+                            ["w", "و", "Waw"],
+                            ["Y", "ى", "Alef Maqsura"],
+                            ["y", "ي", "Ya"],
+                        ] as row}
+                            <div class="flex items-center gap-2 bg-white dark:bg-[#303446] px-2.5 py-1.5">
+                                <span class="font-mono font-bold text-brand-gold-500 w-4 shrink-0">{row[0]}</span>
+                                <span class="font-scheherazade text-base text-slate-700 dark:text-[#c6d0f5] w-5 shrink-0 text-right" dir="rtl">{row[1]}</span>
+                                <button
+                                    onclick={() => bwActiveLabel = bwActiveLabel === row[2] ? null : row[2]}
+                                    title={row[2]}
+                                    class="text-left text-[10.5px] cursor-pointer transition-colors min-w-0
+                                           {bwActiveLabel === row[2]
+                                               ? 'text-brand-gold-500 dark:text-[#e5c890] font-semibold break-words'
+                                               : 'truncate text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-500 dark:hover:text-[#a5adce]'}"
+                                >{row[2]}</button>
+                            </div>
+                        {/each}
+                    </div>
+
+                    <!-- Diacritics table -->
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-400 dark:text-[#838ba7] mb-1.5">Diacritics (Harakat)</p>
+                    <div class="grid grid-cols-4 gap-px rounded-xl overflow-hidden border border-slate-200 dark:border-[#414559] text-[11.5px] mb-4">
+                        {#each [
+                            ["a", "َ", "Fatha"],
+                            ["u", "ُ", "Damma"],
+                            ["i", "ِ", "Kasra"],
+                            ["~", "ّ", "Shadda"],
+                            ["o", "ْ", "Sukun"],
+                            ["F", "ً", "Tanwin Fath"],
+                            ["N", "ٌ", "Tanwin Damm"],
+                            ["K", "ٍ", "Tanwin Kasr"],
+                            ["`", "ٰ", "Superscript Alef"],
+                            ["^", "ٓ", "Maddah"],
+                            ["{", "ٱ", "Alef Wasla"],
+                            ["#", "ٔ", "Hamza Above"],
+                        ] as row}
+                            <div class="flex items-center gap-2 bg-white dark:bg-[#303446] px-2.5 py-1.5">
+                                <span class="font-mono font-bold text-brand-gold-500 w-4 shrink-0">{row[0]}</span>
+                                <span class="font-scheherazade text-base text-slate-700 dark:text-[#c6d0f5] w-5 shrink-0 text-right" dir="rtl">{row[1]}</span>
+                                <button
+                                    onclick={() => bwActiveLabel = bwActiveLabel === row[2] ? null : row[2]}
+                                    title={row[2]}
+                                    class="text-left text-[10.5px] cursor-pointer transition-colors min-w-0
+                                           {bwActiveLabel === row[2]
+                                               ? 'text-brand-gold-500 dark:text-[#e5c890] font-semibold break-words'
+                                               : 'truncate text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-500 dark:hover:text-[#a5adce]'}"
+                                >{row[2]}</button>
+                            </div>
+                        {/each}
+                    </div>
+
+                    <!-- Active label display -->
+                    <div class="mb-3 h-8 flex items-center gap-2 rounded-lg border px-3 transition-all
+                                {bwActiveLabel
+                                    ? 'border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c]'
+                                    : 'border-transparent bg-transparent'}">
+                        {#if bwActiveLabel}
+                            <Icon icon="solar:info-circle-bold-duotone" width="0.9rem" class="text-brand-gold-400 shrink-0" />
+                            <span class="text-[12px] font-medium text-brand-charcoal-600 dark:text-[#c6d0f5]">{bwActiveLabel}</span>
+                            <button
+                                onclick={() => bwActiveLabel = null}
+                                class="cursor-pointer ml-auto text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-500 dark:hover:text-[#c6d0f5] transition-colors text-base leading-none"
+                                aria-label="Dismiss"
+                            >×</button>
+                        {:else}
+                            <span class="text-[11px] text-brand-charcoal-200 dark:text-[#626880] italic">Click any label to see its full name</span>
+                        {/if}
+                    </div>
+
+                    <div class="rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] px-3 py-2 text-[11.5px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                        <span class="font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">Example:</span>
+                        <span class="font-mono text-brand-gold-600 dark:text-[#e5c890] mx-1">rb~i</span>
+                        decodes to
+                        <span class="font-scheherazade text-base mx-1 text-slate-700 dark:text-[#c6d0f5]" dir="rtl">رَبِّ</span>
+                        — r (ر) + a (َ) + b (ب) + ~ (ّ) + i (ِ)
+                    </div>
+                </section>
+
+                <!-- 4. Manuscript Viewer -->
                 <section id="help-manuscripts" class="mb-8">
                     <h2
                         class="text-base font-bold mb-2 text-brand-charcoal-500 dark:text-[#e5c890]"
@@ -324,6 +496,15 @@
                             of the current folio to your Downloads folder. A spinner
                             shows progress; a confirmation message confirms the saved
                             filename.
+                        </li>
+                        <li>
+                            <strong>Insert to Lexical</strong> — click the gold
+                            <em>Insert to Lexical</em> button (next to Download) to
+                            embed the current folio image directly into the active
+                            Lexical editor tab. The image is inserted at the cursor
+                            position with the manuscript title and folio number as
+                            alt-text. The button is disabled when no Lexical tab is
+                            open.
                         </li>
                         <li>
                             <strong>Hide/show list</strong> — click the sidebar toggle
@@ -397,20 +578,19 @@
                     >
                         Recitation Player
                     </h2>
-                    <p class="mb-2">
-                        To enable audio playback, open Surah Controls and pick a
-                        reciter (Mishary or Saad Al-Ghamdi). The player appears
-                        at the bottom of the reader.
+                    <p class="mb-2 text-[12.5px]">
+                        To enable audio playback, open <strong>Surah Controls</strong>
+                        and select a reciter. The player appears at the bottom of
+                        the reader.
                     </p>
-                    <ul class="list-disc pl-4 space-y-1 text-[12.5px]">
+                    <ul class="list-disc pl-4 space-y-1.5 text-[12.5px] mb-3">
                         <li>
                             Tap <strong>play / pause</strong>, or skip forward /
                             back by ayah.
                         </li>
                         <li>
                             Download a surah for offline use via the <strong
-                                >download icon</strong
-                            >.
+                                >download icon</strong>.
                         </li>
                         <li>
                             After a search, the player switches to <strong
@@ -418,6 +598,46 @@
                             > — cycling through all matched ayahs automatically.
                         </li>
                     </ul>
+
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-400 dark:text-[#838ba7] mb-1.5">Choosing Reciters</p>
+                    <p class="mb-2 text-[12.5px]">
+                        The player supports <strong>two reciter slots</strong>. Each slot
+                        holds one reciter, and you can switch between them instantly
+                        using the reciter toggle buttons in the player bar —
+                        without stopping playback.
+                    </p>
+                    <ul class="list-disc pl-4 space-y-1.5 text-[12.5px] mb-3">
+                        <li>
+                            Click the <strong>manage reciters button</strong>
+                            (person icon) in the player bar to open the
+                            <em>Reciter Select</em> dialog.
+                        </li>
+                        <li>
+                            The dialog shows all available reciters. The two tabs
+                            at the top represent <strong>Slot 1</strong> and
+                            <strong>Slot 2</strong> — click a tab to choose which
+                            slot you are assigning.
+                        </li>
+                        <li>
+                            Click any reciter in the list to assign it to the
+                            focused slot. The dialog automatically moves focus to
+                            the other slot so you can fill both quickly.
+                        </li>
+                        <li>
+                            The same reciter cannot be assigned to both slots.
+                        </li>
+                        <li>
+                            Press <strong>Done</strong> to confirm. Your slot
+                            choices are saved and restored across sessions.
+                        </li>
+                    </ul>
+                    <div class="rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] px-3 py-2 text-[11.5px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                        <span class="font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">Tip:</span>
+                        Some reciters use a <em>continuous-seek</em> audio style
+                        (one long file per surah) while others use per-ayah files.
+                        Both work identically from the user's perspective; the style
+                        is noted in the reciter list.
+                    </div>
                 </section>
 
                 <!-- 5. Surah & Translation Controls -->
@@ -529,9 +749,16 @@
                     </p>
                     <ul class="list-disc pl-4 space-y-1 text-[12.5px]">
                         <li>
-                            Requires the <strong>ilm</strong> package for styled
-                            documents — install it via
-                            <em>Editor Tools → Typst Packages → Install</em>.
+                            Any <code class="font-mono">@preview</code> package
+                            used in an <code class="font-mono">#import</code> statement
+                            is downloaded automatically from the
+                            <a
+                                href="https://typst.app/universe"
+                                class="underline"
+                                onclick={(e) => { e.preventDefault(); openUrl('https://typst.app/universe'); }}
+                            >Typst Universe</a> registry on first use and cached
+                            locally — no manual installation needed. Subsequent
+                            compiles use the local cache and work offline.
                         </li>
                         <li>
                             Great for structured papers, formatted essays, and
@@ -547,42 +774,103 @@
                     >
                         Julia — Scientific Computing
                     </h2>
-                    <p class="mb-2">
-                        A full Julia REPL embedded in the editor.
+                    <p class="mb-2 text-[12.5px]">
+                        AyahLab includes a full <strong>Julia terminal</strong> — a
+                        live coding environment you can use to navigate the Quran
+                        reader, run calculations, and build data-driven analyses.
+                        You do not need to be a programmer to use the basic
+                        navigation commands below.
                     </p>
-                    <ul class="list-disc pl-4 space-y-1 text-[12.5px]">
+                    <ul class="list-disc pl-4 space-y-1 text-[12.5px] mb-3">
                         <li>
-                            Install Julia via <em
-                                >Editor Tools → Julia → Auto-install</em
-                            > (or point to an existing binary).
+                            Install Julia via <em>Editor Tools → Julia → Auto-install</em>
+                            (or point to an existing binary in Settings).
                         </li>
                         <li>
-                            Built-in <strong>AyahLab API</strong> lets Julia control
-                            the Quran reader directly:
+                            Once started, type any command into the terminal and
+                            press <kbd class="rounded bg-slate-100 dark:bg-[#414559] px-1 py-0.5 text-[10px] font-mono">Enter</kbd>
+                            to run it.
                         </li>
                     </ul>
-                    <div
-                        class="mt-2 rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] px-3 py-2 font-mono text-[11.5px] space-y-0.5"
-                    >
-                        <div>
-                            <span class="text-brand-gold-500">AL.surah(n)</span>
-                            <span
-                                class="text-brand-charcoal-300 dark:text-[#8caaee]"
-                                >— navigate reader to surah number n</span
-                            >
+
+                    <!-- AL.surah -->
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-400 dark:text-[#838ba7] mb-1.5">AL.surah( ) — Navigate to a Surah</p>
+                    <p class="text-[12.5px] mb-2">
+                        Think of <code class="rounded bg-slate-100 dark:bg-[#414559] px-1 font-mono text-[11px]">AL.surah(n)</code>
+                        as a bookmark shortcut. Type it and press Enter — the
+                        Quran reader immediately jumps to that surah.
+                        <code class="rounded bg-slate-100 dark:bg-[#414559] px-1 font-mono text-[11px]">n</code>
+                        is the surah number (1–114).
+                    </p>
+                    <div class="rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] px-3 py-2 font-mono text-[11.5px] space-y-1 mb-3">
+                        <div class="flex gap-3">
+                            <span class="text-brand-gold-500 shrink-0">AL.surah(1)</span>
+                            <span class="text-brand-charcoal-300 dark:text-[#8caaee]">— go to Al-Fatihah (surah 1)</span>
                         </div>
-                        <div>
-                            <span class="text-brand-gold-500">AL.ayah(n)</span>
-                            <span
-                                class="text-brand-charcoal-300 dark:text-[#8caaee]"
-                                >— jump to ayah n in the current surah</span
-                            >
+                        <div class="flex gap-3">
+                            <span class="text-brand-gold-500 shrink-0">AL.surah(2)</span>
+                            <span class="text-brand-charcoal-300 dark:text-[#8caaee]">— go to Al-Baqarah (surah 2)</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-brand-gold-500 shrink-0">AL.surah(114)</span>
+                            <span class="text-brand-charcoal-300 dark:text-[#8caaee]">— go to An-Nas (the last surah)</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-brand-gold-500 shrink-0">AL.surah([1, 18, 36])</span>
+                            <span class="text-brand-charcoal-300 dark:text-[#8caaee]">— show surahs 1, 18, and 36 together</span>
                         </div>
                     </div>
-                    <p class="mt-2 text-[12.5px]">
-                        Use these to build data-driven analyses that update the
-                        reader live as code runs.
+
+                    <!-- AL.ayah -->
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-400 dark:text-[#838ba7] mb-1.5">AL.ayah( ) — Navigate to a Specific Ayah</p>
+                    <p class="text-[12.5px] mb-2">
+                        <code class="rounded bg-slate-100 dark:bg-[#414559] px-1 font-mono text-[11px]">AL.ayah()</code>
+                        takes a surah reference and an ayah number, and scrolls
+                        the reader directly to that verse. You always nest it
+                        inside <code class="rounded bg-slate-100 dark:bg-[#414559] px-1 font-mono text-[11px]">AL.surah()</code>
+                        to tell it <em>which</em> surah the ayah belongs to.
                     </p>
+                    <div class="rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] px-3 py-2 font-mono text-[11.5px] space-y-1 mb-3">
+                        <div class="flex gap-3">
+                            <span class="text-brand-gold-500 shrink-0 whitespace-nowrap">AL.ayah(AL.surah(1), 1)</span>
+                            <span class="text-brand-charcoal-300 dark:text-[#8caaee]">— Al-Fatihah, ayah 1</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-brand-gold-500 shrink-0 whitespace-nowrap">AL.ayah(AL.surah(2), 255)</span>
+                            <span class="text-brand-charcoal-300 dark:text-[#8caaee]">— Ayat al-Kursi (2:255)</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-brand-gold-500 shrink-0 whitespace-nowrap">AL.ayah(AL.surah(36), 82)</span>
+                            <span class="text-brand-charcoal-300 dark:text-[#8caaee]">— Ya-Sin 36:82 ("Kun fayakun")</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-brand-gold-500 shrink-0 whitespace-nowrap">AL.ayah(AL.surah(2), [285, 286])</span>
+                            <span class="text-brand-charcoal-300 dark:text-[#8caaee]">— show both closing ayahs of Al-Baqarah</span>
+                        </div>
+                    </div>
+
+                    <!-- Pattern / loop example -->
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-400 dark:text-[#838ba7] mb-1.5">Going Further — Loops &amp; Patterns</p>
+                    <p class="text-[12.5px] mb-2">
+                        Because Julia is a full programming language, you can use
+                        variables and loops. For example, step through every
+                        surah automatically, or collect a list of ayahs to
+                        review one by one.
+                    </p>
+                    <div class="rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] px-3 py-2 font-mono text-[11.5px] space-y-1 mb-3">
+                        <div class="text-brand-charcoal-300 dark:text-[#8caaee] text-[10.5px] pb-0.5">— store a surah and reuse it</div>
+                        <div><span class="text-brand-gold-500">s = AL.surah(18)</span><span class="text-brand-charcoal-300 dark:text-[#8caaee]"> &nbsp;# Al-Kahf</span></div>
+                        <div><span class="text-brand-gold-500">AL.ayah(s, 1)</span><span class="text-brand-charcoal-300 dark:text-[#8caaee]"> &nbsp;&nbsp;&nbsp;# first ayah</span></div>
+                        <div><span class="text-brand-gold-500">AL.ayah(s, 110)</span><span class="text-brand-charcoal-300 dark:text-[#8caaee]"> &nbsp;&nbsp;# last ayah</span></div>
+                        <div class="pt-1 text-brand-charcoal-300 dark:text-[#8caaee] text-[10.5px]">— jump through the last ten surahs one by one</div>
+                        <div><span class="text-brand-gold-500">for n in 105:114; AL.surah(n); sleep(2); end</span></div>
+                    </div>
+
+                    <div class="rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] px-3 py-2 text-[11.5px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                        <span class="font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">Tip:</span>
+                        End a line with a semicolon <code class="rounded bg-slate-100 dark:bg-[#414559] px-1 font-mono text-[10.5px]">;</code>
+                        to run the command silently (no output printed in the terminal). Useful when looping to keep the terminal clean.
+                    </div>
                 </section>
 
                 <!-- 11. Settings & Tour -->

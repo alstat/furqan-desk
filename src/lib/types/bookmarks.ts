@@ -17,5 +17,6 @@ export interface Highlight {
     surah: number;
     ayah: number;
     text: string;
+    note: string | null;
     created_at: string;
 }

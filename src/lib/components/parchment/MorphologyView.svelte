@@ -12,7 +12,7 @@
     import type { MorphWord } from "$lib/types/morphology";
     import WordMorphologyPopover from "./WordMorphologyPopover.svelte";
     import { setLastRead } from "$lib/functions/bookmarks";
-    import { currentReadingAyah } from "$lib/stores/bookmarks.store";
+    import { currentReadingAyah, pendingHighlight } from "$lib/stores/bookmarks.store";
     import Icon from "@iconify/svelte";
     import { requestPlayAyah, requestPlayPosition, requestPlayBasmallah } from "$lib/stores/recitation.store";
     import { invoke } from '@tauri-apps/api/core';
@@ -172,6 +172,7 @@
     let pinnedPopovers: Array<{
         id: number;
         word: MorphWord;
+        ayahNum: number;
         position: { x: number; y: number; placement: 'above' | 'below' };
     }> = $state([]);
     let pinnedCounter = 0;
@@ -721,8 +722,14 @@
             pinnedPopovers = [...pinnedPopovers, {
                 id: pinnedCounter++,
                 word: selectedWord!.word,
+                ayahNum: selectedWord!.ayahNum,
                 position: { ...popoverPosition },
             }];
+            selectedWord = null;
+        }}
+        onHighlight={() => {
+            const surah = $surahMorphology?.surah ?? 0;
+            pendingHighlight.set({ surah, ayah: selectedWord!.ayahNum, text: selectedWord!.word.combined_arabic, word: selectedWord!.word });
             selectedWord = null;
         }}
     />
@@ -733,6 +740,11 @@
         word={pinned.word}
         position={pinned.position}
         onClose={() => {
+            pinnedPopovers = pinnedPopovers.filter(p => p.id !== pinned.id);
+        }}
+        onHighlight={() => {
+            const surah = $surahMorphology?.surah ?? 0;
+            pendingHighlight.set({ surah, ayah: pinned.ayahNum, text: pinned.word.combined_arabic, word: pinned.word });
             pinnedPopovers = pinnedPopovers.filter(p => p.id !== pinned.id);
         }}
     />

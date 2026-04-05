@@ -16,6 +16,7 @@
     import NewBlogToast from "$lib/components/shared/NewBlogToast.svelte";
     import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
     import HelpDialog from "$lib/components/help/HelpDialog.svelte";
+    import { helpStore, openHelp, closeHelp } from "$lib/stores/help.store";
     import ManuscriptViewer from "$lib/components/manuscripts/ManuscriptViewer.svelte";
     import {
         manuscriptViewerOpen,
@@ -42,7 +43,7 @@
         typeof window !== "undefined" ? window.innerHeight : 600,
     );
     let showSettings = $state(false);
-    let showHelp = $state(false);
+    // showHelp is now driven by helpStore (so any component can open the help dialog)
     let isLoading = $state(true);
 
     onMount(async () => {
@@ -217,9 +218,9 @@
 <SettingsDialog
     open={showSettings}
     onClose={() => (showSettings = false)}
-    onOpenHelp={() => (showHelp = true)}
+    onOpenHelp={() => openHelp()}
 />
-<HelpDialog open={showHelp} onClose={() => (showHelp = false)} />
+<HelpDialog open={$helpStore.open} initialSection={$helpStore.section} onClose={closeHelp} />
 <ManuscriptViewer
     open={$manuscriptViewerOpen}
     onClose={() => manuscriptViewerOpen.set(false)}
