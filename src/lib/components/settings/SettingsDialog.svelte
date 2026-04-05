@@ -322,10 +322,16 @@
         <!-- Typst Packages -->
         <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
             <p class={sectionLabel}>{$t('settings.typst')}</p>
+            <p class="mb-2 text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                Default packages for the Typst editor. Downloaded automatically on first use and cached locally.
+            </p>
             <div class="flex items-center justify-between mb-2">
-                <span class={rowLabel}>ilm
-                    <span class="ml-1 font-mono text-brand-charcoal-300 dark:text-[#838ba7]">v1.4.2</span>
-                </span>
+                <div>
+                    <span class={rowLabel}>ilm
+                        <span class="ml-1 font-mono text-brand-charcoal-300 dark:text-[#838ba7]">v1.4.2</span>
+                    </span>
+                    <p class="text-[10.5px] text-brand-charcoal-300 dark:text-[#838ba7]">Book &amp; document format</p>
+                </div>
                 <button
                     onclick={() => openUrl('https://github.com/talal/ilm')}
                     class={actionBtn}
@@ -335,9 +341,12 @@
                 </button>
             </div>
             <div class="flex items-center justify-between">
-                <span class={rowLabel}>diatypst
-                    <span class="ml-1 font-mono text-brand-charcoal-300 dark:text-[#838ba7]">v0.9.1</span>
-                </span>
+                <div>
+                    <span class={rowLabel}>diatypst
+                        <span class="ml-1 font-mono text-brand-charcoal-300 dark:text-[#838ba7]">v0.9.1</span>
+                    </span>
+                    <p class="text-[10.5px] text-brand-charcoal-300 dark:text-[#838ba7]">Presentation format</p>
+                </div>
                 <button
                     onclick={() => openUrl('https://github.com/skriptum/Diatypst')}
                     class={actionBtn}

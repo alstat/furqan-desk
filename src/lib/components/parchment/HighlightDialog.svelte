@@ -46,7 +46,13 @@
             arabicPara.append(createTextNode(hl.text));
             const attrPara = createParagraphNode();
             attrPara.append(createTextNode(label));
-            insertNodes([arabicPara, attrPara]);
+            if (hl.note) {
+                const notePara = createParagraphNode();
+                notePara.append(createTextNode(hl.note));
+                insertNodes([arabicPara, notePara, attrPara]);
+            } else {
+                insertNodes([arabicPara, attrPara]);
+            }
         });
         insertingId = null;
     }
@@ -196,11 +202,14 @@
                         >
                             <!-- Arabic text -->
                             <p
-                                class="mb-2.5 font-scheherazade text-lg leading-loose text-brand-charcoal-500 wrap-break-word overflow-hidden"
+                                class="mb-1.5 font-scheherazade text-lg leading-loose text-brand-charcoal-500 wrap-break-word overflow-hidden"
                                 dir="rtl"
                             >
                                 {hl.text}
                             </p>
+                            {#if hl.note}
+                                <p class="mb-2 text-[11px] text-brand-charcoal-400 dark:text-[#838ba7] italic line-clamp-2">{hl.note}</p>
+                            {/if}
                             <!-- Footer row -->
                             <div
                                 class="flex items-center justify-between gap-2"

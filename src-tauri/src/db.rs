@@ -184,7 +184,10 @@ impl Database {
                 post_url TEXT NOT NULL,
                 seen_at  TEXT NOT NULL DEFAULT (datetime('now'))
             );",
-        )
+        )?;
+        // Idempotent column migration — ignored if column already exists
+        conn.execute("ALTER TABLE highlights ADD COLUMN note TEXT", []).ok();
+        Ok(())
     }
 
     // ── User-data migration helpers ─────────────────────────────────────────
@@ -224,15 +227,30 @@ impl Database {
             .ok();
 
         let highlights = {
-            let mut stmt = conn.prepare(
-                "SELECT surah, ayah, text, created_at FROM highlights ORDER BY id",
-            )?;
+            // The `note` column was added in a later release; older databases
+            // won't have it.  Use PRAGMA to detect presence so we don't fail
+            // (and lose all highlights) when migrating from an old install.
+            let has_note = conn
+                .query_row(
+                    "SELECT COUNT(*) FROM pragma_table_info('highlights') WHERE name='note'",
+                    [],
+                    |r| r.get::<_, i64>(0),
+                )
+                .unwrap_or(0)
+                > 0;
+            let query = if has_note {
+                "SELECT surah, ayah, text, note, created_at FROM highlights ORDER BY id"
+            } else {
+                "SELECT surah, ayah, text, NULL, created_at FROM highlights ORDER BY id"
+            };
+            let mut stmt = conn.prepare(query)?;
             let rows: Vec<_> = stmt.query_map([], |row| {
                 Ok((
                     row.get::<_, i64>(0)?,
                     row.get::<_, i64>(1)?,
                     row.get::<_, String>(2)?,
-                    row.get::<_, String>(3)?,
+                    row.get::<_, Option<String>>(3)?,
+                    row.get::<_, String>(4)?,
                 ))
             })?
             .filter_map(|r| r.ok())
@@ -265,10 +283,10 @@ impl Database {
         }
         {
             let mut stmt = conn.prepare(
-                "INSERT INTO highlights (surah, ayah, text, created_at) VALUES (?1, ?2, ?3, ?4)",
+                "INSERT INTO highlights (surah, ayah, text, note, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
             )?;
-            for (surah, ayah, text, created_at) in &data.highlights {
-                stmt.execute(rusqlite::params![surah, ayah, text, created_at])?;
+            for (surah, ayah, text, note, created_at) in &data.highlights {
+                stmt.execute(rusqlite::params![surah, ayah, text, note, created_at])?;
             }
         }
         tx.commit()
@@ -279,5 +297,5 @@ impl Database {
 struct UserData {
     bookmarks: Vec<(i64, i64, Option<String>, String)>,
     last_read: Option<(i64, i64, String)>,
-    highlights: Vec<(i64, i64, String, String)>,
+    highlights: Vec<(i64, i64, String, Option<String>, String)>,
 }

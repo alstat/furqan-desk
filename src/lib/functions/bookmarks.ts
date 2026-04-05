@@ -39,8 +39,8 @@ export async function loadHighlights(): Promise<void> {
     highlights.set(data);
 }
 
-export async function addHighlight(surah: number, ayah: number, text: string): Promise<Highlight> {
-    const highlight = await invoke<Highlight>('add_highlight', { surah, ayah, text });
+export async function addHighlight(surah: number, ayah: number, text: string, note: string | null): Promise<Highlight> {
+    const highlight = await invoke<Highlight>('add_highlight', { surah, ayah, text, note });
     highlights.update(list => [highlight, ...list]);
     return highlight;
 }

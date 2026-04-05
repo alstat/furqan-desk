@@ -62,6 +62,32 @@
         return () => clearTimeout(debounceTimer);
     });
 
+    const IMPORT_RE = /#import\s+"@([\w-]+)\/([\w-]+):([\d.]+)"/g;
+
+    async function ensurePackagesInstalled(source: string): Promise<void> {
+        const imports: { namespace: string; name: string; version: string }[] = [];
+        for (const m of source.matchAll(IMPORT_RE)) {
+            imports.push({ namespace: m[1], name: m[2], version: m[3] });
+        }
+        if (imports.length === 0) return;
+
+        const installed = await Promise.all(
+            imports.map((p) => invoke<boolean>("check_typst_package", p)),
+        );
+        const missing = imports.filter((_, i) => !installed[i]);
+        if (missing.length === 0) return;
+
+        await Promise.all(
+            missing.map((p) =>
+                invoke("install_typst_package", p).catch((e) => {
+                    throw new Error(
+                        `Package install failed: @${p.namespace}/${p.name}:${p.version} — ${e}`,
+                    );
+                }),
+            ),
+        );
+    }
+
     async function compileToSvg(src: string) {
         if (!src.trim()) {
             typstSvgPages.set([]);
@@ -71,6 +97,7 @@
         typstIsCompiling.set(true);
         typstCompileError.set("");
         try {
+            await ensurePackagesInstalled(src);
             typstSvgPages.set(
                 await invoke<string[]>("compile_typst_svg", { source: src }),
             );
@@ -85,8 +112,10 @@
     async function exportPdf() {
         typstCompileError.set("");
         try {
+            const src = get(typstSource);
+            await ensurePackagesInstalled(src);
             const bytes = await invoke<number[]>("compile_typst_pdf", {
-                source: get(typstSource),
+                source: src,
             });
             const path = await save({
                 filters: [{ name: "PDF", extensions: ["pdf"] }],
