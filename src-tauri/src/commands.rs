@@ -663,6 +663,7 @@ pub struct Highlight {
     pub surah: i64,
     pub ayah: i64,
     pub text: String,
+    pub note: Option<String>,
     pub created_at: String,
 }
 
@@ -1264,18 +1265,19 @@ pub fn add_highlight(
     surah: i64,
     ayah: i64,
     text: String,
+    note: Option<String>,
 ) -> Result<Highlight, String> {
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
-        "INSERT INTO highlights (surah, ayah, text) VALUES (?1, ?2, ?3)",
-        rusqlite::params![surah, ayah, text],
+        "INSERT INTO highlights (surah, ayah, text, note) VALUES (?1, ?2, ?3, ?4)",
+        rusqlite::params![surah, ayah, text, note],
     )
     .map_err(|e| e.to_string())?;
     let id = conn.last_insert_rowid();
     conn.query_row(
-        "SELECT id, surah, ayah, text, created_at FROM highlights WHERE id = ?1",
+        "SELECT id, surah, ayah, text, note, created_at FROM highlights WHERE id = ?1",
         [id],
-        |r| Ok(Highlight { id: r.get(0)?, surah: r.get(1)?, ayah: r.get(2)?, text: r.get(3)?, created_at: r.get(4)? }),
+        |r| Ok(Highlight { id: r.get(0)?, surah: r.get(1)?, ayah: r.get(2)?, text: r.get(3)?, note: r.get(4)?, created_at: r.get(5)? }),
     )
     .map_err(|e| e.to_string())
 }
@@ -1284,10 +1286,10 @@ pub fn add_highlight(
 pub fn get_highlights(db: State<Database>) -> Result<Vec<Highlight>, String> {
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
-        .prepare("SELECT id, surah, ayah, text, created_at FROM highlights ORDER BY created_at DESC")
+        .prepare("SELECT id, surah, ayah, text, note, created_at FROM highlights ORDER BY created_at DESC")
         .map_err(|e| e.to_string())?;
     let rows = stmt.query_map([], |r| Ok(Highlight {
-        id: r.get(0)?, surah: r.get(1)?, ayah: r.get(2)?, text: r.get(3)?, created_at: r.get(4)?,
+        id: r.get(0)?, surah: r.get(1)?, ayah: r.get(2)?, text: r.get(3)?, note: r.get(4)?, created_at: r.get(5)?,
     }))
     .map_err(|e| e.to_string())?
     .collect::<Result<Vec<_>, _>>()

@@ -8,6 +8,7 @@
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { t } from '$lib/i18n';
     import { get } from 'svelte/store';
+    import { openHelp } from '$lib/stores/help.store';
     import { lexicalEditorInstance } from '$lib/stores/editor.store';
     import {
         $createTableNode as createTableNode,
@@ -26,9 +27,10 @@
         position: { x: number; y: number; placement: "above" | "below" };
         onClose: () => void;
         onPin?: () => void;
+        onHighlight?: () => void;
     }
 
-    let { word, position, onClose, onPin }: Props = $props();
+    let { word, position, onClose, onPin, onHighlight }: Props = $props();
 
     let zIndex = $state(bringToFront());
 
@@ -223,22 +225,40 @@
         '1P':  '1st pl.',
     };
 
-    const FEATURES: Array<{ key: keyof typeof word.tokens[0]['features']; label: string; arabic?: boolean; transform?: (v: string) => string }> = [
-        { key: 'root',        label: 'Root',    arabic: true },
-        { key: 'lemma',       label: 'Lemma',   arabic: true },
-        { key: 'pos',         label: 'POS',         transform: v => POS_LABELS[v]        ?? v },
-        { key: 'gender',      label: 'Gender'                                                 },
-        { key: 'number',      label: 'Number'                                                 },
-        { key: 'case_type',   label: 'Case'                                                   },
-        { key: 'person',      label: 'Person',      transform: v => PERSON_LABELS[v]     ?? v },
-        { key: 'aspect',      label: 'Aspect'                                                 },
-        { key: 'voice',       label: 'Voice'                                                  },
-        { key: 'mood',        label: 'Mood',        transform: v => MOOD_LABELS[v]        ?? v },
-        { key: 'state',       label: 'State'                                                  },
-        { key: 'derivation',  label: 'Form',        transform: v => DERIVATION_LABELS[v] ?? v },
-        { key: 'prefix_type', label: 'Prefix',      transform: v => PREFIX_LABELS[v]     ?? v },
-        { key: 'suffix_type', label: 'Suffix',      transform: v => SUFFIX_LABELS[v]     ?? v },
+    const FEATURES: Array<{ key: keyof typeof word.tokens[0]['features']; labelKey: string; arabic?: boolean }> = [
+        { key: 'root',        labelKey: 'morphology.feat.root',   arabic: true },
+        { key: 'lemma',       labelKey: 'morphology.feat.lemma',  arabic: true },
+        { key: 'pos',         labelKey: 'morphology.feat.pos'                  },
+        { key: 'gender',      labelKey: 'morphology.feat.gender'               },
+        { key: 'number',      labelKey: 'morphology.feat.number'               },
+        { key: 'case_type',   labelKey: 'morphology.feat.case'                 },
+        { key: 'person',      labelKey: 'morphology.feat.person'               },
+        { key: 'aspect',      labelKey: 'morphology.feat.aspect'               },
+        { key: 'voice',       labelKey: 'morphology.feat.voice'                },
+        { key: 'mood',        labelKey: 'morphology.feat.mood'                 },
+        { key: 'state',       labelKey: 'morphology.feat.state'                },
+        { key: 'derivation',  labelKey: 'morphology.feat.form'                 },
+        { key: 'prefix_type', labelKey: 'morphology.feat.prefix'               },
+        { key: 'suffix_type', labelKey: 'morphology.feat.suffix'               },
     ];
+
+    function translateFeatureValue(tFn: (k: string) => string, key: string, value: string): string {
+        switch (key) {
+            case 'pos':         return tFn(`morphology.pos.${value.replace(' ', '_')}`)           || POS_LABELS[value]        || value;
+            case 'gender':      return tFn(`morphology.gender.${value}`)                          || value;
+            case 'number':      return tFn(`morphology.number.${value}`)                          || value;
+            case 'case_type':   return tFn(`morphology.case.${value}`)                            || value;
+            case 'aspect':      return tFn(`morphology.aspect.${value}`)                          || value;
+            case 'voice':       return tFn(`morphology.voice.${value}`)                           || value;
+            case 'state':       return tFn(`morphology.state.${value}`)                           || value;
+            case 'person':      return tFn(`morphology.person.${value}`)                          || PERSON_LABELS[value]     || value;
+            case 'derivation':  return tFn(`morphology.form.${value.replace(/[()]/g, '')}`)       || DERIVATION_LABELS[value] || value;
+            case 'prefix_type': return tFn(`morphology.prefix.${value.replace(/:/g, '_')}`)       || PREFIX_LABELS[value]     || value;
+            case 'suffix_type': return tFn(`morphology.suffix.${value}`)                          || SUFFIX_LABELS[value]     || value;
+            case 'mood':        return tFn(`morphology.mood.${value}`)                            || MOOD_LABELS[value]       || value;
+            default:            return value;
+        }
+    }
 
     function insertToLexical(): void {
         const editor = get(lexicalEditorInstance);
@@ -262,18 +282,19 @@
                 table.append(headerRow);
 
                 // Feature rows (non-null only)
-                for (const { key, label, arabic, transform } of FEATURES) {
+                const tFn = get(t);
+                for (const { key, labelKey, arabic } of FEATURES) {
                     const val = token.features[key];
                     if (!val) continue;
                     const row = createTableRowNode();
 
                     const labelCell = createTableCellNode(TableCellHeaderStates.NO_STATUS);
-                    labelCell.append(createParagraphNode().append(createTextNode(label)));
+                    labelCell.append(createParagraphNode().append(createTextNode(tFn(labelKey))));
 
                     const rawVal = val as string;
                     const displayVal = arabic
                         ? buckwalterToArabic(rawVal)
-                        : transform ? transform(rawVal) : rawVal;
+                        : translateFeatureValue(tFn, key, rawVal);
                     const valueCell = createTableCellNode(TableCellHeaderStates.NO_STATUS);
                     valueCell.append(createParagraphNode().append(createTextNode(displayVal)));
 
@@ -314,7 +335,7 @@
                 {word.combined_arabic}
             </span>
             <span class="text-[10px] font-medium text-slate-400 dark:text-[#838ba7]">
-                {word.tokens.length} token{word.tokens.length !== 1 ? 's' : ''}
+                {word.tokens.length} {word.tokens.length !== 1 ? $t('morphology.tokens') : $t('morphology.token')}
             </span>
         </div>
         <div class="flex items-center gap-1">
@@ -327,6 +348,16 @@
             >
                 <Icon icon="solar:add-square-bold-duotone" width="15" />
             </button>
+            {#if onHighlight}
+                <button
+                    onclick={onHighlight}
+                    aria-label={$t('highlight.word_highlight')}
+                    title={$t('highlight.word_highlight')}
+                    class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 dark:text-[#838ba7] transition-all hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-brand-gold-500 dark:hover:text-[#e5c890] active:scale-95"
+                >
+                    <Icon icon="solar:magic-stick-3-bold-duotone" width="14" />
+                </button>
+            {/if}
             {#if onPin}
                 <button
                     onclick={onPin}
@@ -365,20 +396,24 @@
                         <span class="font-scheherazade text-right text-xl p-1 leading-none {s.text}">
                             {token.form_arabic}
                         </span>
-                        <code class="rounded-md bg-slate-100 dark:bg-[#414559] px-1.5 py-0.5 font-mono text-[10px] text-slate-500 dark:text-[#949cbb]" dir="ltr">
-                            {token.form_buckwalter}
-                        </code>
+                        <button
+                            onclick={() => openHelp('help-buckwalter')}
+                            title={$t('morphology.buckwalter_help')}
+                            aria-label={$t('morphology.buckwalter_help')}
+                            class="cursor-pointer rounded-md bg-slate-100 dark:bg-[#414559] px-1.5 py-0.5 font-mono text-[10px] text-slate-500 dark:text-[#949cbb] hover:underline hover:text-slate-700 dark:hover:text-[#c6d0f5] transition-colors"
+                            dir="ltr"
+                        >{token.form_buckwalter}</button>
                     </div>
                 </div>
 
                 <!-- Features -->
                 {#if FEATURES.some(f => token.features[f.key])}
                     <div class="divide-y divide-slate-100 dark:divide-[#414559]/60 border-t {s.border} px-3 pb-0.5">
-                        {#each FEATURES as { key, label, arabic, transform }}
+                        {#each FEATURES as { key, labelKey, arabic }}
                             {#if token.features[key]}
                                 <div class="flex items-center justify-between gap-3 py-1.5">
                                     <span class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-[#838ba7]">
-                                        {label}
+                                        {$t(labelKey)}
                                     </span>
                                     {#if arabic}
                                         <span class="font-scheherazade text-sm font-medium {s.text}" dir="rtl">
@@ -386,7 +421,7 @@
                                         </span>
                                     {:else}
                                         <span class="text-[11px] font-medium text-slate-600 dark:text-[#a5adce]">
-                                            {transform ? transform(token.features[key] as string) : token.features[key]}
+                                            {translateFeatureValue($t, key, token.features[key] as string)}
                                         </span>
                                     {/if}
                                 </div>
