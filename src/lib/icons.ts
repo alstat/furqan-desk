@@ -84,9 +84,11 @@ addCollection(pick(solarData, [
     'list-bold-duotone',
     'link-bold-duotone',
     'lock-bold-duotone',
+    'info-circle-bold-duotone',
     'magic-stick-3-bold-duotone',
     'magnifer-bold-duotone',
     'menu-dots-line-duotone',
+    'microphone-bold-duotone',
     'minimize-square-bold-duotone',
     'minus-circle-bold-duotone',
     'pallete-bold-duotone',
@@ -105,6 +107,7 @@ addCollection(pick(solarData, [
     'refresh-bold-duotone',
     'refresh-circle-bold-duotone',
     'settings-bold-duotone',
+    'settings-minimalistic-bold',
     'shield-check-bold-duotone',
     'sidebar-minimalistic-bold',
     'sidebar-minimalistic-bold-duotone',
@@ -123,6 +126,7 @@ addCollection(pick(solarData, [
     'trash-bin-trash-bold-duotone',
     'unlink-bold',
     'upload-bold-duotone',
+    'user-speak-bold-duotone',
     'wifi-router-minimalistic-bold-duotone',
 ]));
 
