@@ -93,6 +93,38 @@ html.dark .bg-gradient-radial {
     background-color: #232634; /* Frappe Crust — outer app background */
 }
 
+/* ── Light mode scrollbars (global baseline) ─────────────────────────────── */
+/* Standard CSS scrollbar API — also the fallback once GTK_OVERLAY_SCROLLING=0
+   is set on Linux, which hands scrollbar rendering back to WebKit.            */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #c6c6c582 transparent;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #c6c6c582;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #a8a8a8cc;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
 /* ── Dark mode scrollbars ─────────────────────────────────────────────────── */
 /* Firefox */
 html.dark * {
