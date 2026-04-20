@@ -240,6 +240,8 @@ export const ko: Record<string, string> = {
     'surah.size_medium': '보통',
     'surah.size_large': '크게',
     'surah.size_xlarge': '매우 크게',
+    'surah.size_2xlarge': '2X 크게',
+    'surah.size_3xlarge': '3X 크게',
     'surah.hide_page': '수라 페이지 숨기기',
     'surah.translator': '번역가',
     'surah.none': '없음',

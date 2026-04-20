@@ -253,6 +253,8 @@ export const tl: Record<string, string> = {
   "surah.size_medium": "Katamtaman",
   "surah.size_large": "Malaki",
   "surah.size_xlarge": "Napaka-laki",
+  "surah.size_2xlarge": "2X Malaki",
+  "surah.size_3xlarge": "3X Malaki",
   "surah.hide_page": "Itago ang Pahina ng Surah",
   "surah.translator": "Tagasalin",
   "surah.none": "Wala",

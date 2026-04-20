@@ -330,7 +330,7 @@
                             <option value="font-garamond">EB Garamond</option>
                         </select>
                         <span
-                            class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300"
+                            class="pointer-events-none absolute inset-y-0 right-2.5 text- flex items-center text-brand-charcoal-300"
                         >
                             <Icon icon="charm:chevron-down" width="0.75rem" />
                         </span>
@@ -348,6 +348,8 @@
                             <option value="text-xl">{$t('surah.size_medium')}</option>
                             <option value="text-2xl">{$t('surah.size_large')}</option>
                             <option value="text-3xl">{$t('surah.size_xlarge')}</option>
+                            <option value="text-4xl">{$t('surah.size_2xlarge')}</option>
+                            <option value="text-5xl">{$t('surah.size_3xlarge')}</option>
                         </select>
                         <span
                             class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300"

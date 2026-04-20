@@ -15,6 +15,7 @@
         tocOpen,
         tocAnchorRect,
         zenPeek,
+        singlePageMargin,
     } from "$lib/stores/editor.store";
     import { activeTab } from "$lib/stores/tabs.store";
     import FeedbackDialog from "./FeedbackDialog.svelte";
@@ -90,7 +91,8 @@
 
 <div
     id="tour-sidebar"
-    class={`relative flex justify-right overflow-visible font-base text-slate-900 dark:text-[#c6d0f5] ${sidebarWidth}`}
+    style:width="{$isSidebar ? Math.round($singlePageMargin / 12 * 100) : 0}%"
+    class={`relative flex justify-right overflow-visible font-base text-slate-900 dark:text-[#c6d0f5]`}
 >
     <!-- Sidebar toggle (top) -->
     <button

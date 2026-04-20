@@ -16,7 +16,10 @@
     import type { SurahMorphology } from "$lib/types/morphology";
     import { morphFontSize } from "$lib/stores/morphology.store";
     import MorphologyView from "./MorphologyView.svelte";
-    import { pendingJumpAyah, pendingHighlight } from "$lib/stores/bookmarks.store";
+    import {
+        pendingJumpAyah,
+        pendingHighlight,
+    } from "$lib/stores/bookmarks.store";
     import HighlightSaveDialog from "./HighlightSaveDialog.svelte";
     import {
         totalAyahsInSurah,
@@ -28,7 +31,12 @@
     import ReciterSelectDialog from "./ReciterSelectDialog.svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { activeTranslatorId } from "$lib/stores/translation.store";
-    import { zenMode, appDarkMode, zenPeek } from "$lib/stores/editor.store";
+    import {
+        zenMode,
+        appDarkMode,
+        zenPeek,
+        singlePageMargin,
+    } from "$lib/stores/editor.store";
 
     let scrollContainer = $state<HTMLElement | null>(null);
     let showBookmarks = $state(false);
@@ -203,8 +211,18 @@
 
 <div
     id="tour-parchment"
-    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 h-full flex flex-col items-center rounded-sm ${$zenMode && $appDarkMode ? "bg-transparent" : "bg-white dark:bg-[#303446]"} sm:w-full md:w-9/12 lg:w-6/12 ${$zenMode ? "" : "sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"}`}
+    style:width="{Math.round($singlePageMargin / 12 * 100)}%"
+    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 h-full flex flex-col items-center rounded-sm ${$zenMode && $appDarkMode ? "bg-transparent" : "bg-white dark:bg-[#303446]"} ${$zenMode ? "" : "sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"}`}
 >
+    <div class="w-full">
+        <ParchmentActionBar
+            onOpenBookmarks={() => (showBookmarks = true)}
+            onOpenHighlights={() => (showHighlights = true)}
+            onSearch={handleSearch}
+            {isSearching}
+        />
+    </div>
+
     {#if $zenMode}
         {#if !$isSidebar}
             <div
@@ -225,15 +243,6 @@
                 : 'rgba(229,200,144,0.55)'} 80%, transparent 100%)"
         ></div>
     {/if}
-
-    <div class="w-full">
-        <ParchmentActionBar
-            onOpenBookmarks={() => (showBookmarks = true)}
-            onOpenHighlights={() => (showHighlights = true)}
-            onSearch={handleSearch}
-            {isSearching}
-        />
-    </div>
 
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div

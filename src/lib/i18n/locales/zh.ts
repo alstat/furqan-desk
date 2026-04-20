@@ -240,6 +240,8 @@ export const zh: Record<string, string> = {
     'surah.size_medium': '中',
     'surah.size_large': '大',
     'surah.size_xlarge': '特大',
+    'surah.size_2xlarge': '2倍大',
+    'surah.size_3xlarge': '3倍大',
     'surah.hide_page': '隐藏章节页',
     'surah.translator': '译者',
     'surah.none': '无',

@@ -249,6 +249,8 @@ export const ja: Record<string, string> = {
   "surah.size_medium": "中",
   "surah.size_large": "大",
   "surah.size_xlarge": "特大",
+  "surah.size_2xlarge": "2倍大",
+  "surah.size_3xlarge": "3倍大",
   "surah.hide_page": "スーラページを非表示",
   "surah.translator": "翻訳者",
   "surah.none": "なし",

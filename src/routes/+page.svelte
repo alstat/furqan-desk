@@ -38,6 +38,7 @@
     import { checkFirstRun } from "$lib/stores/tour.store";
     import { zenMode, appDarkMode } from "$lib/stores/editor.store";
     import SukunPeekToggle from "$lib/components/shared/SukunPeekToggle.svelte";
+    import UpDownMargin from "$lib/components/shared/UpDownMargin.svelte";
 
     let height: number = $state(
         typeof window !== "undefined" ? window.innerHeight : 600,
@@ -135,7 +136,7 @@
 </script>
 
 <svelte:window bind:innerHeight={height} />
-<div class="w-[95%] rounded-r-md max-w-375 relative mx-auto sm:py-6">
+<div class="w-[95%] rounded-r-md max-w-full relative mx-auto sm:py-6">
     <div
         class={`flex rounded-r-md ${$surahOrientation()} ${$isSidebar && !$zenMode ? "bg-white dark:bg-[#232634] " : ""} flex-row justify-center`}
         style:height="{height - 47}px"
@@ -145,7 +146,7 @@
                 (t) => t.id === activeCrossGroup.partnerTabId,
             )}
             <div
-                class="relative z-1 px-1 flex flex-col sm:w-full md:w-9/12 lg:w-6/12 rounded-r-md
+                class="relative z-1 px-1 flex flex-col sm:w-full md:w-9/12 lg:w-10/12 rounded-r-md
                         {$zenMode
                     ? ''
                     : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]'}"
@@ -212,6 +213,7 @@
         <Sidebar />
     </div>
 </div>
+<UpDownMargin />
 <SurahWidget />
 <EditorToolbar onOpenSettings={() => (showSettings = true)} />
 <TourOverlay />
@@ -220,7 +222,11 @@
     onClose={() => (showSettings = false)}
     onOpenHelp={() => openHelp()}
 />
-<HelpDialog open={$helpStore.open} initialSection={$helpStore.section} onClose={closeHelp} />
+<HelpDialog
+    open={$helpStore.open}
+    initialSection={$helpStore.section}
+    onClose={closeHelp}
+/>
 <ManuscriptViewer
     open={$manuscriptViewerOpen}
     onClose={() => manuscriptViewerOpen.set(false)}

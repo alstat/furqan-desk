@@ -273,7 +273,7 @@
 				class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[11px]
 				       text-brand-charcoal-500 dark:text-[#c6d0f5]
 				       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
-				       rounded transition-colors font-mono text-left"
+				       rounded-full transition-colors font-mono text-left"
 				style="padding-left: {0.5 + depth * 0.75}rem; padding-right: 0.5rem"
 			>
 				{#if node.isLoading}
@@ -326,7 +326,7 @@
 				       text-brand-charcoal-500 dark:text-[#c6d0f5]
 				       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 				       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
-				       rounded transition-colors font-mono text-left"
+				       rounded-full transition-colors font-mono text-left"
 				style="padding-left: {0.5 + depth * 0.75}rem; padding-right: 0.5rem"
 				title={$t('explorer.file_hint')}
 			>

@@ -65,7 +65,8 @@
     const IMPORT_RE = /#import\s+"@([\w-]+)\/([\w-]+):([\d.]+)"/g;
 
     async function ensurePackagesInstalled(source: string): Promise<void> {
-        const imports: { namespace: string; name: string; version: string }[] = [];
+        const imports: { namespace: string; name: string; version: string }[] =
+            [];
         for (const m of source.matchAll(IMPORT_RE)) {
             imports.push({ namespace: m[1], name: m[2], version: m[3] });
         }
@@ -178,7 +179,7 @@
 
     // ── Resize (preview pane) ─────────────────────────────────────────────────
     let containerEl: HTMLDivElement;
-    let previewHeight = $state(216); // 54 × 4px = 216px (replaces fixed h-54)
+    let previewHeight = $state(200); // 54 × 4px = 216px (replaces fixed h-54)
     let dragStartY = 0;
     let dragStartHeight = 0;
 
@@ -218,7 +219,9 @@
                 onclick={() => (lineWrap = !lineWrap)}
                 title={lineWrap ? "Disable line wrap" : "Enable line wrap"}
                 class="{$zenMode
-                    ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200')
+                    ? $zenPeek
+                        ? 'opacity-50 transition-opacity duration-200'
+                        : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
                     : ''} flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                        {lineWrap
                     ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'

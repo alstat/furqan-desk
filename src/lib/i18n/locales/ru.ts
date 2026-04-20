@@ -240,6 +240,8 @@ export const ru: Record<string, string> = {
     'surah.size_medium': 'Средний',
     'surah.size_large': 'Большой',
     'surah.size_xlarge': 'Очень большой',
+    'surah.size_2xlarge': '2X Большой',
+    'surah.size_3xlarge': '3X Большой',
     'surah.hide_page': 'Скрыть страницу суры',
     'surah.translator': 'Переводчик',
     'surah.none': 'Нет',

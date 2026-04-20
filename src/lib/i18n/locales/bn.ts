@@ -249,6 +249,8 @@ export const bn: Record<string, string> = {
   "surah.size_medium": "মাঝারি",
   "surah.size_large": "বড়",
   "surah.size_xlarge": "অতিরিক্ত বড়",
+  "surah.size_2xlarge": "২X বড়",
+  "surah.size_3xlarge": "৩X বড়",
   "surah.hide_page": "সূরা পেজ লুকান",
   "surah.translator": "অনুবাদক",
   "surah.none": "কোনোটি নয়",
