@@ -249,6 +249,8 @@ export const en: Record<string, string> = {
   "surah.size_medium": "Medium",
   "surah.size_large": "Large",
   "surah.size_xlarge": "Extra Large",
+  "surah.size_2xlarge": "2X Large",
+  "surah.size_3xlarge": "3X Large",
   "surah.hide_page": "Hide Surah Page",
   "surah.translator": "Translator",
   "surah.none": "None",

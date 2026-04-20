@@ -34,12 +34,12 @@
 
 <!-- Outer: matches Parchment's outer wrapper exactly; stripped when embedded in a split panel -->
 <div
-    class="{embedded
-        ? 'flex-1 flex flex-col min-h-0 w-full'
+    class={embedded
+        ? "flex-1 flex flex-col min-h-0 w-full"
         : ($zenMode
-            ? ''
-            : 'sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]') +
-          ' relative z-1 flex flex-col items-center rounded-r-md sm:w-full md:w-9/12 lg:w-6/12'}"
+              ? ""
+              : "sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]") +
+          " relative z-1 flex flex-col items-center rounded-r-md sm:w-full md:w-9/12 lg:w-6/12"}
 >
     <!-- Inner: matches Parchment's inner scrollable div (border + rounded-r-md) -->
     <div
@@ -76,10 +76,11 @@
             <button
                 onclick={exportPdf}
                 class={$zenMode
-                    ? actionBtnStyle + ($zenPeek
-                        ? " absolute -top-5 left-11/12 opacity-50 transition-opacity duration-200"
-                        : " absolute -top-5 left-11/12 opacity-0 hover:opacity-100 transition-opacity duration-200")
-                    : actionBtnStyle + " absolute -top-5 left-11/12"}
+                    ? actionBtnStyle +
+                      ($zenPeek
+                          ? " absolute -top-4.5 left-11/12 opacity-50 transition-opacity duration-200"
+                          : " absolute -top-4.5 left-11/12 opacity-0 hover:opacity-100 transition-opacity duration-200")
+                    : actionBtnStyle + " absolute -top-4.5 left-11/12"}
             >
                 <Icon icon="ph:file-pdf-bold" />
             </button>

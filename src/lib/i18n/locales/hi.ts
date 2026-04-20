@@ -249,6 +249,8 @@ export const hi: Record<string, string> = {
   "surah.size_medium": "मध्यम",
   "surah.size_large": "बड़ा",
   "surah.size_xlarge": "अतिरिक्त बड़ा",
+  "surah.size_2xlarge": "2X बड़ा",
+  "surah.size_3xlarge": "3X बड़ा",
   "surah.hide_page": "सूरह पेज छुपाएं",
   "surah.translator": "अनुवादक",
   "surah.none": "कोई नहीं",

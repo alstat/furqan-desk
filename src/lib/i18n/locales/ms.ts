@@ -248,6 +248,8 @@ export const ms: Record<string, string> = {
   "surah.size_medium": "Sederhana",
   "surah.size_large": "Besar",
   "surah.size_xlarge": "Sangat Besar",
+  "surah.size_2xlarge": "2X Besar",
+  "surah.size_3xlarge": "3X Besar",
   "surah.hide_page": "Sembunyikan Halaman Surah",
   "surah.translator": "Penterjemah",
   "surah.none": "Tiada",

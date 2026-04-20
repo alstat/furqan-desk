@@ -240,6 +240,8 @@ export const ur: Record<string, string> = {
     'surah.size_medium': 'درمیانہ',
     'surah.size_large': 'بڑا',
     'surah.size_xlarge': 'بہت بڑا',
+    'surah.size_2xlarge': '2X بڑا',
+    'surah.size_3xlarge': '3X بڑا',
     'surah.hide_page': 'سورہ صفحہ چھپائیں',
     'surah.translator': 'مترجم',
     'surah.none': 'کوئی نہیں',

@@ -4,6 +4,33 @@ import type { HistoryState } from "@lexical/history";
 import type { EditorView } from "@codemirror/view";
 import { activeTab } from "./tabs.store";
 
+// ── Parchment Width ────────────────────────────────────────
+function loadSinglePageMargin(): number {
+  try {
+    const v = localStorage.getItem("single-page-margin");
+    if (v) {
+      const n = parseInt(v, 10);
+      if (n >= 6 && n <= 12) return n;
+    }
+  } catch {
+    /* ignore */
+  }
+  return 6;
+}
+const _singlePageMargin = writable<number>(loadSinglePageMargin());
+export const singlePageMargin = {
+  subscribe: _singlePageMargin.subscribe,
+  set(v: number) {
+    const clamped = Math.max(6, Math.min(12, v));
+    try {
+      localStorage.setItem("single-page-margin", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _singlePageMargin.set(clamped);
+  },
+};
+
 // ── Editor theme (Ayu Light / Ayu Mirage) ────────────────────────────────────
 
 export type EditorTheme = "ayu-light" | "ayu-mirage";
@@ -136,16 +163,22 @@ export const tocOpen: Writable<boolean> = writable(false);
 
 function loadZenMode(): boolean {
   try {
-    const v = localStorage.getItem('zen-mode');
-    if (v !== null) return v === 'true';
-  } catch { /* ignore */ }
+    const v = localStorage.getItem("zen-mode");
+    if (v !== null) return v === "true";
+  } catch {
+    /* ignore */
+  }
   return false;
 }
 const _zenMode = writable<boolean>(loadZenMode());
 export const zenMode = {
   subscribe: _zenMode.subscribe,
   set(v: boolean) {
-    try { localStorage.setItem('zen-mode', String(v)); } catch { /* ignore */ }
+    try {
+      localStorage.setItem("zen-mode", String(v));
+    } catch {
+      /* ignore */
+    }
     _zenMode.set(v);
   },
 };

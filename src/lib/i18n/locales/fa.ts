@@ -240,6 +240,8 @@ export const fa: Record<string, string> = {
     'surah.size_medium': 'متوسط',
     'surah.size_large': 'بزرگ',
     'surah.size_xlarge': 'خیلی بزرگ',
+    'surah.size_2xlarge': 'بسیار بزرگ',
+    'surah.size_3xlarge': 'فوق‌العاده بزرگ',
     'surah.hide_page': 'مخفی کردن صفحه سوره',
     'surah.translator': 'مترجم',
     'surah.none': 'هیچ',

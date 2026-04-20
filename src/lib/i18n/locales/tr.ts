@@ -240,6 +240,8 @@ export const tr: Record<string, string> = {
     'surah.size_medium': 'Orta',
     'surah.size_large': 'Büyük',
     'surah.size_xlarge': 'Çok Büyük',
+    'surah.size_2xlarge': '2X Büyük',
+    'surah.size_3xlarge': '3X Büyük',
     'surah.hide_page': 'Sure Sayfasını Gizle',
     'surah.translator': 'Çevirmen',
     'surah.none': 'Hiçbiri',
