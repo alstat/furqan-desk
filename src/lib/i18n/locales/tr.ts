@@ -128,6 +128,7 @@ export const tr: Record<string, string> = {
     'donation.subtitle': 'Uygulamayı ücretsiz tut',
     'donation.kofi': 'Ko-fi\'de Bağış Yap →',
     'donation.scan': '{app} uygulamasıyla tara',
+    'donation.kofi_methods': 'PayPal, kredi ve banka kartlarını destekler',
     // Editor Toolbar
     'editor.settings': 'Ayarlar',
     'editor.app_theme': 'Uygulama Teması',
@@ -140,6 +141,7 @@ export const tr: Record<string, string> = {
     'editor.new_file': 'Yeni Dosya',
     'editor.create_new': 'Yeni Oluştur',
     'editor.app_controls': 'Uygulama Kontrolleri',
+    'editor.page_width': 'Sayfa Genişliği',
     // Triple-dot dropdown
     'toolbar.more_options': 'Daha fazla seçenek',
     'toolbar.insert_section': 'Ekle',
@@ -211,6 +213,7 @@ export const tr: Record<string, string> = {
     'recitation.next': 'Sonraki ayet',
     'recitation.downloading': 'İndiriliyor…',
     'recitation.download': 'Tilaveti indir',
+    'recitation.cancel': 'İndirmeyi iptal etmek için tıklayın',
     // Recitation download dialog
     'recitation_dl.title': 'Çevrimdışı Tilavet',
     'recitation_dl.subtitle': 'Çevrimdışı oynatma için indir',

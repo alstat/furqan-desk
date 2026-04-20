@@ -134,6 +134,7 @@ export const hi: Record<string, string> = {
   "donation.subtitle": "ऐप को मुफ़्त रखें",
   "donation.kofi": "Ko-fi पर दान करें →",
   "donation.scan": "{app} ऐप से स्कैन करें",
+  "donation.kofi_methods": "PayPal, क्रेडिट और डेबिट कार्ड का समर्थन करता है",
   // Editor Toolbar
   "editor.settings": "सेटिंग्स",
   "editor.app_theme": "ऐप थीम",
@@ -146,6 +147,7 @@ export const hi: Record<string, string> = {
   "editor.new_file": "नई फ़ाइल",
   "editor.create_new": "नया बनाएं",
   "editor.app_controls": "ऐप नियंत्रण",
+  "editor.page_width": "पृष्ठ चौड़ाई",
   // Triple-dot dropdown
   "toolbar.more_options": "अधिक विकल्प",
   "toolbar.insert_section": "सम्मिलित करें",
@@ -220,6 +222,7 @@ export const hi: Record<string, string> = {
   "recitation.next": "अगली आयत",
   "recitation.downloading": "डाउनलोड हो रहा है…",
   "recitation.download": "तिलावत डाउनलोड करें",
+  "recitation.cancel": "डाउनलोड रद्द करने के लिए क्लिक करें",
   // Recitation download dialog
   "recitation_dl.title": "ऑफलाइन तिलावत",
   "recitation_dl.subtitle": "ऑफलाइन प्लेबैक के लिए डाउनलोड करें",

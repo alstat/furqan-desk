@@ -128,6 +128,7 @@ export const fa: Record<string, string> = {
     'donation.subtitle': 'برنامه را رایگان نگه دارید',
     'donation.kofi': 'کمک مالی در Ko-fi →',
     'donation.scan': 'با برنامه {app} اسکن کنید',
+    'donation.kofi_methods': 'پشتیبانی از PayPal، کارت‌های اعتباری و بدهکاری',
     // Editor Toolbar
     'editor.settings': 'تنظیمات',
     'editor.app_theme': 'تم برنامه',
@@ -140,6 +141,7 @@ export const fa: Record<string, string> = {
     'editor.new_file': 'فایل جدید',
     'editor.create_new': 'ایجاد جدید',
     'editor.app_controls': 'کنترل‌های برنامه',
+    'editor.page_width': 'عرض صفحه',
     // Triple-dot dropdown
     'toolbar.more_options': 'گزینه‌های بیشتر',
     'toolbar.insert_section': 'درج',
@@ -211,6 +213,7 @@ export const fa: Record<string, string> = {
     'recitation.next': 'آیه بعدی',
     'recitation.downloading': 'در حال دانلود…',
     'recitation.download': 'دانلود تلاوت',
+    'recitation.cancel': 'برای لغو دانلود کلیک کنید',
     // Recitation download dialog
     'recitation_dl.title': 'تلاوت آفلاین',
     'recitation_dl.subtitle': 'دانلود برای پخش آفلاین',

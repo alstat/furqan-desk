@@ -128,6 +128,7 @@ export const ur: Record<string, string> = {
     'donation.subtitle': 'ایپ کو مفت رکھیں',
     'donation.kofi': 'Ko-fi پر عطیہ دیں →',
     'donation.scan': '{app} ایپ سے اسکین کریں',
+    'donation.kofi_methods': 'PayPal، کریڈٹ اور ڈیبٹ کارڈز کو سپورٹ کرتا ہے',
     // Editor Toolbar
     'editor.settings': 'ترتیبات',
     'editor.app_theme': 'ایپ تھیم',
@@ -140,6 +141,7 @@ export const ur: Record<string, string> = {
     'editor.new_file': 'نئی فائل',
     'editor.create_new': 'نئی بنائیں',
     'editor.app_controls': 'ایپ کنٹرولز',
+    'editor.page_width': 'صفحے کی چوڑائی',
     // Triple-dot dropdown
     'toolbar.more_options': 'مزید اختیارات',
     'toolbar.insert_section': 'داخل کریں',
@@ -211,6 +213,7 @@ export const ur: Record<string, string> = {
     'recitation.next': 'اگلی آیت',
     'recitation.downloading': 'ڈاؤن لوڈ ہو رہا ہے…',
     'recitation.download': 'تلاوت ڈاؤن لوڈ کریں',
+    'recitation.cancel': 'ڈاؤن لوڈ روکنے کے لیے کلک کریں',
     // Recitation download dialog
     'recitation_dl.title': 'آف لائن تلاوت',
     'recitation_dl.subtitle': 'آف لائن سننے کے لیے ڈاؤن لوڈ کریں',

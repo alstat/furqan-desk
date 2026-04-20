@@ -161,9 +161,9 @@
         {#if (!$hideSurahPage() && !$isSidebar) || ($hideSurahPage() && $isSidebar)}
             <div class="border-t border-brand-sand-200"></div>
 
-            <!-- Parchment Width -->
+            <!-- Page Width -->
             <div>
-                <span class={labelClass}>Parchment Width</span>
+                <span class={labelClass}>{$t('editor.page_width')}</span>
                 <div class="flex items-center gap-2 mt-1.5">
                     <button
                         onclick={() => singlePageMargin.set($singlePageMargin - 1)}

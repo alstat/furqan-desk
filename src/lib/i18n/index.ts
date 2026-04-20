@@ -17,8 +17,17 @@ import { de } from './locales/de';
 import { fr } from './locales/fr';
 import { es } from './locales/es';
 import { ru } from './locales/ru';
+import { vi } from './locales/vi';
+import { th } from './locales/th';
+import { my } from './locales/my';
+import { ceb } from './locales/ceb';
+import { kk } from './locales/kk';
+import { uz } from './locales/uz';
+import { tk } from './locales/tk';
+import { ky } from './locales/ky';
+import { tg } from './locales/tg';
 
-export type Locale = 'en' | 'ar' | 'bn' | 'fa' | 'hi' | 'id' | 'ms' | 'pt' | 'tl' | 'tr' | 'ur' | 'zh' | 'ja' | 'ko' | 'de' | 'fr' | 'es' | 'ru';
+export type Locale = 'en' | 'ar' | 'bn' | 'fa' | 'hi' | 'id' | 'ms' | 'pt' | 'tl' | 'tr' | 'ur' | 'zh' | 'ja' | 'ko' | 'de' | 'fr' | 'es' | 'ru' | 'vi' | 'th' | 'my' | 'ceb' | 'kk' | 'uz' | 'tk' | 'ky' | 'tg';
 
 export const LOCALE_NAMES: Record<Locale, string> = {
     en: 'English',
@@ -39,9 +48,18 @@ export const LOCALE_NAMES: Record<Locale, string> = {
     fr: 'Français',
     es: 'Español',
     ru: 'Русский',
+    vi: 'Tiếng Việt',
+    th: 'ภาษาไทย',
+    my: 'မြန်မာဘာသာ',
+    ceb: 'Bisaya',
+    kk: 'Қазақша',
+    uz: "O'zbek",
+    tk: 'Türkmen',
+    ky: 'Кыргызча',
+    tg: 'Тоҷикӣ',
 };
 
-const locales: Record<Locale, Record<string, string>> = { en, ar, bn, fa, hi, id, ms, pt, tl, tr, ur, zh, ja, ko, de, fr, es, ru };
+const locales: Record<Locale, Record<string, string>> = { en, ar, bn, fa, hi, id, ms, pt, tl, tr, ur, zh, ja, ko, de, fr, es, ru, vi, th, my, ceb, kk, uz, tk, ky, tg };
 
 function loadLocale(): Locale {
     try {

@@ -135,6 +135,7 @@ export const de: Record<string, string> = {
   "donation.subtitle": "Die App kostenlos halten",
   "donation.kofi": "Auf Ko-fi spenden →",
   "donation.scan": "Mit {app} scannen",
+  "donation.kofi_methods": "Unterstützt PayPal, Kredit- & Debitkarten",
   // Editor Toolbar
   "editor.settings": "Einstellungen",
   "editor.app_theme": "App-Design",
@@ -147,6 +148,7 @@ export const de: Record<string, string> = {
   "editor.new_file": "Neue Datei",
   "editor.create_new": "Neu erstellen",
   "editor.app_controls": "App-Steuerung",
+  "editor.page_width": "Seitenbreite",
   // Triple-dot dropdown
   "toolbar.more_options": "Weitere Optionen",
   "toolbar.insert_section": "Einfügen",
@@ -221,6 +223,7 @@ export const de: Record<string, string> = {
   "recitation.next": "Nächster Vers",
   "recitation.downloading": "Wird heruntergeladen…",
   "recitation.download": "Rezitation herunterladen",
+  "recitation.cancel": "Klicken Sie, um den Download abzubrechen",
   // Recitation download dialog
   "recitation_dl.title": "Offline-Rezitation",
   "recitation_dl.subtitle": "Für die Offline-Wiedergabe herunterladen",

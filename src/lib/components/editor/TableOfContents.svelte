@@ -1,5 +1,6 @@
 <script lang="ts">
     import { fly } from "svelte/transition";
+    import { onDestroy } from "svelte";
     import { $getRoot as getRoot } from "lexical";
     import { $isHeadingNode as isHeadingNode } from "@lexical/rich-text";
     import { tocOpen, tocAnchorRect, lexicalEditorInstance } from "$lib/stores/editor.store";
@@ -7,6 +8,7 @@
     import { activeTab } from "$lib/stores/tabs.store";
     import Icon from "@iconify/svelte";
     import { t } from "$lib/i18n";
+    import { bringToFront } from "$lib/stores/window-manager.store";
 
     interface TocEntry {
         key: string;
@@ -14,8 +16,46 @@
         tag: "h1" | "h2" | "h3";
     }
 
+    const PANEL_W = 208;
+
     let headings = $state<TocEntry[]>([]);
     let activeKey = $state<string | null>(null);
+    let x = $state(0);
+    let y = $state(0);
+    let zIndex = $state(500);
+    let isDragging = $state(false);
+    let dragStartX = 0, dragStartY = 0, startX = 0, startY = 0;
+    let initialized = false;
+
+    $effect(() => {
+        if ($tocOpen && !initialized) {
+            const rect = $tocAnchorRect;
+            x = rect ? Math.min(rect.right + 8, window.innerWidth - PANEL_W - 8) : Math.max(0, (window.innerWidth - PANEL_W) / 2);
+            y = rect ? Math.max(8, rect.top) : Math.max(8, (window.innerHeight - 420) * 0.25);
+            zIndex = bringToFront();
+            initialized = true;
+        }
+        if (!$tocOpen) initialized = false;
+    });
+
+    function startDrag(e: PointerEvent) {
+        isDragging = true;
+        dragStartX = e.clientX; dragStartY = e.clientY;
+        startX = x; startY = y;
+        window.addEventListener('pointermove', onDrag);
+        window.addEventListener('pointerup', stopDrag, { once: true });
+    }
+    function onDrag(e: PointerEvent) {
+        x = Math.max(0, Math.min(window.innerWidth - PANEL_W, startX + (e.clientX - dragStartX)));
+        y = Math.max(0, Math.min(window.innerHeight - 60, startY + (e.clientY - dragStartY)));
+    }
+    function stopDrag() {
+        isDragging = false;
+        window.removeEventListener('pointermove', onDrag);
+    }
+    onDestroy(() => {
+        if (typeof window !== 'undefined') window.removeEventListener('pointermove', onDrag);
+    });
 
     $effect(() => {
         const editor = $lexicalEditorInstance;
@@ -70,18 +110,22 @@
 {#if $tocOpen && $tocAnchorRect}
     <div
         transition:fly={{ y: 9, duration: 180, opacity: 0 }}
-        class="fixed z-50 w-52 max-h-[65vh]
+        class="fixed max-h-[65vh]
 		       rounded-3xl overflow-hidden flex flex-col
 		       bg-white dark:bg-[#292c3c]
 		       border border-stone-200 dark:border-[#414559]
 		       shadow-md shadow-black/5 dark:shadow-black/20"
-        style="top: {$tocAnchorRect.top}px; left: {$tocAnchorRect.right + 8}px;"
+        role="dialog"
+        style="top: {y}px; left: {x}px; width: {PANEL_W}px; z-index: {zIndex};"
+        onpointerdown={() => { zIndex = bringToFront(); }}
     >
         <!-- Header -->
         <div
             class="shrink-0 flex items-center gap-2 px-4 py-2.5
 			       border-b border-stone-200 dark:border-[#414559]
-			       bg-brand-sand-50 dark:bg-[#232634]"
+			       bg-brand-sand-50 dark:bg-[#232634]
+			       {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
+            onpointerdown={startDrag}
         >
             <Icon
                 icon="solar:list-bold-duotone"

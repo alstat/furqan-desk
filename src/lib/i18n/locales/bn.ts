@@ -134,6 +134,7 @@ export const bn: Record<string, string> = {
   "donation.subtitle": "অ্যাপটি বিনামূল্যে রাখুন",
   "donation.kofi": "Ko-fi-তে দান করুন →",
   "donation.scan": "{app} অ্যাপ দিয়ে স্ক্যান করুন",
+  "donation.kofi_methods": "PayPal, ক্রেডিট ও ডেবিট কার্ড সমর্থিত",
   // Editor Toolbar
   "editor.settings": "সেটিংস",
   "editor.app_theme": "অ্যাপ থিম",
@@ -146,6 +147,7 @@ export const bn: Record<string, string> = {
   "editor.new_file": "নতুন ফাইল",
   "editor.create_new": "নতুন তৈরি করুন",
   "editor.app_controls": "অ্যাপ নিয়ন্ত্রণ",
+  "editor.page_width": "পৃষ্ঠার প্রস্থ",
   // Triple-dot dropdown
   "toolbar.more_options": "আরো বিকল্প",
   "toolbar.insert_section": "সন্নিবেশ",
@@ -219,6 +221,7 @@ export const bn: Record<string, string> = {
   "recitation.next": "পরের আয়াত",
   "recitation.downloading": "ডাউনলোড হচ্ছে…",
   "recitation.download": "তিলাওয়াত ডাউনলোড করুন",
+  "recitation.cancel": "ডাউনলোড বাতিল করতে ক্লিক করুন",
   // Recitation download dialog
   "recitation_dl.title": "অফলাইন তিলাওয়াত",
   "recitation_dl.subtitle": "অফলাইন প্লেব্যাকের জন্য ডাউনলোড করুন",

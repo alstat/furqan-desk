@@ -165,7 +165,8 @@
       "Bash(codesign -d --entitlements - /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/target/universal-apple-darwin/release/bundle/macos/AyahLab.app)",
       "Bash(codesign -d --entitlements - /Applications/AyahLab.app)",
       "Bash(cargo metadata:*)",
-      "Bash(pkill -f AyahLab)"
+      "Bash(pkill -f AyahLab)",
+      "Bash(sed 's/:$//')"
     ]
   }
 }

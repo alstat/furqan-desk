@@ -4,7 +4,7 @@ import type { HistoryState } from "@lexical/history";
 import type { EditorView } from "@codemirror/view";
 import { activeTab } from "./tabs.store";
 
-// ── Parchment Width ────────────────────────────────────────
+// ── Page Width ────────────────────────────────────────
 function loadSinglePageMargin(): number {
   try {
     const v = localStorage.getItem("single-page-margin");

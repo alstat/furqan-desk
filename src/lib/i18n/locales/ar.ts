@@ -128,6 +128,7 @@ export const ar: Record<string, string> = {
     'donation.subtitle': 'أبقِ التطبيق مجانياً',
     'donation.kofi': 'تبرع عبر Ko-fi →',
     'donation.scan': 'امسح بتطبيق {app}',
+    'donation.kofi_methods': 'يدعم PayPal وبطاقات الائتمان والخصم',
     // Editor Toolbar
     'editor.settings': 'الإعدادات',
     'editor.app_theme': 'سمة التطبيق',
@@ -140,6 +141,7 @@ export const ar: Record<string, string> = {
     'editor.new_file': 'ملف جديد',
     'editor.create_new': 'إنشاء جديد',
     'editor.app_controls': 'أدوات التطبيق',
+    'editor.page_width': 'عرض الصفحة',
     // Triple-dot dropdown
     'toolbar.more_options': 'خيارات إضافية',
     'toolbar.insert_section': 'إدراج',
@@ -211,6 +213,7 @@ export const ar: Record<string, string> = {
     'recitation.next': 'الآية التالية',
     'recitation.downloading': 'جارٍ التنزيل…',
     'recitation.download': 'تنزيل التلاوة',
+    'recitation.cancel': 'انقر لإلغاء التنزيل',
     // Recitation download dialog
     'recitation_dl.title': 'التلاوة دون إنترنت',
     'recitation_dl.subtitle': 'تنزيل للاستماع دون اتصال',

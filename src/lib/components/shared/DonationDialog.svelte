@@ -104,7 +104,7 @@
                         <span class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">Ko-fi</span>
                     </div>
                     <p class="text-[11px] text-brand-charcoal-300 dark:text-[#8087a2]">
-                        Supports PayPal, credit &amp; debit cards
+                        {$t('donation.kofi_methods')}
                     </p>
                     <button
                         onclick={handleKofi}

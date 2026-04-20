@@ -134,6 +134,7 @@ export const en: Record<string, string> = {
   "donation.subtitle": "Keep the app free",
   "donation.kofi": "Donate on Ko-fi →",
   "donation.scan": "Scan with {app} app",
+  "donation.kofi_methods": "Supports PayPal, credit & debit cards",
   // Editor Toolbar (App Controls panel)
   "editor.settings": "Settings",
   "editor.app_theme": "App Theme",
@@ -146,6 +147,7 @@ export const en: Record<string, string> = {
   "editor.new_file": "New File",
   "editor.create_new": "Create New",
   "editor.app_controls": "App Controls",
+  "editor.page_width": "Page Width",
   // Triple-dot overflow dropdown
   "toolbar.more_options": "More options",
   "toolbar.insert_section": "Insert",

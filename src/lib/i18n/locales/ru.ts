@@ -128,6 +128,7 @@ export const ru: Record<string, string> = {
     'donation.subtitle': 'Сохранить приложение бесплатным',
     'donation.kofi': 'Пожертвовать на Ko-fi →',
     'donation.scan': 'Сканировать приложением {app}',
+    'donation.kofi_methods': 'Поддерживает PayPal, кредитные и дебетовые карты',
     // Editor Toolbar
     'editor.settings': 'Настройки',
     'editor.app_theme': 'Тема приложения',
@@ -140,6 +141,7 @@ export const ru: Record<string, string> = {
     'editor.new_file': 'Новый файл',
     'editor.create_new': 'Создать новый',
     'editor.app_controls': 'Управление приложением',
+    'editor.page_width': 'Ширина страницы',
     // Triple-dot dropdown
     'toolbar.more_options': 'Дополнительные параметры',
     'toolbar.insert_section': 'Вставить',
@@ -211,6 +213,7 @@ export const ru: Record<string, string> = {
     'recitation.next': 'Следующий аят',
     'recitation.downloading': 'Загрузка…',
     'recitation.download': 'Скачать чтение',
+    'recitation.cancel': 'Нажмите, чтобы отменить загрузку',
     // Recitation download dialog
     'recitation_dl.title': 'Чтение офлайн',
     'recitation_dl.subtitle': 'Скачать для офлайн-воспроизведения',

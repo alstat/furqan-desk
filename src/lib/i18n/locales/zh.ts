@@ -128,6 +128,7 @@ export const zh: Record<string, string> = {
     'donation.subtitle': '让应用保持免费',
     'donation.kofi': '在 Ko-fi 上捐款 →',
     'donation.scan': '用 {app} 扫描',
+    'donation.kofi_methods': '支持 PayPal、信用卡和借记卡',
     // Editor Toolbar
     'editor.settings': '设置',
     'editor.app_theme': '应用主题',
@@ -140,6 +141,7 @@ export const zh: Record<string, string> = {
     'editor.new_file': '新建文件',
     'editor.create_new': '新建',
     'editor.app_controls': '应用控制',
+    'editor.page_width': '页面宽度',
     // Triple-dot dropdown
     'toolbar.more_options': '更多选项',
     'toolbar.insert_section': '插入',
@@ -211,6 +213,7 @@ export const zh: Record<string, string> = {
     'recitation.next': '下一节经文',
     'recitation.downloading': '下载中…',
     'recitation.download': '下载诵经',
+    'recitation.cancel': '点击取消下载',
     // Recitation download dialog
     'recitation_dl.title': '离线诵经',
     'recitation_dl.subtitle': '下载以供离线播放',
