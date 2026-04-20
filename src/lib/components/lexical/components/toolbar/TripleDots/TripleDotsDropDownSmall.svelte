@@ -33,9 +33,26 @@
         $getSelection as getSelection,
         $isRangeSelection as isRangeSelection,
     } from "lexical";
-    import { t } from '$lib/i18n';
+    import { t } from "$lib/i18n";
+    import { hideSurahPage } from "$lib/stores/quran.svelte";
 
-    let { windowWidth, onInsertImageClick, onInsertEquationClick } = $props();
+    let {
+        windowWidth,
+        onInsertImageClick,
+        onInsertEquationClick,
+        expanded = false,
+    }: {
+        windowWidth: number;
+        onInsertImageClick: () => void;
+        onInsertEquationClick: () => void;
+        expanded?: boolean;
+    } = $props();
+
+    const lineSpacings = [
+        { label: $t("toolbar.spacing_single"), value: "1" },
+        { label: $t("toolbar.spacing_1_5"), value: "1.5" },
+        { label: $t("toolbar.spacing_double"), value: "2" },
+    ];
 
     let isOpen = $state(false);
     let dropdownRef: HTMLDivElement;
@@ -135,89 +152,110 @@
     });
 </script>
 
-<div class="relative" bind:this={dropdownRef}>
-    <button
-        bind:this={buttonRef}
-        onclick={toggleDropdown}
-        class={"p-1 " + toolBarBtnStyle + (isOpen ? " " + activeBtnStyle : "")}
-        aria-label={$t('toolbar.more_options')}
-    >
-        <Icon icon={icons["tripleDots"]} height="1rem" />
-    </button>
-
-    {#if isOpen}
-        <Portal>
-            <div
-                transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-                class="absolute z-50 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm"
-                style="width: 12rem;"
-                bind:this={panelRef}
-                use:handlePortalMount
+{#if expanded && $hideSurahPage()}
+    <div class="flex items-center gap-1">
+        <Indent />
+        <Outdent />
+        <Divider />
+        {#each lineSpacings as spacing}
+            <button
+                class={"p-1 flex items-center gap-0.5 " +
+                    toolBarBtnStyle +
+                    ($lineHeight === spacing.value ? " " + activeBtnStyle : "")}
+                onclick={() => applyLineSpacing(spacing.value)}
+                title={spacing.label}
             >
-                <div class="py-1">
-                    <!-- LG breakpoint items (show when width < lg) -->
-                    {#if windowWidth < 1024}
-                        <div class="py-1">
-                            <div class="flex items-center">
-                                <!-- MD breakpoint items (show when width < md) -->
-                                {#if windowWidth < 768}
-                                    <BoldButton />
-                                    <ItalicButton />
-                                {/if}
-                                <UnderlineButton />
-                                <StrikethroughButton />
-                                <FormatCodeButton />
-                            </div>
-                        </div>
-                        <div
-                            class="my-1 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
-                        ></div>
-                    {/if}
+                <Icon icon={icons["lineSpacing"]} height="1rem" />
+                <span class="text-[10px]">{spacing.value}×</span>
+            </button>
+        {/each}
+    </div>
+{:else}
+    <div class="relative" bind:this={dropdownRef}>
+        <button
+            bind:this={buttonRef}
+            onclick={toggleDropdown}
+            class={"p-1 " +
+                toolBarBtnStyle +
+                (isOpen ? " " + activeBtnStyle : "")}
+            aria-label={$t("toolbar.more_options")}
+        >
+            <Icon icon={icons["tripleDots"]} height="1rem" />
+        </button>
 
-                    <!-- XL breakpoint items (show when width < xl) -->
-                    <!-- {#if windowWidth < 1380} -->
-                    <div class="px-5 py-2">
-                        <div class="flex items-center py-1">
-                            <Indent />
-                            <Outdent />
-                        </div>
-                        <div
-                            class="my-1 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
-                        ></div>
-                        <div class="py-1">
-                            <span
-                                class="text-xs font-medium text-brand-charcoal-500"
-                                >{$t('toolbar.line_spacing')}</span
-                            >
-                            <div class="mt-1 flex flex-col space-y-1">
-                                {#each [{ label: $t('toolbar.spacing_single'), value: "1" }, { label: $t('toolbar.spacing_1_5'), value: "1.5" }, { label: $t('toolbar.spacing_double'), value: "2" }] as spacing}
-                                    <button
-                                        class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-full hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100 {$lineHeight ===
-                                        spacing.value
-                                            ? 'bg-brand-sand-200 text-brand-charcoal-900 font-semibold'
-                                            : ''}"
-                                        onclick={() =>
-                                            applyLineSpacing(spacing.value)}
-                                    >
-                                        <div
-                                            class="flex w-32 flex-row items-center"
+        {#if isOpen}
+            <Portal>
+                <div
+                    transition:fly={{ y: 8, duration: 180, opacity: 0 }}
+                    class="absolute z-50 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm"
+                    style="width: 12rem;"
+                    bind:this={panelRef}
+                    use:handlePortalMount
+                >
+                    <div class="py-1">
+                        <!-- LG breakpoint items (show when width < lg) -->
+                        {#if windowWidth < 1024}
+                            <div class="py-1">
+                                <div class="flex items-center">
+                                    <!-- MD breakpoint items (show when width < md) -->
+                                    {#if windowWidth < 768}
+                                        <BoldButton />
+                                        <ItalicButton />
+                                    {/if}
+                                    <UnderlineButton />
+                                    <StrikethroughButton />
+                                    <FormatCodeButton />
+                                </div>
+                            </div>
+                            <div
+                                class="my-1 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
+                            ></div>
+                        {/if}
+
+                        <div class="px-5 py-2">
+                            <div class="flex items-center py-1">
+                                <Indent />
+                                <Outdent />
+                            </div>
+                            <div
+                                class="my-1 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
+                            ></div>
+                            <div class="py-1">
+                                <span
+                                    class="text-xs font-medium text-brand-charcoal-500"
+                                    >{$t("toolbar.line_spacing")}</span
+                                >
+                                <div class="mt-1 flex flex-col space-y-1">
+                                    {#each lineSpacings as spacing}
+                                        <button
+                                            class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-full hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100 {$lineHeight ===
+                                            spacing.value
+                                                ? 'bg-brand-sand-200 text-brand-charcoal-900 font-semibold'
+                                                : ''}"
+                                            onclick={() =>
+                                                applyLineSpacing(spacing.value)}
                                         >
-                                            <div class="pr-2">
-                                                <Icon
-                                                    icon={icons["lineSpacing"]}
-                                                    width="1rem"
-                                                />
+                                            <div
+                                                class="flex w-32 flex-row items-center"
+                                            >
+                                                <div class="pr-2">
+                                                    <Icon
+                                                        icon={icons[
+                                                            "lineSpacing"
+                                                        ]}
+                                                        width="1rem"
+                                                    />
+                                                </div>
+                                                <div>{spacing.label}</div>
                                             </div>
-                                            <div>{spacing.label}</div>
-                                        </div>
-                                    </button>
-                                {/each}
+                                        </button>
+                                    {/each}
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <!-- {/if} -->
                 </div>
-            </div>
-        </Portal>
-    {/if}
-</div>
+            </Portal>
+        {/if}
+    </div>
+{/if}

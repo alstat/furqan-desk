@@ -478,4 +478,20 @@ export const bn: Record<string, string> = {
   "editor.equation.placeholder": "যেমন: x^2 + y^2 = z^2",
   "editor.equation.preview_placeholder": "প্রিভিউ এখানে দেখা যাবে",
   "editor.code.edit_title": "কোড ব্লক সম্পাদনা করুন",
+  // Ayah hover buttons (MorphologyView)
+  "morphology.play_basmallah": "বিসমিল্লাহ বাজান",
+  "morphology.play_ayah": "আয়াত {ayah} বাজান",
+  "morphology.view_manuscripts": "আয়াত {ayah} এর পাণ্ডুলিপি দেখুন",
+  "morphology.insert_ayah": "আয়াত {ayah} সম্পাদকে যোগ করুন",
+  // Slash commands
+  "slash.math_label": "ইনলাইন গণিত",
+  "slash.math_desc": "ইনলাইন LaTeX সমীকরণ যোগ করুন",
+  "slash.math_block_label": "গণিত ব্লক",
+  "slash.math_block_desc": "ব্লক LaTeX সমীকরণ যোগ করুন",
+  "slash.table_label": "সারণী",
+  "slash.table_desc": "সারণী যোগ করুন — যেমন: /table-5-3",
+  "slash.quote_label": "উদ্ধৃতি",
+  "slash.quote_desc": "ব্লক উদ্ধৃতি হিসেবে ফরম্যাট করুন",
+  "slash.checklist_label": "চেকলিস্ট",
+  "slash.checklist_desc": "একটি চেকলিস্ট যোগ করুন",
 };

@@ -476,4 +476,20 @@ export const hi: Record<string, string> = {
   "editor.equation.placeholder": "उदा. x^2 + y^2 = z^2",
   "editor.equation.preview_placeholder": "पूर्वावलोकन यहाँ दिखाई देगा",
   "editor.code.edit_title": "कोड ब्लॉक संपादित करें",
+  // Ayah hover buttons (MorphologyView)
+  "morphology.play_basmallah": "बिस्मिल्लाह चलाएं",
+  "morphology.play_ayah": "आयत {ayah} चलाएं",
+  "morphology.view_manuscripts": "आयत {ayah} की पांडुलिपि देखें",
+  "morphology.insert_ayah": "आयत {ayah} को संपादक में डालें",
+  // Slash commands
+  "slash.math_label": "इनलाइन गणित",
+  "slash.math_desc": "इनलाइन LaTeX समीकरण डालें",
+  "slash.math_block_label": "गणित ब्लॉक",
+  "slash.math_block_desc": "ब्लॉक LaTeX समीकरण डालें",
+  "slash.table_label": "तालिका",
+  "slash.table_desc": "तालिका डालें — जैसे: /table-5-3",
+  "slash.quote_label": "उद्धरण",
+  "slash.quote_desc": "ब्लॉक उद्धरण के रूप में फ़ॉर्मेट करें",
+  "slash.checklist_label": "चेकलिस्ट",
+  "slash.checklist_desc": "चेकलिस्ट डालें",
 };

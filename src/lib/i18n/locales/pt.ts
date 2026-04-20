@@ -479,4 +479,20 @@ export const pt: Record<string, string> = {
   "editor.equation.placeholder": "ex. x^2 + y^2 = z^2",
   "editor.equation.preview_placeholder": "A visualização aparecerá aqui",
   "editor.code.edit_title": "Editar bloco de código",
+  // Ayah hover buttons (MorphologyView)
+  "morphology.play_basmallah": "Reproduzir Basmala",
+  "morphology.play_ayah": "Reproduzir versículo {ayah}",
+  "morphology.view_manuscripts": "Ver manuscritos do versículo {ayah}",
+  "morphology.insert_ayah": "Inserir versículo {ayah} no editor",
+  // Slash commands
+  "slash.math_label": "Matemática em linha",
+  "slash.math_desc": "Inserir equação LaTeX em linha",
+  "slash.math_block_label": "Bloco matemático",
+  "slash.math_block_desc": "Inserir equação LaTeX em bloco",
+  "slash.table_label": "Tabela",
+  "slash.table_desc": "Inserir tabela — ex. /table-5-3",
+  "slash.quote_label": "Citação",
+  "slash.quote_desc": "Formatar como citação em bloco",
+  "slash.checklist_label": "Lista de verificação",
+  "slash.checklist_desc": "Inserir uma lista de verificação",
 };

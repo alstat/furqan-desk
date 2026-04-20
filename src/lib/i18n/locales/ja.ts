@@ -477,4 +477,20 @@ export const ja: Record<string, string> = {
   "editor.equation.placeholder": "例: x^2 + y^2 = z^2",
   "editor.equation.preview_placeholder": "プレビューがここに表示されます",
   "editor.code.edit_title": "コードブロックを編集",
+  // Ayah hover buttons (MorphologyView)
+  "morphology.play_basmallah": "ビスミッラーを再生",
+  "morphology.play_ayah": "アーヤ {ayah} を再生",
+  "morphology.view_manuscripts": "アーヤ {ayah} の写本を表示",
+  "morphology.insert_ayah": "アーヤ {ayah} をエディタに挿入",
+  // Slash commands
+  "slash.math_label": "インライン数式",
+  "slash.math_desc": "インラインLaTeX数式を挿入",
+  "slash.math_block_label": "数式ブロック",
+  "slash.math_block_desc": "ブロックLaTeX数式を挿入",
+  "slash.table_label": "テーブル",
+  "slash.table_desc": "テーブルを挿入 — 例: /table-5-3",
+  "slash.quote_label": "引用",
+  "slash.quote_desc": "ブロック引用としてフォーマット",
+  "slash.checklist_label": "チェックリスト",
+  "slash.checklist_desc": "チェックリストを挿入",
 };

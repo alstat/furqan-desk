@@ -467,4 +467,20 @@ export const fa: Record<string, string> = {
     'editor.equation.placeholder': 'مثال: x^2 + y^2 = z^2',
     'editor.equation.preview_placeholder': 'پیش‌نمایش اینجا نمایش داده می‌شود',
     'editor.code.edit_title': 'ویرایش بلوک کد',
+    // Ayah hover buttons (MorphologyView)
+    'morphology.play_basmallah': 'پخش بسم‌الله',
+    'morphology.play_ayah': 'پخش آیه {ayah}',
+    'morphology.view_manuscripts': 'مشاهده نسخ خطی آیه {ayah}',
+    'morphology.insert_ayah': 'درج آیه {ayah} در ویرایشگر',
+    // Slash commands
+    'slash.math_label': 'ریاضی درون‌خطی',
+    'slash.math_desc': 'درج معادله LaTeX درون‌خطی',
+    'slash.math_block_label': 'بلوک ریاضی',
+    'slash.math_block_desc': 'درج معادله LaTeX بلوکی',
+    'slash.table_label': 'جدول',
+    'slash.table_desc': 'درج جدول — مثال: /table-5-3',
+    'slash.quote_label': 'نقل‌قول',
+    'slash.quote_desc': 'قالب‌بندی به صورت نقل‌قول',
+    'slash.checklist_label': 'چک‌لیست',
+    'slash.checklist_desc': 'درج چک‌لیست',
 };

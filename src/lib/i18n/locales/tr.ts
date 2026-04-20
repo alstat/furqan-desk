@@ -467,4 +467,20 @@ export const tr: Record<string, string> = {
     'editor.equation.placeholder': 'örn. x^2 + y^2 = z^2',
     'editor.equation.preview_placeholder': 'Önizleme burada görünecek',
     'editor.code.edit_title': 'Kod bloğunu düzenle',
+    // Ayah hover buttons (MorphologyView)
+    'morphology.play_basmallah': "Besmele'yi oynat",
+    'morphology.play_ayah': '{ayah}. ayeti oynat',
+    'morphology.view_manuscripts': '{ayah}. ayet el yazmalarını görüntüle',
+    'morphology.insert_ayah': '{ayah}. ayeti editöre ekle',
+    // Slash commands
+    'slash.math_label': 'Satır içi matematik',
+    'slash.math_desc': 'Satır içi LaTeX denklemi ekle',
+    'slash.math_block_label': 'Matematik bloğu',
+    'slash.math_block_desc': 'Blok LaTeX denklemi ekle',
+    'slash.table_label': 'Tablo',
+    'slash.table_desc': 'Tablo ekle — örn. /table-5-3',
+    'slash.quote_label': 'Alıntı',
+    'slash.quote_desc': 'Blok alıntı olarak biçimlendir',
+    'slash.checklist_label': 'Kontrol listesi',
+    'slash.checklist_desc': 'Kontrol listesi ekle',
 };

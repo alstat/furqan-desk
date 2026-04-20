@@ -467,4 +467,20 @@ export const zh: Record<string, string> = {
     'editor.equation.placeholder': '例如 x^2 + y^2 = z^2',
     'editor.equation.preview_placeholder': '预览将在这里显示',
     'editor.code.edit_title': '编辑代码块',
+    // Ayah hover buttons (MorphologyView)
+    'morphology.play_basmallah': '播放比斯米拉',
+    'morphology.play_ayah': '播放第 {ayah} 节',
+    'morphology.view_manuscripts': '查看第 {ayah} 节的手稿',
+    'morphology.insert_ayah': '将第 {ayah} 节插入编辑器',
+    // Slash commands
+    'slash.math_label': '行内数学',
+    'slash.math_desc': '插入行内 LaTeX 公式',
+    'slash.math_block_label': '数学块',
+    'slash.math_block_desc': '插入块级 LaTeX 公式',
+    'slash.table_label': '表格',
+    'slash.table_desc': '插入表格 — 例如: /table-5-3',
+    'slash.quote_label': '引用',
+    'slash.quote_desc': '格式化为块引用',
+    'slash.checklist_label': '清单',
+    'slash.checklist_desc': '插入清单',
 };
