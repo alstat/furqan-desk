@@ -137,6 +137,7 @@ export const tl: Record<string, string> = {
   "donation.subtitle": "Panatilihing libre ang app",
   "donation.kofi": "Mag-donate sa Ko-fi →",
   "donation.scan": "I-scan gamit ang app na {app}",
+  "donation.kofi_methods": "Sumusuporta sa PayPal, credit at debit cards",
   // Editor Toolbar
   "editor.settings": "Mga Setting",
   "editor.app_theme": "Tema ng App",
@@ -149,6 +150,7 @@ export const tl: Record<string, string> = {
   "editor.new_file": "Bagong File",
   "editor.create_new": "Lumikha ng Bago",
   "editor.app_controls": "Mga Kontrol ng App",
+  "editor.page_width": "Lapad ng Pahina",
   // Triple-dot dropdown
   "toolbar.more_options": "Higit pang mga opsyon",
   "toolbar.insert_section": "Ipasok",
@@ -223,6 +225,7 @@ export const tl: Record<string, string> = {
   "recitation.next": "Susunod na ayah",
   "recitation.downloading": "Dina-download…",
   "recitation.download": "I-download ang recitation",
+  "recitation.cancel": "I-click para ma-cancel ang download",
   // Recitation download dialog
   "recitation_dl.title": "Offline na Recitation",
   "recitation_dl.subtitle": "I-download para sa offline na pag-play",

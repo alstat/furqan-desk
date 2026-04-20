@@ -128,6 +128,7 @@ export const id: Record<string, string> = {
     'donation.subtitle': 'Jaga agar aplikasi tetap gratis',
     'donation.kofi': 'Donasi di Ko-fi →',
     'donation.scan': 'Pindai dengan aplikasi {app}',
+    'donation.kofi_methods': 'Mendukung PayPal, kartu kredit & debit',
     // Editor Toolbar
     'editor.settings': 'Pengaturan',
     'editor.app_theme': 'Tema Aplikasi',
@@ -140,6 +141,7 @@ export const id: Record<string, string> = {
     'editor.new_file': 'File Baru',
     'editor.create_new': 'Buat Baru',
     'editor.app_controls': 'Kontrol Aplikasi',
+    'editor.page_width': 'Lebar Halaman',
     // Triple-dot dropdown
     'toolbar.more_options': 'Opsi lainnya',
     'toolbar.insert_section': 'Sisipkan',
@@ -211,6 +213,7 @@ export const id: Record<string, string> = {
     'recitation.next': 'Ayat berikutnya',
     'recitation.downloading': 'Mengunduh…',
     'recitation.download': 'Unduh bacaan',
+    'recitation.cancel': 'Klik untuk membatalkan unduhan',
     // Recitation download dialog
     'recitation_dl.title': 'Bacaan Offline',
     'recitation_dl.subtitle': 'Unduh untuk pemutaran offline',

@@ -128,6 +128,7 @@ export const ko: Record<string, string> = {
     'donation.subtitle': '앱을 무료로 유지',
     'donation.kofi': 'Ko-fi에서 후원 →',
     'donation.scan': '{app} 앱으로 스캔',
+    'donation.kofi_methods': 'PayPal, 신용카드 및 체크카드 지원',
     // Editor Toolbar
     'editor.settings': '설정',
     'editor.app_theme': '앱 테마',
@@ -140,6 +141,7 @@ export const ko: Record<string, string> = {
     'editor.new_file': '새 파일',
     'editor.create_new': '새로 만들기',
     'editor.app_controls': '앱 컨트롤',
+    'editor.page_width': '페이지 너비',
     // Triple-dot dropdown
     'toolbar.more_options': '더 많은 옵션',
     'toolbar.insert_section': '삽입',
@@ -211,6 +213,7 @@ export const ko: Record<string, string> = {
     'recitation.next': '다음 아야',
     'recitation.downloading': '다운로드 중…',
     'recitation.download': '낭송 다운로드',
+    'recitation.cancel': '다운로드를 취소하려면 클릭하세요',
     // Recitation download dialog
     'recitation_dl.title': '오프라인 낭송',
     'recitation_dl.subtitle': '오프라인 재생을 위해 다운로드',

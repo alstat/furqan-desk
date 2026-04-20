@@ -134,6 +134,7 @@ export const ja: Record<string, string> = {
   "donation.subtitle": "アプリを無料に保つ",
   "donation.kofi": "Ko-fi で寄付 →",
   "donation.scan": "{app} アプリでスキャン",
+  "donation.kofi_methods": "PayPal、クレジット・デビットカード対応",
   // Editor Toolbar
   "editor.settings": "設定",
   "editor.app_theme": "アプリのテーマ",
@@ -146,6 +147,7 @@ export const ja: Record<string, string> = {
   "editor.new_file": "新しいファイル",
   "editor.create_new": "新規作成",
   "editor.app_controls": "アプリコントロール",
+  "editor.page_width": "ページ幅",
   // Triple-dot dropdown
   "toolbar.more_options": "その他のオプション",
   "toolbar.insert_section": "挿入",
@@ -219,6 +221,7 @@ export const ja: Record<string, string> = {
   "recitation.next": "次のアーヤ",
   "recitation.downloading": "ダウンロード中…",
   "recitation.download": "朗誦をダウンロード",
+  "recitation.cancel": "クリックしてダウンロードをキャンセル",
   // Recitation download dialog
   "recitation_dl.title": "オフライン朗誦",
   "recitation_dl.subtitle": "オフライン再生用にダウンロード",

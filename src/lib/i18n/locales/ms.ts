@@ -134,6 +134,7 @@ export const ms: Record<string, string> = {
   "donation.subtitle": "Jaga aplikasi tetap percuma",
   "donation.kofi": "Derma di Ko-fi →",
   "donation.scan": "Imbas dengan aplikasi {app}",
+  "donation.kofi_methods": "Menyokong PayPal, kad kredit & debit",
   // Editor Toolbar
   "editor.settings": "Tetapan",
   "editor.app_theme": "Tema Aplikasi",
@@ -146,6 +147,7 @@ export const ms: Record<string, string> = {
   "editor.new_file": "Fail Baru",
   "editor.create_new": "Cipta Baru",
   "editor.app_controls": "Kawalan Aplikasi",
+  "editor.page_width": "Lebar Halaman",
   // Triple-dot dropdown
   "toolbar.more_options": "Pilihan lain",
   "toolbar.insert_section": "Masukkan",
@@ -219,6 +221,7 @@ export const ms: Record<string, string> = {
   "recitation.next": "Ayat seterusnya",
   "recitation.downloading": "Memuat turun…",
   "recitation.download": "Muat turun bacaan",
+  "recitation.cancel": "Klik untuk membatalkan muat turun",
   // Recitation download dialog
   "recitation_dl.title": "Bacaan Luar Talian",
   "recitation_dl.subtitle": "Muat turun untuk main balik luar talian",
