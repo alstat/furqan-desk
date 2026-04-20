@@ -220,6 +220,7 @@ export const en: Record<string, string> = {
   "recitation.next": "Next ayah",
   "recitation.downloading": "Downloading…",
   "recitation.download": "Download recitation",
+  "recitation.cancel": "Click to cancel download",
   // Reciter select dialog
   "reciter_select.title": "Choose Reciters",
   "reciter_select.subtitle": "Select two reciters to display in the player",
@@ -478,4 +479,20 @@ export const en: Record<string, string> = {
   "editor.equation.placeholder": "e.g. x^2 + y^2 = z^2",
   "editor.equation.preview_placeholder": "Preview will appear here",
   "editor.code.edit_title": "Edit Code Block",
+  // Ayah hover buttons (MorphologyView)
+  "morphology.play_basmallah": "Play Basmallah",
+  "morphology.play_ayah": "Play ayah {ayah}",
+  "morphology.view_manuscripts": "View manuscripts for ayah {ayah}",
+  "morphology.insert_ayah": "Insert ayah {ayah} to editor",
+  // Slash commands
+  "slash.math_label": "Inline Math",
+  "slash.math_desc": "Insert inline LaTeX equation",
+  "slash.math_block_label": "Math Block",
+  "slash.math_block_desc": "Insert block LaTeX equation",
+  "slash.table_label": "Table",
+  "slash.table_desc": "Insert table — e.g. /table-5-3",
+  "slash.quote_label": "Quote",
+  "slash.quote_desc": "Format as block quote",
+  "slash.checklist_label": "Check List",
+  "slash.checklist_desc": "Insert a checklist",
 };

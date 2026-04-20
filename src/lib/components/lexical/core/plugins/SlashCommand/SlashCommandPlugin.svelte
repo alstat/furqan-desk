@@ -23,6 +23,10 @@
     } from "@lexical/utils";
     import { $createTableNodeWithDimensions as createTableNodeWithDimensions } from "@lexical/table";
     import { $createEquationNode as createEquationNode } from "../Equation/EquationNode.js";
+    import { $setBlocksType as setBlocksType } from "@lexical/selection";
+    import { $createQuoteNode as createQuoteNode } from "@lexical/rich-text";
+    import { INSERT_CHECK_LIST_COMMAND } from "@lexical/list";
+    import { t } from "$lib/i18n";
 
     const editor = getEditor();
 
@@ -33,26 +37,38 @@
         icon: string;
     }
 
-    const COMMANDS: SlashCommand[] = [
+    const COMMANDS: SlashCommand[] = $derived([
         {
             id: "math",
-            label: "Inline Math",
-            description: "Insert inline LaTeX equation",
+            label: $t("slash.math_label"),
+            description: $t("slash.math_desc"),
             icon: icons["math"],
         },
         {
             id: "math-block",
-            label: "Math Block",
-            description: "Insert block LaTeX equation",
+            label: $t("slash.math_block_label"),
+            description: $t("slash.math_block_desc"),
             icon: icons["math"],
         },
         {
             id: "table",
-            label: "Table",
-            description: "Insert table — e.g. /table-5-3",
+            label: $t("slash.table_label"),
+            description: $t("slash.table_desc"),
             icon: "fluent:table-16-filled",
         },
-    ];
+        {
+            id: "quote",
+            label: $t("slash.quote_label"),
+            description: $t("slash.quote_desc"),
+            icon: icons["quote"],
+        },
+        {
+            id: "checklist",
+            label: $t("slash.checklist_label"),
+            description: $t("slash.checklist_desc"),
+            icon: icons["checklist"],
+        },
+    ]);
 
     let isOpen = $state(false);
     let query = $state("");
@@ -121,8 +137,15 @@
                     const para = createParagraphNode();
                     tableNode.insertAfter(para);
                 }
+            } else if (cmdId === "quote") {
+                const sel = getSelection();
+                setBlocksType(sel, () => createQuoteNode());
             }
         });
+
+        if (cmdId === "checklist") {
+            editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined);
+        }
     }
 
     function portal(node: HTMLElement) {

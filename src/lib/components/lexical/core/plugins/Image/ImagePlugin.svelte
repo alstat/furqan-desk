@@ -33,6 +33,7 @@
 		type LexicalCommand,
 		type LexicalEditor
 	} from 'lexical';
+	import { $createLinkNode as createLinkNode } from '@lexical/link';
 	import { $wrapNodeInElement as wrapNodeInElement, mergeRegister } from '@lexical/utils';
 
 	import { onMount } from 'svelte';
@@ -78,12 +79,22 @@
 						wrapNodeInElement(imageNode, createParagraphNode).selectEnd();
 					}
 
-					if (payload.captionText) {
-						const metaParagraph = createParagraphNode();
-						metaParagraph.append(createTextNode(payload.captionText));
-						imageNode.getParentOrThrow().insertAfter(metaParagraph);
-						metaParagraph.selectEnd();
+if (payload.captionText) {
+					const metaParagraph = createParagraphNode();
+					metaParagraph.append(createTextNode(payload.captionText));
+					if (payload.linkUrl) {
+						metaParagraph.append(createTextNode(" · "));
+						const linkText = createTextNode("View on Corpus Coranicum");
+						const linkNode = createLinkNode(payload.linkUrl, {
+							target: '_blank',
+							rel: 'noopener noreferrer',
+						});
+						linkNode.append(linkText);
+						metaParagraph.append(linkNode);
 					}
+					imageNode.getParentOrThrow().insertAfter(metaParagraph);
+					metaParagraph.selectEnd();
+				}
 
 					return true;
 				},

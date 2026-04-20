@@ -467,4 +467,20 @@ export const ur: Record<string, string> = {
     'editor.equation.placeholder': 'مثلاً: x^2 + y^2 = z^2',
     'editor.equation.preview_placeholder': 'پیش نظارہ یہاں ظاہر ہوگا',
     'editor.code.edit_title': 'کوڈ بلاک ترمیم کریں',
+    // Ayah hover buttons (MorphologyView)
+    'morphology.play_basmallah': 'بسم اللہ چلائیں',
+    'morphology.play_ayah': 'آیت {ayah} چلائیں',
+    'morphology.view_manuscripts': 'آیت {ayah} کے قلمی نسخے دیکھیں',
+    'morphology.insert_ayah': 'آیت {ayah} کو ایڈیٹر میں داخل کریں',
+    // Slash commands
+    'slash.math_label': 'انٹرلائن ریاضی',
+    'slash.math_desc': 'انٹرلائن LaTeX مساوات داخل کریں',
+    'slash.math_block_label': 'ریاضی بلاک',
+    'slash.math_block_desc': 'بلاک LaTeX مساوات داخل کریں',
+    'slash.table_label': 'جدول',
+    'slash.table_desc': 'جدول داخل کریں — مثلاً: /table-5-3',
+    'slash.quote_label': 'اقتباس',
+    'slash.quote_desc': 'بلاک اقتباس کے طور پر فارمیٹ کریں',
+    'slash.checklist_label': 'چیک لسٹ',
+    'slash.checklist_desc': 'چیک لسٹ داخل کریں',
 };

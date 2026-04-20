@@ -467,4 +467,20 @@ export const ko: Record<string, string> = {
     'editor.equation.placeholder': '예: x^2 + y^2 = z^2',
     'editor.equation.preview_placeholder': '미리보기가 여기에 표시됩니다',
     'editor.code.edit_title': '코드 블록 편집',
+    // Ayah hover buttons (MorphologyView)
+    'morphology.play_basmallah': '비스밀라 재생',
+    'morphology.play_ayah': '구절 {ayah} 재생',
+    'morphology.view_manuscripts': '구절 {ayah}의 사본 보기',
+    'morphology.insert_ayah': '구절 {ayah}을 편집기에 삽입',
+    // Slash commands
+    'slash.math_label': '인라인 수식',
+    'slash.math_desc': '인라인 LaTeX 수식 삽입',
+    'slash.math_block_label': '수식 블록',
+    'slash.math_block_desc': '블록 LaTeX 수식 삽입',
+    'slash.table_label': '표',
+    'slash.table_desc': '표 삽입 — 예: /table-5-3',
+    'slash.quote_label': '인용',
+    'slash.quote_desc': '블록 인용으로 서식 지정',
+    'slash.checklist_label': '체크리스트',
+    'slash.checklist_desc': '체크리스트 삽입',
 };

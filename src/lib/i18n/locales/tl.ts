@@ -481,4 +481,20 @@ export const tl: Record<string, string> = {
   "editor.equation.placeholder": "hal. x^2 + y^2 = z^2",
   "editor.equation.preview_placeholder": "Ang preview ay lilitaw dito",
   "editor.code.edit_title": "I-edit ang code block",
+  // Ayah hover buttons (MorphologyView)
+  "morphology.play_basmallah": "I-play ang Basmallah",
+  "morphology.play_ayah": "I-play ang talata {ayah}",
+  "morphology.view_manuscripts": "Tingnan ang mga manuskrito ng talata {ayah}",
+  "morphology.insert_ayah": "Ipasok ang talata {ayah} sa editor",
+  // Slash commands
+  "slash.math_label": "Inline na matematika",
+  "slash.math_desc": "Maglagay ng inline na LaTeX equation",
+  "slash.math_block_label": "Bloke ng matematika",
+  "slash.math_block_desc": "Maglagay ng bloke na LaTeX equation",
+  "slash.table_label": "Talahanayan",
+  "slash.table_desc": "Maglagay ng talahanayan — hal. /table-5-3",
+  "slash.quote_label": "Sipi",
+  "slash.quote_desc": "I-format bilang block quote",
+  "slash.checklist_label": "Checklist",
+  "slash.checklist_desc": "Maglagay ng checklist",
 };

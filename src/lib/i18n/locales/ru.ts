@@ -467,4 +467,20 @@ export const ru: Record<string, string> = {
     'editor.equation.placeholder': 'напр. x^2 + y^2 = z^2',
     'editor.equation.preview_placeholder': 'Здесь появится предварительный просмотр',
     'editor.code.edit_title': 'Редактировать блок кода',
+    // Ayah hover buttons (MorphologyView)
+    'morphology.play_basmallah': 'Воспроизвести Басмалу',
+    'morphology.play_ayah': 'Воспроизвести аят {ayah}',
+    'morphology.view_manuscripts': 'Просмотреть рукописи аята {ayah}',
+    'morphology.insert_ayah': 'Вставить аят {ayah} в редактор',
+    // Slash commands
+    'slash.math_label': 'Встроенная математика',
+    'slash.math_desc': 'Вставить встроенное уравнение LaTeX',
+    'slash.math_block_label': 'Математический блок',
+    'slash.math_block_desc': 'Вставить блочное уравнение LaTeX',
+    'slash.table_label': 'Таблица',
+    'slash.table_desc': 'Вставить таблицу — напр. /table-5-3',
+    'slash.quote_label': 'Цитата',
+    'slash.quote_desc': 'Форматировать как блочную цитату',
+    'slash.checklist_label': 'Список задач',
+    'slash.checklist_desc': 'Вставить список задач',
 };

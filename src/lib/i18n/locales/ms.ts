@@ -475,4 +475,20 @@ export const ms: Record<string, string> = {
   "editor.equation.placeholder": "cth. x^2 + y^2 = z^2",
   "editor.equation.preview_placeholder": "Pratonton akan muncul di sini",
   "editor.code.edit_title": "Edit blok kod",
+  // Ayah hover buttons (MorphologyView)
+  "morphology.play_basmallah": "Main Basmallah",
+  "morphology.play_ayah": "Main ayat {ayah}",
+  "morphology.view_manuscripts": "Lihat manuskrip ayat {ayah}",
+  "morphology.insert_ayah": "Masukkan ayat {ayah} ke editor",
+  // Slash commands
+  "slash.math_label": "Matematik sebaris",
+  "slash.math_desc": "Masukkan persamaan LaTeX sebaris",
+  "slash.math_block_label": "Blok matematik",
+  "slash.math_block_desc": "Masukkan persamaan LaTeX blok",
+  "slash.table_label": "Jadual",
+  "slash.table_desc": "Masukkan jadual — cth. /table-5-3",
+  "slash.quote_label": "Petikan",
+  "slash.quote_desc": "Format sebagai petikan blok",
+  "slash.checklist_label": "Senarai semak",
+  "slash.checklist_desc": "Masukkan senarai semak",
 };

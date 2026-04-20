@@ -467,4 +467,20 @@ export const id: Record<string, string> = {
     'editor.equation.placeholder': 'mis. x^2 + y^2 = z^2',
     'editor.equation.preview_placeholder': 'Pratinjau akan muncul di sini',
     'editor.code.edit_title': 'Edit blok kode',
+    // Ayah hover buttons (MorphologyView)
+    'morphology.play_basmallah': 'Putar Basmallah',
+    'morphology.play_ayah': 'Putar ayat {ayah}',
+    'morphology.view_manuscripts': 'Lihat manuskrip ayat {ayah}',
+    'morphology.insert_ayah': 'Sisipkan ayat {ayah} ke editor',
+    // Slash commands
+    'slash.math_label': 'Matematika sebaris',
+    'slash.math_desc': 'Sisipkan persamaan LaTeX sebaris',
+    'slash.math_block_label': 'Blok matematika',
+    'slash.math_block_desc': 'Sisipkan persamaan LaTeX blok',
+    'slash.table_label': 'Tabel',
+    'slash.table_desc': 'Sisipkan tabel — mis. /table-5-3',
+    'slash.quote_label': 'Kutipan',
+    'slash.quote_desc': 'Format sebagai kutipan blok',
+    'slash.checklist_label': 'Daftar periksa',
+    'slash.checklist_desc': 'Sisipkan daftar periksa',
 };

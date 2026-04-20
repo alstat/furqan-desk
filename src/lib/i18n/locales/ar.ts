@@ -467,4 +467,20 @@ export const ar: Record<string, string> = {
     'editor.equation.placeholder': 'مثال: x^2 + y^2 = z^2',
     'editor.equation.preview_placeholder': 'ستظهر المعاينة هنا',
     'editor.code.edit_title': 'تحرير كتلة الكود',
+    // Ayah hover buttons (MorphologyView)
+    'morphology.play_basmallah': 'تشغيل البسملة',
+    'morphology.play_ayah': 'تشغيل الآية {ayah}',
+    'morphology.view_manuscripts': 'عرض مخطوطات الآية {ayah}',
+    'morphology.insert_ayah': 'إدراج الآية {ayah} في المحرر',
+    // Slash commands
+    'slash.math_label': 'رياضيات مضمّنة',
+    'slash.math_desc': 'إدراج معادلة LaTeX مضمّنة',
+    'slash.math_block_label': 'كتلة رياضية',
+    'slash.math_block_desc': 'إدراج معادلة LaTeX كتلية',
+    'slash.table_label': 'جدول',
+    'slash.table_desc': 'إدراج جدول — مثال: /table-5-3',
+    'slash.quote_label': 'اقتباس',
+    'slash.quote_desc': 'تنسيق كاقتباس',
+    'slash.checklist_label': 'قائمة مهام',
+    'slash.checklist_desc': 'إدراج قائمة مهام',
 };

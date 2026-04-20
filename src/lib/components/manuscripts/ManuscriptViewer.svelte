@@ -566,6 +566,17 @@
         return parts.join(" · ");
     }
 
+    function buildCorpusCoranicumUrl(): string | null {
+        const ms = selectedManuscript;
+        const page = selectedPage;
+        const ref = $manuscriptAyah;
+        if (!ms || !ref) return null;
+
+        const folio = `${page?.folio ?? ""}${page?.side ?? ""}`.trim();
+        const pagePart = folio ? `/page/${folio}` : "";
+        return `https://corpuscoranicum.de/en/manuscripts/${ms.manuscript_id}${pagePart}?sura=${ref.surah}&verse=${ref.ayah}`;
+    }
+
     async function insertToLexical() {
         const editor = get(lexicalEditorInstance);
         if (!editor || !imageSrc) return;
@@ -598,10 +609,12 @@
                 ? `${selectedManuscript.title} — Folio ${selectedPage?.folio ?? ""}${selectedPage?.side ?? ""}`
                 : "Manuscript image";
             const captionText = buildCaptionText();
+            const linkUrl = buildCorpusCoranicumUrl();
             editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
                 src: dataUrl,
                 altText,
                 captionText,
+                linkUrl,
             });
             insertMsg = "✓ Inserted";
         } catch (e) {

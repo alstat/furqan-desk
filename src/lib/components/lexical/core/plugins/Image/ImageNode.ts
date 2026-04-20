@@ -28,6 +28,7 @@ export interface ImagePayload {
     captionText?: string;
     height?: number;
     key?: NodeKey;
+    linkUrl?: string;
     maxWidth?: number;
     showCaption?: boolean;
     src: string;

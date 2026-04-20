@@ -45,6 +45,10 @@
             hideSurahPage.set(() => false);
         }
 
+        if (isSidebar) {
+          singlePageMargin.set(6);
+        }
+
         $isSidebar = opening;
         rotateSpring.set(
             $surahOrientation() === "flex-row-reverse"

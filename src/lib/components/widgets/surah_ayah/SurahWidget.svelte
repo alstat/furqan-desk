@@ -42,6 +42,7 @@
     } from "$lib/stores/translation.store";
     import { onMount } from "svelte";
     import { t } from '$lib/i18n';
+    import { singlePageMargin } from "$lib/stores/editor.store";
 
     const LANG_NAMES: Record<string, string> = {
         AR: "Arabic",
@@ -369,7 +370,11 @@
                 aria-label={$t('surah.hide_page')}
                 onclick={() => {
                     hideSurah = !hideSurah;
-                    if (hideSurah && !$isSidebar) $isSidebar = true;
+                    if (hideSurah && !$isSidebar) {
+                      $isSidebar = true;
+                    } else if (!hideSurah && isSidebar) {
+                      singlePageMargin.set(6);
+                    }
                 }}
                 class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {hideSurah
                     ? 'bg-brand-gold-400'

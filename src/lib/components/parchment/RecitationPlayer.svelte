@@ -544,36 +544,55 @@
             class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"
         ></div>
 
-        <!-- Download / spinner — only rendered when relevant; trailing divider included -->
-        {#if $isDownloading || !currentSurahDownloaded}
-            {#if $isDownloading}
-                <div
-                    class="p-1.5 text-brand-gold-500 dark:text-[#e5c890]"
-                    title={$t("recitation.downloading")}
-                    aria-label={$t("recitation.downloading")}
-                    role="status"
-                >
-                    <Icon
-                        icon="solar:refresh-bold-duotone"
-                        width="1rem"
-                        class="animate-spin"
-                    />
+        <!-- Download / progress — always visible during download; trailing divider -->
+        {#if $isDownloading}
+            {@const progressPct = $downloadProgress && $downloadProgress.total > 0 ? ($downloadProgress.downloaded / $downloadProgress.total) * 100 : 0}
+            <button
+                onclick={async () => {
+                    try {
+                        await invoke("cancel_recitation_download");
+                        isDownloading.set(false);
+                        downloadProgress.set(null);
+                    } catch (e) {
+                        console.error("Cancel failed:", e);
+                    }
+                }}
+                title={$t("recitation.cancel")}
+                aria-label={$t("recitation.cancel")}
+                class="cursor-pointer flex items-center gap-1.5 px-1 hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60 rounded-lg transition-colors"
+            >
+                <Icon
+                    icon="solar:refresh-bold-duotone"
+                    width="0.875rem"
+                    class="animate-spin text-brand-gold-500 dark:text-[#e5c890]"
+                />
+                <div class="w-10 h-1 rounded-full bg-stone-200 dark:bg-[#414559] overflow-hidden">
+                    <div
+                        class="h-full rounded-full bg-brand-gold-500 dark:bg-[#e5c890] transition-all duration-300"
+                        style={`width: ${progressPct}%`}
+                    ></div>
                 </div>
-            {:else}
-                <button
-                    onclick={() => recitationDownloadDialogOpen.set(true)}
-                    aria-label={$t("recitation.download")}
-                    class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
-                           hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
-                           hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
-                           transition-all"
-                >
-                    <Icon
-                        icon="solar:download-minimalistic-bold"
-                        width="1rem"
-                    />
-                </button>
-            {/if}
+                <span class="text-[10px] font-medium text-brand-gold-600 dark:text-[#e5c890]">
+                    {Math.round(progressPct)}%
+                </span>
+            </button>
+            <div
+                class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"
+            ></div>
+        {:else if !currentSurahDownloaded}
+            <button
+                onclick={() => recitationDownloadDialogOpen.set(true)}
+                aria-label={$t("recitation.download")}
+                class="cursor-pointer p-1.5 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
+                       hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
+                       hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
+                       transition-all"
+            >
+                <Icon
+                    icon="solar:download-minimalistic-bold"
+                    width="1rem"
+                />
+            </button>
             <div
                 class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"
             ></div>
