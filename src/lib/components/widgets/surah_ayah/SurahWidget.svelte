@@ -273,7 +273,18 @@
         "w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#626880] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]";
     const labelClass =
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
+
+    let windowWidth = $state(0);
+    $effect(() => {
+      if (windowWidth) {
+      console.log(windowWidth);
+      }
+    }
+    )
+
 </script>
+
+<svelte:window bind:innerWidth={windowWidth} />
 
 {#snippet surahCardBody()}
     <div class="px-4 py-3">
@@ -372,8 +383,15 @@
                     hideSurah = !hideSurah;
                     if (hideSurah && !$isSidebar) {
                       $isSidebar = true;
-                    } else if (!hideSurah && isSidebar) {
-                      singlePageMargin.set(6);
+                    } else if (!hideSurah && $isSidebar) {
+                      if (windowWidth < 1800) {
+                        singlePageMargin.set(12);
+                        console.log(windowWidth)
+                      } else if (windowWidth >= 1800 && windowWidth < 2000) {
+                        singlePageMargin.set(10);
+                      } else {
+                        singlePageMargin.set(8);
+                      }
                     }
                 }}
                 class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {hideSurah
