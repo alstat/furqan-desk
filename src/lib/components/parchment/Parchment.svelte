@@ -209,10 +209,10 @@
     }
 </script>
 
+<!-- style:width="{Math.round(($singlePageMargin / 12) * 100)}%" -->
 <div
     id="tour-parchment"
-    style:width="{Math.round(($singlePageMargin / 12) * 100)}%"
-    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 h-full flex flex-col items-center rounded-sm ${$zenMode && $appDarkMode ? "bg-transparent" : "bg-white dark:bg-[#303446]"} ${$zenMode ? "" : "sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"}`}
+    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 h-full justify-center min-w-0 text-center flex flex-col items-center rounded-sm ${$zenMode && $appDarkMode ? "bg-transparent" : "bg-white dark:bg-[#303446]"} ${$zenMode ? "" : "sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"}`}
 >
     <div class="w-full">
         <ParchmentActionBar

@@ -12,6 +12,7 @@
     import { hideSurahPage, isSidebar, surahOrientation } from "$lib/stores/quran.svelte";
     import { rotateSpring } from "$lib/stores/animation";
     import { t } from '$lib/i18n';
+    import { crossGroups } from "$lib/stores/julia-terminal.store";
 
     // ── create new tab ─────────────────────────────────────────────────────────
     let showNewOptions = $state(false);
@@ -36,7 +37,56 @@
 
     let { onOpenSettings = () => {} }: { onOpenSettings?: () => void } =
         $props();
+
+    let windowWidth = $state(0);
+    let activeTabType = $derived($tabs.find(t => t.id === $activeTabId)?.type);
+
+    let disableLowerPageWidth = $derived.by(() => {
+        const expanded =
+            (!$hideSurahPage() ||
+             $crossGroups.some(g => g.hostTabId === $activeTabId || g.partnerTabId === $activeTabId) ||
+             activeTabType === "julia" ||
+             activeTabType === "typst") &&
+            $isSidebar;
+        if (expanded) {
+            if (windowWidth < 1300) return $singlePageMargin <= 12;
+            if (windowWidth < 1500) return $singlePageMargin <= 11;
+            if (windowWidth < 1800) return $singlePageMargin <= 10;
+            if (windowWidth < 2000) return $singlePageMargin <= 8;
+            return $singlePageMargin <= 6;
+        } else {
+            return $singlePageMargin <= 5;
+        }
+    });
+
+    $effect(() => {
+        const expanded =
+            (!$hideSurahPage() ||
+             $crossGroups.some(g => g.hostTabId === $activeTabId || g.partnerTabId === $activeTabId) ||
+             activeTabType === "julia" ||
+             activeTabType === "typst") &&
+            $isSidebar;
+        if (expanded) {
+            if (windowWidth < 1800) {
+                singlePageMargin.set(12);
+            } else if (windowWidth >= 1800 && windowWidth < 2000) {
+                singlePageMargin.set(10);
+            } else {
+                singlePageMargin.set(8);
+            }
+        } else {
+            if (windowWidth < 1800) {
+                singlePageMargin.set(5);
+            } else if (windowWidth >= 1800 && windowWidth < 2000) {
+                singlePageMargin.set(7);
+            } else {
+                singlePageMargin.set(8);
+            }
+        }
+    })
 </script>
+<svelte:window bind:innerWidth={windowWidth} />
+
 
 {#snippet cardBody()}
     <div class="flex flex-col gap-3.5 px-4 pt-3 pb-4">
@@ -158,7 +208,7 @@
         </div>
 
         <!-- Divider -->
-        {#if (!$hideSurahPage() && !$isSidebar) || ($hideSurahPage() && $isSidebar)}
+        <!-- {#if (!$hideSurahPage() && !$isSidebar) || ($hideSurahPage() && $isSidebar)} -->
             <div class="border-t border-brand-sand-200"></div>
 
             <!-- Page Width -->
@@ -167,7 +217,7 @@
                 <div class="flex items-center gap-2 mt-1.5">
                     <button
                         onclick={() => singlePageMargin.set($singlePageMargin - 1)}
-                        disabled={$singlePageMargin <= 6}
+                        disabled={disableLowerPageWidth}
                         class="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full border
     						   border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
     						   text-brand-charcoal-500 font-semibold text-sm transition-colors
@@ -195,7 +245,7 @@
                     </button>
                 </div>
             </div>
-        {/if}
+        <!-- {/if} -->
 
         <!-- Divider -->
         <div class="border-t border-brand-sand-200"></div>

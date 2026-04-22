@@ -21,7 +21,7 @@
     import type { JuliaGroup, CrossGroup } from "$lib/stores/julia-terminal.store";
     import Icon from "@iconify/svelte";
     import { confirm } from "@tauri-apps/plugin-dialog";
-    import { zenMode, zenPeek } from "$lib/stores/editor.store";
+    import { singlePageMargin, zenMode, zenPeek } from "$lib/stores/editor.store";
 
     const GROUP_COLORS = [
         {
@@ -159,6 +159,19 @@
 
     // Any editor type can show the split icon when the Parchment is hidden
     let canShowSplit = $derived($hideSurahPage());
+    let windowWidth = $state(0);
+
+    $effect(() => {
+      if ($hideSurahPage() && $crossGroups.length > 0 ) {
+        if (windowWidth < 1800) {
+          singlePageMargin.set(12);
+        } else if (windowWidth >= 1800 && windowWidth < 2000) {
+          singlePageMargin.set(10);
+        } else {
+          singlePageMargin.set(8);
+        }
+      }
+    })
 
     function onWindowPointerDown(e: PointerEvent) {
         if (pickerForTabId === null) return;
@@ -351,6 +364,7 @@
     onpointerdown={onWindowPointerDown}
     onpointermove={onWindowPointerMove}
     onpointerup={onWindowPointerUp}
+    bind:innerWidth={windowWidth}
 />
 
 <!-- Outer: clips scrollbar thumb to the rounded-full boundary -->

@@ -17,7 +17,8 @@
         zenPeek,
         singlePageMargin,
     } from "$lib/stores/editor.store";
-    import { activeTab } from "$lib/stores/tabs.store";
+    import { activeTab, activeTabId } from "$lib/stores/tabs.store";
+    import { crossGroups } from "$lib/stores/julia-terminal.store";
     import FeedbackDialog from "./FeedbackDialog.svelte";
     import DonationDialog from "./DonationDialog.svelte";
     import Icon from "@iconify/svelte";
@@ -31,10 +32,16 @@
 
     let { children, roundRight = true } = $props();
 
-    let sidebarWidth = $derived(
-        $isSidebar ? "sm:w-full md:w-9/12 lg:w-6/12" : "",
+    let sidebarWidth = $derived($isSidebar ? "w-full" : "");
+
+    let hasLeftPanel = $derived(
+        !$hideSurahPage() ||
+        $crossGroups.some((g) => g.hostTabId === $activeTabId || g.partnerTabId === $activeTabId) ||
+        $activeTab?.type === "julia" ||
+        $activeTab?.type === "typst"
     );
 
+    let windowWidth = $state(0);
     function toggleSidebar() {
         const opening = !$isSidebar;
 
@@ -45,8 +52,15 @@
             hideSurahPage.set(() => false);
         }
 
-        if (isSidebar) {
-          singlePageMargin.set(6);
+        if (!$hideSurahPage() && $isSidebar) {
+          if (windowWidth < 1800) {
+            singlePageMargin.set(12);
+            console.log(windowWidth)
+          } else if (windowWidth >= 1800 && windowWidth < 2000) {
+            singlePageMargin.set(10);
+          } else {
+            singlePageMargin.set(8);
+          }
         }
 
         $isSidebar = opening;
@@ -92,10 +106,11 @@
         };
     }
 </script>
+<svelte:window bind:innerWidth={windowWidth} />
 
 <div
     id="tour-sidebar"
-    style:width="{$isSidebar ? Math.round($singlePageMargin / 12 * 100) : 0}%"
+    style:width="{$isSidebar ? (hasLeftPanel ? 50 : 100) : 0}%"
     class={`relative flex justify-right overflow-visible font-base text-slate-900 dark:text-[#c6d0f5]`}
 >
     <!-- Sidebar toggle (top) -->

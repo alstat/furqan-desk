@@ -10,7 +10,7 @@ function loadSinglePageMargin(): number {
     const v = localStorage.getItem("single-page-margin");
     if (v) {
       const n = parseInt(v, 10);
-      if (n >= 6 && n <= 12) return n;
+      if (n >= 5 && n <= 12) return n;
     }
   } catch {
     /* ignore */
@@ -21,7 +21,7 @@ const _singlePageMargin = writable<number>(loadSinglePageMargin());
 export const singlePageMargin = {
   subscribe: _singlePageMargin.subscribe,
   set(v: number) {
-    const clamped = Math.max(6, Math.min(12, v));
+    const clamped = Math.max(5, Math.min(12, v));
     try {
       localStorage.setItem("single-page-margin", String(clamped));
     } catch {
