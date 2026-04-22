@@ -339,7 +339,6 @@
                         >
                             <option value="font-scheherazade">Scheherazade New</option>
                             <option value="font-amiri">Amiri Qur'an</option>
-                            <option value="font-garamond">EB Garamond</option>
                         </select>
                         <span
                             class="pointer-events-none absolute inset-y-0 right-2.5 text- flex items-center text-brand-charcoal-300"

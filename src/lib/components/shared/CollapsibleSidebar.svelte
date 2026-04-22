@@ -21,6 +21,7 @@
     import { crossGroups } from "$lib/stores/julia-terminal.store";
     import FeedbackDialog from "./FeedbackDialog.svelte";
     import DonationDialog from "./DonationDialog.svelte";
+    import UserAccountDialog from "./UserAccountDialog.svelte";
     import Icon from "@iconify/svelte";
     import { donationOpen } from "$lib/stores/tour.store";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
@@ -28,6 +29,7 @@
     import { zenMode, appDarkMode } from "$lib/stores/editor.store";
 
     let feedbackOpen = $state(false);
+    let accountOpen = $state(false);
     let tocBtnEl = $state<HTMLButtonElement | null>(null);
 
     let { children, roundRight = true } = $props();
@@ -169,6 +171,16 @@
         </button>
     {/if}
 
+    <!-- User account button (above donation) -->
+    <button
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-26 z-3 ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+        onclick={() => (accountOpen = true)}
+        aria-label="User Account"
+        title="User Account"
+    >
+        <Icon icon="solar:user-bold-duotone" class="h-4 w-4" />
+    </button>
+
     <!-- Donation button (above feedback) -->
     <button
         class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-15 z-3 ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
@@ -196,6 +208,10 @@
     <FeedbackDialog
         open={feedbackOpen}
         onClose={() => (feedbackOpen = false)}
+    />
+    <UserAccountDialog
+        open={accountOpen}
+        onClose={() => (accountOpen = false)}
     />
 
     <div class={$isSidebar ? `flex flex-row w-full` : `hidden`}>

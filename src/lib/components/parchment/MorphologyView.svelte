@@ -489,25 +489,6 @@
 {/snippet}
 
 <div dir="rtl" class="w-full min-w-0">
-    <div dir="ltr" class="{$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''} absolute -top-5.5 left-11/12 z-50">
-        {#if $morphologyMultiSurahList !== null}
-            <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-1 leading-none
-                         bg-brand-sand-100/80 border border-brand-sand-200 backdrop-blur-sm
-                         dark:bg-[#292c3c]/80 dark:border-[#414559]">
-                <span class="inline-block h-1.5 w-1.5 rounded-full bg-brand-gold-400 dark:bg-[#e5c890]"></span>
-                <span class="inline-block h-1.5 w-1.5 rounded-full bg-brand-gold-400 dark:bg-[#e5c890]"></span>
-            </span>
-        {:else}
-            <span
-                class="inline-flex items-center gap-1 rounded-full px-1.5 py-1 text-[9px] font-semibold leading-none
-                         bg-brand-sand-100/80 border border-brand-sand-200 backdrop-blur-sm
-                         dark:bg-[#292c3c]/80 dark:border-[#414559] text-brand-gold-500 dark:text-[#e5c890]"
-            >
-                <Icon icon="solar:book-bold-duotone" width="0.6rem" />
-                {$surahMorphology?.surah ?? ''}
-            </span>
-        {/if}
-    </div>
     {#if $morphologyMultiSurahList !== null}
         <!-- Multi-surah mode: render each surah stacked -->
         {#each $morphologyMultiSurahList as surahData}
