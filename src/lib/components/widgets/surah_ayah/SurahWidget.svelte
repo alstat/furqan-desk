@@ -45,27 +45,40 @@
     import { singlePageMargin } from "$lib/stores/editor.store";
 
     const LANG_NAMES: Record<string, string> = {
+        SQ: "Albanian",
         AR: "Arabic",
         BN: "Bengali",
-        DE: "German",
+        BS: "Bosnian",
+        CEB: "Bisaya",
+        ZH: "Chinese",
         EN: "English",
-        FA: "Persian",
         FR: "French",
+        DE: "German",
         HA: "Hausa",
         HI: "Hindi",
         ID: "Indonesian",
+        JA: "Japanese",
+        KK: "Kazakh",
+        KO: "Korea",
+        KU: "Kurdish",
+        KY: "Kyrgyz",
         MS: "Malay",
+        FA: "Persian",
         PA: "Punjabi",
         PS: "Pashto",
-        ES: "Spanish",
-        JA: "Japanese",
         PT: "Portuguese",
         RU: "Russian",
+        SR: "Serbian",
+        ES: "Spanish",
         SW: "Swahili",
+        TG: "Tajik",
         TL: "Tagalog",
+        TA: "Tamil",
+        TH: "Thai",
         TR: "Turkish",
         UR: "Urdu",
-        ZH: "Chinese",
+        UZ: "Uzbek",
+        VI: "Vietnamese",
     };
 
     let font: string = $state("font-scheherazade");
@@ -418,7 +431,7 @@
                     class={selectClass}
                 >
                     <option value="">{$t('surah.none')}</option>
-                    {#each [...new Set($availableTranslators.map((tr) => tr.lang))] as lang}
+                    {#each [...new Set($availableTranslators.map((tr) => tr.lang))].sort((a, b) => (LANG_NAMES[a] ?? a).localeCompare(LANG_NAMES[b] ?? b)) as lang}
                         <optgroup label={LANG_NAMES[lang] ?? lang}>
                             {#each $availableTranslators.filter((tr) => tr.lang === lang) as tr}
                                 <option value={String(tr.id)}>{tr.name}</option>
@@ -502,7 +515,7 @@
                         class={selectClass}
                     >
                         <option value="">{$t('surah.none')}</option>
-                        {#each [...new Set($availableTafsirAuthors.map((a) => a.lang))] as lang}
+                        {#each [...new Set($availableTafsirAuthors.map((a) => a.lang))].sort((a, b) => (LANG_NAMES[a] ?? a).localeCompare(LANG_NAMES[b] ?? b)) as lang}
                             <optgroup label={LANG_NAMES[lang] ?? lang}>
                                 {#each $availableTafsirAuthors.filter((a) => a.lang === lang) as a}
                                     <option value={String(a.id)}
