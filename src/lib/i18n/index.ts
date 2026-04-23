@@ -26,8 +26,15 @@ import { uz } from './locales/uz';
 import { tk } from './locales/tk';
 import { ky } from './locales/ky';
 import { tg } from './locales/tg';
+import { sq } from './locales/sq';
+import { bs } from './locales/bs';
+import { sr } from './locales/sr';
+import { ku } from './locales/ku';
+import { ta } from './locales/ta';
+import { sw } from './locales/sw';
+import { pa } from './locales/pa';
 
-export type Locale = 'en' | 'ar' | 'bn' | 'fa' | 'hi' | 'id' | 'ms' | 'pt' | 'tl' | 'tr' | 'ur' | 'zh' | 'ja' | 'ko' | 'de' | 'fr' | 'es' | 'ru' | 'vi' | 'th' | 'my' | 'ceb' | 'kk' | 'uz' | 'tk' | 'ky' | 'tg';
+export type Locale = 'en' | 'ar' | 'bn' | 'fa' | 'hi' | 'id' | 'ms' | 'pt' | 'tl' | 'tr' | 'ur' | 'zh' | 'ja' | 'ko' | 'de' | 'fr' | 'es' | 'ru' | 'vi' | 'th' | 'my' | 'ceb' | 'kk' | 'uz' | 'tk' | 'ky' | 'tg' | 'sq' | 'bs' | 'sr' | 'ku' | 'ta' | 'sw' | 'pa';
 
 export const LOCALE_NAMES: Record<Locale, string> = {
     en: 'English',
@@ -57,9 +64,16 @@ export const LOCALE_NAMES: Record<Locale, string> = {
     tk: 'Türkmen',
     ky: 'Кыргызча',
     tg: 'Тоҷикӣ',
+    sq: 'Shqip',
+    bs: 'Bosanski',
+    sr: 'Српски',
+    ku: 'کوردی',
+    ta: 'தமிழ்',
+    sw: 'Kiswahili',
+    pa: 'ਪੰਜਾਬੀ',
 };
 
-const locales: Record<Locale, Record<string, string>> = { en, ar, bn, fa, hi, id, ms, pt, tl, tr, ur, zh, ja, ko, de, fr, es, ru, vi, th, my, ceb, kk, uz, tk, ky, tg };
+const locales: Record<Locale, Record<string, string>> = { en, ar, bn, fa, hi, id, ms, pt, tl, tr, ur, zh, ja, ko, de, fr, es, ru, vi, th, my, ceb, kk, uz, tk, ky, tg, sq, bs, sr, ku, ta, sw, pa };
 
 function loadLocale(): Locale {
     try {
