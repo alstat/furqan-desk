@@ -1,4 +1,4 @@
-import { writable, derived, type Writable } from "svelte/store";
+import { writable, derived, get, type Writable } from "svelte/store";
 import type { LexicalEditor } from "lexical";
 import type { HistoryState } from "@lexical/history";
 import type { EditorView } from "@codemirror/view";
@@ -145,6 +145,88 @@ export const codeMirrorCanUndo: Writable<boolean> = writable(false);
 export const codeMirrorCanRedo: Writable<boolean> = writable(false);
 /** Increment to force TypstEditor to recompile without changing the source. */
 export const typstRecompile: Writable<number> = writable(0);
+
+// ── Custom editor font families ───────────────────────────────────────────────
+
+const CUSTOM_FONT_FAMILIES_KEY = "custom-font-families";
+
+function normalizeCustomFontFamilies(fonts: string[]): string[] {
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+
+  for (const raw of fonts) {
+    const name = raw.trim();
+    if (!name) continue;
+    const key = name.toLocaleLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    normalized.push(name);
+  }
+
+  return normalized;
+}
+
+function loadCustomFontFamilies(): string[] {
+  try {
+    const raw = localStorage.getItem(CUSTOM_FONT_FAMILIES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return normalizeCustomFontFamilies(
+        parsed.filter((value): value is string => typeof value === "string"),
+      );
+    }
+  } catch {
+    /* ignore */
+  }
+  return [];
+}
+
+function persistCustomFontFamilies(fonts: string[]): void {
+  try {
+    localStorage.setItem(CUSTOM_FONT_FAMILIES_KEY, JSON.stringify(fonts));
+  } catch {
+    /* ignore */
+  }
+}
+
+const _customFontFamilies = writable<string[]>(loadCustomFontFamilies());
+
+function setCustomFontFamilies(fonts: string[]): void {
+  const normalized = normalizeCustomFontFamilies(fonts);
+  persistCustomFontFamilies(normalized);
+  _customFontFamilies.set(normalized);
+}
+
+export const customFontFamilies = {
+  subscribe: _customFontFamilies.subscribe,
+  set: setCustomFontFamilies,
+};
+
+export type CustomFontAddResult = "added" | "empty" | "duplicate";
+
+export function addCustomFontFamily(name: string): CustomFontAddResult {
+  const trimmed = name.trim();
+  if (!trimmed) return "empty";
+
+  const exists = get(_customFontFamilies).some(
+    (font) => font.toLocaleLowerCase() === trimmed.toLocaleLowerCase(),
+  );
+  if (exists) return "duplicate";
+
+  setCustomFontFamilies([...get(_customFontFamilies), trimmed]);
+  return "added";
+}
+
+export function removeCustomFontFamily(name: string): void {
+  setCustomFontFamilies(
+    get(_customFontFamilies).filter((font) => font !== name),
+  );
+}
+
+export function resetCustomFontFamilies(): void {
+  setCustomFontFamilies([]);
+}
 
 // ── Julia plot output ─────────────────────────────────────────────────────────
 

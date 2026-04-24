@@ -7,6 +7,9 @@
         getActiveEditor,
         getIsEditable,
     } from "$lexical/core/composerContext.js";
+    import { customFontFamilies } from "$lib/stores/editor.store";
+    import { openCustomFontDialog } from "$lib/stores/custom-font-dialog.store";
+    import { t } from "$lib/i18n";
     import DropDown from "../generic/dropdown/DropDown.svelte";
     import DropDownItem from "../generic/dropdown/DropDownItem.svelte";
 
@@ -26,10 +29,26 @@
 
     const activeEditor = getActiveEditor();
     const value: Writable<string> = getContext("fontFamily");
-    console.log("here is the font family");
-    console.log($value);
     const style = "font-family";
     const isEditable = getIsEditable();
+
+    const allFontOptions = $derived.by(() => {
+        const seen = new Set(
+            FONT_FAMILY_OPTIONS.map(([font]) => font.toLocaleLowerCase()),
+        );
+        const customOptions: [string, string][] = [];
+
+        for (const font of $customFontFamilies) {
+            const key = font.toLocaleLowerCase();
+            if (seen.has(key)) continue;
+            seen.add(key);
+            customOptions.push([font, font]);
+        }
+
+        return [...FONT_FAMILY_OPTIONS, ...customOptions].sort(([a], [b]) =>
+            a.localeCompare(b),
+        );
+    });
 
     const handleClick = (option: string) => {
         $activeEditor.update(() => {
@@ -53,7 +72,13 @@
     {buttonAriaLabel}
 >
     <!-- <Icon slot="buttonIconClassName" icon={icons["fontFamily"]}/> -->
-    {#each FONT_FAMILY_OPTIONS as [option, text]}
+    <DropDownItem
+        class="item w-36"
+        onclick={openCustomFontDialog}
+    >
+        <span class="text">+ {$t('settings.custom_fonts.add_custom')}</span>
+    </DropDownItem>
+    {#each allFontOptions as [option, text]}
         <DropDownItem
             class={`item w-36 ${$value === option ? "active dropdown-item-active" : ""}`}
             onclick={() => handleClick(option)}

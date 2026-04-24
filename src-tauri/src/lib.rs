@@ -122,6 +122,7 @@ pub fn run() {
             commands::get_manuscript_image,
             commands::clear_manuscript_cache,
             commands::get_manuscript_demo_image,
+            commands::get_system_font_families,
             feedback::send_feedback,
         ])
         .on_window_event(|window, event| {

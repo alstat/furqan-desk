@@ -37,6 +37,7 @@ reqwest   = { version = "0.12", default-features = false, features = ["rustls-tl
 flate2    = "1"
 tar       = "0.4"
 tokio     = { version = "1", features = ["process", "io-util", "sync", "rt", "macros", "time", "fs"] }
+fontdb    = "0.23"
 
 [target.'cfg(target_os = "android")'.dependencies]
 ndk         = "0.9"

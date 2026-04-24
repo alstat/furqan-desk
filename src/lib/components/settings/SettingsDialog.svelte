@@ -1,7 +1,12 @@
 <script lang="ts">
     import Icon from '@iconify/svelte';
-    import Dialog from '$lib/components/shared/Dialog.svelte';
-    import { appDarkMode, zenMode } from '$lib/stores/editor.store';
+import Dialog from '$lib/components/shared/Dialog.svelte';
+    import {
+        appDarkMode,
+        zenMode,
+        customFontFamilies,
+    } from '$lib/stores/editor.store';
+    import { openCustomFontDialog } from '$lib/stores/custom-font-dialog.store';
     import { restartTour } from '$lib/stores/tour.store';
     import { invoke } from '@tauri-apps/api/core';
     import { manuscriptsEnabled } from '$lib/stores/manuscripts.store';
@@ -132,7 +137,7 @@
 
         <!-- Help -->
         <div class="py-2">
-            <p class={sectionLabel}>Help</p>
+            <p class={sectionLabel}>{$t('settings.help')}</p>
             <div class="flex items-center justify-between">
                 <span class={rowLabel}>{$t('settings.help.browse')}</span>
                 <button onclick={onOpenHelp} class={actionBtn}>
@@ -144,12 +149,27 @@
 
         <!-- Tutorial -->
         <div class="py-2">
-            <p class={sectionLabel}>Tutorial</p>
+            <p class={sectionLabel}>{$t('settings.tutorial')}</p>
             <div class="flex items-center justify-between">
                 <span class={rowLabel}>{$t('settings.tutorial.desc')}</span>
                 <button onclick={handleRestartTour} class={actionBtn}>
                     <Icon icon="solar:play-circle-bold-duotone" width="0.85rem" />
                     {$t('settings.tutorial.restart')}
+                </button>
+            </div>
+        </div>
+
+        <!-- Custom Fonts -->
+        <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
+            <p class={sectionLabel}>{$t('settings.custom_fonts')}</p>
+            <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] mb-2">
+                {$t('settings.custom_fonts.desc')}
+            </p>
+            <div class="flex items-center justify-between">
+                <span class={rowLabel}>{$customFontFamilies.length} {$t('settings.custom_fonts.saved_count')}</span>
+                <button onclick={openCustomFontDialog} class={actionBtn}>
+                    <Icon icon="solar:settings-bold-duotone" width="0.85rem" />
+                    {$t('settings.custom_fonts.open')}
                 </button>
             </div>
         </div>

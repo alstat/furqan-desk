@@ -15,8 +15,13 @@
     import UpdateToast from "$lib/components/shared/UpdateToast.svelte";
     import NewBlogToast from "$lib/components/shared/NewBlogToast.svelte";
     import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
+    import CustomFontDialog from "$lib/components/settings/CustomFontDialog.svelte";
     import HelpDialog from "$lib/components/help/HelpDialog.svelte";
     import { helpStore, openHelp, closeHelp } from "$lib/stores/help.store";
+    import {
+        customFontDialogOpen,
+        closeCustomFontDialog,
+    } from "$lib/stores/custom-font-dialog.store";
     import ManuscriptViewer from "$lib/components/manuscripts/ManuscriptViewer.svelte";
     import {
         manuscriptViewerOpen,
@@ -231,6 +236,10 @@
     open={showSettings}
     onClose={() => (showSettings = false)}
     onOpenHelp={() => openHelp()}
+/>
+<CustomFontDialog
+    open={$customFontDialogOpen}
+    onClose={closeCustomFontDialog}
 />
 <HelpDialog
     open={$helpStore.open}
