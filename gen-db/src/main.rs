@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 
 /// Increment this whenever the schema or data changes.
 /// Must match DB_VERSION in db.rs.
-const DB_VERSION: i64 = 10;
+const DB_VERSION: i64 = 11;
 
 fn main() {
     // Support running from the workspace root (furqan-desk/) or from src-tauri/
@@ -463,10 +463,20 @@ fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
         &conn,
         &data_dir.join("transliteration/english-transliteration-tajweed-simple.json"),
     )?;
-    init_word_by_word_table(
-        &conn,
-        &data_dir.join("word-by-word/english-wbw-translation.json"),
-    )?;
+    let wbw_langs: &[(&str, &str)] = &[
+        ("english",    "word-by-word/english-wbw-translation.json"),
+        ("bengali",    "word-by-word/bangali-word-by-word-translation.json"),
+        ("french",     "word-by-word/french-wbw-translation.json"),
+        ("hindi",      "word-by-word/hindi-wbw-translation.json"),
+        ("indonesian", "word-by-word/indonesian-word-by-word-translation.json"),
+        ("persian",    "word-by-word/persian-wbw-translation.json"),
+        ("tamil",      "word-by-word/tamil-wbw-translation.json"),
+        ("turkish",    "word-by-word/turkish-wbw-translation.json"),
+        ("urdu",       "word-by-word/urud-wbw.json"),
+    ];
+    for (lang, file) in wbw_langs {
+        init_word_by_word_table(&conn, lang, &data_dir.join(file))?;
+    }
 
     // Stamp the version
     conn.execute_batch(&format!(
@@ -1006,14 +1016,15 @@ fn init_transliteration_table(conn: &Connection, path: &Path) -> Result<()> {
 
 // ─── Word-by-word ─────────────────────────────────────────────────────────────
 
-fn init_word_by_word_table(conn: &Connection, path: &Path) -> Result<()> {
+fn init_word_by_word_table(conn: &Connection, lang: &str, path: &Path) -> Result<()> {
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS word_by_word (
+            lang  TEXT    NOT NULL,
             surah INTEGER NOT NULL,
             ayah  INTEGER NOT NULL,
             word  INTEGER NOT NULL,
             text  TEXT    NOT NULL,
-            PRIMARY KEY (surah, ayah, word)
+            PRIMARY KEY (lang, surah, ayah, word)
         );",
     )?;
 
@@ -1022,7 +1033,7 @@ fn init_word_by_word_table(conn: &Connection, path: &Path) -> Result<()> {
         return Ok(());
     }
 
-    println!("Importing word-by-word …");
+    println!("Importing word-by-word ({lang}) …");
     let content = fs::read_to_string(path)
         .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
     let json: serde_json::Value = serde_json::from_str(&content)
@@ -1035,7 +1046,7 @@ fn init_word_by_word_table(conn: &Connection, path: &Path) -> Result<()> {
     let tx = conn.unchecked_transaction()?;
     {
         let mut stmt = conn.prepare(
-            "INSERT OR IGNORE INTO word_by_word (surah, ayah, word, text) VALUES (?1, ?2, ?3, ?4)",
+            "INSERT OR IGNORE INTO word_by_word (lang, surah, ayah, word, text) VALUES (?1, ?2, ?3, ?4, ?5)",
         )?;
         for (key, val) in obj {
             let parts: Vec<&str> = key.split(':').collect();
@@ -1049,7 +1060,7 @@ fn init_word_by_word_table(conn: &Connection, path: &Path) -> Result<()> {
                 continue;
             }
             let text = val.as_str().unwrap_or("");
-            stmt.execute(rusqlite::params![surah, ayah, word, text])?;
+            stmt.execute(rusqlite::params![lang, surah, ayah, word, text])?;
         }
     }
     tx.commit()?;

@@ -1414,15 +1414,16 @@ pub struct WordTranslation {
 pub fn get_surah_word_by_word(
     db: State<Database>,
     surah: i64,
+    lang: String,
 ) -> Result<Vec<WordTranslation>, String> {
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare(
-            "SELECT ayah, word, text FROM word_by_word WHERE surah = ?1 ORDER BY ayah, word",
+            "SELECT ayah, word, text FROM word_by_word WHERE surah = ?1 AND lang = ?2 ORDER BY ayah, word",
         )
         .map_err(|e| e.to_string())?;
     let rows = stmt
-        .query_map(rusqlite::params![surah], |row| {
+        .query_map(rusqlite::params![surah, lang], |row| {
             Ok(WordTranslation {
                 ayah: row.get(0)?,
                 word: row.get(1)?,

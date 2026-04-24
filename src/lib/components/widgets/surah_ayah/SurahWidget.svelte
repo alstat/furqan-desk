@@ -31,6 +31,7 @@
         activeTranslatorId,
         transliterationEnabled,
         wordByWordEnabled,
+        wordByWordLang,
         tafsirEnabled,
         activeTafsirId,
         availableTafsirAuthors,
@@ -88,6 +89,7 @@
     let selectedTranslatorId: string = $state("");
     let translitEnabled: boolean = $state(false);
     let wbwEnabled: boolean = $state(false);
+    let selectedWbwLang: string = $state("english");
     let tafsirOn: boolean = $state(false);
     let selectedTafsirId: string = $state("");
 
@@ -104,6 +106,7 @@
         if (saved !== null) selectedTranslatorId = String(saved);
         translitEnabled = $transliterationEnabled;
         wbwEnabled = $wordByWordEnabled;
+        selectedWbwLang = $wordByWordLang;
         try {
             const tafsirAuthors =
                 await invoke<TafsirAuthorInfo[]>("get_tafsir_authors");
@@ -143,6 +146,9 @@
     });
     $effect(() => {
         wordByWordEnabled.set(wbwEnabled);
+    });
+    $effect(() => {
+        wordByWordLang.set(selectedWbwLang);
     });
     $effect(() => {
         tafsirEnabled.set(tafsirOn);
@@ -486,6 +492,24 @@
                 ></span>
             </button>
         </div>
+        {#if wbwEnabled}
+            <div class="relative -mt-1.5">
+                <select bind:value={selectedWbwLang} class={selectClass}>
+                    <option value="english">English</option>
+                    <option value="bengali">Bengali</option>
+                    <option value="french">French</option>
+                    <option value="hindi">Hindi</option>
+                    <option value="indonesian">Indonesian</option>
+                    <option value="persian">Persian</option>
+                    <option value="tamil">Tamil</option>
+                    <option value="turkish">Turkish</option>
+                    <option value="urdu">Urdu</option>
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+                    <Icon icon="charm:chevron-down" width="0.75rem" />
+                </span>
+            </div>
+        {/if}
         <div class="border-t border-brand-sand-100 dark:border-[#414559] pt-3">
             <div class="flex items-center justify-between mb-2">
                 <span class={labelClass}>{$t('surah.tafsir')}</span>

@@ -16,7 +16,7 @@
     import Icon from "@iconify/svelte";
     import { requestPlayAyah, requestPlayPosition, requestPlayBasmallah } from "$lib/stores/recitation.store";
     import { invoke } from '@tauri-apps/api/core';
-    import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir, multiSurahTafsirMap, availableTafsirAuthors } from '$lib/stores/translation.store';
+    import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, wordByWordLang, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir, multiSurahTafsirMap, availableTafsirAuthors } from '$lib/stores/translation.store';
     import type { AyahTranslation, AyahTafsir } from '$lib/stores/translation.store';
     import { manuscriptsEnabled, manuscriptAyah, manuscriptViewerOpen } from '$lib/stores/manuscripts.store';
     import { t } from '$lib/i18n';
@@ -53,11 +53,12 @@
     $effect(() => {
         const enabled = $wordByWordEnabled;
         const surah = $surahMorphology?.surah;
+        const lang = $wordByWordLang;
         if (!enabled || !surah) { surahWordByWord.set(null); return; }
-        invoke<Array<{ayah: number; word: number; text: string}>>('get_surah_word_by_word', { surah })
+        invoke<Array<{ayah: number; word: number; text: string}>>('get_surah_word_by_word', { surah, lang })
             .then(rows => {
                 if ($surahMorphology?.surah !== surah) return;
-                console.log(`[WBW] loaded ${rows.length} entries for surah ${surah}`);
+                console.log(`[WBW] loaded ${rows.length} entries for surah ${surah} (${lang})`);
                 surahWordByWord.set(new Map(rows.map(r => [`${r.ayah}:${r.word}`, r.text])));
             })
             .catch(err => {
@@ -101,9 +102,10 @@
     $effect(() => {
         const list = $morphologyMultiSurahList;
         const enabled = $wordByWordEnabled;
+        const lang = $wordByWordLang;
         if (!list || !enabled) { multiSurahWordByWordMap.set(null); return; }
         Promise.all(list.map(s =>
-            invoke<Array<{ayah: number; word: number; text: string}>>('get_surah_word_by_word', { surah: s.surah })
+            invoke<Array<{ayah: number; word: number; text: string}>>('get_surah_word_by_word', { surah: s.surah, lang })
                 .then(rows => [s.surah, new Map(rows.map(r => [`${r.ayah}:${r.word}`, r.text]))] as const)
                 .catch(() => [s.surah, new Map<string, string>()] as const)
         )).then(entries => multiSurahWordByWordMap.set(new Map(entries)));
