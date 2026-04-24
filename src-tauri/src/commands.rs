@@ -1,7 +1,7 @@
 use crate::db::Database;
 use crate::typst_world::get_world;
 use serde::Serialize;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
@@ -2292,4 +2292,19 @@ pub fn get_surah_tafsir(
         .collect::<rusqlite::Result<Vec<_>>>()
         .map_err(|e| e.to_string())?;
     Ok(rows)
+}
+
+#[tauri::command]
+pub fn get_system_font_families() -> Result<Vec<String>, String> {
+    let mut db = fontdb::Database::new();
+    db.load_system_fonts();
+
+    let mut families = BTreeSet::new();
+    for face in db.faces() {
+        for (family, _) in &face.families {
+            families.insert(family.clone());
+        }
+    }
+
+    Ok(families.into_iter().collect())
 }
