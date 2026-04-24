@@ -566,11 +566,11 @@
         return parts.join(" · ");
     }
 
-    function buildCorpusCoranicumUrl(): string | null {
+    function buildCorpusCoranicumUrl(): string | undefined {
         const ms = selectedManuscript;
         const page = selectedPage;
         const ref = $manuscriptAyah;
-        if (!ms || !ref) return null;
+        if (!ms || !ref) return undefined;
 
         const folio = `${page?.folio ?? ""}${page?.side ?? ""}`.trim();
         const pagePart = folio ? `/page/${folio}` : "";

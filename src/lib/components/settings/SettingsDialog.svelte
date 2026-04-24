@@ -9,7 +9,6 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     import { openCustomFontDialog } from '$lib/stores/custom-font-dialog.store';
     import { restartTour } from '$lib/stores/tour.store';
     import { invoke } from '@tauri-apps/api/core';
-    import { manuscriptsEnabled } from '$lib/stores/manuscripts.store';
     import { morphGlassEffect } from '$lib/stores/morphology.store';
     import { onMount, onDestroy } from 'svelte';
     import { listen } from '@tauri-apps/api/event';
@@ -239,29 +238,6 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         <!-- Manuscripts -->
         <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
             <p class={sectionLabel}>{$t('settings.manuscripts')}</p>
-            <div class="flex items-center justify-between mb-2">
-                <span class={rowLabel}>{$t('settings.manuscripts.browse')}</span>
-                <div class="flex gap-2">
-                    <button
-                        onclick={() => manuscriptsEnabled.set(false)}
-                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
-                            ${!$manuscriptsEnabled
-                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
-                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
-                    >
-                        {$t('common.disabled')}
-                    </button>
-                    <button
-                        onclick={() => manuscriptsEnabled.set(true)}
-                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
-                            ${$manuscriptsEnabled
-                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
-                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
-                    >
-                        {$t('common.enabled')}
-                    </button>
-                </div>
-            </div>
             <div class="flex items-center justify-between">
                 <span class={rowLabel}>
                     {$t('settings.manuscripts.cache')}

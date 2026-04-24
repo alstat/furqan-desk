@@ -166,7 +166,12 @@
       "Bash(codesign -d --entitlements - /Applications/AyahLab.app)",
       "Bash(cargo metadata:*)",
       "Bash(pkill -f AyahLab)",
-      "Bash(sed 's/:$//')"
+      "Bash(sed 's/:$//')",
+      "WebFetch(domain:quran.com)",
+      "WebFetch(domain:api-docs.quran.foundation)",
+      "WebFetch(domain:quran.foundation)",
+      "WebFetch(domain:archive.org)",
+      "WebFetch(domain:old.quranwbw.com)"
     ]
   }
 }
