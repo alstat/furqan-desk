@@ -29,6 +29,10 @@ export const de: Record<string, string> = {
   "settings.appearance": "Erscheinungsbild",
   "settings.appearance.glass": "Glaseffekt für Morphologie-Popover",
   "settings.appearance.glass.desc": "Deaktivieren für bessere Leistung",
+  "settings.appearance.typst_preview_dark": "Typst-Vorschau Dunkelmodus",
+
+  "settings.appearance.typst_preview_dark.desc": "Wenn der App-Dunkelmodus aktiv ist, werden auch die Typst-Vorschauseiten abgedunkelt.",
+
   "settings.manuscripts": "Manuskripte",
   "settings.manuscripts.browse": "Frühe Koranmanuskripte durchsuchen",
   "settings.manuscripts.cache": "Zwischengespeicherte Manuskriptbilder löschen",
@@ -41,6 +45,7 @@ export const de: Record<string, string> = {
   "settings.julia.update": "Über juliaup aktualisieren",
   "settings.julia.up_to_date": "Julia ist aktuell",
   "settings.typst": "Typst-Pakete",
+  "typst.export_pdf": "PDF exportieren",
   "settings.website": "Website",
   "settings.website.download": "Update herunterladen",
   "settings.website.up_to_date": "Aktuell",
@@ -297,6 +302,7 @@ export const de: Record<string, string> = {
   "toolbar.open_file": "Datei öffnen",
   "toolbar.save": "Speichern",
   "toolbar.save_as": "Speichern unter",
+  "toolbar.export_docx": "Als Word exportieren (.docx)",
   // Global Search button
   "search.global": "Globale Suche",
   // Table of Contents toggle button

@@ -29,6 +29,10 @@ export const ru: Record<string, string> = {
     'settings.appearance': 'Внешний вид',
     'settings.appearance.glass': 'Эффект стекла в панели морфологии',
     'settings.appearance.glass.desc': 'Отключите для повышения производительности',
+    'settings.appearance.typst_preview_dark': 'Тёмный режим предпросмотра Typst',
+
+    'settings.appearance.typst_preview_dark.desc': 'Когда тёмный режим приложения включён, страницы предпросмотра Typst также затемняются.',
+
     'settings.manuscripts': 'Рукописи',
     'settings.manuscripts.browse': 'Просмотр ранних рукописей Корана',
     'settings.manuscripts.cache': 'Очистить кэш изображений рукописей',
@@ -41,6 +45,7 @@ export const ru: Record<string, string> = {
     'settings.julia.update': 'Обновить через juliaup',
     'settings.julia.up_to_date': 'Julia обновлена',
     'settings.typst': 'Пакеты Typst',
+    'typst.export_pdf': 'Экспортировать PDF',
     'settings.website': 'Веб-сайт',
     'settings.website.download': 'Скачать обновление',
     'settings.website.up_to_date': 'Актуально',
@@ -286,6 +291,7 @@ export const ru: Record<string, string> = {
     'toolbar.open_file': 'Открыть файл',
     'toolbar.save': 'Сохранить',
     'toolbar.save_as': 'Сохранить как',
+    'toolbar.export_docx': 'Экспорт в Word (.docx)',
     // Global Search button
     'search.global': 'Глобальный поиск',
     // Table of Contents toggle button

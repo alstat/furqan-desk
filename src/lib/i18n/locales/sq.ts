@@ -28,6 +28,10 @@ export const sq: Record<string, string> = {
   "settings.appearance": "Pamja",
   "settings.appearance.glass": "Efekti i qelqit të popoverit të morfologjisë",
   "settings.appearance.glass.desc": "Çaktivizoni për të përmirësuar performancën",
+  "settings.appearance.typst_preview_dark": "Modaliteti i errët i pamjes paraprake Typst",
+
+  "settings.appearance.typst_preview_dark.desc": "Kur modaliteti i errët i aplikacionit është aktiv, faqet e pamjes paraprake Typst gjithashtu errësohen.",
+
   "settings.manuscripts": "Dorëshkrime",
   "settings.manuscripts.browse": "Shfletoni dorëshkrimet e hershme kuranike",
   "settings.manuscripts.cache": "Pastro imazhet e dorëshkrimeve të memorizuara",
@@ -40,6 +44,7 @@ export const sq: Record<string, string> = {
   "settings.julia.update": "Përditëso nëpërmjet juliaup",
   "settings.julia.up_to_date": "Julia është e përditësuar",
   "settings.typst": "Paketat Typst",
+  "typst.export_pdf": "Eksporto PDF",
   "settings.website": "Faqja e internetit",
   "settings.website.download": "Shkarko përditësimin",
   "settings.website.up_to_date": "E përditësuar",
@@ -261,6 +266,7 @@ export const sq: Record<string, string> = {
   "toolbar.open_file": "Hap skedarin",
   "toolbar.save": "Ruaj",
   "toolbar.save_as": "Ruaj si",
+  "toolbar.export_docx": "Eksporto si Word (.docx)",
   "search.global": "Kërkimi global",
   "toc.button": "Tabela e Përmbajtjes",
   "manuscript.title": "Dorëshkrime",

@@ -29,6 +29,10 @@ export const en: Record<string, string> = {
   "settings.appearance": "Appearance",
   "settings.appearance.glass": "Morphology popover glass effect",
   "settings.appearance.glass.desc": "Disable to improve performance",
+  "settings.appearance.typst_preview_dark": "Typst preview dark mode",
+
+  "settings.appearance.typst_preview_dark.desc": "When app dark mode is on, also darken the Typst preview pages.",
+
   "settings.manuscripts": "Manuscripts",
   "settings.manuscripts.browse": "Browse early Quranic manuscripts",
   "settings.manuscripts.cache": "Clear cached manuscript images",
@@ -41,6 +45,7 @@ export const en: Record<string, string> = {
   "settings.julia.update": "Update via juliaup",
   "settings.julia.up_to_date": "Julia is up to date",
   "settings.typst": "Typst Packages",
+  "typst.export_pdf": "Export PDF",
   "settings.website": "Website",
   "settings.website.download": "Download update",
   "settings.website.up_to_date": "Up to date",
@@ -297,6 +302,7 @@ export const en: Record<string, string> = {
   "toolbar.open_file": "Open file",
   "toolbar.save": "Save",
   "toolbar.save_as": "Save As",
+  "toolbar.export_docx": "Export as Word (.docx)",
   // Global Search button
   "search.global": "Global Search",
   // Table of Contents toggle button

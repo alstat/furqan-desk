@@ -29,6 +29,10 @@ export const pt: Record<string, string> = {
   "settings.appearance": "Aparência",
   "settings.appearance.glass": "Efeito de vidro no popover de morfologia",
   "settings.appearance.glass.desc": "Desative para melhorar o desempenho",
+  "settings.appearance.typst_preview_dark": "Modo escuro da pré-visualização do Typst",
+
+  "settings.appearance.typst_preview_dark.desc": "Quando o modo escuro do app estiver ativo, as páginas de pré-visualização do Typst também ficam escuras.",
+
   "settings.manuscripts": "Manuscritos",
   "settings.manuscripts.browse": "Explorar manuscritos corânicos antigos",
   "settings.manuscripts.cache": "Limpar imagens de manuscritos armazenadas",
@@ -41,6 +45,7 @@ export const pt: Record<string, string> = {
   "settings.julia.update": "Atualizar via juliaup",
   "settings.julia.up_to_date": "Julia está atualizado",
   "settings.typst": "Pacotes Typst",
+  "typst.export_pdf": "Exportar PDF",
   "settings.website": "Site",
   "settings.website.download": "Baixar atualização",
   "settings.website.up_to_date": "Atualizado",
@@ -298,6 +303,7 @@ export const pt: Record<string, string> = {
   "toolbar.open_file": "Abrir arquivo",
   "toolbar.save": "Salvar",
   "toolbar.save_as": "Salvar Como",
+  "toolbar.export_docx": "Exportar como Word (.docx)",
   // Global Search button
   "search.global": "Pesquisa Global",
   // Table of Contents toggle button

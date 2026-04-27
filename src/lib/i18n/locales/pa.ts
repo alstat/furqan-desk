@@ -28,6 +28,10 @@ export const pa: Record<string, string> = {
   "settings.appearance": "ਦਿੱਖ",
   "settings.appearance.glass": "ਰੂਪ ਵਿਗਿਆਨ ਪੌਪਓਵਰ ਕੱਚ ਪ੍ਰਭਾਵ",
   "settings.appearance.glass.desc": "ਪ੍ਰਦਰਸ਼ਨ ਸੁਧਾਰਨ ਲਈ ਬੰਦ ਕਰੋ",
+  "settings.appearance.typst_preview_dark": "Typst ਪ੍ਰੀਵਿਊ ਡਾਰਕ ਮੋਡ",
+
+  "settings.appearance.typst_preview_dark.desc": "ਜਦੋਂ ਐਪ ਡਾਰਕ ਮੋਡ ਚਾਲੂ ਹੋਵੇ, ਤਾਂ Typst ਪ੍ਰੀਵਿਊ ਪੰਨੇ ਵੀ ਗੂੜ੍ਹੇ ਕਰੋ।",
+
   "settings.manuscripts": "ਹੱਥ-ਲਿਖਤਾਂ",
   "settings.manuscripts.browse": "ਕੁਰਾਨ ਦੀਆਂ ਪੁਰਾਣੀਆਂ ਹੱਥ-ਲਿਖਤਾਂ ਦੇਖੋ",
   "settings.manuscripts.cache": "ਕੈਸ਼ ਕੀਤੀਆਂ ਤਸਵੀਰਾਂ ਮਿਟਾਓ",
@@ -40,6 +44,7 @@ export const pa: Record<string, string> = {
   "settings.julia.update": "juliaup ਰਾਹੀਂ ਅੱਪਡੇਟ ਕਰੋ",
   "settings.julia.up_to_date": "Julia ਅੱਪ-ਟੂ-ਡੇਟ ਹੈ",
   "settings.typst": "ਟਾਈਪਸਟ ਪੈਕੇਜ",
+  "typst.export_pdf": "PDF ਨਿਰਯਾਤ ਕਰੋ",
   "settings.website": "ਵੈੱਬਸਾਈਟ",
   "settings.website.download": "ਅੱਪਡੇਟ ਡਾਊਨਲੋਡ ਕਰੋ",
   "settings.website.up_to_date": "ਅੱਪ-ਟੂ-ਡੇਟ",
@@ -261,6 +266,7 @@ export const pa: Record<string, string> = {
   "toolbar.open_file": "ਫ਼ਾਈਲ ਖੋਲ੍ਹੋ",
   "toolbar.save": "ਰੱਖਿਅਤ ਕਰੋ",
   "toolbar.save_as": "ਇਸ ਤਰ੍ਹਾਂ ਸੁਰੱਖਿਅਤ ਕਰੋ",
+  "toolbar.export_docx": "Word ਵਜੋਂ ਨਿਰਯਾਤ ਕਰੋ (.docx)",
   "search.global": "ਗਲੋਬਲ ਖੋਜ",
   "toc.button": "ਸਮੱਗਰੀ ਦੀ ਸਾਰਣੀ",
   "manuscript.title": "ਖਰੜੇ",

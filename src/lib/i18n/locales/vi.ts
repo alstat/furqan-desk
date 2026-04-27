@@ -29,6 +29,10 @@ export const vi: Record<string, string> = {
   "settings.appearance": "Giao diện",
   "settings.appearance.glass": "Hiệu ứng kính popover hình thái học",
   "settings.appearance.glass.desc": "Tắt để cải thiện hiệu suất",
+  "settings.appearance.typst_preview_dark": "Chế độ tối cho xem trước Typst",
+
+  "settings.appearance.typst_preview_dark.desc": "Khi chế độ tối của ứng dụng đang bật, các trang xem trước Typst cũng được làm tối.",
+
   "settings.manuscripts": "Bản thảo",
   "settings.manuscripts.browse": "Duyệt các bản thảo Kinh Quran cổ đại",
   "settings.manuscripts.cache": "Xóa ảnh bản thảo đã lưu trong bộ nhớ đệm",
@@ -41,6 +45,7 @@ export const vi: Record<string, string> = {
   "settings.julia.update": "Cập nhật qua juliaup",
   "settings.julia.up_to_date": "Julia đã được cập nhật",
   "settings.typst": "Gói Typst",
+  "typst.export_pdf": "Xuất PDF",
   "settings.website": "Trang web",
   "settings.website.download": "Tải xuống cập nhật",
   "settings.website.up_to_date": "Đã cập nhật",
@@ -292,6 +297,7 @@ export const vi: Record<string, string> = {
   "toolbar.open_file": "Mở tệp",
   "toolbar.save": "Lưu",
   "toolbar.save_as": "Lưu thành",
+  "toolbar.export_docx": "Xuất sang Word (.docx)",
   // Global Search button
   "search.global": "Tìm kiếm toàn cục",
   // Table of Contents toggle button

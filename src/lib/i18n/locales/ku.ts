@@ -28,6 +28,10 @@ export const ku: Record<string, string> = {
   "settings.appearance": "دیمەن",
   "settings.appearance.glass": "کاریگەری شووشەی پەنجەرەی مۆرفۆلۆجی",
   "settings.appearance.glass.desc": "بۆ باشکردنی کارایی ناچالاک بکە",
+  "settings.appearance.typst_preview_dark": "Moda tarî ya pêşdîtina Typst",
+
+  "settings.appearance.typst_preview_dark.desc": "Dema moda tarî ya sepanê vekirî be, rûpelên pêşdîtina Typst jî tarî dibin.",
+
   "settings.manuscripts": "دەستنووسەکان",
   "settings.manuscripts.browse": "بینینی دەستنووسە کۆنەکانی قورئان",
   "settings.manuscripts.cache": "سڕینەوەی وێنەی دەستنووسەی کاشێکراو",
@@ -40,6 +44,7 @@ export const ku: Record<string, string> = {
   "settings.julia.update": "نوێکردنەوە لە ڕێگەی juliaup",
   "settings.julia.up_to_date": "Julia نوێیە",
   "settings.typst": "پاکێجەکانی تایپست",
+  "typst.export_pdf": "PDF هەناردە بکە",
   "settings.website": "ماڵپەڕ",
   "settings.website.download": "دابەزاندنی نوێکاری",
   "settings.website.up_to_date": "نوێکراوەتەوە",
@@ -261,6 +266,7 @@ export const ku: Record<string, string> = {
   "toolbar.open_file": "فایل بکەرەوە",
   "toolbar.save": "پاراستن",
   "toolbar.save_as": "وەک پاشەکەوت بکە",
+  "toolbar.export_docx": "وەک Word (.docx) هەناردە بکە",
   "search.global": "گەڕانی جیهانی",
   "toc.button": "خشتەی ناوەڕۆک",
   "manuscript.title": "دەستنووسەکان",

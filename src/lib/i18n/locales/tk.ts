@@ -29,6 +29,10 @@ export const tk: Record<string, string> = {
   "settings.appearance": "Görnüş",
   "settings.appearance.glass": "Morfologiýa popover aýna täsiri",
   "settings.appearance.glass.desc": "Öndürijiligi gowulaşdyrmak üçin öçürmek",
+  "settings.appearance.typst_preview_dark": "Typst öňünden seretmegiň garaňky režimi",
+
+  "settings.appearance.typst_preview_dark.desc": "Programmanyň garaňky režimi açyk bolanda, Typst öňünden seretmek sahypalary hem garaňkylaşdyrylýar.",
+
   "settings.manuscripts": "El ýazmalary",
   "settings.manuscripts.browse": "Gadymy Gurhany el ýazmalaryny görmek",
   "settings.manuscripts.cache": "Keşde saklanýan el ýazma suratlaryny arassalamak",
@@ -41,6 +45,7 @@ export const tk: Record<string, string> = {
   "settings.julia.update": "juliaup arkaly täzelemek",
   "settings.julia.up_to_date": "Julia täzelendi",
   "settings.typst": "Typst paketleri",
+  "typst.export_pdf": "PDF eksport et",
   "settings.website": "Web sahypa",
   "settings.website.download": "Täzelenme ýüklemek",
   "settings.website.up_to_date": "Täzelendi",
@@ -292,6 +297,7 @@ export const tk: Record<string, string> = {
   "toolbar.open_file": "Faýly açmak",
   "toolbar.save": "Saklamak",
   "toolbar.save_as": "Başga at bilen saklamak",
+  "toolbar.export_docx": "Word hökmünde eksport et (.docx)",
   // Global Search button
   "search.global": "Ählumumy gözleg",
   // Table of Contents toggle button

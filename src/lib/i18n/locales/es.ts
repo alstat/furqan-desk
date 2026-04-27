@@ -30,6 +30,10 @@ export const es: Record<string, string> = {
   "settings.appearance.glass":
     "Efecto cristal en la ventana emergente de morfología",
   "settings.appearance.glass.desc": "Desactivar para mejorar el rendimiento",
+  "settings.appearance.typst_preview_dark": "Modo oscuro de la vista previa de Typst",
+
+  "settings.appearance.typst_preview_dark.desc": "Cuando el modo oscuro está activo, también se oscurecen las páginas de vista previa de Typst.",
+
   "settings.manuscripts": "Manuscritos",
   "settings.manuscripts.browse": "Explorar manuscritos coránicos tempranos",
   "settings.manuscripts.cache": "Borrar imágenes de manuscritos en caché",
@@ -42,6 +46,7 @@ export const es: Record<string, string> = {
   "settings.julia.update": "Actualizar con juliaup",
   "settings.julia.up_to_date": "Julia está actualizado",
   "settings.typst": "Paquetes Typst",
+  "typst.export_pdf": "Exportar PDF",
   "settings.website": "Sitio web",
   "settings.website.download": "Descargar actualización",
   "settings.website.up_to_date": "Actualizado",
@@ -299,6 +304,7 @@ export const es: Record<string, string> = {
   "toolbar.open_file": "Abrir archivo",
   "toolbar.save": "Guardar",
   "toolbar.save_as": "Guardar como",
+  "toolbar.export_docx": "Exportar como Word (.docx)",
   // Global Search button
   "search.global": "Búsqueda global",
   // Table of Contents toggle button

@@ -29,6 +29,10 @@ export const id: Record<string, string> = {
     'settings.appearance': 'Tampilan',
     'settings.appearance.glass': 'Efek kaca popover morfologi',
     'settings.appearance.glass.desc': 'Nonaktifkan untuk meningkatkan performa',
+    'settings.appearance.typst_preview_dark': 'Mode gelap pratinjau Typst',
+
+    'settings.appearance.typst_preview_dark.desc': 'Saat mode gelap aplikasi aktif, halaman pratinjau Typst juga digelapkan.',
+
     'settings.manuscripts': 'Manuskrip',
     'settings.manuscripts.browse': 'Jelajahi manuskrip Al-Quran awal',
     'settings.manuscripts.cache': 'Hapus gambar manuskrip yang disimpan',
@@ -41,6 +45,7 @@ export const id: Record<string, string> = {
     'settings.julia.update': 'Perbarui via juliaup',
     'settings.julia.up_to_date': 'Julia sudah terbaru',
     'settings.typst': 'Paket Typst',
+    'typst.export_pdf': 'Ekspor PDF',
     'settings.website': 'Situs Web',
     'settings.website.download': 'Unduh pembaruan',
     'settings.website.up_to_date': 'Sudah terbaru',
@@ -286,6 +291,7 @@ export const id: Record<string, string> = {
     'toolbar.open_file': 'Buka file',
     'toolbar.save': 'Simpan',
     'toolbar.save_as': 'Simpan Sebagai',
+    'toolbar.export_docx': 'Ekspor sebagai Word (.docx)',
     // Global Search button
     'search.global': 'Pencarian Global',
     // Table of Contents toggle button

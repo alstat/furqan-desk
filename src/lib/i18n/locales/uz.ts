@@ -29,6 +29,10 @@ export const uz: Record<string, string> = {
   "settings.appearance": "Ko'rinish",
   "settings.appearance.glass": "Morfologiya popover shisha effekti",
   "settings.appearance.glass.desc": "Ishlashni yaxshilash uchun o'chirish",
+  "settings.appearance.typst_preview_dark": "Typst oldindan ko'rish qorong'i rejimi",
+
+  "settings.appearance.typst_preview_dark.desc": "Ilova qorong'i rejimi yoqilganda, Typst oldindan ko'rish sahifalari ham qorong'ilashadi.",
+
   "settings.manuscripts": "Qo'lyozmalar",
   "settings.manuscripts.browse": "Qadimiy Quron qo'lyozmalarini ko'rish",
   "settings.manuscripts.cache": "Keshga saqlangan qo'lyozma rasmlarini tozalash",
@@ -41,6 +45,7 @@ export const uz: Record<string, string> = {
   "settings.julia.update": "juliaup orqali yangilash",
   "settings.julia.up_to_date": "Julia yangilangan",
   "settings.typst": "Typst paketlari",
+  "typst.export_pdf": "PDF eksport qilish",
   "settings.website": "Veb-sayt",
   "settings.website.download": "Yangilanishni yuklab olish",
   "settings.website.up_to_date": "Yangilangan",
@@ -292,6 +297,7 @@ export const uz: Record<string, string> = {
   "toolbar.open_file": "Faylni ochish",
   "toolbar.save": "Saqlash",
   "toolbar.save_as": "Boshqa nom bilan saqlash",
+  "toolbar.export_docx": "Word (.docx) sifatida eksport qilish",
   // Global Search button
   "search.global": "Global qidirish",
   // Table of Contents toggle button

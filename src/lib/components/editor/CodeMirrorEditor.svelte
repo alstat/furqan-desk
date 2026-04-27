@@ -15,6 +15,8 @@
         history,
         historyKeymap,
         indentWithTab,
+        toggleComment,
+        toggleBlockComment,
         undoDepth,
         redoDepth,
     } from '@codemirror/commands';
@@ -299,9 +301,17 @@
         return [ayuLightBase, syntaxHighlighting(ayuLightHighlight)];
     }
 
+    const juliaLanguage = StreamLanguage.define(julia);
+    const juliaCommentData = juliaLanguage.data.of({
+        commentTokens: { line: '#', block: { open: '#=', close: '=#' } },
+    });
+    const typstCommentData = typstLanguage.data.of({
+        commentTokens: { line: '//', block: { open: '/*', close: '*/' } },
+    });
+
     function getLangExt(lang: string): Extension {
-        if (lang === 'julia') return StreamLanguage.define(julia);
-        if (lang === 'typst') return typstLanguage;
+        if (lang === 'julia') return [juliaLanguage, juliaCommentData];
+        if (lang === 'typst') return [typstLanguage, typstCommentData];
         return [];
     }
 
@@ -329,6 +339,8 @@
                 search({ top: true }),
                 keymap.of([
                     ...extraKeymap,
+                    { key: 'Mod-/', run: toggleComment, preventDefault: true },
+                    { key: 'Shift-Alt-a', run: toggleBlockComment, preventDefault: true },
                     indentWithTab,
                     ...historyKeymap,
                     ...searchKeymap,

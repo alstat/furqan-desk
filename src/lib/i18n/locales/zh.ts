@@ -29,6 +29,10 @@ export const zh: Record<string, string> = {
     'settings.appearance': '外观',
     'settings.appearance.glass': '词法弹窗毛玻璃效果',
     'settings.appearance.glass.desc': '禁用可提升性能',
+    'settings.appearance.typst_preview_dark': 'Typst 预览深色模式',
+
+    'settings.appearance.typst_preview_dark.desc': '应用深色模式开启时，Typst 预览页面也会变暗。',
+
     'settings.manuscripts': '手稿',
     'settings.manuscripts.browse': '浏览早期古兰经手稿',
     'settings.manuscripts.cache': '清除缓存的手稿图片',
@@ -41,6 +45,7 @@ export const zh: Record<string, string> = {
     'settings.julia.update': '通过 juliaup 更新',
     'settings.julia.up_to_date': 'Julia 已是最新',
     'settings.typst': 'Typst 包',
+    'typst.export_pdf': '导出 PDF',
     'settings.website': '网站',
     'settings.website.download': '下载更新',
     'settings.website.up_to_date': '已是最新',
@@ -286,6 +291,7 @@ export const zh: Record<string, string> = {
     'toolbar.open_file': '打开文件',
     'toolbar.save': '保存',
     'toolbar.save_as': '另存为',
+    'toolbar.export_docx': '导出为 Word (.docx)',
     // Global Search button
     'search.global': '全局搜索',
     // Table of Contents toggle button
