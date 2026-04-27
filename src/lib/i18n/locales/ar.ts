@@ -29,6 +29,10 @@ export const ar: Record<string, string> = {
     'settings.appearance': 'المظهر',
     'settings.appearance.glass': 'تأثير الزجاج في نافذة الصرف',
     'settings.appearance.glass.desc': 'تعطيله يحسّن الأداء',
+    'settings.appearance.typst_preview_dark': 'الوضع الداكن لمعاينة Typst',
+
+    'settings.appearance.typst_preview_dark.desc': 'عند تفعيل الوضع الداكن للتطبيق، تُعتَّم صفحات معاينة Typst أيضًا.',
+
     'settings.manuscripts': 'المخطوطات',
     'settings.manuscripts.browse': 'تصفح المخطوطات القرآنية المبكرة',
     'settings.manuscripts.cache': 'مسح صور المخطوطات المخزنة مؤقتاً',
@@ -41,6 +45,7 @@ export const ar: Record<string, string> = {
     'settings.julia.update': 'تحديث عبر juliaup',
     'settings.julia.up_to_date': 'Julia محدّثة',
     'settings.typst': 'حزم Typst',
+    'typst.export_pdf': 'تصدير PDF',
     'settings.website': 'الموقع الإلكتروني',
     'settings.website.download': 'تنزيل التحديث',
     'settings.website.up_to_date': 'محدّث',
@@ -286,6 +291,7 @@ export const ar: Record<string, string> = {
     'toolbar.open_file': 'فتح ملف',
     'toolbar.save': 'حفظ',
     'toolbar.save_as': 'حفظ باسم',
+    'toolbar.export_docx': 'تصدير كملف Word (.docx)',
     // Global Search button
     'search.global': 'بحث عام',
     // Table of Contents toggle button

@@ -29,6 +29,10 @@ export const ja: Record<string, string> = {
   "settings.appearance": "外観",
   "settings.appearance.glass": "形態論ポップオーバーのグラス効果",
   "settings.appearance.glass.desc": "無効にすると性能が向上します",
+  "settings.appearance.typst_preview_dark": "Typstプレビューのダークモード",
+
+  "settings.appearance.typst_preview_dark.desc": "アプリのダークモードがオンのとき、Typstプレビューのページも暗くします。",
+
   "settings.manuscripts": "写本",
   "settings.manuscripts.browse": "初期クルアーン写本を閲覧",
   "settings.manuscripts.cache": "キャッシュされた写本画像を消去",
@@ -41,6 +45,7 @@ export const ja: Record<string, string> = {
   "settings.julia.update": "juliaup でアップデート",
   "settings.julia.up_to_date": "Julia は最新です",
   "settings.typst": "Typst パッケージ",
+  "typst.export_pdf": "PDF をエクスポート",
   "settings.website": "ウェブサイト",
   "settings.website.download": "アップデートをダウンロード",
   "settings.website.up_to_date": "最新です",
@@ -295,6 +300,7 @@ export const ja: Record<string, string> = {
   "toolbar.open_file": "ファイルを開く",
   "toolbar.save": "保存",
   "toolbar.save_as": "名前を付けて保存",
+  "toolbar.export_docx": "Word(.docx)としてエクスポート",
   // Global Search button
   "search.global": "グローバル検索",
   // Table of Contents toggle button

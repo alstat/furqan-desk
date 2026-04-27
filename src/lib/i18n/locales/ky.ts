@@ -29,6 +29,10 @@ export const ky: Record<string, string> = {
   "settings.appearance": "Көрүнүш",
   "settings.appearance.glass": "Морфология попап айнек эффекти",
   "settings.appearance.glass.desc": "Иштешти жакшыртуу үчүн өчүрүү",
+  "settings.appearance.typst_preview_dark": "Typst алдын ала көрүүнүн караңгы режими",
+
+  "settings.appearance.typst_preview_dark.desc": "Колдонмонун караңгы режими күйүк болгондо Typst алдын ала көрүү барактары да караңгылайт.",
+
   "settings.manuscripts": "Кол жазмалар",
   "settings.manuscripts.browse": "Байыркы Куран кол жазмаларын карап чыгуу",
   "settings.manuscripts.cache": "Кэштелген кол жазма сүрөттөрүн тазалоо",
@@ -41,6 +45,7 @@ export const ky: Record<string, string> = {
   "settings.julia.update": "juliaup аркылуу жаңыртуу",
   "settings.julia.up_to_date": "Julia жаңыртылган",
   "settings.typst": "Typst пакеттери",
+  "typst.export_pdf": "PDF экспорттоо",
   "settings.website": "Веб-сайт",
   "settings.website.download": "Жаңыртууну жүктөп алуу",
   "settings.website.up_to_date": "Жаңыртылган",
@@ -292,6 +297,7 @@ export const ky: Record<string, string> = {
   "toolbar.open_file": "Файлды ачуу",
   "toolbar.save": "Сактоо",
   "toolbar.save_as": "Башка ат менен сактоо",
+  "toolbar.export_docx": "Word катары экспорттоо (.docx)",
   // Global Search button
   "search.global": "Глобалдык издөө",
   // Table of Contents toggle button

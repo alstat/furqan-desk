@@ -28,6 +28,10 @@ export const sr: Record<string, string> = {
   "settings.appearance": "Изглед",
   "settings.appearance.glass": "Стаклени ефекат искачућег прозора морфологије",
   "settings.appearance.glass.desc": "Онемогућите за побољшање перформанси",
+  "settings.appearance.typst_preview_dark": "Тамни режим за Typst преглед",
+
+  "settings.appearance.typst_preview_dark.desc": "Када је тамни режим апликације укључен, и стране Typst прегледа постају тамне.",
+
   "settings.manuscripts": "Рукописи",
   "settings.manuscripts.browse": "Прегледајте ране куранске рукописе",
   "settings.manuscripts.cache": "Обриши кеширане слике рукописа",
@@ -40,6 +44,7 @@ export const sr: Record<string, string> = {
   "settings.julia.update": "Ажурирај путем juliaup",
   "settings.julia.up_to_date": "Julia је ажурирана",
   "settings.typst": "Типст Пацкагес",
+  "typst.export_pdf": "Извези PDF",
   "settings.website": "Веб сајт",
   "settings.website.download": "Преузми ажурирање",
   "settings.website.up_to_date": "Ажурирано",
@@ -261,6 +266,7 @@ export const sr: Record<string, string> = {
   "toolbar.open_file": "Отворите датотеку",
   "toolbar.save": "Сачувај",
   "toolbar.save_as": "Сачувај као",
+  "toolbar.export_docx": "Извези као Word (.docx)",
   "search.global": "Глобална претрага",
   "toc.button": "Садржај",
   "manuscript.title": "Рукописи",

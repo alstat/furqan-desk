@@ -29,6 +29,10 @@ export const ceb: Record<string, string> = {
   "settings.appearance": "Hitsura",
   "settings.appearance.glass": "Morphology popover glass effect",
   "settings.appearance.glass.desc": "I-disable aron mapabuti ang pasundayag",
+  "settings.appearance.typst_preview_dark": "Dark mode sa Typst preview",
+
+  "settings.appearance.typst_preview_dark.desc": "Kung naka-on ang dark mode sa app, padilima usab ang mga panid sa Typst preview.",
+
   "settings.manuscripts": "Mga Manuskrito",
   "settings.manuscripts.browse": "Tan-awa ang karaan nga mga manuskrito sa Quran",
   "settings.manuscripts.cache": "Limpyohi ang mga naka-cache nga imahe sa manuskrito",
@@ -41,6 +45,7 @@ export const ceb: Record<string, string> = {
   "settings.julia.update": "I-update pinaagi sa juliaup",
   "settings.julia.up_to_date": "Ang Julia kay updated na",
   "settings.typst": "Mga Pakete sa Typst",
+  "typst.export_pdf": "I-export ang PDF",
   "settings.website": "Website",
   "settings.website.download": "I-download ang update",
   "settings.website.up_to_date": "Updated na",
@@ -292,6 +297,7 @@ export const ceb: Record<string, string> = {
   "toolbar.open_file": "Ablihi ang file",
   "toolbar.save": "I-save",
   "toolbar.save_as": "I-save Isip",
+  "toolbar.export_docx": "I-export isip Word (.docx)",
   // Global Search button
   "search.global": "Global nga Pagpangita",
   // Table of Contents toggle button

@@ -29,6 +29,10 @@ export const bn: Record<string, string> = {
   "settings.appearance": "চেহারা",
   "settings.appearance.glass": "মরফোলজি পপওভার গ্লাস ইফেক্ট",
   "settings.appearance.glass.desc": "পারফরম্যান্স উন্নত করতে নিষ্ক্রিয় করুন",
+  "settings.appearance.typst_preview_dark": "Typst প্রিভিউ ডার্ক মোড",
+
+  "settings.appearance.typst_preview_dark.desc": "অ্যাপ ডার্ক মোড চালু থাকলে, Typst প্রিভিউ পৃষ্ঠাগুলিও গাঢ় করুন।",
+
   "settings.manuscripts": "পাণ্ডুলিপি",
   "settings.manuscripts.browse": "প্রাথমিক কোরআনিক পাণ্ডুলিপি দেখুন",
   "settings.manuscripts.cache": "ক্যাশ করা পাণ্ডুলিপি ছবি মুছুন",
@@ -41,6 +45,7 @@ export const bn: Record<string, string> = {
   "settings.julia.update": "juliaup দিয়ে আপডেট করুন",
   "settings.julia.up_to_date": "Julia আপডেট আছে",
   "settings.typst": "Typst প্যাকেজ",
+  "typst.export_pdf": "PDF রপ্তানি করুন",
   "settings.website": "ওয়েবসাইট",
   "settings.website.download": "আপডেট ডাউনলোড করুন",
   "settings.website.up_to_date": "আপডেট আছে",
@@ -296,6 +301,7 @@ export const bn: Record<string, string> = {
   "toolbar.open_file": "ফাইল খুলুন",
   "toolbar.save": "সংরক্ষণ করুন",
   "toolbar.save_as": "এইভাবে সংরক্ষণ করুন",
+  "toolbar.export_docx": "Word হিসেবে এক্সপোর্ট করুন (.docx)",
   // Global Search button
   "search.global": "বৈশ্বিক অনুসন্ধান",
   // Table of Contents toggle button

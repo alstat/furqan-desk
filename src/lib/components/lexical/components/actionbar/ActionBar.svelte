@@ -2,10 +2,12 @@
     import ImportButton from "./ImportButton.svelte";
     import OpenFolderButton from "./OpenFolderButton.svelte";
     import ExportButton from "./ExportButton.svelte";
+    import ExportDocxButton from "./ExportDocxButton.svelte";
     import SaveAsButton from "./SaveAsButton.svelte";
     import RedoButton from "./RedoButton.svelte";
     import UndoButton from "./UndoButton.svelte";
     import { zenMode, zenPeek } from "$lib/stores/editor.store";
+    import { activeTab } from "$lib/stores/tabs.store";
 
     let { topOffset = "-top-5" }: { topOffset?: string } = $props();
 </script>
@@ -23,5 +25,8 @@
         <ImportButton />
         <ExportButton />
         <SaveAsButton />
+        {#if $activeTab?.type === "lexical"}
+            <ExportDocxButton />
+        {/if}
     </div>
 </div>

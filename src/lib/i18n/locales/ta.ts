@@ -28,6 +28,10 @@ export const ta: Record<string, string> = {
   "settings.appearance": "தோற்றம்",
   "settings.appearance.glass": "உருவியல் பாப்ஓவர் கண்ணாடி விளைவு",
   "settings.appearance.glass.desc": "செயல்திறனை மேம்படுத்த முடக்கவும்",
+  "settings.appearance.typst_preview_dark": "Typst முன்னோட்ட இருண்ட பயன்முறை",
+
+  "settings.appearance.typst_preview_dark.desc": "பயன்பாட்டின் இருண்ட பயன்முறை இயக்கத்தில் இருக்கும்போது Typst முன்னோட்டப் பக்கங்களும் இருளாக்கப்படும்.",
+
   "settings.manuscripts": "கையெழுத்துப் பிரதிகள்",
   "settings.manuscripts.browse": "ஆரம்பகால குரான் கையெழுத்துப் பிரதிகளை உலாவுங்கள்",
   "settings.manuscripts.cache": "தற்காலிகமாக சேமித்த படங்களை அழி",
@@ -40,6 +44,7 @@ export const ta: Record<string, string> = {
   "settings.julia.update": "juliaup மூலம் புதுப்பிக்கவும்",
   "settings.julia.up_to_date": "Julia புதுப்பிக்கப்பட்டது",
   "settings.typst": "டைப்ஸ்ட் தொகுப்புகள்",
+  "typst.export_pdf": "PDF ஆக ஏற்றுமதி செய்",
   "settings.website": "இணையதளம்",
   "settings.website.download": "புதுப்பிப்பை பதிவிறக்கவும்",
   "settings.website.up_to_date": "புதுப்பிக்கப்பட்டது",
@@ -261,6 +266,7 @@ export const ta: Record<string, string> = {
   "toolbar.open_file": "கோப்பைத் திற",
   "toolbar.save": "சேமி",
   "toolbar.save_as": "இவ்வாறு சேமி",
+  "toolbar.export_docx": "Word ஆக ஏற்றுமதி செய்க (.docx)",
   "search.global": "உலகளாவிய தேடல்",
   "toc.button": "உள்ளடக்க அட்டவணை",
   "manuscript.title": "கையெழுத்துப் பிரதிகள்",

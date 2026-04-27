@@ -29,6 +29,10 @@ export const th: Record<string, string> = {
   "settings.appearance": "รูปลักษณ์",
   "settings.appearance.glass": "เอฟเฟกต์กระจก popover สัณฐานวิทยา",
   "settings.appearance.glass.desc": "ปิดเพื่อปรับปรุงประสิทธิภาพ",
+  "settings.appearance.typst_preview_dark": "โหมดมืดสำหรับตัวอย่าง Typst",
+
+  "settings.appearance.typst_preview_dark.desc": "เมื่อเปิดโหมดมืดของแอป จะทำให้หน้าตัวอย่าง Typst เข้มขึ้นด้วย",
+
   "settings.manuscripts": "ต้นฉบับ",
   "settings.manuscripts.browse": "เรียกดูต้นฉบับอัลกุรอานโบราณ",
   "settings.manuscripts.cache": "ล้างภาพต้นฉบับที่แคชไว้",
@@ -41,6 +45,7 @@ export const th: Record<string, string> = {
   "settings.julia.update": "อัปเดตผ่าน juliaup",
   "settings.julia.up_to_date": "Julia เป็นเวอร์ชันล่าสุดแล้ว",
   "settings.typst": "แพ็กเกจ Typst",
+  "typst.export_pdf": "ส่งออก PDF",
   "settings.website": "เว็บไซต์",
   "settings.website.download": "ดาวน์โหลดอัปเดต",
   "settings.website.up_to_date": "เป็นเวอร์ชันล่าสุด",
@@ -292,6 +297,7 @@ export const th: Record<string, string> = {
   "toolbar.open_file": "เปิดไฟล์",
   "toolbar.save": "บันทึก",
   "toolbar.save_as": "บันทึกเป็น",
+  "toolbar.export_docx": "ส่งออกเป็น Word (.docx)",
   // Global Search button
   "search.global": "ค้นหาทั่วโลก",
   // Table of Contents toggle button

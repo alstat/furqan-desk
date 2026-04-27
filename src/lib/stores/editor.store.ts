@@ -96,6 +96,31 @@ export const appDarkMode = {
   },
 };
 
+function loadTypstPreviewDarkMode(): boolean {
+  try {
+    const v = localStorage.getItem("typst-preview-dark-mode");
+    if (v === "true") return true;
+    if (v === "false") return false;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+const _typstPreviewDarkMode = writable<boolean>(loadTypstPreviewDarkMode());
+
+export const typstPreviewDarkMode = {
+  subscribe: _typstPreviewDarkMode.subscribe,
+  set(v: boolean) {
+    try {
+      localStorage.setItem("typst-preview-dark-mode", String(v));
+    } catch {
+      /* ignore */
+    }
+    _typstPreviewDarkMode.set(v);
+  },
+};
+
 function loadTheme(): EditorTheme {
   try {
     const v = localStorage.getItem("editor-theme");

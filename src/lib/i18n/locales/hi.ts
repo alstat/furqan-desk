@@ -29,6 +29,10 @@ export const hi: Record<string, string> = {
   "settings.appearance": "दिखावट",
   "settings.appearance.glass": "मॉर्फोलॉजी पॉपओवर ग्लास इफेक्ट",
   "settings.appearance.glass.desc": "प्रदर्शन सुधारने के लिए अक्षम करें",
+  "settings.appearance.typst_preview_dark": "Typst प्रीव्यू डार्क मोड",
+
+  "settings.appearance.typst_preview_dark.desc": "जब ऐप डार्क मोड चालू हो, तो Typst प्रीव्यू पृष्ठ भी गहरे करें।",
+
   "settings.manuscripts": "पांडुलिपियाँ",
   "settings.manuscripts.browse": "प्रारंभिक कुरआनिक पांडुलिपियाँ देखें",
   "settings.manuscripts.cache": "कैश की गई पांडुलिपि छवियाँ साफ़ करें",
@@ -41,6 +45,7 @@ export const hi: Record<string, string> = {
   "settings.julia.update": "juliaup के ज़रिए अपडेट करें",
   "settings.julia.up_to_date": "Julia अप टू डेट है",
   "settings.typst": "Typst पैकेज",
+  "typst.export_pdf": "PDF निर्यात करें",
   "settings.website": "वेबसाइट",
   "settings.website.download": "अपडेट डाउनलोड करें",
   "settings.website.up_to_date": "अप टू डेट",
@@ -295,6 +300,7 @@ export const hi: Record<string, string> = {
   "toolbar.open_file": "फ़ाइल खोलें",
   "toolbar.save": "सहेजें",
   "toolbar.save_as": "इस रूप में सहेजें",
+  "toolbar.export_docx": "Word के रूप में निर्यात करें (.docx)",
   // Global Search button
   "search.global": "वैश्विक खोज",
   // Table of Contents toggle button

@@ -12,6 +12,8 @@
         typstIsCompiling,
         zenMode,
         zenPeek,
+        appDarkMode,
+        typstPreviewDarkMode,
     } from "$lib/stores/editor.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
     import {
@@ -26,6 +28,7 @@
         type CompletionSource,
     } from "@codemirror/autocomplete";
     import { TYPST_COMPLETIONS } from "$lib/completions/typst";
+    import { t } from "$lib/i18n";
 
     let {
         tabId = null,
@@ -175,7 +178,7 @@
     const labelClass =
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
 
-    let lineWrap = $state(false);
+    let lineWrap = $state(true);
 
     // ── Resize (preview pane) ─────────────────────────────────────────────────
     let containerEl: HTMLDivElement;
@@ -286,7 +289,10 @@
                     <div class="flex flex-col gap-3 pb-2">
                         {#each $typstSvgPages as pageSvg}
                             <div
-                                class="typst-page overflow-hidden border border-stone-200 rounded-md shadow-sm bg-white"
+                                class="typst-page overflow-hidden border border-stone-200 dark:border-[#414559] rounded-md shadow-sm bg-white {$appDarkMode &&
+                                $typstPreviewDarkMode
+                                    ? 'typst-page-dark'
+                                    : ''}"
                             >
                                 {@html pageSvg}
                             </div>
@@ -315,7 +321,7 @@
                     ? 'opacity-25 hover:opacity-100'
                     : ''} mr-3 cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 transition-colors"
             >
-                Export PDF
+                {$t("typst.export_pdf")}
             </button>
         </div>
     {/if}
@@ -326,5 +332,11 @@
         width: 100%;
         height: auto;
         display: block;
+    }
+    .typst-page-dark {
+        background-color: #1f2430;
+    }
+    .typst-page-dark :global(svg) {
+        filter: invert(1) hue-rotate(180deg);
     }
 </style>

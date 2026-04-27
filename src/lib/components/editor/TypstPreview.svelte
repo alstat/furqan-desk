@@ -10,6 +10,8 @@
         typstIsCompiling,
         zenMode,
         zenPeek,
+        appDarkMode,
+        typstPreviewDarkMode,
     } from "$lib/stores/editor.store";
     import Icon from "@iconify/svelte";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
@@ -53,6 +55,17 @@
                 ? ''
                 : 'border-b border-stone-200 dark:border-[#414559]'} flex items-center justify-between px-4 py-1 shrink-0"
         >
+            <button
+                onclick={exportPdf}
+                class={$zenMode
+                    ? actionBtnStyle +
+                      ($zenPeek
+                          ? " absolute top-1 left-11/12 opacity-50 transition-opacity duration-200"
+                          : " absolute top-1 left-11/12 opacity-0 hover:opacity-100 transition-opacity duration-200")
+                    : actionBtnStyle + " absolute top-1 left-11/12"}
+            >
+                <Icon icon="ph:file-pdf-bold" />
+            </button>
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
             >
@@ -73,17 +86,6 @@
                     Preview
                 {/if}
             </span>
-            <button
-                onclick={exportPdf}
-                class={$zenMode
-                    ? actionBtnStyle +
-                      ($zenPeek
-                          ? " absolute -top-4.5 left-11/12 opacity-50 transition-opacity duration-200"
-                          : " absolute -top-4.5 left-11/12 opacity-0 hover:opacity-100 transition-opacity duration-200")
-                    : actionBtnStyle + " absolute -top-4.5 left-11/12"}
-            >
-                <Icon icon="ph:file-pdf-bold" />
-            </button>
         </div>
 
         <!-- Pages -->
@@ -99,7 +101,7 @@
                 <div class="flex flex-col gap-6">
                     {#each $typstSvgPages as pageSvg}
                         <div
-                            class="typst-page overflow-hidden border border-stone-200 dark:border-[#414559] rounded-md shadow-sm bg-white"
+                            class="typst-page overflow-hidden border border-stone-200 dark:border-[#414559] rounded-md shadow-sm bg-white {$appDarkMode && $typstPreviewDarkMode ? 'typst-page-dark' : ''}"
                         >
                             {@html pageSvg}
                         </div>
@@ -119,5 +121,11 @@
         width: 100%;
         height: auto;
         display: block;
+    }
+    .typst-page-dark {
+        background-color: #1f2430;
+    }
+    .typst-page-dark :global(svg) {
+        filter: invert(1) hue-rotate(180deg);
     }
 </style>

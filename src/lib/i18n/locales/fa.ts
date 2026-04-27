@@ -29,6 +29,10 @@ export const fa: Record<string, string> = {
     'settings.appearance': 'ظاهر',
     'settings.appearance.glass': 'افکت شیشه‌ای پنجره صرف‌شناسی',
     'settings.appearance.glass.desc': 'برای بهبود کارایی غیرفعال کنید',
+    'settings.appearance.typst_preview_dark': 'حالت تاریک پیش‌نمایش Typst',
+
+    'settings.appearance.typst_preview_dark.desc': 'وقتی حالت تاریک برنامه فعال است، صفحات پیش‌نمایش Typst نیز تیره می‌شوند.',
+
     'settings.manuscripts': 'نسخه‌های خطی',
     'settings.manuscripts.browse': 'مشاهده نسخه‌های خطی قرآنی اولیه',
     'settings.manuscripts.cache': 'پاک کردن تصاویر نسخه‌های خطی ذخیره‌شده',
@@ -41,6 +45,7 @@ export const fa: Record<string, string> = {
     'settings.julia.update': 'به‌روزرسانی از طریق juliaup',
     'settings.julia.up_to_date': 'Julia به‌روز است',
     'settings.typst': 'بسته‌های Typst',
+    'typst.export_pdf': 'خروجی PDF',
     'settings.website': 'وب‌سایت',
     'settings.website.download': 'دانلود به‌روزرسانی',
     'settings.website.up_to_date': 'به‌روز است',
@@ -286,6 +291,7 @@ export const fa: Record<string, string> = {
     'toolbar.open_file': 'باز کردن فایل',
     'toolbar.save': 'ذخیره',
     'toolbar.save_as': 'ذخیره با نام',
+    'toolbar.export_docx': 'صدور به‌عنوان Word (.docx)',
     // Global Search button
     'search.global': 'جستجوی سراسری',
     // Table of Contents toggle button

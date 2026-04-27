@@ -29,6 +29,10 @@ export const ur: Record<string, string> = {
     'settings.appearance': 'ظاہری شکل',
     'settings.appearance.glass': 'مورفولوجی پوپ اوور گلاس افیکٹ',
     'settings.appearance.glass.desc': 'کارکردگی بہتر کرنے کے لیے بند کریں',
+    'settings.appearance.typst_preview_dark': 'Typst پیش نظارہ ڈارک موڈ',
+
+    'settings.appearance.typst_preview_dark.desc': 'جب ایپ ڈارک موڈ آن ہو، تو Typst پیش نظارہ صفحات کو بھی گہرا کریں۔',
+
     'settings.manuscripts': 'مخطوطات',
     'settings.manuscripts.browse': 'ابتدائی قرآنی مخطوطات دیکھیں',
     'settings.manuscripts.cache': 'محفوظ مخطوطات کی تصاویر صاف کریں',
@@ -41,6 +45,7 @@ export const ur: Record<string, string> = {
     'settings.julia.update': 'juliaup سے اپڈیٹ کریں',
     'settings.julia.up_to_date': 'Julia اپڈیٹ ہے',
     'settings.typst': 'Typst پیکجز',
+    'typst.export_pdf': 'PDF برآمد کریں',
     'settings.website': 'ویب سائٹ',
     'settings.website.download': 'اپڈیٹ ڈاؤنلوڈ کریں',
     'settings.website.up_to_date': 'اپڈیٹ ہے',
@@ -286,6 +291,7 @@ export const ur: Record<string, string> = {
     'toolbar.open_file': 'فائل کھولیں',
     'toolbar.save': 'محفوظ کریں',
     'toolbar.save_as': 'بطور محفوظ کریں',
+    'toolbar.export_docx': 'ورڈ (.docx) کے طور پر برآمد کریں',
     // Global Search button
     'search.global': 'عمومی تلاش',
     // Table of Contents toggle button

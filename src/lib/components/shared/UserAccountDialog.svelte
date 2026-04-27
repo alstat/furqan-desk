@@ -3,6 +3,7 @@
     import Icon from "@iconify/svelte";
     import LoginView from "./LoginView.svelte";
     import ProfileView from "./ProfileView.svelte";
+    import { authSession, authLoading } from "$lib/stores/auth.store";
 
     interface Props {
         open: boolean;
@@ -11,7 +12,7 @@
 
     let { open, onClose }: Props = $props();
 
-    let view: "login" | "profile" = $state("login");
+    let view = $derived($authSession ? "profile" : "login");
 
     function handleClose() {
         onClose();
@@ -38,7 +39,11 @@
             <!-- Header -->
             <div class="flex items-center gap-3 border-b border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100 dark:bg-[#292c3c] px-5 py-4">
                 <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#363a4f] text-brand-gold-600 dark:text-brand-gold-400">
-                    <Icon icon="solar:user-bold-duotone" width="1rem" />
+                    {#if $authLoading}
+                        <Icon icon="svg-spinners:ring-resize" width="0.85rem" />
+                    {:else}
+                        <Icon icon="solar:user-bold-duotone" width="1rem" />
+                    {/if}
                 </div>
                 <div class="flex flex-col">
                     <span class="text-[13px] font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">Account</span>
@@ -60,9 +65,9 @@
             <!-- Body -->
             <div class="flex-1 overflow-y-auto bg-brand-sand-50 dark:bg-[#232634] px-5 py-5">
                 {#if view === "login"}
-                    <LoginView onSwitchToProfile={() => (view = "profile")} />
+                    <LoginView />
                 {:else}
-                    <ProfileView onSwitchToLogin={() => (view = "login")} />
+                    <ProfileView />
                 {/if}
             </div>
         </div>

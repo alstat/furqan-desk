@@ -29,6 +29,10 @@ export const tl: Record<string, string> = {
   "settings.appearance": "Hitsura",
   "settings.appearance.glass": "Epektong salamin ng morphology popover",
   "settings.appearance.glass.desc": "I-disable upang mapabuti ang pagganap",
+  "settings.appearance.typst_preview_dark": "Dark mode ng Typst preview",
+
+  "settings.appearance.typst_preview_dark.desc": "Kapag naka-on ang dark mode ng app, padidilimin din ang mga pahina ng Typst preview.",
+
   "settings.manuscripts": "Mga Manuskrito",
   "settings.manuscripts.browse":
     "I-browse ang maagang mga manuskritong Quranic",
@@ -43,6 +47,7 @@ export const tl: Record<string, string> = {
   "settings.julia.update": "I-update sa pamamagitan ng juliaup",
   "settings.julia.up_to_date": "Napapanahon na ang Julia",
   "settings.typst": "Mga Pakete ng Typst",
+  "typst.export_pdf": "I-export ang PDF",
   "settings.website": "Website",
   "settings.website.download": "I-download ang update",
   "settings.website.up_to_date": "Napapanahon na",
@@ -299,6 +304,7 @@ export const tl: Record<string, string> = {
   "toolbar.open_file": "Buksan ang file",
   "toolbar.save": "I-save",
   "toolbar.save_as": "I-save Bilang",
+  "toolbar.export_docx": "I-export bilang Word (.docx)",
   // Global Search button
   "search.global": "Pandaigdigang Paghahanap",
   // Table of Contents toggle button

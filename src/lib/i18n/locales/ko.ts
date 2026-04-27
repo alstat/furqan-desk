@@ -29,6 +29,10 @@ export const ko: Record<string, string> = {
     'settings.appearance': '외관',
     'settings.appearance.glass': '형태론 팝오버 유리 효과',
     'settings.appearance.glass.desc': '성능 향상을 위해 비활성화',
+    'settings.appearance.typst_preview_dark': 'Typst 미리보기 다크 모드',
+
+    'settings.appearance.typst_preview_dark.desc': '앱 다크 모드가 켜져 있을 때 Typst 미리보기 페이지도 어둡게 표시합니다.',
+
     'settings.manuscripts': '필사본',
     'settings.manuscripts.browse': '초기 쿠란 필사본 탐색',
     'settings.manuscripts.cache': '캐시된 필사본 이미지 지우기',
@@ -41,6 +45,7 @@ export const ko: Record<string, string> = {
     'settings.julia.update': 'juliaup으로 업데이트',
     'settings.julia.up_to_date': 'Julia가 최신 버전입니다',
     'settings.typst': 'Typst 패키지',
+    'typst.export_pdf': 'PDF 내보내기',
     'settings.website': '웹사이트',
     'settings.website.download': '업데이트 다운로드',
     'settings.website.up_to_date': '최신 버전',
@@ -286,6 +291,7 @@ export const ko: Record<string, string> = {
     'toolbar.open_file': '파일 열기',
     'toolbar.save': '저장',
     'toolbar.save_as': '다른 이름으로 저장',
+    'toolbar.export_docx': 'Word(.docx)로 내보내기',
     // Global Search button
     'search.global': '전체 검색',
     // Table of Contents toggle button

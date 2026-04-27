@@ -29,6 +29,10 @@ export const tg: Record<string, string> = {
   "settings.appearance": "Намуд",
   "settings.appearance.glass": "Таъсири шишаи попавери морфология",
   "settings.appearance.glass.desc": "Барои беҳтар кардани иҷро хомӯш кунед",
+  "settings.appearance.typst_preview_dark": "Реҷаи торикии пешнамоиши Typst",
+
+  "settings.appearance.typst_preview_dark.desc": "Вақте ки реҷаи торикии барнома фаъол аст, саҳифаҳои пешнамоиши Typst низ торик мешаванд.",
+
   "settings.manuscripts": "Дастнависҳо",
   "settings.manuscripts.browse": "Дидани дастнависҳои қадимии Қуръон",
   "settings.manuscripts.cache": "Тоза кардани тасвирҳои кэш шудаи дастнавис",
@@ -41,6 +45,7 @@ export const tg: Record<string, string> = {
   "settings.julia.update": "Навсозӣ тавассути juliaup",
   "settings.julia.up_to_date": "Julia навсозӣ шудааст",
   "settings.typst": "Пакетҳои Typst",
+  "typst.export_pdf": "Содир кардани PDF",
   "settings.website": "Вебсайт",
   "settings.website.download": "Бордорӣ навсозӣ",
   "settings.website.up_to_date": "Навсозӣ шудааст",
@@ -292,6 +297,7 @@ export const tg: Record<string, string> = {
   "toolbar.open_file": "Кушодани файл",
   "toolbar.save": "Нигоҳ доштан",
   "toolbar.save_as": "Бо номи дигар нигоҳ доштан",
+  "toolbar.export_docx": "Содирот ҳамчун Word (.docx)",
   // Global Search button
   "search.global": "Ҷустуҷӯи глобалӣ",
   // Table of Contents toggle button

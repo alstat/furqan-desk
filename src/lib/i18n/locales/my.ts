@@ -29,6 +29,10 @@ export const my: Record<string, string> = {
   "settings.appearance": "အသွင်အပြင်",
   "settings.appearance.glass": "ရုပ်ဗေဒ popover မှန် အကျိုးသက်ရောက်မှု",
   "settings.appearance.glass.desc": "စွမ်းဆောင်ရည် တိုးတက်ရန် ပိတ်ပါ",
+  "settings.appearance.typst_preview_dark": "Typst အစမ်းကြည့် မှောင်မိုက်မုဒ်",
+
+  "settings.appearance.typst_preview_dark.desc": "အက်ပ်မှောင်မိုက်မုဒ်ဖွင့်ထားသည့်အခါ Typst အစမ်းကြည့်စာမျက်နှာများကိုလည်း မှောင်စေပါ။",
+
   "settings.manuscripts": "မူရင်းစာမူများ",
   "settings.manuscripts.browse": "ဆူရာ မူရင်းစာမူ ဟောင်းများကို ကြည့်ရှုပါ",
   "settings.manuscripts.cache": "သိမ်းဆည်းထားသော မူရင်းစာမူ ပုံများကို ရှင်းပါ",
@@ -41,6 +45,7 @@ export const my: Record<string, string> = {
   "settings.julia.update": "juliaup မှတဆင့် အပ်ဒိတ်လုပ်ပါ",
   "settings.julia.up_to_date": "Julia သည် နောက်ဆုံးဗားရှင်းဖြစ်သည်",
   "settings.typst": "Typst ပက်ကေ့ချ်များ",
+  "typst.export_pdf": "PDF ထုတ်ရန်",
   "settings.website": "ဝဘ်ဆိုဒ်",
   "settings.website.download": "အပ်ဒိတ် ဒေါင်းလုဒ်လုပ်ပါ",
   "settings.website.up_to_date": "နောက်ဆုံးဗားရှင်း",
@@ -292,6 +297,7 @@ export const my: Record<string, string> = {
   "toolbar.open_file": "ဖိုင် ဖွင့်ပါ",
   "toolbar.save": "သိမ်းပါ",
   "toolbar.save_as": "အမည်ဖြင့် သိမ်းပါ",
+  "toolbar.export_docx": "Word (.docx) အဖြစ် တင်ပို့ရန်",
   // Global Search button
   "search.global": "ကမ္ဘာလုံးဆိုင်ရာ ရှာဖွေမှု",
   // Table of Contents toggle button

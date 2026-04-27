@@ -28,6 +28,10 @@ export const sw: Record<string, string> = {
   "settings.appearance": "Muonekano",
   "settings.appearance.glass": "Athari ya kioo ya popover ya mofolojia",
   "settings.appearance.glass.desc": "Zima ili kuboresha utendaji",
+  "settings.appearance.typst_preview_dark": "Hali ya giza ya hakikisho la Typst",
+
+  "settings.appearance.typst_preview_dark.desc": "Wakati hali ya giza ya programu imewashwa, kurasa za hakikisho la Typst pia hutiwa giza.",
+
   "settings.manuscripts": "Maandishi ya Mkono",
   "settings.manuscripts.browse": "Vinjari maandishi ya mapema ya Kiislamu",
   "settings.manuscripts.cache": "Futa picha za maandishi zilizohifadhiwa",
@@ -40,6 +44,7 @@ export const sw: Record<string, string> = {
   "settings.julia.update": "Sasisha kupitia juliaup",
   "settings.julia.up_to_date": "Julia imesasishwa",
   "settings.typst": "Vifurushi vya Aina",
+  "typst.export_pdf": "Hamisha PDF",
   "settings.website": "Tovuti",
   "settings.website.download": "Pakua sasisho",
   "settings.website.up_to_date": "Imesasishwa",
@@ -261,6 +266,7 @@ export const sw: Record<string, string> = {
   "toolbar.open_file": "Fungua faili",
   "toolbar.save": "Hifadhi",
   "toolbar.save_as": "Hifadhi Kama",
+  "toolbar.export_docx": "Hamisha kama Word (.docx)",
   "search.global": "Utafutaji wa Ulimwenguni",
   "toc.button": "Jedwali la Yaliyomo",
   "manuscript.title": "Maandishi",

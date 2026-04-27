@@ -5,6 +5,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         appDarkMode,
         zenMode,
         customFontFamilies,
+        typstPreviewDarkMode,
     } from '$lib/stores/editor.store';
     import { openCustomFontDialog } from '$lib/stores/custom-font-dialog.store';
     import { restartTour } from '$lib/stores/tour.store';
@@ -197,6 +198,35 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                         onclick={() => morphGlassEffect.set(true)}
                         class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
                             ${$morphGlassEffect
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        {$t('common.enabled')}
+                    </button>
+                </div>
+            </div>
+            <!-- Typst Preview Dark Mode -->
+            <div class="flex items-center justify-between mt-3">
+                <div>
+                    <span class={rowLabel}>{$t('settings.appearance.typst_preview_dark')}</span>
+                    <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        {$t('settings.appearance.typst_preview_dark.desc')}
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <button
+                        onclick={() => typstPreviewDarkMode.set(false)}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${!$typstPreviewDarkMode
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        {$t('common.disabled')}
+                    </button>
+                    <button
+                        onclick={() => typstPreviewDarkMode.set(true)}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${$typstPreviewDarkMode
                                 ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                 : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                     >

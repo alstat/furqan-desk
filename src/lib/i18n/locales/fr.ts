@@ -29,6 +29,10 @@ export const fr: Record<string, string> = {
     'settings.appearance': 'Apparence',
     'settings.appearance.glass': 'Effet verre pour la fenêtre morphologique',
     'settings.appearance.glass.desc': 'Désactiver pour améliorer les performances',
+    'settings.appearance.typst_preview_dark': 'Mode sombre pour l\'aperçu Typst',
+
+    'settings.appearance.typst_preview_dark.desc': 'Quand le mode sombre est activé, les pages d\'aperçu Typst sont également assombries.',
+
     'settings.manuscripts': 'Manuscrits',
     'settings.manuscripts.browse': 'Parcourir les premiers manuscrits coraniques',
     'settings.manuscripts.cache': 'Effacer les images de manuscrits en cache',
@@ -41,6 +45,7 @@ export const fr: Record<string, string> = {
     'settings.julia.update': 'Mettre à jour via juliaup',
     'settings.julia.up_to_date': 'Julia est à jour',
     'settings.typst': 'Paquets Typst',
+    'typst.export_pdf': 'Exporter en PDF',
     'settings.website': 'Site web',
     'settings.website.download': 'Télécharger la mise à jour',
     'settings.website.up_to_date': 'À jour',
@@ -286,6 +291,7 @@ export const fr: Record<string, string> = {
     'toolbar.open_file': 'Ouvrir un fichier',
     'toolbar.save': 'Enregistrer',
     'toolbar.save_as': 'Enregistrer sous',
+    'toolbar.export_docx': 'Exporter en Word (.docx)',
     // Global Search button
     'search.global': 'Recherche globale',
     // Table of Contents toggle button

@@ -29,6 +29,10 @@ export const tr: Record<string, string> = {
     'settings.appearance': 'Görünüm',
     'settings.appearance.glass': 'Morfoloji açılır pencere cam efekti',
     'settings.appearance.glass.desc': 'Performansı artırmak için devre dışı bırakın',
+    'settings.appearance.typst_preview_dark': 'Typst önizleme koyu modu',
+
+    'settings.appearance.typst_preview_dark.desc': 'Uygulama koyu modu açıkken Typst önizleme sayfaları da koyulaştırılır.',
+
     'settings.manuscripts': 'El Yazmaları',
     'settings.manuscripts.browse': 'Erken Kuran el yazmalarına göz atın',
     'settings.manuscripts.cache': 'Önbelleğe alınmış el yazması resimlerini temizle',
@@ -41,6 +45,7 @@ export const tr: Record<string, string> = {
     'settings.julia.update': 'juliaup ile güncelle',
     'settings.julia.up_to_date': 'Julia güncel',
     'settings.typst': 'Typst Paketleri',
+    'typst.export_pdf': 'PDF\'yi Dışa Aktar',
     'settings.website': 'Web Sitesi',
     'settings.website.download': 'Güncellemeyi indir',
     'settings.website.up_to_date': 'Güncel',
@@ -286,6 +291,7 @@ export const tr: Record<string, string> = {
     'toolbar.open_file': 'Dosya aç',
     'toolbar.save': 'Kaydet',
     'toolbar.save_as': 'Farklı Kaydet',
+    'toolbar.export_docx': 'Word olarak dışa aktar (.docx)',
     // Global Search button
     'search.global': 'Genel Arama',
     // Table of Contents toggle button
