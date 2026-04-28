@@ -171,7 +171,9 @@
       "WebFetch(domain:api-docs.quran.foundation)",
       "WebFetch(domain:quran.foundation)",
       "WebFetch(domain:archive.org)",
-      "WebFetch(domain:old.quranwbw.com)"
+      "WebFetch(domain:old.quranwbw.com)",
+      "Bash(git -C /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk log --oneline --all)",
+      "Bash(supabase init *)"
     ]
   }
 }
