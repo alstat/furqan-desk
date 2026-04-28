@@ -1,10 +1,12 @@
-import { writable } from "svelte/store";
+import { writable, derived } from "svelte/store";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "$lib/supabase";
 
 export const authSession = writable<Session | null>(null);
 export const authUser = writable<User | null>(null);
 export const authLoading = writable(true);
+
+export const isPro = derived(authUser, ($u) => $u?.app_metadata?.is_pro === true);
 
 // Restore persisted session on startup then keep stores in sync with auth state changes.
 supabase.auth.getSession().then(({ data }) => {
