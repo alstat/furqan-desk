@@ -22,15 +22,26 @@
     import FeedbackDialog from "./FeedbackDialog.svelte";
     import DonationDialog from "./DonationDialog.svelte";
     import UserAccountDialog from "./UserAccountDialog.svelte";
+    import AiChatDialog from "./AiChatDialog.svelte";
     import Icon from "@iconify/svelte";
     import { donationOpen } from "$lib/stores/tour.store";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
     import { t } from "$lib/i18n";
     import { zenMode, appDarkMode } from "$lib/stores/editor.store";
+    import { authUser, isPro } from "$lib/stores/auth.store";
 
     let feedbackOpen = $state(false);
     let accountOpen = $state(false);
+    let chatOpen = $state(false);
     let tocBtnEl = $state<HTMLButtonElement | null>(null);
+
+    function handleAiClick() {
+        if (!$authUser || !$isPro) {
+            accountOpen = true;
+            return;
+        }
+        chatOpen = true;
+    }
 
     let { children, roundRight = true } = $props();
 
@@ -149,6 +160,17 @@
         </button>
     {/if}
 
+
+    <!-- AI Button -->
+    <button
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-26 z-3 ${chatOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+        onclick={handleAiClick}
+        aria-label={$t('ai_chat.title')}
+        title={$t('ai_chat.title')}
+    >
+        <Icon icon="ri:chat-ai-3-fill" class="h-4 w-4" />
+    </button>
+
     <!-- Julia Plot Viewer button -->
     {#if $juliaMode || $juliaViewerOpen}
         <button
@@ -212,6 +234,10 @@
     <UserAccountDialog
         open={accountOpen}
         onClose={() => (accountOpen = false)}
+    />
+    <AiChatDialog
+        open={chatOpen}
+        onClose={() => (chatOpen = false)}
     />
 
     <div class={$isSidebar ? `flex flex-row w-full` : `hidden`}>
