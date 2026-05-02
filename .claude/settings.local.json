@@ -173,7 +173,14 @@
       "WebFetch(domain:archive.org)",
       "WebFetch(domain:old.quranwbw.com)",
       "Bash(git -C /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk log --oneline --all)",
-      "Bash(supabase init *)"
+      "Bash(supabase init *)",
+      "Bash(mkdir -p /Users/al-ahmadgaidasaad/Documents/Dev/ayahlab-website/supabase/migrations /Users/al-ahmadgaidasaad/Documents/Dev/ayahlab-website/supabase/functions/paddle-webhook)",
+      "Bash(cp /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/supabase/migrations/20260427000001_subscriptions.sql /Users/al-ahmadgaidasaad/Documents/Dev/ayahlab-website/supabase/migrations/)",
+      "Bash(cp /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/supabase/functions/paddle-webhook/index.ts /Users/al-ahmadgaidasaad/Documents/Dev/ayahlab-website/supabase/functions/paddle-webhook/)",
+      "Bash(cp /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/supabase/config.toml /Users/al-ahmadgaidasaad/Documents/Dev/ayahlab-website/supabase/)",
+      "Bash(rm -rf /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/supabase)",
+      "Bash(rm /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/lib/billing/paddle.ts)",
+      "Bash(rmdir /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/lib/billing)"
     ]
   }
 }
