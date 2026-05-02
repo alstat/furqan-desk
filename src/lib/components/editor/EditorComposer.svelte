@@ -3,6 +3,7 @@
     import CodePlugin from "$lexical/core/plugins/CodeHighlighter/CodePlugin.svelte";
     import { EquationNode } from "$lexical/core/plugins/Equation/EquationNode";
     import EquationPlugin from "$lexical/core/plugins/Equation/EquationPlugin.svelte";
+    import AiSelectionPlugin from "$lexical/core/plugins/AiSelectionPlugin.svelte";
     // import {
     // 	Composer,
     // 	ContentEditable,
@@ -115,6 +116,7 @@
                 <CaptionEditorHistoryPlugin />
             </ImagePlugin>
             <EquationPlugin />
+            <AiSelectionPlugin />
             <CodePlugin />
             <TablePlugin />
             <TableCellResizerPlugin />

@@ -16,6 +16,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { getVersion } from '@tauri-apps/api/app';
     import { locale, LOCALE_NAMES, t, type Locale } from '$lib/i18n';
+    import { aiTextDefaultModel } from '$lib/stores/ai-text-transform.store';
 
     interface Props {
         open: boolean;
@@ -156,6 +157,39 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                     <Icon icon="solar:play-circle-bold-duotone" width="0.85rem" />
                     {$t('settings.tutorial.restart')}
                 </button>
+            </div>
+        </div>
+
+        <!-- AI Tools -->
+        <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
+            <p class={sectionLabel}>AI Tools</p>
+            <div class="flex items-center justify-between gap-4">
+                <div>
+                    <span class={rowLabel}>Default selection model</span>
+                    <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        Used by Paraphrase, Elaborate, Shorten, and Prompt.
+                    </p>
+                </div>
+                <div class="flex gap-2 shrink-0">
+                    <button
+                        onclick={() => aiTextDefaultModel.set('standard')}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${$aiTextDefaultModel === 'standard'
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        {$t('ai_chat.model_standard')}
+                    </button>
+                    <button
+                        onclick={() => aiTextDefaultModel.set('advanced')}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${$aiTextDefaultModel === 'advanced'
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        {$t('ai_chat.model_advanced')}
+                    </button>
+                </div>
             </div>
         </div>
 
