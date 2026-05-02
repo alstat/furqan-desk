@@ -14,7 +14,8 @@
         onClose?: () => void;
     }
 
-    let { selectedText, x, y, contextPrompt, onReplace, onClose }: Props = $props();
+    let { selectedText, x, y, contextPrompt, onReplace, onClose }: Props =
+        $props();
 
     let promptOpen = $state(false);
     let promptText = $state("");
@@ -87,10 +88,9 @@
     <div class="flex items-center gap-2">
         {#each actions as action (action.id)}
             <button
-                class="group relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-brand-sand-200 bg-white/95 text-brand-charcoal-500 shadow-lg backdrop-blur-sm transition-colors hover:border-brand-gold-300 hover:bg-brand-gold-100 hover:text-brand-gold-600 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:border-[#414559] dark:bg-[#292c3c]/95 dark:text-[#c6d0f5] dark:shadow-black/40 dark:hover:bg-[#414559] dark:hover:text-[#e5c890] disabled:cursor-wait disabled:opacity-50"
+                class="group relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-brand-gold-200 p-0 shadow-md transition-colors text-brand-gold-600 hover:bg-brand-gold-400 active:bg-brand-gold-500 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:bg-[#363a4f] dark:text-brand-gold-400 dark:hover:bg-[#4a4e5c] dark:active:bg-[#414559] disabled:cursor-wait disabled:opacity-50"
                 disabled={busyAction !== null}
                 onclick={() => run(action.id)}
-                title={action.label}
                 aria-label={action.label}
             >
                 <Icon
@@ -108,10 +108,9 @@
             </button>
         {/each}
         <button
-            class="group relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-brand-sand-200 bg-white/95 text-brand-charcoal-500 shadow-lg backdrop-blur-sm transition-colors hover:border-brand-gold-300 hover:bg-brand-gold-100 hover:text-brand-gold-600 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:border-[#414559] dark:bg-[#292c3c]/95 dark:text-[#c6d0f5] dark:shadow-black/40 dark:hover:bg-[#414559] dark:hover:text-[#e5c890] disabled:opacity-50"
+            class="group relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-brand-gold-200 p-0 shadow-md transition-colors text-brand-gold-600 hover:bg-brand-gold-400 active:bg-brand-gold-500 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:bg-[#363a4f] dark:text-brand-gold-400 dark:hover:bg-[#4a4e5c] dark:active:bg-[#414559] disabled:opacity-50"
             disabled={busyAction !== null}
             onclick={() => (promptOpen = !promptOpen)}
-            title="Prompt"
             aria-label="Prompt"
         >
             <Icon
@@ -130,7 +129,9 @@
     </div>
 
     {#if promptOpen}
-        <div class="flex w-80 items-center gap-1.5 rounded-2xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#292c3c]/95 dark:shadow-black/40">
+        <div
+            class="flex w-80 items-center gap-1.5 rounded-2xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+        >
             <input
                 bind:value={promptText}
                 placeholder="Tell AI what to do..."
@@ -152,7 +153,9 @@
     {/if}
 
     {#if error}
-        <div class="max-w-80 px-1 text-[10px] leading-snug text-red-500 dark:text-red-400">
+        <div
+            class="max-w-80 px-1 text-[10px] leading-snug text-red-500 dark:text-red-400"
+        >
             {error}
         </div>
     {/if}

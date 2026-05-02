@@ -144,11 +144,23 @@
         </svg>
     </button>
 
+
+    <!-- AI Button -->
+    <button
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-15 z-3 ${chatOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+        onclick={handleAiClick}
+        aria-label={$t('ai_chat.title')}
+        title={$t('ai_chat.title')}
+    >
+        <Icon icon="ri:chat-ai-3-fill" class="h-4 w-4" />
+    </button>
+
+
     <!-- Table of Contents button -->
     {#if $isSidebar && $activeTab?.type === "lexical"}
         <button
             bind:this={tocBtnEl}
-            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-15 z-3 ${$tocOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-26 z-3 ${$tocOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
             onclick={() => {
                 if (tocBtnEl) tocAnchorRect.set(tocBtnEl.getBoundingClientRect());
                 $tocOpen = !$tocOpen;
@@ -159,17 +171,6 @@
             <Icon icon="solar:list-bold-duotone" class="h-4 w-4" />
         </button>
     {/if}
-
-
-    <!-- AI Button -->
-    <button
-        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-26 z-3 ${chatOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
-        onclick={handleAiClick}
-        aria-label={$t('ai_chat.title')}
-        title={$t('ai_chat.title')}
-    >
-        <Icon icon="ri:chat-ai-3-fill" class="h-4 w-4" />
-    </button>
 
     <!-- Julia Plot Viewer button -->
     {#if $juliaMode || $juliaViewerOpen}
