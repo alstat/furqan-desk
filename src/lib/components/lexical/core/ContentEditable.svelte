@@ -94,7 +94,7 @@
 	aria-owns={!isEditable ? null : ariaOwns}
 	aria-readonly={!isEditable ? true : undefined}
 	aria-required={ariaRequired}
-	autocapitalize={autoCapitalize}
+	autocapitalize={autoCapitalize ?? undefined}
 	class={`${className} overflow-auto text-base cursor-text`}
 	contentEditable={isEditable}
 	data-testid={testid}

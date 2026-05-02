@@ -180,6 +180,9 @@
 
     let lineWrap = $state(true);
 
+    const aiContextPrompt =
+        "This text is part of a typst file, so your output should be formatted as part of a typst file";
+
     // ── Resize (preview pane) ─────────────────────────────────────────────────
     let containerEl: HTMLDivElement;
     let previewHeight = $state(200); // 54 × 4px = 216px (replaces fixed h-54)
@@ -253,6 +256,8 @@
             language="typst"
             extensions={[typstCompletionExtension]}
             {lineWrap}
+            aiSelectionTools={true}
+            {aiContextPrompt}
             onchange={handleInput}
             class={`${effectiveTab?.type !== "typst" ? "mb-4" : ""} ${sideBySide ? "mb-3" : ""} flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 font-mono`}
         />

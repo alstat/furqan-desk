@@ -12,6 +12,7 @@
     import { ImageNode } from "$lexical/core/plugins/Image/ImageNode.js";
     import ImagePlugin from "$lexical/core/plugins/Image/ImagePlugin.svelte";
     import EquationPlugin from "$lexical/core/plugins/Equation/EquationPlugin.svelte";
+    import AiSelectionPlugin from "$lexical/core/plugins/AiSelectionPlugin.svelte";
     import ListPlugin from "$lexical/core/plugins/ListPlugin.svelte";
     import CheckListPlugin from "$lexical/core/plugins/CheckListPlugin.svelte";
     import HorizontalRulePlugin from "$lexical/core/plugins/HorizontalRulePlugin.svelte";
@@ -68,6 +69,7 @@
             <HorizontalRulePlugin />
             <ImagePlugin />
             <EquationPlugin />
+            <AiSelectionPlugin />
             <ActionBar />
         </div>
     </div>

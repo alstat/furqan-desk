@@ -7,6 +7,7 @@
     KlassConstructor,
     Transform,
   } from 'lexical';
+  import { createSharedNodeState } from 'lexical';
   import {onMount, setContext} from 'svelte';
 
   interface Props {
@@ -52,6 +53,7 @@
         klass: entry.klass,
         replace: entry.replace,
         replaceWithKlass: entry.replaceWithKlass,
+        sharedNodeState: entry.sharedNodeState,
         transforms: getTransformSetFromKlass(entry.klass),
       });
     }
@@ -64,6 +66,7 @@
         klass,
         replace: null,
         replaceWithKlass: null,
+        sharedNodeState: registeredKlass?.sharedNodeState ?? createSharedNodeState(klass),
         transforms: new Set(),
       });
     }

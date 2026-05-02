@@ -43,6 +43,9 @@
 
     let lineWrap = $state(false);
 
+    const aiContextPrompt =
+        "This text is part of a Julia programming file, so your output should be a julia code";
+
     // ── Effective tab (primary uses $activeTab; secondary uses tabId prop) ─────
 
     let effectiveTab = $derived(
@@ -215,6 +218,8 @@
                     extraKeymap={juliaKeymap}
                     extensions={[juliaCompletionExtension]}
                     {lineWrap}
+                    aiSelectionTools={true}
+                    {aiContextPrompt}
                     onchange={handleInput}
                     class="h-full font-mono"
                 />
