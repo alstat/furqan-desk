@@ -20,7 +20,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self' tauri: asset: https://asset.localhost; script-src 'self' 'unsafe-inline' https://cdn.paddle.com https://*.paddle.com; style-src 'self' 'unsafe-inline' https://*.paddle.com; img-src 'self' data: blob: https:; font-src 'self' data: https://*.paddle.com; connect-src 'self' ipc: http://ipc.localhost https://*.paddle.com https://*.paddlejs.com https://*.supabase.co wss://*.supabase.co; frame-src https://*.paddle.com https://buy.paddle.com https://sandbox-buy.paddle.com; media-src 'self' blob: https:"
+      "csp": "default-src 'self' tauri: asset: https://asset.localhost; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost https://*.supabase.co wss://*.supabase.co; media-src 'self' blob: https:"
     }
   },
   "bundle": {

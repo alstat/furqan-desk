@@ -1,7 +1,7 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { authUser, isPro } from "$lib/stores/auth.store";
-    import { openProCheckout } from "$lib/billing/paddle";
+    import { supabase } from "$lib/supabase";
     import { t } from "$lib/i18n";
     import { openUrl } from "@tauri-apps/plugin-opener";
 
@@ -14,7 +14,15 @@
         if (!user) return;
         busy = true;
         try {
-            await openProCheckout(user);
+            const { data, error: sessionErr } = await supabase.auth.getSession();
+            if (sessionErr || !data.session) throw new Error("No active session");
+
+            const base = (import.meta.env.VITE_AYAHLAB_WEBSITE_URL as string | undefined) ?? "https://ayahlab.app";
+            const params = new URLSearchParams({
+                access_token: data.session.access_token,
+                refresh_token: data.session.refresh_token,
+            });
+            await openUrl(`${base}/upgrade#${params.toString()}`);
         } catch (e) {
             console.error(e);
             error = $t("billing.checkout_failed");
