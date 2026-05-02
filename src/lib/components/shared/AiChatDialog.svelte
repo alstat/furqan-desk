@@ -67,6 +67,11 @@
     let resizeStartPanelX = 0;
     let resizeStartPanelY = 0;
 
+    // Sidebar visibility (independent of panel width)
+    let sidebarOpen = $state(false);
+    let sidebarCollapsed = $derived(panelW < 680);
+    let showFloatingToggle = $derived(sidebarCollapsed && !sidebarOpen);
+
     $effect(() => {
         if (typeof window === "undefined") return;
 
@@ -366,18 +371,59 @@
             {#if $keyState === "unlocked"}
                 <div class="flex flex-1 min-h-0 overflow-hidden">
                     <!-- Sidebar -->
-                    <div class={panelW < 680 ? "hidden" : "contents"}>
-                        <ChatSidebar
-                            chats={$chats}
-                            currentChatId={$currentChatId}
-                            usedBytes={$storageBytes}
-                            totalBytes={storageBytesTotal}
-                            disabled={$streaming}
-                            onSelect={handleSelectChat}
-                            onNew={handleNewChat}
-                            onDelete={handleDeleteChat}
-                        />
+                    <div
+                        class={!sidebarCollapsed || sidebarOpen ? "flex" : "hidden"}
+                    >
+                        <div class="relative flex flex-1 flex-col overflow-hidden">
+                            <ChatSidebar
+                                chats={$chats}
+                                currentChatId={$currentChatId}
+                                usedBytes={$storageBytes}
+                                totalBytes={storageBytesTotal}
+                                disabled={$streaming}
+                                onSelect={handleSelectChat}
+                                onNew={handleNewChat}
+                                onDelete={handleDeleteChat}
+                            />
+                            <!-- Close button (when sidebar opened via floating toggle) -->
+                            {#if sidebarCollapsed && sidebarOpen}
+                                <button
+                                    onclick={() => (sidebarOpen = false)}
+                                    class="absolute right-2 top-2 z-10 flex cursor-pointer items-center gap-1 rounded-full bg-brand-gold-200 p-1.5 shadow-md transition-colors hover:bg-brand-gold-400 active:bg-brand-gold-500 dark:bg-[#414559] dark:hover:bg-[#51576d] dark:active:bg-[#626880]"
+                                    title="Hide chat list"
+                                    aria-label="Hide chat list"
+                                >
+                                    <Icon
+                                        icon="solar:arrow-left-linear"
+                                        class="text-brand-gold-600 dark:text-brand-gold-400"
+                                        width="0.85rem"
+                                    />
+                                    <span class="pr-0.5 text-[10px] font-medium text-brand-gold-600 dark:text-brand-gold-400">
+                                        Hide
+                                    </span>
+                                </button>
+                            {/if}
+                        </div>
                     </div>
+
+                    <!-- Floating sidebar toggle (when sidebar is collapsed) -->
+                    {#if showFloatingToggle}
+                        <button
+                            onclick={() => (sidebarOpen = true)}
+                            class="absolute left-0 top-2 z-20 flex cursor-pointer items-center gap-1.5 rounded-r-full bg-brand-gold-200 py-2 pr-3 pl-2 shadow-md transition-colors hover:bg-brand-gold-400 active:bg-brand-gold-500 dark:bg-[#414559] dark:hover:bg-[#51576d] dark:active:bg-[#626880] border-y border-r border-brand-gold-300 dark:border-[#51576d]"
+                            title="Show chat list"
+                            aria-label="Show chat list"
+                        >
+                            <Icon
+                                icon="solar:sidebar-bold-duotone"
+                                class="text-brand-gold-600 dark:text-brand-gold-400"
+                                width="1rem"
+                            />
+                            <span class="pr-0.5 text-[11px] font-medium text-brand-gold-600 dark:text-brand-gold-400">
+                                Chats
+                            </span>
+                        </button>
+                    {/if}
 
                     <!-- Thread + input -->
                     <div class="flex flex-1 min-w-0 flex-col">
