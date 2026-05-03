@@ -538,7 +538,7 @@ export const ar: Record<string, string> = {
     "billing.heading": "اختر خطتك",
     "billing.current_plan": "الخطة الحالية",
     "billing.upgrade": "ترقية",
-    "billing.manage_subscription": "إدارة الاشتراك",
+    "billing.manage_subscription": "إدارة",
     "billing.checkout_failed": "تعذّر بدء الدفع. يُرجى المحاولة مرة أخرى.",
     "billing.tier.free.name": "مجاني",
     "billing.tier.free.tagline": "التجربة الأساسية على جهازك",

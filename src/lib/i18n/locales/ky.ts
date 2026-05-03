@@ -544,7 +544,7 @@ export const ky: Record<string, string> = {
     "billing.heading": "Планыңызды тандаңыз",
     "billing.current_plan": "Учурдагы план",
     "billing.upgrade": "Жаңыртуу",
-    "billing.manage_subscription": "Жазылууну башкаруу",
+    "billing.manage_subscription": "Башкаруу",
     "billing.checkout_failed": "Төлөмдү баштоо мүмкүн болгон жок. Кайра аракет кылыңыз.",
     "billing.tier.free.name": "Акысыз",
     "billing.tier.free.tagline": "Түзмөгүңүздөгү негизги тажрыйба",

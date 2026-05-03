@@ -538,7 +538,7 @@ export const ur: Record<string, string> = {
     "billing.heading": "اپنا پلان منتخب کریں",
     "billing.current_plan": "موجودہ پلان",
     "billing.upgrade": "اپ گریڈ",
-    "billing.manage_subscription": "سبسکرپشن کا نظم کریں",
+    "billing.manage_subscription": "نظم کریں",
     "billing.checkout_failed": "Checkout شروع نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
     "billing.tier.free.name": "مفت",
     "billing.tier.free.tagline": "آپ کے آلے پر بنیادی تجربہ",

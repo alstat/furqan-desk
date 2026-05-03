@@ -491,7 +491,7 @@ export const pa: Record<string, string> = {
     "billing.heading": "ਆਪਣਾ ਪਲਾਨ ਚੁਣੋ",
     "billing.current_plan": "ਮੌਜੂਦਾ ਪਲਾਨ",
     "billing.upgrade": "ਅੱਪਗ੍ਰੇਡ",
-    "billing.manage_subscription": "ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਪ੍ਰਬੰਧਿਤ ਕਰੋ",
+    "billing.manage_subscription": "ਪ੍ਰਬੰਧਿਤ ਕਰੋ",
     "billing.checkout_failed": "ਚੈਕਆਉਟ ਸ਼ੁਰੂ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
     "billing.tier.free.name": "ਮੁਫ਼ਤ",
     "billing.tier.free.tagline": "ਤੁਹਾਡੇ ਡਿਵਾਈਸ ਉੱਤੇ ਮੁੱਖ ਅਨੁਭਵ",

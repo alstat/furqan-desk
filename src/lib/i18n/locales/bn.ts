@@ -549,7 +549,7 @@ export const bn: Record<string, string> = {
     "billing.heading": "আপনার প্ল্যান বেছে নিন",
     "billing.current_plan": "বর্তমান প্ল্যান",
     "billing.upgrade": "আপগ্রেড",
-    "billing.manage_subscription": "সাবস্ক্রিপশন পরিচালনা করুন",
+    "billing.manage_subscription": "পরিচালনা করুন",
     "billing.checkout_failed": "চেকআউট শুরু করা যায়নি। আবার চেষ্টা করুন।",
     "billing.tier.free.name": "বিনামূল্যে",
     "billing.tier.free.tagline": "আপনার ডিভাইসে মূল অভিজ্ঞতা",

@@ -544,7 +544,7 @@ export const vi: Record<string, string> = {
     "billing.heading": "Chọn gói của bạn",
     "billing.current_plan": "Gói hiện tại",
     "billing.upgrade": "Nâng cấp",
-    "billing.manage_subscription": "Quản lý Gói đăng ký",
+    "billing.manage_subscription": "Quản lý",
     "billing.checkout_failed": "Không thể bắt đầu thanh toán. Vui lòng thử lại.",
     "billing.tier.free.name": "Miễn phí",
     "billing.tier.free.tagline": "Trải nghiệm cốt lõi trên thiết bị của bạn",

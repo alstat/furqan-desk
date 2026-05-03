@@ -550,7 +550,7 @@ export const pt: Record<string, string> = {
     "billing.heading": "Escolha seu plano",
     "billing.current_plan": "Plano atual",
     "billing.upgrade": "Fazer upgrade",
-    "billing.manage_subscription": "Gerenciar Assinatura",
+    "billing.manage_subscription": "Gerenciar",
     "billing.checkout_failed": "Não foi possível iniciar o checkout. Tente novamente.",
     "billing.tier.free.name": "Grátis",
     "billing.tier.free.tagline": "Experiência principal no seu dispositivo",

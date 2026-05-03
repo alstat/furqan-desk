@@ -491,7 +491,7 @@ export const ku: Record<string, string> = {
     "billing.heading": "Plana xwe hilbijêre",
     "billing.current_plan": "Plana niha",
     "billing.upgrade": "Bilind bike",
-    "billing.manage_subscription": "Aboneyiyê bi rê ve bibe",
+    "billing.manage_subscription": "Bi rê ve bibe",
     "billing.checkout_failed": "Checkout dest pê nekir. Ji kerema xwe dîsa biceribîne.",
     "billing.tier.free.name": "Belaş",
     "billing.tier.free.tagline": "Ezmûna bingehîn li ser amûra te",

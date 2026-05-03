@@ -547,7 +547,7 @@ export const hi: Record<string, string> = {
     "billing.heading": "अपना प्लान चुनें",
     "billing.current_plan": "वर्तमान प्लान",
     "billing.upgrade": "अपग्रेड",
-    "billing.manage_subscription": "सदस्यता प्रबंधित करें",
+    "billing.manage_subscription": "प्रबंधित करें",
     "billing.checkout_failed": "चेकआउट शुरू नहीं हो सका। कृपया फिर से प्रयास करें।",
     "billing.tier.free.name": "मुफ़्त",
     "billing.tier.free.tagline": "आपके डिवाइस पर मुख्य अनुभव",

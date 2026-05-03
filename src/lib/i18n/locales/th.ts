@@ -544,7 +544,7 @@ export const th: Record<string, string> = {
     "billing.heading": "เลือกแผนของคุณ",
     "billing.current_plan": "แผนปัจจุบัน",
     "billing.upgrade": "อัปเกรด",
-    "billing.manage_subscription": "จัดการการสมัครสมาชิก",
+    "billing.manage_subscription": "จัดการ",
     "billing.checkout_failed": "ไม่สามารถเริ่มชำระเงินได้ โปรดลองอีกครั้ง",
     "billing.tier.free.name": "ฟรี",
     "billing.tier.free.tagline": "ประสบการณ์หลักบนอุปกรณ์ของคุณ",

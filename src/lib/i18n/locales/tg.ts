@@ -544,7 +544,7 @@ export const tg: Record<string, string> = {
     "billing.heading": "Нақшаи худро интихоб кунед",
     "billing.current_plan": "Нақшаи ҷорӣ",
     "billing.upgrade": "Навсозӣ",
-    "billing.manage_subscription": "Идоракунии обуна",
+    "billing.manage_subscription": "Идоракунӣ",
     "billing.checkout_failed": "Checkout оғоз нашуд. Лутфан дубора кӯшиш кунед.",
     "billing.tier.free.name": "Ройгон",
     "billing.tier.free.tagline": "Таҷрибаи асосӣ дар дастгоҳи шумо",

@@ -538,7 +538,7 @@ export const fa: Record<string, string> = {
     "billing.heading": "طرح خود را انتخاب کنید",
     "billing.current_plan": "طرح فعلی",
     "billing.upgrade": "ارتقا",
-    "billing.manage_subscription": "مدیریت اشتراک",
+    "billing.manage_subscription": "مدیریت",
     "billing.checkout_failed": "پرداخت آغاز نشد. دوباره تلاش کنید.",
     "billing.tier.free.name": "رایگان",
     "billing.tier.free.tagline": "تجربه اصلی روی دستگاه شما",

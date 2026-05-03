@@ -491,7 +491,7 @@ export const sw: Record<string, string> = {
     "billing.heading": "Chagua mpango wako",
     "billing.current_plan": "Mpango wa sasa",
     "billing.upgrade": "Boresha",
-    "billing.manage_subscription": "Dhibiti Usajili",
+    "billing.manage_subscription": "Dhibiti",
     "billing.checkout_failed": "Haikuwezekana kuanza malipo. Tafadhali jaribu tena.",
     "billing.tier.free.name": "Bila malipo",
     "billing.tier.free.tagline": "Uzoefu mkuu kwenye kifaa chako",
