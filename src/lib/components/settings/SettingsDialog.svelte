@@ -162,12 +162,12 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
 
         <!-- AI Tools -->
         <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
-            <p class={sectionLabel}>AI Tools</p>
+            <p class={sectionLabel}>{$t('settings.ai_tools')}</p>
             <div class="flex items-center justify-between gap-4">
                 <div>
-                    <span class={rowLabel}>Default selection model</span>
+                    <span class={rowLabel}>{$t('settings.ai_tools.default_selection_model')}</span>
                     <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
-                        Used by Paraphrase, Elaborate, Shorten, and Prompt.
+                        {$t('settings.ai_tools.default_selection_model.desc')}
                     </p>
                 </div>
                 <div class="flex gap-2 shrink-0">
