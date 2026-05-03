@@ -491,7 +491,7 @@ export const sr: Record<string, string> = {
     "billing.heading": "Изаберите план",
     "billing.current_plan": "Тренутни план",
     "billing.upgrade": "Надогради",
-    "billing.manage_subscription": "Управљај претплатом",
+    "billing.manage_subscription": "Управљај",
     "billing.checkout_failed": "Није могуће покренути плаћање. Покушајте поново.",
     "billing.tier.free.name": "Бесплатно",
     "billing.tier.free.tagline": "Основно искуство на вашем уређају",

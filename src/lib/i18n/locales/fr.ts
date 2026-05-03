@@ -538,7 +538,7 @@ export const fr: Record<string, string> = {
     "billing.heading": "Choisissez votre offre",
     "billing.current_plan": "Offre actuelle",
     "billing.upgrade": "Mettre à niveau",
-    "billing.manage_subscription": "Gérer l’abonnement",
+    "billing.manage_subscription": "Gérer",
     "billing.checkout_failed": "Impossible de démarrer le paiement. Veuillez réessayer.",
     "billing.tier.free.name": "Gratuit",
     "billing.tier.free.tagline": "Expérience principale sur votre appareil",

@@ -491,7 +491,7 @@ export const ta: Record<string, string> = {
     "billing.heading": "உங்கள் திட்டத்தைத் தேர்ந்தெடுக்கவும்",
     "billing.current_plan": "தற்போதைய திட்டம்",
     "billing.upgrade": "மேம்படுத்து",
-    "billing.manage_subscription": "சந்தாவை நிர்வகி",
+    "billing.manage_subscription": "நிர்வகி",
     "billing.checkout_failed": "Checkout தொடங்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
     "billing.tier.free.name": "இலவசம்",
     "billing.tier.free.tagline": "உங்கள் சாதனத்தில் மைய அனுபவம்",

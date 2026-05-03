@@ -548,7 +548,7 @@ export const ja: Record<string, string> = {
     "billing.heading": "プランを選択",
     "billing.current_plan": "現在のプラン",
     "billing.upgrade": "アップグレード",
-    "billing.manage_subscription": "サブスクリプションを管理",
+    "billing.manage_subscription": "管理",
     "billing.checkout_failed": "チェックアウトを開始できませんでした。もう一度お試しください。",
     "billing.tier.free.name": "無料",
     "billing.tier.free.tagline": "デバイス上の基本体験",

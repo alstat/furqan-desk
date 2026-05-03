@@ -538,7 +538,7 @@ export const ru: Record<string, string> = {
     "billing.heading": "Выберите план",
     "billing.current_plan": "Текущий план",
     "billing.upgrade": "Обновить",
-    "billing.manage_subscription": "Управлять подпиской",
+    "billing.manage_subscription": "Управлять",
     "billing.checkout_failed": "Не удалось начать оформление заказа. Повторите попытку.",
     "billing.tier.free.name": "Бесплатно",
     "billing.tier.free.tagline": "Основные возможности на вашем устройстве",

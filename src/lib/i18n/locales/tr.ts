@@ -538,7 +538,7 @@ export const tr: Record<string, string> = {
     "billing.heading": "Planınızı seçin",
     "billing.current_plan": "Mevcut plan",
     "billing.upgrade": "Yükselt",
-    "billing.manage_subscription": "Aboneliği Yönet",
+    "billing.manage_subscription": "Yönet",
     "billing.checkout_failed": "Ödeme başlatılamadı. Lütfen tekrar deneyin.",
     "billing.tier.free.name": "Ücretsiz",
     "billing.tier.free.tagline": "Cihazınızda temel deneyim",

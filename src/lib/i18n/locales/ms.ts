@@ -546,7 +546,7 @@ export const ms: Record<string, string> = {
     "billing.heading": "Pilih pelan anda",
     "billing.current_plan": "Pelan semasa",
     "billing.upgrade": "Naik taraf",
-    "billing.manage_subscription": "Urus Langganan",
+    "billing.manage_subscription": "Urus",
     "billing.checkout_failed": "Tidak dapat memulakan pembayaran. Sila cuba lagi.",
     "billing.tier.free.name": "Percuma",
     "billing.tier.free.tagline": "Pengalaman teras pada peranti anda",

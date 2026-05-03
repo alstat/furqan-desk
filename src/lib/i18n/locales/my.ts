@@ -544,7 +544,7 @@ export const my: Record<string, string> = {
     "billing.heading": "သင့်အစီအစဉ်ကို ရွေးပါ",
     "billing.current_plan": "လက်ရှိအစီအစဉ်",
     "billing.upgrade": "အဆင့်မြှင့်ရန်",
-    "billing.manage_subscription": "Subscription ကို စီမံရန်",
+    "billing.manage_subscription": "စီမံရန်",
     "billing.checkout_failed": "Checkout စတင်၍ မရပါ။ ထပ်မံကြိုးစားပါ။",
     "billing.tier.free.name": "အခမဲ့",
     "billing.tier.free.tagline": "သင့်စက်ပေါ်ရှိ အဓိက အတွေ့အကြုံ",

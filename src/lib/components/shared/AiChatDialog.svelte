@@ -354,6 +354,7 @@
                                     ? "solar:sidebar-minimalistic-bold-duotone"
                                     : "solar:sidebar-minimalistic-bold"}
                                 width="1rem"
+                                class="dark:text-brand-charcoal-300"
                             />
                         </button>
                         <button
@@ -423,7 +424,7 @@
                         </div>
                     {:else if usagePct >= 80 && storageBytesTotal > 0}
                         <div
-                            class="shrink-0 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/40 px-4 py-1.5 text-[10px] text-amber-700 dark:text-amber-300 flex items-center gap-1.5"
+                            class="shrink-0 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/40 px-4 py-1.5 text-xs text-amber-700 dark:text-amber-300 flex items-center gap-1.5"
                         >
                             <Icon
                                 icon="solar:info-circle-bold-duotone"
@@ -447,7 +448,7 @@
                                     width="2rem"
                                     class="opacity-50"
                                 />
-                                <p class="text-[12px]">
+                                <p class="text-xs">
                                     {$t("ai_chat.empty")}
                                 </p>
                             </div>
@@ -503,7 +504,7 @@
                                                 handleCopy(i, msg.content)}
                                             aria-label={$t("ai_chat.copy")}
                                             title={$t("ai_chat.copy")}
-                                            class="cursor-pointer mt-1.5 flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] text-brand-charcoal-400 dark:text-[#8087a2] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] transition-colors"
+                                            class="cursor-pointer mt-1.5 flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-brand-charcoal-300 dark:text-[#8087a2] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] transition-colors"
                                         >
                                             {#if copiedIdx === i}
                                                 <Icon
@@ -527,17 +528,17 @@
 
                     <!-- Input -->
                     <div
-                        class="shrink-0 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-200 dark:border-[#414559] px-5 py-3 flex flex-col gap-2"
+                        class="shrink-0 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-200 dark:border-[#414559] px-3 pt-2.5 pb-3 flex flex-col gap-2"
                     >
                         <!-- Model class toggle -->
                         <div class="flex items-center gap-2">
                             <button
                                 onclick={() => ($useAdvanced = !$useAdvanced)}
                                 disabled={$streaming}
-                                class="cursor-pointer flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                                class="cursor-pointer flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                                         {$useAdvanced
                                     ? 'border-brand-gold-400 bg-brand-gold-100 dark:bg-brand-gold-900/30 text-brand-gold-600 dark:text-[#e5c890]'
-                                    : 'border-brand-sand-200 dark:border-[#414559] bg-transparent text-brand-charcoal-400 dark:text-[#8087a2] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c]'}"
+                                    : 'border-brand-sand-200 dark:border-[#414559] text-brand-charcoal-500 bg-transparent text-brand-charcoal-400 dark:text-[#8087a2] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c]'}"
                                 title={$useAdvanced
                                     ? $t("ai_chat.advanced_on")
                                     : $t("ai_chat.advanced_off")}
@@ -553,7 +554,7 @@
                                     : $t("ai_chat.model_standard")}
                             </button>
                             <span
-                                class="text-[9px] text-brand-charcoal-300 dark:text-[#626880] truncate"
+                                class="text-[11px] text-brand-charcoal-300 dark:text-[#626880] truncate"
                             >
                                 {$useAdvanced
                                     ? $t("ai_chat.advanced_hint")
@@ -562,7 +563,7 @@
                         </div>
 
                         <div
-                            class="flex items-end gap-2 rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-brand-gold-900/30 transition-colors"
+                            class="flex items-center gap-2 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-brand-gold-900/30 transition-colors"
                         >
                             <textarea
                                 bind:value={input}
@@ -570,7 +571,7 @@
                                 rows="1"
                                 placeholder={$t("ai_chat.placeholder")}
                                 disabled={$streaming || !!$quotaBlock}
-                                class="flex-1 items-center max-h-40 resize-none bg-transparent text-[12px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:outline-none disabled:opacity-50"
+                                class="flex-1 items-center max-h-40 resize-none bg-transparent text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:outline-none disabled:opacity-50"
                             ></textarea>
                             {#if $streaming}
                                 <button

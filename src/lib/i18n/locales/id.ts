@@ -538,7 +538,7 @@ export const id: Record<string, string> = {
     "billing.heading": "Pilih paket Anda",
     "billing.current_plan": "Paket saat ini",
     "billing.upgrade": "Tingkatkan",
-    "billing.manage_subscription": "Kelola Langganan",
+    "billing.manage_subscription": "Kelola",
     "billing.checkout_failed": "Tidak dapat memulai checkout. Coba lagi.",
     "billing.tier.free.name": "Gratis",
     "billing.tier.free.tagline": "Pengalaman inti di perangkat Anda",

@@ -117,9 +117,15 @@
         if (pct >= 75) return "bg-amber-500";
         return "bg-brand-gold-400";
     }
+    const sectionLabel =
+        "text-xs font-semibold uppercase tracking-wide text-brand-charcoal-300 mb-2";
+    const rowLabel = "text-xs text-slate-600 dark:text-[#c6d0f5]";
+    const descriptionText = "text-brand-charcoal-300 dark:text-[#838ba7]";
+    const actionBtn =
+        "cursor-pointer flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors";
 </script>
 
-<div class="flex flex-col gap-4">
+<div class="flex w-full flex-col gap-4">
     <!-- Avatar + identity -->
     <div class="flex items-center gap-3">
         <div
@@ -129,23 +135,31 @@
         </div>
         <div class="flex flex-col min-w-0">
             <span
-                class="truncate text-[13px] font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]"
+                class="truncate text-sm font-semibold text-brand-charcoal-900"
                 >{displayName}</span
             >
-            <span
-                class="truncate text-[11px] text-brand-charcoal-400 dark:text-[#8087a2]"
+            <span class="truncate text-[11px] text-brand-charcoal-300"
                 >{email}</span
             >
         </div>
         {#if $isPro}
-            <span
-                class="ml-auto shrink-0 rounded-full bg-brand-gold-400 px-2.5 py-0.5 text-[10px] font-bold text-gray-100"
-            >
-                {$t("billing.tier.pro.name")}
-            </span>
+            <div class="ml-auto flex shrink-0 items-center gap-2">
+                <span
+                    class="rounded-full bg-brand-gold-400 px-2.5 py-0.5 text-sm font-bold text-gray-100"
+                >
+                    {$t("billing.tier.pro.name")}
+                </span>
+                <button onclick={handleManage} class={actionBtn}>
+                    <Icon
+                        icon="solar:arrow-right-up-bold-duotone"
+                        width="0.85rem"
+                    />
+                    {$t("billing.manage_subscription")}
+                </button>
+            </div>
         {:else}
             <span
-                class="ml-auto shrink-0 rounded-full border border-brand-sand-200 dark:border-[#414559] px-2.5 py-0.5 text-[10px] font-semibold text-brand-charcoal-300 dark:text-[#626880]"
+                class="ml-auto shrink-0 rounded-full border border-brand-sand-200 dark:border-[#414559] px-2.5 py-0.5 text-sm font-semibold text-brand-charcoal-300 dark:text-[#838ba7]"
             >
                 {$t("billing.tier.free.name")}
             </span>
@@ -153,77 +167,43 @@
     </div>
 
     {#if $isPro}
-        <button
-            onclick={handleManage}
-            class="cursor-pointer w-full rounded-full border border-brand-sand-200 dark:border-[#414559] py-1.5
-                   text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#8087a2]
-                   hover:bg-brand-sand-200 dark:hover:bg-[#303446] transition-colors"
-        >
-            {$t("billing.manage_subscription")}
-        </button>
+        <div class="border-t border-brand-sand-200 dark:border-[#414559]"></div>
 
         <!-- Token usage panel -->
-        <div
-            class="rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] p-3 flex flex-col gap-2.5"
-        >
-            <div class="flex items-center justify-between">
-                <span
-                    class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#8087a2]"
-                >
-                    {$t("account.usage.title")}
-                </span>
-                <button
-                    onclick={handleManualRefresh}
-                    disabled={loadingUsage}
-                    aria-label={$t("account.usage.refresh")}
-                    title={$t("account.usage.refresh")}
-                    class="cursor-pointer flex h-5 w-5 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#292c3c] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] transition-colors disabled:opacity-50"
-                >
-                    <Icon
-                        icon="solar:refresh-circle-bold-duotone"
-                        class={loadingUsage ? "animate-spin" : ""}
-                        width="0.8rem"
-                    />
-                </button>
-            </div>
+        <div class="flex items-center justify-between -mt-2">
+            <span class={sectionLabel}>
+                {$t("account.usage.title")}
+            </span>
+            <button
+                onclick={handleManualRefresh}
+                disabled={loadingUsage}
+                aria-label={$t("account.usage.refresh")}
+                title={$t("account.usage.refresh")}
+                class="cursor-pointer flex h-6 w-6 mb-2 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#292c3c] hover:text-brand-charcoal-500 dark:hover:text-[#c6d0f5] transition-colors disabled:opacity-50"
+            >
+                <Icon
+                    icon="solar:refresh-circle-bold-duotone"
+                    class={loadingUsage ? "animate-spin" : ""}
+                    width="1rem"
+                />
+            </button>
+        </div>
 
+        <div class="flex flex-col space-y-3 -mt-4">
             {#if !usage || !limits}
-                <p
-                    class="text-[10px] text-brand-charcoal-300 dark:text-[#626880]"
-                >
+                <p class="text-sm {descriptionText}">
                     {loadingUsage ? "…" : $t("account.usage.no_usage")}
                 </p>
             {:else}
-                {#each [
-                    {
-                        heading: $t("account.usage.section_standard"),
-                        sub: $t("account.usage.section_standard_sub"),
-                        rows: [
-                            { label: $t("account.usage.daily"),   used: usage.standard.daily.used,   cap: limits.daily_tokens,   reset: usage.standard.daily.resetInSeconds },
-                            { label: $t("account.usage.weekly"),  used: usage.standard.weekly.used,  cap: limits.weekly_tokens,  reset: usage.standard.weekly.resetInSeconds },
-                            { label: $t("account.usage.monthly"), used: usage.standard.monthly.used, cap: limits.monthly_tokens, reset: usage.standard.monthly.resetInSeconds },
-                        ],
-                    },
-                    {
-                        heading: $t("account.usage.section_advanced"),
-                        sub: $t("account.usage.section_advanced_sub"),
-                        rows: [
-                            { label: $t("account.usage.daily"),   used: usage.advanced.daily.used,   cap: limits.advanced_daily_tokens,   reset: usage.advanced.daily.resetInSeconds },
-                            { label: $t("account.usage.weekly"),  used: usage.advanced.weekly.used,  cap: limits.advanced_weekly_tokens,  reset: usage.advanced.weekly.resetInSeconds },
-                            { label: $t("account.usage.monthly"), used: usage.advanced.monthly.used, cap: limits.advanced_monthly_tokens, reset: usage.advanced.monthly.resetInSeconds },
-                        ],
-                    },
-                ] as section (section.heading)}
-                    <div class="flex flex-col gap-1.5">
+                {#each [{ heading: $t("account.usage.section_standard"), sub: $t("account.usage.section_standard_sub"), rows: [{ label: $t("account.usage.daily"), used: usage.standard.daily.used, cap: limits.daily_tokens, reset: usage.standard.daily.resetInSeconds }, { label: $t("account.usage.weekly"), used: usage.standard.weekly.used, cap: limits.weekly_tokens, reset: usage.standard.weekly.resetInSeconds }, { label: $t("account.usage.monthly"), used: usage.standard.monthly.used, cap: limits.monthly_tokens, reset: usage.standard.monthly.resetInSeconds }] }, { heading: $t("account.usage.section_advanced"), sub: $t("account.usage.section_advanced_sub"), rows: [{ label: $t("account.usage.daily"), used: usage.advanced.daily.used, cap: limits.advanced_daily_tokens, reset: usage.advanced.daily.resetInSeconds }, { label: $t("account.usage.weekly"), used: usage.advanced.weekly.used, cap: limits.advanced_weekly_tokens, reset: usage.advanced.weekly.resetInSeconds }, { label: $t("account.usage.monthly"), used: usage.advanced.monthly.used, cap: limits.advanced_monthly_tokens, reset: usage.advanced.monthly.resetInSeconds }] }] as section (section.heading)}
+                    <div
+                        class="flex flex-col gap-3 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] p-3"
+                    >
                         <div class="flex items-baseline justify-between">
-                            <span
-                                class="text-[10px] font-bold text-brand-charcoal-600 dark:text-[#c6d0f5]"
-                            >
+                            <span class="font-bold {rowLabel}">
                                 {section.heading}
                             </span>
-                            <span
-                                class="text-[9px] text-brand-charcoal-300 dark:text-[#626880]"
-                            >
+                            <span class="text-sm {descriptionText}">
                                 {section.sub}
                             </span>
                         </div>
@@ -231,17 +211,14 @@
                             {@const pct = pctOf(row.used, row.cap)}
                             <div class="flex flex-col gap-1 pl-1">
                                 <div
-                                    class="flex items-center justify-between text-[10px]"
+                                    class="flex items-center justify-between text-sm"
                                 >
-                                    <span
-                                        class="text-brand-charcoal-500 dark:text-[#c6d0f5]"
-                                    >
+                                    <span class={rowLabel}>
                                         {row.label}
                                     </span>
-                                    <span
-                                        class="text-brand-charcoal-400 dark:text-[#8087a2]"
-                                    >
-                                        {row.used.toLocaleString()} / {row.cap > 0
+                                    <span class="text-xs {descriptionText}">
+                                        {row.used.toLocaleString()} / {row.cap >
+                                        0
                                             ? row.cap.toLocaleString()
                                             : $t("account.usage.unlimited")}
                                     </span>
@@ -251,15 +228,15 @@
                                         class="h-1 w-full overflow-hidden rounded-full bg-brand-sand-200 dark:bg-[#292c3c]"
                                     >
                                         <div
-                                            class="h-full rounded-full {barColor(pct)}"
+                                            class="h-full rounded-full {barColor(
+                                                pct,
+                                            )}"
                                             style:width="{pct}%"
                                         ></div>
                                     </div>
                                 {/if}
                                 {#if row.reset !== null && row.used > 0}
-                                    <span
-                                        class="text-[9px] text-brand-charcoal-300 dark:text-[#626880]"
-                                    >
+                                    <span class="text-xs {descriptionText}">
                                         {$t("account.usage.resets_in").replace(
                                             "{time}",
                                             formatRelative(row.reset),
@@ -281,9 +258,7 @@
     <!-- Sign out -->
     <button
         onclick={handleSignOut}
-        class="cursor-pointer w-full rounded-full border border-red-200 dark:border-red-900/40 py-1.5
-               text-[11px] font-semibold text-red-500 dark:text-red-400
-               hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+        class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
     >
         {$t("account.sign_out")}
     </button>

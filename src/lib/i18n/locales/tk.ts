@@ -544,7 +544,7 @@ export const tk: Record<string, string> = {
     "billing.heading": "Planyňyzy saýlaň",
     "billing.current_plan": "Häzirki plan",
     "billing.upgrade": "Täzelemek",
-    "billing.manage_subscription": "Abuna ýazylmagy dolandyr",
+    "billing.manage_subscription": "Dolandyr",
     "billing.checkout_failed": "Checkout başlap bolmady. Gaýtadan synanyşyň.",
     "billing.tier.free.name": "Mugt",
     "billing.tier.free.tagline": "Enjamyňyzda esasy tejribe",

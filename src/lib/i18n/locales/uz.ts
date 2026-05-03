@@ -544,7 +544,7 @@ export const uz: Record<string, string> = {
     "billing.heading": "Rejangizni tanlang",
     "billing.current_plan": "Joriy reja",
     "billing.upgrade": "Yangilash",
-    "billing.manage_subscription": "Obunani boshqarish",
+    "billing.manage_subscription": "Boshqarish",
     "billing.checkout_failed": "Checkout boshlanmadi. Qayta urinib ko‘ring.",
     "billing.tier.free.name": "Bepul",
     "billing.tier.free.tagline": "Qurilmangizdagi asosiy tajriba",

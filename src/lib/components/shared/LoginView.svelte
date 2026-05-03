@@ -67,7 +67,7 @@
     }
 </script>
 
-<div class="flex flex-col gap-4">
+<div class="flex w-full flex-col gap-4">
     <!-- Tab switcher -->
     <div class="flex rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#292c3c] p-0.5">
         <button

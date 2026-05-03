@@ -491,7 +491,7 @@ export const sq: Record<string, string> = {
     "billing.heading": "Zgjidhni planin tuaj",
     "billing.current_plan": "Plani aktual",
     "billing.upgrade": "Përmirëso",
-    "billing.manage_subscription": "Menaxho Abonimin",
+    "billing.manage_subscription": "Menaxho",
     "billing.checkout_failed": "Nuk mund të nisej pagesa. Ju lutemi provoni përsëri.",
     "billing.tier.free.name": "Falas",
     "billing.tier.free.tagline": "Përvoja bazë në pajisjen tuaj",

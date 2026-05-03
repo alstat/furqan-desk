@@ -552,7 +552,7 @@ export const tl: Record<string, string> = {
     "billing.heading": "Piliin ang iyong plan",
     "billing.current_plan": "Kasalukuyang plan",
     "billing.upgrade": "Mag-upgrade",
-    "billing.manage_subscription": "Pamahalaan ang Subscription",
+    "billing.manage_subscription": "Pamahalaan",
     "billing.checkout_failed": "Hindi masimulan ang checkout. Pakisubukang muli.",
     "billing.tier.free.name": "Libre",
     "billing.tier.free.tagline": "Core experience sa iyong device",

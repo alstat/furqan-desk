@@ -538,7 +538,7 @@ export const zh: Record<string, string> = {
     "billing.heading": "选择您的方案",
     "billing.current_plan": "当前方案",
     "billing.upgrade": "升级",
-    "billing.manage_subscription": "管理订阅",
+    "billing.manage_subscription": "管理",
     "billing.checkout_failed": "无法开始结账。请重试。",
     "billing.tier.free.name": "免费",
     "billing.tier.free.tagline": "在您的设备上的核心体验",

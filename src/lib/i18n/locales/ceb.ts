@@ -544,7 +544,7 @@ export const ceb: Record<string, string> = {
     "billing.heading": "Pilia ang imong plano",
     "billing.current_plan": "Kasamtangang plano",
     "billing.upgrade": "I-upgrade",
-    "billing.manage_subscription": "Dumala ang Subscription",
+    "billing.manage_subscription": "Dumala",
     "billing.checkout_failed": "Dili masugdan ang checkout. Palihog sulayi pag-usab.",
     "billing.tier.free.name": "Libre",
     "billing.tier.free.tagline": "Core experience sa imong device",

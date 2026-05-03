@@ -538,7 +538,7 @@ export const ko: Record<string, string> = {
     "billing.heading": "요금제 선택",
     "billing.current_plan": "현재 요금제",
     "billing.upgrade": "업그레이드",
-    "billing.manage_subscription": "구독 관리",
+    "billing.manage_subscription": "관리",
     "billing.checkout_failed": "결제를 시작할 수 없습니다. 다시 시도하세요.",
     "billing.tier.free.name": "무료",
     "billing.tier.free.tagline": "기기에서 핵심 경험",
