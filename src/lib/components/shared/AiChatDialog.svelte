@@ -21,14 +21,11 @@
         refreshChats,
         refreshLimits,
     } from "$lib/stores/ai-chat.store";
-    import {
-        keyState,
-        loadKeyState,
-        lock,
-    } from "$lib/stores/chat-key.store";
+    import { keyState, loadKeyState, lock } from "$lib/stores/chat-key.store";
     import { authUser } from "$lib/stores/auth.store";
     import { renderMarkdown } from "$lib/utils/markdown";
     import { copyToClipboard } from "$lib/utils/clipboard";
+    import "katex/dist/katex.min.css";
     import ChatSidebar from "./ChatSidebar.svelte";
     import ChatLockScreen from "./ChatLockScreen.svelte";
 
@@ -67,10 +64,8 @@
     let resizeStartPanelX = 0;
     let resizeStartPanelY = 0;
 
-    // Sidebar visibility (independent of panel width)
-    let sidebarOpen = $state(false);
-    let sidebarCollapsed = $derived(panelW < 680);
-    let showFloatingToggle = $derived(sidebarCollapsed && !sidebarOpen);
+    // Sidebar visibility is controlled from the dialog header.
+    let sidebarOpen = $state(true);
 
     $effect(() => {
         if (typeof window === "undefined") return;
@@ -195,7 +190,8 @@
             window.removeEventListener("pointermove", onResize);
             window.removeEventListener("keydown", handleWindowKeydown);
         }
-        if (typeof document !== "undefined") document.body.style.userSelect = "";
+        if (typeof document !== "undefined")
+            document.body.style.userSelect = "";
     });
 
     // Open lifecycle: load encryption state, then chats + limits.
@@ -309,386 +305,365 @@
             zIndex = bringToFront();
         }}
     >
-            <!-- Header -->
-            <div
-                class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 select-none rounded-t-3xl {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
-                onpointerdown={startDrag}
-                role="banner"
-            >
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2.5">
-                        <div
-                            class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]"
+        <!-- Header -->
+        <div
+            class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 select-none rounded-t-3xl {isDragging
+                ? 'cursor-grabbing'
+                : 'cursor-grab'}"
+            onpointerdown={startDrag}
+            role="banner"
+        >
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div
+                        class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]"
+                    >
+                        <Icon
+                            icon="ri:chat-ai-3-fill"
+                            class="text-brand-gold-500 dark:text-[#e5c890]"
+                            width="1rem"
+                        />
+                    </div>
+                    <div>
+                        <h2
+                            class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                        >
+                            {$t("ai_chat.title")}
+                        </h2>
+                        <p
+                            class="text-[11px] text-brand-charcoal-300 dark:text-[#8087a2]"
+                        >
+                            {$t("ai_chat.subtitle")}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    {#if $keyState === "unlocked"}
+                        <button
+                            onclick={() => (sidebarOpen = !sidebarOpen)}
+                            aria-label={sidebarOpen
+                                ? "Hide chat list"
+                                : "Show chat list"}
+                            title={sidebarOpen
+                                ? "Hide chat list"
+                                : "Show chat list"}
+                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-color"
                         >
                             <Icon
-                                icon="ri:chat-ai-3-fill"
-                                class="text-brand-gold-500 dark:text-[#e5c890]"
+                                icon={sidebarOpen
+                                    ? "solar:sidebar-minimalistic-bold-duotone"
+                                    : "solar:sidebar-minimalistic-bold"}
                                 width="1rem"
                             />
-                        </div>
-                        <div>
-                            <h2
-                                class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
-                            >
-                                {$t("ai_chat.title")}
-                            </h2>
-                            <p
-                                class="text-[11px] text-brand-charcoal-300 dark:text-[#8087a2]"
-                            >
-                                {$t("ai_chat.subtitle")}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        {#if $keyState === "unlocked"}
-                            <button
-                                onclick={lock}
-                                aria-label="Lock"
-                                title="Lock"
-                                class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                            >
-                                <Icon
-                                    icon="solar:lock-keyhole-bold-duotone"
-                                    width="0.95rem"
-                                />
-                            </button>
-                        {/if}
+                        </button>
                         <button
-                            onclick={handleClose}
-                            aria-label="Close"
+                            onclick={lock}
+                            aria-label="Lock"
+                            title="Lock"
                             class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                         >
                             <Icon
-                                icon="solar:close-circle-bold-duotone"
-                                width="1rem"
+                                icon="solar:lock-keyhole-bold-duotone"
+                                width="0.95rem"
                             />
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Body -->
-            {#if $keyState === "unlocked"}
-                <div class="flex flex-1 min-h-0 overflow-hidden">
-                    <!-- Sidebar -->
-                    <div
-                        class={!sidebarCollapsed || sidebarOpen ? "flex" : "hidden"}
-                    >
-                        <div class="relative flex flex-1 flex-col overflow-hidden">
-                            <ChatSidebar
-                                chats={$chats}
-                                currentChatId={$currentChatId}
-                                usedBytes={$storageBytes}
-                                totalBytes={storageBytesTotal}
-                                disabled={$streaming}
-                                onSelect={handleSelectChat}
-                                onNew={handleNewChat}
-                                onDelete={handleDeleteChat}
-                            />
-                            <!-- Close button (when sidebar opened via floating toggle) -->
-                            {#if sidebarCollapsed && sidebarOpen}
-                                <button
-                                    onclick={() => (sidebarOpen = false)}
-                                    class="absolute right-2 top-2 z-10 flex cursor-pointer items-center gap-1 rounded-full bg-brand-gold-200 p-1.5 shadow-md transition-colors hover:bg-brand-gold-400 active:bg-brand-gold-500 dark:bg-[#414559] dark:hover:bg-[#51576d] dark:active:bg-[#626880]"
-                                    title="Hide chat list"
-                                    aria-label="Hide chat list"
-                                >
-                                    <Icon
-                                        icon="solar:arrow-left-linear"
-                                        class="text-brand-gold-600 dark:text-brand-gold-400"
-                                        width="0.85rem"
-                                    />
-                                    <span class="pr-0.5 text-[10px] font-medium text-brand-gold-600 dark:text-brand-gold-400">
-                                        Hide
-                                    </span>
-                                </button>
-                            {/if}
-                        </div>
-                    </div>
-
-                    <!-- Floating sidebar toggle (when sidebar is collapsed) -->
-                    {#if showFloatingToggle}
-                        <button
-                            onclick={() => (sidebarOpen = true)}
-                            class="absolute left-0 top-2 z-20 flex cursor-pointer items-center gap-1.5 rounded-r-full bg-brand-gold-200 py-2 pr-3 pl-2 shadow-md transition-colors hover:bg-brand-gold-400 active:bg-brand-gold-500 dark:bg-[#414559] dark:hover:bg-[#51576d] dark:active:bg-[#626880] border-y border-r border-brand-gold-300 dark:border-[#51576d]"
-                            title="Show chat list"
-                            aria-label="Show chat list"
-                        >
-                            <Icon
-                                icon="solar:sidebar-bold-duotone"
-                                class="text-brand-gold-600 dark:text-brand-gold-400"
-                                width="1rem"
-                            />
-                            <span class="pr-0.5 text-[11px] font-medium text-brand-gold-600 dark:text-brand-gold-400">
-                                Chats
-                            </span>
                         </button>
                     {/if}
+                    <button
+                        onclick={handleClose}
+                        aria-label="Close"
+                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                    >
+                        <Icon
+                            icon="solar:close-circle-bold-duotone"
+                            width="1rem"
+                        />
+                    </button>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Thread + input -->
-                    <div class="flex flex-1 min-w-0 flex-col">
-                        <!-- Quota banners -->
-                        {#if $quotaBlock}
+        <!-- Body -->
+        {#if $keyState === "unlocked"}
+            <div class="flex flex-1 min-h-0 overflow-hidden">
+                <!-- Sidebar -->
+                <div class={sidebarOpen ? "flex" : "hidden"}>
+                    <div class="relative flex flex-1 flex-col overflow-hidden">
+                        <ChatSidebar
+                            chats={$chats}
+                            currentChatId={$currentChatId}
+                            usedBytes={$storageBytes}
+                            totalBytes={storageBytesTotal}
+                            disabled={$streaming}
+                            onSelect={handleSelectChat}
+                            onNew={handleNewChat}
+                            onDelete={handleDeleteChat}
+                        />
+                    </div>
+                </div>
+
+                <!-- Thread + input -->
+                <div class="flex flex-1 min-w-0 flex-col">
+                    <!-- Quota banners -->
+                    {#if $quotaBlock}
+                        <div
+                            class="shrink-0 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-900/40 px-4 py-2 text-[11px] text-red-600 dark:text-red-300 flex items-center gap-2"
+                        >
+                            <Icon
+                                icon="solar:danger-circle-bold-duotone"
+                                width="0.85rem"
+                            />
+                            {$quotaBlock.scope === "storage"
+                                ? $quotaBlock.message
+                                : $t("ai_chat.quota_blocked").replace(
+                                      "{time}",
+                                      formatRetry(
+                                          $quotaBlock.retryAfterSeconds,
+                                      ),
+                                  )}
+                        </div>
+                    {:else if usagePct >= 80 && storageBytesTotal > 0}
+                        <div
+                            class="shrink-0 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/40 px-4 py-1.5 text-[10px] text-amber-700 dark:text-amber-300 flex items-center gap-1.5"
+                        >
+                            <Icon
+                                icon="solar:info-circle-bold-duotone"
+                                width="0.8rem"
+                            />
+                            Storage {usagePct}% full
+                        </div>
+                    {/if}
+
+                    <!-- Messages -->
+                    <div
+                        bind:this={scrollEl}
+                        class="flex-1 overflow-y-auto bg-brand-sand-50 dark:bg-[#232634] px-5 py-5 flex flex-col gap-3"
+                    >
+                        {#if $messages.length === 0}
                             <div
-                                class="shrink-0 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-900/40 px-4 py-2 text-[11px] text-red-600 dark:text-red-300 flex items-center gap-2"
+                                class="flex flex-1 flex-col items-center justify-center gap-2 text-center text-brand-charcoal-300 dark:text-[#626880]"
                             >
                                 <Icon
-                                    icon="solar:danger-circle-bold-duotone"
-                                    width="0.85rem"
+                                    icon="ri:chat-ai-3-fill"
+                                    width="2rem"
+                                    class="opacity-50"
                                 />
-                                {$quotaBlock.scope === "storage"
-                                    ? $quotaBlock.message
-                                    : $t("ai_chat.quota_blocked").replace(
-                                          "{time}",
-                                          formatRetry(
-                                              $quotaBlock.retryAfterSeconds,
-                                          ),
-                                      )}
-                            </div>
-                        {:else if usagePct >= 80 && storageBytesTotal > 0}
-                            <div
-                                class="shrink-0 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/40 px-4 py-1.5 text-[10px] text-amber-700 dark:text-amber-300 flex items-center gap-1.5"
-                            >
-                                <Icon
-                                    icon="solar:info-circle-bold-duotone"
-                                    width="0.8rem"
-                                />
-                                Storage {usagePct}% full
+                                <p class="text-[12px]">
+                                    {$t("ai_chat.empty")}
+                                </p>
                             </div>
                         {/if}
 
-                        <!-- Messages -->
-                        <div
-                            bind:this={scrollEl}
-                            class="flex-1 overflow-y-auto bg-brand-sand-50 dark:bg-[#232634] px-5 py-5 flex flex-col gap-3"
-                        >
-                            {#if $messages.length === 0}
+                        {#each $messages as msg, i (msg.id ?? `pending-${i}`)}
+                            {@const isUser = msg.role === "user"}
+                            {@const isStreamingLast =
+                                i === $messages.length - 1 && $streaming}
+                            <div
+                                class="flex {isUser
+                                    ? 'justify-end'
+                                    : 'justify-start'}"
+                            >
                                 <div
-                                    class="flex flex-1 flex-col items-center justify-center gap-2 text-center text-brand-charcoal-300 dark:text-[#626880]"
-                                >
-                                    <Icon
-                                        icon="ri:chat-ai-3-fill"
-                                        width="2rem"
-                                        class="opacity-50"
-                                    />
-                                    <p class="text-[12px]">
-                                        {$t("ai_chat.empty")}
-                                    </p>
-                                </div>
-                            {/if}
-
-                            {#each $messages as msg, i (msg.id ?? `pending-${i}`)}
-                                {@const isUser = msg.role === "user"}
-                                {@const isStreamingLast =
-                                    i === $messages.length - 1 && $streaming}
-                                <div
-                                    class="flex {isUser
-                                        ? 'justify-end'
-                                        : 'justify-start'}"
+                                    class="max-w-[85%] flex flex-col {isUser
+                                        ? 'items-end'
+                                        : 'items-start'}"
                                 >
                                     <div
-                                        class="max-w-[85%] flex flex-col {isUser
-                                            ? 'items-end'
-                                            : 'items-start'}"
+                                        class="rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed {isUser
+                                            ? 'bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700'
+                                            : 'bg-white dark:bg-[#292c3c] text-brand-charcoal-900 dark:text-[#c6d0f5] border border-brand-sand-200 dark:border-[#414559]'}"
                                     >
-                                        <div
-                                            class="rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed {isUser
-                                                ? 'bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700'
-                                                : 'bg-white dark:bg-[#292c3c] text-brand-charcoal-900 dark:text-[#c6d0f5] border border-brand-sand-200 dark:border-[#414559]'}"
-                                        >
-                                            {#if isUser}
-                                                <p class="whitespace-pre-wrap">
-                                                    {msg.content}
-                                                </p>
-                                            {:else if msg.content === "" && isStreamingLast}
-                                                <span
-                                                    class="flex items-center gap-1.5 text-[11px] text-brand-charcoal-300 dark:text-[#8087a2]"
-                                                >
-                                                    <Icon
-                                                        icon="solar:refresh-circle-bold-duotone"
-                                                        class="animate-spin"
-                                                        width="0.85rem"
-                                                    />
-                                                    {$t("ai_chat.thinking")}
-                                                </span>
-                                            {:else}
-                                                <div class="markdown-body">
-                                                    {@html renderMarkdown(
-                                                        msg.content,
-                                                    )}
-                                                </div>
-                                            {/if}
-                                        </div>
-
-                                        <!-- Copy button (below assistant messages, always visible) -->
-                                        {#if !isUser && msg.content && !isStreamingLast}
-                                            <button
-                                                onclick={() =>
-                                                    handleCopy(i, msg.content)}
-                                                aria-label={$t("ai_chat.copy")}
-                                                title={$t("ai_chat.copy")}
-                                                class="cursor-pointer mt-1.5 flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] text-brand-charcoal-400 dark:text-[#8087a2] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] transition-colors"
+                                        {#if isUser}
+                                            <p class="whitespace-pre-wrap">
+                                                {msg.content}
+                                            </p>
+                                        {:else if msg.content === "" && isStreamingLast}
+                                            <span
+                                                class="flex items-center gap-1.5 text-[11px] text-brand-charcoal-300 dark:text-[#8087a2]"
                                             >
-                                                {#if copiedIdx === i}
-                                                    <Icon
-                                                        icon="solar:check-circle-bold"
-                                                        width="0.75rem"
-                                                    />
-                                                    {$t("ai_chat.copied")}
-                                                {:else}
-                                                    <Icon
-                                                        icon="solar:copy-bold-duotone"
-                                                        width="0.75rem"
-                                                    />
-                                                    {$t("ai_chat.copy")}
-                                                {/if}
-                                            </button>
+                                                <Icon
+                                                    icon="solar:refresh-circle-bold-duotone"
+                                                    class="animate-spin"
+                                                    width="0.85rem"
+                                                />
+                                                {$t("ai_chat.thinking")}
+                                            </span>
+                                        {:else}
+                                            <div class="markdown-body">
+                                                {@html renderMarkdown(
+                                                    msg.content,
+                                                )}
+                                            </div>
                                         {/if}
                                     </div>
+
+                                    <!-- Copy button (below assistant messages, always visible) -->
+                                    {#if !isUser && msg.content && !isStreamingLast}
+                                        <button
+                                            onclick={() =>
+                                                handleCopy(i, msg.content)}
+                                            aria-label={$t("ai_chat.copy")}
+                                            title={$t("ai_chat.copy")}
+                                            class="cursor-pointer mt-1.5 flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] text-brand-charcoal-400 dark:text-[#8087a2] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] transition-colors"
+                                        >
+                                            {#if copiedIdx === i}
+                                                <Icon
+                                                    icon="solar:check-circle-bold"
+                                                    width="0.75rem"
+                                                />
+                                                {$t("ai_chat.copied")}
+                                            {:else}
+                                                <Icon
+                                                    icon="solar:copy-bold-duotone"
+                                                    width="0.75rem"
+                                                />
+                                                {$t("ai_chat.copy")}
+                                            {/if}
+                                        </button>
+                                    {/if}
                                 </div>
-                            {/each}
+                            </div>
+                        {/each}
+                    </div>
+
+                    <!-- Input -->
+                    <div
+                        class="shrink-0 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-200 dark:border-[#414559] px-5 py-3 flex flex-col gap-2"
+                    >
+                        <!-- Model class toggle -->
+                        <div class="flex items-center gap-2">
+                            <button
+                                onclick={() => ($useAdvanced = !$useAdvanced)}
+                                disabled={$streaming}
+                                class="cursor-pointer flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                                        {$useAdvanced
+                                    ? 'border-brand-gold-400 bg-brand-gold-100 dark:bg-brand-gold-900/30 text-brand-gold-600 dark:text-[#e5c890]'
+                                    : 'border-brand-sand-200 dark:border-[#414559] bg-transparent text-brand-charcoal-400 dark:text-[#8087a2] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c]'}"
+                                title={$useAdvanced
+                                    ? $t("ai_chat.advanced_on")
+                                    : $t("ai_chat.advanced_off")}
+                            >
+                                <Icon
+                                    icon={$useAdvanced
+                                        ? "solar:bolt-bold-duotone"
+                                        : "solar:bolt-linear"}
+                                    width="0.7rem"
+                                />
+                                {$useAdvanced
+                                    ? $t("ai_chat.model_advanced")
+                                    : $t("ai_chat.model_standard")}
+                            </button>
+                            <span
+                                class="text-[9px] text-brand-charcoal-300 dark:text-[#626880] truncate"
+                            >
+                                {$useAdvanced
+                                    ? $t("ai_chat.advanced_hint")
+                                    : $t("ai_chat.standard_hint")}
+                            </span>
                         </div>
 
-                        <!-- Input -->
                         <div
-                            class="shrink-0 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-200 dark:border-[#414559] px-5 py-3 flex flex-col gap-2"
+                            class="flex items-end gap-2 rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-brand-gold-900/30 transition-colors"
                         >
-                            <!-- Model class toggle -->
-                            <div class="flex items-center gap-2">
+                            <textarea
+                                bind:value={input}
+                                onkeydown={handleKeydown}
+                                rows="1"
+                                placeholder={$t("ai_chat.placeholder")}
+                                disabled={$streaming || !!$quotaBlock}
+                                class="flex-1 items-center max-h-40 resize-none bg-transparent text-[12px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:outline-none disabled:opacity-50"
+                            ></textarea>
+                            {#if $streaming}
                                 <button
-                                    onclick={() =>
-                                        ($useAdvanced = !$useAdvanced)}
-                                    disabled={$streaming}
-                                    class="cursor-pointer flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-                                        {$useAdvanced
-                                            ? 'border-brand-gold-400 bg-brand-gold-100 dark:bg-brand-gold-900/30 text-brand-gold-600 dark:text-[#e5c890]'
-                                            : 'border-brand-sand-200 dark:border-[#414559] bg-transparent text-brand-charcoal-400 dark:text-[#8087a2] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c]'}"
-                                    title={$useAdvanced
-                                        ? $t("ai_chat.advanced_on")
-                                        : $t("ai_chat.advanced_off")}
+                                    onclick={stopStreaming}
+                                    aria-label={$t("ai_chat.stop")}
+                                    title={$t("ai_chat.stop")}
+                                    class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
                                 >
                                     <Icon
-                                        icon={$useAdvanced
-                                            ? "solar:bolt-bold-duotone"
-                                            : "solar:bolt-linear"}
-                                        width="0.7rem"
+                                        icon="solar:stop-circle-bold-duotone"
+                                        width="0.95rem"
                                     />
-                                    {$useAdvanced
-                                        ? $t("ai_chat.model_advanced")
-                                        : $t("ai_chat.model_standard")}
                                 </button>
-                                <span
-                                    class="text-[9px] text-brand-charcoal-300 dark:text-[#626880] truncate"
+                            {:else}
+                                <button
+                                    onclick={handleSend}
+                                    disabled={!input.trim() || !!$quotaBlock}
+                                    aria-label={$t("ai_chat.send")}
+                                    title={$t("ai_chat.send")}
+                                    class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
-                                    {$useAdvanced
-                                        ? $t("ai_chat.advanced_hint")
-                                        : $t("ai_chat.standard_hint")}
-                                </span>
-                            </div>
-
-                            <div
-                                class="flex items-end gap-2 rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-brand-gold-900/30 transition-colors"
-                            >
-                                <textarea
-                                    bind:value={input}
-                                    onkeydown={handleKeydown}
-                                    rows="1"
-                                    placeholder={$t("ai_chat.placeholder")}
-                                    disabled={$streaming || !!$quotaBlock}
-                                    class="flex-1 max-h-40 resize-none bg-transparent text-[12px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:outline-none disabled:opacity-50"
-                                ></textarea>
-                                {#if $streaming}
-                                    <button
-                                        onclick={stopStreaming}
-                                        aria-label={$t("ai_chat.stop")}
-                                        title={$t("ai_chat.stop")}
-                                        class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
-                                    >
-                                        <Icon
-                                            icon="solar:stop-circle-bold-duotone"
-                                            width="0.95rem"
-                                        />
-                                    </button>
-                                {:else}
-                                    <button
-                                        onclick={handleSend}
-                                        disabled={!input.trim() || !!$quotaBlock}
-                                        aria-label={$t("ai_chat.send")}
-                                        title={$t("ai_chat.send")}
-                                        class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        <Icon
-                                            icon="solar:plain-bold-duotone"
-                                            width="0.9rem"
-                                        />
-                                    </button>
-                                {/if}
-                            </div>
+                                    <Icon
+                                        icon="solar:plain-bold-duotone"
+                                        width="0.9rem"
+                                    />
+                                </button>
+                            {/if}
                         </div>
                     </div>
                 </div>
-            {:else if $keyState === "loading"}
-                <div
-                    class="flex flex-1 items-center justify-center bg-brand-sand-50 dark:bg-[#232634]"
-                >
-                    <Icon
-                        icon="solar:refresh-circle-bold-duotone"
-                        class="animate-spin text-brand-gold-500"
-                        width="1.5rem"
-                    />
-                </div>
-            {:else}
-                <ChatLockScreen />
-            {/if}
+            </div>
+        {:else if $keyState === "loading"}
+            <div
+                class="flex flex-1 items-center justify-center bg-brand-sand-50 dark:bg-[#232634]"
+            >
+                <Icon
+                    icon="solar:refresh-circle-bold-duotone"
+                    class="animate-spin text-brand-gold-500"
+                    width="1.5rem"
+                />
+            </div>
+        {:else}
+            <ChatLockScreen />
+        {/if}
 
-            <div
-                aria-hidden="true"
-                class="resize-handle resize-n"
-                onpointerdown={(e) =>
-                    startResize(e, { n: true, s: false, e: false, w: false })}
-            ></div>
-            <div
-                aria-hidden="true"
-                class="resize-handle resize-s"
-                onpointerdown={(e) =>
-                    startResize(e, { n: false, s: true, e: false, w: false })}
-            ></div>
-            <div
-                aria-hidden="true"
-                class="resize-handle resize-e"
-                onpointerdown={(e) =>
-                    startResize(e, { n: false, s: false, e: true, w: false })}
-            ></div>
-            <div
-                aria-hidden="true"
-                class="resize-handle resize-w"
-                onpointerdown={(e) =>
-                    startResize(e, { n: false, s: false, e: false, w: true })}
-            ></div>
-            <div
-                aria-hidden="true"
-                class="resize-handle resize-ne"
-                onpointerdown={(e) =>
-                    startResize(e, { n: true, s: false, e: true, w: false })}
-            ></div>
-            <div
-                aria-hidden="true"
-                class="resize-handle resize-se"
-                onpointerdown={(e) =>
-                    startResize(e, { n: false, s: true, e: true, w: false })}
-            ></div>
-            <div
-                aria-hidden="true"
-                class="resize-handle resize-sw"
-                onpointerdown={(e) =>
-                    startResize(e, { n: false, s: true, e: false, w: true })}
-            ></div>
-            <div
-                aria-hidden="true"
-                class="resize-handle resize-nw"
-                onpointerdown={(e) =>
-                    startResize(e, { n: true, s: false, e: false, w: true })}
-            ></div>
+        <div
+            aria-hidden="true"
+            class="resize-handle resize-n"
+            onpointerdown={(e) =>
+                startResize(e, { n: true, s: false, e: false, w: false })}
+        ></div>
+        <div
+            aria-hidden="true"
+            class="resize-handle resize-s"
+            onpointerdown={(e) =>
+                startResize(e, { n: false, s: true, e: false, w: false })}
+        ></div>
+        <div
+            aria-hidden="true"
+            class="resize-handle resize-e"
+            onpointerdown={(e) =>
+                startResize(e, { n: false, s: false, e: true, w: false })}
+        ></div>
+        <div
+            aria-hidden="true"
+            class="resize-handle resize-w"
+            onpointerdown={(e) =>
+                startResize(e, { n: false, s: false, e: false, w: true })}
+        ></div>
+        <div
+            aria-hidden="true"
+            class="resize-handle resize-ne"
+            onpointerdown={(e) =>
+                startResize(e, { n: true, s: false, e: true, w: false })}
+        ></div>
+        <div
+            aria-hidden="true"
+            class="resize-handle resize-se"
+            onpointerdown={(e) =>
+                startResize(e, { n: false, s: true, e: true, w: false })}
+        ></div>
+        <div
+            aria-hidden="true"
+            class="resize-handle resize-sw"
+            onpointerdown={(e) =>
+                startResize(e, { n: false, s: true, e: false, w: true })}
+        ></div>
+        <div
+            aria-hidden="true"
+            class="resize-handle resize-nw"
+            onpointerdown={(e) =>
+                startResize(e, { n: true, s: false, e: false, w: true })}
+        ></div>
     </div>
 {/if}
 
@@ -810,19 +785,104 @@
     :global(.dark .markdown-body code) {
         background: rgba(255, 255, 255, 0.08);
     }
-    :global(.markdown-body pre) {
+    :global(.markdown-body pre),
+    :global(.markdown-body pre.hljs) {
         margin: 0.6em 0;
         padding: 0.7em 0.9em;
         border-radius: 8px;
-        background: #1e2030;
-        color: #c6d0f5;
+        background: var(--hljs-bg) !important;
+        color: var(--hljs-fg) !important;
         overflow-x: auto;
         font-size: 12px;
+        border: 1px solid var(--hljs-border);
     }
-    :global(.markdown-body pre code) {
-        background: transparent;
+    :global(.markdown-body pre code),
+    :global(.markdown-body pre code.hljs) {
+        background: transparent !important;
+        color: inherit;
         padding: 0;
         font-size: inherit;
+    }
+
+    /* Theme-aware syntax highlighting (CSS-variable-driven). */
+    :global(.markdown-body) {
+        --hljs-bg: #f6f8fa;
+        --hljs-fg: #1f2328;
+        --hljs-border: rgba(0, 0, 0, 0.06);
+        --hljs-comment: #6e7781;
+        --hljs-keyword: #cf222e;
+        --hljs-string: #0a3069;
+        --hljs-number: #0550ae;
+        --hljs-function: #8250df;
+        --hljs-builtin: #953800;
+        --hljs-variable: #116329;
+    }
+    :global(.dark .markdown-body) {
+        --hljs-bg: #151827;
+        --hljs-fg: #e6e9ff;
+        --hljs-border: rgba(198, 208, 245, 0.14);
+        --hljs-comment: #8c93b5;
+        --hljs-keyword: #d7a7ff;
+        --hljs-string: #b8e994;
+        --hljs-number: #ffb78a;
+        --hljs-function: #9ec5ff;
+        --hljs-builtin: #ffd08a;
+        --hljs-variable: #ff9aa2;
+    }
+    :global(.markdown-body .hljs-comment),
+    :global(.markdown-body .hljs-quote) {
+        color: var(--hljs-comment);
+        font-style: italic;
+    }
+    :global(.markdown-body .hljs-keyword),
+    :global(.markdown-body .hljs-selector-tag),
+    :global(.markdown-body .hljs-literal),
+    :global(.markdown-body .hljs-section),
+    :global(.markdown-body .hljs-doctag),
+    :global(.markdown-body .hljs-name),
+    :global(.markdown-body .hljs-tag),
+    :global(.markdown-body .hljs-meta) {
+        color: var(--hljs-keyword);
+    }
+    :global(.markdown-body .hljs-string),
+    :global(.markdown-body .hljs-regexp),
+    :global(.markdown-body .hljs-meta-string) {
+        color: var(--hljs-string);
+    }
+    :global(.markdown-body .hljs-number),
+    :global(.markdown-body .hljs-symbol),
+    :global(.markdown-body .hljs-bullet),
+    :global(.markdown-body .hljs-link) {
+        color: var(--hljs-number);
+    }
+    :global(.markdown-body .hljs-title),
+    :global(.markdown-body .hljs-title.class_),
+    :global(.markdown-body .hljs-title.function_) {
+        color: var(--hljs-function);
+    }
+    :global(.markdown-body .hljs-built_in),
+    :global(.markdown-body .hljs-builtin-name) {
+        color: var(--hljs-builtin);
+    }
+    :global(.markdown-body .hljs-attribute),
+    :global(.markdown-body .hljs-attr),
+    :global(.markdown-body .hljs-variable),
+    :global(.markdown-body .hljs-template-variable),
+    :global(.markdown-body .hljs-type),
+    :global(.markdown-body .hljs-selector-class),
+    :global(.markdown-body .hljs-selector-attr),
+    :global(.markdown-body .hljs-selector-pseudo) {
+        color: var(--hljs-variable);
+    }
+
+    /* KaTeX block spacing — inherits color from surrounding markdown body. */
+    :global(.markdown-body .math-display) {
+        margin: 0.6em 0;
+        overflow-x: auto;
+        text-align: center;
+    }
+    :global(.markdown-body .math-inline) {
+        display: inline;
     }
     :global(.markdown-body h1),
     :global(.markdown-body h2),

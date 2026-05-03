@@ -29,6 +29,7 @@
         TablePlugin,
         TableActionMenuPlugin,
         MarkdownShortcutPlugin,
+        MarkdownPastePlugin,
         ALL_TRANSFORMERS,
     } from "../lexical";
     import { locale } from '$lib/i18n';
@@ -124,6 +125,7 @@
                 <TableActionMenuPlugin anchorElem={editorShell} cellMerge={true} />
             {/if}
             <MarkdownShortcutPlugin transformers={ALL_TRANSFORMERS} />
+            <MarkdownPastePlugin transformers={ALL_TRANSFORMERS} />
             <SlashCommandPlugin />
             <EditorStorePlugin />
         </div>

@@ -4,6 +4,7 @@
     import LoginView from "./LoginView.svelte";
     import ProfileView from "./ProfileView.svelte";
     import { authSession, authLoading } from "$lib/stores/auth.store";
+    import { t } from "$lib/i18n";
 
     interface Props {
         open: boolean;
@@ -46,9 +47,9 @@
                     {/if}
                 </div>
                 <div class="flex flex-col">
-                    <span class="text-[13px] font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">Account</span>
+                    <span class="text-[13px] font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">{$t("account.title")}</span>
                     <span class="text-[11px] text-brand-charcoal-400 dark:text-[#8087a2]">
-                        {view === "login" ? "Sign in or create an account" : "Your profile & subscription"}
+                        {view === "login" ? $t("account.subtitle.login") : $t("account.subtitle.profile")}
                     </span>
                 </div>
                 <button
@@ -56,7 +57,7 @@
                     class="cursor-pointer ml-auto flex h-7 w-7 items-center justify-center rounded-lg
                            bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5]
                            hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    aria-label="Close"
+                    aria-label={$t("common.close")}
                 >
                     <Icon icon="solar:close-circle-bold-duotone" width="0.9rem" />
                 </button>

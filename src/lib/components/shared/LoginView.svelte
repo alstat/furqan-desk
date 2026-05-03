@@ -1,5 +1,6 @@
 <script lang="ts">
     import { supabase } from "$lib/supabase";
+    import { t } from "$lib/i18n";
     import Icon from "@iconify/svelte";
 
     let tab: "signin" | "signup" = $state("signin");
@@ -25,7 +26,7 @@
 
     async function handleSignIn() {
         clearMessages();
-        if (!signinEmail || !signinPassword) { error = "Email and password are required."; return; }
+        if (!signinEmail || !signinPassword) { error = $t("auth.error_email_password_required"); return; }
         loading = true;
         const { error: err } = await supabase.auth.signInWithPassword({
             email: signinEmail,
@@ -37,7 +38,7 @@
 
     async function handleSignUp() {
         clearMessages();
-        if (!signupEmail || !signupPassword) { error = "Email and password are required."; return; }
+        if (!signupEmail || !signupPassword) { error = $t("auth.error_email_password_required"); return; }
         loading = true;
         const { error: err } = await supabase.auth.signUp({
             email: signupEmail,
@@ -48,20 +49,20 @@
         if (err) {
             error = err.message;
         } else {
-            successMsg = "Check your email to confirm your account.";
+            successMsg = $t("auth.signup_confirm_email");
         }
     }
 
     async function handleForgotPassword() {
         clearMessages();
-        if (!signinEmail) { error = "Enter your email address first."; return; }
+        if (!signinEmail) { error = $t("auth.error_email_required"); return; }
         loading = true;
         const { error: err } = await supabase.auth.resetPasswordForEmail(signinEmail);
         loading = false;
         if (err) {
             error = err.message;
         } else {
-            successMsg = "Password reset email sent.";
+            successMsg = $t("auth.reset_email_sent");
         }
     }
 </script>
@@ -74,21 +75,21 @@
             class="flex-1 rounded-full py-1 text-[11px] font-semibold transition-colors
                    {tab === 'signin' ? 'bg-brand-gold-400 text-gray-100 shadow-sm' : 'text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#303446]'}"
         >
-            Sign In
+            {$t("auth.sign_in")}
         </button>
         <button
             onclick={() => { tab = "signup"; clearMessages(); }}
             class="flex-1 rounded-full py-1 text-[11px] font-semibold transition-colors
                    {tab === 'signup' ? 'bg-brand-gold-400 text-gray-100 shadow-sm' : 'text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#303446]'}"
         >
-            Sign Up
+            {$t("auth.sign_up")}
         </button>
     </div>
 
     {#if tab === "signin"}
         <div class="flex flex-col gap-2.5">
-            <input type="email" placeholder="Email address" bind:value={signinEmail} class={inputClass} />
-            <input type="password" placeholder="Password" bind:value={signinPassword} class={inputClass} />
+            <input type="email" placeholder={$t("auth.email_address")} bind:value={signinEmail} class={inputClass} />
+            <input type="password" placeholder={$t("auth.password")} bind:value={signinPassword} class={inputClass} />
             <button
                 onclick={handleSignIn}
                 disabled={loading}
@@ -100,20 +101,20 @@
                 {#if loading}
                     <Icon icon="svg-spinners:ring-resize" width="0.85rem" />
                 {/if}
-                Sign In
+                {$t("auth.sign_in")}
             </button>
             <button
                 onclick={handleForgotPassword}
                 class="cursor-pointer text-center text-[11px] text-brand-charcoal-400 dark:text-[#8087a2] hover:text-brand-gold-500 transition-colors"
             >
-                Forgot password?
+                {$t("auth.forgot_password")}
             </button>
         </div>
     {:else}
         <div class="flex flex-col gap-2.5">
-            <input type="text" placeholder="Full name" bind:value={signupName} class={inputClass} />
-            <input type="email" placeholder="Email address" bind:value={signupEmail} class={inputClass} />
-            <input type="password" placeholder="Password" bind:value={signupPassword} class={inputClass} />
+            <input type="text" placeholder={$t("auth.full_name")} bind:value={signupName} class={inputClass} />
+            <input type="email" placeholder={$t("auth.email_address")} bind:value={signupEmail} class={inputClass} />
+            <input type="password" placeholder={$t("auth.password")} bind:value={signupPassword} class={inputClass} />
             <button
                 onclick={handleSignUp}
                 disabled={loading}
@@ -125,7 +126,7 @@
                 {#if loading}
                     <Icon icon="svg-spinners:ring-resize" width="0.85rem" />
                 {/if}
-                Create Account
+                {$t("auth.create_account")}
             </button>
         </div>
     {/if}
@@ -139,9 +140,9 @@
 
     <!-- Pro callout -->
     <div class="rounded-2xl border border-brand-gold-200 dark:border-brand-gold-800/40 bg-brand-gold-50 dark:bg-brand-gold-900/20 px-4 py-3 flex flex-col gap-1">
-        <p class="text-[11px] font-semibold text-brand-gold-700 dark:text-brand-gold-400">Unlock AyahLab Pro</p>
+        <p class="text-[11px] font-semibold text-brand-gold-700 dark:text-brand-gold-400">{$t("auth.pro_callout_title")}</p>
         <p class="text-[11px] text-brand-charcoal-400 dark:text-[#8087a2] leading-relaxed">
-            Advanced morphology views, unlimited manuscripts, cloud sync, and more.
+            {$t("auth.pro_callout_desc")}
         </p>
     </div>
 </div>

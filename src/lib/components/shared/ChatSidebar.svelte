@@ -52,14 +52,14 @@
 </script>
 
 <div
-    class="flex w-64 shrink-0 flex-col border-r border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030]"
+    class="flex h-full w-64 shrink-0 flex-col border-r border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030]"
 >
     <!-- New chat -->
     <div class="shrink-0 p-2">
         <button
             onclick={onNew}
             disabled={disabled}
-            class="cursor-pointer w-full flex items-center gap-2 rounded-xl bg-brand-gold-400 dark:bg-brand-gold-500 px-3 py-2 text-[12px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="cursor-pointer w-full flex items-center justify-center gap-2 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-2 text-[12px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
             <Icon icon="solar:add-circle-bold-duotone" width="0.95rem" />
             {$t("ai_chat.new_chat")}
@@ -77,13 +77,13 @@
         {:else}
             {#each chats as c (c.id)}
                 <div
-                    class="group relative mb-1 rounded-lg {currentChatId === c.id
-                        ? 'bg-brand-gold-100 dark:bg-[#414559]'
+                    class="group relative mb-1 rounded-xl {currentChatId === c.id
+                        ? 'bg-brand-gold-100 dark:bg-brand-gold-900/20'
                         : 'hover:bg-brand-sand-100 dark:hover:bg-[#292c3c]'}"
                 >
                     <button
                         onclick={() => onSelect(c.id)}
-                        class="cursor-pointer block w-full text-left px-3 py-2 pr-8"
+                        class="cursor-pointer block w-full text-left px-3 py-2.5 pr-8"
                     >
                         <p
                             class="truncate text-[12px] font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"

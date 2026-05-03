@@ -152,7 +152,7 @@
         aria-label={$t('ai_chat.title')}
         title={$t('ai_chat.title')}
     >
-        <Icon icon="ri:chat-ai-3-fill" class="h-4 w-4" />
+        <Icon icon="ri:chat-ai-3-fill" class="h-4 w-4 text-brand-charcoal-300" />
     </button>
 
 
@@ -198,8 +198,8 @@
     <button
         class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-26 z-3 ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
         onclick={() => (accountOpen = true)}
-        aria-label="User Account"
-        title="User Account"
+        aria-label={$t("account.title")}
+        title={$t("account.title")}
     >
         <Icon icon="solar:user-bold-duotone" class="h-4 w-4" />
     </button>

@@ -189,6 +189,19 @@ export async function createChat(
     return data.id as string;
 }
 
+export async function updateChatTitle(
+    chatId: string,
+    newTitle: string,
+): Promise<void> {
+    const key = ensureUnlocked();
+    const env = await encrypt(key, newTitle);
+    const { error } = await supabase
+        .from("chats")
+        .update({ title_ciphertext: env.ciphertext, title_iv: env.iv })
+        .eq("id", chatId);
+    if (error) throw error;
+}
+
 export async function appendMessage(
     chatId: string,
     userId: string,
