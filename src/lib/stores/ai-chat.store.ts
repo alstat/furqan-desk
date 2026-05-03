@@ -6,6 +6,7 @@ import {
     createChat,
     appendMessage,
     updateMessageContent,
+    updateChatTitle,
     deleteChat as deleteChatRow,
     getStorageUsage,
     getTierLimits,
@@ -39,6 +40,7 @@ export const quotaBlock = writable<QuotaBlock | null>(null);
 export const useAdvanced = writable<boolean>(false);
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-completion`;
+const TITLE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/summarize-chat-title`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 let abortController: AbortController | null = null;
@@ -139,6 +141,11 @@ export async function sendMessage(prompt: string): Promise<void> {
         chatId = await createChat(userId, text);
         currentChatId.set(chatId);
         isNewChat = true;
+        // Fire-and-forget title summarization. Falls back to derived title on
+        // any failure. The chat list refreshes in finally{} below — that
+        // refresh will pick up the new title if this resolves first; otherwise
+        // a small extra refresh is triggered here.
+        void summarizeAndApplyTitle(chatId, text, token, userId);
     }
 
     // Persist user message first so it's never lost.
@@ -275,6 +282,33 @@ export async function sendMessage(prompt: string): Promise<void> {
         if (isNewChat) {
             // Already in chats list now via refresh.
         }
+    }
+}
+
+async function summarizeAndApplyTitle(
+    chatId: string,
+    firstUserPrompt: string,
+    token: string,
+    userId: string,
+): Promise<void> {
+    try {
+        const res = await fetch(TITLE_FUNCTION_URL, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                apikey: ANON_KEY,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ chatId, firstUserPrompt }),
+        });
+        if (!res.ok) return;
+        const json = (await res.json()) as { title?: string };
+        const title = json.title?.trim();
+        if (!title) return;
+        await updateChatTitle(chatId, title);
+        await refreshChats(userId);
+    } catch {
+        // swallow — derived title remains
     }
 }
 

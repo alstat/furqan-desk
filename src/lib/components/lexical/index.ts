@@ -25,6 +25,7 @@ export {default as TableActionMenuPlugin} from './core/plugins/Table/TableAction
 export {default as TableHoverActionPlugin} from './core/plugins/Table/TableHoverActionPlugin.svelte';
 
 export {default as MarkdownShortcutPlugin} from './core/plugins/MardownShortcut/MarkdownShortcutPlugin.svelte';
+export {default as MarkdownPastePlugin} from './core/plugins/MardownShortcut/MarkdownPastePlugin.svelte';
 export {
   INLINE_CODE,
   BOLD_ITALIC_STAR,
