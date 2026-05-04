@@ -4,6 +4,8 @@
         runAiTextTransform,
         type AiTextAction,
     } from "$lib/stores/ai-text-transform.store";
+    import { tick } from "svelte";
+    import { t } from "$lib/i18n";
 
     interface Props {
         selectedText: string;
@@ -19,27 +21,28 @@
 
     let promptOpen = $state(false);
     let promptText = $state("");
+    let promptInput: HTMLInputElement | null = $state(null);
     let busyAction = $state<AiTextAction | null>(null);
     let error = $state("");
 
     const actions: Array<{
         id: Exclude<AiTextAction, "prompt">;
-        label: string;
+        labelKey: string;
         icon: string;
     }> = [
         {
             id: "paraphrase",
-            label: "Paraphrase",
+            labelKey: "ai_selection.paraphrase",
             icon: "solar:pen-new-square-bold-duotone",
         },
         {
             id: "elaborate",
-            label: "Elaborate",
-            icon: "solar:document-add-bold-duotone",
+            labelKey: "ai_selection.elaborate",
+            icon: "solar:maximize-square-3-bold-duotone",
         },
         {
             id: "shorten",
-            label: "Shorten",
+            labelKey: "ai_selection.shorten",
             icon: "solar:minimize-square-3-bold-duotone",
         },
     ];
@@ -76,6 +79,14 @@
         if (!prompt) return;
         run("prompt", prompt);
     }
+
+    async function togglePrompt() {
+        promptOpen = !promptOpen;
+        if (!promptOpen) return;
+
+        await tick();
+        promptInput?.focus();
+    }
 </script>
 
 <div
@@ -91,7 +102,7 @@
                 class="group relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-brand-gold-200 p-0 shadow-md transition-colors text-brand-gold-600 hover:bg-brand-gold-400 active:bg-brand-gold-500 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:bg-[#363a4f] dark:text-brand-gold-400 dark:hover:bg-[#4a4e5c] dark:active:bg-[#414559] disabled:cursor-wait disabled:opacity-50"
                 disabled={busyAction !== null}
                 onclick={() => run(action.id)}
-                aria-label={action.label}
+                aria-label={$t(action.labelKey)}
             >
                 <Icon
                     icon={busyAction === action.id
@@ -103,15 +114,15 @@
                 <span
                     class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-brand-charcoal-900 px-2 py-1 text-[10px] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-[#1e2030] dark:text-[#c6d0f5]"
                 >
-                    {action.label}
+                    {$t(action.labelKey)}
                 </span>
             </button>
         {/each}
         <button
             class="group relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-brand-gold-200 p-0 shadow-md transition-colors text-brand-gold-600 hover:bg-brand-gold-400 active:bg-brand-gold-500 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:bg-[#363a4f] dark:text-brand-gold-400 dark:hover:bg-[#4a4e5c] dark:active:bg-[#414559] disabled:opacity-50"
             disabled={busyAction !== null}
-            onclick={() => (promptOpen = !promptOpen)}
-            aria-label="Prompt"
+            onclick={togglePrompt}
+            aria-label={$t("ai_selection.prompt")}
         >
             <Icon
                 icon={busyAction === "prompt"
@@ -123,7 +134,7 @@
             <span
                 class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-brand-charcoal-900 px-2 py-1 text-[10px] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-[#1e2030] dark:text-[#c6d0f5]"
             >
-                Prompt
+                {$t("ai_selection.prompt")}
             </span>
         </button>
     </div>
@@ -133,8 +144,9 @@
             class="flex w-80 items-center gap-1.5 rounded-2xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
         >
             <input
+                bind:this={promptInput}
                 bind:value={promptText}
-                placeholder="Tell AI what to do..."
+                placeholder={$t("ai_selection.prompt_placeholder")}
                 class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
                 onkeydown={(e) => {
                     if (e.key === "Enter") submitPrompt();
@@ -145,7 +157,7 @@
                 class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 hover:dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 disabled={!promptText.trim() || busyAction !== null}
                 onclick={submitPrompt}
-                title="Run prompt"
+                title={$t("ai_selection.run_prompt")}
             >
                 <Icon icon="solar:plain-bold-duotone" width="0.85rem" />
             </button>
