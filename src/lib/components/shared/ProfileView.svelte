@@ -134,8 +134,7 @@
             {initials}
         </div>
         <div class="flex flex-col min-w-0">
-            <span
-                class="truncate text-sm font-semibold text-brand-charcoal-900"
+            <span class="truncate text-sm font-semibold text-brand-charcoal-900"
                 >{displayName}</span
             >
             <span class="truncate text-[11px] text-brand-charcoal-300"
@@ -145,8 +144,12 @@
         {#if $isPro}
             <div class="ml-auto flex shrink-0 items-center gap-2">
                 <span
-                    class="rounded-full bg-brand-gold-400 px-2.5 py-0.5 text-sm font-bold text-gray-100"
+                    class="inline-flex items-center gap-1.5 rounded-full border bg-linear-to-r from-brand-gold-400 via-brand-gold-500 to-brand-gold-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-gray-100 shadow-sm shadow-brand-gold-400/25 dark:from-[#e5c890] dark:via-[#d4b57f] dark:to-[#c4a26e] dark:text-[#292c3c] dark:shadow-black/20"
                 >
+                    <Icon
+                        icon="solar:crown-star-bold-duotone"
+                        width="0.85rem"
+                    />
                     {$t("billing.tier.pro.name")}
                 </span>
                 <button onclick={handleManage} class={actionBtn}>
@@ -191,9 +194,24 @@
 
         <div class="flex flex-col space-y-3 -mt-4">
             {#if !usage || !limits}
-                <p class="text-sm {descriptionText}">
-                    {loadingUsage ? "…" : $t("account.usage.no_usage")}
-                </p>
+                {#if loadingUsage}
+                    <div
+                        class="flex items-center gap-2 text-sm {descriptionText}"
+                        role="status"
+                        aria-label={$t("explorer.loading")}
+                    >
+                        <Icon
+                            icon="solar:waterdrop-bold-duotone"
+                            class="animate-pulse text-brand-gold-400/70 dark:text-[#e5c890]/70"
+                            width="1.15rem"
+                        />
+                        <span class="sr-only">{$t("explorer.loading")}</span>
+                    </div>
+                {:else}
+                    <p class="text-sm {descriptionText}">
+                        {$t("account.usage.no_usage")}
+                    </p>
+                {/if}
             {:else}
                 {#each [{ heading: $t("account.usage.section_standard"), sub: $t("account.usage.section_standard_sub"), rows: [{ label: $t("account.usage.daily"), used: usage.standard.daily.used, cap: limits.daily_tokens, reset: usage.standard.daily.resetInSeconds }, { label: $t("account.usage.weekly"), used: usage.standard.weekly.used, cap: limits.weekly_tokens, reset: usage.standard.weekly.resetInSeconds }, { label: $t("account.usage.monthly"), used: usage.standard.monthly.used, cap: limits.monthly_tokens, reset: usage.standard.monthly.resetInSeconds }] }, { heading: $t("account.usage.section_advanced"), sub: $t("account.usage.section_advanced_sub"), rows: [{ label: $t("account.usage.daily"), used: usage.advanced.daily.used, cap: limits.advanced_daily_tokens, reset: usage.advanced.daily.resetInSeconds }, { label: $t("account.usage.weekly"), used: usage.advanced.weekly.used, cap: limits.advanced_weekly_tokens, reset: usage.advanced.weekly.resetInSeconds }, { label: $t("account.usage.monthly"), used: usage.advanced.monthly.used, cap: limits.advanced_monthly_tokens, reset: usage.advanced.monthly.resetInSeconds }] }] as section (section.heading)}
                     <div

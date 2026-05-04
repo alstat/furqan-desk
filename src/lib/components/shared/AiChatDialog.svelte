@@ -469,32 +469,34 @@
                                         : 'items-start'}"
                                 >
                                     <div
-                                        class="rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed {isUser
-                                            ? 'bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700'
-                                            : 'bg-white dark:bg-[#292c3c] text-brand-charcoal-900 dark:text-[#c6d0f5] border border-brand-sand-200 dark:border-[#414559]'}"
+                                        class="chat-bubble relative overflow-visible rounded-[20px] px-4 py-2.5 text-[13px] leading-relaxed {isUser
+                                            ? 'chat-bubble-user rounded-br-[5px] bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700'
+                                            : 'chat-bubble-assistant bg-white dark:bg-[#292c3c] text-brand-charcoal-900 dark:text-[#c6d0f5] border border-brand-sand-200 dark:border-[#414559]'}"
                                     >
-                                        {#if isUser}
-                                            <p class="whitespace-pre-wrap">
-                                                {msg.content}
-                                            </p>
-                                        {:else if msg.content === "" && isStreamingLast}
-                                            <span
-                                                class="flex items-center gap-1.5 text-[11px] text-brand-charcoal-300 dark:text-[#8087a2]"
-                                            >
-                                                <Icon
-                                                    icon="solar:refresh-circle-bold-duotone"
-                                                    class="animate-spin"
-                                                    width="0.85rem"
-                                                />
-                                                {$t("ai_chat.thinking")}
-                                            </span>
-                                        {:else}
-                                            <div class="markdown-body">
-                                                {@html renderMarkdown(
-                                                    msg.content,
-                                                )}
-                                            </div>
-                                        {/if}
+                                        <div class="relative z-10">
+                                            {#if isUser}
+                                                <p class="whitespace-pre-wrap">
+                                                    {msg.content}
+                                                </p>
+                                            {:else if msg.content === "" && isStreamingLast}
+                                                <span
+                                                    class="flex items-center gap-1.5 text-[11px] text-brand-charcoal-300 dark:text-[#8087a2]"
+                                                >
+                                                    <Icon
+                                                        icon="solar:refresh-circle-bold-duotone"
+                                                        class="animate-spin"
+                                                        width="0.85rem"
+                                                    />
+                                                    {$t("ai_chat.thinking")}
+                                                </span>
+                                            {:else}
+                                                <div class="markdown-body">
+                                                    {@html renderMarkdown(
+                                                        msg.content,
+                                                    )}
+                                                </div>
+                                            {/if}
+                                        </div>
                                     </div>
 
                                     <!-- Copy button (below assistant messages, always visible) -->
@@ -752,6 +754,65 @@
         border-right: 1.5px solid rgba(130, 130, 130, 0.55);
         border-bottom-right-radius: 9px;
         pointer-events: none;
+    }
+
+    /* iMessage-style chat bubble tails */
+    .chat-bubble {
+        --thread-bg: var(--color-brand-sand-50);
+        --bubble-bg: #ffffff;
+        --bubble-border: transparent;
+        position: relative;
+        isolation: isolate;
+        filter: drop-shadow(0 1px 1px rgba(47, 47, 47, 0.08));
+    }
+
+    .chat-bubble-user {
+        --bubble-bg: var(--color-brand-gold-400);
+        --bubble-border: var(--color-brand-gold-400);
+    }
+
+    .chat-bubble-assistant {
+        --bubble-bg: #ffffff;
+        --bubble-border: var(--color-brand-sand-200);
+    }
+
+    :global(.dark) .chat-bubble {
+        --thread-bg: #232634;
+        filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.22));
+    }
+
+    :global(.dark) .chat-bubble-user {
+        --bubble-bg: var(--color-brand-gold-500);
+        --bubble-border: var(--color-brand-gold-500);
+    }
+
+    :global(.dark) .chat-bubble-assistant {
+        --bubble-bg: #292c3c;
+        --bubble-border: #414559;
+    }
+
+    /* User bubble tail (bottom-right, gold) */
+    .chat-bubble-user::before {
+        content: "";
+        position: absolute;
+        right: -7px;
+        bottom: -1px;
+        width: 20px;
+        height: 22px;
+        background: var(--bubble-bg);
+        border-bottom-left-radius: 18px 16px;
+        z-index: 0;
+    }
+    .chat-bubble-user::after {
+        content: "";
+        position: absolute;
+        right: -18px;
+        bottom: -1px;
+        width: 18px;
+        height: 22px;
+        background: var(--thread-bg);
+        border-bottom-left-radius: 14px 16px;
+        z-index: 1;
     }
 
     :global(.markdown-body) {

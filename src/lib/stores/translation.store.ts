@@ -83,3 +83,5 @@ activeTafsirId.subscribe(v => {
 
 export const availableTafsirAuthors = writable<TafsirAuthorInfo[]>([]);
 export const surahTafsir = writable<AyahTafsir[] | null>(null);
+
+export const tafsirDialogOpen = writable<boolean>(false);
