@@ -294,6 +294,9 @@ export const en: Record<string, string> = {
   "surah.transliteration": "Transliteration",
   "surah.word_by_word": "Word by Word",
   "surah.tafsir": "Tafsir",
+  "surah.tafsir_view_dialog": "View as Dialog",
+  "tafsir.dialog_title": "Tafsir",
+  "tafsir.empty": "No tafsir available for the selected author.",
   "surah.display_card": "Display",
   "surah.translation_card": "Translation",
   "surah.surah_card": "Surah",
@@ -532,6 +535,8 @@ export const en: Record<string, string> = {
   "slash.quote_desc": "Format as block quote",
   "slash.checklist_label": "Check List",
   "slash.checklist_desc": "Insert a checklist",
+  "slash.quran_label": "Quran Verses (Pro)",
+  "slash.quran_desc": "Insert ayahs — e.g. /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
   // Account dialog
   // Authentication
   "auth.sign_in": "Sign In",

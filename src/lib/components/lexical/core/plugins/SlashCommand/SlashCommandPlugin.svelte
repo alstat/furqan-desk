@@ -27,6 +27,18 @@
     import { $createQuoteNode as createQuoteNode } from "@lexical/rich-text";
     import { INSERT_CHECK_LIST_COMMAND } from "@lexical/list";
     import { t } from "$lib/i18n";
+    import { isPro } from "$lib/stores/auth.store";
+    import { invoke } from "@tauri-apps/api/core";
+    import type { SurahMorphology } from "$lib/types/morphology";
+    import {
+        parseQuranSlashQuery,
+        QURAN_SLASH_REGEX,
+        QURAN_SLASH_COMPLETE_REGEX,
+    } from "$lib/utils/quranSlashParser";
+    import {
+        $createQuranBlockNode as createQuranBlockNode,
+        type QuranVerse,
+    } from "../Quran/QuranBlockNode";
 
     const editor = getEditor();
 
@@ -68,6 +80,16 @@
             description: $t("slash.checklist_desc"),
             icon: icons["checklist"],
         },
+        ...($isPro
+            ? [
+                  {
+                      id: "quran",
+                      label: $t("slash.quran_label"),
+                      description: $t("slash.quran_desc"),
+                      icon: "solar:book-bold-duotone",
+                  },
+              ]
+            : []),
     ]);
 
     let isOpen = $state(false);
@@ -83,6 +105,7 @@
         COMMANDS.filter((cmd) => {
             if (!query) return true;
             if (cmd.id === "table") return /^table(-\d+(-\d+)?)?$/.test(query);
+            if (cmd.id === "quran") return QURAN_SLASH_REGEX.test(query);
             return cmd.id.startsWith(query);
         }),
     );
@@ -92,11 +115,78 @@
         selectedIndex = 0;
     }
 
+    async function insertQuranBlock(
+        capturedKey: string,
+        capturedOffset: number,
+        capturedQuery: string,
+    ) {
+        if (!$isPro) return;
+        if (!QURAN_SLASH_COMPLETE_REGEX.test(capturedQuery)) return;
+        const parsed = parseQuranSlashQuery(capturedQuery);
+        if (!parsed.ok) return;
+
+        const surahCache = new Map<number, SurahMorphology>();
+        const uniqueSurahs = [...new Set(parsed.pairs.map((p) => p.surah))];
+        try {
+            await Promise.all(
+                uniqueSurahs.map(async (s) => {
+                    const morph = await invoke<SurahMorphology>(
+                        "get_surah_morphology",
+                        { surahNumber: s },
+                    );
+                    surahCache.set(s, morph);
+                }),
+            );
+        } catch (e) {
+            console.error("[quran-slash] failed to fetch surah morphology", e);
+            return;
+        }
+
+        const verses: QuranVerse[] = [];
+        for (const { surah, ayah } of parsed.pairs) {
+            const morph = surahCache.get(surah);
+            if (!morph) continue;
+            const ayahMorph = morph.ayahs.find((a) => a.ayah === ayah);
+            if (!ayahMorph) continue;
+            const arabic = ayahMorph.words
+                .map((w) => w.combined_arabic)
+                .join(" ");
+            verses.push({ surah, ayah, arabic });
+        }
+        if (verses.length === 0) return;
+
+        editor.update(() => {
+            const textNode = getNodeByKey(capturedKey);
+            if (!isTextNode(textNode)) return;
+            const sel = textNode.select(
+                capturedOffset,
+                capturedOffset + 1 + capturedQuery.length,
+            );
+            sel.insertText("");
+
+            const freshSel = getSelection();
+            if (!isRangeSelection(freshSel)) return;
+
+            const blockNode = createQuranBlockNode(verses);
+            freshSel.insertNodes([blockNode]);
+            if (blockNode.getNextSibling() === null) {
+                const para = createParagraphNode();
+                blockNode.insertAfter(para);
+                para.select();
+            }
+        });
+    }
+
     function selectCommand(cmdId: string) {
         const capturedKey = anchorNodeKey;
         const capturedOffset = slashOffset;
         const capturedQuery = query;
         closeMenu();
+
+        if (cmdId === "quran") {
+            void insertQuranBlock(capturedKey, capturedOffset, capturedQuery);
+            return;
+        }
 
         editor.update(() => {
             const textNode = getNodeByKey(capturedKey);
@@ -211,6 +301,7 @@
                         if (!q) return true;
                         if (cmd.id === "table")
                             return /^table(-\d+(-\d+)?)?$/.test(q);
+                        if (cmd.id === "quran") return QURAN_SLASH_REGEX.test(q);
                         return cmd.id.startsWith(q);
                     });
 

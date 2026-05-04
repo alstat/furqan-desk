@@ -2,6 +2,7 @@
     import Icon from "@iconify/svelte";
     import ControlCard from "../cards/ControlCard.svelte";
     import GroupCards from "../cards/GroupCards.svelte";
+    import TafsirDialog from "$lib/components/shared/TafsirDialog.svelte";
     import {
         selectedSurahIdx,
         selectedSurahName,
@@ -35,6 +36,7 @@
         tafsirEnabled,
         activeTafsirId,
         availableTafsirAuthors,
+        tafsirDialogOpen,
     } from "$lib/stores/translation.store";
     import { invoke } from "@tauri-apps/api/core";
     import type {
@@ -555,6 +557,16 @@
                         <Icon icon="charm:chevron-down" width="0.75rem" />
                     </span>
                 </div>
+                {#if selectedTafsirId}
+                    <button
+                        type="button"
+                        onclick={() => (tafsirDialogOpen.set(true))}
+                        class="cursor-pointer mb-1 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100 dark:bg-[#292c3c] px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
+                    >
+                        <Icon icon="solar:book-2-bold-duotone" width="0.85rem" />
+                        {$t('surah.tafsir_view_dialog')}
+                    </button>
+                {/if}
             {/if}
         </div>
     </div>
@@ -578,3 +590,5 @@
     xPosition={"right"}
     id="tour-surah-widget"
 />
+
+<TafsirDialog open={$tafsirDialogOpen} onClose={() => tafsirDialogOpen.set(false)} />

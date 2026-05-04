@@ -16,7 +16,7 @@
     import Icon from "@iconify/svelte";
     import { requestPlayAyah, requestPlayPosition, requestPlayBasmallah } from "$lib/stores/recitation.store";
     import { invoke } from '@tauri-apps/api/core';
-    import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, wordByWordLang, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir, multiSurahTafsirMap, availableTafsirAuthors } from '$lib/stores/translation.store';
+    import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, wordByWordLang, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir, multiSurahTafsirMap, availableTafsirAuthors, tafsirDialogOpen } from '$lib/stores/translation.store';
     import type { AyahTranslation, AyahTafsir } from '$lib/stores/translation.store';
     import { manuscriptsEnabled, manuscriptAyah, manuscriptViewerOpen } from '$lib/stores/manuscripts.store';
     import { t } from '$lib/i18n';
@@ -509,7 +509,7 @@
             {@const multiTranslit = $multiSurahTransliterationMap?.get(surahData.surah) ?? null}
             {@const multiWbw = $multiSurahWordByWordMap?.get(surahData.surah) ?? null}
             {@const multiTafsir = $multiSurahTafsirMap?.get(surahData.surah) ?? null}
-            {@const hasExtras = multiTrans !== null || multiTranslit !== null || multiWbw !== null || multiTafsir !== null}
+            {@const hasExtras = multiTrans !== null || multiTranslit !== null || multiWbw !== null || (multiTafsir !== null && !$tafsirDialogOpen)}
             {@render surahNameHeader(multiName, 'mb-6')}
             {#if surahData.surah !== 1 && surahData.surah !== 9 && $basmallahMorphology}
                 <div id="ayah-{surahData.surah}-0" class="relative mb-6">
@@ -586,7 +586,7 @@
                                     {/if}
                                 </div>
                             {/if}
-                            {#if multiTafsir?.has(ayahData.ayah)}
+                            {#if multiTafsir?.has(ayahData.ayah) && !$tafsirDialogOpen}
                                 <div dir="ltr" class="mt-2 border-t border-brand-sand-100 dark:border-[#414559]/60 pt-2">
                                     <button
                                         onclick={() => toggleMultiTafsir(surahData.surah, ayahData.ayah)}
@@ -658,7 +658,7 @@
 
             </div>
         {/if}
-        {#if translationMap !== null || $surahTransliteration !== null || $surahWordByWord !== null || tafsirMap !== null}
+        {#if translationMap !== null || $surahTransliteration !== null || $surahWordByWord !== null || (tafsirMap !== null && !$tafsirDialogOpen)}
             <!-- Block mode: one ayah per row, right-justified, divider between ayahs -->
             <div dir="rtl" class="w-full min-w-0" style="contain: style;">
                 {#if displayAyahs.length > 0 && displayAyahs[0].ayah > 1}
@@ -711,7 +711,7 @@
                                 {/if}
                             </div>
                         {/if}
-                        {#if tafsirMap?.has(ayahData.ayah)}
+                        {#if tafsirMap?.has(ayahData.ayah) && !$tafsirDialogOpen}
                             <div dir="ltr" class="mt-2 border-t border-brand-sand-100 dark:border-[#414559]/60 pt-2">
                                 <button
                                     onclick={() => toggleTafsir(ayahData.ayah)}
