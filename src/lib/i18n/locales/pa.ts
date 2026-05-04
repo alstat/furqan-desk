@@ -295,7 +295,7 @@ export const pa: Record<string, string> = {
   "manuscript.insert": "Lexical ਵਿੱਚ ਸ਼ਾਮਲ ਕਰੋ",
   "manuscript.insert_tooltip": "ਸੰਪਾਦਕ ਵਿੱਚ ਚਿੱਤਰ ਸ਼ਾਮਲ ਕਰੋ",
   "manuscript.no_editor": "ਪਹਿਲਾਂ ਇੱਕ Lexical ਦਸਤਾਵੇਜ਼ ਟੈਬ ਖੋਲ੍ਹੋ",
-  "morphology.insert_to_lexical": "ਸੰਪਾਦਕ ਵਿੱਚ ਰੂਪ ਵਿਗਿਆਨ ਸ਼ਾਮਲ ਕਰੋ",
+  "morphology.insert_to_lexical": "Lexical ਸੰਪਾਦਕ ਵਿੱਚ ਰੂਪ ਵਿਗਿਆਨ ਸ਼ਾਮਲ ਕਰੋ",
   "morphology.buckwalter_help": "Buckwalter ਲਿਪੀਅੰਤਰਨ ਬਾਰੇ ਜਾਣੋ",
   "morphology.feat.root": "ਰੂਟ",
   "morphology.feat.lemma": "ਲੇਮਾ",

@@ -295,7 +295,7 @@ export const sr: Record<string, string> = {
   "manuscript.insert": "Инсерт то Лекицал",
   "manuscript.insert_tooltip": "Уметните слику у едитор",
   "manuscript.no_editor": "Прво отворите картицу Лексички документ",
-  "morphology.insert_to_lexical": "Уметните морфологију у едитор",
+  "morphology.insert_to_lexical": "Уметните морфологију у Lexical едитор",
   "morphology.buckwalter_help": "Сазнајте више о Буцквалтер транслитерацији",
   "morphology.feat.root": "Роот",
   "morphology.feat.lemma": "Лемма",

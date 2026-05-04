@@ -324,7 +324,7 @@ export const ur: Record<string, string> = {
     'manuscript.insert_tooltip': 'ایڈیٹر میں تصویر داخل کریں',
     'manuscript.no_editor': 'پہلے Lexical دستاویز کھولیں',
     // Morphology popover
-    'morphology.insert_to_lexical': 'ایڈیٹر میں صرف و نحو داخل کریں',
+    'morphology.insert_to_lexical': 'Lexical ایڈیٹر میں صرف و نحو داخل کریں',
     'morphology.buckwalter_help': 'بکوالٹر حروف تہجی کے بارے میں جانیں',
     // Morphology — feature labels
     'morphology.feat.root':   'جذر',

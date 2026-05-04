@@ -330,7 +330,7 @@ export const uz: Record<string, string> = {
   "manuscript.insert_tooltip": "Rasmni muharrirga qo'shish",
   "manuscript.no_editor": "Avval Lexical hujjat yorlig'ini oching",
   // Morphology popover
-  "morphology.insert_to_lexical": "Morfologiyani muharrirga qo'shish",
+  "morphology.insert_to_lexical": "Morfologiyani Lexical muharrirga qo'shish",
   "morphology.buckwalter_help": "Buckwalter transliteratsiyasi haqida bilish",
   // Morphology — feature labels
   "morphology.feat.root":   "Ildiz",

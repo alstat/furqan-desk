@@ -330,7 +330,7 @@ export const tg: Record<string, string> = {
   "manuscript.insert_tooltip": "Дохил кардани тасвир ба таҳрирӣ",
   "manuscript.no_editor": "Аввал ҷадвали санади Lexical-ро кушоед",
   // Morphology popover
-  "morphology.insert_to_lexical": "Дохил кардани морфология ба таҳрирӣ",
+  "morphology.insert_to_lexical": "Дохил кардани морфология ба таҳриргари Lexical",
   "morphology.buckwalter_help": "Омӯхтан дар бораи транслитератсияи Buckwalter",
   // Morphology — feature labels
   "morphology.feat.root":   "Реша",

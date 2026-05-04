@@ -330,7 +330,7 @@ export const my: Record<string, string> = {
   "manuscript.insert_tooltip": "တည်းဖြတ်ကိရိယာတွင် ပုံ ထည့်ပါ",
   "manuscript.no_editor": "အရင် Lexical စာမူ တဘ် ဖွင့်ပါ",
   // Morphology popover
-  "morphology.insert_to_lexical": "တည်းဖြတ်ကိရိယာတွင် ရုပ်ဗေဒ ထည့်ပါ",
+  "morphology.insert_to_lexical": "Lexical တည်းဖြတ်ကိရိယာတွင် ရုပ်ဗေဒ ထည့်ပါ",
   "morphology.buckwalter_help": "Buckwalter အသံဖော်ပြချက် လေ့လာပါ",
   // Morphology — feature labels
   "morphology.feat.root":   "ရင်းမြစ်",

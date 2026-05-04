@@ -318,7 +318,7 @@
                         value={`${i + 1}`}
                         selected={$selectedSurahIdx - 1 === i}
                     >
-                        {label.ar} — {SURAH_EN[i]}
+                        {i + 1}. {label.ar} — {SURAH_EN[i]}
                     </option>
                 {/each}
             </select>

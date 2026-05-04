@@ -330,7 +330,7 @@ export const th: Record<string, string> = {
   "manuscript.insert_tooltip": "แทรกรูปภาพในตัวแก้ไข",
   "manuscript.no_editor": "เปิดแท็บเอกสาร Lexical ก่อน",
   // Morphology popover
-  "morphology.insert_to_lexical": "แทรกสัณฐานวิทยาในตัวแก้ไข",
+  "morphology.insert_to_lexical": "แทรกสัณฐานวิทยาในตัวแก้ไข Lexical",
   "morphology.buckwalter_help": "เรียนรู้เกี่ยวกับการทับศัพท์ Buckwalter",
   // Morphology — feature labels
   "morphology.feat.root":   "รากศัพท์",

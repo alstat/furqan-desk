@@ -324,7 +324,7 @@ export const ko: Record<string, string> = {
     'manuscript.insert_tooltip': '편집기에 이미지 삽입',
     'manuscript.no_editor': '먼저 Lexical 문서를 여세요',
     // Morphology popover
-    'morphology.insert_to_lexical': '편집기에 형태론 삽입',
+    'morphology.insert_to_lexical': 'Lexical 편집기에 형태론 삽입',
     'morphology.buckwalter_help': '버크월터 음역에 대해 알아보기',
     // Morphology — feature labels
     'morphology.feat.root':   '어근',

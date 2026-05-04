@@ -295,7 +295,7 @@ export const sq: Record<string, string> = {
   "manuscript.insert": "Fut në leksik",
   "manuscript.insert_tooltip": "Fut imazhin në redaktues",
   "manuscript.no_editor": "Hapni fillimisht një skedë dokumentesh leksikore",
-  "morphology.insert_to_lexical": "Fut morfologjinë në redaktues",
+  "morphology.insert_to_lexical": "Fut morfologjinë në redaktuesin Lexical",
   "morphology.buckwalter_help": "Mësoni rreth transliterimit të Buckwalter",
   "morphology.feat.root": "Rrënja",
   "morphology.feat.lemma": "Lemë",
