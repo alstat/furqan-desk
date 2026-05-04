@@ -332,7 +332,7 @@ export const ms: Record<string, string> = {
   "manuscript.insert_tooltip": "Masukkan imej ke editor",
   "manuscript.no_editor": "Buka tab dokumen Lexical terlebih dahulu",
   // Morphology popover
-  "morphology.insert_to_lexical": "Masukkan morfologi ke editor",
+  "morphology.insert_to_lexical": "Masukkan morfologi ke editor Lexical",
   "morphology.buckwalter_help": "Ketahui tentang transliterasi Buckwalter",
   // Morphology — feature labels
   "morphology.feat.root":   "Akar kata",

@@ -324,7 +324,7 @@ export const zh: Record<string, string> = {
     'manuscript.insert_tooltip': '将图片插入编辑器',
     'manuscript.no_editor': '请先打开 Lexical 文档',
     // Morphology popover
-    'morphology.insert_to_lexical': '将词法分析插入编辑器',
+    'morphology.insert_to_lexical': '将词法分析插入 Lexical 编辑器',
     'morphology.buckwalter_help': '了解巴克沃尔特转写',
     // Morphology — feature labels
     'morphology.feat.root':   '词根',

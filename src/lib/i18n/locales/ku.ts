@@ -295,7 +295,7 @@ export const ku: Record<string, string> = {
   "manuscript.insert": "دانان بۆ وشەیی",
   "manuscript.insert_tooltip": "وێنە بخەرە ناو دەستکاریکەرەوە",
   "manuscript.no_editor": "سەرەتا تابێکی بەڵگەنامەی وشەیی بکەرەوە",
-  "morphology.insert_to_lexical": "مۆرفۆلۆژی بخەرە ناو دەستکاریکەرەوە",
+  "morphology.insert_to_lexical": "مۆرفۆلۆژی بخەرە ناو دەستکاریکەری Lexical",
   "morphology.buckwalter_help": "فێربە دەربارەی وەرگێڕانی باکواڵتەر",
   "morphology.feat.root": "ڕووت",
   "morphology.feat.lemma": "لێما",

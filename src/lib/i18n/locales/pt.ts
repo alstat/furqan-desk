@@ -336,7 +336,7 @@ export const pt: Record<string, string> = {
   "manuscript.insert_tooltip": "Inserir imagem no editor",
   "manuscript.no_editor": "Abra uma aba de documento Lexical primeiro",
   // Morphology popover
-  "morphology.insert_to_lexical": "Inserir morfologia no editor",
+  "morphology.insert_to_lexical": "Inserir morfologia no editor Lexical",
   "morphology.buckwalter_help": "Aprender sobre a transliteração Buckwalter",
   // Morphology — feature labels
   "morphology.feat.root":   "Raiz",

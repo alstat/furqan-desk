@@ -335,7 +335,7 @@ export const bn: Record<string, string> = {
   "manuscript.insert_tooltip": "এডিটরে ছবি সন্নিবেশ করুন",
   "manuscript.no_editor": "প্রথমে একটি Lexical ডকুমেন্ট ট্যাব খুলুন",
   // Morphology popover
-  "morphology.insert_to_lexical": "এডিটরে রূপতত্ত্ব সন্নিবেশ করুন",
+  "morphology.insert_to_lexical": "Lexical এডিটরে রূপতত্ত্ব সন্নিবেশ করুন",
   "morphology.buckwalter_help": "বাকওয়ালটার লিপান্তর সম্পর্কে জানুন",
   // Morphology — feature labels
   "morphology.feat.root":   "ধাতু",

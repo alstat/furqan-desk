@@ -338,7 +338,7 @@ export const tl: Record<string, string> = {
   "manuscript.insert_tooltip": "Ipasok ang larawan sa editor",
   "manuscript.no_editor": "Buksan muna ang tab ng dokumento ng Lexical",
   // Morphology popover
-  "morphology.insert_to_lexical": "Ipasok ang morpolohiya sa editor",
+  "morphology.insert_to_lexical": "Ipasok ang morpolohiya sa Lexical editor",
   "morphology.buckwalter_help": "Alamin ang tungkol sa Buckwalter transliteration",
   // Morphology — feature labels
   "morphology.feat.root":   "Ugat",

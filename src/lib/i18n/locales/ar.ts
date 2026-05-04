@@ -324,7 +324,7 @@ export const ar: Record<string, string> = {
     'manuscript.insert_tooltip': 'إدراج الصورة في المحرر',
     'manuscript.no_editor': 'افتح مستند Lexical أولاً',
     // Morphology popover
-    'morphology.insert_to_lexical': 'إدراج الصرف في المحرر',
+    'morphology.insert_to_lexical': 'إدراج الصرف في محرر Lexical',
     'morphology.buckwalter_help': 'تعرف على نظام باكوالتر للنقحرة',
     // Morphology — feature labels
     'morphology.feat.root':   'الجذر',

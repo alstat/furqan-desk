@@ -295,7 +295,7 @@ export const bs: Record<string, string> = {
   "manuscript.insert": "Umetnuti u Lexical",
   "manuscript.insert_tooltip": "Ubaci sliku u editor",
   "manuscript.no_editor": "Prvo otvorite karticu Leksičkog dokumenta",
-  "morphology.insert_to_lexical": "Ubaci morfologiju u editor",
+  "morphology.insert_to_lexical": "Ubaci morfologiju u Lexical editor",
   "morphology.buckwalter_help": "Saznajte više o Buckwalter transliteraciji",
   "morphology.feat.root": "Root",
   "morphology.feat.lemma": "Lema",

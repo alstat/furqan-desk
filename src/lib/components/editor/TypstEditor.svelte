@@ -3,7 +3,7 @@
     import { save } from "@tauri-apps/plugin-dialog";
     import { writeFile } from "@tauri-apps/plugin-fs";
     import { get } from "svelte/store";
-    import { onDestroy } from "svelte";
+    import { onDestroy, tick } from "svelte";
     import {
         typstSource,
         typstRecompile,
@@ -44,6 +44,37 @@
     const sideBySide = $derived($hideSurahPage() && !inCrossHost);
 
     let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+    let embeddedPreviewScrollEl: HTMLDivElement | null = $state(null);
+    let currentEmbeddedPreviewPage = $state(1);
+
+    function updateCurrentEmbeddedPreviewPage(): void {
+        if (!embeddedPreviewScrollEl || $typstSvgPages.length === 0) {
+            currentEmbeddedPreviewPage = 1;
+            return;
+        }
+
+        const containerRect = embeddedPreviewScrollEl.getBoundingClientRect();
+        const viewportCenter = containerRect.top + containerRect.height / 2;
+        const pages = Array.from(
+            embeddedPreviewScrollEl.querySelectorAll<HTMLElement>(
+                ".typst-page",
+            ),
+        );
+        let nearestPage = 0;
+        let nearestDistance = Number.POSITIVE_INFINITY;
+
+        for (const [i, page] of pages.entries()) {
+            const rect = page.getBoundingClientRect();
+            const pageCenter = rect.top + rect.height / 2;
+            const distance = Math.abs(pageCenter - viewportCenter);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestPage = i;
+            }
+        }
+
+        currentEmbeddedPreviewPage = nearestPage + 1;
+    }
 
     // Keep typstSource in sync with effective tab content
     $effect(() => {
@@ -63,6 +94,16 @@
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => compileToSvg(src), 300);
         return () => clearTimeout(debounceTimer);
+    });
+
+    $effect(() => {
+        const pageCount = $typstSvgPages.length;
+        if (pageCount === 0) {
+            currentEmbeddedPreviewPage = 1;
+            return;
+        }
+
+        tick().then(updateCurrentEmbeddedPreviewPage);
     });
 
     const IMPORT_RE = /#import\s+"@([\w-]+)\/([\w-]+):([\d.]+)"/g;
@@ -219,7 +260,12 @@
         <div class="flex items-center justify-between px-2 pt-1 mb-1">
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
-                >{effectiveTab?.name ?? "Editor"}</span
+                >{effectiveTab?.name ??
+                    "Editor"}{#if effectiveTab?.isDirty}<span
+                        class="text-brand-gold-500 dark:text-[#e5c890]"
+                    >
+                        *</span
+                    >{/if}</span
             >
             <button
                 onclick={() => (lineWrap = !lineWrap)}
@@ -282,32 +328,46 @@
             style:height="{previewHeight}px"
         >
             <span class={labelClass}>Preview</span>
-            <div class="default-scroll flex-1 overflow-auto min-h-0">
-                {#if $typstIsCompiling}
-                    <p class="text-xs text-brand-charcoal-300 italic">
-                        Compiling…
-                    </p>
-                {:else if $typstCompileError}
-                    <pre
-                        class="text-xs text-red-500 whitespace-pre-wrap">{$typstCompileError}</pre>
-                {:else if $typstSvgPages.length > 0}
-                    <div class="flex flex-col gap-3 pb-2">
-                        {#each $typstSvgPages as pageSvg}
-                            <div
-                                class="typst-page overflow-hidden border border-stone-200 dark:border-[#414559] rounded-md shadow-sm bg-white {$appDarkMode &&
-                                $typstPreviewDarkMode
-                                    ? 'typst-page-dark'
-                                    : ''}"
-                            >
-                                {@html pageSvg}
-                            </div>
-                        {/each}
+            <div class="relative flex-1 min-h-0">
+                {#if $typstSvgPages.length > 0}
+                    <div
+                        class="pointer-events-none absolute right-2 top-2 z-20 rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none text-brand-charcoal-300 backdrop-blur-md"
+                        aria-label="Page {currentEmbeddedPreviewPage} of {$typstSvgPages.length}"
+                    >
+                        {currentEmbeddedPreviewPage} / {$typstSvgPages.length}
                     </div>
-                {:else}
-                    <p class="text-xs text-brand-charcoal-300 italic">
-                        Preview will appear here.
-                    </p>
                 {/if}
+                <div
+                    bind:this={embeddedPreviewScrollEl}
+                    onscroll={updateCurrentEmbeddedPreviewPage}
+                    class="default-scroll h-full overflow-auto"
+                >
+                    {#if $typstIsCompiling}
+                        <p class="text-xs text-brand-charcoal-300 italic">
+                            Compiling…
+                        </p>
+                    {:else if $typstCompileError}
+                        <pre
+                            class="text-xs text-red-500 whitespace-pre-wrap">{$typstCompileError}</pre>
+                    {:else if $typstSvgPages.length > 0}
+                        <div class="flex flex-col gap-3 pb-2">
+                            {#each $typstSvgPages as pageSvg}
+                                <div
+                                    class="typst-page overflow-hidden border border-stone-200 dark:border-[#414559] rounded-md shadow-sm bg-white {$appDarkMode &&
+                                    $typstPreviewDarkMode
+                                        ? 'typst-page-dark'
+                                        : ''}"
+                                >
+                                    {@html pageSvg}
+                                </div>
+                            {/each}
+                        </div>
+                    {:else}
+                        <p class="text-xs text-brand-charcoal-300 italic">
+                            Preview will appear here.
+                        </p>
+                    {/if}
+                </div>
             </div>
         </div>
     {/if}

@@ -324,7 +324,7 @@ export const ru: Record<string, string> = {
     'manuscript.insert_tooltip': 'Вставить изображение в редактор',
     'manuscript.no_editor': 'Сначала откройте документ Lexical',
     // Morphology popover
-    'morphology.insert_to_lexical': 'Вставить морфологию в редактор',
+    'morphology.insert_to_lexical': 'Вставить морфологию в редактор Lexical',
     'morphology.buckwalter_help': 'Узнать о транслитерации Баквольтера',
     // Morphology — feature labels
     'morphology.feat.root':   'Корень',

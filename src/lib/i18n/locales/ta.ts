@@ -295,7 +295,7 @@ export const ta: Record<string, string> = {
   "manuscript.insert": "Lexical இல் செருகவும்",
   "manuscript.insert_tooltip": "எடிட்டரில் படத்தைச் செருகவும்",
   "manuscript.no_editor": "முதலில் ஒரு லெக்சிகல் ஆவணத் தாவலைத் திறக்கவும்",
-  "morphology.insert_to_lexical": "எடிட்டரில் உருவ அமைப்பைச் செருகவும்",
+  "morphology.insert_to_lexical": "Lexical எடிட்டரில் உருவ அமைப்பைச் செருகவும்",
   "morphology.buckwalter_help": "பக்வால்டர் ஒலிபெயர்ப்பு பற்றி அறிக",
   "morphology.feat.root": "ரூட்",
   "morphology.feat.lemma": "லெம்மா",

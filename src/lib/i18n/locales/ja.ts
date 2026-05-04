@@ -334,7 +334,7 @@ export const ja: Record<string, string> = {
   "manuscript.insert_tooltip": "エディタに画像を挿入",
   "manuscript.no_editor": "先に Lexical ドキュメントを開いてください",
   // Morphology popover
-  "morphology.insert_to_lexical": "エディタに形態論を挿入",
+  "morphology.insert_to_lexical": "Lexicalエディタに形態論を挿入",
   "morphology.buckwalter_help": "バックウォルター転写について学ぶ",
   // Morphology — feature labels
   "morphology.feat.root":   "語根",

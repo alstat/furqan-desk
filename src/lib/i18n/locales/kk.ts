@@ -330,7 +330,7 @@ export const kk: Record<string, string> = {
   "manuscript.insert_tooltip": "Суретті редакторға кірістіру",
   "manuscript.no_editor": "Алдымен Lexical құжат қойындысын ашыңыз",
   // Morphology popover
-  "morphology.insert_to_lexical": "Морфологияны редакторға кірістіру",
+  "morphology.insert_to_lexical": "Морфологияны Lexical редакторына кірістіру",
   "morphology.buckwalter_help": "Buckwalter транслитерациясы туралы білу",
   // Morphology — feature labels
   "morphology.feat.root":   "Түбір",

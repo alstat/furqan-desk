@@ -324,7 +324,7 @@ export const tr: Record<string, string> = {
     'manuscript.insert_tooltip': 'Editöre resim ekle',
     'manuscript.no_editor': 'Önce bir Lexical belge sekmesi açın',
     // Morphology popover
-    'morphology.insert_to_lexical': 'Morfolojiyi editöre ekle',
+    'morphology.insert_to_lexical': 'Morfolojiyi Lexical editörüne ekle',
     'morphology.buckwalter_help': 'Buckwalter transliterasyonu hakkında bilgi edinin',
     // Morphology — feature labels
     'morphology.feat.root':   'Kök',

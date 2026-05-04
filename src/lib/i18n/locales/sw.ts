@@ -295,7 +295,7 @@ export const sw: Record<string, string> = {
   "manuscript.insert": "Ingiza kwa Lexical",
   "manuscript.insert_tooltip": "Ingiza picha kwenye kihariri",
   "manuscript.no_editor": "Fungua kichupo cha hati ya Lexical kwanza",
-  "morphology.insert_to_lexical": "Ingiza mofolojia kwenye kihariri",
+  "morphology.insert_to_lexical": "Ingiza mofolojia kwenye kihariri cha Lexical",
   "morphology.buckwalter_help": "Jifunze kuhusu unukuzi wa Buckwalter",
   "morphology.feat.root": "Mzizi",
   "morphology.feat.lemma": "Lema",

@@ -330,7 +330,7 @@ export const tk: Record<string, string> = {
   "manuscript.insert_tooltip": "Suraty redaktora goşmak",
   "manuscript.no_editor": "Ilki Lexical resminamasynyň goýundasyny açyň",
   // Morphology popover
-  "morphology.insert_to_lexical": "Morfologiýany redaktora goşmak",
+  "morphology.insert_to_lexical": "Morfologiýany Lexical redaktora goşmak",
   "morphology.buckwalter_help": "Buckwalter transliterasiýasy barada bilmek",
   // Morphology — feature labels
   "morphology.feat.root":   "Kök",
