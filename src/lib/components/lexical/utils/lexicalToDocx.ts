@@ -20,6 +20,7 @@ import {
 import { readFile } from "@tauri-apps/plugin-fs";
 import { codeBlockParagraphs } from "./docxCodeHighlight";
 import { cssColorToHex, textRunStyleFromNode } from "./docxInlineStyle";
+import { getSurahNameTashkeel } from "$lib/data/surah-names-tashkeel";
 
 type BlockChild = Paragraph | Table;
 type InlineStyle = { italic?: boolean; defaultColor?: string };
@@ -166,6 +167,7 @@ async function blockForNode(
     node: SerializedNode,
     list: ListContext | null,
 ): Promise<BlockChild | BlockChild[] | null> {
+    console.log("[docx-export] blockForNode type=", node.type);
     switch (node.type) {
         case "heading": {
             const tag = (node.tag as string) ?? "h1";
@@ -254,6 +256,12 @@ async function blockForNode(
         }
         case "table": {
             return await tableElement(node);
+        }
+        case "quran-block": {
+            console.log("[docx-export] quran-block node:", JSON.stringify(node));
+            const blocks = quranBlockBlocks(node);
+            console.log("[docx-export] quran-block produced", blocks.length, "blocks");
+            return blocks;
         }
         case "tablerow":
         case "tablecell": {
@@ -710,4 +718,127 @@ function cssLengthToDxa(value: string): number | undefined {
     const unit = (match[2] ?? "px").toLowerCase();
     const pt = unit === "pt" ? n : unit === "px" ? n * 0.75 : n * 12;
     return Math.round(pt * 20);
+}
+
+// ── Quran block ─────────────────────────────────────────────────────────────
+
+interface QuranVerseLike {
+    surah: number;
+    ayah: number;
+    arabic: string;
+}
+
+const QURAN_ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+function toArabicNumerals(n: number): string {
+    return String(n)
+        .split("")
+        .map((d) => {
+            const code = d.charCodeAt(0) - 48;
+            return code >= 0 && code <= 9 ? QURAN_ARABIC_DIGITS[code] : d;
+        })
+        .join("");
+}
+
+function quranBlockBlocks(node: SerializedNode): BlockChild[] {
+    const verses = Array.isArray(node.verses) ? (node.verses as QuranVerseLike[]) : [];
+    if (verses.length === 0) return [];
+
+    const rawScale = typeof node.fontScale === "number" ? (node.fontScale as number) : 1;
+    const fontScale = Number.isFinite(rawScale)
+        ? Math.min(2.0, Math.max(0.7, rawScale))
+        : 1;
+
+    // Group consecutive verses by surah (mirrors QuranBlock.svelte's `groups` derivation).
+    const groups: Array<{ surah: number; verses: QuranVerseLike[] }> = [];
+    for (const v of verses) {
+        const last = groups[groups.length - 1];
+        if (last && last.surah === v.surah) last.verses.push(v);
+        else groups.push({ surah: v.surah, verses: [v] });
+    }
+
+    const out: BlockChild[] = [];
+    for (const group of groups) {
+        out.push(surahBannerParagraph(getSurahNameTashkeel(group.surah)));
+        out.push(versesParagraph(group.verses, fontScale));
+    }
+    out.push(bottomRuleParagraph());
+    return out;
+}
+
+function surahBannerParagraph(name: string): Paragraph {
+    const border = {
+        style: BorderStyle.SINGLE,
+        size: 8,
+        color: QUOTE_BORDER_COLOR,
+        space: 4,
+    };
+    return new Paragraph({
+        alignment: AlignmentType.CENTER,
+        bidirectional: true,
+        spacing: { before: 160, after: 80 },
+        indent: { left: 1200, right: 1200 },
+        shading: {
+            type: ShadingType.CLEAR,
+            color: "auto",
+            fill: QUOTE_BG_FILL,
+        },
+        border: {
+            top: border,
+            bottom: border,
+            left: border,
+            right: border,
+        },
+        children: [
+            new TextRun({
+                text: name,
+                font: "Scheherazade New",
+                size: 36,
+                rightToLeft: true,
+            }),
+        ],
+    });
+}
+
+function versesParagraph(verses: QuranVerseLike[], fontScale: number): Paragraph {
+    const verseSize = Math.round(28 * fontScale);
+    const markerSize = Math.round(26 * fontScale);
+    const children: ParagraphChild[] = [];
+    for (const v of verses) {
+        children.push(
+            new TextRun({
+                text: v.arabic,
+                font: "Scheherazade New",
+                size: verseSize,
+                rightToLeft: true,
+            }),
+            new TextRun({
+                text: ` ⁠﴿⁠${toArabicNumerals(v.ayah)}⁠﴾⁠ `,
+                font: "Scheherazade New",
+                size: markerSize,
+                color: QUOTE_BORDER_COLOR,
+                rightToLeft: true,
+            }),
+        );
+    }
+    return new Paragraph({
+        alignment: AlignmentType.CENTER,
+        bidirectional: true,
+        spacing: { before: 120, after: 120 },
+        children,
+    });
+}
+
+function bottomRuleParagraph(): Paragraph {
+    return new Paragraph({
+        children: [],
+        spacing: { before: 60, after: 160 },
+        border: {
+            bottom: {
+                style: BorderStyle.SINGLE,
+                size: 6,
+                color: QUOTE_BORDER_COLOR,
+                space: 1,
+            },
+        },
+    });
 }
