@@ -169,6 +169,9 @@
 
             const blockNode = createQuranBlockNode(verses);
             freshSel.insertNodes([blockNode]);
+            if (blockNode.getPreviousSibling() === null) {
+                blockNode.insertBefore(createParagraphNode());
+            }
             if (blockNode.getNextSibling() === null) {
                 const para = createParagraphNode();
                 blockNode.insertAfter(para);

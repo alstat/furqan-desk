@@ -4,6 +4,7 @@
     import { EquationNode } from "$lexical/core/plugins/Equation/EquationNode";
     import EquationPlugin from "$lexical/core/plugins/Equation/EquationPlugin.svelte";
     import { QuranBlockNode } from "$lexical/core/plugins/Quran/QuranBlockNode";
+    import QuranBlockPlugin from "$lexical/core/plugins/Quran/QuranBlockPlugin.svelte";
     import AiSelectionPlugin from "$lexical/core/plugins/AiSelectionPlugin.svelte";
     // import {
     // 	Composer,
@@ -129,6 +130,7 @@
             <MarkdownShortcutPlugin transformers={ALL_TRANSFORMERS} />
             <MarkdownPastePlugin transformers={ALL_TRANSFORMERS} />
             <SlashCommandPlugin />
+            <QuranBlockPlugin />
             <EditorStorePlugin />
         </div>
     </div>
