@@ -185,7 +185,12 @@
       "Bash(bunx svelte-check *)",
       "Bash(bun --version)",
       "Bash(bun /tmp/test_full.ts)",
-      "Bash(unzip -p /tmp/multi.docx word/document.xml)"
+      "Bash(unzip -p /tmp/multi.docx word/document.xml)",
+      "Bash(xcrun stapler *)",
+      "Bash(spctl -a -vvv -t exec /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/target/universal-apple-darwin/release/bundle/macos/AyahLab.app)",
+      "Bash(rm /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/target/universal-apple-darwin/release/bundle/macos/.DS_Store)",
+      "Bash(killall Finder)",
+      "Bash(open /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/target/universal-apple-darwin/release/bundle/macos/)"
     ]
   }
 }
