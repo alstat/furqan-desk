@@ -81,7 +81,8 @@ export async function lexicalStateToDocxBlob(
     rootJson: SerializedNode,
     _title: string,
 ): Promise<Blob> {
-    const blocks = await walkBlocks(rootJson.children ?? [], null);
+    const flatChildren = liftQuranBlocksFromList(rootJson.children ?? []);
+    const blocks = await walkBlocks(flatChildren, null);
     const doc = new Document({
         creator: "AyahLab",
         styles: {
@@ -722,6 +723,60 @@ function cssLengthToDxa(value: string): number | undefined {
 
 // ── Quran block ─────────────────────────────────────────────────────────────
 
+// Lift `quran-block` decorator nodes out of their parents so they sit at the
+// root level for the block-walker. Lexical's DecoratorNode is inline by
+// default, so QuranBlockNode commonly nests inside a paragraph alongside
+// other inline content; the parent is split at each quran-block boundary so
+// the document order — text, block, more text, another block — is preserved.
+// Table containers are left intact (we don't fragment table cells).
+function liftQuranBlocksFromList(nodes: SerializedNode[]): SerializedNode[] {
+    const out: SerializedNode[] = [];
+    for (const node of nodes) out.push(...liftFromNode(node));
+    return out;
+}
+
+function liftFromNode(node: SerializedNode): SerializedNode[] {
+    if (node.type === "quran-block") return [node];
+    if (!Array.isArray(node.children) || node.children.length === 0) {
+        return [node];
+    }
+    if (isUnsplittableContainer(node)) {
+        // Recurse but keep the container as a single output node — don't split
+        // tables/cells around an embedded quran-block.
+        const newChildren: SerializedNode[] = [];
+        for (const child of node.children) {
+            for (const lifted of liftFromNode(child)) newChildren.push(lifted);
+        }
+        return [{ ...node, children: newChildren }];
+    }
+
+    const segments: SerializedNode[] = [];
+    let buffer: SerializedNode[] = [];
+    const flushBuffer = () => {
+        if (buffer.length === 0) return;
+        segments.push({ ...node, children: buffer });
+        buffer = [];
+    };
+    for (const child of node.children) {
+        const lifted = liftFromNode(child);
+        for (const item of lifted) {
+            if (item.type === "quran-block") {
+                flushBuffer();
+                segments.push(item);
+            } else {
+                buffer.push(item);
+            }
+        }
+    }
+    flushBuffer();
+    return segments.length > 0 ? segments : [{ ...node, children: [] }];
+}
+
+function isUnsplittableContainer(node: SerializedNode): boolean {
+    return node.type === "table" || node.type === "tablerow" || node.type === "tablecell";
+}
+
+
 interface QuranVerseLike {
     surah: number;
     ayah: number;
@@ -758,44 +813,81 @@ function quranBlockBlocks(node: SerializedNode): BlockChild[] {
 
     const out: BlockChild[] = [];
     for (const group of groups) {
-        out.push(surahBannerParagraph(getSurahNameTashkeel(group.surah)));
+        out.push(surahBannerTable(getSurahNameTashkeel(group.surah)));
         out.push(versesParagraph(group.verses, fontScale));
     }
-    out.push(bottomRuleParagraph());
+    out.push(bottomRuleTable());
     return out;
 }
 
-function surahBannerParagraph(name: string): Paragraph {
-    const border = {
+const QURAN_BANNER_TOTAL_DXA = 9000;
+const QURAN_BANNER_PANEL_DXA = 2400;
+
+function surahBannerTable(name: string): Table {
+    const armDxa = Math.floor((QURAN_BANNER_TOTAL_DXA - QURAN_BANNER_PANEL_DXA) / 2);
+    const armRule = {
         style: BorderStyle.SINGLE,
-        size: 8,
+        size: 4,
         color: QUOTE_BORDER_COLOR,
-        space: 4,
+        space: 0,
     };
-    return new Paragraph({
-        alignment: AlignmentType.CENTER,
-        bidirectional: true,
-        spacing: { before: 160, after: 80 },
-        indent: { left: 1200, right: 1200 },
-        shading: {
-            type: ShadingType.CLEAR,
-            color: "auto",
-            fill: QUOTE_BG_FILL,
+    const panelBorder = {
+        style: BorderStyle.SINGLE,
+        size: 6,
+        color: QUOTE_BORDER_COLOR,
+        space: 0,
+    };
+    const armCell = (): TableCell =>
+        new TableCell({
+            width: { size: armDxa, type: WidthType.DXA },
+            verticalAlign: "center",
+            borders: {
+                top: { style: BorderStyle.NONE, size: 0, color: "auto" },
+                bottom: armRule,
+                left: { style: BorderStyle.NONE, size: 0, color: "auto" },
+                right: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            },
+            children: [new Paragraph({ children: [] })],
+        });
+    const panelCell = new TableCell({
+        width: { size: QURAN_BANNER_PANEL_DXA, type: WidthType.DXA },
+        verticalAlign: "center",
+        borders: {
+            top: panelBorder,
+            bottom: panelBorder,
+            left: panelBorder,
+            right: panelBorder,
         },
-        border: {
-            top: border,
-            bottom: border,
-            left: border,
-            right: border,
-        },
+        shading: { type: ShadingType.CLEAR, color: "auto", fill: QUOTE_BG_FILL },
         children: [
-            new TextRun({
-                text: name,
-                font: "Scheherazade New",
-                size: 36,
-                rightToLeft: true,
+            new Paragraph({
+                alignment: AlignmentType.CENTER,
+                bidirectional: true,
+                spacing: { before: 40, after: 40 },
+                children: [
+                    new TextRun({
+                        text: name,
+                        font: "Scheherazade New",
+                        size: 28,
+                        rightToLeft: true,
+                    }),
+                ],
             }),
         ],
+    });
+    return new Table({
+        rows: [new TableRow({ children: [armCell(), panelCell, armCell()] })],
+        columnWidths: [armDxa, QURAN_BANNER_PANEL_DXA, armDxa],
+        width: { size: QURAN_BANNER_TOTAL_DXA, type: WidthType.DXA },
+        alignment: AlignmentType.CENTER,
+        borders: {
+            top: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            bottom: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            left: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            right: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            insideVertical: { style: BorderStyle.NONE, size: 0, color: "auto" },
+        },
     });
 }
 
@@ -828,17 +920,37 @@ function versesParagraph(verses: QuranVerseLike[], fontScale: number): Paragraph
     });
 }
 
-function bottomRuleParagraph(): Paragraph {
-    return new Paragraph({
-        children: [],
-        spacing: { before: 60, after: 160 },
-        border: {
-            bottom: {
-                style: BorderStyle.SINGLE,
-                size: 6,
-                color: QUOTE_BORDER_COLOR,
-                space: 1,
-            },
+function bottomRuleTable(): Table {
+    // Mirrors the surah banner's arm width so the closing rule visually aligns
+    // with the banner above it.
+    const rule = {
+        style: BorderStyle.SINGLE,
+        size: 4,
+        color: QUOTE_BORDER_COLOR,
+        space: 0,
+    };
+    const cell = new TableCell({
+        width: { size: QURAN_BANNER_TOTAL_DXA, type: WidthType.DXA },
+        borders: {
+            top: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            bottom: rule,
+            left: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            right: { style: BorderStyle.NONE, size: 0, color: "auto" },
+        },
+        children: [new Paragraph({ children: [], spacing: { before: 0, after: 60 } })],
+    });
+    return new Table({
+        rows: [new TableRow({ children: [cell] })],
+        columnWidths: [QURAN_BANNER_TOTAL_DXA],
+        width: { size: QURAN_BANNER_TOTAL_DXA, type: WidthType.DXA },
+        alignment: AlignmentType.CENTER,
+        borders: {
+            top: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            bottom: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            left: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            right: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "auto" },
+            insideVertical: { style: BorderStyle.NONE, size: 0, color: "auto" },
         },
     });
 }

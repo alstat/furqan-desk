@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 
 /// Increment this whenever the schema or data changes.
 /// Must match DB_VERSION in db.rs.
-const DB_VERSION: i64 = 11;
+const DB_VERSION: i64 = 12;
 
 fn main() {
     // Support running from the workspace root (furqan-desk/) or from src-tauri/
@@ -310,6 +310,11 @@ fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
             "EN".into(),
             "Ibn Kathir (English)".into(),
             data_dir.join("tafsir/en/en-tafisr-ibn-kathir.json"),
+        ),
+        (
+            "EN".into(),
+            "Al-Mukhtasar (English)".into(),
+            data_dir.join("tafsir/en/abridged-explanation-of-the-quran.json"),
         ),
         (
             "TL".into(),
