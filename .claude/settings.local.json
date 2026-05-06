@@ -180,7 +180,12 @@
       "Bash(cp /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/supabase/config.toml /Users/al-ahmadgaidasaad/Documents/Dev/ayahlab-website/supabase/)",
       "Bash(rm -rf /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/supabase)",
       "Bash(rm /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/lib/billing/paddle.ts)",
-      "Bash(rmdir /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/lib/billing)"
+      "Bash(rmdir /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/lib/billing)",
+      "Bash(unzip -p test.docx word/document.xml)",
+      "Bash(bunx svelte-check *)",
+      "Bash(bun --version)",
+      "Bash(bun /tmp/test_full.ts)",
+      "Bash(unzip -p /tmp/multi.docx word/document.xml)"
     ]
   }
 }

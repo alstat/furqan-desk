@@ -91,7 +91,7 @@ fn copy_static_db(src: &Path, dest: &Path, _asset_relative_path: &str) -> Result
 
 /// Must match DB_VERSION in src/bin/gen_db.rs.
 /// Increment both when the static dataset changes.
-const DB_VERSION: i64 = 11;
+const DB_VERSION: i64 = 12;
 
 pub struct Database(pub Mutex<Connection>);
 
