@@ -287,6 +287,7 @@
     let imageLoading = $state(false);
     let imageError = $state(false);
     let imageSource = $state("");
+    let loadedRefKey: string | null = null;
 
     // details fetched in background per manuscript
     let detailMap = $state(new Map<number, ManuscriptDetail>());
@@ -315,6 +316,38 @@
     let downloadMsg = $state("");
     let inserting = $state(false);
     let insertMsg = $state("");
+    let surahInput = $state(1);
+    let ayahInput = $state(1);
+    let referenceError = $state("");
+    let syncedInputRefKey: string | null = null;
+
+    $effect(() => {
+        const ref = $manuscriptAyah;
+        if (!ref) return;
+
+        const refKey = `${ref.surah}:${ref.ayah}`;
+        if (syncedInputRefKey === refKey) return;
+        syncedInputRefKey = refKey;
+        surahInput = ref.surah;
+        ayahInput = ref.ayah;
+        referenceError = "";
+    });
+
+    function loadReference() {
+        const surah = Number(surahInput);
+        const ayah = Number(ayahInput);
+        if (!Number.isInteger(surah) || surah < 1 || surah > 114) {
+            referenceError = $t("manuscript.invalid_surah");
+            return;
+        }
+        if (!Number.isInteger(ayah) || ayah < 1) {
+            referenceError = $t("manuscript.invalid_ayah");
+            return;
+        }
+
+        referenceError = "";
+        manuscriptAyah.set({ surah, ayah });
+    }
 
     // In-container zoom
     let imgScale = $state(1);
@@ -401,6 +434,9 @@
             return;
         }
         if (!ref) return;
+        const refKey = `${ref.surah}:${ref.ayah}`;
+        if (loadedRefKey === refKey) return;
+
         loading = true;
         results = [];
         error = false;
@@ -419,6 +455,7 @@
             .then((raw) => {
                 const parsed = JSON.parse(raw) as { data?: ManuscriptEntry[] };
                 results = Array.isArray(parsed.data) ? parsed.data : [];
+                loadedRefKey = refKey;
                 if (results.length > 0) selectedId = results[0].manuscript_id;
             })
             .catch(() => {
@@ -495,7 +532,8 @@
         })
             .then((bytes) => {
                 thumbnailBytes = bytes;
-                if (msId !== undefined) loadedIds = new Set([...loadedIds, msId]);
+                if (msId !== undefined)
+                    loadedIds = new Set([...loadedIds, msId]);
                 const url = URL.createObjectURL(
                     new Blob([new Uint8Array(bytes)], { type: "image/jpeg" }),
                 );
@@ -559,7 +597,9 @@
         if (folio !== "Folio") parts.push(folio);
         if (ms.archive.name) parts.push(ms.archive.name);
         if (ms.archive.city) parts.push(ms.archive.city);
-        const date = selectedDetail?.date?.trim() || selectedDetail?.carbon_dating?.trim();
+        const date =
+            selectedDetail?.date?.trim() ||
+            selectedDetail?.carbon_dating?.trim();
         if (date) parts.push(date);
         if (img?.image_source?.trim()) parts.push(img.image_source.trim());
 
@@ -599,10 +639,12 @@
             } else {
                 const img = selectedImage;
                 if (!img) return;
-                const bytes = thumbnailBytes ?? await invoke<number[]>("get_manuscript_image", {
-                    imageUrl: img.image_url,
-                    thumbnail: false,
-                });
+                const bytes =
+                    thumbnailBytes ??
+                    (await invoke<number[]>("get_manuscript_image", {
+                        imageUrl: img.image_url,
+                        thumbnail: false,
+                    }));
                 dataUrl = bytesToDataUrl(bytes, "image/jpeg");
             }
             const altText = selectedManuscript
@@ -763,10 +805,10 @@
                     <span
                         class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                     >
-                        {$t('manuscript.demo_title')}
+                        {$t("manuscript.demo_title")}
                         <span
                             class="ml-1 text-[11px] font-normal text-brand-gold-500 border border-brand-gold-300 dark:border-[#e5c890]/40 rounded-full px-1.5 py-0.5"
-                            >{$t('manuscript.demo_badge')}</span
+                            >{$t("manuscript.demo_badge")}</span
                         >
                     </span>
                 {:else if $manuscriptAyah}
@@ -774,13 +816,16 @@
                         class="text-[11px] font-semibold uppercase tracking-wide
 			             text-brand-charcoal-500 dark:text-[#838ba7] py-2"
                     >
-                        {$t('manuscript.title_ayah', { surah: String($manuscriptAyah.surah), ayah: String($manuscriptAyah.ayah) })}
+                        {$t("manuscript.title_ayah", {
+                            surah: String($manuscriptAyah.surah),
+                            ayah: String($manuscriptAyah.ayah),
+                        })}
                     </span>
                 {:else}
                     <span
                         class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                     >
-                        {$t('manuscript.title')}
+                        {$t("manuscript.title")}
                     </span>
                 {/if}
             </div>
@@ -788,7 +833,9 @@
                 <!-- Sidebar toggle -->
                 <button
                     onclick={() => (sidebarOpen = !sidebarOpen)}
-                    title={sidebarOpen ? $t('manuscript.hide_list') : $t('manuscript.show_list')}
+                    title={sidebarOpen
+                        ? $t("manuscript.hide_list")
+                        : $t("manuscript.show_list")}
                     class="cursor-pointer p-1 rounded-lg text-brand-charcoal-300 dark:text-[#838ba7]
                        hover:bg-brand-gold-200 dark:hover:bg-[#414559] transition-colors"
                 >
@@ -802,7 +849,7 @@
                 <button
                     onclick={onClose}
                     class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    aria-label={$t('manuscript.close')}
+                    aria-label={$t("manuscript.close")}
                 >
                     <Icon
                         icon="solar:close-circle-bold-duotone"
@@ -811,6 +858,80 @@
                 </button>
             </div>
         </div>
+
+        {#if !demoMode}
+            <div
+                class="shrink-0 flex flex-wrap items-center justify-between gap-2 border-b border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c]/60 px-4 py-2"
+            >
+                <form
+                    class="flex flex-wrap items-center gap-2"
+                    onsubmit={(e) => {
+                        e.preventDefault();
+                        loadReference();
+                    }}
+                >
+                    <label
+                        for="manuscript-surah-input"
+                        class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+                    >
+                        {$t("manuscript.surah")}
+                    </label>
+                    <input
+                        id="manuscript-surah-input"
+                        type="number"
+                        min="1"
+                        max="114"
+                        bind:value={surahInput}
+                        class="w-16 rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-2 py-1 text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] outline-none focus:border-brand-gold-400 focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
+                    />
+                    <label
+                        for="manuscript-ayah-input"
+                        class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+                    >
+                        {$t("manuscript.ayah")}
+                    </label>
+                    <input
+                        id="manuscript-ayah-input"
+                        type="number"
+                        min="1"
+                        bind:value={ayahInput}
+                        class="w-16 rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-2 py-1 text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] outline-none focus:border-brand-gold-400 focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
+                    />
+                    <button
+                        type="submit"
+                        class="cursor-pointer inline-flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+                    >
+                        <Icon
+                            icon="solar:refresh-bold-duotone"
+                            width="0.75rem"
+                        />
+                        {$t("manuscript.load_reference")}
+                    </button>
+                </form>
+                {#if referenceError}
+                    <span
+                        class="text-[11px] font-medium text-red-500 dark:text-red-400"
+                    >
+                        {referenceError}
+                    </span>
+                {:else if $manuscriptAyah}
+                    <span
+                        class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                    >
+                        {$t("manuscript.current_reference", {
+                            surah: String($manuscriptAyah.surah),
+                            ayah: String($manuscriptAyah.ayah),
+                        })}
+                    </span>
+                {:else}
+                    <span
+                        class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                    >
+                        {$t("manuscript.reference_prompt")}
+                    </span>
+                {/if}
+            </div>
+        {/if}
 
         <!-- Body -->
         <div class="flex flex-1 min-h-0">
@@ -830,20 +951,32 @@
                         <div
                             class="px-3 py-4 text-xs text-red-500 dark:text-red-400 text-center leading-relaxed"
                         >
-                            {$t('manuscript.error').split('\n')[0]}<br />{$t('manuscript.error').split('\n')[1]}
+                            {$t("manuscript.error").split("\n")[0]}<br />{$t(
+                                "manuscript.error",
+                            ).split("\n")[1]}
+                        </div>
+                    {:else if !$manuscriptAyah}
+                        <div
+                            class="px-3 py-4 text-xs text-brand-charcoal-300 dark:text-[#838ba7] text-center leading-relaxed"
+                        >
+                            {$t("manuscript.reference_prompt")}
                         </div>
                     {:else if results.length === 0}
                         <div
                             class="px-3 py-4 text-xs text-brand-charcoal-300 dark:text-[#838ba7] text-center"
                         >
-                            {$t('manuscript.none')}
+                            {$t("manuscript.none")}
                         </div>
                     {:else}
                         <div class="px-3 pb-1.5 pt-0.5">
                             <span
                                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
-                                {results.length === 1 ? $t('manuscript.count_one') : $t('manuscript.count_many', { n: String(results.length) })}
+                                {results.length === 1
+                                    ? $t("manuscript.count_one")
+                                    : $t("manuscript.count_many", {
+                                          n: String(results.length),
+                                      })}
                             </span>
                         </div>
                         {#each sortedResults as ms}
@@ -973,7 +1106,7 @@
                                     width="1.5rem"
                                     class="mx-auto mb-1"
                                 />
-                                {$t('manuscript.image_error')}
+                                {$t("manuscript.image_error")}
                             </div>
                         {:else if imageSrc}
                             <img
@@ -999,7 +1132,7 @@
                                             imgScale * 1.3,
                                         );
                                     }}
-                                    title={$t('manuscript.zoom_in')}
+                                    title={$t("manuscript.zoom_in")}
                                     class="cursor-pointer p-1.5 rounded-full
                                        bg-white/90 dark:bg-[#292c3c]/90 border border-slate-200 dark:border-[#414559]
                                        text-brand-charcoal-400 dark:text-[#8caaee]
@@ -1020,7 +1153,7 @@
                                         if (imgScale <= MIN_SCALE) resetZoom();
                                     }}
                                     disabled={imgScale <= MIN_SCALE}
-                                    title={$t('manuscript.zoom_out')}
+                                    title={$t("manuscript.zoom_out")}
                                     class="cursor-pointer p-1.5 rounded-full
                                        bg-white/90 dark:bg-[#292c3c]/90 border border-slate-200 dark:border-[#414559]
                                        text-brand-charcoal-400 dark:text-[#8caaee]
@@ -1036,7 +1169,7 @@
                                 {#if imgScale > 1}
                                     <button
                                         onclick={resetZoom}
-                                        title={$t('manuscript.zoom_reset')}
+                                        title={$t("manuscript.zoom_reset")}
                                         class="cursor-pointer p-1.5 rounded-full
                                            bg-white/90 dark:bg-[#292c3c]/90 border border-slate-200 dark:border-[#414559]
                                            text-brand-charcoal-400 dark:text-[#8caaee]
@@ -1053,7 +1186,7 @@
                                     onclick={() => {
                                         zoomed = true;
                                     }}
-                                    title={$t('manuscript.fullscreen')}
+                                    title={$t("manuscript.fullscreen")}
                                     class="cursor-pointer p-1.5 rounded-full
                                        bg-white/90 dark:bg-[#292c3c]/90 border border-slate-200 dark:border-[#414559]
                                        text-brand-charcoal-400 dark:text-[#8caaee]
@@ -1078,7 +1211,7 @@
                             <div
                                 class="text-xs text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
-                                {$t('explorer.loading')}
+                                {$t("explorer.loading")}
                             </div>
                         {/if}
                     </div>
@@ -1088,8 +1221,12 @@
                         <div
                             class="shrink-0 border-t border-slate-100 dark:border-[#414559] px-3 py-2 overflow-y-auto max-h-37"
                         >
-                            <div class="mb-1.5 flex items-center justify-between gap-2">
-                                <span class="text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]">
+                            <div
+                                class="mb-1.5 flex items-center justify-between gap-2"
+                            >
+                                <span
+                                    class="text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+                                >
                                     Manuscript Metadata
                                 </span>
                                 <a
@@ -1100,7 +1237,10 @@
                                     class="inline-flex items-center gap-1 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100/70 dark:bg-[#292c3c] px-2 py-0.5 text-[10px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
                                 >
                                     Corpus Coranicum
-                                    <Icon icon="solar:arrow-right-up-linear" width="0.65rem" />
+                                    <Icon
+                                        icon="solar:arrow-right-up-linear"
+                                        width="0.65rem"
+                                    />
                                 </a>
                             </div>
                             <div
@@ -1110,7 +1250,7 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >{$t('manuscript.meta_date')}</span
+                                            >{$t("manuscript.meta_date")}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1122,7 +1262,9 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >{$t('manuscript.meta_radiocarbon')}</span
+                                            >{$t(
+                                                "manuscript.meta_radiocarbon",
+                                            )}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1134,7 +1276,9 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >{$t('manuscript.meta_material')}</span
+                                            >{$t(
+                                                "manuscript.meta_material",
+                                            )}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1146,7 +1290,9 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >{$t('manuscript.meta_script')}</span
+                                            >{$t(
+                                                "manuscript.meta_script",
+                                            )}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1160,7 +1306,7 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >{$t('manuscript.meta_size')}</span
+                                            >{$t("manuscript.meta_size")}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1172,7 +1318,9 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >{$t('manuscript.meta_folios')}</span
+                                            >{$t(
+                                                "manuscript.meta_folios",
+                                            )}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1184,7 +1332,9 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >{$t('manuscript.meta_callno')}</span
+                                            >{$t(
+                                                "manuscript.meta_callno",
+                                            )}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1196,7 +1346,7 @@
                                     <div class="flex gap-1.5">
                                         <span
                                             class="text-brand-charcoal-300 dark:text-[#838ba7] shrink-0"
-                                            >{$t('manuscript.meta_lines')}</span
+                                            >{$t("manuscript.meta_lines")}</span
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
@@ -1214,7 +1364,7 @@
                                     <summary
                                         class="text-[11px] font-semibold cursor-pointer text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-500 dark:hover:text-[#c6d0f5] select-none"
                                     >
-                                        {$t('manuscript.catalogue')}
+                                        {$t("manuscript.catalogue")}
                                     </summary>
                                     <div
                                         class="mt-1 text-[10.5px] text-brand-charcoal-300 dark:text-[#a5adce] leading-relaxed
@@ -1273,13 +1423,13 @@
                                     <span
                                         class="w-3 h-3 rounded-full border border-brand-charcoal-400 border-t-transparent animate-spin"
                                     ></span>
-                                    {$t('manuscript.downloading')}
+                                    {$t("manuscript.downloading")}
                                 {:else}
                                     <Icon
                                         icon="solar:download-bold-duotone"
                                         width="0.75rem"
                                     />
-                                    {$t('manuscript.download')}
+                                    {$t("manuscript.download")}
                                 {/if}
                             </button>
                             <button
@@ -1288,8 +1438,8 @@
                                     !imageSrc ||
                                     !$lexicalEditorInstance}
                                 title={!$lexicalEditorInstance
-                                    ? $t('manuscript.no_editor')
-                                    : $t('manuscript.insert_tooltip')}
+                                    ? $t("manuscript.no_editor")
+                                    : $t("manuscript.insert_tooltip")}
                                 class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full border border-transparent
                                bg-brand-gold-400 hover:bg-brand-gold-600 active:bg-brand-gold-600/90
                                text-gray-100 dark:text-gray-700 hover:dark:text-gray-100
@@ -1299,7 +1449,7 @@
                                     <span
                                         class="w-3 h-3 rounded-full border border-gray-100 border-t-transparent animate-spin"
                                     ></span>
-                                    {$t('manuscript.inserting')}
+                                    {$t("manuscript.inserting")}
                                 {:else if insertMsg}
                                     {insertMsg}
                                 {:else}
@@ -1307,7 +1457,7 @@
                                         icon="solar:gallery-add-bold"
                                         width="0.75rem"
                                     />
-                                    {$t('manuscript.insert')}
+                                    {$t("manuscript.insert")}
                                 {/if}
                             </button>
                         </div>
@@ -1318,11 +1468,22 @@
                             class="w-8 h-8 rounded-full border-2 border-brand-gold-400 border-t-transparent animate-spin"
                         ></div>
                     </div>
+                {:else if !$manuscriptAyah}
+                    <div
+                        class="flex-1 flex flex-col items-center justify-center gap-2 px-6 text-center text-xs text-brand-charcoal-300 dark:text-[#838ba7]"
+                    >
+                        <Icon
+                            icon="solar:document-text-bold-duotone"
+                            width="2rem"
+                            class="text-brand-sand-400 dark:text-[#626880]"
+                        />
+                        <span>{$t("manuscript.reference_prompt")}</span>
+                    </div>
                 {:else if !loading && !error}
                     <div
                         class="flex-1 flex items-center justify-center text-xs text-brand-charcoal-300 dark:text-[#838ba7]"
                     >
-                        {$t('manuscript.select')}
+                        {$t("manuscript.select")}
                     </div>
                 {/if}
             </div>

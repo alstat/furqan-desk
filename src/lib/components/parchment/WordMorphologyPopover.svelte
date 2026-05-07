@@ -463,7 +463,7 @@
                             <span class="text-[10px] font-semibold uppercase tracking-wide text-brand-gold-600/80 dark:text-[#e5c890]/80">
                                 {$t('surah.word_by_word')}
                             </span>
-                            <span dir="rtl" class="font-scheherazade text-lg leading-none text-brand-charcoal-500/70 dark:text-[#c6d0f5]/70">
+                            <span dir="rtl" class="font-scheherazade text-lg leading-none text-brand-gold-600/80 dark:text-[#e5c890]/80">
                                 {word.combined_arabic}
                             </span>
                         </div>
