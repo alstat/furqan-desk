@@ -1,6 +1,7 @@
 <script lang="ts">
     import Icon from '@iconify/svelte';
     import type { Snippet } from 'svelte';
+    import { t } from '$lib/i18n';
 
     interface Props {
         icon: string;
@@ -32,7 +33,7 @@
         </div>
         <button
             onclick={onClose}
-            aria-label="Close"
+            aria-label={$t('common.close')}
             class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
                    bg-brand-gold-200 dark:bg-[#414559]
                    text-brand-gold-600 dark:text-[#c6d0f5]

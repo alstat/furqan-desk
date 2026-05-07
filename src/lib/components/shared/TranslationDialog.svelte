@@ -24,6 +24,7 @@
         TRANSLATION_LINE_SPACING_BOUNDS,
     } from "$lib/stores/editor.store";
     import { openCustomFontDialog } from "$lib/stores/custom-font-dialog.store";
+    import { t } from "$lib/i18n";
 
     const BUILTIN_FONT_FAMILIES = [
         "Amiri Quran",
@@ -121,7 +122,7 @@
     let optionsPanel = $state<HTMLDivElement | null>(null);
 
     function labelFor(n: number): string {
-        return $surahLabels[n - 1]?.en ?? `Surah ${n}`;
+        return $surahLabels[n - 1]?.en ?? $t("dialog.surah_fallback", { n });
     }
 
     function parseFootnotes(entry: AyahTranslation): Record<string, string> | null {
@@ -287,7 +288,7 @@
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="false"
-        aria-label="Translation"
+        aria-label={$t("translation.dialog_title")}
         tabindex="-1"
         class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
@@ -301,11 +302,11 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2.5 min-w-0">
                     <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]">
-                        <Icon icon="solar:translation-bold-duotone" class="text-brand-gold-500" width="1rem" />
+                        <Icon icon="garden:translation-exists-stroke-12" class="text-brand-gold-500" width="1rem" />
                     </div>
                     <div class="min-w-0">
                         <h2 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] truncate">
-                            Translation{isMulti ? ` - ${sections.map((s) => labelFor(s.surah)).join(", ")}` : surahName ? ` - ${surahName}` : ""}
+                            {$t("translation.dialog_title")}{isMulti ? ` - ${sections.map((s) => labelFor(s.surah)).join(", ")}` : surahName ? ` - ${surahName}` : ""}
                         </h2>
                         {#if translatorName}
                             <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] truncate">{translatorName}</p>
@@ -317,8 +318,8 @@
                         bind:this={optionsBtn}
                         onclick={() => (showOptions = !showOptions)}
                         onpointerdown={(e) => e.stopPropagation()}
-                        aria-label="Display options"
-                        title="Display options"
+                        aria-label={$t("dialog.display_options")}
+                        title={$t("dialog.display_options")}
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors {showOptions ? 'ring-2 ring-brand-gold-300 dark:ring-[#e5c890]/50' : ''}"
                     >
                         <Icon icon="solar:settings-bold-duotone" width="1rem" />
@@ -326,7 +327,7 @@
                     <button
                         onclick={onClose}
                         onpointerdown={(e) => e.stopPropagation()}
-                        aria-label="Close"
+                        aria-label={$t("common.close")}
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
                         <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
@@ -345,36 +346,36 @@
                                     <Icon icon="solar:settings-bold-duotone" width="1rem" />
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">Display options</p>
-                                    <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]">Translation reading style</p>
+                                    <p class="text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">{$t("dialog.display_options")}</p>
+                                    <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]">{$t("translation.reading_style")}</p>
                                 </div>
                             </div>
 
                             <div>
-                                <span class={labelClass}>Font size</span>
+                                <span class={labelClass}>{$t("dialog.font_size")}</span>
                                 <div class="flex items-center gap-2">
-                                    <button onclick={decFontSize} disabled={$translationFontSize <= TRANSLATION_FONT_SIZE_BOUNDS.min} aria-label="Decrease font size" class={adjustButtonClass}><svg width="10" height="2" viewBox="0 0 10 2" fill="none"><line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+                                    <button onclick={decFontSize} disabled={$translationFontSize <= TRANSLATION_FONT_SIZE_BOUNDS.min} aria-label={$t("dialog.decrease_font_size")} class={adjustButtonClass}><svg width="10" height="2" viewBox="0 0 10 2" fill="none"><line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
                                     <span class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums">{$translationFontSize}px</span>
-                                    <button onclick={incFontSize} disabled={$translationFontSize >= TRANSLATION_FONT_SIZE_BOUNDS.max} aria-label="Increase font size" class={adjustButtonClass}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-                                    <button onclick={resetFontSize} aria-label="Reset font size" title="Reset" class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"><Icon icon="solar:restart-linear" width="0.9rem" /></button>
+                                    <button onclick={incFontSize} disabled={$translationFontSize >= TRANSLATION_FONT_SIZE_BOUNDS.max} aria-label={$t("dialog.increase_font_size")} class={adjustButtonClass}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+                                    <button onclick={resetFontSize} aria-label={$t("dialog.reset_font_size")} title={$t("dialog.reset")} class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"><Icon icon="solar:restart-linear" width="0.9rem" /></button>
                                 </div>
                             </div>
 
                             <div>
-                                <span class={labelClass}>Line spacing</span>
+                                <span class={labelClass}>{$t("dialog.line_spacing")}</span>
                                 <div class="flex items-center gap-2">
-                                    <button onclick={decLineSpacing} disabled={$translationLineSpacing <= TRANSLATION_LINE_SPACING_BOUNDS.min} aria-label="Decrease line spacing" class={adjustButtonClass}><svg width="10" height="2" viewBox="0 0 10 2" fill="none"><line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+                                    <button onclick={decLineSpacing} disabled={$translationLineSpacing <= TRANSLATION_LINE_SPACING_BOUNDS.min} aria-label={$t("dialog.decrease_line_spacing")} class={adjustButtonClass}><svg width="10" height="2" viewBox="0 0 10 2" fill="none"><line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
                                     <span class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums">{$translationLineSpacing.toFixed(1)}x</span>
-                                    <button onclick={incLineSpacing} disabled={$translationLineSpacing >= TRANSLATION_LINE_SPACING_BOUNDS.max} aria-label="Increase line spacing" class={adjustButtonClass}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-                                    <button onclick={resetLineSpacing} aria-label="Reset line spacing" title="Reset" class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"><Icon icon="solar:restart-linear" width="0.9rem" /></button>
+                                    <button onclick={incLineSpacing} disabled={$translationLineSpacing >= TRANSLATION_LINE_SPACING_BOUNDS.max} aria-label={$t("dialog.increase_line_spacing")} class={adjustButtonClass}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+                                    <button onclick={resetLineSpacing} aria-label={$t("dialog.reset_line_spacing")} title={$t("dialog.reset")} class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"><Icon icon="solar:restart-linear" width="0.9rem" /></button>
                                 </div>
                             </div>
 
                             <div>
-                                <label for="translation-font-family" class={labelClass}>Font family</label>
+                                <label for="translation-font-family" class={labelClass}>{$t("dialog.font_family")}</label>
                                 <div class="relative">
                                     <select id="translation-font-family" value={$translationFontFamily} onchange={(e) => translationFontFamily.set((e.currentTarget as HTMLSelectElement).value)} class={selectClass}>
-                                        <option value="">Default</option>
+                                        <option value="">{$t("dialog.default")}</option>
                                         {#each fontFamilyOptions as font}
                                             <option value={font}>{font}</option>
                                         {/each}
@@ -383,7 +384,7 @@
                                 </div>
                                 <button onclick={() => { showOptions = false; openCustomFontDialog(); }} class="cursor-pointer mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#e5c890]/30 bg-brand-gold-100/80 dark:bg-[#414559] px-3 py-1.5 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] transition-all hover:bg-brand-gold-200 dark:hover:bg-[#51576d]">
                                     <Icon icon="solar:add-circle-linear" width="0.8rem" />
-                                    Add custom font
+                                    {$t('settings.custom_fonts.add_custom')}
                                 </button>
                             </div>
                         </div>
@@ -405,7 +406,7 @@
                         </div>
                     {/if}
                     {#if section.entries.length === 0}
-                        <div class="py-3 text-[12px] text-brand-charcoal-300 dark:text-[#838ba7]">No translation available.</div>
+                        <div class="py-3 text-[12px] text-brand-charcoal-300 dark:text-[#838ba7]">{$t("translation.empty")}</div>
                     {:else}
                         <div class="flex flex-col">
                             {#each section.entries as entry, i (entry.ayah)}
@@ -430,7 +431,7 @@
                     {/if}
                 {/each}
             {:else}
-                <div class="py-6 text-center text-sm text-brand-charcoal-300 dark:text-[#838ba7]">No translation available.</div>
+                <div class="py-6 text-center text-sm text-brand-charcoal-300 dark:text-[#838ba7]">{$t("translation.empty")}</div>
             {/if}
         </div>
 

@@ -206,7 +206,9 @@
                 </div>
             </div>
         {:else if typstMode}
-            <div class="flex-1 min-w-0 h-full flex flex-col">
+            <div
+                class="flex-1 min-w-0 h-full flex flex-col sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"
+            >
                 <TypstPreview embedded={true} />
             </div>
         {:else}

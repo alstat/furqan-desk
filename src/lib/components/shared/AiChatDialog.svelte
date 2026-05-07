@@ -397,7 +397,7 @@
                     {/if}
                     <button
                         onclick={handleClose}
-                        aria-label="Close"
+                        aria-label={$t('common.close')}
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
                         <Icon

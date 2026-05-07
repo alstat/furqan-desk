@@ -142,7 +142,7 @@
     const surahName = $derived($surahLabels[$selectedSurahIdx - 1]?.en ?? "");
 
     function labelFor(n: number): string {
-        return $surahLabels[n - 1]?.en ?? `Surah ${n}`;
+        return $surahLabels[n - 1]?.en ?? $t("dialog.surah_fallback", { n });
     }
 
     type Section = { surah: number; entries: { ayah: number; text: string }[] };
@@ -358,8 +358,8 @@
                         bind:this={optionsBtn}
                         onclick={toggleOptions}
                         onpointerdown={(e) => e.stopPropagation()}
-                        aria-label="Display options"
-                        title="Display options"
+                        aria-label={$t("dialog.display_options")}
+                        title={$t("dialog.display_options")}
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors {showOptions
                             ? 'ring-2 ring-brand-gold-300 dark:ring-[#e5c890]/50'
                             : ''}"
@@ -369,7 +369,7 @@
                     <button
                         onclick={onClose}
                         onpointerdown={(e) => e.stopPropagation()}
-                        aria-label="Close"
+                        aria-label={$t("common.close")}
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
                         <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
@@ -389,23 +389,23 @@
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
-                                        Display options
+                                        {$t("dialog.display_options")}
                                     </p>
                                     <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]">
-                                        Tafsir reading style
+                                        {$t("tafsir.reading_style")}
                                     </p>
                                 </div>
                             </div>
 
                             <div>
                                 <span class={labelClass}>
-                                    Font size
+                                    {$t("dialog.font_size")}
                                 </span>
                                 <div class="flex items-center gap-2">
                                     <button
                                         onclick={decFontSize}
                                         disabled={$tafsirFontSize <= TAFSIR_FONT_SIZE_BOUNDS.min}
-                                        aria-label="Decrease font size"
+                                        aria-label={$t("dialog.decrease_font_size")}
                                         class={adjustButtonClass}
                                     >
                                         <svg width="10" height="2" viewBox="0 0 10 2" fill="none">
@@ -420,7 +420,7 @@
                                     <button
                                         onclick={incFontSize}
                                         disabled={$tafsirFontSize >= TAFSIR_FONT_SIZE_BOUNDS.max}
-                                        aria-label="Increase font size"
+                                        aria-label={$t("dialog.increase_font_size")}
                                         class={adjustButtonClass}
                                     >
                                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -430,8 +430,8 @@
                                     </button>
                                     <button
                                         onclick={resetFontSize}
-                                        aria-label="Reset font size"
-                                        title="Reset"
+                                        aria-label={$t("dialog.reset_font_size")}
+                                        title={$t("dialog.reset")}
                                         class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
                                     >
                                         <Icon icon="solar:restart-linear" width="0.9rem" />
@@ -441,13 +441,13 @@
 
                             <div>
                                 <span class={labelClass}>
-                                    Line spacing
+                                    {$t("dialog.line_spacing")}
                                 </span>
                                 <div class="flex items-center gap-2">
                                     <button
                                         onclick={decLineSpacing}
                                         disabled={$tafsirLineSpacing <= TAFSIR_LINE_SPACING_BOUNDS.min}
-                                        aria-label="Decrease line spacing"
+                                        aria-label={$t("dialog.decrease_line_spacing")}
                                         class={adjustButtonClass}
                                     >
                                         <svg width="10" height="2" viewBox="0 0 10 2" fill="none">
@@ -462,7 +462,7 @@
                                     <button
                                         onclick={incLineSpacing}
                                         disabled={$tafsirLineSpacing >= TAFSIR_LINE_SPACING_BOUNDS.max}
-                                        aria-label="Increase line spacing"
+                                        aria-label={$t("dialog.increase_line_spacing")}
                                         class={adjustButtonClass}
                                     >
                                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -472,8 +472,8 @@
                                     </button>
                                     <button
                                         onclick={resetLineSpacing}
-                                        aria-label="Reset line spacing"
-                                        title="Reset"
+                                        aria-label={$t("dialog.reset_line_spacing")}
+                                        title={$t("dialog.reset")}
                                         class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
                                     >
                                         <Icon icon="solar:restart-linear" width="0.9rem" />
@@ -483,7 +483,7 @@
 
                             <div>
                                 <label for="tafsir-font-family" class={labelClass}>
-                                    Font family
+                                    {$t("dialog.font_family")}
                                 </label>
                                 <div class="relative">
                                     <select
@@ -495,7 +495,7 @@
                                             )}
                                         class={selectClass}
                                     >
-                                        <option value="">Default</option>
+                                        <option value="">{$t("dialog.default")}</option>
                                         {#each fontFamilyOptions as font}
                                             <option value={font}>{font}</option>
                                         {/each}

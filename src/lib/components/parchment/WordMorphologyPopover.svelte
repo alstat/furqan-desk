@@ -452,7 +452,7 @@
     <!-- Token list -->
     <div class="default-scroll flex-1 space-y-2.5 overflow-y-auto p-3">
         {#if wordMeaning}
-            <div class="overflow-hidden rounded-2xl border border-brand-gold-200/80 bg-linear-to-br from-brand-gold-50 to-white dark:border-[#e5c890]/30 dark:from-[#e5c890]/10 dark:to-[#303446]/60">
+            <div class="overflow-hidden rounded-xl border border-brand-gold-200/80 bg-linear-to-br from-brand-gold-50 to-white dark:border-[#e5c890]/30 dark:from-[#e5c890]/10 dark:to-[#303446]/60">
                 <div class="h-0.5 w-full bg-brand-gold-400 dark:bg-[#e5c890]"></div>
                 <div class="flex items-start gap-3 px-3.5 py-3">
                     <div class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-brand-gold-100 text-brand-gold-600 dark:bg-[#e5c890]/15 dark:text-[#e5c890]">

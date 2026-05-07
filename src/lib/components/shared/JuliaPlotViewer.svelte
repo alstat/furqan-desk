@@ -8,6 +8,7 @@
         type JuliaPlot,
     } from "$lib/stores/editor.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import { t } from "$lib/i18n";
 
     let currentIndex = $state(0);
 
@@ -229,7 +230,7 @@
     <div
         role="dialog"
         aria-modal="true"
-        aria-label="Plot fullscreen view"
+        aria-label={$t("julia.fullscreen_label")}
         tabindex="-1"
         class="fixed inset-0 bg-black/92 flex items-center justify-center cursor-zoom-out"
         style="z-index: {zIndex + 1};"
@@ -250,7 +251,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <img
                 src="data:image/png;base64,{currentPlot.data}"
-                alt="Julia plot fullscreen"
+                alt={$t("julia.fullscreen_alt")}
                 class="max-w-[94vw] max-h-[94vh] object-contain rounded-xl shadow-2xl"
                 onclick={(e) => e.stopPropagation()}
                 onkeydown={(e) => e.stopPropagation()}
@@ -259,7 +260,7 @@
         <button
             onclick={() => (zoomed = false)}
             class="absolute top-4 right-4 cursor-pointer text-gray-100 dark:text-gray-700 hover:dark:text-gray-100/70 hover:text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 transition-colors"
-            aria-label="Close fullscreen"
+            aria-label={$t("julia.close_fullscreen")}
         >
             <Icon icon="solar:close-circle-bold-duotone" width="1.8rem" />
         </button>
@@ -299,7 +300,7 @@
                     class="text-[11px] py-2 font-semibold uppercase tracking-wide
 			             text-brand-charcoal-500 dark:text-[#838ba7]"
                 >
-                    Julia Plots
+                    {$t("julia.plots")}
                     {#if hasPlots}
                         <span
                             class="ml-1 text-brand-charcoal-400 dark:text-[#626880] normal-case"
@@ -317,7 +318,7 @@
                         class="cursor-pointer text-[11px] font-semibold text-brand-charcoal-300
 					       dark:text-[#838ba7] hover:text-red-500 dark:hover:text-red-400
 					       transition-colors"
-                        title="Remove this plot"
+                        title={$t("julia.remove_plot")}
                     >
                         <Icon
                             icon="solar:trash-bin-minimalistic-bold-duotone"
@@ -329,9 +330,9 @@
                         class="cursor-pointer text-[11px] font-semibold text-brand-charcoal-300
 					       dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 					       transition-colors"
-                        title="Clear all plots"
+                        title={$t("julia.clear_all_plots")}
                     >
-                        Clear all
+                        {$t("julia.clear_all")}
                     </button>
                 {/if}
                 <!-- Close button -->
@@ -341,8 +342,8 @@
                            bg-brand-gold-200 dark:bg-[#414559]
                            text-brand-gold-600 dark:text-[#c6d0f5]
                            hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    aria-label="Close plot viewer"
-                    title="Close"
+                    aria-label={$t("julia.close_viewer")}
+                    title={$t("common.close")}
                 >
                     <Icon
                         icon="solar:close-circle-bold-duotone"
@@ -365,15 +366,15 @@
                         class="opacity-30"
                     />
                     <p class="text-[11px] italic text-center">
-                        No plots yet.<br />
-                        Run Julia code that produces a figure to see it here.
+                        {$t("julia.empty_title")}<br />
+                        {$t("julia.empty_desc")}
                     </p>
                 </div>
             {:else if currentPlot}
                 <!-- Image viewport -->
                 <div
                     role="img"
-                    aria-label="Julia plot viewer"
+                    aria-label={$t("julia.viewer_label")}
                     class="flex-1 min-h-0 overflow-hidden flex items-center justify-center relative
 			            bg-white dark:bg-[#1e2030] p-2
 			            {currentPlot && imgScale > 1 ? 'cursor-grab' : 'cursor-default'}"
@@ -397,7 +398,7 @@
                     {:else}
                         <img
                             src="data:image/png;base64,{currentPlot.data}"
-                            alt="Julia plot {currentIndex + 1}"
+                            alt={$t("julia.plot_alt", { index: currentIndex + 1 })}
                             class="max-w-full max-h-full object-contain select-none pointer-events-none"
                             style="transform: scale({imgScale}) translate({imgTranslateX /
                                 imgScale}px, {imgTranslateY / imgScale}px);
@@ -416,7 +417,7 @@
                                     MAX_SCALE,
                                     imgScale * 1.3,
                                 ))}
-                            title="Zoom in"
+                            title={$t("manuscript.zoom_in")}
                             class="cursor-pointer p-1.5 rounded-full bg-white/90 dark:bg-[#292c3c]/90
                                    border border-slate-200 dark:border-[#414559]
                                    text-brand-charcoal-400 dark:text-[#8caaee]
@@ -433,7 +434,7 @@
                                 if (imgScale <= MIN_SCALE) resetZoom();
                             }}
                             disabled={imgScale <= MIN_SCALE}
-                            title="Zoom out"
+                            title={$t("manuscript.zoom_out")}
                             class="cursor-pointer p-1.5 rounded-full bg-white/90 dark:bg-[#292c3c]/90
                                    border border-slate-200 dark:border-[#414559]
                                    text-brand-charcoal-400 dark:text-[#8caaee]
@@ -448,7 +449,7 @@
                         {#if imgScale > 1}
                             <button
                                 onclick={resetZoom}
-                                title="Reset zoom"
+                                title={$t("manuscript.zoom_reset")}
                                 class="cursor-pointer p-1.5 rounded-full bg-white/90 dark:bg-[#292c3c]/90
                                        border border-slate-200 dark:border-[#414559]
                                        text-brand-charcoal-400 dark:text-[#8caaee]
@@ -462,7 +463,7 @@
                         {/if}
                         <button
                             onclick={() => (zoomed = true)}
-                            title="Fullscreen"
+                            title={$t("manuscript.fullscreen")}
                             class="cursor-pointer p-1.5 rounded-full bg-white/90 dark:bg-[#292c3c]/90
                                    border border-slate-200 dark:border-[#414559]
                                    text-brand-charcoal-400 dark:text-[#8caaee]
@@ -501,7 +502,7 @@
 						       disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
                             <Icon icon="charm:chevron-left" width="0.75rem" />
-                            Prev
+                            {$t("common.previous")}
                         </button>
 
                         <!-- Dot indicators (up to 8) -->
@@ -511,7 +512,7 @@
                                     Math.max(0, currentIndex - 3) + dotOffset}
                                 <button
                                     onclick={() => (currentIndex = dotIdx)}
-                                    aria-label="Go to plot {dotIdx + 1}"
+                                    aria-label={$t("julia.go_to_plot", { index: dotIdx + 1 })}
                                     class="cursor-pointer w-1.5 h-1.5 rounded-full transition-colors
 								       {dotIdx === currentIndex
                                         ? 'bg-brand-gold-500 dark:bg-[#e5c890]'
@@ -528,7 +529,7 @@
 						       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 						       disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
-                            Next
+                            {$t("common.next")}
                             <Icon icon="charm:chevron-right" width="0.75rem" />
                         </button>
                     </div>

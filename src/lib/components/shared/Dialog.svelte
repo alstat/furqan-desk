@@ -2,6 +2,7 @@
     import Icon from '@iconify/svelte';
     import type { Snippet } from 'svelte';
     import { fly } from 'svelte/transition';
+    import { t } from '$lib/i18n';
 
     interface Props {
         open: boolean;
@@ -29,7 +30,7 @@
                 <button
                     onclick={onClose}
                     class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    aria-label="Close"
+                    aria-label={$t('common.close')}
                 >
                     <Icon icon="solar:close-circle-bold-duotone" width="1.1rem" />
                 </button>

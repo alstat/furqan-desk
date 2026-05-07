@@ -49,42 +49,57 @@
     import { t } from '$lib/i18n';
     import { singlePageMargin } from "$lib/stores/editor.store";
 
-    const LANG_NAMES: Record<string, string> = {
-        SQ: "Albanian",
-        AR: "Arabic",
-        BN: "Bengali",
-        BS: "Bosnian",
-        CEB: "Bisaya",
-        ZH: "Chinese",
-        EN: "English",
-        FR: "French",
-        DE: "German",
-        HA: "Hausa",
-        HI: "Hindi",
-        ID: "Indonesian",
-        JA: "Japanese",
-        KK: "Kazakh",
-        KO: "Korea",
-        KU: "Kurdish",
-        KY: "Kyrgyz",
-        MS: "Malay",
-        FA: "Persian",
-        PA: "Punjabi",
-        PS: "Pashto",
-        PT: "Portuguese",
-        RU: "Russian",
-        SR: "Serbian",
-        ES: "Spanish",
-        SW: "Swahili",
-        TG: "Tajik",
-        TL: "Tagalog",
-        TA: "Tamil",
-        TH: "Thai",
-        TR: "Turkish",
-        UR: "Urdu",
-        UZ: "Uzbek",
-        VI: "Vietnamese",
+    const LANG_KEYS: Record<string, string> = {
+        SQ: "language.albanian",
+        AR: "language.arabic",
+        BN: "language.bengali",
+        BS: "language.bosnian",
+        CEB: "language.bisaya",
+        ZH: "language.chinese",
+        EN: "language.english",
+        FR: "language.french",
+        DE: "language.german",
+        HA: "language.hausa",
+        HI: "language.hindi",
+        ID: "language.indonesian",
+        JA: "language.japanese",
+        KK: "language.kazakh",
+        KO: "language.korean",
+        KU: "language.kurdish",
+        KY: "language.kyrgyz",
+        MS: "language.malay",
+        FA: "language.persian",
+        PA: "language.punjabi",
+        PS: "language.pashto",
+        PT: "language.portuguese",
+        RU: "language.russian",
+        SR: "language.serbian",
+        ES: "language.spanish",
+        SW: "language.swahili",
+        TG: "language.tajik",
+        TL: "language.tagalog",
+        TA: "language.tamil",
+        TH: "language.thai",
+        TR: "language.turkish",
+        UR: "language.urdu",
+        UZ: "language.uzbek",
+        VI: "language.vietnamese",
     };
+
+    const wordByWordLanguageOptions = [
+        ["english", "language.english"],
+        ["bengali", "language.bengali"],
+        ["french", "language.french"],
+        ["hindi", "language.hindi"],
+        ["indonesian", "language.indonesian"],
+        ["persian", "language.persian"],
+        ["tamil", "language.tamil"],
+        ["turkish", "language.turkish"],
+        ["urdu", "language.urdu"],
+    ] as const;
+
+    const languageName = (code: string) =>
+        LANG_KEYS[code] ? $t(LANG_KEYS[code]) : code;
 
     let font: string = $state("font-scheherazade");
     let textSize: string = $state("text-xl");
@@ -441,8 +456,8 @@
                     class={selectClass}
                 >
                     <option value="">{$t('surah.none')}</option>
-                    {#each [...new Set($availableTranslators.map((tr) => tr.lang))].sort((a, b) => (LANG_NAMES[a] ?? a).localeCompare(LANG_NAMES[b] ?? b)) as lang}
-                        <optgroup label={LANG_NAMES[lang] ?? lang}>
+                    {#each [...new Set($availableTranslators.map((tr) => tr.lang))].sort((a, b) => languageName(a).localeCompare(languageName(b))) as lang}
+                        <optgroup label={languageName(lang)}>
                             {#each $availableTranslators.filter((tr) => tr.lang === lang) as tr}
                                 <option value={String(tr.id)}>{tr.name}</option>
                             {/each}
@@ -462,8 +477,8 @@
                 onclick={() => translationDialogOpen.set(true)}
                 class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100 dark:bg-[#292c3c] px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
             >
-                <Icon icon="solar:translation-bold-duotone" width="0.85rem" />
-                View translation dialog
+                <Icon icon="garden:translation-exists-stroke-12" width="0.85rem" />
+                {$t('surah.translation_view_dialog')}
             </button>
         {/if}
         <div class="flex items-center justify-between">
@@ -509,15 +524,9 @@
         {#if wbwEnabled}
             <div class="relative -mt-1.5">
                 <select bind:value={selectedWbwLang} class={selectClass}>
-                    <option value="english">English</option>
-                    <option value="bengali">Bengali</option>
-                    <option value="french">French</option>
-                    <option value="hindi">Hindi</option>
-                    <option value="indonesian">Indonesian</option>
-                    <option value="persian">Persian</option>
-                    <option value="tamil">Tamil</option>
-                    <option value="turkish">Turkish</option>
-                    <option value="urdu">Urdu</option>
+                    {#each wordByWordLanguageOptions as [value, labelKey]}
+                        <option {value}>{$t(labelKey)}</option>
+                    {/each}
                 </select>
                 <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
                     <Icon icon="charm:chevron-down" width="0.75rem" />
@@ -553,8 +562,8 @@
                         class={selectClass}
                     >
                         <option value="">{$t('surah.none')}</option>
-                        {#each [...new Set($availableTafsirAuthors.map((a) => a.lang))].sort((a, b) => (LANG_NAMES[a] ?? a).localeCompare(LANG_NAMES[b] ?? b)) as lang}
-                            <optgroup label={LANG_NAMES[lang] ?? lang}>
+                        {#each [...new Set($availableTafsirAuthors.map((a) => a.lang))].sort((a, b) => languageName(a).localeCompare(languageName(b))) as lang}
+                            <optgroup label={languageName(lang)}>
                                 {#each $availableTafsirAuthors.filter((a) => a.lang === lang) as a}
                                     <option value={String(a.id)}
                                         >{a.name.replace(/ \([^)]+\)$/, '')}</option

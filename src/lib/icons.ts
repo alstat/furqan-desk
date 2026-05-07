@@ -12,6 +12,7 @@ import { addCollection } from '@iconify/svelte';
 
 import solarData from '@iconify-json/solar/icons.json';
 import fluentData from '@iconify-json/fluent/icons.json';
+import gardenData from '@iconify-json/garden/icons.json';
 import iconParkData from '@iconify-json/icon-park-outline/icons.json';
 import charmData from '@iconify-json/charm/icons.json';
 import dashiconsData from '@iconify-json/dashicons/icons.json';
@@ -33,6 +34,7 @@ import svgSpinnersData from '@iconify-json/svg-spinners/icons.json';
 const collections: any[] = [
     solarData,
     fluentData,
+    gardenData,
     iconParkData,
     charmData,
     dashiconsData,
