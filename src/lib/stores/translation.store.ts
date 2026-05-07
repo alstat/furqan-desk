@@ -85,3 +85,4 @@ export const availableTafsirAuthors = writable<TafsirAuthorInfo[]>([]);
 export const surahTafsir = writable<AyahTafsir[] | null>(null);
 
 export const tafsirDialogOpen = writable<boolean>(false);
+export const translationDialogOpen = writable<boolean>(false);

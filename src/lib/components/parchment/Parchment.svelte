@@ -150,6 +150,22 @@
             recitationPlaylist.set(null);
             return;
         }
+
+        // Reference shortcut: "surah:ayah" jumps directly (e.g., "2:255")
+        const refMatch = query.trim().match(/^(\d{1,3})\s*:\s*(\d{1,3})$/);
+        if (refMatch) {
+            const surah = parseInt(refMatch[1], 10);
+            const ayah = parseInt(refMatch[2], 10);
+            if (surah >= 1 && surah <= 114 && ayah >= 1) {
+                morphologyMultiSurahList.set(null);
+                morphologyAyahFilter.set(null);
+                recitationPlaylist.set(null);
+                selectedSurahIdx.set(surah);
+                pendingJumpAyah.set(ayah);
+                return;
+            }
+        }
+
         isSearching = true;
         try {
             const matches = await invoke<{ surah: number; ayah: number }[]>(

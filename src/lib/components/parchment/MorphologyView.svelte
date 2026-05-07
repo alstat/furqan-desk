@@ -16,11 +16,21 @@
     import Icon from "@iconify/svelte";
     import { requestPlayAyah, requestPlayPosition, requestPlayBasmallah } from "$lib/stores/recitation.store";
     import { invoke } from '@tauri-apps/api/core';
-    import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, wordByWordLang, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir, multiSurahTafsirMap, availableTafsirAuthors, tafsirDialogOpen } from '$lib/stores/translation.store';
+    import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, wordByWordLang, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir, multiSurahTafsirMap, availableTafsirAuthors, tafsirDialogOpen, translationDialogOpen, availableTranslators } from '$lib/stores/translation.store';
     import type { AyahTranslation, AyahTafsir } from '$lib/stores/translation.store';
     import { manuscriptsEnabled, manuscriptAyah, manuscriptViewerOpen } from '$lib/stores/manuscripts.store';
     import { t } from '$lib/i18n';
-    import { zenMode, zenPeek, lexicalEditorInstance } from "$lib/stores/editor.store";
+    import {
+        zenMode,
+        zenPeek,
+        lexicalEditorInstance,
+        tafsirFontFamily,
+        tafsirFontSize,
+        tafsirLineSpacing,
+        translationFontFamily,
+        translationFontSize,
+        translationLineSpacing,
+    } from "$lib/stores/editor.store";
     import { get } from 'svelte/store';
     import { $createParagraphNode as createParagraphNode, $createTextNode as createTextNode, $insertNodes as insertNodes } from 'lexical';
     import { getSurahNameTashkeel } from '$lib/data/surah-names-tashkeel';
@@ -140,6 +150,22 @@
     const tafsirDir = $derived.by((): 'rtl' | 'ltr' => {
         const author = $availableTafsirAuthors.find(a => a.id === $activeTafsirId);
         return author && RTL_TAFSIR_LANGS.has(author.lang) ? 'rtl' : 'ltr';
+    });
+
+    const tafsirFontStack = $derived.by(() => {
+        const f = $tafsirFontFamily.trim();
+        return f ? `"${f}", system-ui, sans-serif` : "";
+    });
+
+    const RTL_TRANSLATION_LANGS = new Set(['AR', 'UR', 'PS', 'FA']);
+    const translationDir = $derived.by((): 'rtl' | 'ltr' => {
+        const translator = $availableTranslators.find(tr => tr.id === $activeTranslatorId);
+        return translator && RTL_TRANSLATION_LANGS.has(translator.lang) ? 'rtl' : 'ltr';
+    });
+
+    const translationFontStack = $derived.by(() => {
+        const f = $translationFontFamily.trim();
+        return f ? `"${f}", system-ui, sans-serif` : "";
     });
 
     let expandedTafsirAyahs = $state(new Set<number>());
@@ -387,7 +413,7 @@
             {@const multiTranslit = $multiSurahTransliterationMap?.get(surahData.surah) ?? null}
             {@const multiWbw = $multiSurahWordByWordMap?.get(surahData.surah) ?? null}
             {@const multiTafsir = $multiSurahTafsirMap?.get(surahData.surah) ?? null}
-            {@const hasExtras = multiTrans !== null || multiTranslit !== null || multiWbw !== null || (multiTafsir !== null && !$tafsirDialogOpen)}
+            {@const hasExtras = (multiTrans !== null && !$translationDialogOpen) || multiTranslit !== null || multiWbw !== null || (multiTafsir !== null && !$tafsirDialogOpen)}
             {@render surahNameHeader(multiName, 'mb-6')}
             {#if surahData.surah !== 1 && surahData.surah !== 9 && $basmallahMorphology}
                 <div id="ayah-{surahData.surah}-0" class="relative mb-6">
@@ -404,9 +430,9 @@
                                 >{word.combined_arabic}&nbsp;</span>{/each}<span class="group/ayah-num relative inline-block whitespace-nowrap"><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayBasmallah.set(surahData.surah)} title={$t('morphology.play_basmallah')} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button></span></span>
                         </div>
                     </div>
-                    {#if $basmallahTranslation && multiTrans !== null}
-                        <div dir="ltr" class="mt-1.5 px-6 text-sm leading-relaxed text-center text-brand-charcoal-500 dark:text-[#a5adce]">
-                            <p dir="ltr">{$basmallahTranslation.text}</p>
+                    {#if $basmallahTranslation && multiTrans !== null && !$translationDialogOpen}
+                        <div dir={translationDir} class="mt-1.5 px-6 text-sm leading-relaxed text-center text-brand-charcoal-500 dark:text-[#a5adce]" style:font-family={translationFontStack} style:font-size={`${$translationFontSize}px`} style:line-height={$translationLineSpacing}>
+                            <p>{$basmallahTranslation.text}</p>
                         </div>
                     {/if}
                 </div>
@@ -450,10 +476,10 @@
                                 </p>
                             {/if}
 
-                            {#if multiTrans?.has(ayahData.ayah)}
+                            {#if multiTrans?.has(ayahData.ayah) && !$translationDialogOpen}
                                 {@const entry = multiTrans.get(ayahData.ayah)!}
                                 {@const fnotes = entry.footnotes ? JSON.parse(entry.footnotes) as Record<string, string> : null}
-                                <div dir="auto" class="mt-1.5 text-sm leading-relaxed text-start text-brand-charcoal-500 dark:text-[#a5adce]">
+                                <div dir={translationDir} class="mt-1.5 text-sm leading-relaxed text-start text-brand-charcoal-500 dark:text-[#a5adce]" style:font-family={translationFontStack} style:font-size={`${$translationFontSize}px`} style:line-height={$translationLineSpacing}>
                                     <p>{entry.text}</p>
                                     {#if fnotes}
                                         <ol class="mt-1.5 space-y-0.5 text-xs text-brand-charcoal-300 dark:text-[#838ba7] list-decimal list-inside">
@@ -474,7 +500,7 @@
                                         {expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`) ? $t('tafsir.hide') : $t('tafsir.show')}
                                     </button>
                                     {#if expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`)}
-                                        <div class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]" style:direction={tafsirDir} style:text-align={tafsirDir === 'ltr' ? 'left' : 'right'}>
+                                        <div class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]" style:direction={tafsirDir} style:font-family={tafsirFontStack} style:font-size={`${$tafsirFontSize}px`} style:line-height={$tafsirLineSpacing} style:text-align={tafsirDir === 'ltr' ? 'left' : 'right'}>
                                             {@html multiTafsir.get(ayahData.ayah)}
                                         </div>
                                     {/if}
@@ -528,15 +554,15 @@
                     </div>
                 </div>
 
-                {#if $basmallahTranslation && translationMap !== null}
-                    <div dir="ltr" class="mt-1.5 px-6 text-sm leading-relaxed text-center text-brand-charcoal-500 dark:text-[#a5adce]">
-                        <p dir="ltr">{$basmallahTranslation.text}</p>
+                {#if $basmallahTranslation && translationMap !== null && !$translationDialogOpen}
+                    <div dir={translationDir} class="mt-1.5 px-6 text-sm leading-relaxed text-center text-brand-charcoal-500 dark:text-[#a5adce]" style:font-family={translationFontStack} style:font-size={`${$translationFontSize}px`} style:line-height={$translationLineSpacing}>
+                        <p>{$basmallahTranslation.text}</p>
                     </div>
                 {/if}
 
             </div>
         {/if}
-        {#if translationMap !== null || $surahTransliteration !== null || $surahWordByWord !== null || (tafsirMap !== null && !$tafsirDialogOpen)}
+        {#if (translationMap !== null && !$translationDialogOpen) || $surahTransliteration !== null || $surahWordByWord !== null || (tafsirMap !== null && !$tafsirDialogOpen)}
             <!-- Block mode: one ayah per row, right-justified, divider between ayahs -->
             <div dir="rtl" class="w-full min-w-0" style="contain: style;">
                 {#if displayAyahs.length > 0 && displayAyahs[0].ayah > 1}
@@ -575,10 +601,10 @@
                             </p>
                         {/if}
 
-                        {#if translationMap?.has(ayahData.ayah)}
+                        {#if translationMap?.has(ayahData.ayah) && !$translationDialogOpen}
                             {@const entry = translationMap.get(ayahData.ayah)!}
                             {@const fnotes = entry.footnotes ? JSON.parse(entry.footnotes) as Record<string, string> : null}
-                            <div dir="auto" class="mt-1.5 text-sm leading-relaxed text-start text-brand-charcoal-500 dark:text-[#a5adce]">
+                            <div dir={translationDir} class="mt-1.5 text-sm leading-relaxed text-start text-brand-charcoal-500 dark:text-[#a5adce]" style:font-family={translationFontStack} style:font-size={`${$translationFontSize}px`} style:line-height={$translationLineSpacing}>
                                 <p>{entry.text}</p>
                                 {#if fnotes}
                                     <ol class="mt-1.5 space-y-0.5 text-xs text-brand-charcoal-300 dark:text-[#838ba7] list-decimal list-inside">
@@ -599,7 +625,7 @@
                                     {expandedTafsirAyahs.has(ayahData.ayah) ? $t('tafsir.hide') : $t('tafsir.show')}
                                 </button>
                                 {#if expandedTafsirAyahs.has(ayahData.ayah)}
-                                    <div class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]" style:direction={tafsirDir} style:text-align={tafsirDir === 'ltr' ? 'left' : 'right'}>
+                                    <div class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]" style:direction={tafsirDir} style:font-family={tafsirFontStack} style:font-size={`${$tafsirFontSize}px`} style:line-height={$tafsirLineSpacing} style:text-align={tafsirDir === 'ltr' ? 'left' : 'right'}>
                                         {@html tafsirMap.get(ayahData.ayah)}
                                     </div>
                                 {/if}

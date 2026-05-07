@@ -14,7 +14,107 @@
         availableTafsirAuthors,
     } from "$lib/stores/translation.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import {
+        customFontFamilies,
+        tafsirFontSize,
+        tafsirFontFamily,
+        tafsirLineSpacing,
+        TAFSIR_FONT_SIZE_BOUNDS,
+        TAFSIR_LINE_SPACING_BOUNDS,
+    } from "$lib/stores/editor.store";
+    import { openCustomFontDialog } from "$lib/stores/custom-font-dialog.store";
     import { t } from "$lib/i18n";
+
+    const BUILTIN_FONT_FAMILIES = [
+        "Amiri Quran",
+        "Aref Ruqaa Ink",
+        "Arial",
+        "Courier New",
+        "EB Garamond",
+        "Georgia",
+        "Reem Kufi Ink",
+        "Scheherazade New",
+        "Times New Roman",
+        "Trebuchet MS",
+        "Verdana",
+    ];
+
+    const selectClass =
+        "w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#626880] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]";
+    const labelClass =
+        "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
+    const adjustButtonClass =
+        "cursor-pointer w-7 h-7 flex items-center justify-center rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#363a4f] hover:bg-brand-sand-200 dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
+
+    const fontFamilyOptions = $derived.by(() => {
+        const seen = new Set(
+            BUILTIN_FONT_FAMILIES.map((f) => f.toLocaleLowerCase()),
+        );
+        const merged = [...BUILTIN_FONT_FAMILIES];
+        for (const font of $customFontFamilies) {
+            const key = font.toLocaleLowerCase();
+            if (seen.has(key)) continue;
+            seen.add(key);
+            merged.push(font);
+        }
+        return merged.sort((a, b) => a.localeCompare(b));
+    });
+
+    let showOptions = $state(false);
+    let optionsBtn = $state<HTMLButtonElement | null>(null);
+    let optionsPanel = $state<HTMLDivElement | null>(null);
+
+    function toggleOptions() {
+        showOptions = !showOptions;
+    }
+
+    function handleDocPointerDown(e: PointerEvent) {
+        if (!showOptions) return;
+        const target = e.target as Node | null;
+        if (!target) return;
+        if (
+            optionsPanel?.contains(target) ||
+            optionsBtn?.contains(target)
+        )
+            return;
+        showOptions = false;
+    }
+
+    $effect(() => {
+        if (showOptions) {
+            window.addEventListener("pointerdown", handleDocPointerDown, true);
+            return () =>
+                window.removeEventListener(
+                    "pointerdown",
+                    handleDocPointerDown,
+                    true,
+                );
+        }
+    });
+
+    function decFontSize() {
+        tafsirFontSize.set($tafsirFontSize - 1);
+    }
+    function incFontSize() {
+        tafsirFontSize.set($tafsirFontSize + 1);
+    }
+    function resetFontSize() {
+        tafsirFontSize.set(TAFSIR_FONT_SIZE_BOUNDS.default);
+    }
+    function decLineSpacing() {
+        tafsirLineSpacing.set($tafsirLineSpacing - 0.1);
+    }
+    function incLineSpacing() {
+        tafsirLineSpacing.set($tafsirLineSpacing + 0.1);
+    }
+    function resetLineSpacing() {
+        tafsirLineSpacing.set(TAFSIR_LINE_SPACING_BOUNDS.default);
+    }
+
+    const tafsirFontStack = $derived.by(() => {
+        const f = $tafsirFontFamily.trim();
+        return f ? `"${f}", system-ui, sans-serif` : "";
+    });
 
     interface Props {
         open: boolean;
@@ -204,6 +304,7 @@
         role="dialog"
         aria-modal="false"
         aria-label={$t("tafsir.dialog_title")}
+        tabindex="-1"
         class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
         onpointerdown={() => {
@@ -252,13 +353,173 @@
                         {/if}
                     </div>
                 </div>
-                <button
-                    onclick={onClose}
-                    aria-label="Close"
-                    class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                >
-                    <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
-                </button>
+                <div class="flex items-center gap-1.5 shrink-0 relative">
+                    <button
+                        bind:this={optionsBtn}
+                        onclick={toggleOptions}
+                        onpointerdown={(e) => e.stopPropagation()}
+                        aria-label="Display options"
+                        title="Display options"
+                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors {showOptions
+                            ? 'ring-2 ring-brand-gold-300 dark:ring-[#e5c890]/50'
+                            : ''}"
+                    >
+                        <Icon icon="solar:settings-bold-duotone" width="1rem" />
+                    </button>
+                    <button
+                        onclick={onClose}
+                        onpointerdown={(e) => e.stopPropagation()}
+                        aria-label="Close"
+                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                    >
+                        <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
+                    </button>
+
+                    {#if showOptions}
+                        <div
+                            bind:this={optionsPanel}
+                            onpointerdown={(e) => e.stopPropagation()}
+                            role="menu"
+                            tabindex="-1"
+                            class="absolute right-0 top-9 z-20 w-72 rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
+                        >
+                            <div class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2">
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]">
+                                    <Icon icon="solar:settings-bold-duotone" width="1rem" />
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                        Display options
+                                    </p>
+                                    <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                                        Tafsir reading style
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <span class={labelClass}>
+                                    Font size
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <button
+                                        onclick={decFontSize}
+                                        disabled={$tafsirFontSize <= TAFSIR_FONT_SIZE_BOUNDS.min}
+                                        aria-label="Decrease font size"
+                                        class={adjustButtonClass}
+                                    >
+                                        <svg width="10" height="2" viewBox="0 0 10 2" fill="none">
+                                            <line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                    </button>
+                                    <span
+                                        class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
+                                    >
+                                        {$tafsirFontSize}px
+                                    </span>
+                                    <button
+                                        onclick={incFontSize}
+                                        disabled={$tafsirFontSize >= TAFSIR_FONT_SIZE_BOUNDS.max}
+                                        aria-label="Increase font size"
+                                        class={adjustButtonClass}
+                                    >
+                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                            <line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                    </button>
+                                    <button
+                                        onclick={resetFontSize}
+                                        aria-label="Reset font size"
+                                        title="Reset"
+                                        class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
+                                    >
+                                        <Icon icon="solar:restart-linear" width="0.9rem" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <span class={labelClass}>
+                                    Line spacing
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <button
+                                        onclick={decLineSpacing}
+                                        disabled={$tafsirLineSpacing <= TAFSIR_LINE_SPACING_BOUNDS.min}
+                                        aria-label="Decrease line spacing"
+                                        class={adjustButtonClass}
+                                    >
+                                        <svg width="10" height="2" viewBox="0 0 10 2" fill="none">
+                                            <line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                    </button>
+                                    <span
+                                        class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
+                                    >
+                                        {$tafsirLineSpacing.toFixed(1)}x
+                                    </span>
+                                    <button
+                                        onclick={incLineSpacing}
+                                        disabled={$tafsirLineSpacing >= TAFSIR_LINE_SPACING_BOUNDS.max}
+                                        aria-label="Increase line spacing"
+                                        class={adjustButtonClass}
+                                    >
+                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                            <line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                    </button>
+                                    <button
+                                        onclick={resetLineSpacing}
+                                        aria-label="Reset line spacing"
+                                        title="Reset"
+                                        class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
+                                    >
+                                        <Icon icon="solar:restart-linear" width="0.9rem" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="tafsir-font-family" class={labelClass}>
+                                    Font family
+                                </label>
+                                <div class="relative">
+                                    <select
+                                        id="tafsir-font-family"
+                                        value={$tafsirFontFamily}
+                                        onchange={(e) =>
+                                            tafsirFontFamily.set(
+                                                (e.currentTarget as HTMLSelectElement).value,
+                                            )}
+                                        class={selectClass}
+                                    >
+                                        <option value="">Default</option>
+                                        {#each fontFamilyOptions as font}
+                                            <option value={font}>{font}</option>
+                                        {/each}
+                                    </select>
+                                    <span
+                                        class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300 dark:text-[#838ba7]"
+                                    >
+                                        <Icon icon="charm:chevron-down" width="0.75rem" />
+                                    </span>
+                                </div>
+                                <button
+                                    onclick={() => {
+                                        showOptions = false;
+                                        openCustomFontDialog();
+                                    }}
+                                    class="cursor-pointer mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#e5c890]/30 bg-brand-gold-100/80 dark:bg-[#414559] px-3 py-1.5 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] transition-all hover:bg-brand-gold-200 dark:hover:bg-[#51576d]"
+                                >
+                                    <Icon icon="solar:add-circle-linear" width="0.8rem" />
+                                    {$t('settings.custom_fonts.add_custom')}
+                                </button>
+                            </div>
+                        </div>
+                    {/if}
+                </div>
             </div>
         </div>
 
@@ -316,6 +577,9 @@
                                     <div
                                         class="tafsir-content text-[13px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]"
                                         style:direction={tafsirDir}
+                                        style:font-family={tafsirFontStack}
+                                        style:font-size={`${$tafsirFontSize}px`}
+                                        style:line-height={$tafsirLineSpacing}
                                         style:text-align={tafsirDir === "ltr"
                                             ? "left"
                                             : "right"}
