@@ -563,9 +563,11 @@
                 filename,
             });
             const short = path.split("/").pop() ?? filename;
-            downloadMsg = `✓ Saved: ${short}`;
+            downloadMsg = $t("manuscript.download_saved", { filename: short });
         } catch (e) {
-            downloadMsg = `✗ Failed: ${String(e).slice(0, 60)}`;
+            downloadMsg = $t("manuscript.download_failed", {
+                error: String(e).slice(0, 60),
+            });
         } finally {
             downloading = false;
             setTimeout(() => {
@@ -592,9 +594,16 @@
 
         const ref = $manuscriptAyah;
         const parts: string[] = [ms.title];
-        if (ref) parts.push(`Surah ${ref.surah}:${ref.ayah}`);
-        const folio = `Folio ${page?.folio ?? ""}${page?.side ?? ""}`.trim();
-        if (folio !== "Folio") parts.push(folio);
+        if (ref)
+            parts.push(
+                $t("manuscript.caption_reference", {
+                    surah: String(ref.surah),
+                    ayah: String(ref.ayah),
+                }),
+            );
+        const folioValue = `${page?.folio ?? ""}${page?.side ?? ""}`.trim();
+        if (folioValue)
+            parts.push($t("manuscript.caption_folio", { folio: folioValue }));
         if (ms.archive.name) parts.push(ms.archive.name);
         if (ms.archive.city) parts.push(ms.archive.city);
         const date =
@@ -648,8 +657,10 @@
                 dataUrl = bytesToDataUrl(bytes, "image/jpeg");
             }
             const altText = selectedManuscript
-                ? `${selectedManuscript.title} — Folio ${selectedPage?.folio ?? ""}${selectedPage?.side ?? ""}`
-                : "Manuscript image";
+                ? `${selectedManuscript.title} — ${$t("manuscript.caption_folio", {
+                      folio: `${selectedPage?.folio ?? ""}${selectedPage?.side ?? ""}`,
+                  })}`
+                : $t("manuscript.image_alt_default");
             const captionText = buildCaptionText();
             const linkUrl = buildCorpusCoranicumUrl();
             editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
@@ -658,11 +669,11 @@
                 captionText,
                 linkUrl,
             });
-            insertMsg = "✓ Inserted";
+            insertMsg = $t("manuscript.inserted");
         } catch (e) {
             await message(
-                `Could not fetch the manuscript image.\n\n${String(e)}`,
-                { title: "Insert Failed", kind: "error" },
+                $t("manuscript.insert_failed_message", { error: String(e) }),
+                { title: $t("manuscript.insert_failed_title"), kind: "error" },
             );
         } finally {
             inserting = false;
@@ -755,7 +766,7 @@
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
         <img
             src={imageSrc}
-            alt="Manuscript zoomed"
+            alt={$t("manuscript.image_alt_zoomed")}
             class="max-w-[94vw] max-h-[94vh] object-contain rounded-xl shadow-2xl"
             onclick={(e) => e.stopPropagation()}
             onkeydown={(e) => e.stopPropagation()}
@@ -763,7 +774,7 @@
         <button
             onclick={() => (zoomed = false)}
             class="absolute top-4 right-4 cursor-pointer text-gray-100 dark:text-gray-700 hover:dark:text-gray-100/70 hover:text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 transition-colors"
-            aria-label="Close zoom"
+            aria-label={$t("manuscript.close_zoom")}
         >
             <Icon icon="solar:close-circle-bold-duotone" width="1.8rem" />
         </button>
@@ -914,16 +925,7 @@
                     >
                         {referenceError}
                     </span>
-                {:else if $manuscriptAyah}
-                    <span
-                        class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
-                    >
-                        {$t("manuscript.current_reference", {
-                            surah: String($manuscriptAyah.surah),
-                            ayah: String($manuscriptAyah.ayah),
-                        })}
-                    </span>
-                {:else}
+                {:else if $manuscriptAyah}{:else}
                     <span
                         class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
                     >
@@ -1017,7 +1019,9 @@
                                             {#if loadedIds.has(ms.manuscript_id)}
                                                 <span
                                                     class="shrink-0 inline-block w-1.5 h-1.5 rounded-full bg-brand-gold-400 dark:bg-[#e5c890]"
-                                                    title="Image loaded"
+                                                    title={$t(
+                                                        "manuscript.image_loaded",
+                                                    )}
                                                 ></span>
                                             {/if}
                                         </p>
@@ -1025,7 +1029,9 @@
                                             <p
                                                 class="text-[11px] text-brand-gold-500 dark:text-[#e5c890] mt-0.5 font-medium"
                                             >
-                                                {dateStr} CE
+                                                {$t("manuscript.date_ce", {
+                                                    date: dateStr,
+                                                })}
                                             </p>
                                         {:else if !detail}
                                             <span
@@ -1111,7 +1117,9 @@
                         {:else if imageSrc}
                             <img
                                 src={imageSrc}
-                                alt="Folio {selectedPage?.folio}{selectedPage?.side}"
+                                alt={$t("manuscript.image_alt_folio", {
+                                    folio: `${selectedPage?.folio ?? ""}${selectedPage?.side ?? ""}`,
+                                })}
                                 class="max-w-full max-h-full object-contain rounded-lg shadow-md select-none pointer-events-none"
                                 style="transform: scale({imgScale}) translate({imgTranslateX /
                                     imgScale}px, {imgTranslateY / imgScale}px);
@@ -1227,7 +1235,7 @@
                                 <span
                                     class="text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
                                 >
-                                    Manuscript Metadata
+                                    {$t("manuscript.metadata")}
                                 </span>
                                 <a
                                     href={buildCorpusCoranicumUrl() ??
@@ -1236,7 +1244,7 @@
                                     rel="noreferrer"
                                     class="inline-flex items-center gap-1 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100/70 dark:bg-[#292c3c] px-2 py-0.5 text-[10px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
                                 >
-                                    Corpus Coranicum
+                                    {$t("manuscript.corpus_coranicum")}
                                     <Icon
                                         icon="solar:arrow-right-up-linear"
                                         width="0.65rem"
@@ -1254,7 +1262,9 @@
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
-                                            >{selectedDetail.date} CE</span
+                                            >{$t("manuscript.date_ce", {
+                                                date: selectedDetail.date,
+                                            })}</span
                                         >
                                     </div>
                                 {/if}
@@ -1310,7 +1320,9 @@
                                         >
                                         <span
                                             class="font-medium text-brand-charcoal-900 dark:text-[#c6d0f5]"
-                                            >{selectedDetail.dimensions} mm</span
+                                            >{$t("manuscript.size_mm", {
+                                                size: selectedDetail.dimensions,
+                                            })}</span
                                         >
                                     </div>
                                 {/if}
@@ -1406,7 +1418,7 @@
                             {:else if imageSource}
                                 {imageSource}
                             {:else}
-                                © Corpus Coranicum (BBAW)
+                                {$t("manuscript.credit_corpus_coranicum")}
                             {/if}
                         </span>
                         <div class="flex items-center gap-1.5 shrink-0">

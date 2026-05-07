@@ -27,7 +27,6 @@
     import { $createQuoteNode as createQuoteNode } from "@lexical/rich-text";
     import { INSERT_CHECK_LIST_COMMAND } from "@lexical/list";
     import { t } from "$lib/i18n";
-    import { isPro } from "$lib/stores/auth.store";
     import { invoke } from "@tauri-apps/api/core";
     import type { SurahMorphology } from "$lib/types/morphology";
     import {
@@ -80,16 +79,12 @@
             description: $t("slash.checklist_desc"),
             icon: icons["checklist"],
         },
-        ...($isPro
-            ? [
-                  {
-                      id: "quran",
-                      label: $t("slash.quran_label"),
-                      description: $t("slash.quran_desc"),
-                      icon: "solar:book-bold-duotone",
-                  },
-              ]
-            : []),
+        {
+            id: "quran",
+            label: $t("slash.quran_label"),
+            description: $t("slash.quran_desc"),
+            icon: "solar:book-bold-duotone",
+        },
     ]);
 
     let isOpen = $state(false);
@@ -120,7 +115,6 @@
         capturedOffset: number,
         capturedQuery: string,
     ) {
-        if (!$isPro) return;
         if (!QURAN_SLASH_COMPLETE_REGEX.test(capturedQuery)) return;
         const parsed = parseQuranSlashQuery(capturedQuery);
         if (!parsed.ok) return;
