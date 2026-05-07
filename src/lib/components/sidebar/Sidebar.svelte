@@ -10,7 +10,6 @@
     import FileExplorer from "$lib/components/shared/FileExplorer.svelte";
     import GlobalSearch from "$lib/components/shared/GlobalSearch.svelte";
     import TableOfContents from "$lib/components/editor/TableOfContents.svelte";
-    import JuliaPlotViewer from "$lib/components/shared/JuliaPlotViewer.svelte";
     import {
         lexicalEditorInstance,
         lexicalHistoryState,
@@ -258,8 +257,6 @@
         <GlobalSearch />
         <!-- Table of Contents panel -->
         <TableOfContents />
-        <!-- Julia Plot Viewer button: same strip, aligned with donation/feedback buttons at the bottom -->
-        <JuliaPlotViewer />
         <ActionBar />
         {#if $activeTab}
             {@const ft = fileTypeInfo($activeTab)}

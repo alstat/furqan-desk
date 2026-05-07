@@ -1,16 +1,22 @@
 <script lang="ts">
     import Icon from '@iconify/svelte';
-    import Dialog from '$lib/components/shared/Dialog.svelte';
-    import { appDarkMode, zenMode } from '$lib/stores/editor.store';
+import Dialog from '$lib/components/shared/Dialog.svelte';
+    import {
+        appDarkMode,
+        zenMode,
+        customFontFamilies,
+        typstPreviewDarkMode,
+    } from '$lib/stores/editor.store';
+    import { openCustomFontDialog } from '$lib/stores/custom-font-dialog.store';
     import { restartTour } from '$lib/stores/tour.store';
     import { invoke } from '@tauri-apps/api/core';
-    import { manuscriptsEnabled } from '$lib/stores/manuscripts.store';
     import { morphGlassEffect } from '$lib/stores/morphology.store';
     import { onMount, onDestroy } from 'svelte';
     import { listen } from '@tauri-apps/api/event';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { getVersion } from '@tauri-apps/api/app';
     import { locale, LOCALE_NAMES, t, type Locale } from '$lib/i18n';
+    import { aiTextDefaultModel } from '$lib/stores/ai-text-transform.store';
 
     interface Props {
         open: boolean;
@@ -120,7 +126,7 @@
                     onchange={(e) => locale.set(e.currentTarget.value as Locale)}
                     class="w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#626880] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]"
                 >
-                    {#each Object.entries(LOCALE_NAMES) as [code, name]}
+                    {#each Object.entries(LOCALE_NAMES).sort(([, a], [, b]) => a.localeCompare(b)) as [code, name]}
                         <option value={code}>{name}</option>
                     {/each}
                 </select>
@@ -132,7 +138,7 @@
 
         <!-- Help -->
         <div class="py-2">
-            <p class={sectionLabel}>Help</p>
+            <p class={sectionLabel}>{$t('settings.help')}</p>
             <div class="flex items-center justify-between">
                 <span class={rowLabel}>{$t('settings.help.browse')}</span>
                 <button onclick={onOpenHelp} class={actionBtn}>
@@ -144,12 +150,60 @@
 
         <!-- Tutorial -->
         <div class="py-2">
-            <p class={sectionLabel}>Tutorial</p>
+            <p class={sectionLabel}>{$t('settings.tutorial')}</p>
             <div class="flex items-center justify-between">
                 <span class={rowLabel}>{$t('settings.tutorial.desc')}</span>
                 <button onclick={handleRestartTour} class={actionBtn}>
                     <Icon icon="solar:play-circle-bold-duotone" width="0.85rem" />
                     {$t('settings.tutorial.restart')}
+                </button>
+            </div>
+        </div>
+
+        <!-- AI Tools -->
+        <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
+            <p class={sectionLabel}>{$t('settings.ai_tools')}</p>
+            <div class="flex items-center justify-between gap-4">
+                <div>
+                    <span class={rowLabel}>{$t('settings.ai_tools.default_selection_model')}</span>
+                    <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        {$t('settings.ai_tools.default_selection_model.desc')}
+                    </p>
+                </div>
+                <div class="flex gap-2 shrink-0">
+                    <button
+                        onclick={() => aiTextDefaultModel.set('standard')}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${$aiTextDefaultModel === 'standard'
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        {$t('ai_chat.model_standard')}
+                    </button>
+                    <button
+                        onclick={() => aiTextDefaultModel.set('advanced')}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${$aiTextDefaultModel === 'advanced'
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        {$t('ai_chat.model_advanced')}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Fonts -->
+        <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
+            <p class={sectionLabel}>{$t('settings.custom_fonts')}</p>
+            <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] mb-2">
+                {$t('settings.custom_fonts.desc')}
+            </p>
+            <div class="flex items-center justify-between">
+                <span class={rowLabel}>{$customFontFamilies.length} {$t('settings.custom_fonts.saved_count')}</span>
+                <button onclick={openCustomFontDialog} class={actionBtn}>
+                    <Icon icon="solar:settings-bold-duotone" width="0.85rem" />
+                    {$t('settings.custom_fonts.open')}
                 </button>
             </div>
         </div>
@@ -178,6 +232,35 @@
                         onclick={() => morphGlassEffect.set(true)}
                         class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
                             ${$morphGlassEffect
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        {$t('common.enabled')}
+                    </button>
+                </div>
+            </div>
+            <!-- Typst Preview Dark Mode -->
+            <div class="flex items-center justify-between mt-3">
+                <div>
+                    <span class={rowLabel}>{$t('settings.appearance.typst_preview_dark')}</span>
+                    <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        {$t('settings.appearance.typst_preview_dark.desc')}
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <button
+                        onclick={() => typstPreviewDarkMode.set(false)}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${!$typstPreviewDarkMode
+                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                    >
+                        {$t('common.disabled')}
+                    </button>
+                    <button
+                        onclick={() => typstPreviewDarkMode.set(true)}
+                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                            ${$typstPreviewDarkMode
                                 ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                 : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                     >
@@ -219,29 +302,6 @@
         <!-- Manuscripts -->
         <div class="py-2 border-t border-slate-100 dark:border-[#414559]">
             <p class={sectionLabel}>{$t('settings.manuscripts')}</p>
-            <div class="flex items-center justify-between mb-2">
-                <span class={rowLabel}>{$t('settings.manuscripts.browse')}</span>
-                <div class="flex gap-2">
-                    <button
-                        onclick={() => manuscriptsEnabled.set(false)}
-                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
-                            ${!$manuscriptsEnabled
-                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
-                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
-                    >
-                        {$t('common.disabled')}
-                    </button>
-                    <button
-                        onclick={() => manuscriptsEnabled.set(true)}
-                        class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
-                            ${$manuscriptsEnabled
-                                ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
-                                : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
-                    >
-                        {$t('common.enabled')}
-                    </button>
-                </div>
-            </div>
             <div class="flex items-center justify-between">
                 <span class={rowLabel}>
                     {$t('settings.manuscripts.cache')}

@@ -3,6 +3,9 @@
     import CodePlugin from "$lexical/core/plugins/CodeHighlighter/CodePlugin.svelte";
     import { EquationNode } from "$lexical/core/plugins/Equation/EquationNode";
     import EquationPlugin from "$lexical/core/plugins/Equation/EquationPlugin.svelte";
+    import { QuranBlockNode } from "$lexical/core/plugins/Quran/QuranBlockNode";
+    import QuranBlockPlugin from "$lexical/core/plugins/Quran/QuranBlockPlugin.svelte";
+    import AiSelectionPlugin from "$lexical/core/plugins/AiSelectionPlugin.svelte";
     // import {
     // 	Composer,
     // 	ContentEditable,
@@ -28,6 +31,7 @@
         TablePlugin,
         TableActionMenuPlugin,
         MarkdownShortcutPlugin,
+        MarkdownPastePlugin,
         ALL_TRANSFORMERS,
     } from "../lexical";
     import { locale } from '$lib/i18n';
@@ -77,6 +81,7 @@
             HorizontalRuleNode,
             ImageNode,
             EquationNode,
+            QuranBlockNode,
             CodeNode,
             TableNode,
             TableRowNode,
@@ -115,6 +120,7 @@
                 <CaptionEditorHistoryPlugin />
             </ImagePlugin>
             <EquationPlugin />
+            <AiSelectionPlugin />
             <CodePlugin />
             <TablePlugin />
             <TableCellResizerPlugin />
@@ -122,7 +128,9 @@
                 <TableActionMenuPlugin anchorElem={editorShell} cellMerge={true} />
             {/if}
             <MarkdownShortcutPlugin transformers={ALL_TRANSFORMERS} />
+            <MarkdownPastePlugin transformers={ALL_TRANSFORMERS} />
             <SlashCommandPlugin />
+            <QuranBlockPlugin />
             <EditorStorePlugin />
         </div>
     </div>

@@ -33,6 +33,8 @@
 	import TripleDotsDropDown from '../toolbar/TripleDots/TripleDotsDropDown.svelte';
     import TripleDotsDropDownSmall from '../toolbar/TripleDots/TripleDotsDropDownSmall.svelte';
 	import FontColorButton from '../toolbar/FontColorButton.svelte';
+	import { singlePageMargin } from '$lib/stores/editor.store';
+    import { hideSurahPage } from '$lib/stores/quran.svelte';
 
 	let imageDialog = $state<InsertImageDialog | undefined>(undefined);
 	let equationDialog = $state<InsertEquationDialog | undefined>(undefined);
@@ -66,36 +68,21 @@
 		<StrikethroughButton />
 		<FormatCodeButton />
 		<FontColorButton />
-
-		{#if windowWidth > 1380}
-			<Divider />
-			<InsertDropDown>
-				<InsertHRDropDownItem />
-				<InsertImageDropDownItem onclick={() => imageDialog?.open()} />
-				<InsertEquationDropDownItem onclick={() => equationDialog?.open()} />
-				<InsertTableDropDownItem onclick={() => tableDialog?.open()} />
-			</InsertDropDown>
-            <DropDownAlign />
-			<Divider />
-			<!-- <Indent />
-			<Outdent /> -->
-			<TripleDotsDropDownSmall
-				{windowWidth}
-				onInsertImageClick={() => imageDialog?.open()}
-				onInsertEquationClick={() => equationDialog?.open()}
-			/>
-		{/if}
-
-		<!-- TripleDotsDropdown component with the window width -->
-		{#if windowWidth < 1380}
-			<Divider />
-			<TripleDotsDropDown
-				{windowWidth}
-				onInsertImageClick={() => imageDialog?.open()}
-				onInsertEquationClick={() => equationDialog?.open()}
-			/>
-		{/if}
-
+		<Divider />
+		<InsertDropDown>
+			<InsertHRDropDownItem />
+			<InsertImageDropDownItem onclick={() => imageDialog?.open()} />
+			<InsertEquationDropDownItem onclick={() => equationDialog?.open()} />
+			<InsertTableDropDownItem onclick={() => tableDialog?.open()} />
+		</InsertDropDown>
+		<DropDownAlign />
+		<Divider />
+		<TripleDotsDropDownSmall
+			{windowWidth}
+			expanded={$singlePageMargin >= 9}
+			onInsertImageClick={() => imageDialog?.open()}
+			onInsertEquationClick={() => equationDialog?.open()}
+		/>
 		<!-- dialogs -->
 		<InsertImageDialog bind:this={imageDialog} />
 		<InsertEquationDialog bind:this={equationDialog} />

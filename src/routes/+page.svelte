@@ -14,9 +14,15 @@
     import SplashScreen from "$lib/components/shared/SplashScreen.svelte";
     import UpdateToast from "$lib/components/shared/UpdateToast.svelte";
     import NewBlogToast from "$lib/components/shared/NewBlogToast.svelte";
+    import JuliaPlotViewer from "$lib/components/shared/JuliaPlotViewer.svelte";
     import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
+    import CustomFontDialog from "$lib/components/settings/CustomFontDialog.svelte";
     import HelpDialog from "$lib/components/help/HelpDialog.svelte";
     import { helpStore, openHelp, closeHelp } from "$lib/stores/help.store";
+    import {
+        customFontDialogOpen,
+        closeCustomFontDialog,
+    } from "$lib/stores/custom-font-dialog.store";
     import ManuscriptViewer from "$lib/components/manuscripts/ManuscriptViewer.svelte";
     import {
         manuscriptViewerOpen,
@@ -33,11 +39,15 @@
     import { activeTab, activeTabId, tabs } from "$lib/stores/tabs.store";
     import { crossGroups } from "$lib/stores/julia-terminal.store";
     import type { CrossGroup } from "$lib/stores/julia-terminal.store";
-    import { lexicalEditorInstance } from "$lib/stores/editor.store";
+    import {
+        lexicalEditorInstance,
+        singlePageMargin,
+    } from "$lib/stores/editor.store";
     import { get } from "svelte/store";
     import { checkFirstRun } from "$lib/stores/tour.store";
     import { zenMode, appDarkMode } from "$lib/stores/editor.store";
     import SukunPeekToggle from "$lib/components/shared/SukunPeekToggle.svelte";
+    import UpDownMargin from "$lib/components/shared/UpDownMargin.svelte";
 
     let height: number = $state(
         typeof window !== "undefined" ? window.innerHeight : 600,
@@ -135,7 +145,10 @@
 </script>
 
 <svelte:window bind:innerHeight={height} />
-<div class="w-[95%] rounded-r-md max-w-375 relative mx-auto sm:py-6">
+<div
+    class="max-w-[95%] rounded-r-md relative mx-auto sm:py-6"
+    style:width="{Math.round(($singlePageMargin / 12) * 100)}%"
+>
     <div
         class={`flex rounded-r-md ${$surahOrientation()} ${$isSidebar && !$zenMode ? "bg-white dark:bg-[#232634] " : ""} flex-row justify-center`}
         style:height="{height - 47}px"
@@ -145,7 +158,7 @@
                 (t) => t.id === activeCrossGroup.partnerTabId,
             )}
             <div
-                class="relative z-1 px-1 flex flex-col sm:w-full md:w-9/12 lg:w-6/12 rounded-r-md
+                class="relative z-1 px-1 flex flex-col flex-1 min-w-0 rounded-r-md
                         {$zenMode
                     ? ''
                     : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]'}"
@@ -171,7 +184,7 @@
             <!-- Julia REPL panel on the right (or left in RTL layout) — shared by all tabs -->
             <div
                 class="relative z-1 flex flex-col items-center
-                        sm:w-full md:w-9/12 lg:w-6/12 rounded-r-md
+                        flex-1 min-w-0 rounded-r-md
                         {$zenMode
                     ? ''
                     : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]'}"
@@ -193,9 +206,15 @@
                 </div>
             </div>
         {:else if typstMode}
-            <TypstPreview />
+            <div
+                class="flex-1 min-w-0 h-full flex flex-col sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"
+            >
+                <TypstPreview embedded={true} />
+            </div>
         {:else}
-            <Parchment />
+            <div class="flex-1 min-w-0 h-full">
+                <Parchment />
+            </div>
         {/if}
         {#if $zenMode && $isSidebar}
             <div
@@ -212,6 +231,7 @@
         <Sidebar />
     </div>
 </div>
+<UpDownMargin />
 <SurahWidget />
 <EditorToolbar onOpenSettings={() => (showSettings = true)} />
 <TourOverlay />
@@ -220,7 +240,15 @@
     onClose={() => (showSettings = false)}
     onOpenHelp={() => openHelp()}
 />
-<HelpDialog open={$helpStore.open} initialSection={$helpStore.section} onClose={closeHelp} />
+<CustomFontDialog
+    open={$customFontDialogOpen}
+    onClose={closeCustomFontDialog}
+/>
+<HelpDialog
+    open={$helpStore.open}
+    initialSection={$helpStore.section}
+    onClose={closeHelp}
+/>
 <ManuscriptViewer
     open={$manuscriptViewerOpen}
     onClose={() => manuscriptViewerOpen.set(false)}
@@ -233,3 +261,4 @@
 <SplashScreen visible={isLoading} />
 <UpdateToast />
 <NewBlogToast />
+<JuliaPlotViewer />

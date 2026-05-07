@@ -91,7 +91,7 @@ fn copy_static_db(src: &Path, dest: &Path, _asset_relative_path: &str) -> Result
 
 /// Must match DB_VERSION in src/bin/gen_db.rs.
 /// Increment both when the static dataset changes.
-const DB_VERSION: i64 = 5;
+const DB_VERSION: i64 = 12;
 
 pub struct Database(pub Mutex<Connection>);
 
@@ -114,9 +114,19 @@ impl Database {
                     "DB version mismatch (have {}, need {}), migrating …",
                     current_version, DB_VERSION
                 );
-                // If the existing DB is corrupted (e.g. from a bad previous install),
-                // fall back to empty user data rather than panicking.
-                let user_data = Self::extract_user_data(&db_path).unwrap_or_default();
+                // Keep a backup of the old DB so user data is never permanently
+                // lost if extraction fails or a future migration has a bug.
+                let backup_path = app_data_dir.join("quran.db.bak");
+                let _ = std::fs::copy(&db_path, &backup_path);
+
+                let user_data = match Self::extract_user_data(&db_path) {
+                    Ok(data) => data,
+                    Err(e) => {
+                        eprintln!("Warning: failed to extract user data before migration: {e}. \
+                                   Your old database is backed up at quran.db.bak");
+                        UserData::default()
+                    }
+                };
                 copy_static_db(&static_db_path, &db_path, "data/quran_static.db")?;
                 let conn = Connection::open(&db_path)?;
                 Self::apply_pragmas(&conn)?;

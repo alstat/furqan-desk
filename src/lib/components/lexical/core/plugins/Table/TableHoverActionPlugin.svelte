@@ -42,6 +42,45 @@
 
   let {anchorElem}: Props = $props();
 
+  function useDebounce<T extends (...args: any[]) => void>(
+    fn: T,
+    wait: number,
+    maxWait: number,
+  ): T & { cancel: () => void } {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let maxTimer: ReturnType<typeof setTimeout> | null = null;
+    let latestArgs: Parameters<T> | null = null;
+
+    function clearTimers() {
+      if (timer) clearTimeout(timer);
+      if (maxTimer) clearTimeout(maxTimer);
+      timer = null;
+      maxTimer = null;
+    }
+
+    function flush() {
+      if (!latestArgs) return;
+      const args = latestArgs;
+      latestArgs = null;
+      clearTimers();
+      fn(...args);
+    }
+
+    const debounced = ((...args: Parameters<T>) => {
+      latestArgs = args;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(flush, wait);
+      if (!maxTimer) maxTimer = setTimeout(flush, maxWait);
+    }) as T & { cancel: () => void };
+
+    debounced.cancel = () => {
+      latestArgs = null;
+      clearTimers();
+    };
+
+    return debounced;
+  }
+
   function getMouseInfo(event: MouseEvent): {
     tableDOMNode: HTMLElement | null;
     isOutside: boolean;

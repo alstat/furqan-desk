@@ -1,3 +1,52 @@
+<script module lang="ts">
+    import { invoke } from '@tauri-apps/api/core';
+    import type { Locale } from '$lib/i18n';
+
+    type WordByWordRow = { ayah: number; word: number; text: string };
+
+    const WORD_BY_WORD_LANG_BY_LOCALE: Partial<Record<Locale, string>> = {
+        en: 'english',
+        bn: 'bengali',
+        fr: 'french',
+        hi: 'hindi',
+        id: 'indonesian',
+        fa: 'persian',
+        ta: 'tamil',
+        tr: 'turkish',
+        ur: 'urdu',
+    };
+
+    const wordByWordCache = new Map<string, Promise<Map<string, string>>>();
+
+    function wordByWordLangForLocale(locale: Locale): string {
+        return WORD_BY_WORD_LANG_BY_LOCALE[locale] ?? 'english';
+    }
+
+    function loadSurahWordByWord(surah: number, lang: string): Promise<Map<string, string>> {
+        const cacheKey = `${surah}:${lang}`;
+        const cached = wordByWordCache.get(cacheKey);
+        if (cached) return cached;
+
+        const request = invoke<WordByWordRow[]>('get_surah_word_by_word', { surah, lang })
+            .then((rows) => new Map(rows.map((row) => [`${row.ayah}:${row.word}`, row.text])))
+            .catch((err) => {
+                wordByWordCache.delete(cacheKey);
+                throw err;
+            });
+        wordByWordCache.set(cacheKey, request);
+        return request;
+    }
+
+    async function loadWordMeaning(surah: number, ayah: number, word: number, preferredLang: string): Promise<string | null> {
+        const preferredMap = await loadSurahWordByWord(surah, preferredLang);
+        const preferredMeaning = preferredMap.get(`${ayah}:${word}`);
+        if (preferredMeaning || preferredLang === 'english') return preferredMeaning ?? null;
+
+        const englishMap = await loadSurahWordByWord(surah, 'english');
+        return englishMap.get(`${ayah}:${word}`) ?? null;
+    }
+</script>
+
 <script lang="ts">
     import type { MorphWord } from "$lib/types/morphology";
     import Icon from "@iconify/svelte";
@@ -6,7 +55,7 @@
     import { onDestroy } from "svelte";
     import { morphGlassEffect } from "$lib/stores/morphology.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
-    import { t } from '$lib/i18n';
+    import { locale, t } from '$lib/i18n';
     import { get } from 'svelte/store';
     import { openHelp } from '$lib/stores/help.store';
     import { lexicalEditorInstance } from '$lib/stores/editor.store';
@@ -24,15 +73,38 @@
 
     interface Props {
         word: MorphWord;
+        surahNum: number;
+        ayahNum: number;
         position: { x: number; y: number; placement: "above" | "below" };
         onClose: () => void;
         onPin?: () => void;
         onHighlight?: () => void;
     }
 
-    let { word, position, onClose, onPin, onHighlight }: Props = $props();
+    let { word, surahNum, ayahNum, position, onClose, onPin, onHighlight }: Props = $props();
 
     let zIndex = $state(bringToFront());
+    let wordMeaning = $state<string | null>(null);
+    let meaningRequestId = 0;
+
+    $effect(() => {
+        const requestId = ++meaningRequestId;
+        const currentSurah = surahNum;
+        const currentAyah = ayahNum;
+        const currentWord = word.word;
+        const preferredLang = wordByWordLangForLocale($locale);
+
+        wordMeaning = null;
+        if (currentSurah <= 0 || currentAyah <= 0) return;
+
+        loadWordMeaning(currentSurah, currentAyah, currentWord, preferredLang)
+            .catch(() => preferredLang === 'english'
+                ? null
+                : loadWordMeaning(currentSurah, currentAyah, currentWord, 'english').catch(() => null))
+            .then((meaning) => {
+                if (meaningRequestId === requestId) wordMeaning = meaning;
+            });
+    });
 
     function portal(node: HTMLElement) {
         document.body.appendChild(node);
@@ -379,6 +451,30 @@
 
     <!-- Token list -->
     <div class="default-scroll flex-1 space-y-2.5 overflow-y-auto p-3">
+        {#if wordMeaning}
+            <div class="overflow-hidden rounded-xl border border-brand-gold-200/80 bg-linear-to-br from-brand-gold-50 to-white dark:border-[#e5c890]/30 dark:from-[#e5c890]/10 dark:to-[#303446]/60">
+                <div class="h-0.5 w-full bg-brand-gold-400 dark:bg-[#e5c890]"></div>
+                <div class="flex items-start gap-3 px-3.5 py-3">
+                    <div class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-brand-gold-100 text-brand-gold-600 dark:bg-[#e5c890]/15 dark:text-[#e5c890]">
+                        <Icon icon="solar:book-bookmark-bold-duotone" width="0.9rem" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="mb-1 flex items-center justify-between gap-2">
+                            <span class="text-[10px] font-semibold uppercase tracking-wide text-brand-gold-600/80 dark:text-[#e5c890]/80">
+                                {$t('surah.word_by_word')}
+                            </span>
+                            <span dir="rtl" class="font-scheherazade text-lg leading-none text-brand-gold-600/80 dark:text-[#e5c890]/80">
+                                {word.combined_arabic}
+                            </span>
+                        </div>
+                        <p dir="auto" class="text-sm font-semibold leading-relaxed text-brand-charcoal-500 dark:text-[#949cbb]">
+                            {wordMeaning}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {/if}
+
         {#each word.tokens as token}
             {@const s = getStyle(token.tag)}
             <div class="overflow-hidden rounded-xl border {s.border} {s.bg}">

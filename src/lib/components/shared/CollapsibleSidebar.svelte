@@ -15,25 +15,46 @@
         tocOpen,
         tocAnchorRect,
         zenPeek,
+        singlePageMargin,
     } from "$lib/stores/editor.store";
-    import { activeTab } from "$lib/stores/tabs.store";
+    import { activeTab, activeTabId } from "$lib/stores/tabs.store";
+    import { crossGroups } from "$lib/stores/julia-terminal.store";
     import FeedbackDialog from "./FeedbackDialog.svelte";
     import DonationDialog from "./DonationDialog.svelte";
+    import UserAccountDialog from "./UserAccountDialog.svelte";
+    import AiChatDialog from "./AiChatDialog.svelte";
     import Icon from "@iconify/svelte";
     import { donationOpen } from "$lib/stores/tour.store";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
     import { t } from "$lib/i18n";
     import { zenMode, appDarkMode } from "$lib/stores/editor.store";
+    import { authUser, isPro } from "$lib/stores/auth.store";
+    import { aiChatDialogOpen } from "$lib/stores/ai-chat.store";
 
     let feedbackOpen = $state(false);
+    let accountOpen = $state(false);
     let tocBtnEl = $state<HTMLButtonElement | null>(null);
+
+    function handleAiClick() {
+        if (!$authUser || !$isPro) {
+            accountOpen = true;
+            return;
+        }
+        aiChatDialogOpen.set(true);
+    }
 
     let { children, roundRight = true } = $props();
 
-    let sidebarWidth = $derived(
-        $isSidebar ? "sm:w-full md:w-9/12 lg:w-6/12" : "",
+    let sidebarWidth = $derived($isSidebar ? "w-full" : "");
+
+    let hasLeftPanel = $derived(
+        !$hideSurahPage() ||
+        $crossGroups.some((g) => g.hostTabId === $activeTabId || g.partnerTabId === $activeTabId) ||
+        $activeTab?.type === "julia" ||
+        $activeTab?.type === "typst"
     );
 
+    let windowWidth = $state(0);
     function toggleSidebar() {
         const opening = !$isSidebar;
 
@@ -42,6 +63,17 @@
         // the parchment instead so the user always sees content.
         if (!opening && $hideSurahPage()) {
             hideSurahPage.set(() => false);
+        }
+
+        if (!$hideSurahPage() && $isSidebar) {
+          if (windowWidth < 1800) {
+            singlePageMargin.set(12);
+            console.log(windowWidth)
+          } else if (windowWidth >= 1800 && windowWidth < 2000) {
+            singlePageMargin.set(10);
+          } else {
+            singlePageMargin.set(8);
+          }
         }
 
         $isSidebar = opening;
@@ -87,10 +119,12 @@
         };
     }
 </script>
+<svelte:window bind:innerWidth={windowWidth} />
 
 <div
     id="tour-sidebar"
-    class={`relative flex justify-right overflow-visible font-base text-slate-900 dark:text-[#c6d0f5] ${sidebarWidth}`}
+    style:width="{$isSidebar ? (hasLeftPanel ? 50 : 100) : 0}%"
+    class={`relative flex justify-right overflow-visible font-base text-slate-900 dark:text-[#c6d0f5]`}
 >
     <!-- Sidebar toggle (top) -->
     <button
@@ -110,11 +144,23 @@
         </svg>
     </button>
 
+
+    <!-- AI Button -->
+    <button
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-15 z-3 ${$aiChatDialogOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+        onclick={handleAiClick}
+        aria-label={$t('ai_chat.title')}
+        title={$t('ai_chat.title')}
+    >
+        <Icon icon="ri:chat-ai-3-fill" class="h-4 w-4 text-brand-charcoal-300" />
+    </button>
+
+
     <!-- Table of Contents button -->
     {#if $isSidebar && $activeTab?.type === "lexical"}
         <button
             bind:this={tocBtnEl}
-            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-15 z-3 ${$tocOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-26 z-3 ${$tocOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
             onclick={() => {
                 if (tocBtnEl) tocAnchorRect.set(tocBtnEl.getBoundingClientRect());
                 $tocOpen = !$tocOpen;
@@ -129,7 +175,7 @@
     <!-- Julia Plot Viewer button -->
     {#if $juliaMode || $juliaViewerOpen}
         <button
-            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-26 z-3 rounded-full
+            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-37 z-3 rounded-full
 			       ${$juliaViewerOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
             onclick={() => ($juliaViewerOpen = !$juliaViewerOpen)}
             aria-label="Julia Plot Viewer"
@@ -147,6 +193,16 @@
             {/if}
         </button>
     {/if}
+
+    <!-- User account button (above donation) -->
+    <button
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-26 z-3 ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+        onclick={() => (accountOpen = true)}
+        aria-label={$t("account.title")}
+        title={$t("account.title")}
+    >
+        <Icon icon="solar:user-bold-duotone" class="h-4 w-4" />
+    </button>
 
     <!-- Donation button (above feedback) -->
     <button
@@ -175,6 +231,14 @@
     <FeedbackDialog
         open={feedbackOpen}
         onClose={() => (feedbackOpen = false)}
+    />
+    <UserAccountDialog
+        open={accountOpen}
+        onClose={() => (accountOpen = false)}
+    />
+    <AiChatDialog
+        open={$aiChatDialogOpen}
+        onClose={() => aiChatDialogOpen.set(false)}
     />
 
     <div class={$isSidebar ? `flex flex-row w-full` : `hidden`}>

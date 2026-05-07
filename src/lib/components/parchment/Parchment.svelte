@@ -16,7 +16,10 @@
     import type { SurahMorphology } from "$lib/types/morphology";
     import { morphFontSize } from "$lib/stores/morphology.store";
     import MorphologyView from "./MorphologyView.svelte";
-    import { pendingJumpAyah, pendingHighlight } from "$lib/stores/bookmarks.store";
+    import {
+        pendingJumpAyah,
+        pendingHighlight,
+    } from "$lib/stores/bookmarks.store";
     import HighlightSaveDialog from "./HighlightSaveDialog.svelte";
     import {
         totalAyahsInSurah,
@@ -28,7 +31,12 @@
     import ReciterSelectDialog from "./ReciterSelectDialog.svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { activeTranslatorId } from "$lib/stores/translation.store";
-    import { zenMode, appDarkMode, zenPeek } from "$lib/stores/editor.store";
+    import {
+        zenMode,
+        appDarkMode,
+        zenPeek,
+        singlePageMargin,
+    } from "$lib/stores/editor.store";
 
     let scrollContainer = $state<HTMLElement | null>(null);
     let showBookmarks = $state(false);
@@ -142,6 +150,22 @@
             recitationPlaylist.set(null);
             return;
         }
+
+        // Reference shortcut: "surah:ayah" jumps directly (e.g., "2:255")
+        const refMatch = query.trim().match(/^(\d{1,3})\s*:\s*(\d{1,3})$/);
+        if (refMatch) {
+            const surah = parseInt(refMatch[1], 10);
+            const ayah = parseInt(refMatch[2], 10);
+            if (surah >= 1 && surah <= 114 && ayah >= 1) {
+                morphologyMultiSurahList.set(null);
+                morphologyAyahFilter.set(null);
+                recitationPlaylist.set(null);
+                selectedSurahIdx.set(surah);
+                pendingJumpAyah.set(ayah);
+                return;
+            }
+        }
+
         isSearching = true;
         try {
             const matches = await invoke<{ surah: number; ayah: number }[]>(
@@ -201,10 +225,20 @@
     }
 </script>
 
+<!-- style:width="{Math.round(($singlePageMargin / 12) * 100)}%" -->
 <div
     id="tour-parchment"
-    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 h-full flex flex-col items-center rounded-sm ${$zenMode && $appDarkMode ? "bg-transparent" : "bg-white dark:bg-[#303446]"} sm:w-full md:w-9/12 lg:w-6/12 ${$zenMode ? "" : "sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"}`}
+    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 h-full justify-center min-w-0 text-center flex flex-col items-center rounded-sm ${$zenMode && $appDarkMode ? "bg-transparent" : "bg-white dark:bg-[#303446]"} ${$zenMode ? "" : "sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"}`}
 >
+    <div class="w-full z-30">
+        <ParchmentActionBar
+            onOpenBookmarks={() => (showBookmarks = true)}
+            onOpenHighlights={() => (showHighlights = true)}
+            onSearch={handleSearch}
+            {isSearching}
+        />
+    </div>
+
     {#if $zenMode}
         {#if !$isSidebar}
             <div
@@ -226,13 +260,38 @@
         ></div>
     {/if}
 
-    <div class="w-full">
-        <ParchmentActionBar
-            onOpenBookmarks={() => (showBookmarks = true)}
-            onOpenHighlights={() => (showHighlights = true)}
-            onSearch={handleSearch}
-            {isSearching}
-        />
+    <!-- Surah label — anchored to outer stable div so font-size reflows don't shift it -->
+    <div
+        dir="ltr"
+        class="{$zenMode
+            ? $zenPeek
+                ? 'opacity-50 transition-opacity duration-200'
+                : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
+            : ''} absolute -top-3.5 right-12 z-50"
+    >
+        {#if $morphologyMultiSurahList !== null}
+            <span
+                class="inline-flex items-center gap-1.5 rounded-full px-2 py-1 leading-none
+                         bg-brand-sand-100/80 border border-brand-sand-200 backdrop-blur-sm
+                         dark:bg-[#292c3c]/80 dark:border-[#414559]"
+            >
+                <span
+                    class="inline-block h-1.5 w-1.5 rounded-full bg-brand-gold-400 dark:bg-[#e5c890]"
+                ></span>
+                <span
+                    class="inline-block h-1.5 w-1.5 rounded-full bg-brand-gold-400 dark:bg-[#e5c890]"
+                ></span>
+            </span>
+        {:else}
+            <span
+                class="inline-flex items-center gap-1 rounded-full px-1.5 py-1 text-[9px] font-semibold leading-none
+                         bg-brand-sand-100/80 border border-brand-sand-200 backdrop-blur-sm
+                         dark:bg-[#292c3c]/80 dark:border-[#414559] text-brand-gold-500 dark:text-[#e5c890]"
+            >
+                <Icon icon="solar:book-bold-duotone" width="0.6rem" />
+                {$surahMorphology?.surah ?? ""}
+            </span>
+        {/if}
     </div>
 
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -240,7 +299,7 @@
         bind:this={scrollContainer}
         role="document"
         onmouseup={handleMouseUp}
-        class={`default-scroll w-full flex-1 min-h-0 overflow-y-auto px-12 pt-10 pb-20 text-right ${$morphFontSize} leading-loose text-slate-600 dark:text-[#c6d0f5] ${$isSidebar ? "rounded-r-md" : "rounded-md"} ${$zenMode ? "" : "border border-stone-200 dark:border-[#414559]"}`}
+        class={`default-scroll relative w-full flex-1 min-h-0 overflow-y-auto px-12 pt-10 pb-20 text-right ${$morphFontSize} leading-loose text-slate-600 dark:text-[#c6d0f5] ${$isSidebar ? "rounded-r-md" : "rounded-md"} ${$zenMode ? "" : "border border-stone-200 dark:border-[#414559]"}`}
     >
         <MorphologyView />
     </div>

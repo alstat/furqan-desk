@@ -165,7 +165,32 @@
       "Bash(codesign -d --entitlements - /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src-tauri/target/universal-apple-darwin/release/bundle/macos/AyahLab.app)",
       "Bash(codesign -d --entitlements - /Applications/AyahLab.app)",
       "Bash(cargo metadata:*)",
-      "Bash(pkill -f AyahLab)"
+      "Bash(pkill -f AyahLab)",
+      "Bash(sed 's/:$//')",
+      "WebFetch(domain:quran.com)",
+      "WebFetch(domain:api-docs.quran.foundation)",
+      "WebFetch(domain:quran.foundation)",
+      "WebFetch(domain:archive.org)",
+      "WebFetch(domain:old.quranwbw.com)",
+      "Bash(git -C /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk log --oneline --all)",
+      "Bash(supabase init *)",
+      "Bash(mkdir -p /Users/al-ahmadgaidasaad/Documents/Dev/ayahlab-website/supabase/migrations /Users/al-ahmadgaidasaad/Documents/Dev/ayahlab-website/supabase/functions/paddle-webhook)",
+      "Bash(cp /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/supabase/migrations/20260427000001_subscriptions.sql /Users/al-ahmadgaidasaad/Documents/Dev/ayahlab-website/supabase/migrations/)",
+      "Bash(cp /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/supabase/functions/paddle-webhook/index.ts /Users/al-ahmadgaidasaad/Documents/Dev/ayahlab-website/supabase/functions/paddle-webhook/)",
+      "Bash(cp /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/supabase/config.toml /Users/al-ahmadgaidasaad/Documents/Dev/ayahlab-website/supabase/)",
+      "Bash(rm -rf /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/supabase)",
+      "Bash(rm /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/lib/billing/paddle.ts)",
+      "Bash(rmdir /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/lib/billing)",
+      "Bash(unzip -p test.docx word/document.xml)",
+      "Bash(bunx svelte-check *)",
+      "Bash(bun --version)",
+      "Bash(bun /tmp/test_full.ts)",
+      "Bash(unzip -p /tmp/multi.docx word/document.xml)",
+      "Bash(xcrun stapler *)",
+      "Bash(spctl -a -vvv -t exec /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/target/universal-apple-darwin/release/bundle/macos/AyahLab.app)",
+      "Bash(rm /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/target/universal-apple-darwin/release/bundle/macos/.DS_Store)",
+      "Bash(killall Finder)",
+      "Bash(open /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/target/universal-apple-darwin/release/bundle/macos/)"
     ]
   }
 }

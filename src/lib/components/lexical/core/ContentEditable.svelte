@@ -49,7 +49,7 @@
 		ariaRequired = undefined,
 		autoCapitalize = undefined,
 		// className = 'ContentEditable__root',
-        className = 'ContentEditable__root relative block top-2 px-4 w-full outline-none border-0 text-brand-charcoal-500 default-scroll',
+        className = 'ContentEditable__root relative block top-2 px-4 w-full outline-none border-0 text-[#555555] dark:text-[#949cbb] default-scroll',
 		id = undefined,
 		role = 'textbox',
 		spellCheck = true,
@@ -94,7 +94,7 @@
 	aria-owns={!isEditable ? null : ariaOwns}
 	aria-readonly={!isEditable ? true : undefined}
 	aria-required={ariaRequired}
-	autocapitalize={autoCapitalize}
+	autocapitalize={autoCapitalize ?? undefined}
 	class={`${className} overflow-auto text-base cursor-text`}
 	contentEditable={isEditable}
 	data-testid={testid}

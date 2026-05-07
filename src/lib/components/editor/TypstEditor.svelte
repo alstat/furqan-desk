@@ -3,7 +3,7 @@
     import { save } from "@tauri-apps/plugin-dialog";
     import { writeFile } from "@tauri-apps/plugin-fs";
     import { get } from "svelte/store";
-    import { onDestroy } from "svelte";
+    import { onDestroy, tick } from "svelte";
     import {
         typstSource,
         typstRecompile,
@@ -12,6 +12,8 @@
         typstIsCompiling,
         zenMode,
         zenPeek,
+        appDarkMode,
+        typstPreviewDarkMode,
     } from "$lib/stores/editor.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
     import {
@@ -26,6 +28,7 @@
         type CompletionSource,
     } from "@codemirror/autocomplete";
     import { TYPST_COMPLETIONS } from "$lib/completions/typst";
+    import { t } from "$lib/i18n";
 
     let {
         tabId = null,
@@ -41,6 +44,37 @@
     const sideBySide = $derived($hideSurahPage() && !inCrossHost);
 
     let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+    let embeddedPreviewScrollEl: HTMLDivElement | null = $state(null);
+    let currentEmbeddedPreviewPage = $state(1);
+
+    function updateCurrentEmbeddedPreviewPage(): void {
+        if (!embeddedPreviewScrollEl || $typstSvgPages.length === 0) {
+            currentEmbeddedPreviewPage = 1;
+            return;
+        }
+
+        const containerRect = embeddedPreviewScrollEl.getBoundingClientRect();
+        const viewportCenter = containerRect.top + containerRect.height / 2;
+        const pages = Array.from(
+            embeddedPreviewScrollEl.querySelectorAll<HTMLElement>(
+                ".typst-page",
+            ),
+        );
+        let nearestPage = 0;
+        let nearestDistance = Number.POSITIVE_INFINITY;
+
+        for (const [i, page] of pages.entries()) {
+            const rect = page.getBoundingClientRect();
+            const pageCenter = rect.top + rect.height / 2;
+            const distance = Math.abs(pageCenter - viewportCenter);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestPage = i;
+            }
+        }
+
+        currentEmbeddedPreviewPage = nearestPage + 1;
+    }
 
     // Keep typstSource in sync with effective tab content
     $effect(() => {
@@ -62,10 +96,21 @@
         return () => clearTimeout(debounceTimer);
     });
 
+    $effect(() => {
+        const pageCount = $typstSvgPages.length;
+        if (pageCount === 0) {
+            currentEmbeddedPreviewPage = 1;
+            return;
+        }
+
+        tick().then(updateCurrentEmbeddedPreviewPage);
+    });
+
     const IMPORT_RE = /#import\s+"@([\w-]+)\/([\w-]+):([\d.]+)"/g;
 
     async function ensurePackagesInstalled(source: string): Promise<void> {
-        const imports: { namespace: string; name: string; version: string }[] = [];
+        const imports: { namespace: string; name: string; version: string }[] =
+            [];
         for (const m of source.matchAll(IMPORT_RE)) {
             imports.push({ namespace: m[1], name: m[2], version: m[3] });
         }
@@ -174,11 +219,14 @@
     const labelClass =
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
 
-    let lineWrap = $state(false);
+    let lineWrap = $state(true);
+
+    const aiContextPrompt =
+        "This text is part of a typst file, so your output should be formatted as part of a typst file";
 
     // ── Resize (preview pane) ─────────────────────────────────────────────────
     let containerEl: HTMLDivElement;
-    let previewHeight = $state(216); // 54 × 4px = 216px (replaces fixed h-54)
+    let previewHeight = $state(200); // 54 × 4px = 216px (replaces fixed h-54)
     let dragStartY = 0;
     let dragStartHeight = 0;
 
@@ -212,13 +260,20 @@
         <div class="flex items-center justify-between px-2 pt-1 mb-1">
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
-                >{effectiveTab?.name ?? "Editor"}</span
+                >{effectiveTab?.name ??
+                    "Editor"}{#if effectiveTab?.isDirty}<span
+                        class="text-brand-gold-500 dark:text-[#e5c890]"
+                    >
+                        *</span
+                    >{/if}</span
             >
             <button
                 onclick={() => (lineWrap = !lineWrap)}
                 title={lineWrap ? "Disable line wrap" : "Enable line wrap"}
                 class="{$zenMode
-                    ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200')
+                    ? $zenPeek
+                        ? 'opacity-50 transition-opacity duration-200'
+                        : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
                     : ''} flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                        {lineWrap
                     ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'
@@ -247,6 +302,8 @@
             language="typst"
             extensions={[typstCompletionExtension]}
             {lineWrap}
+            aiSelectionTools={true}
+            {aiContextPrompt}
             onchange={handleInput}
             class={`${effectiveTab?.type !== "typst" ? "mb-4" : ""} ${sideBySide ? "mb-3" : ""} flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 font-mono`}
         />
@@ -271,29 +328,46 @@
             style:height="{previewHeight}px"
         >
             <span class={labelClass}>Preview</span>
-            <div class="default-scroll flex-1 overflow-auto min-h-0">
-                {#if $typstIsCompiling}
-                    <p class="text-xs text-brand-charcoal-300 italic">
-                        Compiling…
-                    </p>
-                {:else if $typstCompileError}
-                    <pre
-                        class="text-xs text-red-500 whitespace-pre-wrap">{$typstCompileError}</pre>
-                {:else if $typstSvgPages.length > 0}
-                    <div class="flex flex-col gap-3 pb-2">
-                        {#each $typstSvgPages as pageSvg}
-                            <div
-                                class="typst-page overflow-hidden border border-stone-200 rounded-md shadow-sm bg-white"
-                            >
-                                {@html pageSvg}
-                            </div>
-                        {/each}
+            <div class="relative flex-1 min-h-0">
+                {#if $typstSvgPages.length > 0}
+                    <div
+                        class="pointer-events-none absolute right-2 top-2 z-20 rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none text-brand-charcoal-300 backdrop-blur-md"
+                        aria-label="Page {currentEmbeddedPreviewPage} of {$typstSvgPages.length}"
+                    >
+                        {currentEmbeddedPreviewPage} / {$typstSvgPages.length}
                     </div>
-                {:else}
-                    <p class="text-xs text-brand-charcoal-300 italic">
-                        Preview will appear here.
-                    </p>
                 {/if}
+                <div
+                    bind:this={embeddedPreviewScrollEl}
+                    onscroll={updateCurrentEmbeddedPreviewPage}
+                    class="default-scroll h-full overflow-auto"
+                >
+                    {#if $typstIsCompiling}
+                        <p class="text-xs text-brand-charcoal-300 italic">
+                            Compiling…
+                        </p>
+                    {:else if $typstCompileError}
+                        <pre
+                            class="text-xs text-red-500 whitespace-pre-wrap">{$typstCompileError}</pre>
+                    {:else if $typstSvgPages.length > 0}
+                        <div class="flex flex-col gap-3 pb-2">
+                            {#each $typstSvgPages as pageSvg}
+                                <div
+                                    class="typst-page overflow-hidden border border-stone-200 dark:border-[#414559] rounded-md shadow-sm bg-white {$appDarkMode &&
+                                    $typstPreviewDarkMode
+                                        ? 'typst-page-dark'
+                                        : ''}"
+                                >
+                                    {@html pageSvg}
+                                </div>
+                            {/each}
+                        </div>
+                    {:else}
+                        <p class="text-xs text-brand-charcoal-300 italic">
+                            Preview will appear here.
+                        </p>
+                    {/if}
+                </div>
             </div>
         </div>
     {/if}
@@ -312,7 +386,7 @@
                     ? 'opacity-25 hover:opacity-100'
                     : ''} mr-3 cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 transition-colors"
             >
-                Export PDF
+                {$t("typst.export_pdf")}
             </button>
         </div>
     {/if}
@@ -323,5 +397,11 @@
         width: 100%;
         height: auto;
         display: block;
+    }
+    .typst-page-dark {
+        background-color: #1f2430;
+    }
+    .typst-page-dark :global(svg) {
+        filter: invert(1) hue-rotate(180deg);
     }
 </style>

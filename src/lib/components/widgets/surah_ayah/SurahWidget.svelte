@@ -2,6 +2,8 @@
     import Icon from "@iconify/svelte";
     import ControlCard from "../cards/ControlCard.svelte";
     import GroupCards from "../cards/GroupCards.svelte";
+    import TafsirDialog from "$lib/components/shared/TafsirDialog.svelte";
+    import TranslationDialog from "$lib/components/shared/TranslationDialog.svelte";
     import {
         selectedSurahIdx,
         selectedSurahName,
@@ -31,9 +33,12 @@
         activeTranslatorId,
         transliterationEnabled,
         wordByWordEnabled,
+        wordByWordLang,
         tafsirEnabled,
         activeTafsirId,
         availableTafsirAuthors,
+        tafsirDialogOpen,
+        translationDialogOpen,
     } from "$lib/stores/translation.store";
     import { invoke } from "@tauri-apps/api/core";
     import type {
@@ -42,30 +47,59 @@
     } from "$lib/stores/translation.store";
     import { onMount } from "svelte";
     import { t } from '$lib/i18n';
+    import { singlePageMargin } from "$lib/stores/editor.store";
 
-    const LANG_NAMES: Record<string, string> = {
-        AR: "Arabic",
-        BN: "Bengali",
-        DE: "German",
-        EN: "English",
-        FA: "Persian",
-        FR: "French",
-        HA: "Hausa",
-        HI: "Hindi",
-        ID: "Indonesian",
-        MS: "Malay",
-        PA: "Punjabi",
-        PS: "Pashto",
-        ES: "Spanish",
-        JA: "Japanese",
-        PT: "Portuguese",
-        RU: "Russian",
-        SW: "Swahili",
-        TL: "Tagalog",
-        TR: "Turkish",
-        UR: "Urdu",
-        ZH: "Chinese",
+    const LANG_KEYS: Record<string, string> = {
+        SQ: "language.albanian",
+        AR: "language.arabic",
+        BN: "language.bengali",
+        BS: "language.bosnian",
+        CEB: "language.bisaya",
+        ZH: "language.chinese",
+        EN: "language.english",
+        FR: "language.french",
+        DE: "language.german",
+        HA: "language.hausa",
+        HI: "language.hindi",
+        ID: "language.indonesian",
+        JA: "language.japanese",
+        KK: "language.kazakh",
+        KO: "language.korean",
+        KU: "language.kurdish",
+        KY: "language.kyrgyz",
+        MS: "language.malay",
+        FA: "language.persian",
+        PA: "language.punjabi",
+        PS: "language.pashto",
+        PT: "language.portuguese",
+        RU: "language.russian",
+        SR: "language.serbian",
+        ES: "language.spanish",
+        SW: "language.swahili",
+        TG: "language.tajik",
+        TL: "language.tagalog",
+        TA: "language.tamil",
+        TH: "language.thai",
+        TR: "language.turkish",
+        UR: "language.urdu",
+        UZ: "language.uzbek",
+        VI: "language.vietnamese",
     };
+
+    const wordByWordLanguageOptions = [
+        ["english", "language.english"],
+        ["bengali", "language.bengali"],
+        ["french", "language.french"],
+        ["hindi", "language.hindi"],
+        ["indonesian", "language.indonesian"],
+        ["persian", "language.persian"],
+        ["tamil", "language.tamil"],
+        ["turkish", "language.turkish"],
+        ["urdu", "language.urdu"],
+    ] as const;
+
+    const languageName = (code: string) =>
+        LANG_KEYS[code] ? $t(LANG_KEYS[code]) : code;
 
     let font: string = $state("font-scheherazade");
     let textSize: string = $state("text-xl");
@@ -74,6 +108,7 @@
     let selectedTranslatorId: string = $state("");
     let translitEnabled: boolean = $state(false);
     let wbwEnabled: boolean = $state(false);
+    let selectedWbwLang: string = $state("english");
     let tafsirOn: boolean = $state(false);
     let selectedTafsirId: string = $state("");
 
@@ -90,6 +125,7 @@
         if (saved !== null) selectedTranslatorId = String(saved);
         translitEnabled = $transliterationEnabled;
         wbwEnabled = $wordByWordEnabled;
+        selectedWbwLang = $wordByWordLang;
         try {
             const tafsirAuthors =
                 await invoke<TafsirAuthorInfo[]>("get_tafsir_authors");
@@ -129,6 +165,9 @@
     });
     $effect(() => {
         wordByWordEnabled.set(wbwEnabled);
+    });
+    $effect(() => {
+        wordByWordLang.set(selectedWbwLang);
     });
     $effect(() => {
         tafsirEnabled.set(tafsirOn);
@@ -272,7 +311,18 @@
         "w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#626880] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]";
     const labelClass =
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
+
+    let windowWidth = $state(0);
+    $effect(() => {
+      if (windowWidth) {
+      console.log(windowWidth);
+      }
+    }
+    )
+
 </script>
+
+<svelte:window bind:innerWidth={windowWidth} />
 
 {#snippet surahCardBody()}
     <div class="px-4 py-3">
@@ -287,7 +337,7 @@
                         value={`${i + 1}`}
                         selected={$selectedSurahIdx - 1 === i}
                     >
-                        {label.ar} — {SURAH_EN[i]}
+                        {i + 1}. {label.ar} — {SURAH_EN[i]}
                     </option>
                 {/each}
             </select>
@@ -327,10 +377,9 @@
                         >
                             <option value="font-scheherazade">Scheherazade New</option>
                             <option value="font-amiri">Amiri Qur'an</option>
-                            <option value="font-garamond">EB Garamond</option>
                         </select>
                         <span
-                            class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300"
+                            class="pointer-events-none absolute inset-y-0 right-2.5 text- flex items-center text-brand-charcoal-300"
                         >
                             <Icon icon="charm:chevron-down" width="0.75rem" />
                         </span>
@@ -348,6 +397,8 @@
                             <option value="text-xl">{$t('surah.size_medium')}</option>
                             <option value="text-2xl">{$t('surah.size_large')}</option>
                             <option value="text-3xl">{$t('surah.size_xlarge')}</option>
+                            <option value="text-4xl">{$t('surah.size_2xlarge')}</option>
+                            <option value="text-5xl">{$t('surah.size_3xlarge')}</option>
                         </select>
                         <span
                             class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300"
@@ -367,7 +418,18 @@
                 aria-label={$t('surah.hide_page')}
                 onclick={() => {
                     hideSurah = !hideSurah;
-                    if (hideSurah && !$isSidebar) $isSidebar = true;
+                    if (hideSurah && !$isSidebar) {
+                      $isSidebar = true;
+                    } else if (!hideSurah && $isSidebar) {
+                      if (windowWidth < 1800) {
+                        singlePageMargin.set(12);
+                        console.log(windowWidth)
+                      } else if (windowWidth >= 1800 && windowWidth < 2000) {
+                        singlePageMargin.set(10);
+                      } else {
+                        singlePageMargin.set(8);
+                      }
+                    }
                 }}
                 class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {hideSurah
                     ? 'bg-brand-gold-400'
@@ -394,8 +456,8 @@
                     class={selectClass}
                 >
                     <option value="">{$t('surah.none')}</option>
-                    {#each [...new Set($availableTranslators.map((tr) => tr.lang))] as lang}
-                        <optgroup label={LANG_NAMES[lang] ?? lang}>
+                    {#each [...new Set($availableTranslators.map((tr) => tr.lang))].sort((a, b) => languageName(a).localeCompare(languageName(b))) as lang}
+                        <optgroup label={languageName(lang)}>
                             {#each $availableTranslators.filter((tr) => tr.lang === lang) as tr}
                                 <option value={String(tr.id)}>{tr.name}</option>
                             {/each}
@@ -409,6 +471,16 @@
                 </span>
             </div>
         </div>
+        {#if selectedTranslatorId}
+            <button
+                type="button"
+                onclick={() => translationDialogOpen.set(true)}
+                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100 dark:bg-[#292c3c] px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
+            >
+                <Icon icon="garden:translation-exists-stroke-12" width="0.85rem" />
+                {$t('surah.translation_view_dialog')}
+            </button>
+        {/if}
         <div class="flex items-center justify-between">
             <span class={labelClass}>{$t('surah.transliteration')}</span>
             <button
@@ -449,6 +521,18 @@
                 ></span>
             </button>
         </div>
+        {#if wbwEnabled}
+            <div class="relative -mt-1.5">
+                <select bind:value={selectedWbwLang} class={selectClass}>
+                    {#each wordByWordLanguageOptions as [value, labelKey]}
+                        <option {value}>{$t(labelKey)}</option>
+                    {/each}
+                </select>
+                <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+                    <Icon icon="charm:chevron-down" width="0.75rem" />
+                </span>
+            </div>
+        {/if}
         <div class="border-t border-brand-sand-100 dark:border-[#414559] pt-3">
             <div class="flex items-center justify-between mb-2">
                 <span class={labelClass}>{$t('surah.tafsir')}</span>
@@ -478,8 +562,8 @@
                         class={selectClass}
                     >
                         <option value="">{$t('surah.none')}</option>
-                        {#each [...new Set($availableTafsirAuthors.map((a) => a.lang))] as lang}
-                            <optgroup label={LANG_NAMES[lang] ?? lang}>
+                        {#each [...new Set($availableTafsirAuthors.map((a) => a.lang))].sort((a, b) => languageName(a).localeCompare(languageName(b))) as lang}
+                            <optgroup label={languageName(lang)}>
                                 {#each $availableTafsirAuthors.filter((a) => a.lang === lang) as a}
                                     <option value={String(a.id)}
                                         >{a.name.replace(/ \([^)]+\)$/, '')}</option
@@ -494,6 +578,16 @@
                         <Icon icon="charm:chevron-down" width="0.75rem" />
                     </span>
                 </div>
+                {#if selectedTafsirId}
+                    <button
+                        type="button"
+                        onclick={() => (tafsirDialogOpen.set(true))}
+                        class="cursor-pointer mb-1 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100 dark:bg-[#292c3c] px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
+                    >
+                        <Icon icon="solar:book-2-bold-duotone" width="0.85rem" />
+                        {$t('surah.tafsir_view_dialog')}
+                    </button>
+                {/if}
             {/if}
         </div>
     </div>
@@ -517,3 +611,6 @@
     xPosition={"right"}
     id="tour-surah-widget"
 />
+
+<TafsirDialog open={$tafsirDialogOpen} onClose={() => tafsirDialogOpen.set(false)} />
+<TranslationDialog open={$translationDialogOpen} onClose={() => translationDialogOpen.set(false)} />

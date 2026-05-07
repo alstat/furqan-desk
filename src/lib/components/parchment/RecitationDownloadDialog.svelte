@@ -92,6 +92,7 @@
                 surahFilter,
                 ayahFilter,
             });
+            onClose();
         } catch (e) {
             console.error("Download failed:", e);
             isDownloading.set(false);
@@ -107,7 +108,7 @@
     }
 
     function handleClose() {
-        if (!$isDownloading) onClose();
+        onClose();
     }
 
     let progressPct = $derived(
@@ -173,9 +174,8 @@
                     </div>
                     <button
                         onclick={handleClose}
-                        disabled={$isDownloading}
                         aria-label={$t("common.close")}
-                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
                         <Icon icon="solar:close-circle-bold" width="1rem" />
                     </button>

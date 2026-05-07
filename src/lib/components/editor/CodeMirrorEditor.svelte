@@ -15,6 +15,8 @@
         history,
         historyKeymap,
         indentWithTab,
+        toggleComment,
+        toggleBlockComment,
         undoDepth,
         redoDepth,
     } from '@codemirror/commands';
@@ -29,6 +31,8 @@
     import { tags } from '@lezer/highlight';
     import { julia } from '@codemirror/legacy-modes/mode/julia';
     import { editorTheme, cmFontSize, codeMirrorViewInstance, codeMirrorCanUndo, codeMirrorCanRedo } from '$lib/stores/editor.store';
+    import { isPro } from '$lib/stores/auth.store';
+    import AiSelectionToolbar from '$lib/components/shared/AiSelectionToolbar.svelte';
 
     // ── Props ─────────────────────────────────────────────────────────────────
 
@@ -39,6 +43,8 @@
         extensions: extraExtensions = [],
         class: className = '',
         lineWrap = true,
+        aiSelectionTools = false,
+        aiContextPrompt,
         onchange,
     }: {
         value?: string;
@@ -47,8 +53,18 @@
         extensions?: Extension[];
         class?: string;
         lineWrap?: boolean;
+        aiSelectionTools?: boolean;
+        aiContextPrompt?: string;
         onchange?: (newValue: string) => void;
     } = $props();
+
+    let aiSelection = $state<{
+        from: number;
+        to: number;
+        text: string;
+        x: number;
+        y: number;
+    } | null>(null);
 
     // ── Ayu Light theme ───────────────────────────────────────────────────────
 
@@ -299,9 +315,17 @@
         return [ayuLightBase, syntaxHighlighting(ayuLightHighlight)];
     }
 
+    const juliaLanguage = StreamLanguage.define(julia);
+    const juliaCommentData = juliaLanguage.data.of({
+        commentTokens: { line: '#', block: { open: '#=', close: '=#' } },
+    });
+    const typstCommentData = typstLanguage.data.of({
+        commentTokens: { line: '//', block: { open: '/*', close: '*/' } },
+    });
+
     function getLangExt(lang: string): Extension {
-        if (lang === 'julia') return StreamLanguage.define(julia);
-        if (lang === 'typst') return typstLanguage;
+        if (lang === 'julia') return [juliaLanguage, juliaCommentData];
+        if (lang === 'typst') return [typstLanguage, typstCommentData];
         return [];
     }
 
@@ -313,6 +337,59 @@
 
     let container: HTMLDivElement;
     let view: EditorView;
+
+    function updateAiSelection() {
+        if (!aiSelectionTools || !view || !$isPro) {
+            aiSelection = null;
+            return;
+        }
+
+        const selection = view.state.selection.main;
+        if (selection.empty) {
+            aiSelection = null;
+            return;
+        }
+
+        const from = Math.min(selection.from, selection.to);
+        const to = Math.max(selection.from, selection.to);
+        const text = view.state.sliceDoc(from, to);
+        if (!text.trim()) {
+            aiSelection = null;
+            return;
+        }
+
+        const start = view.coordsAtPos(from);
+        const end = view.coordsAtPos(to);
+        if (!start && !end) {
+            aiSelection = null;
+            return;
+        }
+
+        const left = start?.left ?? end!.left;
+        const right = end?.right ?? start!.right;
+        const top = Math.min(start?.top ?? end!.top, end?.top ?? start!.top);
+        const viewportWidth = window.innerWidth || 0;
+        aiSelection = {
+            from,
+            to,
+            text,
+            x: Math.max(180, Math.min(viewportWidth - 180, (left + right) / 2)),
+            y: Math.max(12, top - 8),
+        };
+    }
+
+    function replaceAiSelection(replacement: string) {
+        if (!view || !aiSelection) return;
+        const from = Math.min(aiSelection.from, view.state.doc.length);
+        const to = Math.min(aiSelection.to, view.state.doc.length);
+        view.dispatch({
+            changes: { from, to, insert: replacement },
+            selection: { anchor: from + replacement.length },
+            scrollIntoView: true,
+        });
+        view.focus();
+        aiSelection = null;
+    }
 
     onMount(() => {
         const state = EditorState.create({
@@ -329,6 +406,8 @@
                 search({ top: true }),
                 keymap.of([
                     ...extraKeymap,
+                    { key: 'Mod-/', run: toggleComment, preventDefault: true },
+                    { key: 'Shift-Alt-a', run: toggleBlockComment, preventDefault: true },
                     indentWithTab,
                     ...historyKeymap,
                     ...searchKeymap,
@@ -340,6 +419,9 @@
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged) {
                         onchange?.(update.state.doc.toString());
+                    }
+                    if (update.selectionSet || update.docChanged || update.focusChanged) {
+                        updateAiSelection();
                     }
                     codeMirrorCanUndo.set(undoDepth(update.state) > 0);
                     codeMirrorCanRedo.set(redoDepth(update.state) > 0);
@@ -399,6 +481,17 @@
 </script>
 
 <div bind:this={container} class={className} style="--cm-font-size: {$cmFontSize}px"></div>
+
+{#if aiSelectionTools && $isPro && aiSelection}
+    <AiSelectionToolbar
+        selectedText={aiSelection.text}
+        x={aiSelection.x}
+        y={aiSelection.y}
+        contextPrompt={aiContextPrompt}
+        onReplace={replaceAiSelection}
+        onClose={() => (aiSelection = null)}
+    />
+{/if}
 
 <style>
     div :global(.cm-editor) {

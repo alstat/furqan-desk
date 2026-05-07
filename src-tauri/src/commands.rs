@@ -1,7 +1,7 @@
 use crate::db::Database;
 use crate::typst_world::get_world;
 use serde::Serialize;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
@@ -1414,15 +1414,16 @@ pub struct WordTranslation {
 pub fn get_surah_word_by_word(
     db: State<Database>,
     surah: i64,
+    lang: String,
 ) -> Result<Vec<WordTranslation>, String> {
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare(
-            "SELECT ayah, word, text FROM word_by_word WHERE surah = ?1 ORDER BY ayah, word",
+            "SELECT ayah, word, text FROM word_by_word WHERE surah = ?1 AND lang = ?2 ORDER BY ayah, word",
         )
         .map_err(|e| e.to_string())?;
     let rows = stmt
-        .query_map(rusqlite::params![surah], |row| {
+        .query_map(rusqlite::params![surah, lang], |row| {
             Ok(WordTranslation {
                 ayah: row.get(0)?,
                 word: row.get(1)?,
@@ -2292,4 +2293,19 @@ pub fn get_surah_tafsir(
         .collect::<rusqlite::Result<Vec<_>>>()
         .map_err(|e| e.to_string())?;
     Ok(rows)
+}
+
+#[tauri::command]
+pub fn get_system_font_families() -> Result<Vec<String>, String> {
+    let mut db = fontdb::Database::new();
+    db.load_system_fonts();
+
+    let mut families = BTreeSet::new();
+    for face in db.faces() {
+        for (family, _) in &face.families {
+            families.insert(family.clone());
+        }
+    }
+
+    Ok(families.into_iter().collect())
 }

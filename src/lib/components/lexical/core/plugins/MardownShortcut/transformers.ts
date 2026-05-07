@@ -34,6 +34,11 @@ import {
   $createListItemNode as createListItemNode,
   $isListNode as isListNode,
 } from '@lexical/list';
+import {
+  EquationNode,
+  $createEquationNode as createEquationNode,
+  $isEquationNode as isEquationNode,
+} from '../Equation/EquationNode.js';
 
 export const HR: ElementTransformer = {
   dependencies: [HorizontalRuleNode],
@@ -176,12 +181,61 @@ export const CODE_BLOCK: ElementTransformer = {
   type: 'element',
 };
 
+// Block math: matches a single line that is exactly \[...\] or $$...$$.
+// We accept the opening delimiter on its own line (LaTeX style) or all on one
+// line. The MarkdownShortcut/import path passes one line at a time, so for
+// multi-line display equations we collapse intra-equation newlines to spaces
+// in the matched text.
+export const EQUATION_BLOCK: ElementTransformer = {
+  dependencies: [EquationNode],
+  export: (node: LexicalNode) => {
+    if (!isEquationNode(node) || node.isInline()) return null;
+    return `\\[\n${node.getEquation()}\n\\]`;
+  },
+  regExp: /^\s*(?:\\\[\s*([\s\S]*?)\s*\\\]|\$\$\s*([\s\S]*?)\s*\$\$)\s*$/,
+  replace: (parentNode, _children, match, isImport) => {
+    const latex = (match[1] ?? match[2] ?? '').trim();
+    if (!latex) return;
+    const eq = createEquationNode(latex, false);
+    const para = createParagraphNode();
+    para.append(eq);
+    if (isImport || parentNode.getNextSibling() != null) {
+      parentNode.replace(para);
+    } else {
+      parentNode.insertBefore(para);
+    }
+    para.selectEnd();
+  },
+  type: 'element',
+};
+
+// Inline math: \(...\) or $...$ within a paragraph.
+export const EQUATION_INLINE: TextMatchTransformer = {
+  dependencies: [EquationNode],
+  export: (node) => {
+    if (!isEquationNode(node) || !node.isInline()) return null;
+    return `\\(${node.getEquation()}\\)`;
+  },
+  importRegExp: /\\\(([\s\S]+?)\\\)|(?<!\$)\$(?!\$)((?:\\\$|[^\$\n])+?)\$(?!\d)/,
+  regExp: /(?:\\\(([\s\S]+?)\\\)|(?<!\$)\$(?!\$)((?:\\\$|[^\$\n])+?)\$(?!\d))$/,
+  replace: (textNode, match) => {
+    const latex = (match[1] ?? match[2] ?? '').trim();
+    if (!latex) return;
+    const eq = createEquationNode(latex, true);
+    textNode.replace(eq);
+  },
+  trigger: ')',
+  type: 'text-match',
+};
+
 export const ALL_TRANSFORMERS: Array<Transformer> = [
   HR,
   IMAGE,
   CHECK_LIST,
   LINK,
+  EQUATION_BLOCK,
   CODE_BLOCK,
+  EQUATION_INLINE,
   ...ELEMENT_TRANSFORMERS,
   ...TEXT_FORMAT_TRANSFORMERS,
 ];

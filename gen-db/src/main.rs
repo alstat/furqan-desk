@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 
 /// Increment this whenever the schema or data changes.
 /// Must match DB_VERSION in db.rs.
-const DB_VERSION: i64 = 5;
+const DB_VERSION: i64 = 12;
 
 fn main() {
     // Support running from the workspace root (furqan-desk/) or from src-tauri/
@@ -232,6 +232,66 @@ fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
             "Hamed Choi".into(),
             data_dir.join("translation/ko/hamed-choi-simple.json"),
         ),
+        (
+            "VI".into(),
+            "Hasan Abdul Karim".into(),
+            data_dir.join("translation/vi/hasan-abdul-karim-simple.json"),
+        ),
+        (
+            "TH".into(),
+            "Quran Complex".into(),
+            data_dir.join("translation/th/quran-th-quran-complex-simple.json"),
+        ),
+        (
+            "CEB".into(),
+            "Rowwad Center (Bisaya)".into(),
+            data_dir.join("translation/ceb/bisayan-translation-rowwad-center-simple.json"),
+        ),
+        (
+            "KK".into(),
+            "Khalifa Altay".into(),
+            data_dir.join("translation/kk/khalifa-altay-simple.json"),
+        ),
+        (
+            "UZ".into(),
+            "Muhammad Sodik Muhammad Yusuf".into(),
+            data_dir.join("translation/uz/muhammad-sodik-muhammad-yusuf-simple.json"),
+        ),
+        (
+            "KY".into(),
+            "Hakimov".into(),
+            data_dir.join("translation/ky/kyrgyz-hakimov-simple.json"),
+        ),
+        (
+            "TG".into(),
+            "Khawaja Mirof".into(),
+            data_dir.join("translation/tg/khawaja-mirof-khawaja-mir-simple.json"),
+        ),
+        (
+            "SQ".into(),
+            "Al-Hasan Efendi".into(),
+            data_dir.join("translation/sq/al-hasan-efendi-simple.json"),
+        ),
+        (
+            "BS".into(),
+            "Dar al-Salam Center".into(),
+            data_dir.join("translation/bs/dar-al-salam-center-simple 3.json"),
+        ),
+        (
+            "KU".into(),
+            "Muhammad Saleh Bamoki".into(),
+            data_dir.join("translation/ku/muhammad-saleh-bamoki-simple.json"),
+        ),
+        (
+            "SR".into(),
+            "Dar al-Salam Center".into(),
+            data_dir.join("translation/sr/dar-al-salam-center-simple 4.json"),
+        ),
+        (
+            "TA".into(),
+            "Abdul Hameed Baqavi".into(),
+            data_dir.join("translation/ta/abdul-hameed-baqavi-simple.json"),
+        ),
     ];
     init_translation_tables(&conn, &translation_paths)?;
 
@@ -250,6 +310,11 @@ fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
             "EN".into(),
             "Ibn Kathir (English)".into(),
             data_dir.join("tafsir/en/en-tafisr-ibn-kathir.json"),
+        ),
+        (
+            "EN".into(),
+            "Al-Mukhtasar (English)".into(),
+            data_dir.join("tafsir/en/abridged-explanation-of-the-quran.json"),
         ),
         (
             "TL".into(),
@@ -291,6 +356,111 @@ fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
             "Ibn Kathir (Urdu)".into(),
             data_dir.join("tafsir/ur/tafseer-ibn-e-kaseer-urdu.json"),
         ),
+        (
+            "AR".into(),
+            "Al-Mukhtasar (Arabic)".into(),
+            data_dir.join("tafsir/ar/arabic-al-mukhtasar-in-interpreting-the-noble-quran.json"),
+        ),
+        (
+            "BN".into(),
+            "Al-Mukhtasar (Bengali)".into(),
+            data_dir.join("tafsir/bn/bengali-mokhtasar.json"),
+        ),
+        (
+            "ES".into(),
+            "Al-Mukhtasar (Spanish)".into(),
+            data_dir.join("tafsir/es/spanish-mokhtasar.json"),
+        ),
+        (
+            "FA".into(),
+            "As-Sa'di (Persian)".into(),
+            data_dir.join("tafsir/fa/fr-tafsir-as-saadi.json"),
+        ),
+        (
+            "FA".into(),
+            "Al-Mukhtasar (Persian)".into(),
+            data_dir.join("tafsir/fa/persian-mokhtasar.json"),
+        ),
+        (
+            "FR".into(),
+            "Al-Mukhtasar (French)".into(),
+            data_dir.join("tafsir/fr/french-mokhtasar.json"),
+        ),
+        (
+            "ID".into(),
+            "Al-Mukhtasar (Indonesian)".into(),
+            data_dir.join("tafsir/id/indonesian-mokhtasar.json"),
+        ),
+        (
+            "KY".into(),
+            "Al-Mukhtasar (Kyrgyz)".into(),
+            data_dir.join("tafsir/ky/kyrgyz-mokhtasar.json"),
+        ),
+        (
+            "RU".into(),
+            "Al-Mukhtasar (Russian)".into(),
+            data_dir.join("tafsir/ru/russian-mokhtasar.json"),
+        ),
+        (
+            "RU".into(),
+            "As-Sa'di (Russian)".into(),
+            data_dir.join("tafsir/ru/tafsir-as-saadi-russian.json"),
+        ),
+        (
+            "TH".into(),
+            "Al-Mukhtasar (Thai)".into(),
+            data_dir.join("tafsir/th/thai-mokhtasar.json"),
+        ),
+        (
+            "TR".into(),
+            "Al-Mukhtasar (Turkish)".into(),
+            data_dir.join("tafsir/tr/turkish-mokhtasar.json"),
+        ),
+        (
+            "UZ".into(),
+            "Al-Mukhtasar (Uzbek)".into(),
+            data_dir.join("tafsir/uz/uzbek-mokhtasar.json"),
+        ),
+        (
+            "VI".into(),
+            "Al-Mukhtasar (Vietnamese)".into(),
+            data_dir.join("tafsir/vi/vietnamese-mokhtasar.json"),
+        ),
+        (
+            "ZH".into(),
+            "Al-Mukhtasar (Chinese)".into(),
+            data_dir.join("tafsir/zh/chinese-mokhtasar.json"),
+        ),
+        (
+            "JA".into(),
+            "Al-Mukhtasar (Japanese)".into(),
+            data_dir.join("tafsir/ja/japanese-mokhtasar.json"),
+        ),
+        (
+            "SQ".into(),
+            "As-Sa'di (Albanian)".into(),
+            data_dir.join("tafsir/sq/sq-saadi.json"),
+        ),
+        (
+            "BS".into(),
+            "Al-Mukhtasar (Bosnian)".into(),
+            data_dir.join("tafsir/bs/bosnian-mokhtasar.json"),
+        ),
+        (
+            "SR".into(),
+            "Al-Mukhtasar (Serbian)".into(),
+            data_dir.join("tafsir/sr/serbian-mokhtasar.json"),
+        ),
+        (
+            "KU".into(),
+            "Al-Mukhtasar (Kurdish)".into(),
+            data_dir.join("tafsir/ku/kurdish-mokhtasar.json"),
+        ),
+        (
+            "TA".into(),
+            "Al-Mukhtasar (Tamil)".into(),
+            data_dir.join("tafsir/ta/tamil-mokhtasar.json"),
+        ),
     ];
     init_tafsir_tables(&conn, &tafsir_paths)?;
 
@@ -298,10 +468,20 @@ fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
         &conn,
         &data_dir.join("transliteration/english-transliteration-tajweed-simple.json"),
     )?;
-    init_word_by_word_table(
-        &conn,
-        &data_dir.join("word-by-word/english-wbw-translation.json"),
-    )?;
+    let wbw_langs: &[(&str, &str)] = &[
+        ("english",    "word-by-word/english-wbw-translation.json"),
+        ("bengali",    "word-by-word/bangali-word-by-word-translation.json"),
+        ("french",     "word-by-word/french-wbw-translation.json"),
+        ("hindi",      "word-by-word/hindi-wbw-translation.json"),
+        ("indonesian", "word-by-word/indonesian-word-by-word-translation.json"),
+        ("persian",    "word-by-word/persian-wbw-translation.json"),
+        ("tamil",      "word-by-word/tamil-wbw-translation.json"),
+        ("turkish",    "word-by-word/turkish-wbw-translation.json"),
+        ("urdu",       "word-by-word/urud-wbw.json"),
+    ];
+    for (lang, file) in wbw_langs {
+        init_word_by_word_table(&conn, lang, &data_dir.join(file))?;
+    }
 
     // Stamp the version
     conn.execute_batch(&format!(
@@ -841,14 +1021,15 @@ fn init_transliteration_table(conn: &Connection, path: &Path) -> Result<()> {
 
 // ─── Word-by-word ─────────────────────────────────────────────────────────────
 
-fn init_word_by_word_table(conn: &Connection, path: &Path) -> Result<()> {
+fn init_word_by_word_table(conn: &Connection, lang: &str, path: &Path) -> Result<()> {
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS word_by_word (
+            lang  TEXT    NOT NULL,
             surah INTEGER NOT NULL,
             ayah  INTEGER NOT NULL,
             word  INTEGER NOT NULL,
             text  TEXT    NOT NULL,
-            PRIMARY KEY (surah, ayah, word)
+            PRIMARY KEY (lang, surah, ayah, word)
         );",
     )?;
 
@@ -857,7 +1038,7 @@ fn init_word_by_word_table(conn: &Connection, path: &Path) -> Result<()> {
         return Ok(());
     }
 
-    println!("Importing word-by-word …");
+    println!("Importing word-by-word ({lang}) …");
     let content = fs::read_to_string(path)
         .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
     let json: serde_json::Value = serde_json::from_str(&content)
@@ -870,7 +1051,7 @@ fn init_word_by_word_table(conn: &Connection, path: &Path) -> Result<()> {
     let tx = conn.unchecked_transaction()?;
     {
         let mut stmt = conn.prepare(
-            "INSERT OR IGNORE INTO word_by_word (surah, ayah, word, text) VALUES (?1, ?2, ?3, ?4)",
+            "INSERT OR IGNORE INTO word_by_word (lang, surah, ayah, word, text) VALUES (?1, ?2, ?3, ?4, ?5)",
         )?;
         for (key, val) in obj {
             let parts: Vec<&str> = key.split(':').collect();
@@ -884,7 +1065,7 @@ fn init_word_by_word_table(conn: &Connection, path: &Path) -> Result<()> {
                 continue;
             }
             let text = val.as_str().unwrap_or("");
-            stmt.execute(rusqlite::params![surah, ayah, word, text])?;
+            stmt.execute(rusqlite::params![lang, surah, ayah, word, text])?;
         }
     }
     tx.commit()?;

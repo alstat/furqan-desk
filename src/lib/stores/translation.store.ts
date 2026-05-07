@@ -40,6 +40,13 @@ wordByWordEnabled.subscribe(v => {
     if (browser) localStorage.setItem('wordByWordEnabled', String(v));
 });
 
+export const wordByWordLang = writable<string>(
+    browser ? (localStorage.getItem('wordByWordLang') ?? 'english') : 'english'
+);
+wordByWordLang.subscribe(v => {
+    if (browser) localStorage.setItem('wordByWordLang', v);
+});
+
 export const surahWordByWord = writable<Map<string, string> | null>(null);
 
 // Multi-surah maps: surah number → per-ayah data (populated in multi-surah / AL mode)
@@ -76,3 +83,6 @@ activeTafsirId.subscribe(v => {
 
 export const availableTafsirAuthors = writable<TafsirAuthorInfo[]>([]);
 export const surahTafsir = writable<AyahTafsir[] | null>(null);
+
+export const tafsirDialogOpen = writable<boolean>(false);
+export const translationDialogOpen = writable<boolean>(false);

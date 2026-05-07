@@ -5,7 +5,7 @@ export function modifyText(command: string, showUI: boolean = false, value: stri
 	if (value === 'N') {
 		value = 'H6';
 	}
-	return document.execCommand(command, showUI, value);
+	return document.execCommand(command, showUI, value ?? undefined);
 }
 
 export function link(command: string) {

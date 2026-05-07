@@ -3,6 +3,11 @@
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
     import { t } from "$lib/i18n";
     import { zenMode, zenPeek } from "$lib/stores/editor.store";
+    import {
+        manuscriptAyah,
+        manuscriptsEnabled,
+        manuscriptViewerOpen,
+    } from "$lib/stores/manuscripts.store";
 
     interface Props {
         onOpenBookmarks: () => void;
@@ -46,6 +51,10 @@
         onSearch("");
         inputEl?.focus();
     }
+
+    function reopenManuscripts() {
+        manuscriptViewerOpen.set(true);
+    }
 </script>
 
 <div
@@ -74,6 +83,27 @@
     >
         <Icon icon="solar:magic-stick-3-bold-duotone" width="1rem" />
     </button>
+
+    {#if $manuscriptsEnabled}
+        <button
+            onclick={reopenManuscripts}
+            class={actionBtnStyle + " p-2 z-50"}
+            title={$manuscriptAyah
+                ? $t("parchment.reopen_manuscripts", {
+                      surah: String($manuscriptAyah.surah),
+                      ayah: String($manuscriptAyah.ayah),
+                  })
+                : $t("parchment.open_manuscripts")}
+            aria-label={$manuscriptAyah
+                ? $t("parchment.reopen_manuscripts", {
+                      surah: String($manuscriptAyah.surah),
+                      ayah: String($manuscriptAyah.ayah),
+                  })
+                : $t("parchment.open_manuscripts")}
+        >
+            <Icon icon="solar:document-text-bold-duotone" width="1rem" />
+        </button>
+    {/if}
 
     <button
         onclick={toggleSearch}
@@ -113,7 +143,7 @@
             <button
                 onclick={submitSearch}
                 disabled={isSearching || !searchQuery.trim()}
-                class="cursor-pointer text-brand-charcoal-400 dark:text-[#c6d0f5] hover:text-brand-charcoal-600 dark:hover:text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                class="cursor-pointer text-brand-charcoal-400 hover:text-brand-charcoal-600 dark:hover:text-gray-100 dark:text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 title={$t("parchment.search")}
                 aria-label={$t("parchment.submit_search")}
             >

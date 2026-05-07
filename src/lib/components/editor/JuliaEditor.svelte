@@ -43,6 +43,9 @@
 
     let lineWrap = $state(false);
 
+    const aiContextPrompt =
+        "This text is part of a Julia programming file, so your output should be a julia code";
+
     // ── Effective tab (primary uses $activeTab; secondary uses tabId prop) ─────
 
     let effectiveTab = $derived(
@@ -171,7 +174,7 @@
         <div class="flex items-center justify-between px-2 pt-1 mb-1">
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
-                >{effectiveTab?.name ?? "Julia Editor"}</span
+                >{effectiveTab?.name ?? "Julia Editor"}{#if effectiveTab?.isDirty}<span class="text-brand-gold-500 dark:text-[#e5c890]"> *</span>{/if}</span
             >
             <button
                 onclick={() => (lineWrap = !lineWrap)}
@@ -215,6 +218,8 @@
                     extraKeymap={juliaKeymap}
                     extensions={[juliaCompletionExtension]}
                     {lineWrap}
+                    aiSelectionTools={true}
+                    {aiContextPrompt}
                     onchange={handleInput}
                     class="h-full font-mono"
                 />

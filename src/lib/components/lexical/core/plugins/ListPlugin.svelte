@@ -108,14 +108,14 @@
           const text = parent.getTextContent();
 
           const bulletMatch  = BULLET_RE.exec(text);
-          const orderedMatch = !bulletMatch && ORDERED_RE.exec(text);
+          const orderedMatch = bulletMatch ? null : ORDERED_RE.exec(text);
 
           if (!bulletMatch && !orderedMatch) return false;
 
           event?.preventDefault();
 
           const listType  = bulletMatch ? 'bullet' : 'number';
-          const itemText  = (bulletMatch ?? orderedMatch)![1];
+          const itemText  = (bulletMatch ?? orderedMatch)?.[1] ?? '';
 
           const list      = createListNode(listType);
           const item1     = createListItemNode();
