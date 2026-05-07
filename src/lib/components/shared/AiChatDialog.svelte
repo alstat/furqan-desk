@@ -18,6 +18,7 @@
         loadChat,
         deleteChat,
         newChat,
+        pendingSelectionQuestion,
         refreshChats,
         refreshLimits,
     } from "$lib/stores/ai-chat.store";
@@ -215,6 +216,18 @@
         })();
     });
 
+    $effect(() => {
+        if (!open) return;
+        if ($keyState !== "unlocked") return;
+        if ($streaming) return;
+        const pending = $pendingSelectionQuestion;
+        if (!pending) return;
+
+        pendingSelectionQuestion.set(null);
+        newChat();
+        void sendMessage(formatSelectionQuestion(pending));
+    });
+
     // Auto-scroll on message updates while open.
     $effect(() => {
         if (!open) return;
@@ -232,6 +245,19 @@
         if (!text || $streaming) return;
         input = "";
         await sendMessage(text);
+    }
+
+    function formatSelectionQuestion({
+        prompt,
+        selectedText,
+        contextPrompt,
+    }: {
+        prompt: string;
+        selectedText: string;
+        contextPrompt?: string;
+    }): string {
+        const context = contextPrompt?.trim();
+        return `${context ? `Context:\n${context}\n\n` : ""}${prompt.trim()}\n\nSelected text:\n${selectedText.trim()}`;
     }
 
     function handleKeydown(e: KeyboardEvent) {
