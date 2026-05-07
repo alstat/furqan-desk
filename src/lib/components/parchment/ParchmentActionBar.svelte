@@ -3,6 +3,11 @@
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
     import { t } from "$lib/i18n";
     import { zenMode, zenPeek } from "$lib/stores/editor.store";
+    import {
+        manuscriptAyah,
+        manuscriptsEnabled,
+        manuscriptViewerOpen,
+    } from "$lib/stores/manuscripts.store";
 
     interface Props {
         onOpenBookmarks: () => void;
@@ -46,6 +51,10 @@
         onSearch("");
         inputEl?.focus();
     }
+
+    function reopenManuscripts() {
+        manuscriptViewerOpen.set(true);
+    }
 </script>
 
 <div
@@ -74,6 +83,27 @@
     >
         <Icon icon="solar:magic-stick-3-bold-duotone" width="1rem" />
     </button>
+
+    {#if $manuscriptsEnabled}
+        <button
+            onclick={reopenManuscripts}
+            class={actionBtnStyle + " p-2 z-50"}
+            title={$manuscriptAyah
+                ? $t("parchment.reopen_manuscripts", {
+                      surah: String($manuscriptAyah.surah),
+                      ayah: String($manuscriptAyah.ayah),
+                  })
+                : $t("parchment.open_manuscripts")}
+            aria-label={$manuscriptAyah
+                ? $t("parchment.reopen_manuscripts", {
+                      surah: String($manuscriptAyah.surah),
+                      ayah: String($manuscriptAyah.ayah),
+                  })
+                : $t("parchment.open_manuscripts")}
+        >
+            <Icon icon="solar:document-text-bold-duotone" width="1rem" />
+        </button>
+    {/if}
 
     <button
         onclick={toggleSearch}

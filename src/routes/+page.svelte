@@ -14,6 +14,7 @@
     import SplashScreen from "$lib/components/shared/SplashScreen.svelte";
     import UpdateToast from "$lib/components/shared/UpdateToast.svelte";
     import NewBlogToast from "$lib/components/shared/NewBlogToast.svelte";
+    import JuliaPlotViewer from "$lib/components/shared/JuliaPlotViewer.svelte";
     import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
     import CustomFontDialog from "$lib/components/settings/CustomFontDialog.svelte";
     import HelpDialog from "$lib/components/help/HelpDialog.svelte";
@@ -258,3 +259,4 @@
 <SplashScreen visible={isLoading} />
 <UpdateToast />
 <NewBlogToast />
+<JuliaPlotViewer />

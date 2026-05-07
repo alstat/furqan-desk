@@ -175,7 +175,7 @@
     <!-- Julia Plot Viewer button -->
     {#if $juliaMode || $juliaViewerOpen}
         <button
-            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-26 z-3 rounded-full
+            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-37 z-3 rounded-full
 			       ${$juliaViewerOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
             onclick={() => ($juliaViewerOpen = !$juliaViewerOpen)}
             aria-label="Julia Plot Viewer"
