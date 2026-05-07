@@ -29,10 +29,10 @@
     import { t } from "$lib/i18n";
     import { zenMode, appDarkMode } from "$lib/stores/editor.store";
     import { authUser, isPro } from "$lib/stores/auth.store";
+    import { aiChatDialogOpen } from "$lib/stores/ai-chat.store";
 
     let feedbackOpen = $state(false);
     let accountOpen = $state(false);
-    let chatOpen = $state(false);
     let tocBtnEl = $state<HTMLButtonElement | null>(null);
 
     function handleAiClick() {
@@ -40,7 +40,7 @@
             accountOpen = true;
             return;
         }
-        chatOpen = true;
+        aiChatDialogOpen.set(true);
     }
 
     let { children, roundRight = true } = $props();
@@ -147,7 +147,7 @@
 
     <!-- AI Button -->
     <button
-        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-15 z-3 ${chatOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-15 z-3 ${$aiChatDialogOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
         onclick={handleAiClick}
         aria-label={$t('ai_chat.title')}
         title={$t('ai_chat.title')}
@@ -237,8 +237,8 @@
         onClose={() => (accountOpen = false)}
     />
     <AiChatDialog
-        open={chatOpen}
-        onClose={() => (chatOpen = false)}
+        open={$aiChatDialogOpen}
+        onClose={() => aiChatDialogOpen.set(false)}
     />
 
     <div class={$isSidebar ? `flex flex-row w-full` : `hidden`}>

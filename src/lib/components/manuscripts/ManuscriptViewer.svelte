@@ -1088,6 +1088,21 @@
                         <div
                             class="shrink-0 border-t border-slate-100 dark:border-[#414559] px-3 py-2 overflow-y-auto max-h-37"
                         >
+                            <div class="mb-1.5 flex items-center justify-between gap-2">
+                                <span class="text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]">
+                                    Manuscript Metadata
+                                </span>
+                                <a
+                                    href={buildCorpusCoranicumUrl() ??
+                                        `https://corpuscoranicum.de/en/manuscripts/${selectedManuscript.manuscript_id}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    class="inline-flex items-center gap-1 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100/70 dark:bg-[#292c3c] px-2 py-0.5 text-[10px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
+                                >
+                                    Corpus Coranicum
+                                    <Icon icon="solar:arrow-right-up-linear" width="0.65rem" />
+                                </a>
+                            </div>
                             <div
                                 class="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[10.5px]"
                             >

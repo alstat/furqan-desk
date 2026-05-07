@@ -34,6 +34,12 @@ export const chats = writable<ChatSummary[]>([]);
 export const storageBytes = writable<number>(0);
 export const limits = writable<TierLimits | null>(null);
 export const quotaBlock = writable<QuotaBlock | null>(null);
+export const aiChatDialogOpen = writable<boolean>(false);
+export const pendingSelectionQuestion = writable<{
+    prompt: string;
+    selectedText: string;
+    contextPrompt?: string;
+} | null>(null);
 // When true, the next message uses the advanced (premium) model instead of the
 // cheap default. Persisted across the session via localStorage so the user's
 // preference survives dialog close/open.
@@ -54,6 +60,19 @@ export function newChat() {
     messages.set([]);
     currentChatId.set(null);
     quotaBlock.set(null);
+}
+
+export function askAiAboutSelection({
+    prompt,
+    selectedText,
+    contextPrompt,
+}: {
+    prompt: string;
+    selectedText: string;
+    contextPrompt?: string;
+}): void {
+    pendingSelectionQuestion.set({ prompt, selectedText, contextPrompt });
+    aiChatDialogOpen.set(true);
 }
 
 export async function refreshChats(userId: string): Promise<void> {
