@@ -253,6 +253,236 @@ export function resetCustomFontFamilies(): void {
   setCustomFontFamilies([]);
 }
 
+// ── Tafsir display preferences ────────────────────────────────────────────────
+
+const TAFSIR_FONT_SIZE_KEY = "tafsir-font-size";
+const TAFSIR_FONT_FAMILY_KEY = "tafsir-font-family";
+const TAFSIR_LINE_SPACING_KEY = "tafsir-line-spacing";
+const TAFSIR_FONT_SIZE_MIN = 10;
+const TAFSIR_FONT_SIZE_MAX = 28;
+const TAFSIR_FONT_SIZE_DEFAULT = 13;
+const TAFSIR_LINE_SPACING_MIN = 1.1;
+const TAFSIR_LINE_SPACING_MAX = 2.4;
+const TAFSIR_LINE_SPACING_DEFAULT = 1.6;
+
+function loadTafsirFontSize(): number {
+  try {
+    const v = localStorage.getItem(TAFSIR_FONT_SIZE_KEY);
+    if (v) {
+      const n = parseInt(v, 10);
+      if (n >= TAFSIR_FONT_SIZE_MIN && n <= TAFSIR_FONT_SIZE_MAX) return n;
+    }
+  } catch {
+    /* ignore */
+  }
+  return TAFSIR_FONT_SIZE_DEFAULT;
+}
+
+const _tafsirFontSize = writable<number>(loadTafsirFontSize());
+
+export const tafsirFontSize = {
+  subscribe: _tafsirFontSize.subscribe,
+  set(v: number) {
+    const clamped = Math.max(
+      TAFSIR_FONT_SIZE_MIN,
+      Math.min(TAFSIR_FONT_SIZE_MAX, Math.round(v)),
+    );
+    try {
+      localStorage.setItem(TAFSIR_FONT_SIZE_KEY, String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _tafsirFontSize.set(clamped);
+  },
+};
+
+export const TAFSIR_FONT_SIZE_BOUNDS = {
+  min: TAFSIR_FONT_SIZE_MIN,
+  max: TAFSIR_FONT_SIZE_MAX,
+  default: TAFSIR_FONT_SIZE_DEFAULT,
+};
+
+function loadTafsirFontFamily(): string {
+  try {
+    const v = localStorage.getItem(TAFSIR_FONT_FAMILY_KEY);
+    if (typeof v === "string") return v;
+  } catch {
+    /* ignore */
+  }
+  return "";
+}
+
+const _tafsirFontFamily = writable<string>(loadTafsirFontFamily());
+
+export const tafsirFontFamily = {
+  subscribe: _tafsirFontFamily.subscribe,
+  set(v: string) {
+    const trimmed = (v ?? "").trim();
+    try {
+      localStorage.setItem(TAFSIR_FONT_FAMILY_KEY, trimmed);
+    } catch {
+      /* ignore */
+    }
+    _tafsirFontFamily.set(trimmed);
+  },
+};
+
+function loadTafsirLineSpacing(): number {
+  try {
+    const v = localStorage.getItem(TAFSIR_LINE_SPACING_KEY);
+    if (v) {
+      const n = parseFloat(v);
+      if (n >= TAFSIR_LINE_SPACING_MIN && n <= TAFSIR_LINE_SPACING_MAX) {
+        return n;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return TAFSIR_LINE_SPACING_DEFAULT;
+}
+
+const _tafsirLineSpacing = writable<number>(loadTafsirLineSpacing());
+
+export const tafsirLineSpacing = {
+  subscribe: _tafsirLineSpacing.subscribe,
+  set(v: number) {
+    const rounded = Math.round(v * 10) / 10;
+    const clamped = Math.max(
+      TAFSIR_LINE_SPACING_MIN,
+      Math.min(TAFSIR_LINE_SPACING_MAX, rounded),
+    );
+    try {
+      localStorage.setItem(TAFSIR_LINE_SPACING_KEY, String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _tafsirLineSpacing.set(clamped);
+  },
+};
+
+export const TAFSIR_LINE_SPACING_BOUNDS = {
+  min: TAFSIR_LINE_SPACING_MIN,
+  max: TAFSIR_LINE_SPACING_MAX,
+  default: TAFSIR_LINE_SPACING_DEFAULT,
+};
+
+// ── Translation display preferences ───────────────────────────────────────────
+
+const TRANSLATION_FONT_SIZE_KEY = "translation-font-size";
+const TRANSLATION_FONT_FAMILY_KEY = "translation-font-family";
+const TRANSLATION_LINE_SPACING_KEY = "translation-line-spacing";
+const TRANSLATION_FONT_SIZE_MIN = 10;
+const TRANSLATION_FONT_SIZE_MAX = 28;
+const TRANSLATION_FONT_SIZE_DEFAULT = 14;
+const TRANSLATION_LINE_SPACING_MIN = 1.1;
+const TRANSLATION_LINE_SPACING_MAX = 2.4;
+const TRANSLATION_LINE_SPACING_DEFAULT = 1.6;
+
+function loadTranslationFontSize(): number {
+  try {
+    const v = localStorage.getItem(TRANSLATION_FONT_SIZE_KEY);
+    if (v) {
+      const n = parseInt(v, 10);
+      if (n >= TRANSLATION_FONT_SIZE_MIN && n <= TRANSLATION_FONT_SIZE_MAX) {
+        return n;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return TRANSLATION_FONT_SIZE_DEFAULT;
+}
+
+const _translationFontSize = writable<number>(loadTranslationFontSize());
+
+export const translationFontSize = {
+  subscribe: _translationFontSize.subscribe,
+  set(v: number) {
+    const clamped = Math.max(
+      TRANSLATION_FONT_SIZE_MIN,
+      Math.min(TRANSLATION_FONT_SIZE_MAX, Math.round(v)),
+    );
+    try {
+      localStorage.setItem(TRANSLATION_FONT_SIZE_KEY, String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _translationFontSize.set(clamped);
+  },
+};
+
+export const TRANSLATION_FONT_SIZE_BOUNDS = {
+  min: TRANSLATION_FONT_SIZE_MIN,
+  max: TRANSLATION_FONT_SIZE_MAX,
+  default: TRANSLATION_FONT_SIZE_DEFAULT,
+};
+
+function loadTranslationFontFamily(): string {
+  try {
+    const v = localStorage.getItem(TRANSLATION_FONT_FAMILY_KEY);
+    if (typeof v === "string") return v;
+  } catch {
+    /* ignore */
+  }
+  return "";
+}
+
+const _translationFontFamily = writable<string>(loadTranslationFontFamily());
+
+export const translationFontFamily = {
+  subscribe: _translationFontFamily.subscribe,
+  set(v: string) {
+    const trimmed = (v ?? "").trim();
+    try {
+      localStorage.setItem(TRANSLATION_FONT_FAMILY_KEY, trimmed);
+    } catch {
+      /* ignore */
+    }
+    _translationFontFamily.set(trimmed);
+  },
+};
+
+function loadTranslationLineSpacing(): number {
+  try {
+    const v = localStorage.getItem(TRANSLATION_LINE_SPACING_KEY);
+    if (v) {
+      const n = parseFloat(v);
+      if (n >= TRANSLATION_LINE_SPACING_MIN && n <= TRANSLATION_LINE_SPACING_MAX) {
+        return n;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return TRANSLATION_LINE_SPACING_DEFAULT;
+}
+
+const _translationLineSpacing = writable<number>(loadTranslationLineSpacing());
+
+export const translationLineSpacing = {
+  subscribe: _translationLineSpacing.subscribe,
+  set(v: number) {
+    const rounded = Math.round(v * 10) / 10;
+    const clamped = Math.max(
+      TRANSLATION_LINE_SPACING_MIN,
+      Math.min(TRANSLATION_LINE_SPACING_MAX, rounded),
+    );
+    try {
+      localStorage.setItem(TRANSLATION_LINE_SPACING_KEY, String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _translationLineSpacing.set(clamped);
+  },
+};
+
+export const TRANSLATION_LINE_SPACING_BOUNDS = {
+  min: TRANSLATION_LINE_SPACING_MIN,
+  max: TRANSLATION_LINE_SPACING_MAX,
+  default: TRANSLATION_LINE_SPACING_DEFAULT,
+};
+
 // ── Julia plot output ─────────────────────────────────────────────────────────
 
 export interface JuliaPlot {

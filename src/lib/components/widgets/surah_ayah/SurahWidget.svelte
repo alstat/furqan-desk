@@ -3,6 +3,7 @@
     import ControlCard from "../cards/ControlCard.svelte";
     import GroupCards from "../cards/GroupCards.svelte";
     import TafsirDialog from "$lib/components/shared/TafsirDialog.svelte";
+    import TranslationDialog from "$lib/components/shared/TranslationDialog.svelte";
     import {
         selectedSurahIdx,
         selectedSurahName,
@@ -37,6 +38,7 @@
         activeTafsirId,
         availableTafsirAuthors,
         tafsirDialogOpen,
+        translationDialogOpen,
     } from "$lib/stores/translation.store";
     import { invoke } from "@tauri-apps/api/core";
     import type {
@@ -454,6 +456,16 @@
                 </span>
             </div>
         </div>
+        {#if selectedTranslatorId}
+            <button
+                type="button"
+                onclick={() => translationDialogOpen.set(true)}
+                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100 dark:bg-[#292c3c] px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
+            >
+                <Icon icon="solar:translation-bold-duotone" width="0.85rem" />
+                View translation dialog
+            </button>
+        {/if}
         <div class="flex items-center justify-between">
             <span class={labelClass}>{$t('surah.transliteration')}</span>
             <button
@@ -592,3 +604,4 @@
 />
 
 <TafsirDialog open={$tafsirDialogOpen} onClose={() => tafsirDialogOpen.set(false)} />
+<TranslationDialog open={$translationDialogOpen} onClose={() => translationDialogOpen.set(false)} />
