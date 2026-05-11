@@ -627,6 +627,12 @@ export const en: Record<string, string> = {
   "morphology.play_ayah": "Play ayah {ayah}",
   "morphology.view_manuscripts": "View manuscripts for ayah {ayah}",
   "morphology.insert_ayah": "Insert ayah {ayah} to editor",
+  "morphology.ai_ask_ayah": "Ask AI about ayah {ayah}",
+  "morphology.ai_prompt_placeholder": "Ask AI about this ayah…",
+  "morphology.ai_ask_word": "Ask AI about this word",
+  "morphology.ai_word_placeholder": "Ask AI about this word…",
+  "morphology.ai_ask_tafsir": "Ask AI about this tafsir",
+  "quran_block.view_in_quran": "View ayah {ayah} in Qur'an",
   // Slash commands
   "slash.math_label": "Inline Math",
   "slash.math_desc": "Insert inline LaTeX equation",
@@ -656,7 +662,7 @@ export const en: Record<string, string> = {
   "auth.reset_email_sent": "Password reset email sent.",
   "auth.pro_callout_title": "Unlock AyahLab Pro",
   "auth.pro_callout_desc":
-    "Advanced morphology views, unlimited manuscripts, cloud sync, and more.",
+    "Chat with AI about any verse, and paraphrase, elaborate, shorten, or ask anything about selected text in any editor.",
   "account.title": "Account",
   "account.subtitle.login": "Sign in or create an account",
   "account.subtitle.profile": "Your profile & subscription",

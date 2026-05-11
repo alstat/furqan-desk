@@ -633,7 +633,7 @@ export const ko: Record<string, string> = {
     "auth.signup_confirm_email": "계정을 확인하려면 이메일을 확인하세요.",
     "auth.reset_email_sent": "비밀번호 재설정 이메일을 보냈습니다.",
     "auth.pro_callout_title": "AyahLab Pro 잠금 해제",
-    "auth.pro_callout_desc": "고급 형태론 보기, 무제한 원고, 클라우드 동기화 등.",
+    "auth.pro_callout_desc": "어떤 구절에 대해서도 AI와 대화하고, 어떤 에디터에서든 선택한 텍스트를 바꿔 쓰거나 자세히 풀거나 줄이거나 무엇이든 물어보세요.",
     "account.title": "계정",
     "account.subtitle.login": "로그인하거나 계정 만들기",
     "account.subtitle.profile": "프로필 및 구독",

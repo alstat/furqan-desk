@@ -533,7 +533,7 @@ export const bs: Record<string, string> = {
     "auth.signup_confirm_email": "Provjerite e-poštu da potvrdite račun.",
     "auth.reset_email_sent": "E-pošta za resetovanje lozinke je poslana.",
     "auth.pro_callout_title": "Otključajte AyahLab Pro",
-    "auth.pro_callout_desc": "Napredni prikazi morfologije, neograničeni rukopisi, sinhronizacija u oblaku i više.",
+    "auth.pro_callout_desc": "Razgovarajte s AI-em o bilo kojem ajetu i parafrazirajte, proširite, skratite ili pitajte bilo šta o označenom tekstu u bilo kojem uređivaču.",
     "account.title": "Račun",
     "account.subtitle.login": "Prijavite se ili kreirajte račun",
     "account.subtitle.profile": "Vaš profil i pretplata",

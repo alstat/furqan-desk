@@ -639,7 +639,7 @@ export const ceb: Record<string, string> = {
     "auth.signup_confirm_email": "Susiha ang imong email aron makumpirma ang imong account.",
     "auth.reset_email_sent": "Napadala na ang password reset email.",
     "auth.pro_callout_title": "Ablihi ang AyahLab Pro",
-    "auth.pro_callout_desc": "Advanced nga morphology views, walay kinutobang manuscripts, cloud sync, ug uban pa.",
+    "auth.pro_callout_desc": "Pakigsulti sa AI bahin sa bisan unsang bersikulo, ug i-paraphrase, i-elaborate, i-shorten, o pangutan-a ang bisan unsa bahin sa pinili nga teksto sa bisan unsang editor.",
     "account.title": "Akaunt",
     "account.subtitle.login": "Sign in o paghimo og account",
     "account.subtitle.profile": "Imong profile ug subscription",

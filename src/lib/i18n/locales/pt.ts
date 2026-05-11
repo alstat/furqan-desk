@@ -645,7 +645,7 @@ export const pt: Record<string, string> = {
     "auth.signup_confirm_email": "Verifique seu e-mail para confirmar sua conta.",
     "auth.reset_email_sent": "E-mail de redefinição de senha enviado.",
     "auth.pro_callout_title": "Desbloquear AyahLab Pro",
-    "auth.pro_callout_desc": "Visualizações morfológicas avançadas, manuscritos ilimitados, sincronização na nuvem e mais.",
+    "auth.pro_callout_desc": "Converse com a IA sobre qualquer versículo e parafraseie, amplie, encurte ou pergunte qualquer coisa sobre o texto selecionado em qualquer editor.",
     "account.title": "Conta",
     "account.subtitle.login": "Entre ou crie uma conta",
     "account.subtitle.profile": "Seu perfil e assinatura",

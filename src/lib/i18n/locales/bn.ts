@@ -644,7 +644,7 @@ export const bn: Record<string, string> = {
     "auth.signup_confirm_email": "আপনার অ্যাকাউন্ট নিশ্চিত করতে ইমেল দেখুন।",
     "auth.reset_email_sent": "পাসওয়ার্ড রিসেট ইমেল পাঠানো হয়েছে।",
     "auth.pro_callout_title": "AyahLab Pro আনলক করুন",
-    "auth.pro_callout_desc": "উন্নত মরফোলজি ভিউ, সীমাহীন পাণ্ডুলিপি, ক্লাউড সিঙ্ক এবং আরও অনেক কিছু।",
+    "auth.pro_callout_desc": "যেকোনো আয়াত নিয়ে AI-এর সাথে চ্যাট করুন এবং যেকোনো এডিটরে নির্বাচিত পাঠ্যকে অন্যভাবে লিখুন, বিস্তারিত করুন, সংক্ষিপ্ত করুন বা সে সম্পর্কে যেকোনো কিছু জিজ্ঞাসা করুন।",
     "account.title": "অ্যাকাউন্ট",
     "account.subtitle.login": "সাইন ইন করুন বা অ্যাকাউন্ট তৈরি করুন",
     "account.subtitle.profile": "আপনার প্রোফাইল ও সাবস্ক্রিপশন",

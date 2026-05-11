@@ -639,7 +639,7 @@ export const tg: Record<string, string> = {
     "auth.signup_confirm_email": "Барои тасдиқи ҳисоб почтаи худро санҷед.",
     "auth.reset_email_sent": "Почтаи барқарорсозии парол фиристода шуд.",
     "auth.pro_callout_title": "AyahLab Pro-ро кушоед",
-    "auth.pro_callout_desc": "Намоишҳои пешрафтаи морфология, дастнависҳои бемаҳдуд, ҳамоҳангсозии абрӣ ва бештар.",
+    "auth.pro_callout_desc": "Бо AI дар бораи ҳар ояте сӯҳбат кунед ва дар ҳар муҳаррире матни интихобшударо аз нав нависед, васеъ кунед, кӯтоҳ кунед ё ҳар чизро дар бораи он бипурсед.",
     "account.title": "Ҳисоб",
     "account.subtitle.login": "Ворид шавед ё ҳисоб эҷод кунед",
     "account.subtitle.profile": "Профил ва обунаи шумо",

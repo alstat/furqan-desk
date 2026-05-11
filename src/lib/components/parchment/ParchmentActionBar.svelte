@@ -81,7 +81,7 @@
         title={$t("parchment.highlights")}
         aria-label={$t("parchment.open_highlights")}
     >
-        <Icon icon="solar:magic-stick-3-bold-duotone" width="1rem" />
+        <Icon icon="ph:highlighter-duotone" width="1rem" />
     </button>
 
     {#if $manuscriptsEnabled}

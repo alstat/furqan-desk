@@ -633,7 +633,7 @@ export const ur: Record<string, string> = {
     "auth.signup_confirm_email": "اپنے اکاؤنٹ کی تصدیق کے لیے ای میل چیک کریں۔",
     "auth.reset_email_sent": "پاس ورڈ ری سیٹ ای میل بھیج دی گئی۔",
     "auth.pro_callout_title": "AyahLab Pro کھولیں",
-    "auth.pro_callout_desc": "اعلیٰ morphology views، لامحدود manuscripts، cloud sync، اور مزید۔",
+    "auth.pro_callout_desc": "کسی بھی آیت کے بارے میں AI سے گفتگو کریں، اور کسی بھی ایڈیٹر میں منتخب متن کو دوبارہ لکھیں، تفصیل دیں، مختصر کریں یا اس کے بارے میں کچھ بھی پوچھیں۔",
     "account.title": "اکاؤنٹ",
     "account.subtitle.login": "سائن ان کریں یا اکاؤنٹ بنائیں",
     "account.subtitle.profile": "آپ کا پروفائل اور سبسکرپشن",

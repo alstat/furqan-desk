@@ -643,7 +643,7 @@ export const ja: Record<string, string> = {
     "auth.signup_confirm_email": "アカウント確認のためメールを確認してください。",
     "auth.reset_email_sent": "パスワードリセットメールを送信しました。",
     "auth.pro_callout_title": "AyahLab Pro をアンロック",
-    "auth.pro_callout_desc": "高度な形態論ビュー、無制限の写本、クラウド同期など。",
+    "auth.pro_callout_desc": "任意の節についてAIとチャットし、任意のエディタで選択したテキストを言い換え、詳述、短縮、または何でも質問できます。",
     "account.title": "アカウント",
     "account.subtitle.login": "サインインまたはアカウントを作成",
     "account.subtitle.profile": "プロフィールとサブスクリプション",

@@ -633,7 +633,7 @@ export const id: Record<string, string> = {
     "auth.signup_confirm_email": "Periksa email Anda untuk mengonfirmasi akun.",
     "auth.reset_email_sent": "Email reset kata sandi telah dikirim.",
     "auth.pro_callout_title": "Buka AyahLab Pro",
-    "auth.pro_callout_desc": "Tampilan morfologi lanjutan, manuskrip tanpa batas, sinkronisasi cloud, dan lainnya.",
+    "auth.pro_callout_desc": "Mengobrol dengan AI tentang ayat mana pun, dan parafrasekan, perluas, persingkat, atau tanyakan apa pun tentang teks yang dipilih di editor mana pun.",
     "account.title": "Akun",
     "account.subtitle.login": "Masuk atau buat akun",
     "account.subtitle.profile": "Profil dan langganan Anda",

@@ -533,7 +533,7 @@ export const ta: Record<string, string> = {
     "auth.signup_confirm_email": "உங்கள் கணக்கை உறுதிப்படுத்த மின்னஞ்சலைச் சரிபார்க்கவும்.",
     "auth.reset_email_sent": "கடவுச்சொல் மீட்டமைப்பு மின்னஞ்சல் அனுப்பப்பட்டது.",
     "auth.pro_callout_title": "AyahLab Pro திறக்கவும்",
-    "auth.pro_callout_desc": "மேம்பட்ட morphology காட்சிகள், வரம்பற்ற கையெழுத்துப் பிரதிகள், cloud sync மற்றும் மேலும்.",
+    "auth.pro_callout_desc": "எந்த வசனத்தைப் பற்றியும் AI-உடன் உரையாடி, எந்த எடிட்டரிலும் தேர்ந்தெடுத்த உரையை மறு உரை, விரிவாக்கம், சுருக்கம் செய்யுங்கள் அல்லது அதைப் பற்றி எதையும் கேளுங்கள்.",
     "account.title": "கணக்கு",
     "account.subtitle.login": "உள்நுழையவும் அல்லது கணக்கை உருவாக்கவும்",
     "account.subtitle.profile": "உங்கள் சுயவிவரம் மற்றும் சந்தா",

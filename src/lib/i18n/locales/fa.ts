@@ -633,7 +633,7 @@ export const fa: Record<string, string> = {
     "auth.signup_confirm_email": "برای تأیید حساب، ایمیل خود را بررسی کنید.",
     "auth.reset_email_sent": "ایمیل بازنشانی رمز عبور ارسال شد.",
     "auth.pro_callout_title": "AyahLab Pro را فعال کنید",
-    "auth.pro_callout_desc": "نماهای صرفی پیشرفته، نسخه‌های خطی نامحدود، همگام‌سازی ابری و موارد بیشتر.",
+    "auth.pro_callout_desc": "درباره هر آیه با هوش مصنوعی گفت‌وگو کنید و متن انتخاب‌شده را در هر ویرایشگری بازنویسی، گسترش یا کوتاه کنید یا هر پرسشی درباره آن بپرسید.",
     "account.title": "حساب",
     "account.subtitle.login": "وارد شوید یا حساب ایجاد کنید",
     "account.subtitle.profile": "نمایه و اشتراک شما",

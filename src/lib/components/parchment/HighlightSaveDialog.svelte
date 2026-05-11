@@ -66,7 +66,7 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
                         <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]">
-                            <Icon icon="solar:magic-stick-3-bold-duotone" class="text-brand-gold-500" width="1rem" />
+                            <Icon icon="ph:highlighter-duotone" class="text-brand-gold-500" width="1rem" />
                         </div>
                         <div>
                             <h2 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">{$t('highlight.save')}</h2>
@@ -130,7 +130,7 @@
                         disabled={saving}
                         class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
                     >
-                        <Icon icon="solar:magic-stick-3-bold-duotone" width="0.8rem" />
+                        <Icon icon="ph:highlighter-duotone" width="0.8rem" />
                         {saving ? $t('highlight.saving') : $t('highlight.save')}
                     </button>
                 </div>

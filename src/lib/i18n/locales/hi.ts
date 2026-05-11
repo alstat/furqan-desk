@@ -642,7 +642,7 @@ export const hi: Record<string, string> = {
     "auth.signup_confirm_email": "अपना खाता पुष्टि करने के लिए ईमेल देखें।",
     "auth.reset_email_sent": "पासवर्ड रीसेट ईमेल भेज दिया गया।",
     "auth.pro_callout_title": "AyahLab Pro अनलॉक करें",
-    "auth.pro_callout_desc": "उन्नत मॉर्फोलॉजी व्यू, असीमित पांडुलिपियां, क्लाउड सिंक और बहुत कुछ।",
+    "auth.pro_callout_desc": "किसी भी आयत के बारे में AI से चैट करें, और किसी भी एडिटर में चयनित पाठ को पुनः लिखें, विस्तार दें, छोटा करें या उसके बारे में कुछ भी पूछें।",
     "account.title": "खाता",
     "account.subtitle.login": "साइन इन करें या खाता बनाएं",
     "account.subtitle.profile": "आपकी प्रोफ़ाइल और सदस्यता",

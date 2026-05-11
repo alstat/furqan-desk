@@ -639,7 +639,7 @@ export const th: Record<string, string> = {
     "auth.signup_confirm_email": "ตรวจสอบอีเมลเพื่อยืนยันบัญชีของคุณ",
     "auth.reset_email_sent": "ส่งอีเมลรีเซ็ตรหัสผ่านแล้ว",
     "auth.pro_callout_title": "ปลดล็อก AyahLab Pro",
-    "auth.pro_callout_desc": "มุมมองสัณฐานวิทยาขั้นสูง ต้นฉบับไม่จำกัด การซิงค์คลาวด์ และอื่น ๆ",
+    "auth.pro_callout_desc": "พูดคุยกับ AI เกี่ยวกับโองการใดก็ได้ และเรียบเรียงใหม่ ขยายความ ย่อ หรือถามอะไรก็ได้เกี่ยวกับข้อความที่เลือกในตัวแก้ไขใดก็ได้",
     "account.title": "บัญชี",
     "account.subtitle.login": "ลงชื่อเข้าใช้หรือสร้างบัญชี",
     "account.subtitle.profile": "โปรไฟล์และการสมัครสมาชิกของคุณ",

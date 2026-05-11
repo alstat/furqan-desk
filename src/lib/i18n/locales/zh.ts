@@ -633,7 +633,7 @@ export const zh: Record<string, string> = {
     "auth.signup_confirm_email": "请检查电子邮件以确认您的账户。",
     "auth.reset_email_sent": "密码重置邮件已发送。",
     "auth.pro_callout_title": "解锁 AyahLab Pro",
-    "auth.pro_callout_desc": "高级形态学视图、无限手稿、云同步等。",
+    "auth.pro_callout_desc": "就任何经文与 AI 对话，并可在任何编辑器中改写、扩展、缩短或就所选文本提出任何问题。",
     "account.title": "账户",
     "account.subtitle.login": "登录或创建账户",
     "account.subtitle.profile": "您的个人资料和订阅",

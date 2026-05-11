@@ -338,7 +338,7 @@
             48}px; transform: translateX(-50%);"
     >
         <Icon
-            icon="solar:magic-stick-3-bold-duotone"
+            icon="ph:highlighter-duotone"
             class="shrink-0 text-brand-gold-500 dark:text-[#e5c890]"
             width="0.9rem"
         />

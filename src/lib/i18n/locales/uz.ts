@@ -639,7 +639,7 @@ export const uz: Record<string, string> = {
     "auth.signup_confirm_email": "Hisobingizni tasdiqlash uchun emailingizni tekshiring.",
     "auth.reset_email_sent": "Parolni tiklash emaili yuborildi.",
     "auth.pro_callout_title": "AyahLab Pro ni ochish",
-    "auth.pro_callout_desc": "Kengaytirilgan morfologiya ko‘rinishlari, cheksiz qo‘lyozmalar, bulut sinxronlashuvi va boshqalar.",
+    "auth.pro_callout_desc": "Har qanday oyat haqida AI bilan suhbatlashing va har qanday tahrirlovchida tanlangan matnni qayta yozing, kengaytiring, qisqartiring yoki u haqida har qanday narsa so‘rang.",
     "account.title": "Hisob",
     "account.subtitle.login": "Kiring yoki hisob yarating",
     "account.subtitle.profile": "Profilingiz va obunangiz",

@@ -533,7 +533,7 @@ export const pa: Record<string, string> = {
     "auth.signup_confirm_email": "ਆਪਣਾ ਖਾਤਾ ਪੁਸ਼ਟੀ ਕਰਨ ਲਈ ਈਮੇਲ ਵੇਖੋ।",
     "auth.reset_email_sent": "ਪਾਸਵਰਡ ਰੀਸੈਟ ਈਮੇਲ ਭੇਜ ਦਿੱਤੀ ਗਈ।",
     "auth.pro_callout_title": "AyahLab Pro ਅਨਲੌਕ ਕਰੋ",
-    "auth.pro_callout_desc": "ਉੱਨਤ ਮੋਰਫੋਲੋਜੀ ਦ੍ਰਿਸ਼, ਬੇਅੰਤ ਪਾਂਡੁਲਿਪੀਆਂ, ਕਲਾਉਡ ਸਿੰਕ ਅਤੇ ਹੋਰ।",
+    "auth.pro_callout_desc": "ਕਿਸੇ ਵੀ ਆਇਤ ਬਾਰੇ AI ਨਾਲ ਗੱਲ ਕਰੋ, ਅਤੇ ਕਿਸੇ ਵੀ ਐਡੀਟਰ ਵਿੱਚ ਚੁਣੇ ਹੋਏ ਪਾਠ ਨੂੰ ਮੁੜ-ਲਿਖੋ, ਵਿਸਥਾਰ ਦਿਓ, ਛੋਟਾ ਕਰੋ ਜਾਂ ਇਸ ਬਾਰੇ ਕੁਝ ਵੀ ਪੁੱਛੋ।",
     "account.title": "ਖਾਤਾ",
     "account.subtitle.login": "ਸਾਈਨ ਇਨ ਕਰੋ ਜਾਂ ਖਾਤਾ ਬਣਾਓ",
     "account.subtitle.profile": "ਤੁਹਾਡਾ ਪ੍ਰੋਫਾਈਲ ਅਤੇ ਸਬਸਕ੍ਰਿਪਸ਼ਨ",

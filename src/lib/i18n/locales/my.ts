@@ -639,7 +639,7 @@ export const my: Record<string, string> = {
     "auth.signup_confirm_email": "သင့်အကောင့်အတည်ပြုရန် အီးမေးလ်ကို စစ်ဆေးပါ။",
     "auth.reset_email_sent": "စကားဝှက်ပြန်လည်သတ်မှတ်ရန် အီးမေးလ် ပို့ပြီးပါပြီ။",
     "auth.pro_callout_title": "AyahLab Pro ကို ဖွင့်ပါ",
-    "auth.pro_callout_desc": "အဆင့်မြင့် morphology မြင်ကွင်းများ၊ အကန့်အသတ်မရှိ manuscript များ၊ cloud sync နှင့် အခြားများ။",
+    "auth.pro_callout_desc": "မည်သည့်အာယတ်အကြောင်းကိုမဆို AI နှင့်စကားပြောပါ၊ မည်သည့်တည်းဖြတ်ကိရိယာတွင်မဆို ရွေးချယ်ထားသောစာသားကို စကားပြန်ဆိုခြင်း၊ ချဲ့ထွင်ခြင်း၊ တိုစေခြင်း သို့မဟုတ် မည်သည့်အရာကိုမဆို မေးမြန်းနိုင်သည်။",
     "account.title": "အကောင့်",
     "account.subtitle.login": "အကောင့်ဝင်ပါ သို့မဟုတ် အကောင့်ဖန်တီးပါ",
     "account.subtitle.profile": "သင့်ပရိုဖိုင်နှင့် subscription",

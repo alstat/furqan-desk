@@ -639,7 +639,7 @@ export const tk: Record<string, string> = {
     "auth.signup_confirm_email": "Hasabyňyzy tassyklamak üçin e-poçtaňyzy barlaň.",
     "auth.reset_email_sent": "Paroly täzeden düzmek e-poçtasy iberildi.",
     "auth.pro_callout_title": "AyahLab Pro aç",
-    "auth.pro_callout_desc": "Öňdebaryjy morfologiýa görnüşleri, çäksiz golýazmalar, cloud sync we has köp.",
+    "auth.pro_callout_desc": "Islendik aýat barada AI bilen söhbetdeş boluň we islendik redaktorda saýlanan teksti gaýtadan ýazyň, giňeldiň, gysgaldyň ýa-da ol barada islendik zady soraň.",
     "account.title": "Hasap",
     "account.subtitle.login": "Giriň ýa-da hasap dörediň",
     "account.subtitle.profile": "Profil we abuna ýazylşyňyz",

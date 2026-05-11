@@ -144,7 +144,7 @@
                         class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]"
                     >
                         <Icon
-                            icon="solar:magic-stick-3-bold-duotone"
+                            icon="ph:highlighter-duotone"
                             class="text-brand-gold-500"
                             width="1rem"
                         />
@@ -180,7 +180,7 @@
                         class="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-sand-100"
                     >
                         <Icon
-                            icon="solar:magic-stick-3-bold-duotone"
+                            icon="ph:highlighter-duotone"
                             class="text-brand-sand-400"
                             width="1.75rem"
                         />

@@ -645,7 +645,7 @@ export const de: Record<string, string> = {
     "auth.signup_confirm_email": "Prüfen Sie Ihre E-Mail, um Ihr Konto zu bestätigen.",
     "auth.reset_email_sent": "E-Mail zum Zurücksetzen des Passworts wurde gesendet.",
     "auth.pro_callout_title": "AyahLab Pro freischalten",
-    "auth.pro_callout_desc": "Erweiterte Morphologieansichten, unbegrenzte Manuskripte, Cloud-Synchronisierung und mehr.",
+    "auth.pro_callout_desc": "Chatte mit der KI über jeden Vers und paraphrasiere, erweitere, kürze oder frage alles zum markierten Text in jedem Editor.",
     "account.title": "Konto",
     "account.subtitle.login": "Anmelden oder Konto erstellen",
     "account.subtitle.profile": "Ihr Profil und Abonnement",

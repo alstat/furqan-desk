@@ -533,7 +533,7 @@ export const sw: Record<string, string> = {
     "auth.signup_confirm_email": "Angalia barua pepe yako kuthibitisha akaunti.",
     "auth.reset_email_sent": "Barua pepe ya kuweka upya nenosiri imetumwa.",
     "auth.pro_callout_title": "Fungua AyahLab Pro",
-    "auth.pro_callout_desc": "Mionekano ya juu ya mofolojia, hati zisizo na kikomo, usawazishaji wa wingu, na zaidi.",
+    "auth.pro_callout_desc": "Zungumza na AI kuhusu aya yoyote, na ufafanue upya, ufafanue zaidi, ufupishe au uulize chochote kuhusu maandishi uliyochagua katika kihariri chochote.",
     "account.title": "Akaunti",
     "account.subtitle.login": "Ingia au fungua akaunti",
     "account.subtitle.profile": "Wasifu na usajili wako",
