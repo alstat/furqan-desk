@@ -19,6 +19,8 @@
     import { activeTranslatorId, surahTranslation, basmallahTranslation, transliterationEnabled, surahTransliteration, wordByWordEnabled, wordByWordLang, surahWordByWord, multiSurahTranslationMap, multiSurahTransliterationMap, multiSurahWordByWordMap, tafsirEnabled, activeTafsirId, surahTafsir, multiSurahTafsirMap, availableTafsirAuthors, tafsirDialogOpen, translationDialogOpen, availableTranslators } from '$lib/stores/translation.store';
     import type { AyahTranslation, AyahTafsir } from '$lib/stores/translation.store';
     import { manuscriptsEnabled, manuscriptAyah, manuscriptViewerOpen } from '$lib/stores/manuscripts.store';
+    import { isPro } from '$lib/stores/auth.store';
+    import { askAiAboutSelection } from '$lib/stores/ai-chat.store';
     import { t } from '$lib/i18n';
     import {
         zenMode,
@@ -306,6 +308,10 @@
         if (selectedWord !== null && !isPopoverClick && !isWordClick) {
             selectedWord = null;
         }
+
+        if (aiPromptOpen && !clickedElement.closest('[data-ai-ayah-prompt]')) {
+            closeAiPrompt();
+        }
     }
 
     function insertAyahToLexical(
@@ -361,9 +367,138 @@
             insertNodes(paras);
         });
     }
+
+    // --- AI prompt for an ayah (Pro) ---
+    type AiPromptContext = {
+        surah: number;
+        ayahNum: number;
+        arabic: string;
+        translit: string | null;
+        translation: string | null;
+        wbw: string | null;
+        tafsir: string | null;
+    };
+    let aiPromptOpen = $state(false);
+    let aiPromptX = $state(0);
+    let aiPromptY = $state(0);
+    let aiPromptText = $state('');
+    let aiPromptContext: AiPromptContext | null = $state(null);
+    let aiPromptInput: HTMLInputElement | null = $state(null);
+
+    function openAiPromptForAyah(
+        event: MouseEvent,
+        surah: number,
+        ayahNum: number,
+        words: MorphWord[],
+        translitMap: Map<number, string> | null | undefined,
+        transMap: Map<number, AyahTranslation> | null | undefined,
+        wbwMap: Map<string, string> | null | undefined,
+    ) {
+        event.stopPropagation();
+        const arabic = words.map(w => w.combined_arabic).join(' ');
+        const translit = translitMap?.get(ayahNum) ?? null;
+        const translation = transMap?.get(ayahNum)?.text ?? null;
+        const wbw = wbwMap
+            ? words.map(w => {
+                const tr = wbwMap.get(`${ayahNum}:${w.word}`);
+                return tr ? `${w.combined_arabic} (${tr})` : w.combined_arabic;
+            }).join(' · ')
+            : null;
+        aiPromptContext = { surah, ayahNum, arabic, translit, translation, wbw, tafsir: null };
+        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+        aiPromptX = rect.left + rect.width / 2;
+        aiPromptY = rect.bottom + 8;
+        aiPromptText = '';
+        aiPromptOpen = true;
+        queueMicrotask(() => aiPromptInput?.focus());
+    }
+
+    function stripHtml(html: string): string {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        return (tmp.textContent ?? tmp.innerText ?? '').trim();
+    }
+
+    function openAiPromptForTafsir(
+        event: MouseEvent,
+        surah: number,
+        ayahNum: number,
+        words: MorphWord[],
+        tafsirHtml: string,
+    ) {
+        event.stopPropagation();
+        const arabic = words.map(w => w.combined_arabic).join(' ');
+        const tafsir = stripHtml(tafsirHtml);
+        aiPromptContext = {
+            surah,
+            ayahNum,
+            arabic,
+            translit: null,
+            translation: null,
+            wbw: null,
+            tafsir,
+        };
+        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+        aiPromptX = rect.left + rect.width / 2;
+        aiPromptY = rect.bottom + 8;
+        aiPromptText = '';
+        aiPromptOpen = true;
+        queueMicrotask(() => aiPromptInput?.focus());
+    }
+
+    function closeAiPrompt() {
+        aiPromptOpen = false;
+        aiPromptContext = null;
+        aiPromptText = '';
+    }
+
+    function submitAiPrompt() {
+        const prompt = aiPromptText.trim();
+        const ctx = aiPromptContext;
+        if (!prompt || !ctx) return;
+        const surahName = getSurahNameTashkeel(ctx.surah) || ($surahLabels[ctx.surah - 1]?.en ?? `Surah ${ctx.surah}`);
+        const lines: string[] = [`${surahName} · Ayah ${ctx.ayahNum}`];
+        if (ctx.translit) lines.push(`Transliteration: ${ctx.translit}`);
+        if (ctx.translation) lines.push(`Translation: ${ctx.translation}`);
+        if (ctx.wbw) lines.push(`Word-by-word: ${ctx.wbw}`);
+        if (ctx.tafsir) lines.push(`Tafsir:\n${ctx.tafsir}`);
+        const contextPrompt = lines.join('\n');
+        askAiAboutSelection({ prompt, selectedText: ctx.arabic, contextPrompt });
+        closeAiPrompt();
+    }
 </script>
 
 <svelte:window on:click={handleClickOutside} />
+
+{#if aiPromptOpen && aiPromptContext}
+    <div
+        data-ai-ayah-prompt
+        role="presentation"
+        class="fixed z-9999 flex w-80 items-center gap-1.5 rounded-2xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+        style="left:{aiPromptX}px; top:{aiPromptY}px; transform: translateX(-50%);"
+        onclick={(e) => e.stopPropagation()}
+        onkeydown={(e) => { if (e.key === 'Escape') closeAiPrompt(); }}
+    >
+        <input
+            bind:this={aiPromptInput}
+            bind:value={aiPromptText}
+            placeholder={$t('morphology.ai_prompt_placeholder')}
+            class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+            onkeydown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); submitAiPrompt(); }
+                else if (e.key === 'Escape') closeAiPrompt();
+            }}
+        />
+        <button
+            class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 hover:dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={!aiPromptText.trim()}
+            onclick={submitAiPrompt}
+            title={$t('morphology.ai_ask_ayah', { ayah: String(aiPromptContext.ayahNum) })}
+        >
+            <Icon icon="solar:plain-bold-duotone" width="0.85rem" />
+        </button>
+    </div>
+{/if}
 
 {#snippet surahNameHeader(name: string, spacing: string)}
     <div class="{spacing}" dir="ltr">
@@ -468,7 +603,7 @@
                                     class="morph-word {$morphFontFamily} cursor-pointer rounded {multiWbw ? 'inline-flex flex-col items-center gap-1 align-top px-1.5 py-2 min-w-14' : 'inline-block'} {getWordColor(word)} {isSelectedWord(word, surahData.surah, ayahData.ayah) ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                                     onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                                     onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
-                                >{#if multiWbw}<span>{word.combined_arabic}</span><span dir="ltr" class="text-[9px] leading-snug text-brand-charcoal-400 dark:text-[#838ba7] font-sans w-full text-center wrap-break-word whitespace-normal">{multiWbw.get(`${ayahData.ayah}:${word.word}`) ?? ''}</span>{:else}{word.combined_arabic}&nbsp;{/if}</span>{/each}<span id="ayah-{surahData.surah}-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayPosition.set({ surah: surahData.surah, ayah: ayahData.ayah })} title={$t('morphology.play_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: surahData.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title={$t('morphology.view_manuscripts', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}<button onclick={() => insertAyahToLexical(surahData.surah, ayahData.ayah, ayahData.words, multiTranslit, multiTrans, multiWbw)} title={$t('morphology.insert_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:add-square-bold-duotone" width="0.6rem" /></button></span></span></div>
+                                >{#if multiWbw}<span>{word.combined_arabic}</span><span dir="ltr" class="text-[9px] leading-snug text-brand-charcoal-400 dark:text-[#838ba7] font-sans w-full text-center wrap-break-word whitespace-normal">{multiWbw.get(`${ayahData.ayah}:${word.word}`) ?? ''}</span>{:else}{word.combined_arabic}&nbsp;{/if}</span>{/each}<span id="ayah-{surahData.surah}-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayPosition.set({ surah: surahData.surah, ayah: ayahData.ayah })} title={$t('morphology.play_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: surahData.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title={$t('morphology.view_manuscripts', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}{#if $isPro}<button onclick={(e) => openAiPromptForAyah(e, surahData.surah, ayahData.ayah, ayahData.words, multiTranslit, multiTrans, multiWbw)} title={$t('morphology.ai_ask_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="ri:chat-ai-3-fill" width="0.6rem" /></button>{/if}</span></span></div>
 
                             {#if multiTranslit?.has(ayahData.ayah)}
                                 <p dir="ltr" class="mt-1 text-sm leading-relaxed text-brand-charcoal-300 dark:text-[#626880] italic">
@@ -492,13 +627,25 @@
                             {/if}
                             {#if multiTafsir?.has(ayahData.ayah) && !$tafsirDialogOpen}
                                 <div dir="ltr" class="mt-2 border-t border-brand-sand-100 dark:border-[#414559]/60 pt-2">
-                                    <button
-                                        onclick={() => toggleMultiTafsir(surahData.surah, ayahData.ayah)}
-                                        class="cursor-pointer flex items-center gap-1.5 text-[10.5px] font-semibold text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890] transition-colors mb-1"
-                                    >
-                                        <Icon icon={expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`) ? 'solar:alt-arrow-up-bold' : 'solar:alt-arrow-down-bold'} width="0.65rem" />
-                                        {expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`) ? $t('tafsir.hide') : $t('tafsir.show')}
-                                    </button>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <button
+                                            onclick={() => toggleMultiTafsir(surahData.surah, ayahData.ayah)}
+                                            class="cursor-pointer flex items-center gap-1.5 text-[10.5px] font-semibold text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890] transition-colors"
+                                        >
+                                            <Icon icon={expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`) ? 'solar:alt-arrow-up-bold' : 'solar:alt-arrow-down-bold'} width="0.65rem" />
+                                            {expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`) ? $t('tafsir.hide') : $t('tafsir.show')}
+                                        </button>
+                                        {#if $isPro && expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`)}
+                                            <button
+                                                onclick={(e) => openAiPromptForTafsir(e, surahData.surah, ayahData.ayah, ayahData.words, multiTafsir.get(ayahData.ayah)!)}
+                                                title={$t('morphology.ai_ask_tafsir')}
+                                                aria-label={$t('morphology.ai_ask_tafsir')}
+                                                class="cursor-pointer flex items-center gap-0.5 text-brand-gold-600 dark:text-[#e5c890] hover:text-brand-gold-500 dark:hover:text-[#e5c890]/80 transition-colors"
+                                            >
+                                                <Icon icon="ri:chat-ai-3-fill" width="0.75rem" />
+                                            </button>
+                                        {/if}
+                                    </div>
                                     {#if expandedMultiTafsirKeys.has(`${surahData.surah}-${ayahData.ayah}`)}
                                         <div class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]" style:direction={tafsirDir} style:font-family={tafsirFontStack} style:font-size={`${$tafsirFontSize}px`} style:line-height={$tafsirLineSpacing} style:text-align={tafsirDir === 'ltr' ? 'left' : 'right'}>
                                             {@html multiTafsir.get(ayahData.ayah)}
@@ -528,7 +675,7 @@
                         class="morph-word {$morphFontFamily} cursor-pointer rounded inline-block {getWordColor(word)} {isSelectedWord(word, surahData.surah, ayahData.ayah) ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                         onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                         onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
-                    >{word.combined_arabic}&nbsp;</span>{/each}<span id="ayah-{surahData.surah}-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayPosition.set({ surah: surahData.surah, ayah: ayahData.ayah })} title={$t('morphology.play_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: surahData.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title={$t('morphology.view_manuscripts', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}<button onclick={() => insertAyahToLexical(surahData.surah, ayahData.ayah, ayahData.words, multiTranslit, multiTrans, multiWbw)} title={$t('morphology.insert_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:add-square-bold-duotone" width="0.6rem" /></button></span></span>{/each}{#if multiAyahs.length > 0 && multiAyahs[multiAyahs.length - 1].ayah < (surahData.ayahs.at(-1)?.ayah ?? 0)}<span dir="ltr" class="inline-block px-2 select-none" aria-hidden="true"><span class="text-brand-charcoal-300/60 dark:text-[#626880]/60 pl-2"> • • • </span></span>{/if}</div>
+                    >{word.combined_arabic}&nbsp;</span>{/each}<span id="ayah-{surahData.surah}-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayPosition.set({ surah: surahData.surah, ayah: ayahData.ayah })} title={$t('morphology.play_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: surahData.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title={$t('morphology.view_manuscripts', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}{#if $isPro}<button onclick={(e) => openAiPromptForAyah(e, surahData.surah, ayahData.ayah, ayahData.words, multiTranslit, multiTrans, multiWbw)} title={$t('morphology.ai_ask_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="ri:chat-ai-3-fill" width="0.6rem" /></button>{/if}</span></span>{/each}{#if multiAyahs.length > 0 && multiAyahs[multiAyahs.length - 1].ayah < (surahData.ayahs.at(-1)?.ayah ?? 0)}<span dir="ltr" class="inline-block px-2 select-none" aria-hidden="true"><span class="text-brand-charcoal-300/60 dark:text-[#626880]/60 pl-2"> • • • </span></span>{/if}</div>
             {/if}
         {/each}
     {:else}
@@ -593,7 +740,7 @@
                                 class="morph-word {$morphFontFamily} cursor-pointer rounded {$surahWordByWord ? 'inline-flex flex-col items-center gap-1 align-top px-1.5 py-2 min-w-14' : 'inline-block'} {getWordColor(word)} {isSelectedWord(word, $surahMorphology.surah, ayahData.ayah) ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                                 onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                                 onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
-                            >{#if $surahWordByWord}<span>{word.combined_arabic}</span><span dir="ltr" class="text-[9px] leading-snug text-brand-charcoal-400 dark:text-[#838ba7] font-sans w-full text-center wrap-break-word whitespace-normal">{$surahWordByWord.get(`${ayahData.ayah}:${word.word}`) ?? ''}</span>{:else}{word.combined_arabic}&nbsp;{/if}</span>{/each}<span id="ayah-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayAyah.set(ayahData.ayah)} title={$t('morphology.play_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: $surahMorphology!.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title={$t('morphology.view_manuscripts', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}<button onclick={() => insertAyahToLexical($surahMorphology!.surah, ayahData.ayah, ayahData.words, $surahTransliteration, translationMap, $surahWordByWord)} title={$t('morphology.insert_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:add-square-bold-duotone" width="0.6rem" /></button></span></span></div>
+                            >{#if $surahWordByWord}<span>{word.combined_arabic}</span><span dir="ltr" class="text-[9px] leading-snug text-brand-charcoal-400 dark:text-[#838ba7] font-sans w-full text-center wrap-break-word whitespace-normal">{$surahWordByWord.get(`${ayahData.ayah}:${word.word}`) ?? ''}</span>{:else}{word.combined_arabic}&nbsp;{/if}</span>{/each}<span id="ayah-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayAyah.set(ayahData.ayah)} title={$t('morphology.play_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: $surahMorphology!.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title={$t('morphology.view_manuscripts', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}{#if $isPro}<button onclick={(e) => openAiPromptForAyah(e, $surahMorphology!.surah, ayahData.ayah, ayahData.words, $surahTransliteration, translationMap, $surahWordByWord)} title={$t('morphology.ai_ask_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="ri:chat-ai-3-fill" width="0.6rem" /></button>{/if}</span></span></div>
 
                         {#if $surahTransliteration?.has(ayahData.ayah)}
                             <p dir="ltr" class="mt-1 text-sm leading-relaxed text-brand-charcoal-300 dark:text-[#626880] italic">
@@ -617,13 +764,25 @@
                         {/if}
                         {#if tafsirMap?.has(ayahData.ayah) && !$tafsirDialogOpen}
                             <div dir="ltr" class="mt-2 border-t border-brand-sand-100 dark:border-[#414559]/60 pt-2">
-                                <button
-                                    onclick={() => toggleTafsir(ayahData.ayah)}
-                                    class="cursor-pointer flex items-center gap-1.5 text-[10.5px] font-semibold text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890] transition-colors mb-1"
-                                >
-                                    <Icon icon={expandedTafsirAyahs.has(ayahData.ayah) ? 'solar:alt-arrow-up-bold' : 'solar:alt-arrow-down-bold'} width="0.65rem" />
-                                    {expandedTafsirAyahs.has(ayahData.ayah) ? $t('tafsir.hide') : $t('tafsir.show')}
-                                </button>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <button
+                                        onclick={() => toggleTafsir(ayahData.ayah)}
+                                        class="cursor-pointer flex items-center gap-1.5 text-[10.5px] font-semibold text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890] transition-colors"
+                                    >
+                                        <Icon icon={expandedTafsirAyahs.has(ayahData.ayah) ? 'solar:alt-arrow-up-bold' : 'solar:alt-arrow-down-bold'} width="0.65rem" />
+                                        {expandedTafsirAyahs.has(ayahData.ayah) ? $t('tafsir.hide') : $t('tafsir.show')}
+                                    </button>
+                                    {#if $isPro && expandedTafsirAyahs.has(ayahData.ayah)}
+                                        <button
+                                            onclick={(e) => openAiPromptForTafsir(e, $surahMorphology!.surah, ayahData.ayah, ayahData.words, tafsirMap.get(ayahData.ayah)!)}
+                                            title={$t('morphology.ai_ask_tafsir')}
+                                            aria-label={$t('morphology.ai_ask_tafsir')}
+                                            class="cursor-pointer flex items-center gap-0.5 text-brand-gold-600 dark:text-[#e5c890] hover:text-brand-gold-500 dark:hover:text-[#e5c890]/80 transition-colors"
+                                        >
+                                            <Icon icon="ri:chat-ai-3-fill" width="0.75rem" />
+                                        </button>
+                                    {/if}
+                                </div>
                                 {#if expandedTafsirAyahs.has(ayahData.ayah)}
                                     <div class="tafsir-content text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]" style:direction={tafsirDir} style:font-family={tafsirFontStack} style:font-size={`${$tafsirFontSize}px`} style:line-height={$tafsirLineSpacing} style:text-align={tafsirDir === 'ltr' ? 'left' : 'right'}>
                                         {@html tafsirMap.get(ayahData.ayah)}
@@ -653,7 +812,7 @@
                     class="morph-word {$morphFontFamily} cursor-pointer rounded inline-block {getWordColor(word)} {isSelectedWord(word, $surahMorphology.surah, ayahData.ayah) ? 'bg-yellow-200 dark:bg-yellow-900/40' : ''}"
                     onclick={(e) => handleWordClick(e, word, ayahData.ayah)}
                     onkeydown={(e) => e.key === 'Enter' && handleWordClick(e as unknown as MouseEvent, word, ayahData.ayah)}
-                >{word.combined_arabic}&nbsp;</span>{/each}<span id="ayah-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayAyah.set(ayahData.ayah)} title={$t('morphology.play_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: $surahMorphology!.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title={$t('morphology.view_manuscripts', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}<button onclick={() => insertAyahToLexical($surahMorphology!.surah, ayahData.ayah, ayahData.words, $surahTransliteration, translationMap, $surahWordByWord)} title={$t('morphology.insert_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:add-square-bold-duotone" width="0.6rem" /></button></span></span>{/each}{#if displayAyahs.length > 0 && displayAyahs[displayAyahs.length - 1].ayah < ($surahMorphology?.ayahs.at(-1)?.ayah ?? 0)}<span dir="ltr" class="inline-block px-2 select-none" aria-hidden="true"><span class="text-brand-charcoal-300/60 dark:text-[#626880]/60 pl-2"> • • • </span></span>{/if}</div>
+                >{word.combined_arabic}&nbsp;</span>{/each}<span id="ayah-{ayahData.ayah}" class="group/ayah-num relative inline-block whitespace-nowrap"><span class="font-scheherazade text-lime-700 dark:text-lime-600 px-1">&#x2060;﴿&#x2060;{convertToArabicNumbers(ayahData.ayah)}&#x2060;﴾&#x2060;</span><span class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"><button onclick={() => requestPlayAyah.set(ayahData.ayah)} title={$t('morphology.play_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:play-bold" width="0.6rem" /></button>{#if $manuscriptsEnabled}<button onclick={() => { manuscriptAyah.set({ surah: $surahMorphology!.surah, ayah: ayahData.ayah }); manuscriptViewerOpen.set(true); }} title={$t('morphology.view_manuscripts', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button>{/if}{#if $isPro}<button onclick={(e) => openAiPromptForAyah(e, $surahMorphology!.surah, ayahData.ayah, ayahData.words, $surahTransliteration, translationMap, $surahWordByWord)} title={$t('morphology.ai_ask_ayah', { ayah: String(ayahData.ayah) })} class="cursor-pointer flex items-center gap-0.5 bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"><Icon icon="ri:chat-ai-3-fill" width="0.6rem" /></button>{/if}</span></span>{/each}{#if displayAyahs.length > 0 && displayAyahs[displayAyahs.length - 1].ayah < ($surahMorphology?.ayahs.at(-1)?.ayah ?? 0)}<span dir="ltr" class="inline-block px-2 select-none" aria-hidden="true"><span class="text-brand-charcoal-300/60 dark:text-[#626880]/60 pl-2"> • • • </span></span>{/if}</div>
         {/if}
     {:else}
         <div class="py-8 text-center text-gray-500 dark:text-[#838ba7] h-full min-h-75">

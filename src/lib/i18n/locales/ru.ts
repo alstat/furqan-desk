@@ -633,7 +633,7 @@ export const ru: Record<string, string> = {
     "auth.signup_confirm_email": "Проверьте почту, чтобы подтвердить аккаунт.",
     "auth.reset_email_sent": "Письмо для сброса пароля отправлено.",
     "auth.pro_callout_title": "Откройте AyahLab Pro",
-    "auth.pro_callout_desc": "Расширенные представления морфологии, неограниченные рукописи, облачная синхронизация и многое другое.",
+    "auth.pro_callout_desc": "Общайтесь с ИИ о любом аяте и перефразируйте, расширяйте, сокращайте или спрашивайте что угодно о выделенном тексте в любом редакторе.",
     "account.title": "Аккаунт",
     "account.subtitle.login": "Войдите или создайте аккаунт",
     "account.subtitle.profile": "Ваш профиль и подписка",

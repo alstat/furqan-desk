@@ -533,7 +533,7 @@ export const ku: Record<string, string> = {
     "auth.signup_confirm_email": "E-nameya xwe kontrol bike da hesabê xwe piştrast bikî.",
     "auth.reset_email_sent": "E-nameya vegerandina şîfreyê hat şandin.",
     "auth.pro_callout_title": "AyahLab Pro vekin",
-    "auth.pro_callout_desc": "Dîtinên morfolojiyê yên pêşketî, destnivîsên bê sînor, hevdemkirina cloud, û zêdetir.",
+    "auth.pro_callout_desc": "Bi AI re li ser her ayetekê bipeyivin, û di her edîtorekê de nivîsa hilbijartî ji nû ve binivîsin, fireh bikin, kurt bikin an her tiştî jê bipirsin.",
     "account.title": "Hesab",
     "account.subtitle.login": "Têkeve an hesab biafirîne",
     "account.subtitle.profile": "Profîl û aboneyiya te",

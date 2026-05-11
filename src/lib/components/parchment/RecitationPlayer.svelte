@@ -1,7 +1,7 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
     import Icon from "@iconify/svelte";
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { selectedSurahIdx } from "$lib/stores/quran.svelte";
     import {
         activeReciterId,
@@ -14,6 +14,8 @@
         downloadProgress,
         recitationPlaylist,
         requestPlayPosition,
+        requestPlayDirect,
+        requestPlayBlock,
         requestPlayBasmallah,
         recitationDownloadDialogOpen,
         selectedReciterSlots,
@@ -37,6 +39,9 @@
     // Playlist mode state
     let playlistIdx = $state(0);
     let currentPlayingSurah = $state<number | null>(null);
+    // True while the current playback was triggered via requestPlayDirect (e.g. QuranBlock).
+    // Highlighting then targets surah-qualified data attributes instead of plain ayah ids.
+    let directPlayActive = $state(false);
     // Seek-mode state for surah-level audio reciters (e.g. Maher)
     let seekEndMs = $state<number | null>(null);
     // Monotonically-increasing counter; each playAyahOfSurah call captures its own
@@ -140,6 +145,7 @@
         seekEndMs = null;
         playlistIdx = 0;
         currentPlayingSurah = null;
+        directPlayActive = false;
     }
 
     async function playAyahOfSurah(
@@ -221,11 +227,13 @@
     }
 
     async function playAyah(ayahNum: number) {
+        directPlayActive = false;
         currentPlayingSurah = $selectedSurahIdx;
         await playAyahOfSurah($selectedSurahIdx, ayahNum);
     }
 
     async function playBasmallah(forSurah: number) {
+        directPlayActive = false;
         isPlayingBasmallah = true;
         currentPlayingSurah = forSurah;
         await playAyahOfSurah(1, 1, 0); // fetch surah 1:1 audio, display as ayah 0
@@ -237,6 +245,7 @@
         const item = playlist[idx];
         if (!item) return;
         playlistIdx = idx;
+        directPlayActive = false;
         currentPlayingSurah = item.surah;
         await playAyahOfSurah(item.surah, item.ayah);
     }
@@ -289,6 +298,42 @@
             (p) => p.surah === pos.surah && p.ayah === pos.ayah,
         );
         if (idx >= 0) playAtPlaylistIdx(idx);
+    });
+
+    // Watch for direct play requests (e.g. editor QuranBlock) — plays
+    // regardless of whether the requested ayah is in the current playlist.
+    $effect(() => {
+        const pos = $requestPlayDirect;
+        if (pos === null) return;
+        requestPlayDirect.set(null);
+        directPlayActive = true;
+        currentPlayingSurah = pos.surah;
+        void playAyahOfSurah(pos.surah, pos.ayah);
+    });
+
+    // Watch for block-scoped playlist requests (e.g. a single QuranBlock).
+    // Installs the block's verses as the active playlist so auto-advance stays
+    // within the block and stops at the block's last verse.
+    $effect(() => {
+        const req = $requestPlayBlock;
+        if (req === null) return;
+        requestPlayBlock.set(null);
+        if (req.playlist.length === 0) return;
+        const startIdx = Math.max(
+            0,
+            Math.min(req.startIdx, req.playlist.length - 1),
+        );
+        recitationPlaylist.set(req.playlist);
+        // The playlist subscriber runs stopAndReset(); wait for it to settle
+        // before starting playback so our play call isn't immediately cancelled.
+        const item = req.playlist[startIdx];
+        void (async () => {
+            await tick();
+            directPlayActive = false;
+            playlistIdx = startIdx;
+            currentPlayingSurah = item.surah;
+            await playAyahOfSurah(item.surah, item.ayah);
+        })();
     });
 
     function handleEnded() {
@@ -376,14 +421,19 @@
 
         if (ayah === null) return;
 
-        // In playlist mode use surah-qualified selectors (multi-surah DOM ids)
+        // Direct-play (e.g. QuranBlock) — match only surah-qualified elements
+        // so we don't accidentally highlight parchment ayahs from a different surah.
         const inPlaylist = $recitationPlaylist !== null && surah !== null;
-        const elemSelector = inPlaylist
-            ? `[data-surah="${surah}"][data-ayah="${ayah}"], #ayah-${surah}-${ayah}`
-            : `[data-ayah="${ayah}"], #ayah-${ayah}`;
-        const anchorSelector = inPlaylist
-            ? `#ayah-${surah}-${ayah}`
-            : `#ayah-${ayah}`;
+        const elemSelector = directPlayActive && surah !== null
+            ? `[data-surah="${surah}"][data-ayah="${ayah}"]`
+            : inPlaylist
+                ? `[data-surah="${surah}"][data-ayah="${ayah}"], #ayah-${surah}-${ayah}`
+                : `[data-ayah="${ayah}"], #ayah-${ayah}`;
+        const anchorSelector = directPlayActive && surah !== null
+            ? `[data-surah="${surah}"][data-ayah="${ayah}"]`
+            : inPlaylist
+                ? `#ayah-${surah}-${ayah}`
+                : `#ayah-${ayah}`;
 
         document
             .querySelectorAll<HTMLElement>(elemSelector)

@@ -641,7 +641,7 @@ export const ms: Record<string, string> = {
     "auth.signup_confirm_email": "Semak e-mel anda untuk mengesahkan akaun.",
     "auth.reset_email_sent": "E-mel tetapan semula kata laluan telah dihantar.",
     "auth.pro_callout_title": "Buka kunci AyahLab Pro",
-    "auth.pro_callout_desc": "Paparan morfologi lanjutan, manuskrip tanpa had, penyegerakan awan dan banyak lagi.",
+    "auth.pro_callout_desc": "Berbual dengan AI tentang mana-mana ayat, dan parafrasakan, kembangkan, ringkaskan atau tanya apa sahaja tentang teks yang dipilih dalam mana-mana editor.",
     "account.title": "Akaun",
     "account.subtitle.login": "Log masuk atau cipta akaun",
     "account.subtitle.profile": "Profil dan langganan anda",

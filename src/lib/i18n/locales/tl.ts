@@ -647,7 +647,7 @@ export const tl: Record<string, string> = {
     "auth.signup_confirm_email": "Tingnan ang iyong email para kumpirmahin ang account.",
     "auth.reset_email_sent": "Naipadala na ang password reset email.",
     "auth.pro_callout_title": "I-unlock ang AyahLab Pro",
-    "auth.pro_callout_desc": "Advanced na morphology views, walang limitasyong manuscripts, cloud sync, at iba pa.",
+    "auth.pro_callout_desc": "Mag-chat kasama ang AI tungkol sa anumang talata, at i-paraphrase, palawakin, paikliin, o magtanong ng anuman tungkol sa napiling teksto sa anumang editor.",
     "account.title": "Akaunt",
     "account.subtitle.login": "Mag-sign in o gumawa ng account",
     "account.subtitle.profile": "Iyong profile at subscription",

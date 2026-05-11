@@ -533,7 +533,7 @@ export const sq: Record<string, string> = {
     "auth.signup_confirm_email": "Kontrolloni emailin për të konfirmuar llogarinë.",
     "auth.reset_email_sent": "Emaili për rivendosjen e fjalëkalimit u dërgua.",
     "auth.pro_callout_title": "Zhblloko AyahLab Pro",
-    "auth.pro_callout_desc": "Pamje të avancuara morfologjike, dorëshkrime pa kufi, sinkronizim cloud dhe më shumë.",
+    "auth.pro_callout_desc": "Bisedoni me AI-në për çdo varg dhe parafrazoni, zgjeroni, shkurtoni ose pyesni çdo gjë për tekstin e zgjedhur në çdo redaktor.",
     "account.title": "Llogaria",
     "account.subtitle.login": "Hyni ose krijoni një llogari",
     "account.subtitle.profile": "Profili dhe abonimi juaj",

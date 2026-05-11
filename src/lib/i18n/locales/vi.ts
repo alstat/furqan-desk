@@ -639,7 +639,7 @@ export const vi: Record<string, string> = {
     "auth.signup_confirm_email": "Kiểm tra email để xác nhận tài khoản.",
     "auth.reset_email_sent": "Email đặt lại mật khẩu đã được gửi.",
     "auth.pro_callout_title": "Mở khóa AyahLab Pro",
-    "auth.pro_callout_desc": "Chế độ xem hình thái học nâng cao, bản thảo không giới hạn, đồng bộ đám mây và hơn thế nữa.",
+    "auth.pro_callout_desc": "Trò chuyện với AI về bất kỳ câu kinh nào, và diễn giải lại, mở rộng, rút gọn hoặc hỏi bất cứ điều gì về văn bản đã chọn trong bất kỳ trình soạn thảo nào.",
     "account.title": "Tài khoản",
     "account.subtitle.login": "Đăng nhập hoặc tạo tài khoản",
     "account.subtitle.profile": "Hồ sơ và gói đăng ký của bạn",

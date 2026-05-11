@@ -633,7 +633,7 @@ export const tr: Record<string, string> = {
     "auth.signup_confirm_email": "Hesabınızı doğrulamak için e-postanızı kontrol edin.",
     "auth.reset_email_sent": "Şifre sıfırlama e-postası gönderildi.",
     "auth.pro_callout_title": "AyahLab Pro kilidini açın",
-    "auth.pro_callout_desc": "Gelişmiş morfoloji görünümleri, sınırsız el yazmaları, bulut eşitleme ve daha fazlası.",
+    "auth.pro_callout_desc": "Herhangi bir ayet hakkında AI ile sohbet edin; herhangi bir düzenleyicide seçili metni başka kelimelerle ifade edin, genişletin, kısaltın veya hakkında herhangi bir şey sorun.",
     "account.title": "Hesap",
     "account.subtitle.login": "Oturum açın veya hesap oluşturun",
     "account.subtitle.profile": "Profiliniz ve aboneliğiniz",

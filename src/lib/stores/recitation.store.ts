@@ -47,6 +47,16 @@ export const requestPlayBasmallah = writable<number | null>(null);
 export const recitationPlaylist = writable<{ surah: number; ayah: number }[] | null>(null);
 // Set to request playback of a specific surah+ayah position (used by multi-surah play buttons)
 export const requestPlayPosition = writable<{ surah: number; ayah: number } | null>(null);
+// Set to request direct playback of a specific surah+ayah using the active reciter,
+// regardless of the current playlist. Used by editor blocks like QuranBlock.
+export const requestPlayDirect = writable<{ surah: number; ayah: number } | null>(null);
+// Set to request playback of a self-contained playlist (e.g. all verses of a single
+// QuranBlock) starting from a given index. Used by editor blocks so playback stays
+// within the block and does not spill over to unrelated ayahs.
+export const requestPlayBlock = writable<{
+    playlist: { surah: number; ayah: number }[];
+    startIdx: number;
+} | null>(null);
 
 // ── Offline download ──────────────────────────────────────────────────────────
 export const downloadedSurahs = writable<Record<number, number[]>>({});
