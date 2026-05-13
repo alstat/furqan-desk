@@ -632,6 +632,8 @@ export const en: Record<string, string> = {
   "morphology.ai_ask_word": "Ask AI about this word",
   "morphology.ai_word_placeholder": "Ask AI about this word…",
   "morphology.ai_ask_tafsir": "Ask AI about this tafsir",
+  "manuscript.ai_ask": "Ask AI about this manuscript",
+  "manuscript.ai_placeholder": "Ask AI about this manuscript…",
   "quran_block.view_in_quran": "View ayah {ayah} in Qur'an",
   // Slash commands
   "slash.math_label": "Inline Math",
