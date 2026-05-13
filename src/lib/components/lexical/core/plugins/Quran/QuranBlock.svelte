@@ -301,15 +301,15 @@
                             dir="ltr"
                             class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"
                             contenteditable="false"
-                            ><button
-                                type="button"
-                                onmousedown={(e) => e.preventDefault()}
-                                onclick={(e) => playAyah(e, v.surah, v.ayah)}
-                                title={$t("morphology.play_ayah", { ayah: String(v.ayah) })}
-                                aria-label={$t("morphology.play_ayah", { ayah: String(v.ayah) })}
-                                class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
-                                ><Icon icon="solar:play-bold" width="0.6rem" /></button
-                            >{#if $manuscriptsEnabled}<button
+                            >{#if $isPro}<button
+                                    type="button"
+                                    onmousedown={(e) => e.preventDefault()}
+                                    onclick={(e) => openAiPromptForAyah(e, v.surah, v.ayah, v.arabic)}
+                                    title={$t("morphology.ai_ask_ayah", { ayah: String(v.ayah) })}
+                                    aria-label={$t("morphology.ai_ask_ayah", { ayah: String(v.ayah) })}
+                                    class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
+                                    ><Icon icon="ri:chat-ai-3-fill" width="0.6rem" /></button
+                                >{/if}{#if $manuscriptsEnabled}<button
                                     type="button"
                                     onmousedown={(e) => e.preventDefault()}
                                     onclick={(e) => viewManuscripts(e, v.surah, v.ayah)}
@@ -320,20 +320,20 @@
                                 >{/if}<button
                                 type="button"
                                 onmousedown={(e) => e.preventDefault()}
+                                onclick={(e) => playAyah(e, v.surah, v.ayah)}
+                                title={$t("morphology.play_ayah", { ayah: String(v.ayah) })}
+                                aria-label={$t("morphology.play_ayah", { ayah: String(v.ayah) })}
+                                class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
+                                ><Icon icon="solar:play-bold" width="0.6rem" /></button
+                            ><button
+                                type="button"
+                                onmousedown={(e) => e.preventDefault()}
                                 onclick={(e) => viewInMorphology(e, v.surah, v.ayah)}
                                 title={$t("quran_block.view_in_quran", { ayah: String(v.ayah) })}
                                 aria-label={$t("quran_block.view_in_quran", { ayah: String(v.ayah) })}
                                 class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
                                 ><Icon icon="basil:book-open-solid" width="0.6rem" /></button
-                            >{#if $isPro}<button
-                                    type="button"
-                                    onmousedown={(e) => e.preventDefault()}
-                                    onclick={(e) => openAiPromptForAyah(e, v.surah, v.ayah, v.arabic)}
-                                    title={$t("morphology.ai_ask_ayah", { ayah: String(v.ayah) })}
-                                    aria-label={$t("morphology.ai_ask_ayah", { ayah: String(v.ayah) })}
-                                    class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
-                                    ><Icon icon="ri:chat-ai-3-fill" width="0.6rem" /></button
-                                >{/if}</span
+                            ></span
                         ></span
                     >{' '}
                 {/each}

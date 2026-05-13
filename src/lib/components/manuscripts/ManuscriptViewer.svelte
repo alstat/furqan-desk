@@ -9,6 +9,8 @@
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { lexicalEditorInstance } from "$lib/stores/editor.store";
     import { INSERT_IMAGE_COMMAND } from "$lib/components/lexical/core/plugins/Image/ImagePlugin.svelte";
+    import { isPro } from "$lib/stores/auth.store";
+    import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
     import { t } from "$lib/i18n";
 
     interface Props {
@@ -626,6 +628,94 @@
         return `https://corpuscoranicum.de/en/manuscripts/${ms.manuscript_id}${pagePart}?sura=${ref.surah}&verse=${ref.ayah}`;
     }
 
+    // ── AI prompt about this manuscript (Pro) ────────────────────────────────
+    let aiPromptOpen = $state(false);
+    let aiPromptX = $state(0);
+    let aiPromptY = $state(0);
+    let aiPromptText = $state("");
+    let aiPromptInput: HTMLInputElement | null = $state(null);
+
+    function buildManuscriptContext(): string {
+        const ms = selectedManuscript;
+        const det = selectedDetail;
+        const ref = $manuscriptAyah;
+        const page = selectedPage;
+        const lines: string[] = [];
+        lines.push(
+            "This is an extant manuscript of the Qur'an containing the specified surah and ayah.",
+        );
+        if (ref) lines.push(`Surah: ${ref.surah}`, `Ayah: ${ref.ayah}`);
+        if (ms) {
+            lines.push(`Manuscript title: ${ms.title}`);
+            lines.push(
+                `Archive: ${ms.archive.name}${ms.archive.city ? ", " + ms.archive.city : ""}${ms.archive.country_code ? " (" + ms.archive.country_code + ")" : ""}`,
+            );
+            if (ms.archive.link) lines.push(`Archive link: ${ms.archive.link}`);
+        }
+        if (page) {
+            const folio = `${page.folio ?? ""}${page.side ?? ""}`.trim();
+            if (folio) lines.push(`Folio: ${folio}`);
+        }
+        if (det) {
+            if (det.call_number) lines.push(`Call number: ${det.call_number}`);
+            if (det.date) lines.push(`Date: ${det.date}`);
+            if (det.carbon_dating)
+                lines.push(`Carbon dating: ${det.carbon_dating}`);
+            if (det.dimensions) lines.push(`Dimensions: ${det.dimensions}`);
+            if (det.writing_surface)
+                lines.push(`Writing surface: ${det.writing_surface}`);
+            if (det.line_min || det.line_max) {
+                const lo = det.line_min ?? "";
+                const hi = det.line_max ?? "";
+                lines.push(
+                    `Lines per page: ${lo}${lo && hi && lo !== hi ? "–" + hi : hi && !lo ? hi : ""}`,
+                );
+            }
+            if (
+                det.number_of_folios !== null &&
+                det.number_of_folios !== undefined
+            )
+                lines.push(`Number of folios: ${det.number_of_folios}`);
+            if (det.script_styles?.length)
+                lines.push(`Script styles: ${det.script_styles.join(", ")}`);
+            if (det.codicology) lines.push(`Codicology: ${det.codicology}`);
+            if (det.paleography) lines.push(`Paleography: ${det.paleography}`);
+            if (det.catalogue_entry)
+                lines.push(`Catalogue entry: ${det.catalogue_entry}`);
+        }
+        const url = buildCorpusCoranicumUrl();
+        if (url) lines.push(`Corpus Coranicum link: ${url}`);
+        return lines.join("\n");
+    }
+
+    function openAiPrompt(e: MouseEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        aiPromptX = rect.right;
+        aiPromptY = rect.bottom + 8;
+        aiPromptText = "";
+        aiPromptOpen = true;
+        queueMicrotask(() => aiPromptInput?.focus());
+    }
+
+    function closeAiPrompt() {
+        aiPromptOpen = false;
+        aiPromptText = "";
+    }
+
+    function submitAiPrompt() {
+        const prompt = aiPromptText.trim();
+        if (!prompt) return;
+        const contextPrompt = buildManuscriptContext();
+        const ref = $manuscriptAyah;
+        const selectedText =
+            selectedManuscript?.title ??
+            (ref ? `Qur'an ${ref.surah}:${ref.ayah}` : "manuscript");
+        askAiAboutSelection({ prompt, selectedText, contextPrompt });
+        closeAiPrompt();
+    }
+
     async function insertToLexical() {
         const editor = get(lexicalEditorInstance);
         if (!editor || !imageSrc) return;
@@ -657,9 +747,12 @@
                 dataUrl = bytesToDataUrl(bytes, "image/jpeg");
             }
             const altText = selectedManuscript
-                ? `${selectedManuscript.title} — ${$t("manuscript.caption_folio", {
-                      folio: `${selectedPage?.folio ?? ""}${selectedPage?.side ?? ""}`,
-                  })}`
+                ? `${selectedManuscript.title} — ${$t(
+                      "manuscript.caption_folio",
+                      {
+                          folio: `${selectedPage?.folio ?? ""}${selectedPage?.side ?? ""}`,
+                      },
+                  )}`
                 : $t("manuscript.image_alt_default");
             const captionText = buildCaptionText();
             const linkUrl = buildCorpusCoranicumUrl();
@@ -919,19 +1012,33 @@
                         {$t("manuscript.load_reference")}
                     </button>
                 </form>
-                {#if referenceError}
-                    <span
-                        class="text-[11px] font-medium text-red-500 dark:text-red-400"
-                    >
-                        {referenceError}
-                    </span>
-                {:else if $manuscriptAyah}{:else}
-                    <span
-                        class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
-                    >
-                        {$t("manuscript.reference_prompt")}
-                    </span>
-                {/if}
+                <div class="flex items-center gap-2">
+                    {#if referenceError}
+                        <span
+                            class="text-[11px] font-medium text-red-500 dark:text-red-400"
+                        >
+                            {referenceError}
+                        </span>
+                    {:else if $manuscriptAyah}{:else}
+                        <span
+                            class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                        >
+                            {$t("manuscript.reference_prompt")}
+                        </span>
+                    {/if}
+                    {#if $isPro && selectedManuscript && $manuscriptAyah}
+                        <button
+                            type="button"
+                            onclick={openAiPrompt}
+                            title={$t("manuscript.ai_ask")}
+                            aria-label={$t("manuscript.ai_ask")}
+                            class="cursor-pointer inline-flex items-center gap-1 rounded-full bg-brand-gold-200 dark:bg-[#414559] px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-300 dark:hover:bg-[#51576d] transition-colors"
+                        >
+                            <Icon icon="ri:chat-ai-3-fill" width="0.75rem" />
+                            {$t("manuscript.ai_ask")}
+                        </button>
+                    {/if}
+                </div>
             </div>
         {/if}
 
@@ -1550,6 +1657,52 @@
             onpointerdown={(e) =>
                 startResize(e, { n: true, s: false, e: false, w: true })}
         ></div>
+    </div>
+{/if}
+
+{#if aiPromptOpen}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+        role="presentation"
+        class="fixed z-[10001] flex w-96 items-center gap-1.5 rounded-2xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+        style="left:{aiPromptX}px; top:{aiPromptY}px; transform: translateX(-100%);"
+        onclick={(e) => e.stopPropagation()}
+        onkeydown={(e) => {
+            if (e.key === "Escape") closeAiPrompt();
+        }}
+    >
+        <input
+            bind:this={aiPromptInput}
+            bind:value={aiPromptText}
+            placeholder={$t("manuscript.ai_placeholder")}
+            class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+            onkeydown={(e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    submitAiPrompt();
+                } else if (e.key === "Escape") {
+                    closeAiPrompt();
+                }
+            }}
+        />
+        <button
+            type="button"
+            onclick={submitAiPrompt}
+            disabled={!aiPromptText.trim()}
+            aria-label={$t("manuscript.ai_ask")}
+            title={$t("manuscript.ai_ask")}
+            class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 hover:dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+            <Icon icon="solar:plain-bold-duotone" width="0.85rem" />
+        </button>
+        <button
+            type="button"
+            onclick={closeAiPrompt}
+            aria-label={$t("common.close")}
+            class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+        >
+            <Icon icon="solar:close-circle-bold-duotone" width="0.85rem" />
+        </button>
     </div>
 {/if}
 
