@@ -512,6 +512,7 @@ struct JuliaOutput {
 #[tauri::command]
 pub async fn start_julia_repl(
     app: AppHandle,
+    cwd: Option<String>,
     state: State<'_, JuliaState>,
 ) -> Result<(), String> {
     // Check if already running (sync block — guard dropped before any await)
@@ -537,6 +538,9 @@ pub async fn start_julia_repl(
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped());
+    if let Some(dir) = cwd.as_deref().filter(|p| !p.is_empty() && std::path::Path::new(p).is_dir()) {
+        cmd.current_dir(dir);
+    }
     // Prevent julialauncher from opening a visible console window on Windows
     #[cfg(windows)]
     {
@@ -867,5 +871,93 @@ pub async fn update_julia(app: AppHandle) -> Result<(), String> {
         return Err("juliaup update failed".to_string());
     }
     emit("Julia updated successfully.");
+    Ok(())
+}
+
+/// Install a specific Julia version via juliaup and switch the default to it.
+/// `version` is a bare semver string like "1.10.4" (no leading "v").
+/// Emits progress on `julia-install-progress`.
+#[tauri::command]
+pub async fn set_julia_version(app: AppHandle, version: String) -> Result<(), String> {
+    let version = version.trim().trim_start_matches('v').to_string();
+    if version.is_empty()
+        || !version
+            .chars()
+            .all(|c| c.is_ascii_digit() || c == '.' || c == '-' || c.is_ascii_alphanumeric())
+    {
+        return Err("Invalid version string".to_string());
+    }
+
+    let emit = |msg: &str| {
+        let _ = app.emit(
+            "julia-install-progress",
+            InstallProgress {
+                message: msg.to_string(),
+            },
+        );
+    };
+
+    let juliaup = {
+        let from_path = {
+            let path_var = std::env::var_os("PATH");
+            let mut found = None;
+            if let Some(path_var) = path_var {
+                for dir in std::env::split_paths(&path_var) {
+                    #[cfg(windows)]
+                    let candidate = dir.join("juliaup.exe");
+                    #[cfg(not(windows))]
+                    let candidate = dir.join("juliaup");
+                    if candidate.exists() {
+                        found = Some(candidate);
+                        break;
+                    }
+                }
+            }
+            found
+        };
+        if let Some(p) = from_path {
+            p
+        } else {
+            let app_data = app.path().app_data_dir().map_err(|e| e.to_string())?;
+            let bundled = app_data.join("juliaup");
+            if bundled.exists() {
+                bundled
+            } else {
+                return Err("juliaup not found in PATH or app data".to_string());
+            }
+        }
+    };
+
+    emit(&format!("Adding Julia {version} via juliaup…"));
+    let mut add = std::process::Command::new(&juliaup);
+    add.arg("add").arg(&version);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        add.creation_flags(0x08000000);
+    }
+    let status = add
+        .status()
+        .map_err(|e| format!("Failed to run juliaup: {e}"))?;
+    if !status.success() {
+        return Err(format!("juliaup add {version} failed"));
+    }
+
+    emit(&format!("Setting Julia {version} as default…"));
+    let mut def = std::process::Command::new(&juliaup);
+    def.arg("default").arg(&version);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        def.creation_flags(0x08000000);
+    }
+    let status = def
+        .status()
+        .map_err(|e| format!("Failed to run juliaup: {e}"))?;
+    if !status.success() {
+        return Err(format!("juliaup default {version} failed"));
+    }
+
+    emit(&format!("Julia {version} is now the default."));
     Ok(())
 }

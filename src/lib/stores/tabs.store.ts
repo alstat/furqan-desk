@@ -23,6 +23,10 @@ export const activeTab   = derived(
 // Folder opened via "Open Folder" button — drives the file browser in Editor Controls
 export const openFolderPath = writable<string | null>(null);
 
+/** Bumped to force the file explorer to re-read the current folder even when
+ *  openFolderPath is unchanged (e.g. user re-picks the same folder). */
+export const folderRefreshTrigger = writable<number>(0);
+
 // Non-reactive undo/redo (keyed by tab id — avoids store churn)
 export const undoHistory = new Map<string, string[]>();
 export const redoHistory = new Map<string, string[]>();
@@ -194,6 +198,17 @@ export function markTabSaved(id: string, path: string): void {
 	tabs.update(ts =>
 		ts.map(t => (t.id === id ? { ...t, path, name, isDirty: false, isPreview: false } : t))
 	);
+
+	const folder = get(openFolderPath);
+	if (folder && isPathInsideFolder(path, folder)) {
+		folderRefreshTrigger.update(n => n + 1);
+	}
+}
+
+function isPathInsideFolder(path: string, folder: string): boolean {
+	const normalizedPath = path.replace(/\\/g, '/');
+	const normalizedFolder = folder.replace(/\\/g, '/').replace(/\/+$/, '');
+	return normalizedPath.startsWith(`${normalizedFolder}/`);
 }
 
 export function closeTab(id: string): void {

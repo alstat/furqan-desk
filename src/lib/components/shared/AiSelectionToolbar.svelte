@@ -164,7 +164,7 @@
             onclick={toggleAskPrompt}
             aria-label="Ask AI"
         >
-            <Icon icon="ri:chat-ai-3-fill" width="1rem" />
+            <Icon icon="ri:chat-smile-ai-fill" width="1rem" />
             <span
                 class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-brand-charcoal-900 px-2 py-1 text-[10px] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-[#1e2030] dark:text-[#c6d0f5]"
             >

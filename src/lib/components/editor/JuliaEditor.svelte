@@ -220,6 +220,7 @@
                     {lineWrap}
                     aiSelectionTools={true}
                     {aiContextPrompt}
+                    filePath={effectiveTab.path ?? null}
                     onchange={handleInput}
                     class="h-full font-mono"
                 />
