@@ -31,6 +31,42 @@ export const singlePageMargin = {
   },
 };
 
+// ── Editor / right-panel split ratio ──────────────────────────────────────────
+// Percentage (0–100) of the row's width occupied by the SIDEBAR (the editor side).
+// Drives the draggable divider when Hide Quran Page is on and the active tab
+// is Julia or Typst (so the right panel is a REPL or Typst preview).
+
+const SPLIT_MIN = 20;
+const SPLIT_MAX = 80;
+
+function loadEditorSplitRatio(): number {
+  try {
+    const v = localStorage.getItem("editor-split-ratio");
+    if (v) {
+      const n = parseFloat(v);
+      if (Number.isFinite(n) && n >= SPLIT_MIN && n <= SPLIT_MAX) return n;
+    }
+  } catch {
+    /* ignore */
+  }
+  return 50;
+}
+
+const _editorSplitRatio = writable<number>(loadEditorSplitRatio());
+
+export const editorSplitRatio = {
+  subscribe: _editorSplitRatio.subscribe,
+  set(v: number) {
+    const clamped = Math.max(SPLIT_MIN, Math.min(SPLIT_MAX, v));
+    try {
+      localStorage.setItem("editor-split-ratio", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _editorSplitRatio.set(clamped);
+  },
+};
+
 // ── Editor theme (Ayu Light / Ayu Mirage) ────────────────────────────────────
 
 export type EditorTheme = "ayu-light" | "ayu-mirage";
@@ -205,13 +241,19 @@ export const editorTheme = {
   },
 };
 
+export type ReplMode = "julia" | "pkg" | "shell";
+
 export interface ReplLine {
   text: string;
   kind: "input" | "output" | "error" | "warn";
+  /** Only meaningful when kind === "input". Defaults to "julia". */
+  mode?: ReplMode;
 }
 /** Shared REPL output lines for all Julia tabs */
 export const juliaReplHistory: Writable<ReplLine[]> = writable([]);
 export const juliaReplStarted: Writable<boolean> = writable(false);
+/** Active Julia project/environment name (empty string = default global env). */
+export const juliaActiveEnv: Writable<string> = writable("");
 
 export const typstMode = derived(
   activeTab,

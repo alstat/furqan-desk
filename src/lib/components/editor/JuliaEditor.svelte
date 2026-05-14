@@ -16,6 +16,7 @@
     import {
         juliaIsRunning,
         executeJuliaCode,
+        isIncompleteJulia,
         flashingTabId,
     } from "$lib/stores/julia-terminal.store";
     import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
@@ -148,16 +149,29 @@
                 const { from, to } = view.state.selection.main;
                 if (from !== to) {
                     executeCode(view.state.sliceDoc(from, to));
-                } else {
-                    const line = view.state.doc.lineAt(from);
-                    executeCode(line.text);
-                    if (line.number < view.state.doc.lines) {
-                        const nextLine = view.state.doc.line(line.number + 1);
-                        view.dispatch({
-                            selection: { anchor: nextLine.from },
-                            scrollIntoView: true,
-                        });
-                    }
+                    return true;
+                }
+                // No selection: take the current line, then extend down line by
+                // line until the snippet parses as a complete Julia expression
+                // (so multi-line constructs like `DataFrame(...)` work).
+                const doc = view.state.doc;
+                const startLine = doc.lineAt(from);
+                let lastLine = startLine.number;
+                let snippet = startLine.text;
+                while (
+                    isIncompleteJulia(snippet) &&
+                    lastLine < doc.lines
+                ) {
+                    lastLine++;
+                    snippet += "\n" + doc.line(lastLine).text;
+                }
+                executeCode(snippet);
+                if (lastLine < doc.lines) {
+                    const nextLine = doc.line(lastLine + 1);
+                    view.dispatch({
+                        selection: { anchor: nextLine.from },
+                        scrollIntoView: true,
+                    });
                 }
                 return true;
             },
