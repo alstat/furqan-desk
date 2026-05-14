@@ -16,6 +16,7 @@
         tocAnchorRect,
         zenPeek,
         singlePageMargin,
+        editorSplitRatio,
     } from "$lib/stores/editor.store";
     import { activeTab, activeTabId } from "$lib/stores/tabs.store";
     import { crossGroups } from "$lib/stores/julia-terminal.store";
@@ -54,6 +55,18 @@
         $crossGroups.some((g) => g.hostTabId === $activeTabId || g.partnerTabId === $activeTabId) ||
         $activeTab?.type === "julia" ||
         $activeTab?.type === "typst"
+    );
+
+    // Hide Quran Page + Julia/Typst tab → right side hosts REPL or Typst preview.
+    // In that mode the user can drag the divider, so the sidebar width is variable.
+    let inResizableSplit = $derived(
+        $hideSurahPage() &&
+        ($activeTab?.type === "julia" || $activeTab?.type === "typst") &&
+        !$crossGroups.some((g) => g.hostTabId === $activeTabId || g.partnerTabId === $activeTabId)
+    );
+
+    let sidebarWidthPct = $derived(
+        !$isSidebar ? 0 : !hasLeftPanel ? 100 : inResizableSplit ? $editorSplitRatio : 50
     );
 
     let windowWidth = $state(0);
@@ -125,7 +138,7 @@
 
 <div
     id="tour-sidebar"
-    style:width="{$isSidebar ? (hasLeftPanel ? 50 : 100) : 0}%"
+    style:width="{sidebarWidthPct}%"
     class={`relative flex justify-right overflow-visible font-base text-slate-900 dark:text-[#c6d0f5]`}
 >
     <!-- Sidebar toggle (top) -->

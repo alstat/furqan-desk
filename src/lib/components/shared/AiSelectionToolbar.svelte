@@ -13,12 +13,20 @@
         x: number;
         y: number;
         contextPrompt?: string;
-        onReplace: (replacement: string) => void;
+        onReplace?: (replacement: string) => void;
         onClose?: () => void;
+        askOnly?: boolean;
     }
 
-    let { selectedText, x, y, contextPrompt, onReplace, onClose }: Props =
-        $props();
+    let {
+        selectedText,
+        x,
+        y,
+        contextPrompt,
+        onReplace,
+        onClose,
+        askOnly = false,
+    }: Props = $props();
 
     let promptOpen = $state(false);
     let askPromptOpen = $state(false);
@@ -62,7 +70,7 @@
                 customPrompt,
                 contextPrompt,
             });
-            onReplace(replacement);
+            onReplace?.(replacement);
             onClose?.();
         } catch (e) {
             error = e instanceof Error ? e.message : String(e);
@@ -118,6 +126,7 @@
     onpointerdown={handlePointerDown}
 >
     <div class="flex items-center gap-2">
+        {#if !askOnly}
         {#each actions as action (action.id)}
             <button
                 class="group relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-brand-gold-200 p-0 shadow-md transition-colors text-brand-gold-600 hover:bg-brand-gold-400 active:bg-brand-gold-500 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:bg-[#363a4f] dark:text-brand-gold-400 dark:hover:bg-[#4a4e5c] dark:active:bg-[#414559] disabled:cursor-wait disabled:opacity-50"
@@ -158,6 +167,7 @@
                 {$t("ai_selection.prompt")}
             </span>
         </button>
+        {/if}
         <button
             class="group relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-brand-gold-200 p-0 shadow-md transition-colors text-brand-gold-600 hover:bg-brand-gold-400 active:bg-brand-gold-500 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:bg-[#363a4f] dark:text-brand-gold-400 dark:hover:bg-[#4a4e5c] dark:active:bg-[#414559] disabled:opacity-50"
             disabled={busyAction !== null}

@@ -442,6 +442,42 @@ end
 Base.displayable(::_ALDisplay, ::MIME"image/png") = true
 Base.displayable(::_ALDisplay, ::MIME"image/svg+xml") = true
 pushdisplay(_ALDisplay())
+# ── Active project / environment name ────────────────────────────────────────
+# Resolves the display name of the active project. Returns "" for the default
+# global env (e.g. `~/.julia/environments/v1.10`) so the UI can show a plain
+# `julia>` prompt for it. For an activated project, returns the `name` field
+# from Project.toml when present, otherwise the project folder's basename.
+function _al_env_name()
+  path = try; Base.active_project(); catch; nothing; end
+  path === nothing && return ""
+  # Detect the default global env, which lives under any depot's
+  # `environments/` directory — show no name for those.
+  for d in DEPOT_PATH
+    if startswith(path, joinpath(d, "environments"))
+      return ""
+    end
+  end
+  name = ""
+  try
+    for line in eachline(path)
+      m = match(r"^\s*name\s*=\s*\"(.+?)\"\s*$", line)
+      if m !== nothing
+        name = String(m.captures[1])
+        break
+      end
+    end
+  catch
+  end
+  isempty(name) && (name = basename(dirname(path)))
+  return name
+end
+function _al_emit_env()
+  n = _al_env_name()
+  # Escape backslashes and quotes for safe JSON embedding.
+  esc = replace(replace(n, "\\" => "\\\\"), "\"" => "\\\"")
+  println(stdout, "__AL_CMD__:{\"type\":\"env\",\"name\":\"" * esc * "\"}")
+end
+_al_emit_env()
 # ── Semicolon suppression (mirrors Julia REPL behaviour) ─────────────────────
 # Checks the last non-empty, non-comment line of the submitted code block.
 # If it ends with ';', the result of the expression is not displayed.
@@ -493,8 +529,14 @@ while true
         Base.invokelatest(display, result)
       end
     catch e
-      println(stderr, sprint(showerror, e))
+      # Include the backtrace so the user sees the full stacktrace, not just
+      # the error message. catch_backtrace() captures the trace from the
+      # most recent exception in this try-block.
+      println(stderr, sprint(showerror, e, catch_backtrace()))
     end
+    # Surface the (possibly new) active env after each user command — this
+    # is how `Pkg.activate(".")` changes get reflected in the input prompt.
+    _al_emit_env()
   end
   print(stdout, "\n__JULIA_DONE__\n")
   flush(stdout)

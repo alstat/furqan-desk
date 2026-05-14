@@ -11,6 +11,7 @@
         sharedTermState,
         juliaIsRunning,
         executeJuliaCode,
+        isIncompleteJulia,
         type TermTab,
     } from "$lib/stores/julia-terminal.store";
     import {
@@ -20,6 +21,7 @@
         replFontSize,
         replLineSpacing,
         juliaReplStarted,
+        juliaActiveEnv,
         appDarkMode,
         type ReplLine,
     } from "$lib/stores/editor.store";
@@ -37,6 +39,8 @@
         multiSurahWordByWordMap,
     } from "$lib/stores/translation.store";
     import { openFolderPath } from "$lib/stores/tabs.store";
+    import { isPro } from "$lib/stores/auth.store";
+    import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
 
     // ── Terminal state (shared across all Julia tabs) ─────────────────────────
 
@@ -232,9 +236,66 @@
     let historyIndex = $state(-1);
     let savedInput = "";
     let focusReplOnDone = false;
+    let replMode = $state<"julia" | "pkg" | "shell">("julia");
 
     let replOutputEl: HTMLDivElement | undefined = $state(undefined);
     let replInputEl: HTMLTextAreaElement | undefined = $state(undefined);
+
+    // ── AI selection toolbar over REPL output ────────────────────────────────
+    let replAiSelection = $state<{
+        text: string;
+        x: number;
+        y: number;
+    } | null>(null);
+
+    function isFocusInsideToolbar(): boolean {
+        const active = document.activeElement as HTMLElement | null;
+        return !!active?.closest("[data-ai-selection-toolbar]");
+    }
+
+    function updateReplAiSelection() {
+        if (!$isPro || !replOutputEl) {
+            replAiSelection = null;
+            return;
+        }
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+            // Keep the toolbar open while the user is typing in its input —
+            // focusing the input collapses the document selection, which
+            // would otherwise dismiss the toolbar immediately.
+            if (isFocusInsideToolbar()) return;
+            replAiSelection = null;
+            return;
+        }
+        const range = sel.getRangeAt(0);
+        // Only show the toolbar if the selection lives inside the REPL output.
+        if (
+            !replOutputEl.contains(range.startContainer) ||
+            !replOutputEl.contains(range.endContainer)
+        ) {
+            replAiSelection = null;
+            return;
+        }
+        const text = sel.toString();
+        if (!text.trim()) {
+            replAiSelection = null;
+            return;
+        }
+        const rect = range.getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) {
+            replAiSelection = null;
+            return;
+        }
+        const viewportWidth = window.innerWidth || 0;
+        replAiSelection = {
+            text,
+            x: Math.max(
+                180,
+                Math.min(viewportWidth - 180, rect.left + rect.width / 2),
+            ),
+            y: Math.max(12, rect.top - 8),
+        };
+    }
 
     const replInputRows = $derived(
         Math.max(1, (replInput.match(/\n/g) ?? []).length + 1),
@@ -355,22 +416,75 @@
         }
         juliaReplStarted.set(false);
         juliaReplHistory.set([]);
+        juliaActiveEnv.set("");
     }
 
     async function runReplInput() {
         const code = replInput.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
         if (!code.trim() || isRunning || isStreaming) return;
+        const modeAtSubmit = replMode;
         replInput = "";
         historyIndex = -1;
         savedInput = "";
         replCmdHistory = [code, ...replCmdHistory];
         focusReplOnDone = true;
-        await executeJuliaCode(code);
+        // Return to default Julia mode after each submission, mirroring the
+        // upstream Julia REPL where pkg/shell modes are single-command.
+        replMode = "julia";
+        await executeJuliaCode(code, undefined, modeAtSubmit);
+    }
+
+    function insertNewlineAtCaret() {
+        const el = replInputEl!;
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        replInput = replInput.slice(0, start) + "\n" + replInput.slice(end);
+        requestAnimationFrame(() => {
+            el.selectionStart = el.selectionEnd = start + 1;
+        });
     }
 
     function handleReplKeydown(e: KeyboardEvent) {
+        // Mode switching (Julia REPL convention): on an empty input, "]" enters
+        // pkg mode and ";" enters shell mode. The character itself is NOT added.
+        if (
+            replMode === "julia" &&
+            replInput === "" &&
+            !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey
+        ) {
+            if (e.key === "]") {
+                e.preventDefault();
+                replMode = "pkg";
+                return;
+            }
+            if (e.key === ";") {
+                e.preventDefault();
+                replMode = "shell";
+                return;
+            }
+        }
+        // Backspace at the very start of an empty input returns to julia mode.
+        if (
+            e.key === "Backspace" &&
+            replMode !== "julia" &&
+            replInput === "" &&
+            replInputEl &&
+            replInputEl.selectionStart === 0 &&
+            replInputEl.selectionEnd === 0
+        ) {
+            e.preventDefault();
+            replMode = "julia";
+            return;
+        }
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
+            const code = replInput.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+            // Multi-line buffering only applies to the default julia mode —
+            // pkg / shell commands are single-line by convention.
+            if (replMode === "julia" && code.trim() && isIncompleteJulia(code)) {
+                insertNewlineAtCaret();
+                return;
+            }
             runReplInput();
         } else if (e.key === "ArrowUp") {
             const before = replInput.slice(0, replInputEl!.selectionStart);
@@ -482,6 +596,8 @@
                                     timestamp: Date.now(),
                                 },
                             ]);
+                        } else if (cmd.type === "env") {
+                            juliaActiveEnv.set(String(cmd.name ?? ""));
                         } else if (cmd.type === "display") {
                             const surahs: number[] = cmd.surahs;
                             const ayahs: number[] | null = cmd.ayahs;
@@ -634,11 +750,18 @@
         const onWinResize = () => refitActiveTerm();
         window.addEventListener("resize", onWinResize);
 
+        const onSelectionChange = () => updateReplAiSelection();
+        document.addEventListener("selectionchange", onSelectionChange);
+        const onScroll = () => updateReplAiSelection();
+        replOutputEl?.addEventListener("scroll", onScroll);
+
         return () => {
             unlistenJulia.then((fn) => fn());
             unlistenPtyOut.then((fn) => fn());
             unlistenPtyExit.then((fn) => fn());
             window.removeEventListener("resize", onWinResize);
+            document.removeEventListener("selectionchange", onSelectionChange);
+            replOutputEl?.removeEventListener("scroll", onScroll);
             if (streamingTimer) clearTimeout(streamingTimer);
         };
     });
@@ -1134,10 +1257,15 @@
                 {:else}
                     {#each replLines as line}
                         {#if line.kind === "input"}
+                            {@const m = line.mode ?? "julia"}
                             <div class="flex gap-1.5 mt-1 first:mt-0">
                                 <span
-                                    class="text-brand-gold-600 shrink-0 select-none font-semibold"
-                                    >julia&gt;</span
+                                    class="shrink-0 select-none font-semibold {m === 'pkg'
+                                        ? 'text-blue-500 dark:text-[#8caaee]'
+                                        : m === 'shell'
+                                          ? 'text-red-500 dark:text-[#e78284]'
+                                          : 'text-brand-gold-600'}"
+                                    >{m === 'pkg' ? '(@v) pkg>' : m === 'shell' ? 'shell>' : 'julia>'}</span
                                 >
                                 <span
                                     class="text-brand-charcoal-500 dark:text-[#c6d0f5] whitespace-pre-wrap"
@@ -1257,8 +1385,17 @@
                 }}
             >
                 <span
-                    class="text-brand-gold-600 shrink-0 select-none font-semibold font-mono repl-mono pt-px"
-                    >julia&gt;</span
+                    class="shrink-0 select-none font-semibold font-mono repl-mono pt-px {replMode === 'pkg'
+                        ? 'text-blue-500 dark:text-[#8caaee]'
+                        : replMode === 'shell'
+                          ? 'text-red-500 dark:text-[#e78284]'
+                          : 'text-brand-gold-600'}"
+                    title={replMode === 'pkg'
+                        ? 'Pkg mode — Backspace to exit'
+                        : replMode === 'shell'
+                          ? 'Shell mode — Backspace to exit'
+                          : 'Julia — type ] for pkg, ; for shell'}
+                    >{replMode === 'pkg' ? ($juliaActiveEnv ? `(${$juliaActiveEnv}) pkg>` : '(@v) pkg>') : replMode === 'shell' ? 'shell>' : ($juliaActiveEnv ? `julia (${$juliaActiveEnv})>` : 'julia>')}</span
                 >
                 <textarea
                     bind:this={replInputEl}
@@ -1280,7 +1417,11 @@
                     rows={replInputRows}
                     placeholder={isRunning || isStreaming
                         ? "Running…"
-                        : "Enter code, Shift+Enter for newline"}
+                        : replMode === 'pkg'
+                          ? 'pkg command, e.g. add DataFrames'
+                          : replMode === 'shell'
+                            ? 'shell command'
+                            : "Enter code, Shift+Enter for newline"}
                     use:noAutocorrect
                     spellcheck={false}
                     class="flex-1 resize-none bg-transparent font-mono repl-mono text-brand-charcoal-700 dark:text-[#c6d0f5]
@@ -1293,6 +1434,17 @@
 
     <!-- Terminal panels (xterm.js). All container divs stay mounted so each
          terminal keeps its scrollback when the user switches tabs. -->
+    {#if $isPro && replAiSelection}
+        <AiSelectionToolbar
+            selectedText={replAiSelection.text}
+            x={replAiSelection.x}
+            y={replAiSelection.y}
+            contextPrompt="The user is asking about output from the Julia REPL. The selected text is taken from the REPL transcript (which may include errors, stack traces, or printed values)."
+            askOnly={true}
+            onClose={() => (replAiSelection = null)}
+        />
+    {/if}
+
     {#if ts.termTabs.length > 0}
         <div
             class="relative flex-1 min-h-0 bg-brand-sand-50 dark:bg-[#303446]"
