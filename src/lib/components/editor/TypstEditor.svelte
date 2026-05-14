@@ -304,6 +304,7 @@
             {lineWrap}
             aiSelectionTools={true}
             {aiContextPrompt}
+            filePath={effectiveTab?.path ?? null}
             onchange={handleInput}
             class={`${effectiveTab?.type !== "typst" ? "mb-4" : ""} ${sideBySide ? "mb-3" : ""} flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 font-mono`}
         />

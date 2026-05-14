@@ -3,30 +3,25 @@ import { invoke } from '@tauri-apps/api/core';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type TermLine = { text: string; is_stderr: boolean; is_input: boolean };
-export type TermTab  = { id: string; label: string };
+export type TermTab = { id: string; label: string };
 
 export interface SharedTermState {
-    activePanel:     string;
-    termTabs:        TermTab[];
-    termOutputLines: Record<string, TermLine[]>;
-    termIsRunning:   Record<string, boolean>;
-    termExited:      Record<string, boolean>;
-    termCounter:     number;
-    termInputValues: Record<string, string>;
+    activePanel: string;
+    termTabs:    TermTab[];
+    termExited:  Record<string, boolean>;
+    termCounter: number;
 }
 
 // ── Stores ────────────────────────────────────────────────────────────────────
 
-/** Single shared terminal/REPL panel state for all Julia tabs */
+/** Shared terminal/REPL panel state for all Julia tabs. Terminal output and
+ *  input are owned by xterm.js instances, so no buffered output/input state
+ *  is kept here — only the tab list and which panel is currently visible. */
 export const sharedTermState = writable<SharedTermState>({
-    activePanel:     'julia',
-    termTabs:        [],
-    termOutputLines: {},
-    termIsRunning:   {},
-    termExited:      {},
-    termCounter:     0,
-    termInputValues: {},
+    activePanel: 'julia',
+    termTabs:    [],
+    termExited:  {},
+    termCounter: 0,
 });
 
 /** A paired group of two Julia editors sharing split view */
@@ -115,7 +110,8 @@ export async function executeJuliaCode(
     juliaReplHistory.update(h => [...h, { text: snippet, kind: 'input' as const }]);
 
     if (!get(juliaReplStarted)) {
-        await invoke('start_julia_repl');
+        const { openFolderPath } = await import('./tabs.store');
+        await invoke('start_julia_repl', { cwd: get(openFolderPath) });
         juliaReplStarted.set(true);
     }
     await invoke('run_julia_code', { code: snippet });

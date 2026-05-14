@@ -477,7 +477,7 @@
                     title={$t('highlight.word_highlight')}
                     class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 dark:text-[#838ba7] transition-all hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-brand-gold-500 dark:hover:text-[#e5c890] active:scale-95"
                 >
-                    <Icon icon="ph:highlighter-duotone" width="14" />
+                    <Icon icon="solar:pen-new-square-bold-duotone" width="14" />
                 </button>
             {/if}
             {#if $isPro}
@@ -487,7 +487,7 @@
                     title={$t('morphology.ai_ask_word')}
                     class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 dark:text-[#838ba7] transition-all hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-brand-gold-500 dark:hover:text-[#e5c890] active:scale-95 {aiPromptOpen ? 'bg-slate-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]' : ''}"
                 >
-                    <Icon icon="ri:chat-ai-3-fill" width="14" />
+                    <Icon icon="ri:chat-smile-ai-fill" width="14" />
                 </button>
             {/if}
             {#if onPin}

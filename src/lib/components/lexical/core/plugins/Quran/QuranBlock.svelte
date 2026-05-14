@@ -308,7 +308,7 @@
                                     title={$t("morphology.ai_ask_ayah", { ayah: String(v.ayah) })}
                                     aria-label={$t("morphology.ai_ask_ayah", { ayah: String(v.ayah) })}
                                     class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
-                                    ><Icon icon="ri:chat-ai-3-fill" width="0.6rem" /></button
+                                    ><Icon icon="ri:chat-smile-ai-fill" width="0.6rem" /></button
                                 >{/if}{#if $manuscriptsEnabled}<button
                                     type="button"
                                     onmousedown={(e) => e.preventDefault()}

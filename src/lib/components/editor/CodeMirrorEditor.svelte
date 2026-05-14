@@ -7,6 +7,7 @@
         highlightActiveLine,
         highlightActiveLineGutter,
         scrollPastEnd,
+        drawSelection,
         type KeyBinding,
     } from '@codemirror/view';
     import { EditorState, Compartment, Transaction, type Extension } from '@codemirror/state';
@@ -15,6 +16,7 @@
         history,
         historyKeymap,
         indentWithTab,
+        insertNewlineKeepIndent,
         toggleComment,
         toggleBlockComment,
         undoDepth,
@@ -33,6 +35,8 @@
     import { editorTheme, cmFontSize, codeMirrorViewInstance, codeMirrorCanUndo, codeMirrorCanRedo } from '$lib/stores/editor.store';
     import { isPro } from '$lib/stores/auth.store';
     import AiSelectionToolbar from '$lib/components/shared/AiSelectionToolbar.svelte';
+    import { invoke } from '@tauri-apps/api/core';
+    import { gitDiffGutter, setGitBaseline } from '$lib/codemirror/gitDiffGutter';
 
     // ── Props ─────────────────────────────────────────────────────────────────
 
@@ -45,6 +49,7 @@
         lineWrap = true,
         aiSelectionTools = false,
         aiContextPrompt,
+        filePath,
         onchange,
     }: {
         value?: string;
@@ -55,6 +60,7 @@
         lineWrap?: boolean;
         aiSelectionTools?: boolean;
         aiContextPrompt?: string;
+        filePath?: string | null;
         onchange?: (newValue: string) => void;
     } = $props();
 
@@ -69,10 +75,11 @@
     // ── Ayu Light theme ───────────────────────────────────────────────────────
 
     const ayuLightBase = EditorView.theme({
-        '&': { backgroundColor: '#fafafa', color: '#5c6773', height: '100%', '--cm-sel': '#c3dcee' },
+        '&': { backgroundColor: '#fafafa', color: '#5c6773', height: '100%', '--cm-sel': '#bcd9f0' },
         '.cm-scroller': { overflow: 'auto', fontFamily: 'inherit', lineHeight: '1.6' },
         '.cm-content': { caretColor: '#ff9940', padding: '8px 0', paddingBottom: '1.5rem' },
         '.cm-cursor, .cm-dropCursor': { borderLeftColor: '#ff9940' },
+        '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': { background: '#bcd9f0' },
         '.cm-activeLine': { backgroundColor: '#f2f5f7' },
         '.cm-gutters': {
             backgroundColor: '#f3f4f5',
@@ -146,10 +153,11 @@
     // ── Ayu Mirage theme ──────────────────────────────────────────────────────
 
     const ayuMirageBase = EditorView.theme({
-        '&': { backgroundColor: '#1f2430', color: '#cbccc6', height: '100%', '--cm-sel': '#3a6ea8' },
+        '&': { backgroundColor: '#1f2430', color: '#cbccc6', height: '100%', '--cm-sel': '#3a4a66' },
         '.cm-scroller': { overflow: 'auto', fontFamily: 'inherit', lineHeight: '1.6' },
         '.cm-content': { caretColor: '#ffcc66', padding: '8px 0', paddingBottom: '1.5rem' },
         '.cm-cursor, .cm-dropCursor': { borderLeftColor: '#ffcc66' },
+        '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': { background: '#3a4a66' },
         '.cm-activeLine': { backgroundColor: '#232834' },
         '.cm-gutters': {
             backgroundColor: '#242936',
@@ -396,6 +404,7 @@
             doc: value,
             extensions: [
                 lineNumbers(),
+                drawSelection(),
                 highlightActiveLine(),
                 highlightActiveLineGutter(),
                 history(),
@@ -406,6 +415,7 @@
                 search({ top: true }),
                 keymap.of([
                     ...extraKeymap,
+                    { key: 'Enter', run: insertNewlineKeepIndent, preventDefault: true },
                     { key: 'Mod-/', run: toggleComment, preventDefault: true },
                     { key: 'Shift-Alt-a', run: toggleBlockComment, preventDefault: true },
                     indentWithTab,
@@ -415,6 +425,7 @@
                 ]),
                 themeComp.of(getThemeExt($editorTheme)),
                 langComp.of(getLangExt(language)),
+                gitDiffGutter(),
                 ...extraExtensions,
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged) {
@@ -478,6 +489,28 @@
         $cmFontSize; // reactive dependency
         if (view) requestAnimationFrame(() => view.requestMeasure());
     });
+
+    // Fetch git HEAD baseline for the current file and feed it into the diff gutter.
+    // null baseline disables the gutter (untracked file or not inside a git repo).
+    $effect(() => {
+        const path = filePath ?? null;
+        if (!view) return;
+        let cancelled = false;
+        if (!path) {
+            view.dispatch({ effects: setGitBaseline.of(null) });
+            return;
+        }
+        invoke<string | null>('git_head_content', { filePath: path })
+            .then((baseline) => {
+                if (cancelled || !view) return;
+                view.dispatch({ effects: setGitBaseline.of(baseline ?? null) });
+            })
+            .catch(() => {
+                if (cancelled || !view) return;
+                view.dispatch({ effects: setGitBaseline.of(null) });
+            });
+        return () => { cancelled = true; };
+    });
 </script>
 
 <div bind:this={container} class={className} style="--cm-font-size: {$cmFontSize}px"></div>
@@ -505,9 +538,26 @@
     div :global(.cm-focused) {
         outline: none;
     }
-    /* Native browser selection — character-accurate, works on any sub-word range */
-    div :global(.cm-content *::selection),
-    div :global(.cm-content::selection) {
-        background-color: var(--cm-sel, #c3dcee);
+    /* drawSelection() renders selection as full-line-height blocks (no gaps
+       between wrapped/multi-line rows), VSCode-style. Hide the native
+       ::selection so the two highlights don't overlap. */
+    div :global(.cm-content ::selection),
+    div :global(.cm-content::selection),
+    div :global(.cm-line ::selection),
+    div :global(.cm-line::selection) {
+        background-color: transparent;
+    }
+    div :global(.cm-selectionLayer .cm-selectionBackground),
+    div :global(.cm-selectionBackground) {
+        background: var(--cm-sel, #c3dcee) !important;
+        border-radius: 2px;
+        /* Small horizontal end-padding so the highlight doesn't butt up
+           against the next glyph or line edge. */
+        padding-right: 2px;
+        box-sizing: content-box;
+    }
+    div :global(.cm-focused .cm-selectionLayer .cm-selectionBackground),
+    div :global(.cm-focused .cm-selectionBackground) {
+        background: var(--cm-sel, #c3dcee) !important;
     }
 </style>

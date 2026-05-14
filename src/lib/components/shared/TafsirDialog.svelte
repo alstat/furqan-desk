@@ -466,7 +466,7 @@
                             onpointerdown={(e) => e.stopPropagation()}
                             role="menu"
                             tabindex="-1"
-                            class="absolute right-0 top-9 z-20 w-72 rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
+                            class="absolute right-0 top-9 z-20 w-72 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
                         >
                             <div class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2">
                                 <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]">
@@ -517,7 +517,7 @@
                                         onclick={resetFontSize}
                                         aria-label={$t("dialog.reset_font_size")}
                                         title={$t("dialog.reset")}
-                                        class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
+                                        class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
                                     >
                                         <Icon icon="solar:restart-linear" width="0.9rem" />
                                     </button>
@@ -559,7 +559,7 @@
                                         onclick={resetLineSpacing}
                                         aria-label={$t("dialog.reset_line_spacing")}
                                         title={$t("dialog.reset")}
-                                        class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
+                                        class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
                                     >
                                         <Icon icon="solar:restart-linear" width="0.9rem" />
                                     </button>
@@ -672,7 +672,7 @@
                                                 class="cursor-pointer flex items-center justify-center h-7 w-7 p-1 rounded-full text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-100 dark:hover:bg-[#414559] transition-colors"
                                             >
                                                 <Icon
-                                                    icon="ri:chat-ai-3-fill"
+                                                    icon="ri:chat-smile-ai-fill"
                                                     width="0.85rem"
                                                 />
                                             </button>

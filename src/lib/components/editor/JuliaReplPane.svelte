@@ -1,20 +1,26 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, onDestroy, tick } from "svelte";
     import { get } from "svelte/store";
     import { listen } from "@tauri-apps/api/event";
     import { IS_APPLE } from "@lexical/utils";
+    import Icon from "@iconify/svelte";
+    import { Terminal } from "@xterm/xterm";
+    import { FitAddon } from "@xterm/addon-fit";
+    import "@xterm/xterm/css/xterm.css";
     import {
         sharedTermState,
         juliaIsRunning,
         executeJuliaCode,
-        type TermLine,
         type TermTab,
     } from "$lib/stores/julia-terminal.store";
     import {
         juliaReplHistory,
         juliaPlots,
         cmFontSize,
+        replFontSize,
+        replLineSpacing,
         juliaReplStarted,
+        appDarkMode,
         type ReplLine,
     } from "$lib/stores/editor.store";
     import { invoke } from "@tauri-apps/api/core";
@@ -30,6 +36,7 @@
         multiSurahTransliterationMap,
         multiSurahWordByWordMap,
     } from "$lib/stores/translation.store";
+    import { openFolderPath } from "$lib/stores/tabs.store";
 
     // ── Terminal state (shared across all Julia tabs) ─────────────────────────
 
@@ -40,14 +47,179 @@
         const snapshot = {
             activePanel: ts.activePanel,
             termTabs: ts.termTabs,
-            termOutputLines: ts.termOutputLines,
-            termIsRunning: ts.termIsRunning,
             termExited: ts.termExited,
             termCounter: ts.termCounter,
-            termInputValues: ts.termInputValues,
         };
         sharedTermState.set(snapshot);
     });
+
+    // ── xterm.js terminal bundles (one per terminal tab) ─────────────────────
+
+    type Bundle = {
+        term: Terminal;
+        fit: FitAddon;
+        onDataDispose: () => void;
+        attached: boolean;
+    };
+    const bundles = new Map<string, Bundle>();
+    let termContainerEls = $state<Record<string, HTMLDivElement | undefined>>(
+        {},
+    );
+
+    function b64ToBytes(b64: string): Uint8Array {
+        const bin = atob(b64);
+        const out = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+        return out;
+    }
+    function bytesToB64(bytes: Uint8Array): string {
+        let bin = "";
+        const CHUNK = 0x8000;
+        for (let i = 0; i < bytes.length; i += CHUNK) {
+            bin += String.fromCharCode.apply(
+                null,
+                bytes.subarray(i, i + CHUNK) as unknown as number[],
+            );
+        }
+        return btoa(bin);
+    }
+    function strToB64(s: string): string {
+        return bytesToB64(new TextEncoder().encode(s));
+    }
+
+    function termTheme(dark: boolean) {
+        if (dark) {
+            return {
+                background: "#303446",
+                foreground: "#a5adce",
+                cursor: "#f4b8e4",
+                cursorAccent: "#303446",
+                selectionBackground: "#3a3f57",
+                black: "#51576d",
+                red: "#e78284",
+                green: "#a6d189",
+                yellow: "#e5c890",
+                blue: "#8caaee",
+                magenta: "#f4b8e4",
+                cyan: "#81c8be",
+                white: "#b5bfe2",
+                brightBlack: "#626880",
+                brightRed: "#e78284",
+                brightGreen: "#a6d189",
+                brightYellow: "#e5c890",
+                brightBlue: "#8caaee",
+                brightMagenta: "#f4b8e4",
+                brightCyan: "#81c8be",
+                brightWhite: "#a5adce",
+            };
+        }
+        return {
+            background: "#faf7f2",
+            foreground: "#707070",
+            cursor: "#d33682",
+            cursorAccent: "#faf7f2",
+            selectionBackground: "#cfe3ff",
+            black: "#707070",
+            red: "#c44545",
+            green: "#5a8a3a",
+            yellow: "#b58900",
+            blue: "#268bd2",
+            magenta: "#d33682",
+            cyan: "#2aa198",
+            white: "#bdbdbd",
+            brightBlack: "#586e75",
+            brightRed: "#dc322f",
+            brightGreen: "#859900",
+            brightYellow: "#b58900",
+            brightBlue: "#268bd2",
+            brightMagenta: "#d33682",
+            brightCyan: "#2aa198",
+            brightWhite: "#fdf6e3",
+        };
+    }
+
+    async function attachTerm(id: string, container: HTMLDivElement) {
+        const existing = bundles.get(id);
+        if (existing?.attached) return;
+        const term =
+            existing?.term ??
+            new Terminal({
+                cursorBlink: true,
+                fontFamily:
+                    "Menlo, Monaco, 'JetBrainsMono Nerd Font', 'JetBrains Mono', 'Fira Code', monospace",
+                fontSize: $replFontSize,
+                lineHeight: $replLineSpacing,
+                theme: termTheme($appDarkMode),
+                allowProposedApi: true,
+                scrollback: 5000,
+            });
+        const fit = existing?.fit ?? new FitAddon();
+        if (!existing) term.loadAddon(fit);
+
+        term.open(container);
+        await tick();
+        try {
+            fit.fit();
+        } catch {
+            /* ignore */
+        }
+
+        const onData = term.onData((data) => {
+            invoke("pty_write", { id, dataB64: strToB64(data) }).catch(
+                () => {},
+            );
+        });
+
+        bundles.set(id, {
+            term,
+            fit,
+            onDataDispose: () => onData.dispose(),
+            attached: true,
+        });
+
+        try {
+            await invoke("start_pty", {
+                id,
+                cols: term.cols,
+                rows: term.rows,
+                cwd: get(openFolderPath),
+            });
+            await invoke("pty_resize", {
+                id,
+                cols: term.cols,
+                rows: term.rows,
+            }).catch(() => {});
+        } catch (e) {
+            term.writeln(`\r\n\x1b[31m${String(e)}\x1b[0m`);
+            ts.termExited[id] = true;
+        }
+
+        requestAnimationFrame(() => term.focus());
+    }
+
+    function disposeBundle(id: string) {
+        const b = bundles.get(id);
+        if (!b) return;
+        b.onDataDispose();
+        b.term.dispose();
+        bundles.delete(id);
+    }
+
+    function refitActiveTerm() {
+        const id = ts.activePanel;
+        const b = bundles.get(id);
+        if (!b) return;
+        try {
+            b.fit.fit();
+            invoke("pty_resize", {
+                id,
+                cols: b.term.cols,
+                rows: b.term.rows,
+            }).catch(() => {});
+        } catch {
+            /* ignore */
+        }
+    }
 
     // ── REPL lines (reactive from shared store) ───────────────────────────────
 
@@ -136,21 +308,6 @@
             }
         }
     }
-
-    // ── Terminal output/input DOM refs ────────────────────────────────────────
-
-    let termOutputEl: HTMLDivElement | undefined = $state(undefined);
-    let termInputEl: HTMLInputElement | undefined = $state(undefined);
-
-    // Scroll terminal to bottom when active panel switches
-    $effect(() => {
-        void ts.activePanel;
-        if (termOutputEl) {
-            setTimeout(() => {
-                termOutputEl!.scrollTop = termOutputEl!.scrollHeight;
-            }, 0);
-        }
-    });
 
     // ── REPL helpers ──────────────────────────────────────────────────────────
 
@@ -247,72 +404,45 @@
 
     // ── Terminal helpers ──────────────────────────────────────────────────────
 
-    function scrollTermToBottom() {
-        if (termOutputEl) {
-            setTimeout(() => {
-                termOutputEl!.scrollTop = termOutputEl!.scrollHeight;
-            }, 0);
-        }
-    }
-
     async function addTerminal() {
         ts.termCounter++;
-        const id = `term-${ts.termCounter}`;
+        const id = `pty-${ts.termCounter}-${Date.now()}`;
         const label = `Terminal ${ts.termCounter}`;
         ts.termTabs = [...ts.termTabs, { id, label }];
-        ts.termOutputLines[id] = [];
-        ts.termIsRunning[id] = false;
-        ts.termInputValues[id] = "";
         ts.termExited[id] = false;
         ts.activePanel = id;
-        try {
-            await invoke("start_terminal", { id });
-        } catch (e) {
-            ts.termOutputLines[id] = [
-                { text: String(e), is_stderr: true, is_input: false },
-            ];
-            ts.termExited[id] = true;
-        }
+        // The xterm instance is attached by the $effect once the container
+        // div is bound to the DOM.
     }
 
     async function closeTerminal(id: string) {
         try {
-            await invoke("close_terminal", { id });
+            await invoke("pty_kill", { id });
         } catch {
             /* ignore */
         }
+        disposeBundle(id);
         ts.termTabs = ts.termTabs.filter((t) => t.id !== id);
-        const { [id]: _ol, ...restOl } = ts.termOutputLines;
-        const { [id]: _ir, ...restIr } = ts.termIsRunning;
-        const { [id]: _iv, ...restIv } = ts.termInputValues;
         const { [id]: _ex, ...restEx } = ts.termExited;
-        ts.termOutputLines = restOl;
-        ts.termIsRunning = restIr;
-        ts.termInputValues = restIv;
         ts.termExited = restEx;
+        const { [id]: _ce, ...restCe } = termContainerEls;
+        termContainerEls = restCe;
         if (ts.activePanel === id) ts.activePanel = "julia";
     }
 
-    async function runTerminalCommand(id: string) {
-        const cmd = (ts.termInputValues[id] ?? "").trim();
-        if (!cmd || ts.termIsRunning[id] || ts.termExited[id]) return;
-        ts.termInputValues[id] = "";
-        ts.termIsRunning[id] = true;
-        ts.termOutputLines[id] = [
-            ...(ts.termOutputLines[id] ?? []),
-            { text: cmd, is_stderr: false, is_input: true },
-        ];
-        scrollTermToBottom();
+    async function killActiveTerm() {
+        const id = ts.activePanel;
+        if (id === "julia" || ts.termExited[id]) return;
+        // 0x03 = ETX = Ctrl-C; PTY line discipline turns this into SIGINT.
         try {
-            await invoke("send_terminal_input", { id, command: cmd });
-        } catch (e) {
-            ts.termOutputLines[id] = [
-                ...(ts.termOutputLines[id] ?? []),
-                { text: String(e), is_stderr: true, is_input: false },
-            ];
-            ts.termIsRunning[id] = false;
-            scrollTermToBottom();
+            await invoke("pty_write", {
+                id,
+                dataB64: bytesToB64(new Uint8Array([0x03])),
+            });
+        } catch {
+            /* ignore */
         }
+        bundles.get(id)?.term.focus();
     }
 
     // ── Event listeners ───────────────────────────────────────────────────────
@@ -485,171 +615,503 @@
             scrollReplToBottom();
         });
 
-        const unlistenTermOut = listen<{
-            id: string;
-            line: string;
-            is_stderr: boolean;
-        }>("terminal-output", (event) => {
-            const { id, line, is_stderr } = event.payload;
-            if (!(id in ts.termOutputLines)) return;
-            ts.termOutputLines[id] = [
-                ...(ts.termOutputLines[id] ?? []),
-                { text: line, is_stderr, is_input: false },
-            ];
-            if (ts.activePanel === id) scrollTermToBottom();
+        const unlistenPtyOut = listen<{ id: string; data_b64: string }>(
+            "pty-output",
+            (event) => {
+                const { id, data_b64 } = event.payload;
+                const b = bundles.get(id);
+                if (!b) return;
+                b.term.write(b64ToBytes(data_b64));
+            },
+        );
+
+        const unlistenPtyExit = listen<{ id: string }>("pty-exit", (event) => {
+            const { id } = event.payload;
+            if (!(id in ts.termExited)) return;
+            ts.termExited[id] = true;
         });
 
-        const unlistenTermDone = listen<{ id: string }>(
-            "terminal-done",
-            (event) => {
-                const { id } = event.payload;
-                if (!(id in ts.termIsRunning)) return;
-                ts.termIsRunning[id] = false;
-                if (ts.activePanel === id) scrollTermToBottom();
-            },
-        );
-
-        const unlistenTermExit = listen<{ id: string }>(
-            "terminal-exit",
-            (event) => {
-                const { id } = event.payload;
-                if (!(id in ts.termExited)) return;
-                ts.termExited[id] = true;
-                ts.termIsRunning[id] = false;
-            },
-        );
+        const onWinResize = () => refitActiveTerm();
+        window.addEventListener("resize", onWinResize);
 
         return () => {
             unlistenJulia.then((fn) => fn());
-            unlistenTermOut.then((fn) => fn());
-            unlistenTermDone.then((fn) => fn());
-            unlistenTermExit.then((fn) => fn());
+            unlistenPtyOut.then((fn) => fn());
+            unlistenPtyExit.then((fn) => fn());
+            window.removeEventListener("resize", onWinResize);
             if (streamingTimer) clearTimeout(streamingTimer);
         };
     });
+
+    onDestroy(() => {
+        for (const id of [...bundles.keys()]) {
+            invoke("pty_kill", { id }).catch(() => {});
+            disposeBundle(id);
+        }
+    });
+
+    // Attach xterm instances as containers become available.
+    $effect(() => {
+        for (const tab of ts.termTabs) {
+            const container = termContainerEls[tab.id];
+            if (container && !bundles.get(tab.id)?.attached) {
+                attachTerm(tab.id, container);
+            }
+        }
+    });
+
+    // Refit when the active panel changes (e.g., switching tabs).
+    $effect(() => {
+        const _activePanel = ts.activePanel;
+        requestAnimationFrame(() => {
+            refitActiveTerm();
+            const b = bundles.get(_activePanel);
+            b?.term.focus();
+        });
+    });
+
+    // Update theme on dark-mode flip.
+    $effect(() => {
+        const dark = $appDarkMode;
+        for (const b of bundles.values()) {
+            b.term.options.theme = termTheme(dark);
+        }
+    });
+
+    // Update font size / line spacing on store changes.
+    $effect(() => {
+        const fs = $replFontSize;
+        const lh = $replLineSpacing;
+        for (const [id, b] of bundles.entries()) {
+            b.term.options.fontSize = fs;
+            b.term.options.lineHeight = lh;
+            try {
+                b.fit.fit();
+                invoke("pty_resize", {
+                    id,
+                    cols: b.term.cols,
+                    rows: b.term.rows,
+                }).catch(() => {});
+            } catch {
+                /* ignore */
+            }
+        }
+    });
+
+    // ── Settings popover ──────────────────────────────────────────────────────
+    const REPL_FONT_BOUNDS = { min: 9, max: 24, default: 12 };
+    const REPL_LINE_BOUNDS = { min: 1.0, max: 2.0, default: 1.3 };
+
+    let showSettings = $state(false);
+    let settingsAnchorEl: HTMLDivElement | undefined = $state();
+
+    function handleSettingsClickOutside(e: MouseEvent) {
+        if (!settingsAnchorEl) return;
+        if (!settingsAnchorEl.contains(e.target as Node)) {
+            showSettings = false;
+        }
+    }
+
+    $effect(() => {
+        if (showSettings) {
+            document.addEventListener("mousedown", handleSettingsClickOutside);
+            return () =>
+                document.removeEventListener(
+                    "mousedown",
+                    handleSettingsClickOutside,
+                );
+        }
+    });
+
+    function decFontSize() {
+        replFontSize.set(Math.max(REPL_FONT_BOUNDS.min, $replFontSize - 1));
+    }
+    function incFontSize() {
+        replFontSize.set(Math.min(REPL_FONT_BOUNDS.max, $replFontSize + 1));
+    }
+    function resetFontSize() {
+        replFontSize.set(REPL_FONT_BOUNDS.default);
+    }
+    function decLineSpacing() {
+        replLineSpacing.set(
+            Math.max(
+                REPL_LINE_BOUNDS.min,
+                +($replLineSpacing - 0.1).toFixed(2),
+            ),
+        );
+    }
+    function incLineSpacing() {
+        replLineSpacing.set(
+            Math.min(
+                REPL_LINE_BOUNDS.max,
+                +($replLineSpacing + 0.1).toFixed(2),
+            ),
+        );
+    }
+    function resetLineSpacing() {
+        replLineSpacing.set(REPL_LINE_BOUNDS.default);
+    }
+
+    const settingsLabelClass =
+        "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
+    const settingsAdjustBtnClass =
+        "cursor-pointer w-7 h-7 flex items-center justify-center rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#363a4f] hover:bg-brand-sand-200 dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
 </script>
 
 <div
     class="flex-1 mt-0.5 flex flex-col rounded-md overflow-hidden border border-brand-sand-200 dark:border-[#414559] min-h-0 h-full"
-    style="--repl-font-size: {$cmFontSize}px"
+    style="--repl-font-size: {$replFontSize}px; --repl-line-height: {$replLineSpacing};"
 >
     <!-- Tab bar -->
     <div
-        class="flex items-center bg-brand-sand-100 dark:bg-[#292c3c] border-b border-brand-sand-200 dark:border-[#414559] shrink-0 overflow-x-auto"
+        class="relative flex items-center py-1 border-b border-brand-sand-200 dark:border-[#414559] shrink-0
+               {ts.activePanel === 'julia'
+            ? 'bg-brand-sand-100 dark:bg-[#292c3c]'
+            : 'bg-brand-sand-50 dark:bg-[#303446]'}"
     >
-        <!-- Julia REPL tab -->
-        <div
-            class="flex items-center flex-none border-r rounded-full mx-2 border-brand-sand-400 dark:border-[#414559]
-                    {ts.activePanel === 'julia'
-                ? 'bg-brand-sand-50 dark:bg-[#414559]'
-                : 'hover:bg-brand-sand-100 dark:hover:bg-[#303446]'}"
-        >
-            <button
-                onclick={() => (ts.activePanel = "julia")}
-                class="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none cursor-pointer
-                       {ts.activePanel === 'julia'
-                    ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
-                    : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
-                >REPL</button
-            >
-            {#if ts.activePanel === "julia"}
-                {#if isRunning || isStreaming}
-                    <span
-                        class="flex items-center gap-1 pr-2 select-none text-brand-gold-400"
-                    >
-                        <svg
-                            class="animate-spin h-3 w-3 shrink-0"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                        >
-                            <circle
-                                class="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                stroke-width="4"
-                            ></circle>
-                            <path
-                                class="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                            ></path>
-                        </svg>
-                        <span class="text-[10px] italic">Running…</span>
-                    </span>
-                {/if}
-                <button
-                    onclick={(e) => {
-                        e.stopPropagation();
-                        clearRepl();
-                    }}
-                    class="cursor-pointer pr-1 text-[10px] font-medium text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] transition-colors select-none"
-                    title="Clear REPL output">Clear</button
-                >
-                <button
-                    onclick={(e) => {
-                        e.stopPropagation();
-                        restartRepl();
-                    }}
-                    class="cursor-pointer px-2 flex items-center gap-0.5 text-[10px] font-medium text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 dark:hover:text-red-400 transition-colors select-none"
-                    title="Kill and restart Julia REPL"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="10"
-                        height="10"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <path
-                            d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
-                        />
-                        <path d="M3 3v5h5" />
-                    </svg>
-                    Restart
-                </button>
-            {/if}
-        </div>
-
-        <!-- Terminal tabs -->
-        {#each ts.termTabs as tab (tab.id)}
+        <div class="flex items-center flex-1 min-w-0 overflow-x-auto">
+            <!-- Julia REPL tab -->
             <div
-                class="flex items-center flex-none mr-2 rounded-full border-r border-brand-sand-400 dark:border-[#414559]
-                        {ts.activePanel === tab.id
+                class="flex items-center flex-none border-r rounded-full mx-2 border-brand-sand-400 dark:border-[#414559]
+                    {ts.activePanel === 'julia'
                     ? 'bg-brand-sand-50 dark:bg-[#414559]'
                     : 'hover:bg-brand-sand-100 dark:hover:bg-[#303446]'}"
             >
                 <button
-                    onclick={() => (ts.activePanel = tab.id)}
-                    class="cursor-pointer px-3 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none
-                           {ts.activePanel === tab.id
+                    onclick={() => (ts.activePanel = "julia")}
+                    class="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none cursor-pointer
+                       {ts.activePanel === 'julia'
                         ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
                         : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
-                    >{tab.label}</button
+                    >REPL</button
                 >
-                <button
-                    onclick={(e) => {
-                        e.stopPropagation();
-                        closeTerminal(tab.id);
-                    }}
-                    class="cursor-pointer pr-2 py-1.5 text-[12px] leading-none text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 transition-colors"
-                    title="Close terminal">×</button
-                >
+                {#if ts.activePanel === "julia"}
+                    {#if isRunning || isStreaming}
+                        <span
+                            class="flex items-center gap-1 pr-2 select-none text-brand-gold-400"
+                        >
+                            <svg
+                                class="animate-spin h-3 w-3 shrink-0"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    class="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    stroke-width="4"
+                                ></circle>
+                                <path
+                                    class="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                                ></path>
+                            </svg>
+                            <span class="text-[10px] italic">Running…</span>
+                        </span>
+                    {/if}
+                    <button
+                        onclick={(e) => {
+                            e.stopPropagation();
+                            clearRepl();
+                        }}
+                        class="cursor-pointer pr-1 text-[10px] font-medium text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] transition-colors select-none"
+                        title="Clear REPL output">Clear</button
+                    >
+                    <button
+                        onclick={(e) => {
+                            e.stopPropagation();
+                            restartRepl();
+                        }}
+                        class="cursor-pointer px-2 flex items-center gap-0.5 text-[10px] font-medium text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 dark:hover:text-red-400 transition-colors select-none"
+                        title="Kill and restart Julia REPL"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path
+                                d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+                            />
+                            <path d="M3 3v5h5" />
+                        </svg>
+                        Restart
+                    </button>
+                {/if}
             </div>
-        {/each}
 
-        <!-- Add terminal button -->
-        <button
-            onclick={addTerminal}
-            class="cursor-pointer ml-auto px-3 py-1.5 text-sm font-medium text-brand-charcoal-400 dark:text-[#838ba7] hover:text-brand-charcoal-700 dark:hover:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] shrink-0 transition-colors"
-            title="Add terminal">+</button
-        >
+            <!-- Terminal tabs -->
+            {#each ts.termTabs as tab (tab.id)}
+                <div
+                    class="flex items-center flex-none mr-2 rounded-full border-r border-brand-sand-400 dark:border-[#414559]
+                        {ts.activePanel === tab.id
+                        ? 'bg-brand-sand-50 dark:bg-[#414559]'
+                        : 'hover:bg-brand-sand-100 dark:hover:bg-[#303446]'}"
+                >
+                    <button
+                        onclick={() => (ts.activePanel = tab.id)}
+                        class="cursor-pointer px-3 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none
+                           {ts.activePanel === tab.id
+                            ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
+                            : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
+                        >{tab.label}</button
+                    >
+                    <button
+                        onclick={(e) => {
+                            e.stopPropagation();
+                            closeTerminal(tab.id);
+                        }}
+                        class="cursor-pointer pr-2 py-1 text-[10px] leading-none text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 transition-colors"
+                        title="Close terminal">×</button
+                    >
+                </div>
+            {/each}
+        </div>
+
+        <!-- Right-aligned tab-bar actions -->
+        <div class="ml-auto flex items-center gap-0.5 pr-2 shrink-0">
+            {#if ts.activePanel !== "julia" && !ts.termExited[ts.activePanel]}
+                <button
+                    onclick={killActiveTerm}
+                    aria-label="Send Ctrl+C"
+                    title="Send Ctrl+C (SIGINT) to the foreground process"
+                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md
+                           text-brand-charcoal-300 dark:text-brand-charcoal-300
+                           hover:text-red-500 dark:hover:text-red-400
+                           hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 transition-colors"
+                >
+                    <Icon
+                        icon="solar:stop-circle-bold-duotone"
+                        width="0.9rem"
+                    />
+                </button>
+            {/if}
+            <!-- Add terminal button -->
+            <button
+                onclick={addTerminal}
+                class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-brand-charcoal-300 hover:text-brand-gold-600 dark:hover:text-brand-gold-400 hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 shrink-0 transition-colors"
+                title="Add terminal"
+                aria-label="Add terminal"
+            >
+                <Icon icon="lucide:plus" width="0.9rem" />
+            </button>
+            <!-- Settings button -->
+            <div bind:this={settingsAnchorEl} class="relative">
+                <button
+                    onclick={() => (showSettings = !showSettings)}
+                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-brand-charcoal-300 hover:text-brand-gold-600 dark:hover:text-brand-gold-400 hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 shrink-0 transition-colors
+                           {showSettings
+                        ? 'bg-brand-sand-100 dark:bg-brand-sand-200 text-brand-gold-600 dark:text-brand-gold-400'
+                        : ''}"
+                    title="Display settings"
+                    aria-label="Display settings"
+                    aria-expanded={showSettings}
+                >
+                    <Icon icon="lucide:settings" width="0.9rem" />
+                </button>
+                {#if showSettings}
+                    <div
+                        role="menu"
+                        tabindex="-1"
+                        onpointerdown={(e) => e.stopPropagation()}
+                        class="absolute right-0 top-full mt-1 z-50 w-72 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
+                    >
+                        <div
+                            class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2"
+                        >
+                            <div
+                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]"
+                            >
+                                <Icon
+                                    icon="solar:settings-bold-duotone"
+                                    width="1rem"
+                                />
+                            </div>
+                            <div class="min-w-0">
+                                <p
+                                    class="text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                                >
+                                    Display options
+                                </p>
+                                <p
+                                    class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                >
+                                    Text size & spacing
+                                </p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class={settingsLabelClass}>Font size</span>
+                            <div class="flex items-center gap-2">
+                                <button
+                                    onclick={decFontSize}
+                                    disabled={$replFontSize <=
+                                        REPL_FONT_BOUNDS.min}
+                                    aria-label="Decrease font size"
+                                    class={settingsAdjustBtnClass}
+                                >
+                                    <svg
+                                        width="10"
+                                        height="2"
+                                        viewBox="0 0 10 2"
+                                        fill="none"
+                                    >
+                                        <line
+                                            x1="0"
+                                            y1="1"
+                                            x2="10"
+                                            y2="1"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                        />
+                                    </svg>
+                                </button>
+                                <span
+                                    class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
+                                >
+                                    {$replFontSize}px
+                                </span>
+                                <button
+                                    onclick={incFontSize}
+                                    disabled={$replFontSize >=
+                                        REPL_FONT_BOUNDS.max}
+                                    aria-label="Increase font size"
+                                    class={settingsAdjustBtnClass}
+                                >
+                                    <svg
+                                        width="10"
+                                        height="10"
+                                        viewBox="0 0 10 10"
+                                        fill="none"
+                                    >
+                                        <line
+                                            x1="5"
+                                            y1="0"
+                                            x2="5"
+                                            y2="10"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                        />
+                                        <line
+                                            x1="0"
+                                            y1="5"
+                                            x2="10"
+                                            y2="5"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                        />
+                                    </svg>
+                                </button>
+                                <button
+                                    onclick={resetFontSize}
+                                    aria-label="Reset font size"
+                                    title="Reset"
+                                    class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
+                                >
+                                    <Icon
+                                        icon="solar:restart-linear"
+                                        width="0.9rem"
+                                    />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class={settingsLabelClass}>Line spacing</span>
+                            <div class="flex items-center gap-2">
+                                <button
+                                    onclick={decLineSpacing}
+                                    disabled={$replLineSpacing <=
+                                        REPL_LINE_BOUNDS.min}
+                                    aria-label="Decrease line spacing"
+                                    class={settingsAdjustBtnClass}
+                                >
+                                    <svg
+                                        width="10"
+                                        height="2"
+                                        viewBox="0 0 10 2"
+                                        fill="none"
+                                    >
+                                        <line
+                                            x1="0"
+                                            y1="1"
+                                            x2="10"
+                                            y2="1"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                        />
+                                    </svg>
+                                </button>
+                                <span
+                                    class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
+                                >
+                                    {$replLineSpacing.toFixed(1)}x
+                                </span>
+                                <button
+                                    onclick={incLineSpacing}
+                                    disabled={$replLineSpacing >=
+                                        REPL_LINE_BOUNDS.max}
+                                    aria-label="Increase line spacing"
+                                    class={settingsAdjustBtnClass}
+                                >
+                                    <svg
+                                        width="10"
+                                        height="10"
+                                        viewBox="0 0 10 10"
+                                        fill="none"
+                                    >
+                                        <line
+                                            x1="5"
+                                            y1="0"
+                                            x2="5"
+                                            y2="10"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                        />
+                                        <line
+                                            x1="0"
+                                            y1="5"
+                                            x2="10"
+                                            y2="5"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                        />
+                                    </svg>
+                                </button>
+                                <button
+                                    onclick={resetLineSpacing}
+                                    aria-label="Reset line spacing"
+                                    title="Reset"
+                                    class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
+                                >
+                                    <Icon
+                                        icon="solar:restart-linear"
+                                        width="0.9rem"
+                                    />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {/if}
+            </div>
+        </div>
     </div>
 
     <!-- Julia REPL content -->
@@ -658,7 +1120,7 @@
             <!-- Output -->
             <div
                 bind:this={replOutputEl}
-                class="default-scroll flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono repl-mono leading-relaxed"
+                class="default-scroll flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono repl-mono"
                 role="log"
                 aria-label="REPL output"
             >
@@ -795,7 +1257,7 @@
                 }}
             >
                 <span
-                    class="text-brand-gold-600 shrink-0 select-none font-semibold font-mono repl-mono leading-relaxed pt-px"
+                    class="text-brand-gold-600 shrink-0 select-none font-semibold font-mono repl-mono pt-px"
                     >julia&gt;</span
                 >
                 <textarea
@@ -822,105 +1284,35 @@
                     use:noAutocorrect
                     spellcheck={false}
                     class="flex-1 resize-none bg-transparent font-mono repl-mono text-brand-charcoal-700 dark:text-[#c6d0f5]
-                           leading-relaxed outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880]
+                           outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880]
                            disabled:opacity-40 disabled:cursor-not-allowed"
                 ></textarea>
             </div>
         </div>
     {/if}
 
-    <!-- Terminal panels -->
-    {#each ts.termTabs as tab (tab.id)}
-        {#if ts.activePanel === tab.id}
-            <div class="flex-1 flex flex-col overflow-hidden min-h-0">
-                <!-- Output -->
+    <!-- Terminal panels (xterm.js). All container divs stay mounted so each
+         terminal keeps its scrollback when the user switches tabs. -->
+    {#if ts.termTabs.length > 0}
+        <div
+            class="relative flex-1 min-h-0 bg-brand-sand-50 dark:bg-[#303446]"
+            style="display: {ts.activePanel !== 'julia' ? 'block' : 'none'};"
+        >
+            {#each ts.termTabs as tab (tab.id)}
                 <div
-                    bind:this={termOutputEl}
-                    class="default-scroll flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono repl-mono leading-relaxed"
-                    role="log"
-                    aria-label="Terminal output"
-                >
-                    {#if (ts.termOutputLines[tab.id] ?? []).length === 0 && !ts.termExited[tab.id]}
-                        <p
-                            class="text-brand-charcoal-300 dark:text-[#626880] italic select-none"
-                        >
-                            Terminal ready. Type a command below and press
-                            Enter.
-                        </p>
-                    {:else}
-                        {#each ts.termOutputLines[tab.id] ?? [] as line}
-                            {#if line.is_input}
-                                <div class="flex gap-1.5 mt-1 first:mt-0">
-                                    <span
-                                        class="text-brand-gold-600 shrink-0 select-none font-semibold"
-                                        >$</span
-                                    >
-                                    <span
-                                        class="text-brand-charcoal-500 dark:text-[#c6d0f5] whitespace-pre-wrap"
-                                        >{line.text}</span
-                                    >
-                                </div>
-                            {:else if line.is_stderr}
-                                <div class="text-red-400 whitespace-pre-wrap">
-                                    {line.text}
-                                </div>
-                            {:else}
-                                <div
-                                    class="text-brand-charcoal-500 dark:text-[#c6d0f5] whitespace-pre-wrap"
-                                >
-                                    {line.text}
-                                </div>
-                            {/if}
-                        {/each}
-                        {#if ts.termExited[tab.id]}
-                            <div
-                                class="mt-2 text-brand-charcoal-300 dark:text-[#626880] italic select-none"
-                            >
-                                Process exited.
-                            </div>
-                        {/if}
-                    {/if}
-                </div>
-
-                <!-- Input -->
-                <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-                <div
-                    role="group"
-                    aria-label="Terminal input"
-                    class="flex items-center gap-2 px-3 py-1.5 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-400 dark:border-[#414559] shrink-0"
-                    onclick={() => termInputEl?.focus()}
-                    onkeydown={(e) => {
-                        if (e.key === "Enter") termInputEl?.focus();
-                    }}
-                >
-                    <span
-                        class="text-brand-gold-600 shrink-0 select-none font-semibold font-mono repl-mono"
-                        >$</span
-                    >
-                    <input
-                        bind:this={termInputEl}
-                        bind:value={ts.termInputValues[tab.id]}
-                        disabled={ts.termIsRunning[tab.id] ||
-                            ts.termExited[tab.id]}
-                        onkeydown={(e) =>
-                            e.key === "Enter" && runTerminalCommand(tab.id)}
-                        placeholder={ts.termExited[tab.id]
-                            ? "Process exited"
-                            : ts.termIsRunning[tab.id]
-                              ? "Running…"
-                              : "Enter command, press Enter to run"}
-                        class="flex-1 bg-transparent font-mono repl-mono text-brand-charcoal-700 dark:text-[#c6d0f5]
-                               outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880]
-                               disabled:opacity-40 disabled:cursor-not-allowed"
-                    />
-                </div>
-            </div>
-        {/if}
-    {/each}
+                    bind:this={termContainerEls[tab.id]}
+                    class="absolute inset-0 {ts.activePanel === tab.id
+                        ? 'visible z-1'
+                        : 'invisible z-0 pointer-events-none'}"
+                ></div>
+            {/each}
+        </div>
+    {/if}
 </div>
 
 <style>
     :global(.repl-mono) {
-        font-size: var(--repl-font-size, 11px);
+        font-size: var(--repl-font-size, 12px);
+        line-height: var(--repl-line-height, 1.3);
     }
 </style>

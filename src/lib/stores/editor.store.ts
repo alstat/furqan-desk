@@ -65,6 +65,66 @@ export const cmFontSize = {
   },
 };
 
+// ── REPL / Terminal font size ─────────────────────────────────────────────────
+
+function loadReplFontSize(): number {
+  try {
+    const v = localStorage.getItem("repl-font-size");
+    if (v) {
+      const n = parseInt(v, 10);
+      if (n >= 9 && n <= 24) return n;
+    }
+  } catch {
+    /* ignore */
+  }
+  return 12;
+}
+
+const _replFontSize = writable<number>(loadReplFontSize());
+
+export const replFontSize = {
+  subscribe: _replFontSize.subscribe,
+  set(v: number) {
+    const clamped = Math.max(9, Math.min(24, v));
+    try {
+      localStorage.setItem("repl-font-size", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _replFontSize.set(clamped);
+  },
+};
+
+// ── REPL / Terminal line spacing ──────────────────────────────────────────────
+
+function loadReplLineSpacing(): number {
+  try {
+    const v = localStorage.getItem("repl-line-spacing");
+    if (v) {
+      const n = parseFloat(v);
+      if (n >= 1 && n <= 2) return n;
+    }
+  } catch {
+    /* ignore */
+  }
+  return 1.3;
+}
+
+const _replLineSpacing = writable<number>(loadReplLineSpacing());
+
+export const replLineSpacing = {
+  subscribe: _replLineSpacing.subscribe,
+  set(v: number) {
+    const clamped = Math.max(1, Math.min(2, v));
+    try {
+      localStorage.setItem("repl-line-spacing", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _replLineSpacing.set(clamped);
+  },
+};
+
 // ── App dark mode ─────────────────────────────────────────────────────────────
 
 function loadAppDarkMode(): boolean {

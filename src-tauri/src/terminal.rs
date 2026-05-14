@@ -22,6 +22,7 @@ impl TerminalState {
 struct TermProcess {
     stdin:   Arc<tokio::sync::Mutex<tokio::process::ChildStdin>>,
     kill_tx: mpsc::Sender<()>,
+    pid:     u32,
 }
 
 // ── Event payloads ────────────────────────────────────────────────────────────
@@ -66,6 +67,11 @@ pub async fn start_terminal(
        .stdout(std::process::Stdio::piped())
        .stderr(std::process::Stdio::piped());
 
+    // Put the shell in its own process group so we can signal the whole
+    // group (shell + running command) with a single SIGINT.
+    #[cfg(unix)]
+    cmd.process_group(0);
+
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
@@ -73,6 +79,7 @@ pub async fn start_terminal(
     }
 
     let mut child = cmd.spawn().map_err(|e| format!("Failed to start terminal: {e}"))?;
+    let pid = child.id().ok_or("failed to obtain terminal pid")?;
 
     let stdin  = child.stdin.take().ok_or("no stdin")?;
     let stdout = child.stdout.take().ok_or("no stdout")?;
@@ -129,7 +136,7 @@ pub async fn start_terminal(
 
     {
         let mut g = state.processes.lock().map_err(|e| e.to_string())?;
-        g.insert(id, TermProcess { stdin: stdin_arc, kill_tx });
+        g.insert(id, TermProcess { stdin: stdin_arc, kill_tx, pid });
     }
 
     // keep kill_rx2 alive until the process exits on its own
@@ -164,6 +171,43 @@ pub async fn send_terminal_input(
     stdin.flush().await
         .map_err(|e| format!("flush error: {e}"))?;
     Ok(())
+}
+
+/// Send SIGINT to the running command in the terminal (Ctrl+C equivalent).
+/// The shell itself stays alive so the user can keep running more commands.
+/// On Windows this is currently a no-op (returns an error) since powershell
+/// non-interactive sessions don't accept console control events the same way.
+#[tauri::command]
+pub async fn signal_terminal(
+    id:    String,
+    state: tauri::State<'_, TerminalState>,
+) -> Result<(), String> {
+    let pid = {
+        let g = state.processes.lock().map_err(|e| e.to_string())?;
+        let p = g.get(&id).ok_or("terminal not running")?;
+        p.pid
+    };
+
+    #[cfg(unix)]
+    {
+        // Send SIGINT to the whole process group so the running child receives
+        // it, not just the shell. `kill -INT -<pgid>` targets the group.
+        let status = std::process::Command::new("kill")
+            .arg("-INT")
+            .arg(format!("-{pid}"))
+            .status()
+            .map_err(|e| format!("failed to invoke kill: {e}"))?;
+        if !status.success() {
+            return Err(format!("kill exited with status {status}"));
+        }
+        Ok(())
+    }
+
+    #[cfg(windows)]
+    {
+        let _ = pid;
+        Err("signal_terminal is not supported on Windows yet".into())
+    }
 }
 
 /// Kill a running terminal process.

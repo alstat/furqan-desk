@@ -345,7 +345,7 @@
                         class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]"
                     >
                         <Icon
-                            icon="ri:chat-ai-3-fill"
+                            icon="ri:chat-smile-ai-fill"
                             class="text-brand-gold-500 dark:text-[#e5c890]"
                             width="1rem"
                         />
@@ -397,7 +397,7 @@
                     {/if}
                     <button
                         onclick={handleClose}
-                        aria-label={$t('common.close')}
+                        aria-label={$t("common.close")}
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
                         <Icon
@@ -470,7 +470,7 @@
                                 class="flex flex-1 flex-col items-center justify-center gap-2 text-center text-brand-charcoal-300 dark:text-[#626880]"
                             >
                                 <Icon
-                                    icon="ri:chat-ai-3-fill"
+                                    icon="ri:chat-smile-ai-fill"
                                     width="2rem"
                                     class="opacity-50"
                                 />

@@ -1034,7 +1034,10 @@
                             aria-label={$t("manuscript.ai_ask")}
                             class="cursor-pointer inline-flex items-center gap-1 rounded-full bg-brand-gold-200 dark:bg-[#414559] px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-300 dark:hover:bg-[#51576d] transition-colors"
                         >
-                            <Icon icon="ri:chat-ai-3-fill" width="0.75rem" />
+                            <Icon
+                                icon="ri:chat-smile-ai-fill"
+                                width="0.75rem"
+                            />
                             {$t("manuscript.ai_ask")}
                         </button>
                     {/if}

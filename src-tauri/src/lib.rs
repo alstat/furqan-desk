@@ -2,7 +2,9 @@ mod buckwalter;
 mod commands;
 mod db;
 mod feedback;
+mod git;
 mod julia;
+mod pty;
 mod terminal;
 mod typst_world;
 
@@ -55,6 +57,7 @@ pub fn run() {
             let julia_custom_path = julia::load_persisted_path(&app.handle());
             app.manage(julia::JuliaState::new(julia_custom_path));
             app.manage(terminal::TerminalState::new());
+            app.manage(pty::PtyState::new());
             app.manage(commands::DownloadState {
                 cancel: Arc::new(AtomicBool::new(false)),
             });
@@ -112,9 +115,15 @@ pub fn run() {
             julia::get_julia_version,
             julia::get_latest_julia_version,
             julia::update_julia,
+            julia::set_julia_version,
             terminal::start_terminal,
             terminal::send_terminal_input,
+            terminal::signal_terminal,
             terminal::close_terminal,
+            pty::start_pty,
+            pty::pty_write,
+            pty::pty_resize,
+            pty::pty_kill,
             commands::search_quran,
             commands::get_manuscript_detail,
             commands::save_manuscript_to_downloads,
@@ -124,6 +133,7 @@ pub fn run() {
             commands::get_manuscript_demo_image,
             commands::get_system_font_families,
             feedback::send_feedback,
+            git::git_head_content,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {

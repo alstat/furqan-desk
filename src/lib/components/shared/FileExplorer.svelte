@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
-	import { readDir, readTextFile } from '@tauri-apps/plugin-fs';
+	import { readDir, readTextFile, watchImmediate, type UnwatchFn } from '@tauri-apps/plugin-fs';
+	import { onDestroy } from 'svelte';
 	import Icon from '@iconify/svelte';
-	import { openFolderPath, openPreviewTab, openOrFocusTab, isFlatFile } from '$lib/stores/tabs.store';
+	import { openFolderPath, folderRefreshTrigger, openPreviewTab, openOrFocusTab, isFlatFile } from '$lib/stores/tabs.store';
 	import { surahOrientation } from '$lib/stores/quran.svelte';
     import { actionBtnStyle } from '$lib/data/toolbar/toolbar';
 	import { t } from '$lib/i18n';
@@ -38,13 +39,90 @@
 	// Button sits just outside the editor content div's left (LTR) or right (RTL) edge
 	// let buttonPosClass = $derived(isRtl ? '-right-10' : '-left-5');
 
+	let _unwatch: UnwatchFn | null = null;
+	let _refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
 	$effect(() => {
 		const folder = $openFolderPath;
 		rootNodes = [];
 		loadError = '';
+		if (_unwatch) { _unwatch(); _unwatch = null; }
+		if (_refreshTimer) { clearTimeout(_refreshTimer); _refreshTimer = null; }
 		if (!folder) return;
 		loadRoot(folder);
+		setupWatcher(folder);
 	});
+
+	// Manual refresh trigger (e.g. user re-picks the same folder via OpenFolderButton)
+	$effect(() => {
+		const tick = $folderRefreshTrigger;
+		if (tick === 0) return;
+		const folder = $openFolderPath;
+		if (folder) refreshTree(folder);
+	});
+
+	onDestroy(() => {
+		if (_unwatch) _unwatch();
+		if (_refreshTimer) clearTimeout(_refreshTimer);
+	});
+
+	async function setupWatcher(folder: string) {
+		try {
+			_unwatch = await watchImmediate(
+				folder,
+				() => {
+					if (_refreshTimer) clearTimeout(_refreshTimer);
+					_refreshTimer = setTimeout(() => {
+						_refreshTimer = null;
+						if ($openFolderPath === folder) refreshTree(folder);
+					}, 150);
+				},
+				{ recursive: true }
+			);
+		} catch {
+			// Watching unavailable (e.g. permissions); explorer still works manually.
+		}
+	}
+
+	function collectExpanded(nodes: FileTreeNode[], set: Set<string>) {
+		for (const n of nodes) {
+			if (n.isDirectory && n.isExpanded && n.isLoaded) {
+				set.add(n.path);
+				collectExpanded(n.children, set);
+			}
+		}
+	}
+
+	async function buildWithExpanded(
+		parentPath: string,
+		expanded: Set<string>
+	): Promise<FileTreeNode[]> {
+		const entries = await readDir(parentPath);
+		const nodes = buildNodes(entries, parentPath);
+		for (const n of nodes) {
+			if (n.isDirectory && expanded.has(n.path)) {
+				try {
+					n.children = await buildWithExpanded(n.path, expanded);
+					n.isLoaded = true;
+					n.isExpanded = true;
+				} catch {
+					n.isForbidden = true;
+				}
+			}
+		}
+		return nodes;
+	}
+
+	async function refreshTree(folder: string) {
+		const expanded = new Set<string>();
+		collectExpanded(rootNodes, expanded);
+		try {
+			rootNodes = await buildWithExpanded(folder, expanded);
+			loadError = '';
+		} catch (e) {
+			loadError = String(e);
+		}
+	}
 
 	function buildNodes(
 		entries: Awaited<ReturnType<typeof readDir>>,
@@ -127,7 +205,12 @@
 	async function openFolder() {
 		const result = await openDialog({ directory: true, multiple: false });
 		if (!result || Array.isArray(result)) return;
-		openFolderPath.set(result as string);
+		const picked = result as string;
+		if ($openFolderPath === picked) {
+			folderRefreshTrigger.update(n => n + 1);
+		} else {
+			openFolderPath.set(picked);
+		}
 	}
 
 	async function previewFile(node: FileTreeNode) {

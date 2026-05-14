@@ -23,6 +23,7 @@
     import DonationDialog from "./DonationDialog.svelte";
     import UserAccountDialog from "./UserAccountDialog.svelte";
     import AiChatDialog from "./AiChatDialog.svelte";
+    import TerminalDialog from "./TerminalDialog.svelte";
     import Icon from "@iconify/svelte";
     import { donationOpen } from "$lib/stores/tour.store";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
@@ -33,6 +34,7 @@
 
     let feedbackOpen = $state(false);
     let accountOpen = $state(false);
+    let terminalOpen = $state(false);
     let tocBtnEl = $state<HTMLButtonElement | null>(null);
 
     function handleAiClick() {
@@ -152,7 +154,17 @@
         aria-label={$t('ai_chat.title')}
         title={$t('ai_chat.title')}
     >
-        <Icon icon="ri:chat-ai-3-fill" class="h-4 w-4 text-brand-charcoal-300" />
+        <Icon icon="ri:chat-smile-ai-fill" class="h-4 w-4 text-brand-charcoal-300" />
+    </button>
+
+    <!-- Terminal Button -->
+    <button
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-26 z-3 ${terminalOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+        onclick={() => (terminalOpen = true)}
+        aria-label="Open terminal"
+        title="Open terminal"
+    >
+        <Icon icon="icon-park-twotone:terminal" class="h-4 w-4 text-brand-charcoal-300" />
     </button>
 
 
@@ -160,7 +172,7 @@
     {#if $isSidebar && $activeTab?.type === "lexical"}
         <button
             bind:this={tocBtnEl}
-            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-26 z-3 ${$tocOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-37 z-3 ${$tocOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
             onclick={() => {
                 if (tocBtnEl) tocAnchorRect.set(tocBtnEl.getBoundingClientRect());
                 $tocOpen = !$tocOpen;
@@ -239,6 +251,10 @@
     <AiChatDialog
         open={$aiChatDialogOpen}
         onClose={() => aiChatDialogOpen.set(false)}
+    />
+    <TerminalDialog
+        open={terminalOpen}
+        onClose={() => (terminalOpen = false)}
     />
 
     <div class={$isSidebar ? `flex flex-row w-full` : `hidden`}>
