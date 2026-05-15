@@ -177,12 +177,13 @@ export function isIncompleteJulia(code: string): boolean {
 
 // ── Shared execute helper (used by both JuliaEditor keymap and JuliaReplPane) ─
 
-export type ReplMode = 'julia' | 'pkg' | 'shell';
+export type ReplMode = 'julia' | 'pkg' | 'shell' | 'help';
 
 /**
  * Wrap user input for non-Julia modes so the underlying Julia process can
  * still execute it. Pkg uses Pkg.REPLMode.pkgstr; shell uses run(`sh -c …`)
- * with proper escaping. Multi-line input is collapsed to a single command.
+ * with proper escaping. Help uses @doc. Multi-line input is collapsed to a
+ * single command.
  */
 function wrapForMode(snippet: string, mode: ReplMode): string {
     if (mode === 'julia') return snippet;
@@ -200,6 +201,11 @@ function wrapForMode(snippet: string, mode: ReplMode): string {
             `    Pkg.REPLMode.pkgstr("${escaped}")`,
             `end`,
         ].join('\n');
+    }
+    if (mode === 'help') {
+        // @doc <name> returns a Markdown.MD object which _ALDisplay renders as
+        // plain text via show(stdout, MIME("text/plain"), result).
+        return `@doc ${oneLine}`;
     }
     // shell mode
     const escaped = oneLine.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
