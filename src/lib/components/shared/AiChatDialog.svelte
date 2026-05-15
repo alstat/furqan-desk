@@ -41,6 +41,35 @@
     let scrollEl = $state<HTMLDivElement | null>(null);
     let copiedIdx = $state<number | null>(null);
 
+    // ── Draggable input splitter ──────────────────────────────────────────────
+    const MIN_INPUT_H = 110; // outer padding (20) + model toggle (28) + gap (8) + button row (44) + buffer
+    let inputH = $state(MIN_INPUT_H);
+    let threadContainerEl = $state<HTMLDivElement | null>(null);
+    let inputResizeStartY = 0;
+    let inputResizeStartH = 0;
+
+    function startInputResize(e: PointerEvent) {
+        e.preventDefault();
+        inputResizeStartY = e.clientY;
+        inputResizeStartH = inputH;
+        document.body.style.userSelect = "none";
+        window.addEventListener("pointermove", onInputResize);
+        window.addEventListener("pointerup", stopInputResize, { once: true });
+    }
+
+    function onInputResize(e: PointerEvent) {
+        const delta = inputResizeStartY - e.clientY;
+        const maxH = threadContainerEl
+            ? Math.max(MIN_INPUT_H, threadContainerEl.offsetHeight - 120)
+            : inputResizeStartH * 3;
+        inputH = Math.max(MIN_INPUT_H, Math.min(maxH, inputResizeStartH + delta));
+    }
+
+    function stopInputResize() {
+        document.body.style.userSelect = "";
+        window.removeEventListener("pointermove", onInputResize);
+    }
+
     let panelW = $state(960);
     let panelH = $state(680);
     const MIN_W = 340;
@@ -189,6 +218,7 @@
         if (typeof window !== "undefined") {
             window.removeEventListener("pointermove", onDrag);
             window.removeEventListener("pointermove", onResize);
+            window.removeEventListener("pointermove", onInputResize);
             window.removeEventListener("keydown", handleWindowKeydown);
         }
         if (typeof document !== "undefined")
@@ -429,7 +459,7 @@
                 </div>
 
                 <!-- Thread + input -->
-                <div class="flex flex-1 min-w-0 flex-col">
+                <div bind:this={threadContainerEl} class="flex flex-1 min-w-0 flex-col">
                     <!-- Quota banners -->
                     {#if $quotaBlock}
                         <div
@@ -490,18 +520,18 @@
                                     : 'justify-start'}"
                             >
                                 <div
-                                    class="max-w-[85%] flex flex-col {isUser
+                                    class="min-w-0 max-w-[85%] flex flex-col {isUser
                                         ? 'items-end'
                                         : 'items-start'}"
                                 >
                                     <div
-                                        class="chat-bubble relative overflow-visible rounded-[20px] px-4 py-2.5 text-[13px] leading-relaxed {isUser
+                                        class="chat-bubble relative overflow-visible rounded-[20px] px-4 py-2.5 text-[13px] leading-relaxed max-w-full {isUser
                                             ? 'chat-bubble-user rounded-br-[5px] bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700'
                                             : 'chat-bubble-assistant bg-white dark:bg-[#292c3c] text-brand-charcoal-900 dark:text-[#c6d0f5] border border-brand-sand-200 dark:border-[#414559]'}"
                                     >
-                                        <div class="relative z-10">
+                                        <div class="relative z-10 overflow-x-auto">
                                             {#if isUser}
-                                                <p class="whitespace-pre-wrap">
+                                                <p class="whitespace-pre-wrap overflow-x-auto max-w-full">
                                                     {msg.content}
                                                 </p>
                                             {:else if msg.content === "" && isStreamingLast}
@@ -554,12 +584,25 @@
                         {/each}
                     </div>
 
+                    <!-- Draggable splitter -->
+                    <div
+                        class="flex-none h-1.5 cursor-row-resize flex items-center justify-center group hover:bg-brand-gold-100 dark:hover:bg-brand-gold-100/10 transition-colors select-none"
+                        onpointerdown={startInputResize}
+                        role="separator"
+                        aria-orientation="horizontal"
+                    >
+                        <div
+                            class="w-8 h-0.5 rounded-full bg-brand-sand-400 dark:bg-[#414559] group-hover:bg-brand-gold-400 transition-colors"
+                        ></div>
+                    </div>
+
                     <!-- Input -->
                     <div
-                        class="shrink-0 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-200 dark:border-[#414559] px-3 pt-2.5 pb-3 flex flex-col gap-2"
+                        class="flex-none bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-200 dark:border-[#414559] px-3 pt-2 pb-3 flex flex-col gap-2"
+                        style:height="{inputH}px"
                     >
                         <!-- Model class toggle -->
-                        <div class="flex items-center gap-2">
+                        <div class="shrink-0 flex items-center gap-2">
                             <button
                                 onclick={() => ($useAdvanced = !$useAdvanced)}
                                 disabled={$streaming}
@@ -591,42 +634,43 @@
                         </div>
 
                         <div
-                            class="flex items-center gap-2 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-brand-gold-900/30 transition-colors"
+                            class="flex-1 flex items-stretch gap-2 min-h-0 rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-brand-gold-900/30 transition-colors"
                         >
                             <textarea
                                 bind:value={input}
                                 onkeydown={handleKeydown}
-                                rows="1"
                                 placeholder={$t("ai_chat.placeholder")}
                                 disabled={$streaming || !!$quotaBlock}
-                                class="flex-1 items-center max-h-40 resize-none bg-transparent text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:outline-none disabled:opacity-50"
+                                class="flex-1 h-full resize-none overflow-y-auto bg-transparent text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:outline-none disabled:opacity-50"
                             ></textarea>
-                            {#if $streaming}
-                                <button
-                                    onclick={stopStreaming}
-                                    aria-label={$t("ai_chat.stop")}
-                                    title={$t("ai_chat.stop")}
-                                    class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
-                                >
-                                    <Icon
-                                        icon="solar:stop-circle-bold-duotone"
-                                        width="0.95rem"
-                                    />
-                                </button>
-                            {:else}
-                                <button
-                                    onclick={handleSend}
-                                    disabled={!input.trim() || !!$quotaBlock}
-                                    aria-label={$t("ai_chat.send")}
-                                    title={$t("ai_chat.send")}
-                                    class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <Icon
-                                        icon="solar:plain-bold-duotone"
-                                        width="0.9rem"
-                                    />
-                                </button>
-                            {/if}
+                            <div class="flex items-end shrink-0">
+                                {#if $streaming}
+                                    <button
+                                        onclick={stopStreaming}
+                                        aria-label={$t("ai_chat.stop")}
+                                        title={$t("ai_chat.stop")}
+                                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                    >
+                                        <Icon
+                                            icon="solar:stop-circle-bold-duotone"
+                                            width="0.95rem"
+                                        />
+                                    </button>
+                                {:else}
+                                    <button
+                                        onclick={handleSend}
+                                        disabled={!input.trim() || !!$quotaBlock}
+                                        aria-label={$t("ai_chat.send")}
+                                        title={$t("ai_chat.send")}
+                                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <Icon
+                                            icon="solar:plain-bold-duotone"
+                                            width="0.9rem"
+                                        />
+                                    </button>
+                                {/if}
+                            </div>
                         </div>
                     </div>
                 </div>

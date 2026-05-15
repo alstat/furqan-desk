@@ -38,7 +38,7 @@
         multiSurahTransliterationMap,
         multiSurahWordByWordMap,
     } from "$lib/stores/translation.store";
-    import { openFolderPath } from "$lib/stores/tabs.store";
+    import { openFolderPath, tabs } from "$lib/stores/tabs.store";
     import { isPro } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
 
@@ -320,6 +320,15 @@
         return () => clearInterval(interval);
     });
 
+    // Clear REPL history when the last Julia tab is closed so a newly opened
+    // Julia file always starts with a fresh REPL display.
+    $effect(() => {
+        const juliaTabCount = $tabs.filter((t) => t.type === "julia").length;
+        if (juliaTabCount === 0) {
+            juliaReplHistory.set([]);
+        }
+    });
+
     function noAutocorrect(node: HTMLElement) {
         node.setAttribute("autocorrect", "off");
         node.setAttribute("autocapitalize", "off");
@@ -449,20 +458,28 @@
 
     function handleReplKeydown(e: KeyboardEvent) {
         // Mode switching (Julia REPL convention): on an empty input, "]" enters
-        // pkg mode and ";" enters shell mode. The character itself is NOT added.
+        // pkg mode, ";" enters shell mode, and "?" enters help mode.
+        // The character itself is NOT added to the input.
         if (
             replMode === "julia" &&
             replInput === "" &&
-            !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey
+            !e.ctrlKey && !e.metaKey && !e.altKey
         ) {
-            if (e.key === "]") {
+            if (e.key === "]" && !e.shiftKey) {
                 e.preventDefault();
                 replMode = "pkg";
                 return;
             }
-            if (e.key === ";") {
+            if (e.key === ";" && !e.shiftKey) {
                 e.preventDefault();
                 replMode = "shell";
+                return;
+            }
+            // "?" is Shift+/ on most keyboards, so shiftKey will be true — check
+            // the resulting character directly rather than gating on !shiftKey.
+            if (e.key === "?") {
+                e.preventDefault();
+                replMode = "help";
                 return;
             }
         }
@@ -758,6 +775,15 @@
         const onScroll = () => updateReplAiSelection();
         replOutputEl?.addEventListener("scroll", onScroll);
 
+        // CD to the new folder whenever the user opens a different folder,
+        // but only if the REPL is already running and not currently busy.
+        let folderSubFirst = true;
+        const unsubFolder = openFolderPath.subscribe((folder) => {
+            if (folderSubFirst) { folderSubFirst = false; return; }
+            if (!folder || !get(juliaReplStarted) || get(juliaIsRunning)) return;
+            void executeJuliaCode(`cd(${JSON.stringify(folder)})`, undefined, "julia");
+        });
+
         return () => {
             unlistenJulia.then((fn) => fn());
             unlistenPtyOut.then((fn) => fn());
@@ -766,6 +792,7 @@
             document.removeEventListener("selectionchange", onSelectionChange);
             replOutputEl?.removeEventListener("scroll", onScroll);
             if (streamingTimer) clearTimeout(streamingTimer);
+            unsubFolder();
         };
     });
 
@@ -1392,13 +1419,23 @@
                         ? 'text-blue-500 dark:text-[#8caaee]'
                         : replMode === 'shell'
                           ? 'text-red-500 dark:text-[#e78284]'
-                          : 'text-brand-gold-600'}"
+                          : replMode === 'help'
+                            ? 'text-purple-500 dark:text-[#ca9ee6]'
+                            : 'text-brand-gold-600'}"
                     title={replMode === 'pkg'
                         ? 'Pkg mode — Backspace to exit'
                         : replMode === 'shell'
                           ? 'Shell mode — Backspace to exit'
-                          : 'Julia — type ] for pkg, ; for shell'}
-                    >{replMode === 'pkg' ? ($juliaActiveEnv ? `(${$juliaActiveEnv}) pkg>` : '(@v) pkg>') : replMode === 'shell' ? 'shell>' : ($juliaActiveEnv ? `julia (${$juliaActiveEnv})>` : 'julia>')}</span
+                          : replMode === 'help'
+                            ? 'Help mode — Backspace to exit'
+                            : 'Julia — type ] for pkg, ; for shell, ? for help'}
+                    >{replMode === 'pkg'
+                        ? ($juliaActiveEnv ? `(${$juliaActiveEnv}) pkg>` : '(@v) pkg>')
+                        : replMode === 'shell'
+                          ? 'shell>'
+                          : replMode === 'help'
+                            ? 'help?>'
+                            : ($juliaActiveEnv ? `julia (${$juliaActiveEnv})>` : 'julia>')}</span
                 >
                 <textarea
                     bind:this={replInputEl}
@@ -1424,7 +1461,9 @@
                           ? 'pkg command, e.g. add DataFrames'
                           : replMode === 'shell'
                             ? 'shell command'
-                            : "Enter code, Shift+Enter for newline"}
+                            : replMode === 'help'
+                              ? 'function or type, e.g. sin'
+                              : "Enter code, Shift+Enter for newline"}
                     use:noAutocorrect
                     spellcheck={false}
                     class="flex-1 resize-none bg-transparent font-mono repl-mono text-brand-charcoal-700 dark:text-[#c6d0f5]

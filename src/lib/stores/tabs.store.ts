@@ -13,8 +13,71 @@ export interface EditorTab {
 	isPreview: boolean; // true = VSCode-style preview tab (italic, replaced on next single-click)
 }
 
-export const tabs        = writable<EditorTab[]>([]);
-export const activeTabId = writable<string | null>(null);
+// ── Hot Exit (VS Code-style session persistence) ───────────────────────────────
+
+const HOT_EXIT_KEY = 'hot-exit-session';
+
+interface HotExitData {
+	tabs: EditorTab[];
+	activeTabId: string | null;
+}
+
+function loadHotExit(): HotExitData | null {
+	try {
+		if (typeof localStorage === 'undefined') return null;
+		const raw = localStorage.getItem(HOT_EXIT_KEY);
+		if (!raw) return null;
+		const data = JSON.parse(raw) as HotExitData;
+		if (!Array.isArray(data.tabs) || data.tabs.length === 0) return null;
+		const valid = data.tabs.filter((t): t is EditorTab =>
+			!!t &&
+			typeof t.id === 'string' &&
+			typeof t.content === 'string' &&
+			typeof t.type === 'string' &&
+			typeof t.name === 'string'
+		);
+		if (!valid.length) return null;
+		const validActiveId =
+			typeof data.activeTabId === 'string' && valid.some(t => t.id === data.activeTabId)
+				? data.activeTabId
+				: valid[0].id;
+		return { tabs: valid, activeTabId: validActiveId };
+	} catch {
+		return null;
+	}
+}
+
+export function clearHotExit(): void {
+	try {
+		localStorage.removeItem(HOT_EXIT_KEY);
+	} catch { /* ignore */ }
+}
+
+const _hotExit = loadHotExit();
+
+export const tabs        = writable<EditorTab[]>(_hotExit?.tabs ?? []);
+export const activeTabId = writable<string | null>(_hotExit?.activeTabId ?? null);
+
+// Debounced save — fires 600 ms after the last tabs or activeTabId change.
+let _hotExitTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleHotExitSave(): void {
+	if (_hotExitTimer !== null) clearTimeout(_hotExitTimer);
+	_hotExitTimer = setTimeout(() => {
+		_hotExitTimer = null;
+		try {
+			const data: HotExitData = {
+				tabs: get(tabs),
+				activeTabId: get(activeTabId),
+			};
+			localStorage.setItem(HOT_EXIT_KEY, JSON.stringify(data));
+		} catch { /* ignore */ }
+	}, 600);
+}
+
+tabs.subscribe(scheduleHotExitSave);
+activeTabId.subscribe(scheduleHotExitSave);
+
 export const activeTab   = derived(
 	[tabs, activeTabId],
 	([$t, $id]) => $t.find(t => t.id === $id) ?? null

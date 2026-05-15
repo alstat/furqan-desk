@@ -108,7 +108,7 @@
                 padding: "8px 0",
                 paddingBottom: "1.5rem",
             },
-            ".cm-cursor, .cm-dropCursor": { borderLeftColor: "#ff9940" },
+            ".cm-cursor, .cm-dropCursor": { borderLeftColor: "#ff9940", borderLeftWidth: "2px" },
             "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
                 { background: "#bcd9f0" },
             ".cm-activeLine": { backgroundColor: "#f2f5f7" },
@@ -267,7 +267,7 @@
                 padding: "8px 0",
                 paddingBottom: "1.5rem",
             },
-            ".cm-cursor, .cm-dropCursor": { borderLeftColor: "#ffcc66" },
+            ".cm-cursor, .cm-dropCursor": { borderLeftColor: "#ffcc66", borderLeftWidth: "2px" },
             "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
                 { background: "#3a4a66" },
             ".cm-activeLine": { backgroundColor: "#232834" },

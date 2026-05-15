@@ -532,11 +532,27 @@ while true
       # Include the backtrace so the user sees the full stacktrace, not just
       # the error message. catch_backtrace() captures the trace from the
       # most recent exception in this try-block.
-      println(stderr, sprint(showerror, e, catch_backtrace()))
+      # Guard with a nested try/catch: showerror itself can throw (e.g. world-age
+      # issues when displaying types from recently-loaded packages), which would
+      # otherwise escape this catch block and prevent __JULIA_DONE__ from printing.
+      # Try progressively simpler renderings so the user always sees something useful.
+      try
+        println(stderr, sprint(showerror, e, catch_backtrace()))
+      catch _
+        try
+          println(stderr, "ERROR: " * sprint(showerror, e))
+        catch _
+          try
+            println(stderr, "ERROR: " * string(e))
+          catch _
+            try; println(stderr, "ERROR: $(typeof(e)) (error display failed)"); catch; end
+          end
+        end
+      end
     end
     # Surface the (possibly new) active env after each user command — this
     # is how `Pkg.activate(".")` changes get reflected in the input prompt.
-    _al_emit_env()
+    try; _al_emit_env(); catch; end
   end
   print(stdout, "\n__JULIA_DONE__\n")
   flush(stdout)
@@ -670,7 +686,7 @@ pub async fn start_julia_repl(
                         Ok(Some(l)) => {
                             let _ = app_stderr.emit("julia-output", JuliaOutput {
                                 chunk: l.clone(),
-                                is_done: true,
+                                is_done: false,
                                 error: Some(l),
                             });
                         }
