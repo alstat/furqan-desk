@@ -42,6 +42,9 @@
     import { isPro } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
 
+    const askAiContextPrompt =
+        "This text is part of a Julia programming file, help provide explanation or correction on the code";
+
     // ── Terminal state (shared across all Julia tabs) ─────────────────────────
 
     let ts = $state(get(sharedTermState));
@@ -1439,7 +1442,7 @@
             selectedText={replAiSelection.text}
             x={replAiSelection.x}
             y={replAiSelection.y}
-            contextPrompt="The user is asking about output from the Julia REPL. The selected text is taken from the REPL transcript (which may include errors, stack traces, or printed values)."
+            {askAiContextPrompt}
             askOnly={true}
             onClose={() => (replAiSelection = null)}
         />

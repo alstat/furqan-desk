@@ -13,6 +13,7 @@
         x: number;
         y: number;
         contextPrompt?: string;
+        askAiContextPrompt?: string;
         onReplace?: (replacement: string) => void;
         onClose?: () => void;
         askOnly?: boolean;
@@ -23,6 +24,7 @@
         x,
         y,
         contextPrompt,
+        askAiContextPrompt,
         onReplace,
         onClose,
         askOnly = false,
@@ -95,7 +97,11 @@
     function submitAskPrompt() {
         const prompt = askPromptText.trim();
         if (!prompt || busyAction) return;
-        askAiAboutSelection({ prompt, selectedText, contextPrompt });
+        askAiAboutSelection({
+            prompt,
+            selectedText,
+            contextPrompt: askAiContextPrompt ?? contextPrompt,
+        });
         onClose?.();
     }
 

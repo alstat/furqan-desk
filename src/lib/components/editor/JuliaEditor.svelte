@@ -47,6 +47,8 @@
     const aiContextPrompt =
         "This text is part of a Julia programming file, so your output should be a julia code";
 
+    const askAiContextPrompt =
+        "This text is part of a Julia programming file, help provide explanation or correction on the code";
     // ── Effective tab (primary uses $activeTab; secondary uses tabId prop) ─────
 
     let effectiveTab = $derived(
@@ -158,10 +160,7 @@
                 const startLine = doc.lineAt(from);
                 let lastLine = startLine.number;
                 let snippet = startLine.text;
-                while (
-                    isIncompleteJulia(snippet) &&
-                    lastLine < doc.lines
-                ) {
+                while (isIncompleteJulia(snippet) && lastLine < doc.lines) {
                     lastLine++;
                     snippet += "\n" + doc.line(lastLine).text;
                 }
@@ -188,7 +187,12 @@
         <div class="flex items-center justify-between px-2 pt-1 mb-1">
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
-                >{effectiveTab?.name ?? "Julia Editor"}{#if effectiveTab?.isDirty}<span class="text-brand-gold-500 dark:text-[#e5c890]"> *</span>{/if}</span
+                >{effectiveTab?.name ??
+                    "Julia Editor"}{#if effectiveTab?.isDirty}<span
+                        class="text-brand-gold-500 dark:text-[#e5c890]"
+                    >
+                        *</span
+                    >{/if}</span
             >
             <button
                 onclick={() => (lineWrap = !lineWrap)}
@@ -234,6 +238,7 @@
                     {lineWrap}
                     aiSelectionTools={true}
                     {aiContextPrompt}
+                    {askAiContextPrompt}
                     filePath={effectiveTab.path ?? null}
                     onchange={handleInput}
                     class="h-full font-mono"
