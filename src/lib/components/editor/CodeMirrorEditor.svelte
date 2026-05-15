@@ -63,6 +63,7 @@
         lineWrap = true,
         aiSelectionTools = false,
         aiContextPrompt,
+        askAiContextPrompt,
         filePath,
         onchange,
     }: {
@@ -74,6 +75,7 @@
         lineWrap?: boolean;
         aiSelectionTools?: boolean;
         aiContextPrompt?: string;
+        askAiContextPrompt?: string;
         filePath?: string | null;
         onchange?: (newValue: string) => void;
     } = $props();
@@ -778,6 +780,7 @@
         x={aiSelection.x}
         y={aiSelection.y}
         contextPrompt={aiContextPrompt}
+        askAiContextPrompt={askAiContextPrompt}
         onReplace={replaceAiSelection}
         onClose={() => (aiSelection = null)}
     />
