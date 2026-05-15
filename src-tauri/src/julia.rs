@@ -537,15 +537,19 @@ while true
       # otherwise escape this catch block and prevent __JULIA_DONE__ from printing.
       # Try progressively simpler renderings so the user always sees something useful.
       try
-        println(stderr, sprint(showerror, e, catch_backtrace()))
+        buf = IOBuffer()
+        Base.invokelatest(showerror, buf, e, catch_backtrace())
+        println(stderr, String(take!(buf)))
       catch _
         try
-          println(stderr, "ERROR: " * sprint(showerror, e))
+          buf = IOBuffer()
+          Base.invokelatest(showerror, buf, e)
+          println(stderr, String(take!(buf)))
         catch _
           try
             println(stderr, "ERROR: " * string(e))
           catch _
-            try; println(stderr, "ERROR: $(typeof(e)) (error display failed)"); catch; end
+            try; println(stderr, "ERROR: $(typeof(e))"); catch; end
           end
         end
       end
