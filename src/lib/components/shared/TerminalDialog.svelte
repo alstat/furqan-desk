@@ -10,7 +10,12 @@
     import "@xterm/xterm/css/xterm.css";
     import { t } from "$lib/i18n";
     import { appDarkMode } from "$lib/stores/editor.store";
+    import { isPro } from "$lib/stores/auth.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
+
+    const askAiContextPrompt =
+        "This text is part of a terminal session. Help explain commands, output, errors, or next steps.";
 
     // ── Font / line-spacing bounds ──────────────────────────────────────────
 
@@ -40,6 +45,12 @@
     let showOptions = $state(false);
     let optionsBtn = $state<HTMLButtonElement | null>(null);
     let optionsPanel = $state<HTMLDivElement | null>(null);
+
+    let terminalAiSelection = $state<{
+        text: string;
+        x: number;
+        y: number;
+    } | null>(null);
 
     const labelClass =
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
@@ -293,6 +304,136 @@
         bundles.get(id)?.term.focus();
     }
 
+    function isFocusInsideToolbar(): boolean {
+        const active = document.activeElement as HTMLElement | null;
+        return !!active?.closest("[data-ai-selection-toolbar]");
+    }
+
+    function updateTerminalAiSelection(e: PointerEvent) {
+        if (!$isPro || !activeId) {
+            terminalAiSelection = null;
+            return;
+        }
+        const selectedText = bundles.get(activeId)?.term.getSelection() ?? "";
+        if (!selectedText.trim()) {
+            if (isFocusInsideToolbar()) return;
+            terminalAiSelection = null;
+            return;
+        }
+
+        const viewportWidth = window.innerWidth || 0;
+        terminalAiSelection = {
+            text: selectedText,
+            x: Math.max(180, Math.min(viewportWidth - 180, e.clientX)),
+            y: Math.max(12, e.clientY - 8),
+        };
+    }
+
+    // ── Active terminal search ───────────────────────────────────────────────
+
+    type SearchMatch = {
+        panel: string;
+        line: number;
+        col: number;
+        length: number;
+    };
+
+    let showSearch = $state(false);
+    let searchQuery = $state("");
+    let searchInputEl: HTMLInputElement | undefined = $state(undefined);
+    let searchMatches = $state<SearchMatch[]>([]);
+    let searchIndex = $state(-1);
+    let searchRevealed = $state(false);
+
+    function getActiveTerminalLines(): string[] {
+        if (!activeId) return [];
+        const b = bundles.get(activeId);
+        if (!b) return [];
+        const buffer = b.term.buffer.active;
+        const lines: string[] = [];
+        for (let i = 0; i < buffer.length; i++) {
+            lines.push(buffer.getLine(i)?.translateToString(true) ?? "");
+        }
+        return lines;
+    }
+
+    function refreshSearchMatches() {
+        const panel = activeId;
+        const query = searchQuery.trim();
+        if (!panel || !query) {
+            searchMatches = [];
+            searchIndex = -1;
+            searchRevealed = false;
+            return;
+        }
+
+        const needle = query.toLocaleLowerCase();
+        searchMatches = getActiveTerminalLines().flatMap((line, row) => {
+            const matches: SearchMatch[] = [];
+            const haystack = line.toLocaleLowerCase();
+            let from = 0;
+            while (from <= haystack.length) {
+                const col = haystack.indexOf(needle, from);
+                if (col === -1) break;
+                matches.push({ panel, line: row, col, length: query.length });
+                from = col + Math.max(needle.length, 1);
+            }
+            return matches;
+        });
+        searchIndex = searchMatches.length > 0 ? 0 : -1;
+        searchRevealed = false;
+    }
+
+    function revealSearchMatch() {
+        const match = searchMatches[searchIndex];
+        if (!match) return;
+        const b = bundles.get(match.panel);
+        if (!b) return;
+        b.term.scrollToLine(match.line);
+        b.term.select(match.col, match.line, match.length);
+        b.term.focus();
+        searchRevealed = true;
+    }
+
+    function stepSearch(delta: 1 | -1) {
+        if (searchMatches.length === 0) return;
+        if (!searchRevealed) {
+            revealSearchMatch();
+            return;
+        }
+        searchIndex =
+            (searchIndex + delta + searchMatches.length) % searchMatches.length;
+        revealSearchMatch();
+    }
+
+    function openSearch() {
+        showSearch = true;
+        requestAnimationFrame(() => {
+            searchInputEl?.focus();
+            searchInputEl?.select();
+            refreshSearchMatches();
+        });
+    }
+
+    function closeSearch() {
+        showSearch = false;
+        searchMatches = [];
+        searchIndex = -1;
+        searchRevealed = false;
+        if (activeId) bundles.get(activeId)?.term.clearSelection();
+    }
+
+    function handleSearchKeydown(e: KeyboardEvent) {
+        e.stopPropagation();
+        if (e.key === "Escape") {
+            e.preventDefault();
+            closeSearch();
+        } else if (e.key === "Enter") {
+            e.preventDefault();
+            stepSearch(e.shiftKey ? -1 : 1);
+        }
+    }
+
     function handleClose() {
         onClose();
     }
@@ -463,6 +604,14 @@
         });
     });
 
+    $effect(() => {
+        const _activeId = activeId;
+        terminalAiSelection = null;
+        if (showSearch) {
+            requestAnimationFrame(() => refreshSearchMatches());
+        }
+    });
+
     // Update term theme when dark mode flips.
     $effect(() => {
         const dark = $appDarkMode;
@@ -547,6 +696,72 @@
                         <Icon icon="solar:stop-circle-bold-duotone" width="0.85rem" />
                     </button>
                 {/if}
+                <div class="relative">
+                    <button
+                        onclick={showSearch ? closeSearch : openSearch}
+                        onpointerdown={(e) => e.stopPropagation()}
+                        aria-label="Search active terminal"
+                        title="Search active terminal"
+                        aria-expanded={showSearch}
+                        class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
+                               bg-brand-gold-200 dark:bg-[#414559]
+                               text-brand-gold-600 dark:text-[#c6d0f5]
+                               hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors
+                               {showSearch ? 'ring-2 ring-brand-gold-300 dark:ring-[#e5c890]/50' : ''}"
+                    >
+                        <Icon icon="solar:magnifer-bold-duotone" width="0.85rem" />
+                    </button>
+
+                    {#if showSearch}
+                        <div
+                            onpointerdown={(e) => e.stopPropagation()}
+                            role="group"
+                            aria-label="Terminal search"
+                            class="absolute right-0 top-9 z-30 flex items-center gap-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-1 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur"
+                        >
+                            <input
+                                bind:this={searchInputEl}
+                                bind:value={searchQuery}
+                                oninput={refreshSearchMatches}
+                                onkeydown={handleSearchKeydown}
+                                class="h-7 w-44 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-2 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 dark:focus:border-[#e5c890]"
+                                placeholder="Search terminal"
+                                aria-label="Search active terminal"
+                            />
+                            <span
+                                class="min-w-11 text-center text-[10px] tabular-nums text-brand-charcoal-300 dark:text-[#838ba7]"
+                            >
+                                {searchMatches.length > 0
+                                    ? `${searchIndex + 1}/${searchMatches.length}`
+                                    : "0/0"}
+                            </span>
+                            <button
+                                onclick={() => stepSearch(-1)}
+                                disabled={searchMatches.length === 0}
+                                class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
+                                title="Previous match"
+                                aria-label="Previous match"
+                            >
+                                <Icon
+                                    icon="solar:alt-arrow-up-linear"
+                                    width="0.85rem"
+                                />
+                            </button>
+                            <button
+                                onclick={() => stepSearch(1)}
+                                disabled={searchMatches.length === 0}
+                                class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
+                                title="Next match"
+                                aria-label="Next match"
+                            >
+                                <Icon
+                                    icon="solar:alt-arrow-down-linear"
+                                    width="0.85rem"
+                                />
+                            </button>
+                        </div>
+                    {/if}
+                </div>
                 <button
                     bind:this={optionsBtn}
                     onclick={toggleOptions}
@@ -714,11 +929,24 @@
             >
         </div>
 
+        {#if $isPro && terminalAiSelection}
+            <AiSelectionToolbar
+                selectedText={terminalAiSelection.text}
+                x={terminalAiSelection.x}
+                y={terminalAiSelection.y}
+                {askAiContextPrompt}
+                askOnly={true}
+                onClose={() => (terminalAiSelection = null)}
+            />
+        {/if}
+
         <!-- Terminal stack: every container is mounted; only the active one is visible. -->
         <div class="relative flex-1 min-h-0 bg-white dark:bg-[#292c3c]">
             {#each tabs as tab (tab.id)}
                 <div
                     bind:this={containerEls[tab.id]}
+                    onpointerup={updateTerminalAiSelection}
+                    role="presentation"
                     class="absolute inset-0 {activeId === tab.id ? 'visible z-1' : 'invisible z-0 pointer-events-none'}"
                 ></div>
             {/each}

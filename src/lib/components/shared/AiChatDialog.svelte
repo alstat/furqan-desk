@@ -42,7 +42,7 @@
     let copiedIdx = $state<number | null>(null);
 
     // ── Draggable input splitter ──────────────────────────────────────────────
-    const MIN_INPUT_H = 110; // outer padding (20) + model toggle (28) + gap (8) + button row (44) + buffer
+    const MIN_INPUT_H = 100; // outer padding (20) + model toggle (28) + gap (8) + button row (44) + buffer
     let inputH = $state(MIN_INPUT_H);
     let threadContainerEl = $state<HTMLDivElement | null>(null);
     let inputResizeStartY = 0;
@@ -62,7 +62,10 @@
         const maxH = threadContainerEl
             ? Math.max(MIN_INPUT_H, threadContainerEl.offsetHeight - 120)
             : inputResizeStartH * 3;
-        inputH = Math.max(MIN_INPUT_H, Math.min(maxH, inputResizeStartH + delta));
+        inputH = Math.max(
+            MIN_INPUT_H,
+            Math.min(maxH, inputResizeStartH + delta),
+        );
     }
 
     function stopInputResize() {
@@ -395,6 +398,21 @@
                 </div>
                 <div class="flex items-center gap-1.5">
                     {#if $keyState === "unlocked"}
+                        {#if !sidebarOpen}
+                            <button
+                                onclick={handleNewChat}
+                                disabled={$streaming}
+                                aria-label={$t("ai_chat.new_chat")}
+                                title={$t("ai_chat.new_chat")}
+                                class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-color"
+                            >
+                                <Icon
+                                    icon="ri:chat-ai-line"
+                                    width="1rem"
+                                    class="dark:text-brand-charcoal-300"
+                                />
+                            </button>
+                        {/if}
                         <button
                             onclick={() => (sidebarOpen = !sidebarOpen)}
                             aria-label={sidebarOpen
@@ -459,7 +477,10 @@
                 </div>
 
                 <!-- Thread + input -->
-                <div bind:this={threadContainerEl} class="flex flex-1 min-w-0 flex-col">
+                <div
+                    bind:this={threadContainerEl}
+                    class="flex flex-1 min-w-0 flex-col"
+                >
                     <!-- Quota banners -->
                     {#if $quotaBlock}
                         <div
@@ -529,9 +550,13 @@
                                             ? 'chat-bubble-user rounded-br-[5px] bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700'
                                             : 'chat-bubble-assistant bg-white dark:bg-[#292c3c] text-brand-charcoal-900 dark:text-[#c6d0f5] border border-brand-sand-200 dark:border-[#414559]'}"
                                     >
-                                        <div class="relative z-10 overflow-x-auto">
+                                        <div
+                                            class="relative z-10 overflow-x-auto"
+                                        >
                                             {#if isUser}
-                                                <p class="whitespace-pre-wrap overflow-x-auto max-w-full">
+                                                <p
+                                                    class="whitespace-pre-wrap overflow-x-auto max-w-full"
+                                                >
                                                     {msg.content}
                                                 </p>
                                             {:else if msg.content === "" && isStreamingLast}
@@ -632,9 +657,8 @@
                                     : $t("ai_chat.standard_hint")}
                             </span>
                         </div>
-
                         <div
-                            class="flex-1 flex items-stretch gap-2 min-h-0 rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-brand-gold-900/30 transition-colors"
+                            class="flex-1 flex items-stretch min-h-0 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] pl-3 pr-2 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-brand-gold-900/30 transition-colors"
                         >
                             <textarea
                                 bind:value={input}
@@ -659,7 +683,8 @@
                                 {:else}
                                     <button
                                         onclick={handleSend}
-                                        disabled={!input.trim() || !!$quotaBlock}
+                                        disabled={!input.trim() ||
+                                            !!$quotaBlock}
                                         aria-label={$t("ai_chat.send")}
                                         title={$t("ai_chat.send")}
                                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"

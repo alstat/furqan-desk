@@ -8,12 +8,16 @@
         highlightActiveLineGutter,
         scrollPastEnd,
         drawSelection,
+        Decoration,
+        type DecorationSet,
         type KeyBinding,
     } from "@codemirror/view";
     import {
         EditorState,
         Compartment,
         Transaction,
+        StateField,
+        StateEffect,
         type Extension,
     } from "@codemirror/state";
     import {
@@ -34,11 +38,15 @@
         StreamLanguage,
         bracketMatching,
         indentOnInput,
+        indentUnit,
+        type StreamParser,
+        type StringStream,
     } from "@codemirror/language";
     import { tags } from "@lezer/highlight";
     import { julia } from "@codemirror/legacy-modes/mode/julia";
     import {
         editorTheme,
+        editorIndentSize,
         cmFontSize,
         codeMirrorViewInstance,
         codeMirrorCanUndo,
@@ -51,6 +59,9 @@
         gitDiffGutter,
         setGitBaseline,
     } from "$lib/codemirror/gitDiffGutter";
+    import { readTextFile } from "@tauri-apps/plugin-fs";
+    import { openOrFocusTab } from "$lib/stores/tabs.store";
+    import { get } from "svelte/store";
 
     // ── Props ─────────────────────────────────────────────────────────────────
 
@@ -406,6 +417,276 @@
         { tag: tags.content, color: "#cbccc6" },
     ]);
 
+    // ── Palette-driven themes (Gruvbox / Monokai) ─────────────────────────────
+
+    interface ThemePalette {
+        dark: boolean;
+        bg: string;
+        fg: string;
+        caret: string;
+        selection: string;
+        activeLine: string;
+        gutterBg: string;
+        gutterFg: string;
+        gutterBorder: string;
+        activeGutterBg: string;
+        tooltipBg: string;
+        tooltipBorder: string;
+        tooltipShadow: string;
+        selMatchBg: string;
+        matchBg: string;
+        matchOutline: string;
+        accent: string;
+        comment: string;
+        keyword: string;
+        operator: string;
+        string: string;
+        special: string;
+        number: string;
+        type: string;
+        func: string;
+        variable: string;
+        atom: string;
+        attr: string;
+        heading: string;
+        link: string;
+        meta: string;
+        punctuation: string;
+    }
+
+    function makeBase(p: ThemePalette): Extension {
+        return EditorView.theme(
+            {
+                "&": {
+                    backgroundColor: p.bg,
+                    color: p.fg,
+                    height: "100%",
+                    "--cm-sel": p.selection,
+                },
+                ".cm-scroller": {
+                    overflow: "auto",
+                    fontFamily: "inherit",
+                    lineHeight: "1.6",
+                },
+                ".cm-content": {
+                    caretColor: p.caret,
+                    padding: "8px 0",
+                    paddingBottom: "1.5rem",
+                },
+                ".cm-cursor, .cm-dropCursor": {
+                    borderLeftColor: p.caret,
+                    borderLeftWidth: "2px",
+                },
+                "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
+                    { background: p.selection },
+                ".cm-activeLine": { backgroundColor: p.activeLine },
+                ".cm-gutters": {
+                    backgroundColor: p.gutterBg,
+                    color: p.gutterFg,
+                    border: "none",
+                    borderRight: `1px solid ${p.gutterBorder}`,
+                },
+                ".cm-activeLineGutter": { backgroundColor: p.activeGutterBg },
+                ".cm-lineNumbers .cm-gutterElement": {
+                    padding: "0 8px 0 12px",
+                    minWidth: "2.4em",
+                },
+                ".cm-matchingBracket": {
+                    backgroundColor: p.matchBg,
+                    outline: `1px solid ${p.matchOutline}`,
+                },
+                ".cm-tooltip": {
+                    backgroundColor: p.tooltipBg,
+                    border: `1px solid ${p.tooltipBorder}`,
+                    borderRadius: "8px",
+                    boxShadow: p.tooltipShadow,
+                    overflow: "hidden",
+                },
+                ".cm-tooltip.cm-tooltip-autocomplete > ul": {
+                    maxHeight: "200px",
+                    fontFamily: "inherit",
+                },
+                ".cm-tooltip.cm-tooltip-autocomplete > ul > li": {
+                    padding: "3px 10px",
+                    lineHeight: "1.6",
+                },
+                ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected]": {
+                    backgroundColor: p.matchBg,
+                    color: p.fg,
+                },
+                ".cm-completionLabel": { color: p.fg },
+                ".cm-completionDetail": {
+                    color: p.gutterFg,
+                    fontSize: "0.8em",
+                    marginLeft: "6px",
+                },
+                ".cm-completionMatchedText": {
+                    color: p.accent,
+                    fontWeight: "600",
+                    textDecoration: "none",
+                },
+                ".cm-search": {
+                    padding: "4px 8px",
+                    background: p.gutterBg,
+                    borderBottom: `1px solid ${p.gutterBorder}`,
+                    flexWrap: "wrap",
+                    gap: "4px",
+                },
+                ".cm-search input": {
+                    background: p.bg,
+                    border: `1px solid ${p.gutterBorder}`,
+                    borderRadius: "4px",
+                    padding: "2px 6px",
+                    color: p.fg,
+                    outline: "none",
+                },
+                ".cm-search input:focus": { borderColor: p.accent },
+                ".cm-search button": {
+                    background: p.matchBg,
+                    border: "none",
+                    borderRadius: "4px",
+                    padding: "2px 8px",
+                    cursor: "pointer",
+                    color: p.fg,
+                },
+                ".cm-search label": { color: p.fg, fontSize: "0.8em" },
+                ".cm-searchMatch": {
+                    backgroundColor: p.matchBg,
+                    outline: `1px solid ${p.matchOutline}`,
+                },
+                ".cm-searchMatch.cm-searchMatch-selected": {
+                    backgroundColor: p.selMatchBg,
+                },
+            },
+            { dark: p.dark },
+        );
+    }
+
+    function makeHighlight(p: ThemePalette): HighlightStyle {
+        return HighlightStyle.define([
+            { tag: tags.comment, color: p.comment, fontStyle: "italic" },
+            { tag: tags.keyword, color: p.keyword, fontWeight: "600" },
+            { tag: tags.controlKeyword, color: p.keyword, fontWeight: "600" },
+            {
+                tag: tags.definitionKeyword,
+                color: p.keyword,
+                fontWeight: "600",
+            },
+            { tag: tags.moduleKeyword, color: p.keyword, fontWeight: "600" },
+            { tag: tags.operator, color: p.operator },
+            { tag: tags.operatorKeyword, color: p.operator },
+            { tag: tags.string, color: p.string },
+            { tag: tags.special(tags.string), color: p.special },
+            { tag: tags.regexp, color: p.special },
+            { tag: tags.escape, color: p.special },
+            { tag: tags.number, color: p.number },
+            { tag: tags.integer, color: p.number },
+            { tag: tags.float, color: p.number },
+            { tag: tags.bool, color: p.number },
+            { tag: tags.null, color: p.number },
+            { tag: tags.atom, color: p.atom },
+            { tag: tags.typeName, color: p.type },
+            { tag: tags.className, color: p.type },
+            { tag: tags.function(tags.variableName), color: p.func },
+            { tag: tags.definition(tags.variableName), color: p.func },
+            { tag: tags.variableName, color: p.variable },
+            { tag: tags.propertyName, color: p.variable },
+            { tag: tags.attributeName, color: p.attr },
+            { tag: tags.self, color: p.atom, fontStyle: "italic" },
+            { tag: tags.punctuation, color: p.punctuation },
+            { tag: tags.bracket, color: p.punctuation },
+            { tag: tags.heading, color: p.heading, fontWeight: "700" },
+            {
+                tag: tags.heading1,
+                color: p.heading,
+                fontWeight: "700",
+                fontSize: "1.2em",
+            },
+            {
+                tag: tags.heading2,
+                color: p.heading,
+                fontWeight: "700",
+                fontSize: "1.1em",
+            },
+            { tag: tags.heading3, color: p.heading, fontWeight: "600" },
+            { tag: tags.strong, fontWeight: "700" },
+            { tag: tags.emphasis, fontStyle: "italic" },
+            { tag: tags.link, color: p.link, textDecoration: "underline" },
+            { tag: tags.url, color: p.link },
+            { tag: tags.meta, color: p.meta },
+            { tag: tags.processingInstruction, color: p.meta },
+            { tag: tags.content, color: p.fg },
+        ]);
+    }
+
+    function makeTheme(p: ThemePalette): Extension[] {
+        return [makeBase(p), syntaxHighlighting(makeHighlight(p))];
+    }
+
+    const gruvboxDark: ThemePalette = {
+        dark: true,
+        bg: "#282828", fg: "#ebdbb2", caret: "#fe8019", selection: "#504945",
+        activeLine: "#32302f", gutterBg: "#1d2021", gutterFg: "#7c6f64",
+        gutterBorder: "#3c3836", activeGutterBg: "#32302f",
+        tooltipBg: "#3c3836", tooltipBorder: "#504945",
+        tooltipShadow: "0 4px 16px rgba(0,0,0,0.4)",
+        selMatchBg: "#fe801966", matchBg: "#504945", matchOutline: "#fabd2f",
+        accent: "#fabd2f",
+        comment: "#928374", keyword: "#fb4934", operator: "#fe8019",
+        string: "#b8bb26", special: "#8ec07c", number: "#d3869b",
+        type: "#fabd2f", func: "#8ec07c", variable: "#ebdbb2",
+        atom: "#d3869b", attr: "#b8bb26", heading: "#fabd2f",
+        link: "#83a598", meta: "#83a598", punctuation: "#a89984",
+    };
+
+    const gruvboxLight: ThemePalette = {
+        dark: false,
+        bg: "#fbf1c7", fg: "#3c3836", caret: "#af3a03", selection: "#ebdbb2",
+        activeLine: "#f2e5bc", gutterBg: "#f2e5bc", gutterFg: "#bdae93",
+        gutterBorder: "#ebdbb2", activeGutterBg: "#ebdbb2",
+        tooltipBg: "#fbf1c7", tooltipBorder: "#d5c4a1",
+        tooltipShadow: "0 4px 16px rgba(0,0,0,0.12)",
+        selMatchBg: "#af3a0366", matchBg: "#d5c4a1", matchOutline: "#b57614",
+        accent: "#b57614",
+        comment: "#a89984", keyword: "#9d0006", operator: "#af3a03",
+        string: "#79740e", special: "#427b58", number: "#8f3f71",
+        type: "#b57614", func: "#427b58", variable: "#3c3836",
+        atom: "#8f3f71", attr: "#79740e", heading: "#b57614",
+        link: "#076678", meta: "#076678", punctuation: "#665c54",
+    };
+
+    const monokaiDark: ThemePalette = {
+        dark: true,
+        bg: "#272822", fg: "#f8f8f2", caret: "#f8f8f0", selection: "#49483e",
+        activeLine: "#2f302a", gutterBg: "#272822", gutterFg: "#6e7066",
+        gutterBorder: "#3a3b34", activeGutterBg: "#2f302a",
+        tooltipBg: "#2f302a", tooltipBorder: "#49483e",
+        tooltipShadow: "0 4px 16px rgba(0,0,0,0.4)",
+        selMatchBg: "#fd971f66", matchBg: "#49483e", matchOutline: "#66d9ef",
+        accent: "#e6db74",
+        comment: "#75715e", keyword: "#f92672", operator: "#f92672",
+        string: "#e6db74", special: "#a6e22e", number: "#ae81ff",
+        type: "#66d9ef", func: "#a6e22e", variable: "#f8f8f2",
+        atom: "#ae81ff", attr: "#a6e22e", heading: "#f92672",
+        link: "#66d9ef", meta: "#66d9ef", punctuation: "#f8f8f2",
+    };
+
+    const monokaiLight: ThemePalette = {
+        dark: false,
+        bg: "#fafaf6", fg: "#4c4b3f", caret: "#e0185a", selection: "#e6e6dc",
+        activeLine: "#f0f0e8", gutterBg: "#f0f0e8", gutterFg: "#b0afa0",
+        gutterBorder: "#e6e6dc", activeGutterBg: "#e6e6dc",
+        tooltipBg: "#ffffff", tooltipBorder: "#e0e0d6",
+        tooltipShadow: "0 4px 16px rgba(0,0,0,0.12)",
+        selMatchBg: "#e0185a40", matchBg: "#e6e6dc", matchOutline: "#1a9bb8",
+        accent: "#c98a00",
+        comment: "#a59f85", keyword: "#e0185a", operator: "#e0185a",
+        string: "#8a7f00", special: "#5c8f00", number: "#7c5cd6",
+        type: "#1a9bb8", func: "#5c8f00", variable: "#4c4b3f",
+        atom: "#7c5cd6", attr: "#5c8f00", heading: "#e0185a",
+        link: "#1a9bb8", meta: "#1a9bb8", punctuation: "#4c4b3f",
+    };
+
     // ── Typst StreamParser ────────────────────────────────────────────────────
 
     type TypstState = {
@@ -550,14 +831,52 @@
 
     // ── Theme / language helpers ───────────────────────────────────────────────
 
+    const themeExtensions: Record<string, Extension[]> = {
+        "ayu-light": [ayuLightBase, syntaxHighlighting(ayuLightHighlight)],
+        "ayu-mirage": [ayuMirageBase, syntaxHighlighting(ayuMirageHighlight)],
+        "gruvbox-light": makeTheme(gruvboxLight),
+        "gruvbox-dark": makeTheme(gruvboxDark),
+        "monokai-light": makeTheme(monokaiLight),
+        "monokai-dark": makeTheme(monokaiDark),
+    };
+
     function getThemeExt(theme: string): Extension[] {
-        if (theme === "ayu-mirage") {
-            return [ayuMirageBase, syntaxHighlighting(ayuMirageHighlight)];
-        }
-        return [ayuLightBase, syntaxHighlighting(ayuLightHighlight)];
+        return themeExtensions[theme] ?? themeExtensions["ayu-light"];
     }
 
-    const juliaLanguage = StreamLanguage.define(julia);
+    // The legacy Julia mode tags every identifier as plain `variable` (or
+    // `builtin` for `::Type` annotations), so type names and function calls
+    // never reach their highlight rules. Wrap the tokenizer to re-tag tokens:
+    //  • An identifier starting with an uppercase letter is, by Julia
+    //    convention, a type or constructor → `type` (→ typeName).
+    //  • A lowercase identifier immediately followed by `(` is a function
+    //    call → custom `functionCall` token (→ function(variableName)).
+    // `NaN`/`Inf` are uppercase value literals and are kept as-is.
+    const NON_TYPE_BUILTINS = new Set(["NaN", "Inf"]);
+    const juliaTypeAware: StreamParser<unknown> = {
+        ...julia,
+        tokenTable: {
+            functionCall: tags.function(tags.variableName),
+        },
+        token(stream: StringStream, state: unknown): string | null {
+            const style = julia.token ? julia.token(stream, state) : null;
+            if (style === "variable" || style === "builtin") {
+                // Strip a leading `::` so type annotations (`s::Ar`) are
+                // detected from the type name itself.
+                let probe = stream.current();
+                if (probe.startsWith("::")) probe = probe.slice(2);
+                if (/^[A-Z]/.test(probe) && !NON_TYPE_BUILTINS.has(probe)) {
+                    return "type";
+                }
+                // Lowercase name directly followed by `(` → function call.
+                if (style === "variable" && stream.peek() === "(") {
+                    return "functionCall";
+                }
+            }
+            return style;
+        },
+    };
+    const juliaLanguage = StreamLanguage.define(juliaTypeAware);
     const juliaCommentData = juliaLanguage.data.of({
         commentTokens: { line: "#", block: { open: "#=", close: "=#" } },
     });
@@ -576,6 +895,7 @@
     const themeComp = new Compartment();
     const langComp = new Compartment();
     const wrapComp = new Compartment();
+    const indentComp = new Compartment();
 
     let container: HTMLDivElement;
     let view: EditorView;
@@ -633,6 +953,207 @@
         aiSelection = null;
     }
 
+    // ── Julia "go to definition" (Ctrl/Cmd + hover & click) ───────────────────
+
+    const JULIA_KEYWORDS = new Set([
+        "function", "end", "if", "else", "elseif", "while", "for", "begin",
+        "let", "do", "try", "catch", "finally", "return", "break", "continue",
+        "module", "baremodule", "using", "import", "export", "const", "local",
+        "global", "struct", "mutable", "abstract", "primitive", "type", "quote",
+        "macro", "where", "in", "isa", "true", "false", "nothing", "missing",
+    ]);
+
+    type WordRange = { from: number; to: number; word: string };
+
+    // Extract the Julia identifier under a document position, with its range.
+    function wordRangeAt(
+        doc: EditorState["doc"],
+        pos: number,
+    ): WordRange | null {
+        const line = doc.lineAt(pos);
+        const text = line.text;
+        const col = pos - line.from;
+        const isWord = (c: string) => /[A-Za-z0-9_!]/.test(c);
+        let start = col;
+        let end = col;
+        while (start > 0 && isWord(text[start - 1])) start--;
+        while (end < text.length && isWord(text[end])) end++;
+        if (start === end) return null;
+        const word = text.slice(start, end);
+        // Identifiers can't start with a digit, and keywords aren't navigable.
+        if (/^[0-9]/.test(word) || JULIA_KEYWORDS.has(word)) return null;
+        return { from: line.from + start, to: line.from + end, word };
+    }
+
+    // Search the current document for a Julia definition of `name`; returns the
+    // character offset of the name in its definition, or null if not found.
+    function findJuliaDefinition(
+        doc: EditorState["doc"],
+        name: string,
+    ): number | null {
+        const esc = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const patterns = [
+            // function name(...)  /  function Mod.name(...)
+            new RegExp(`\\bfunction\\s+(?:[\\w.]+\\.)?${esc}\\b`),
+            // macro name(...)
+            new RegExp(`\\bmacro\\s+${esc}\\b`),
+            // short form:  name(...) = ...
+            new RegExp(`^\\s*(?:[\\w.]+\\.)?${esc}\\s*\\(`),
+            // assignment / const:  name = ...  /  const name = ...
+            new RegExp(`^\\s*(?:const\\s+)?${esc}\\s*=`),
+        ];
+        for (const re of patterns) {
+            for (let i = 1; i <= doc.lines; i++) {
+                const line = doc.line(i);
+                if (re.test(line.text)) {
+                    const idx = line.text.indexOf(name);
+                    return line.from + (idx >= 0 ? idx : 0);
+                }
+            }
+        }
+        return null;
+    }
+
+    // Resolve a symbol's definition through the running Julia REPL — this
+    // covers library/module functions (e.g. `mean` from Statistics) by asking
+    // Julia where its methods are defined, then opening that source file.
+    async function resolveExternalDefinition(name: string) {
+        let locs: string[];
+        try {
+            locs = await invoke<string[]>("julia_definition", {
+                symbol: name,
+            });
+        } catch {
+            return; // REPL not running, or symbol unknown — nothing to do.
+        }
+        // Each entry is "file:line"; pick the first real source file.
+        const loc = locs.find(
+            (l) => l.lastIndexOf(":") > 0 && !l.startsWith("none"),
+        );
+        if (!loc) return;
+        const sep = loc.lastIndexOf(":");
+        const file = loc.slice(0, sep);
+        const line = parseInt(loc.slice(sep + 1), 10) || 1;
+        try {
+            const content = await readTextFile(file);
+            openOrFocusTab(file, content);
+        } catch {
+            return; // File not readable (e.g. baked into a sysimage).
+        }
+        // Wait for the editor to remount on the newly-opened tab, then jump.
+        setTimeout(() => {
+            const v = get(codeMirrorViewInstance);
+            if (!v || line > v.state.doc.lines) return;
+            const docLine = v.state.doc.line(line);
+            v.dispatch({
+                selection: { anchor: docLine.from, head: docLine.to },
+                effects: EditorView.scrollIntoView(docLine.from, {
+                    y: "center",
+                }),
+            });
+            v.focus();
+        }, 220);
+    }
+
+    // Ctrl/Cmd-hover underline: a state field holding a single mark decoration
+    // over the identifier currently under the cursor while the modifier is held.
+    const setDefLink = StateEffect.define<WordRange | null>();
+    const defLinkMark = Decoration.mark({ class: "cm-defLink" });
+
+    const defLinkField = StateField.define<DecorationSet>({
+        create: () => Decoration.none,
+        update(deco, tr) {
+            deco = deco.map(tr.changes);
+            for (const e of tr.effects) {
+                if (e.is(setDefLink)) {
+                    deco = e.value
+                        ? Decoration.set([
+                              defLinkMark.range(e.value.from, e.value.to),
+                          ])
+                        : Decoration.none;
+                }
+            }
+            return deco;
+        },
+        provide: (f) => EditorView.decorations.from(f),
+    });
+
+    let lastMouse = { x: 0, y: 0 };
+
+    // Show / hide the hover underline based on cursor position + modifier state.
+    function updateDefLink(editorView: EditorView, modActive: boolean) {
+        const current = editorView.state.field(defLinkField, false);
+        const hasMark = !!current && current.size > 0;
+        const pos = modActive ? editorView.posAtCoords(lastMouse) : null;
+        const range =
+            pos == null ? null : wordRangeAt(editorView.state.doc, pos);
+        if (!range) {
+            if (hasMark) editorView.dispatch({ effects: setDefLink.of(null) });
+            return;
+        }
+        // Skip a redundant dispatch when the marked range is unchanged.
+        let same = false;
+        current?.between(range.from, range.to, (f, t) => {
+            if (f === range.from && t === range.to) same = true;
+        });
+        if (same) return;
+        editorView.dispatch({ effects: setDefLink.of(range) });
+    }
+
+    const juliaGoToDefinition = EditorView.domEventHandlers({
+        mousedown(event, editorView) {
+            if (!(event.metaKey || event.ctrlKey) || event.button !== 0) {
+                return false;
+            }
+            const pos = editorView.posAtCoords({
+                x: event.clientX,
+                y: event.clientY,
+            });
+            if (pos == null) return false;
+            const range = wordRangeAt(editorView.state.doc, pos);
+            if (!range) return false;
+            event.preventDefault();
+            editorView.dispatch({ effects: setDefLink.of(null) });
+            // Prefer a definition in the current file; fall back to the REPL
+            // for symbols defined in libraries / other modules.
+            const local = findJuliaDefinition(editorView.state.doc, range.word);
+            if (local != null) {
+                editorView.dispatch({
+                    selection: {
+                        anchor: local,
+                        head: local + range.word.length,
+                    },
+                    scrollIntoView: true,
+                });
+                editorView.focus();
+            } else {
+                resolveExternalDefinition(range.word);
+            }
+            return true;
+        },
+        mousemove(event, editorView) {
+            lastMouse = { x: event.clientX, y: event.clientY };
+            updateDefLink(editorView, event.metaKey || event.ctrlKey);
+            return false;
+        },
+        mouseleave(_event, editorView) {
+            updateDefLink(editorView, false);
+            return false;
+        },
+        keydown(event, editorView) {
+            if (event.key === "Meta" || event.key === "Control") {
+                updateDefLink(editorView, true);
+            }
+            return false;
+        },
+        keyup(event, editorView) {
+            if (event.key === "Meta" || event.key === "Control") {
+                updateDefLink(editorView, false);
+            }
+            return false;
+        },
+    });
+
     onMount(() => {
         const state = EditorState.create({
             doc: value,
@@ -644,6 +1165,7 @@
                 history(),
                 bracketMatching(),
                 indentOnInput(),
+                indentComp.of(indentUnit.of(" ".repeat($editorIndentSize))),
                 wrapComp.of(lineWrap ? EditorView.lineWrapping : []),
                 scrollPastEnd(),
                 search({ top: true }),
@@ -667,6 +1189,9 @@
                 ]),
                 themeComp.of(getThemeExt($editorTheme)),
                 langComp.of(getLangExt(language)),
+                ...(language === "julia"
+                    ? [juliaGoToDefinition, defLinkField]
+                    : []),
                 gitDiffGutter(),
                 ...extraExtensions,
                 EditorView.updateListener.of((update) => {
@@ -733,6 +1258,17 @@
         view.dispatch({
             effects: wrapComp.reconfigure(
                 lineWrap ? EditorView.lineWrapping : [],
+            ),
+        });
+    });
+
+    // Sync indent-size changes
+    $effect(() => {
+        const size = $editorIndentSize;
+        if (!view) return;
+        view.dispatch({
+            effects: indentComp.reconfigure(
+                indentUnit.of(" ".repeat(size)),
             ),
         });
     });
@@ -836,5 +1372,12 @@
     div :global(.cm-activeLine .cm-selectionBackground),
     div :global(.cm-activeLine .cm-selectionLayer .cm-selectionBackground) {
         background: var(--cm-sel, #c3dcee) !important;
+    }
+    /* Ctrl/Cmd-hover go-to-definition hint — underline + pointer cursor,
+       mirroring the VSCode / Zed affordance. */
+    div :global(.cm-defLink) {
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        cursor: pointer;
     }
 </style>

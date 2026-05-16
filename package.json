@@ -53,6 +53,7 @@
     "highlight.js": "^11.11.1",
     "katex": "^0.16.21",
     "marked": "^18.0.3",
+    "pdfjs-dist": "^5.7.284",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
@@ -66,7 +67,9 @@
     "@iconify-json/gridicons": "^1.2.4",
     "@iconify-json/ic": "^1.2.4",
     "@iconify-json/icon-park-outline": "^1.2.4",
+    "@iconify-json/icon-park-twotone": "^1.2.4",
     "@iconify-json/iconamoon": "^1.2.2",
+    "@iconify-json/lucide": "^1.2.107",
     "@iconify-json/material-symbols": "^1.2.61",
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/ph": "^1.2.2",

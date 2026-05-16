@@ -6,6 +6,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         zenMode,
         customFontFamilies,
         typstPreviewDarkMode,
+        editorIndentSize,
     } from '$lib/stores/editor.store';
     import { openCustomFontDialog } from '$lib/stores/custom-font-dialog.store';
     import { restartTour } from '$lib/stores/tour.store';
@@ -107,6 +108,35 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
                     <Icon icon="charm:chevron-down" width="0.75rem" />
                 </span>
+            </div>
+        </div>
+
+        <!-- Code Editor -->
+        <div class="py-2 border-b border-slate-100 dark:border-[#414559]">
+            <p class={sectionLabel}>Code Editor</p>
+            <div class="flex items-center justify-between gap-4">
+                <div>
+                    <span class={rowLabel}>Tab size</span>
+                    <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        Number of spaces inserted per indent level.
+                    </p>
+                </div>
+                <div class="relative shrink-0">
+                    <select
+                        value={String($editorIndentSize)}
+                        onchange={(e) =>
+                            editorIndentSize.set(
+                                e.currentTarget.value === '4' ? 4 : 2,
+                            )}
+                        class="appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#626880] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]"
+                    >
+                        <option value="2">2 spaces</option>
+                        <option value="4">4 spaces</option>
+                    </select>
+                    <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+                        <Icon icon="charm:chevron-down" width="0.75rem" />
+                    </span>
+                </div>
             </div>
         </div>
 

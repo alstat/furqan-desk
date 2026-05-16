@@ -4,7 +4,8 @@
 	import { readDir, readTextFile, watchImmediate, type UnwatchFn } from '@tauri-apps/plugin-fs';
 	import { onDestroy } from 'svelte';
 	import Icon from '@iconify/svelte';
-	import { openFolderPath, folderRefreshTrigger, openPreviewTab, openOrFocusTab, isFlatFile } from '$lib/stores/tabs.store';
+	import { openFolderPath, folderRefreshTrigger, openPreviewTab, openOrFocusTab, isFlatFile, isImageFile, isPdfFile } from '$lib/stores/tabs.store';
+	import MediaViewerDialog from './MediaViewerDialog.svelte';
 	import { surahOrientation } from '$lib/stores/quran.svelte';
     import { actionBtnStyle } from '$lib/data/toolbar/toolbar';
 	import { t } from '$lib/i18n';
@@ -145,7 +146,7 @@
 					isForbidden: false,
 					children: []
 				});
-			} else if (isFlatFile(entry.name)) {
+			} else if (isFlatFile(entry.name) || isImageFile(entry.name) || isPdfFile(entry.name)) {
 				files.push({
 					name: entry.name,
 					path: fullPath,
@@ -229,6 +230,15 @@
 		} catch {
 			// File not accessible — silently ignore
 		}
+	}
+
+	// Image / PDF files open in a standalone viewer dialog rather than a tab.
+	let mediaViewerOpen = $state(false);
+	let mediaViewerPath = $state<string | null>(null);
+
+	function openMedia(node: FileTreeNode) {
+		mediaViewerPath = node.path;
+		mediaViewerOpen = true;
 	}
 
 	function hasAnySupportedFile(nodes: FileTreeNode[]): boolean {
@@ -348,6 +358,13 @@
 	</div>
 {/if}
 
+<!-- Image / PDF viewer — independent of the explorer panel's open state -->
+<MediaViewerDialog
+	open={mediaViewerOpen}
+	path={mediaViewerPath}
+	onClose={() => (mediaViewerOpen = false)}
+/>
+
 {#snippet treeNodes(nodes: FileTreeNode[], depth: number)}
 	{#each nodes as node}
 		{#if node.isDirectory}
@@ -387,7 +404,7 @@
 						? 'text-brand-charcoal-200 dark:text-[#414559]'
 						: 'text-brand-gold-500 dark:text-[#e5c890]'}"
 				/>
-				<span class="truncate {node.isForbidden ? 'opacity-50' : ''}">{node.name}</span>
+				<span class="truncate {node.isForbidden ? 'opacity-50' : ''}" title={node.name}>{node.name}</span>
 			</button>
 			{#if node.isExpanded && node.isLoaded}
 				{#if node.children.length === 0}
@@ -401,6 +418,26 @@
 					{@render treeNodes(node.children, depth + 1)}
 				{/if}
 			{/if}
+		{:else if isImageFile(node.name) || isPdfFile(node.name)}
+			<button
+				ondblclick={() => openMedia(node)}
+				class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[11px]
+				       text-brand-charcoal-500 dark:text-[#c6d0f5]
+				       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
+				       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
+				       rounded-full transition-colors font-mono text-left"
+				style="padding-left: {0.5 + depth * 0.75}rem; padding-right: 0.5rem"
+				title={node.name}
+			>
+				<Icon
+					icon={isPdfFile(node.name)
+						? 'solar:file-text-bold-duotone'
+						: 'solar:gallery-bold-duotone'}
+					width="0.8rem"
+					class="shrink-0 text-brand-gold-500 dark:text-[#e5c890]"
+				/>
+				<span class="truncate" title={node.name}>{node.name}</span>
+			</button>
 		{:else if isFlatFile(node.name)}
 			<button
 				onclick={() => previewFile(node)}
@@ -418,7 +455,7 @@
 					width="0.8rem"
 					class="shrink-0 text-brand-charcoal-300 dark:text-[#626880]"
 				/>
-				<span class="truncate">{node.name}</span>
+				<span class="truncate" title={node.name}>{node.name}</span>
 			</button>
 		{/if}
 	{/each}

@@ -120,6 +120,22 @@ export function isFlatFile(filename: string): boolean {
 	return FLAT_FILE_EXTENSIONS.has(ext);
 }
 
+// Raster/image formats shown in the file explorer and opened in the media
+// viewer dialog. `svg` is intentionally excluded — it stays a text-editable
+// flat file (see FLAT_FILE_EXTENSIONS).
+const IMAGE_EXTENSIONS = new Set([
+	'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'ico', 'avif', 'tif', 'tiff',
+]);
+
+export function isImageFile(filename: string): boolean {
+	const ext = filename.split('.').pop()?.toLowerCase() ?? '';
+	return IMAGE_EXTENSIONS.has(ext);
+}
+
+export function isPdfFile(filename: string): boolean {
+	return (filename.split('.').pop()?.toLowerCase() ?? '') === 'pdf';
+}
+
 export function detectType(path: string): TabType {
 	const ext = path.split('.').pop()?.toLowerCase() ?? '';
 	if (ext === 'typ') return 'typst';

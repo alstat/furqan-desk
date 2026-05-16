@@ -140,12 +140,13 @@
         $hideSurahPage()
             ? ($crossGroups.find(
                   (g: CrossGroup) =>
-                      g.hostTabId === $activeTabId || g.partnerTabId === $activeTabId,
+                      g.hostTabId === $activeTabId ||
+                      g.partnerTabId === $activeTabId,
               ) ?? null)
             : null,
     );
     let juliaMode = $derived(
-        $hideSurahPage() && $activeTab?.type === "julia" && !activeCrossGroup
+        $hideSurahPage() && $activeTab?.type === "julia" && !activeCrossGroup,
     );
 
     // When host=Lexical and the partner tab is active, load and auto-save Lexical host content
@@ -156,32 +157,44 @@
         const cg = activeCrossGroup;
         const editor = $lexicalEditorInstance;
         if (!cg || !editor) return;
-        const hostTab = get(tabs).find(t => t.id === cg.hostTabId);
-        if (!hostTab || hostTab.type !== 'lexical') return;
+        const hostTab = get(tabs).find((t) => t.id === cg.hostTabId);
+        if (!hostTab || hostTab.type !== "lexical") return;
         if ($activeTabId === cg.hostTabId) return; // host is active — Effect C handles it
         // Partner is active; load the Lexical host tab's content
         try {
-            const parsed = JSON.parse(hostTab.content || emptyLexicalStateCross);
+            const parsed = JSON.parse(
+                hostTab.content || emptyLexicalStateCross,
+            );
             const stateData = parsed.editorState ?? parsed;
-            editor.setEditorState(editor.parseEditorState(JSON.stringify(stateData)));
-        } catch { /* ignore */ }
+            editor.setEditorState(
+                editor.parseEditorState(JSON.stringify(stateData)),
+            );
+        } catch {
+            /* ignore */
+        }
     });
 
     $effect(() => {
         const cg = activeCrossGroup;
         const editor = $lexicalEditorInstance;
         if (!cg || !editor) return;
-        const hostTab = get(tabs).find(t => t.id === cg.hostTabId);
-        if (!hostTab || hostTab.type !== 'lexical') return;
+        const hostTab = get(tabs).find((t) => t.id === cg.hostTabId);
+        if (!hostTab || hostTab.type !== "lexical") return;
         if ($activeTabId === cg.hostTabId) return; // host is active — normal save applies
         const hostTabId = cg.hostTabId;
-        const unregister = editor.registerUpdateListener(({ dirtyElements, dirtyLeaves }) => {
-            if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
-            const json = JSON.stringify(editor.getEditorState().toJSON());
-            tabs.update(ts => ts.map(t =>
-                t.id === hostTabId ? { ...t, content: json, isDirty: true } : t
-            ));
-        });
+        const unregister = editor.registerUpdateListener(
+            ({ dirtyElements, dirtyLeaves }) => {
+                if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
+                const json = JSON.stringify(editor.getEditorState().toJSON());
+                tabs.update((ts) =>
+                    ts.map((t) =>
+                        t.id === hostTabId
+                            ? { ...t, content: json, isDirty: true }
+                            : t,
+                    ),
+                );
+            },
+        );
         return unregister;
     });
 
@@ -263,7 +276,7 @@
             <div
                 class="{$zenMode
                     ? 'opacity-0 hover:opacity-100 transition-opacity duration-200'
-                    : ''} absolute -top-4.5 left-3/4 z-50 pointer-events-none"
+                    : ''} absolute -top-4.5 left-1/6 z-50 pointer-events-none"
             >
                 <span
                     class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold
@@ -279,7 +292,7 @@
             {#if activeCrossGroup}
                 <!-- Cross pair: sidebar always shows the HOST tab's editor -->
                 {@const hostTabId = activeCrossGroup.hostTabId}
-                {@const hostTab = $tabs.find(t => t.id === hostTabId)}
+                {@const hostTab = $tabs.find((t) => t.id === hostTabId)}
                 {#if hostTab?.type === "julia"}
                     <JuliaEditor
                         tabId={$activeTabId !== hostTabId ? hostTabId : null}
