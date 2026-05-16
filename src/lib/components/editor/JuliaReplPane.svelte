@@ -41,6 +41,7 @@
     import { openFolderPath, tabs } from "$lib/stores/tabs.store";
     import { isPro } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
+    import { t } from "$lib/i18n";
 
     const askAiContextPrompt =
         "This text is part of a Julia programming file, help provide explanation or correction on the code";
@@ -239,7 +240,7 @@
     let historyIndex = $state(-1);
     let savedInput = "";
     let focusReplOnDone = false;
-    let replMode = $state<"julia" | "pkg" | "shell">("julia");
+    let replMode = $state<"julia" | "pkg" | "shell" | "help">("julia");
 
     let replOutputEl: HTMLDivElement | undefined = $state(undefined);
     let replInputEl: HTMLTextAreaElement | undefined = $state(undefined);
@@ -463,7 +464,9 @@
         if (
             replMode === "julia" &&
             replInput === "" &&
-            !e.ctrlKey && !e.metaKey && !e.altKey
+            !e.ctrlKey &&
+            !e.metaKey &&
+            !e.altKey
         ) {
             if (e.key === "]" && !e.shiftKey) {
                 e.preventDefault();
@@ -501,7 +504,11 @@
             const code = replInput.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
             // Multi-line buffering only applies to the default julia mode —
             // pkg / shell commands are single-line by convention.
-            if (replMode === "julia" && code.trim() && isIncompleteJulia(code)) {
+            if (
+                replMode === "julia" &&
+                code.trim() &&
+                isIncompleteJulia(code)
+            ) {
                 insertNewlineAtCaret();
                 return;
             }
@@ -578,6 +585,196 @@
         }
         bundles.get(id)?.term.focus();
     }
+
+    // ── Active pane search ───────────────────────────────────────────────────
+
+    type PaneSearchMatch = {
+        panel: string;
+        line?: number;
+        col?: number;
+        index?: number;
+        length: number;
+    };
+
+    let showSearch = $state(false);
+    let searchQuery = $state("");
+    let searchInputEl: HTMLInputElement | undefined = $state(undefined);
+    let searchMatches = $state<PaneSearchMatch[]>([]);
+    let searchIndex = $state(-1);
+    let searchRevealed = $state(false);
+
+    function getReplText(): string {
+        return replOutputEl?.textContent ?? "";
+    }
+
+    function getActiveTerminalLines(): string[] {
+        const b = bundles.get(ts.activePanel);
+        if (!b) return [];
+        const buffer = b.term.buffer.active;
+        const lines: string[] = [];
+        for (let i = 0; i < buffer.length; i++) {
+            lines.push(buffer.getLine(i)?.translateToString(true) ?? "");
+        }
+        return lines;
+    }
+
+    function collectTextMatches(
+        text: string,
+        query: string,
+        panel: string,
+    ): PaneSearchMatch[] {
+        if (!query) return [];
+        const matches: PaneSearchMatch[] = [];
+        const haystack = text.toLocaleLowerCase();
+        const needle = query.toLocaleLowerCase();
+        let from = 0;
+        while (from <= haystack.length) {
+            const index = haystack.indexOf(needle, from);
+            if (index === -1) break;
+            matches.push({ panel, index, length: query.length });
+            from = index + Math.max(needle.length, 1);
+        }
+        return matches;
+    }
+
+    function collectTerminalMatches(query: string): PaneSearchMatch[] {
+        if (!query) return [];
+        const panel = ts.activePanel;
+        const needle = query.toLocaleLowerCase();
+        return getActiveTerminalLines().flatMap((line, row) => {
+            const matches: PaneSearchMatch[] = [];
+            const haystack = line.toLocaleLowerCase();
+            let from = 0;
+            while (from <= haystack.length) {
+                const col = haystack.indexOf(needle, from);
+                if (col === -1) break;
+                matches.push({ panel, line: row, col, length: query.length });
+                from = col + Math.max(needle.length, 1);
+            }
+            return matches;
+        });
+    }
+
+    function refreshSearchMatches() {
+        const query = searchQuery.trim();
+        searchMatches =
+            ts.activePanel === "julia"
+                ? collectTextMatches(getReplText(), query, "julia")
+                : collectTerminalMatches(query);
+        searchIndex = searchMatches.length > 0 ? 0 : -1;
+        searchRevealed = false;
+    }
+
+    function selectTextOffset(
+        root: HTMLElement,
+        start: number,
+        length: number,
+    ) {
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        let node = walker.nextNode();
+        let startNode: Text | null = null;
+        let endNode: Text | null = null;
+        let startOffset = 0;
+        let endOffset = 0;
+        let offset = 0;
+
+        while (node) {
+            const text = node.textContent ?? "";
+            const nextOffset = offset + text.length;
+            if (!startNode && start >= offset && start <= nextOffset) {
+                startNode = node as Text;
+                startOffset = start - offset;
+            }
+            if (startNode) {
+                const end = start + length;
+                if (end >= offset && end <= nextOffset) {
+                    endNode = node as Text;
+                    endOffset = end - offset;
+                    break;
+                }
+            }
+            offset = nextOffset;
+            node = walker.nextNode();
+        }
+
+        if (!startNode || !endNode) return;
+        const range = document.createRange();
+        range.setStart(startNode, startOffset);
+        range.setEnd(endNode, endOffset);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        range.startContainer.parentElement?.scrollIntoView({
+            block: "center",
+            inline: "nearest",
+        });
+    }
+
+    function revealSearchMatch() {
+        const match = searchMatches[searchIndex];
+        if (!match) return;
+        if (match.panel === "julia") {
+            if (replOutputEl && match.index !== undefined) {
+                selectTextOffset(replOutputEl, match.index, match.length);
+            }
+            searchRevealed = true;
+            return;
+        }
+
+        const b = bundles.get(match.panel);
+        if (!b || match.line === undefined || match.col === undefined) return;
+        b.term.scrollToLine(match.line);
+        b.term.select(match.col, match.line, match.length);
+        b.term.focus();
+        searchRevealed = true;
+    }
+
+    function stepSearch(delta: 1 | -1) {
+        if (searchMatches.length === 0) return;
+        if (!searchRevealed) {
+            revealSearchMatch();
+            return;
+        }
+        searchIndex =
+            (searchIndex + delta + searchMatches.length) % searchMatches.length;
+        revealSearchMatch();
+    }
+
+    function openSearch() {
+        showSearch = true;
+        requestAnimationFrame(() => {
+            searchInputEl?.focus();
+            searchInputEl?.select();
+            refreshSearchMatches();
+        });
+    }
+
+    function closeSearch() {
+        showSearch = false;
+        searchMatches = [];
+        searchIndex = -1;
+        searchRevealed = false;
+        window.getSelection()?.removeAllRanges();
+        if (ts.activePanel !== "julia")
+            bundles.get(ts.activePanel)?.term.clearSelection();
+    }
+
+    function handleSearchKeydown(e: KeyboardEvent) {
+        if (e.key === "Escape") {
+            e.preventDefault();
+            closeSearch();
+        } else if (e.key === "Enter") {
+            e.preventDefault();
+            stepSearch(e.shiftKey ? -1 : 1);
+        }
+    }
+
+    $effect(() => {
+        const _activePanel = ts.activePanel;
+        if (showSearch) {
+            requestAnimationFrame(() => refreshSearchMatches());
+        }
+    });
 
     // ── Event listeners ───────────────────────────────────────────────────────
 
@@ -779,9 +976,17 @@
         // but only if the REPL is already running and not currently busy.
         let folderSubFirst = true;
         const unsubFolder = openFolderPath.subscribe((folder) => {
-            if (folderSubFirst) { folderSubFirst = false; return; }
-            if (!folder || !get(juliaReplStarted) || get(juliaIsRunning)) return;
-            void executeJuliaCode(`cd(${JSON.stringify(folder)})`, undefined, "julia");
+            if (folderSubFirst) {
+                folderSubFirst = false;
+                return;
+            }
+            if (!folder || !get(juliaReplStarted) || get(juliaIsRunning))
+                return;
+            void executeJuliaCode(
+                `cd(${JSON.stringify(folder)})`,
+                undefined,
+                "julia",
+            );
         });
 
         return () => {
@@ -1049,15 +1254,6 @@
                     />
                 </button>
             {/if}
-            <!-- Add terminal button -->
-            <button
-                onclick={addTerminal}
-                class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-brand-charcoal-300 hover:text-brand-gold-600 dark:hover:text-brand-gold-400 hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 shrink-0 transition-colors"
-                title="Add terminal"
-                aria-label="Add terminal"
-            >
-                <Icon icon="lucide:plus" width="0.9rem" />
-            </button>
             <!-- Settings button -->
             <div bind:this={settingsAnchorEl} class="relative">
                 <button
@@ -1070,7 +1266,7 @@
                     aria-label="Display settings"
                     aria-expanded={showSettings}
                 >
-                    <Icon icon="lucide:settings" width="0.9rem" />
+                    <Icon icon="solar:settings-bold-duotone" width="0.9rem" />
                 </button>
                 {#if showSettings}
                     <div
@@ -1094,24 +1290,28 @@
                                 <p
                                     class="text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                                 >
-                                    Display options
+                                    {$t("terminal.display_options")}
                                 </p>
                                 <p
                                     class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
                                 >
-                                    Text size & spacing
+                                    {$t("terminal.text_size_spacing")}
                                 </p>
                             </div>
                         </div>
 
                         <div>
-                            <span class={settingsLabelClass}>Font size</span>
+                            <span class={settingsLabelClass}
+                                >{$t("terminal.font_size")}</span
+                            >
                             <div class="flex items-center gap-2">
                                 <button
                                     onclick={decFontSize}
                                     disabled={$replFontSize <=
                                         REPL_FONT_BOUNDS.min}
-                                    aria-label="Decrease font size"
+                                    aria-label={$t(
+                                        "terminal.decrease_font_size",
+                                    )}
                                     class={settingsAdjustBtnClass}
                                 >
                                     <svg
@@ -1140,7 +1340,9 @@
                                     onclick={incFontSize}
                                     disabled={$replFontSize >=
                                         REPL_FONT_BOUNDS.max}
-                                    aria-label="Increase font size"
+                                    aria-label={$t(
+                                        "terminal.increase_font_size",
+                                    )}
                                     class={settingsAdjustBtnClass}
                                 >
                                     <svg
@@ -1171,8 +1373,8 @@
                                 </button>
                                 <button
                                     onclick={resetFontSize}
-                                    aria-label="Reset font size"
-                                    title="Reset"
+                                    aria-label={$t("terminal.reset_font_size")}
+                                    title={$t("terminal.reset")}
                                     class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
                                 >
                                     <Icon
@@ -1184,13 +1386,17 @@
                         </div>
 
                         <div>
-                            <span class={settingsLabelClass}>Line spacing</span>
+                            <span class={settingsLabelClass}
+                                >{$t("terminal.line_spacing")}</span
+                            >
                             <div class="flex items-center gap-2">
                                 <button
                                     onclick={decLineSpacing}
                                     disabled={$replLineSpacing <=
                                         REPL_LINE_BOUNDS.min}
-                                    aria-label="Decrease line spacing"
+                                    aria-label={$t(
+                                        "terminal.decrease_line_spacing",
+                                    )}
                                     class={settingsAdjustBtnClass}
                                 >
                                     <svg
@@ -1219,7 +1425,9 @@
                                     onclick={incLineSpacing}
                                     disabled={$replLineSpacing >=
                                         REPL_LINE_BOUNDS.max}
-                                    aria-label="Increase line spacing"
+                                    aria-label={$t(
+                                        "terminal.increase_line_spacing",
+                                    )}
                                     class={settingsAdjustBtnClass}
                                 >
                                     <svg
@@ -1250,8 +1458,10 @@
                                 </button>
                                 <button
                                     onclick={resetLineSpacing}
-                                    aria-label="Reset line spacing"
-                                    title="Reset"
+                                    aria-label={$t(
+                                        "terminal.reset_line_spacing",
+                                    )}
+                                    title={$t("terminal.reset")}
                                     class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
                                 >
                                     <Icon
@@ -1264,6 +1474,78 @@
                     </div>
                 {/if}
             </div>
+            <div class="relative">
+                <button
+                    onclick={showSearch ? closeSearch : openSearch}
+                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-brand-charcoal-300 hover:text-brand-gold-600 dark:hover:text-brand-gold-400 hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 shrink-0 transition-colors
+                           {showSearch
+                        ? 'bg-brand-sand-100 dark:bg-brand-sand-200 text-brand-gold-600 dark:text-brand-gold-400'
+                        : ''}"
+                    title="Search active pane"
+                    aria-label="Search active pane"
+                    aria-expanded={showSearch}
+                >
+                    <Icon icon="solar:magnifer-bold-duotone" width="0.9rem" />
+                </button>
+
+                {#if showSearch}
+                    <div
+                        class="absolute right-0 top-7 z-50 flex items-center gap-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] p-1 shadow-lg"
+                    >
+                        <input
+                            bind:this={searchInputEl}
+                            bind:value={searchQuery}
+                            oninput={refreshSearchMatches}
+                            onkeydown={handleSearchKeydown}
+                            class="h-7 w-44 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#232634] px-2 text-xs text-brand-charcoal-700 dark:text-[#c6d0f5] outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 dark:focus:border-[#e5c890]"
+                            placeholder="Search {ts.activePanel === 'julia'
+                                ? 'REPL'
+                                : 'terminal'}"
+                            aria-label="Search active pane"
+                        />
+                        <span
+                            class="min-w-11 text-center text-[10px] tabular-nums text-brand-charcoal-300 dark:text-[#838ba7]"
+                        >
+                            {searchMatches.length > 0
+                                ? `${searchIndex + 1}/${searchMatches.length}`
+                                : "0/0"}
+                        </span>
+                        <button
+                            onclick={() => stepSearch(-1)}
+                            disabled={searchMatches.length === 0}
+                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
+                            title="Previous match"
+                            aria-label="Previous match"
+                        >
+                            <Icon
+                                icon="solar:alt-arrow-up-linear"
+                                width="0.85rem"
+                            />
+                        </button>
+                        <button
+                            onclick={() => stepSearch(1)}
+                            disabled={searchMatches.length === 0}
+                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
+                            title="Next match"
+                            aria-label="Next match"
+                        >
+                            <Icon
+                                icon="solar:alt-arrow-down-linear"
+                                width="0.85rem"
+                            />
+                        </button>
+                    </div>
+                {/if}
+            </div>
+            <!-- Add terminal button -->
+            <button
+                onclick={addTerminal}
+                class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-brand-charcoal-300 hover:text-brand-gold-600 dark:hover:text-brand-gold-400 hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 shrink-0 transition-colors"
+                title="Add terminal"
+                aria-label="Add terminal"
+            >
+                <Icon icon="ic:outline-plus" width="0.9rem" />
+            </button>
         </div>
     </div>
 
@@ -1290,12 +1572,17 @@
                             {@const m = line.mode ?? "julia"}
                             <div class="flex gap-1.5 mt-1 first:mt-0">
                                 <span
-                                    class="shrink-0 select-none font-semibold {m === 'pkg'
+                                    class="shrink-0 select-none font-semibold {m ===
+                                    'pkg'
                                         ? 'text-blue-500 dark:text-[#8caaee]'
                                         : m === 'shell'
                                           ? 'text-red-500 dark:text-[#e78284]'
                                           : 'text-brand-gold-600'}"
-                                    >{m === 'pkg' ? '(@v) pkg>' : m === 'shell' ? 'shell>' : 'julia>'}</span
+                                    >{m === "pkg"
+                                        ? "(@v) pkg>"
+                                        : m === "shell"
+                                          ? "shell>"
+                                          : "julia>"}</span
                                 >
                                 <span
                                     class="text-brand-charcoal-500 dark:text-[#c6d0f5] whitespace-pre-wrap"
@@ -1415,27 +1702,32 @@
                 }}
             >
                 <span
-                    class="shrink-0 select-none font-semibold font-mono repl-mono pt-px {replMode === 'pkg'
+                    class="shrink-0 select-none font-semibold font-mono repl-mono pt-px {replMode ===
+                    'pkg'
                         ? 'text-blue-500 dark:text-[#8caaee]'
                         : replMode === 'shell'
                           ? 'text-red-500 dark:text-[#e78284]'
                           : replMode === 'help'
                             ? 'text-purple-500 dark:text-[#ca9ee6]'
                             : 'text-brand-gold-600'}"
-                    title={replMode === 'pkg'
-                        ? 'Pkg mode — Backspace to exit'
-                        : replMode === 'shell'
-                          ? 'Shell mode — Backspace to exit'
-                          : replMode === 'help'
-                            ? 'Help mode — Backspace to exit'
-                            : 'Julia — type ] for pkg, ; for shell, ? for help'}
-                    >{replMode === 'pkg'
-                        ? ($juliaActiveEnv ? `(${$juliaActiveEnv}) pkg>` : '(@v) pkg>')
-                        : replMode === 'shell'
-                          ? 'shell>'
-                          : replMode === 'help'
-                            ? 'help?>'
-                            : ($juliaActiveEnv ? `julia (${$juliaActiveEnv})>` : 'julia>')}</span
+                    title={replMode === "pkg"
+                        ? "Pkg mode — Backspace to exit"
+                        : replMode === "shell"
+                          ? "Shell mode — Backspace to exit"
+                          : replMode === "help"
+                            ? "Help mode — Backspace to exit"
+                            : "Julia — type ] for pkg, ; for shell, ? for help"}
+                    >{replMode === "pkg"
+                        ? $juliaActiveEnv
+                            ? `(${$juliaActiveEnv}) pkg>`
+                            : "(@v) pkg>"
+                        : replMode === "shell"
+                          ? "shell>"
+                          : replMode === "help"
+                            ? "help?>"
+                            : $juliaActiveEnv
+                              ? `julia (${$juliaActiveEnv})>`
+                              : "julia>"}</span
                 >
                 <textarea
                     bind:this={replInputEl}
@@ -1457,12 +1749,12 @@
                     rows={replInputRows}
                     placeholder={isRunning || isStreaming
                         ? "Running…"
-                        : replMode === 'pkg'
-                          ? 'pkg command, e.g. add DataFrames'
-                          : replMode === 'shell'
-                            ? 'shell command'
-                            : replMode === 'help'
-                              ? 'function or type, e.g. sin'
+                        : replMode === "pkg"
+                          ? "pkg command, e.g. add DataFrames"
+                          : replMode === "shell"
+                            ? "shell command"
+                            : replMode === "help"
+                              ? "function or type, e.g. sin"
                               : "Enter code, Shift+Enter for newline"}
                     use:noAutocorrect
                     spellcheck={false}

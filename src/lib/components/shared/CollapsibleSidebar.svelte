@@ -43,7 +43,7 @@
             accountOpen = true;
             return;
         }
-        aiChatDialogOpen.set(true);
+        aiChatDialogOpen.set(!$aiChatDialogOpen);
     }
 
     let { children, roundRight = true } = $props();
@@ -173,7 +173,7 @@
     <!-- Terminal Button -->
     <button
         class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-26 z-3 ${terminalOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
-        onclick={() => (terminalOpen = true)}
+        onclick={() => (terminalOpen = !terminalOpen)}
         aria-label="Open terminal"
         title="Open terminal"
     >

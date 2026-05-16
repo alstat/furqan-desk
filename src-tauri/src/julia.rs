@@ -514,6 +514,43 @@ while true
       end
     catch
     end
+  elseif startswith(code, "__JULIA_DEFINITION__:")
+    sym = strip(code[length("__JULIA_DEFINITION__:")+1:end])
+    print(stdout, "__JULIA_COMPLETE_START__\n")
+    try
+      val = Base.invokelatest(Core.eval, Main, Meta.parse(sym))
+      for m in methods(val)
+        loc = try; functionloc(m); catch; (nothing, 0); end
+        if loc[1] !== nothing
+          f = string(loc[1])
+          if !isempty(f) && isfile(f)
+            println(stdout, f * ":" * string(loc[2]))
+          end
+        end
+      end
+    catch
+    end
+  elseif startswith(code, "__JULIA_FORMAT__:")
+    # Payload: "<indent>\n<base64 source>". Reply through the completion
+    # channel with a single "OK:<base64>" / "ERR:<base64>" line.
+    rest = code[length("__JULIA_FORMAT__:")+1:end]
+    print(stdout, "__JULIA_COMPLETE_START__\n")
+    try
+      nl = findfirst('\n', rest)
+      indent = parse(Int, strip(rest[1:prevind(rest, nl)]))
+      src = String(Base64.base64decode(strip(rest[nextind(rest, nl):end])))
+      JF = try
+        @eval Main import JuliaFormatter
+        Main.JuliaFormatter
+      catch
+        error("JuliaFormatter.jl is not installed. In the Julia REPL run: import Pkg; Pkg.add(\"JuliaFormatter\")")
+      end
+      formatted = Base.invokelatest(JF.format_text, src; indent=indent)
+      println(stdout, "OK:" * Base64.base64encode(formatted))
+    catch e
+      msg = try; sprint(showerror, e); catch; string(e); end
+      println(stdout, "ERR:" * Base64.base64encode(msg))
+    end
   else
     try
       parsed = Meta.parseall(code)
@@ -769,6 +806,90 @@ pub async fn julia_complete(
         .await
         .map_err(|_| "completion request timed out".to_string())?
         .map_err(|_| "completion channel closed".to_string())
+}
+
+/// Resolve the source location(s) of a Julia symbol via the running REPL.
+/// Returns a list of "file:line" strings (one per method) for use by the
+/// editor's go-to-definition; covers library/module functions (e.g. `mean`
+/// from Statistics). Errors if the REPL is not running or the request times
+/// out. The response reuses the completion channel — its first line is the
+/// `__JULIA_COMPLETE_START__` sentinel — so it shares `completion_tx`.
+#[tauri::command]
+pub async fn julia_definition(
+    symbol: String,
+    state: State<'_, JuliaState>,
+) -> Result<Vec<String>, String> {
+    let (tx, rx) = tokio::sync::oneshot::channel::<Vec<String>>();
+
+    let stdin_arc = {
+        let guard = state.process.lock().map_err(|e| e.to_string())?;
+        let proc = guard.as_ref().ok_or("Julia REPL is not started")?;
+        {
+            let mut slot = proc.completion_tx.lock().unwrap();
+            *slot = Some(tx);
+        }
+        Arc::clone(&proc.stdin)
+    }; // std::sync::MutexGuard dropped here
+
+    let payload = format!("__JULIA_DEFINITION__:{}\n__JULIA_EXEC__\n", symbol);
+    let mut stdin = stdin_arc.lock().await;
+    stdin.write_all(payload.as_bytes()).await
+        .map_err(|e| format!("Failed to write to Julia stdin: {e}"))?;
+    stdin.flush().await
+        .map_err(|e| format!("Failed to flush Julia stdin: {e}"))?;
+    drop(stdin);
+
+    tokio::time::timeout(std::time::Duration::from_secs(5), rx)
+        .await
+        .map_err(|_| "definition request timed out".to_string())?
+        .map_err(|_| "definition channel closed".to_string())
+}
+
+/// Format Julia source via JuliaFormatter.jl in the running REPL.
+/// `code_b64` is the base64-encoded source; `indent` the spaces per level.
+/// Returns the single response line — "OK:<base64 formatted>" or
+/// "ERR:<base64 message>" — which the caller decodes. Errors only on
+/// transport problems (REPL not running, timeout). Shares the completion
+/// channel: the reply begins with the `__JULIA_COMPLETE_START__` sentinel.
+#[tauri::command]
+pub async fn julia_format(
+    code_b64: String,
+    indent: u32,
+    state: State<'_, JuliaState>,
+) -> Result<String, String> {
+    let (tx, rx) = tokio::sync::oneshot::channel::<Vec<String>>();
+
+    let stdin_arc = {
+        let guard = state.process.lock().map_err(|e| e.to_string())?;
+        let proc = guard.as_ref().ok_or("Julia REPL is not started")?;
+        {
+            let mut slot = proc.completion_tx.lock().unwrap();
+            *slot = Some(tx);
+        }
+        Arc::clone(&proc.stdin)
+    }; // std::sync::MutexGuard dropped here
+
+    let payload = format!(
+        "__JULIA_FORMAT__:{}\n{}\n__JULIA_EXEC__\n",
+        indent, code_b64,
+    );
+    let mut stdin = stdin_arc.lock().await;
+    stdin.write_all(payload.as_bytes()).await
+        .map_err(|e| format!("Failed to write to Julia stdin: {e}"))?;
+    stdin.flush().await
+        .map_err(|e| format!("Failed to flush Julia stdin: {e}"))?;
+    drop(stdin);
+
+    // Generous timeout: the first format triggers JuliaFormatter precompilation.
+    let lines = tokio::time::timeout(std::time::Duration::from_secs(180), rx)
+        .await
+        .map_err(|_| "format request timed out".to_string())?
+        .map_err(|_| "format channel closed".to_string())?;
+
+    lines
+        .into_iter()
+        .next()
+        .ok_or_else(|| "empty format response".to_string())
 }
 
 #[tauri::command]

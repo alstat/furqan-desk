@@ -111,6 +111,8 @@ pub fn run() {
             julia::start_julia_repl,
             julia::run_julia_code,
             julia::julia_complete,
+            julia::julia_definition,
+            julia::julia_format,
             julia::stop_julia_repl,
             julia::get_julia_version,
             julia::get_latest_julia_version,

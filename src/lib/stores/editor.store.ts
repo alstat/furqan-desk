@@ -67,9 +67,42 @@ export const editorSplitRatio = {
   },
 };
 
-// ── Editor theme (Ayu Light / Ayu Mirage) ────────────────────────────────────
+// ── Editor theme ──────────────────────────────────────────────────────────────
 
-export type EditorTheme = "ayu-light" | "ayu-mirage";
+export type EditorTheme =
+  | "ayu-light"
+  | "ayu-mirage"
+  | "gruvbox-light"
+  | "gruvbox-dark"
+  | "monokai-light"
+  | "monokai-dark";
+
+export interface EditorThemeInfo {
+  id: EditorTheme;
+  label: string;
+  dark: boolean;
+  /** Editor background colour — used for the theme swatch in the picker. */
+  bg: string;
+  /** Accent colour — used for the swatch dot. */
+  accent: string;
+}
+
+/** All CodeMirror themes available to the editor, in display order. */
+export const ALL_EDITOR_THEMES: EditorThemeInfo[] = [
+  { id: "ayu-light", label: "Ayu Light", dark: false, bg: "#fafafa", accent: "#ff9940" },
+  { id: "ayu-mirage", label: "Ayu Mirage", dark: true, bg: "#1f2430", accent: "#ffcc66" },
+  { id: "gruvbox-light", label: "Gruvbox Light", dark: false, bg: "#fbf1c7", accent: "#b57614" },
+  { id: "gruvbox-dark", label: "Gruvbox Dark", dark: true, bg: "#282828", accent: "#fabd2f" },
+  { id: "monokai-light", label: "Monokai Light", dark: false, bg: "#fafaf6", accent: "#e0185a" },
+  { id: "monokai-dark", label: "Monokai Dark", dark: true, bg: "#272822", accent: "#f92672" },
+];
+
+function isEditorTheme(v: unknown): v is EditorTheme {
+  return (
+    typeof v === "string" &&
+    ALL_EDITOR_THEMES.some((t) => t.id === v)
+  );
+}
 
 // ── CodeMirror font size ──────────────────────────────────────────────────────
 
@@ -220,7 +253,7 @@ export const typstPreviewDarkMode = {
 function loadTheme(): EditorTheme {
   try {
     const v = localStorage.getItem("editor-theme");
-    if (v === "ayu-light" || v === "ayu-mirage") return v;
+    if (isEditorTheme(v)) return v;
   } catch {
     /* ignore */
   }
@@ -241,7 +274,77 @@ export const editorTheme = {
   },
 };
 
-export type ReplMode = "julia" | "pkg" | "shell";
+// ── Editor theme toolbar slots ───────────────────────────────────────────────
+// The two themes surfaced as quick-switch buttons in the Editor Toolbar.
+
+function loadThemeSlots(): [EditorTheme, EditorTheme] {
+  try {
+    const raw = localStorage.getItem("editor-theme-slots");
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (
+        Array.isArray(arr) &&
+        arr.length === 2 &&
+        isEditorTheme(arr[0]) &&
+        isEditorTheme(arr[1]) &&
+        arr[0] !== arr[1]
+      ) {
+        return [arr[0], arr[1]];
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return ["ayu-light", "ayu-mirage"];
+}
+
+const _editorThemeSlots = writable<[EditorTheme, EditorTheme]>(
+  loadThemeSlots(),
+);
+
+export const editorThemeSlots = {
+  subscribe: _editorThemeSlots.subscribe,
+  set(v: [EditorTheme, EditorTheme]) {
+    try {
+      localStorage.setItem("editor-theme-slots", JSON.stringify(v));
+    } catch {
+      /* ignore */
+    }
+    _editorThemeSlots.set(v);
+  },
+};
+
+// ── Code editor indent size ───────────────────────────────────────────────────
+// Number of spaces inserted per indent level (Tab key, auto-indent).
+
+export type IndentSize = 2 | 4;
+
+function loadIndentSize(): IndentSize {
+  try {
+    const v = localStorage.getItem("editor-indent-size");
+    if (v === "4") return 4;
+    if (v === "2") return 2;
+  } catch {
+    /* ignore */
+  }
+  return 2;
+}
+
+const _editorIndentSize = writable<IndentSize>(loadIndentSize());
+
+export const editorIndentSize = {
+  subscribe: _editorIndentSize.subscribe,
+  set(v: IndentSize) {
+    try {
+      localStorage.setItem("editor-indent-size", String(v));
+    } catch {
+      /* ignore */
+    }
+    _editorIndentSize.set(v);
+  },
+};
+
+export type ReplMode = "julia" | "pkg" | "shell" | "help";
 
 export interface ReplLine {
   text: string;
