@@ -551,6 +551,7 @@ export const vi: Record<string, string> = {
   "morphology.prefix.l_IMPV": "Lam mệnh lệnh (li-)",
   "morphology.prefix.l_PRP":  "Lam mục đích (li-)",
   "morphology.prefix.w_CONJ": "Liên từ (wa-)",
+  "morphology.prefix.w_REM": "Tiểu từ tiếp nối (wa-)",
   "morphology.prefix.f_CONJ": "Liên từ (fa-)",
   "morphology.prefix.w_P":    "Giới từ (wa-)",
   "morphology.prefix.k_P":    "Giới từ (ka-)",

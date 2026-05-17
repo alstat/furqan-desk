@@ -545,6 +545,7 @@ export const zh: Record<string, string> = {
     'morphology.prefix.l_IMPV': '命令 lam (li-)',
     'morphology.prefix.l_PRP':  '目的 lam (li-)',
     'morphology.prefix.w_CONJ': '连词 (wa-)',
+    'morphology.prefix.w_REM': '复始小品词 (wa-)',
     'morphology.prefix.f_CONJ': '连词 (fa-)',
     'morphology.prefix.w_P':    '介词 (wa-)',
     'morphology.prefix.k_P':    '介词 (ka-)',

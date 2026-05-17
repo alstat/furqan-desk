@@ -75,7 +75,11 @@ export type EditorTheme =
   | "gruvbox-light"
   | "gruvbox-dark"
   | "monokai-light"
-  | "monokai-dark";
+  | "monokai-dark"
+  | "solarized-light"
+  | "solarized-dark"
+  | "tokyo-night-light"
+  | "tokyo-night-dark";
 
 export interface EditorThemeInfo {
   id: EditorTheme;
@@ -95,6 +99,10 @@ export const ALL_EDITOR_THEMES: EditorThemeInfo[] = [
   { id: "gruvbox-dark", label: "Gruvbox Dark", dark: true, bg: "#282828", accent: "#fabd2f" },
   { id: "monokai-light", label: "Monokai Light", dark: false, bg: "#fafaf6", accent: "#e0185a" },
   { id: "monokai-dark", label: "Monokai Dark", dark: true, bg: "#272822", accent: "#f92672" },
+  { id: "solarized-light", label: "Solarized Light", dark: false, bg: "#fdf6e3", accent: "#b58900" },
+  { id: "solarized-dark", label: "Solarized Dark", dark: true, bg: "#002b36", accent: "#b58900" },
+  { id: "tokyo-night-light", label: "Tokyo Night Light", dark: false, bg: "#e1e2e7", accent: "#9854f1" },
+  { id: "tokyo-night-dark", label: "Tokyo Night", dark: true, bg: "#1a1b26", accent: "#bb9af7" },
 ];
 
 function isEditorTheme(v: unknown): v is EditorTheme {

@@ -150,7 +150,8 @@
                     {@const info = ALL_EDITOR_THEMES.find((t) => t.id === themeId)}
                     <button
                         onclick={() => editorTheme.set(themeId)}
-                        class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors ${
+                        title={info?.label ?? themeId}
+                        class={`cursor-pointer flex-1 min-w-0 overflow-hidden px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors ${
                             $editorTheme === themeId
                                 ? info?.dark
                                     ? "bg-[#1f2430] text-[#ffa759] border-[#ffa759]"
@@ -158,7 +159,11 @@
                                 : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]"
                         }`}
                     >
-                        {info?.label ?? themeId}
+                        <span
+                            class="block whitespace-nowrap [mask-image:linear-gradient(to_right,#000_82%,transparent)] [-webkit-mask-image:linear-gradient(to_right,#000_82%,transparent)]"
+                        >
+                            {info?.label ?? themeId}
+                        </span>
                     </button>
                 {/each}
                 <button

@@ -456,6 +456,7 @@ export const sq: Record<string, string> = {
   "morphology.prefix.l_IMPV": "Imperativ lam (li-)",
   "morphology.prefix.l_PRP": "Qëllimi lam (li-)",
   "morphology.prefix.w_CONJ": "Lidhja (wa-)",
+  "morphology.prefix.w_REM": "Grimca e rifillimit (wa-)",
   "morphology.prefix.f_CONJ": "Lidhëza (fa-)",
   "morphology.prefix.w_P": "Parafjala (wa-)",
   "morphology.prefix.k_P": "Parafjala (ka-)",

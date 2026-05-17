@@ -38,6 +38,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
             let resource_dir = app.path().resource_dir()
                 .expect("Failed to resolve resource directory");
@@ -82,6 +83,7 @@ pub fn run() {
             commands::delete_highlight,
             commands::compile_typst_svg,
             commands::compile_typst_pdf,
+            commands::typst_format,
             commands::check_typst_package,
             commands::install_typst_package,
             commands::check_typst_fonts,

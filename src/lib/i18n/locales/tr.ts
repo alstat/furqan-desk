@@ -545,6 +545,7 @@ export const tr: Record<string, string> = {
     'morphology.prefix.l_IMPV': 'Emir lam (li-)',
     'morphology.prefix.l_PRP':  'Amaç lam (li-)',
     'morphology.prefix.w_CONJ': 'Bağlaç (va-)',
+    'morphology.prefix.w_REM': 'Sürdürme edatı (va-)',
     'morphology.prefix.f_CONJ': 'Bağlaç (fe-)',
     'morphology.prefix.w_P':    'Edat (va-)',
     'morphology.prefix.k_P':    'Edat (ke-)',

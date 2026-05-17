@@ -553,6 +553,7 @@ export const ms: Record<string, string> = {
   "morphology.prefix.l_IMPV": "Lam perintah (li-)",
   "morphology.prefix.l_PRP":  "Lam tujuan (li-)",
   "morphology.prefix.w_CONJ": "Sambungan (wa-)",
+  "morphology.prefix.w_REM": "Partikel pengembalian (wa-)",
   "morphology.prefix.f_CONJ": "Sambungan (fa-)",
   "morphology.prefix.w_P":    "Kata sendi (wa-)",
   "morphology.prefix.k_P":    "Kata sendi (ka-)",

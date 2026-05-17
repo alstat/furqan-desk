@@ -456,6 +456,7 @@ export const sw: Record<string, string> = {
   "morphology.prefix.l_IMPV": "Lam muhimu (li-)",
   "morphology.prefix.l_PRP": "Kusudi lam (li-)",
   "morphology.prefix.w_CONJ": "Kiunganishi (wa-)",
+  "morphology.prefix.w_REM": "Chembe ya kuanza tena (wa-)",
   "morphology.prefix.f_CONJ": "Kiunganishi (fa-)",
   "morphology.prefix.w_P": "Kihusishi (wa-)",
   "morphology.prefix.k_P": "Kihusishi (ka-)",

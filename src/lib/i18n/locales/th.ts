@@ -551,6 +551,7 @@ export const th: Record<string, string> = {
   "morphology.prefix.l_IMPV": "lam สั่ง (li-)",
   "morphology.prefix.l_PRP":  "lam วัตถุประสงค์ (li-)",
   "morphology.prefix.w_CONJ": "สันธาน (wa-)",
+  "morphology.prefix.w_REM": "อนุภาคสานต่อ (wa-)",
   "morphology.prefix.f_CONJ": "สันธาน (fa-)",
   "morphology.prefix.w_P":    "บุพบท (wa-)",
   "morphology.prefix.k_P":    "บุพบท (ka-)",

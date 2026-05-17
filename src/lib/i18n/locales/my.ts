@@ -551,6 +551,7 @@ export const my: Record<string, string> = {
   "morphology.prefix.l_IMPV": "အမိန့် lam (li-)",
   "morphology.prefix.l_PRP":  "ရည်ရွယ်ချက် lam (li-)",
   "morphology.prefix.w_CONJ": "ပေါင်းကြောင်း (wa-)",
+  "morphology.prefix.w_REM": "ဆက်သား ကျကပ် (wa-)",
   "morphology.prefix.f_CONJ": "ပေါင်းကြောင်း (fa-)",
   "morphology.prefix.w_P":    "ဝိဘတ် (wa-)",
   "morphology.prefix.k_P":    "ဝိဘတ် (ka-)",

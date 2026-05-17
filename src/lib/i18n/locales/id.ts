@@ -545,6 +545,7 @@ export const id: Record<string, string> = {
     'morphology.prefix.l_IMPV': 'Lam perintah (li-)',
     'morphology.prefix.l_PRP':  'Lam tujuan (li-)',
     'morphology.prefix.w_CONJ': 'Konjungsi (wa-)',
+    'morphology.prefix.w_REM': 'Partikel resumsi (wa-)',
     'morphology.prefix.f_CONJ': 'Konjungsi (fa-)',
     'morphology.prefix.w_P':    'Kata depan (wa-)',
     'morphology.prefix.k_P':    'Kata depan (ka-)',

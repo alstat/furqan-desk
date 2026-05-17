@@ -317,18 +317,13 @@
                            hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25
                            disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <Icon
-                        icon="solar:magic-stick-3-bold-duotone"
-                        width="11"
-                    />
+                    <Icon icon="icon-park-twotone:format-brush" width="11" />
                     {formatting ? "Formatting…" : "Format"}
                 </button>
                 <!-- Line wrap toggle -->
                 <button
                     onclick={() => (lineWrap = !lineWrap)}
-                    title={lineWrap
-                        ? "Disable line wrap"
-                        : "Enable line wrap"}
+                    title={lineWrap ? "Disable line wrap" : "Enable line wrap"}
                     class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                        {lineWrap
                         ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'

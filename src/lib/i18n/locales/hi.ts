@@ -554,6 +554,7 @@ export const hi: Record<string, string> = {
   "morphology.prefix.l_IMPV": "आज्ञा lam (li-)",
   "morphology.prefix.l_PRP":  "उद्देश्य lam (li-)",
   "morphology.prefix.w_CONJ": "संयोजन (wa-)",
+  "morphology.prefix.w_REM": "पुनरारंभ कण (wa-)",
   "morphology.prefix.f_CONJ": "संयोजन (fa-)",
   "morphology.prefix.w_P":    "परसर्ग (wa-)",
   "morphology.prefix.k_P":    "परसर्ग (ka-)",

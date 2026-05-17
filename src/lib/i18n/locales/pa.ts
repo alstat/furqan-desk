@@ -456,6 +456,7 @@ export const pa: Record<string, string> = {
   "morphology.prefix.l_IMPV": "ਲਾਜ਼ਮੀ ਲੈਮ (ਲੀ-)",
   "morphology.prefix.l_PRP": "ਮਕਸਦ lam (li-)",
   "morphology.prefix.w_CONJ": "ਸੰਯੋਜਕ (wa-)",
+  "morphology.prefix.w_REM": "ਮੁੜ-ਚਾਲੂ ਕਣ (wa-)",
   "morphology.prefix.f_CONJ": "ਸੰਯੋਜਕ (fa-)",
   "morphology.prefix.w_P": "ਅਨੁਸਾਰ (wa-)",
   "morphology.prefix.k_P": "ਅਨੁਸਾਰ (ka-)",

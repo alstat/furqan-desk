@@ -30,6 +30,7 @@
 		DRAGOVER_COMMAND,
 		DRAGSTART_COMMAND,
 		DROP_COMMAND,
+		PASTE_COMMAND,
 		type LexicalCommand,
 		type LexicalEditor
 	} from 'lexical';
@@ -120,9 +121,113 @@ if (payload.captionText) {
 					return onDrop(event, editor);
 				},
 				COMMAND_PRIORITY_HIGH
+			),
+			editor.registerCommand<ClipboardEvent>(
+				PASTE_COMMAND,
+				(event) => {
+					if (!(event instanceof ClipboardEvent)) {
+						return false;
+					}
+					return handleImagePaste(event);
+				},
+				COMMAND_PRIORITY_LOW
 			)
 		);
 	});
+
+	// Collects image blobs the webview exposed on the paste event. `items`
+	// covers raw bitmaps (e.g. screenshots); `files` covers image files
+	// copied from a file manager.
+	function getClipboardImageFiles(data: DataTransfer): File[] {
+		const files: File[] = [];
+		const items = data.items;
+		if (items) {
+			for (let i = 0; i < items.length; i++) {
+				const item = items[i];
+				if (item.kind === 'file' && item.type.startsWith('image/')) {
+					const file = item.getAsFile();
+					if (file) {
+						files.push(file);
+					}
+				}
+			}
+		}
+		if (files.length === 0 && data.files) {
+			for (let i = 0; i < data.files.length; i++) {
+				const file = data.files[i];
+				if (file.type.startsWith('image/')) {
+					files.push(file);
+				}
+			}
+		}
+		return files;
+	}
+
+	function insertImageFile(file: File): void {
+		const reader = new FileReader();
+		reader.onload = () => {
+			if (typeof reader.result === 'string') {
+				editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+					src: reader.result,
+					altText: file.name || 'Pasted image'
+				});
+			}
+		};
+		reader.readAsDataURL(file);
+	}
+
+	// Native fallback: when the webview doesn't surface the image through the
+	// paste event (notably Linux/WebKitGTK), read it straight from the OS
+	// clipboard via the Tauri clipboard-manager plugin. The plugin returns raw
+	// RGBA pixels, so paint them onto a canvas to obtain a PNG data URL.
+	async function insertImageFromOSClipboard(): Promise<boolean> {
+		try {
+			const { readImage } = await import('@tauri-apps/plugin-clipboard-manager');
+			const image = await readImage();
+			const { width, height } = await image.size();
+			const rgba = await image.rgba();
+			if (!width || !height || rgba.length === 0) {
+				return false;
+			}
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			const ctx = canvas.getContext('2d');
+			if (!ctx) {
+				return false;
+			}
+			ctx.putImageData(new ImageData(new Uint8ClampedArray(rgba), width, height), 0, 0);
+			editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+				src: canvas.toDataURL('image/png'),
+				altText: 'Pasted image'
+			});
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	function handleImagePaste(event: ClipboardEvent): boolean {
+		const data = event.clipboardData;
+		if (data) {
+			const files = getClipboardImageFiles(data);
+			if (files.length > 0) {
+				event.preventDefault();
+				files.forEach(insertImageFile);
+				return true;
+			}
+			// Plain text / rich text present: a normal paste — defer to the
+			// other paste handlers.
+			if (data.getData('text/plain') !== '' || data.getData('text/html') !== '') {
+				return false;
+			}
+		}
+		// The webview gave us nothing usable; an image may still sit on the OS
+		// clipboard. Claim the event and resolve it natively.
+		event.preventDefault();
+		insertImageFromOSClipboard();
+		return true;
+	}
 
 	function onDragStart(event: DragEvent): boolean {
 		const node = getImageNodeInSelection();
