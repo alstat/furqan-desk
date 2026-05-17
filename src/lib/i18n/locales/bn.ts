@@ -556,6 +556,7 @@ export const bn: Record<string, string> = {
   "morphology.prefix.l_IMPV": "আদেশ lam (li-)",
   "morphology.prefix.l_PRP":  "উদ্দেশ্য lam (li-)",
   "morphology.prefix.w_CONJ": "সংযোজক (wa-)",
+  "morphology.prefix.w_REM": "পুনরারম্ভ অব্যয় (wa-)",
   "morphology.prefix.f_CONJ": "সংযোজক (fa-)",
   "morphology.prefix.w_P":    "পদান্বয়ী (wa-)",
   "morphology.prefix.k_P":    "পদান্বয়ী (ka-)",

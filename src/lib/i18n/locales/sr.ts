@@ -456,6 +456,7 @@ export const sr: Record<string, string> = {
   "morphology.prefix.l_IMPV": "Императив лам (ли-)",
   "morphology.prefix.l_PRP": "сврха лам (ли-)",
   "morphology.prefix.w_CONJ": "везник (ва-)",
+  "morphology.prefix.w_REM": "Честица наставка (ва-)",
   "morphology.prefix.f_CONJ": "везник (фа-)",
   "morphology.prefix.w_P": "Предлог (ва-)",
   "morphology.prefix.k_P": "Предлог (ка-)",

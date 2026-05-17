@@ -551,6 +551,7 @@ export const tk: Record<string, string> = {
   "morphology.prefix.l_IMPV": "Buýruk lam (li-)",
   "morphology.prefix.l_PRP":  "Maksat lam (li-)",
   "morphology.prefix.w_CONJ": "Baglanyşyk (wa-)",
+  "morphology.prefix.w_REM": "Dowam bölejigi (wa-)",
   "morphology.prefix.f_CONJ": "Baglanyşyk (fa-)",
   "morphology.prefix.w_P":    "Goşulma (wa-)",
   "morphology.prefix.k_P":    "Goşulma (ka-)",

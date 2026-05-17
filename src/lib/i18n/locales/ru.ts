@@ -545,6 +545,7 @@ export const ru: Record<string, string> = {
     'morphology.prefix.l_IMPV': 'Повелительный лам (ли-)',
     'morphology.prefix.l_PRP':  'Целевой лам (ли-)',
     'morphology.prefix.w_CONJ': 'Союз (ва-)',
+    'morphology.prefix.w_REM': 'Возобновительная частица (ва-)',
     'morphology.prefix.f_CONJ': 'Союз (фа-)',
     'morphology.prefix.w_P':    'Предлог (ва-)',
     'morphology.prefix.k_P':    'Предлог (ка-)',

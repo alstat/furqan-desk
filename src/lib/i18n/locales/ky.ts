@@ -551,6 +551,7 @@ export const ky: Record<string, string> = {
   "morphology.prefix.l_IMPV": "Буйрук лам (li-)",
   "morphology.prefix.l_PRP":  "Максат лам (li-)",
   "morphology.prefix.w_CONJ": "Байланыштырма (wa-)",
+  "morphology.prefix.w_REM": "Улантуу бөлүкчөсү (wa-)",
   "morphology.prefix.f_CONJ": "Байланыштырма (fa-)",
   "morphology.prefix.w_P":    "Мүнөзгөч (wa-)",
   "morphology.prefix.k_P":    "Мүнөзгөч (ka-)",

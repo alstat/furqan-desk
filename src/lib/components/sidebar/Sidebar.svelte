@@ -276,7 +276,7 @@
             <div
                 class="{$zenMode
                     ? 'opacity-0 hover:opacity-100 transition-opacity duration-200'
-                    : ''} absolute -top-4.5 left-1/6 z-50 pointer-events-none"
+                    : ''} absolute -top-4.5 left-1/12 z-50 pointer-events-none"
             >
                 <span
                     class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold

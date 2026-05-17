@@ -456,6 +456,7 @@ export const bs: Record<string, string> = {
   "morphology.prefix.l_IMPV": "Imperativ lam (li-)",
   "morphology.prefix.l_PRP": "Namjena lam (li-)",
   "morphology.prefix.w_CONJ": "Veznik (wa-)",
+  "morphology.prefix.w_REM": "Čestica nastavka (wa-)",
   "morphology.prefix.f_CONJ": "Veznik (fa-)",
   "morphology.prefix.w_P": "Prijedlog (wa-)",
   "morphology.prefix.k_P": "Predlog (ka-)",

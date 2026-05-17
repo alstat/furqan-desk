@@ -551,6 +551,7 @@ export const uz: Record<string, string> = {
   "morphology.prefix.l_IMPV": "Buyruq lam (li-)",
   "morphology.prefix.l_PRP":  "Maqsad lam (li-)",
   "morphology.prefix.w_CONJ": "Bog'lovchi (wa-)",
+  "morphology.prefix.w_REM": "Davom ettirish yuklamasi (wa-)",
   "morphology.prefix.f_CONJ": "Bog'lovchi (fa-)",
   "morphology.prefix.w_P":    "Ko'makchi (wa-)",
   "morphology.prefix.k_P":    "Ko'makchi (ka-)",

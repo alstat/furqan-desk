@@ -474,7 +474,7 @@
     <div
         data-ai-ayah-prompt
         role="presentation"
-        class="fixed z-9999 flex w-80 items-center gap-1.5 rounded-2xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+        class="fixed z-9999 flex w-80 items-center gap-1.5 rounded-3xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
         style="left:{aiPromptX}px; top:{aiPromptY}px; transform: translateX(-50%);"
         onclick={(e) => e.stopPropagation()}
         onkeydown={(e) => { if (e.key === 'Escape') closeAiPrompt(); }}
@@ -483,7 +483,7 @@
             bind:this={aiPromptInput}
             bind:value={aiPromptText}
             placeholder={$t('morphology.ai_prompt_placeholder')}
-            class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+            class="min-w-0 flex-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
             onkeydown={(e) => {
                 if (e.key === 'Enter') { e.preventDefault(); submitAiPrompt(); }
                 else if (e.key === 'Escape') closeAiPrompt();

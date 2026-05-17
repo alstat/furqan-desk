@@ -545,6 +545,7 @@ export const ko: Record<string, string> = {
     'morphology.prefix.l_IMPV': '명령 lam (li-)',
     'morphology.prefix.l_PRP':  '목적 lam (li-)',
     'morphology.prefix.w_CONJ': '접속사 (wa-)',
+    'morphology.prefix.w_REM': '재개 불변화사 (wa-)',
     'morphology.prefix.f_CONJ': '접속사 (fa-)',
     'morphology.prefix.w_P':    '전치사 (wa-)',
     'morphology.prefix.k_P':    '전치사 (ka-)',

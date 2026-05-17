@@ -555,6 +555,7 @@ export const ja: Record<string, string> = {
   "morphology.prefix.l_IMPV": "命令 lam (li-)",
   "morphology.prefix.l_PRP":  "目的 lam (li-)",
   "morphology.prefix.w_CONJ": "接続詞 (wa-)",
+  "morphology.prefix.w_REM": "再開小辞 (wa-)",
   "morphology.prefix.f_CONJ": "接続詞 (fa-)",
   "morphology.prefix.w_P":    "前置詞 (wa-)",
   "morphology.prefix.k_P":    "前置詞 (ka-)",

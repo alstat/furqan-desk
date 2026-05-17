@@ -456,6 +456,7 @@ export const ku: Record<string, string> = {
   "morphology.prefix.l_IMPV": "پێویستی لام (li-)",
   "morphology.prefix.l_PRP": "ئامانج لام (li-)",
   "morphology.prefix.w_CONJ": "پەیوەندی (wa-)",
+  "morphology.prefix.w_REM": "گەردیلەی دەستپێکردنەوە (wa-)",
   "morphology.prefix.f_CONJ": "پەیوەندی (fa-)",
   "morphology.prefix.w_P": "پێشگر (wa-)",
   "morphology.prefix.k_P": "پێشگر (ka-)",

@@ -559,6 +559,7 @@ export const tl: Record<string, string> = {
   "morphology.prefix.l_IMPV": "Utos na lam (li-)",
   "morphology.prefix.l_PRP":  "Layunin na lam (li-)",
   "morphology.prefix.w_CONJ": "Pangatnig (wa-)",
+  "morphology.prefix.w_REM": "Katinig ng pagpapatuloy (wa-)",
   "morphology.prefix.f_CONJ": "Pangatnig (fa-)",
   "morphology.prefix.w_P":    "Pang-ukol (wa-)",
   "morphology.prefix.k_P":    "Pang-ukol (ka-)",

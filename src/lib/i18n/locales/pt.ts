@@ -557,6 +557,7 @@ export const pt: Record<string, string> = {
   "morphology.prefix.l_IMPV": "Lam imperativo (li-)",
   "morphology.prefix.l_PRP":  "Lam de propósito (li-)",
   "morphology.prefix.w_CONJ": "Conjunção (wa-)",
+  "morphology.prefix.w_REM": "Partícula de retomada (wa-)",
   "morphology.prefix.f_CONJ": "Conjunção (fa-)",
   "morphology.prefix.w_P":    "Preposição (wa-)",
   "morphology.prefix.k_P":    "Preposição (ka-)",

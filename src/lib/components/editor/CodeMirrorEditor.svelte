@@ -687,6 +687,70 @@
         link: "#1a9bb8", meta: "#1a9bb8", punctuation: "#4c4b3f",
     };
 
+    const solarizedDark: ThemePalette = {
+        dark: true,
+        bg: "#002b36", fg: "#839496", caret: "#839496", selection: "#073642",
+        activeLine: "#073642", gutterBg: "#002b36", gutterFg: "#586e75",
+        gutterBorder: "#073642", activeGutterBg: "#073642",
+        tooltipBg: "#073642", tooltipBorder: "#586e75",
+        tooltipShadow: "0 4px 16px rgba(0,0,0,0.4)",
+        selMatchBg: "#cb4b1666", matchBg: "#073642", matchOutline: "#2aa198",
+        accent: "#b58900",
+        comment: "#586e75", keyword: "#859900", operator: "#cb4b16",
+        string: "#2aa198", special: "#6c71c4", number: "#d33682",
+        type: "#b58900", func: "#268bd2", variable: "#839496",
+        atom: "#d33682", attr: "#859900", heading: "#cb4b16",
+        link: "#268bd2", meta: "#6c71c4", punctuation: "#93a1a1",
+    };
+
+    const solarizedLight: ThemePalette = {
+        dark: false,
+        bg: "#fdf6e3", fg: "#657b83", caret: "#657b83", selection: "#eee8d5",
+        activeLine: "#eee8d5", gutterBg: "#fdf6e3", gutterFg: "#93a1a1",
+        gutterBorder: "#eee8d5", activeGutterBg: "#eee8d5",
+        tooltipBg: "#fdf6e3", tooltipBorder: "#93a1a1",
+        tooltipShadow: "0 4px 16px rgba(0,0,0,0.12)",
+        selMatchBg: "#cb4b1640", matchBg: "#eee8d5", matchOutline: "#2aa198",
+        accent: "#b58900",
+        comment: "#93a1a1", keyword: "#859900", operator: "#cb4b16",
+        string: "#2aa198", special: "#6c71c4", number: "#d33682",
+        type: "#b58900", func: "#268bd2", variable: "#657b83",
+        atom: "#d33682", attr: "#859900", heading: "#cb4b16",
+        link: "#268bd2", meta: "#6c71c4", punctuation: "#586e75",
+    };
+
+    const tokyoNightDark: ThemePalette = {
+        dark: true,
+        bg: "#1a1b26", fg: "#c0caf5", caret: "#c0caf5", selection: "#283457",
+        activeLine: "#1e202e", gutterBg: "#1a1b26", gutterFg: "#3b4261",
+        gutterBorder: "#1e202e", activeGutterBg: "#1e202e",
+        tooltipBg: "#1f2335", tooltipBorder: "#3b4261",
+        tooltipShadow: "0 4px 16px rgba(0,0,0,0.5)",
+        selMatchBg: "#ff9e6466", matchBg: "#283457", matchOutline: "#2ac3de",
+        accent: "#7aa2f7",
+        comment: "#565f89", keyword: "#bb9af7", operator: "#89ddff",
+        string: "#9ece6a", special: "#e0af68", number: "#ff9e64",
+        type: "#2ac3de", func: "#7aa2f7", variable: "#c0caf5",
+        atom: "#ff9e64", attr: "#73daca", heading: "#bb9af7",
+        link: "#7aa2f7", meta: "#7dcfff", punctuation: "#9aa5ce",
+    };
+
+    const tokyoNightLight: ThemePalette = {
+        dark: false,
+        bg: "#e1e2e7", fg: "#3760bf", caret: "#3760bf", selection: "#b6bfe2",
+        activeLine: "#d7d9e3", gutterBg: "#e1e2e7", gutterFg: "#a1a6c5",
+        gutterBorder: "#d7d9e3", activeGutterBg: "#d7d9e3",
+        tooltipBg: "#e9e9ed", tooltipBorder: "#a1a6c5",
+        tooltipShadow: "0 4px 16px rgba(0,0,0,0.12)",
+        selMatchBg: "#b15c0040", matchBg: "#c4c8da", matchOutline: "#007197",
+        accent: "#2e7de9",
+        comment: "#848cb5", keyword: "#9854f1", operator: "#006a83",
+        string: "#587539", special: "#b15c00", number: "#b15c00",
+        type: "#007197", func: "#2e7de9", variable: "#3760bf",
+        atom: "#b15c00", attr: "#7847bd", heading: "#9854f1",
+        link: "#2e7de9", meta: "#007197", punctuation: "#3760bf",
+    };
+
     // ── Typst StreamParser ────────────────────────────────────────────────────
 
     type TypstState = {
@@ -699,6 +763,10 @@
         name: "typst",
         startState: () => ({ blockComment: 0, inString: false, inMath: false }),
         copyState: (s) => ({ ...s }),
+        // Custom token style for function calls (`#align(`, `text(`).
+        tokenTable: {
+            typstFunction: tags.function(tags.variableName),
+        },
 
         token(stream, state) {
             // Inside a block comment
@@ -808,7 +876,12 @@
                     "auto",
                     "context",
                 ];
-                return keywords.includes(word) ? "keyword" : "variableName";
+                if (keywords.includes(word)) return "keyword";
+                // `#align(…)`, `#emph[…]` — a hash name applied to args or a
+                // content block is a function call.
+                const next = stream.peek();
+                if (next === "(" || next === "[") return "typstFunction";
+                return "variableName";
             }
 
             // Numbers with optional units
@@ -818,6 +891,15 @@
                 )
             ) {
                 return "number";
+            }
+
+            // Bare identifiers in code position. Typst has no mode tracking
+            // here, so only function calls are styled; named arguments like
+            // `size:` stay at the editor body color.
+            if (stream.match(/^[a-zA-Z_][a-zA-Z0-9_-]*/)) {
+                const next = stream.peek();
+                if (next === "(") return "typstFunction";
+                return null;
             }
 
             stream.next();
@@ -838,6 +920,10 @@
         "gruvbox-dark": makeTheme(gruvboxDark),
         "monokai-light": makeTheme(monokaiLight),
         "monokai-dark": makeTheme(monokaiDark),
+        "solarized-light": makeTheme(solarizedLight),
+        "solarized-dark": makeTheme(solarizedDark),
+        "tokyo-night-light": makeTheme(tokyoNightLight),
+        "tokyo-night-dark": makeTheme(tokyoNightDark),
     };
 
     function getThemeExt(theme: string): Extension[] {
@@ -851,20 +937,42 @@
     //    convention, a type or constructor → `type` (→ typeName).
     //  • A lowercase identifier immediately followed by `(` is a function
     //    call → custom `functionCall` token (→ function(variableName)).
+    //  • A Julia symbol token like `:code` is re-tagged as `atom`. The legacy
+    //    mode only emits this when `:` starts a new expression, so ranges like
+    //    `1:end` remain plain operators/keywords rather than symbols.
     // `NaN`/`Inf` are uppercase value literals and are kept as-is.
     const NON_TYPE_BUILTINS = new Set(["NaN", "Inf"]);
     const juliaTypeAware: StreamParser<unknown> = {
         ...julia,
         tokenTable: {
             functionCall: tags.function(tags.variableName),
+            juliaSymbol: tags.atom,
         },
         token(stream: StringStream, state: unknown): string | null {
+            // The legacy mode's annotation tokenizer emits a separate
+            // `builtin` token per `{...}` nesting level, so a parametric
+            // type like `::Vector{String}` arrives as several fragments.
+            // Capture the nesting depth *before* tokenizing to recognise
+            // those continuation fragments.
+            const prevNested =
+                (state as { nestedParameters?: number }).nestedParameters ?? 0;
             const style = julia.token ? julia.token(stream, state) : null;
             if (style === "variable" || style === "builtin") {
                 // Strip a leading `::` so type annotations (`s::Ar`) are
                 // detected from the type name itself.
                 let probe = stream.current();
-                if (probe.startsWith("::")) probe = probe.slice(2);
+                if (style === "builtin" && probe.startsWith(":")) {
+                    return "juliaSymbol";
+                }
+                const isAnnotation = probe.startsWith("::");
+                if (isAnnotation) probe = probe.slice(2);
+                // Every fragment of a type annotation — the leading
+                // `::Name`, nested `{`, inner type names, commas and the
+                // closing `}` — is re-tagged `type` so the whole
+                // annotation is highlighted uniformly.
+                if (style === "builtin" && (isAnnotation || prevNested > 0)) {
+                    return "type";
+                }
                 if (/^[A-Z]/.test(probe) && !NON_TYPE_BUILTINS.has(probe)) {
                     return "type";
                 }

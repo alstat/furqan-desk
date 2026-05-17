@@ -456,6 +456,7 @@ export const ta: Record<string, string> = {
   "morphology.prefix.l_IMPV": "நிபந்தனை லாம் (li-)",
   "morphology.prefix.l_PRP": "நோக்கம் லாம் (li-)",
   "morphology.prefix.w_CONJ": "இணைப்பு (wa-)",
+  "morphology.prefix.w_REM": "மீண்டும் தொடங்கும் துகள் (wa-)",
   "morphology.prefix.f_CONJ": "இணைப்பு (fa-)",
   "morphology.prefix.w_P": "முன்மொழிவு (wa-)",
   "morphology.prefix.k_P": "முன்மொழிவு (ka-)",

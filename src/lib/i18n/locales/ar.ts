@@ -545,6 +545,7 @@ export const ar: Record<string, string> = {
     'morphology.prefix.l_IMPV': 'لام الأمر (لِ)',
     'morphology.prefix.l_PRP':  'لام التعليل (لِ)',
     'morphology.prefix.w_CONJ': 'واو العطف (وَ)',
+    'morphology.prefix.w_REM': 'واو الاستئناف (وَ)',
     'morphology.prefix.f_CONJ': 'فاء العطف (فَ)',
     'morphology.prefix.w_P':    'واو القسم (وَ)',
     'morphology.prefix.k_P':    'حرف الجر (كَ)',

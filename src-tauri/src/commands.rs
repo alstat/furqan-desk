@@ -1613,6 +1613,19 @@ pub fn compile_typst_pdf(source: String) -> Result<Vec<u8>, String> {
         .map_err(|e| format!("{e:?}"))
 }
 
+/// Format Typst source with the `typstyle` pretty printer.
+/// `indent` is the spaces per indentation level. Returns the formatted
+/// document, or an error message if the source has syntax errors.
+#[tauri::command]
+pub fn typst_format(source: String, indent: u32) -> Result<String, String> {
+    use typstyle_core::{Config, Typstyle};
+    let config = Config::default().with_tab_spaces(indent as usize);
+    Typstyle::new(config)
+        .format_text(source)
+        .render()
+        .map_err(|e| e.to_string())
+}
+
 // ── Manuscript commands ───────────────────────────────────────────────────────
 
 /// Fetch full metadata for a single manuscript (date, material, script, etc.)

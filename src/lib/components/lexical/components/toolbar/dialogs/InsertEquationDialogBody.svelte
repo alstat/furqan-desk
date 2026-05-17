@@ -5,6 +5,7 @@
     import TextArea from "$lexical/components/generic/input/TextArea.svelte";
     import { selectBtnStyle } from "$lib/data/toolbar/toolbar";
     import katex from "katex";
+    import "katex/dist/katex.min.css";
 
     const activeEditor = getActiveEditor();
     const dispatch = createEventDispatcher();
@@ -23,7 +24,7 @@
             katex.render(equation, element, {
                 throwOnError: false,
                 displayMode: mathStyle == "inline" ? false : true,
-                output: "mathml",
+                output: "htmlAndMathml",
             });
             preview = element.innerHTML;
             error = "";

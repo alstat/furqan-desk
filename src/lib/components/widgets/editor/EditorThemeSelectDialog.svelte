@@ -74,7 +74,7 @@
     >
         <div
             transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-            class="flex w-full max-w-sm flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+            class="flex w-full max-w-sm max-h-[85vh] flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         >
             <!-- Header -->
             <div
@@ -148,7 +148,9 @@
             </div>
 
             <!-- Theme list -->
-            <div class="px-5 py-4 space-y-2 bg-brand-sand-50 dark:bg-[#232634]">
+            <div
+                class="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-2 bg-brand-sand-50 dark:bg-[#232634]"
+            >
                 {#each ALL_EDITOR_THEMES as theme (theme.id)}
                     {@const slotIdx = slotIndexOf(theme.id)}
                     {@const isOtherSlot =

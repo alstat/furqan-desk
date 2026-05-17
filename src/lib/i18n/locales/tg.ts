@@ -551,6 +551,7 @@ export const tg: Record<string, string> = {
   "morphology.prefix.l_IMPV": "Лами амрӣ (li-)",
   "morphology.prefix.l_PRP":  "Лами мақсадӣ (li-)",
   "morphology.prefix.w_CONJ": "Пайвандак (wa-)",
+  "morphology.prefix.w_REM": "Зарраи идома (wa-)",
   "morphology.prefix.f_CONJ": "Пайвандак (fa-)",
   "morphology.prefix.w_P":    "Пешоянд (wa-)",
   "morphology.prefix.k_P":    "Пешоянд (ka-)",
