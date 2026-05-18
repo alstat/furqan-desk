@@ -59,6 +59,8 @@
         gitDiffGutter,
         setGitBaseline,
     } from "$lib/codemirror/gitDiffGutter";
+    import { latexInput } from "$lib/codemirror/latexInput";
+    import { wrapSelection } from "$lib/codemirror/wrapSelection";
     import { readTextFile } from "@tauri-apps/plugin-fs";
     import { openOrFocusTab } from "$lib/stores/tabs.store";
     import { get } from "svelte/store";
@@ -1277,6 +1279,10 @@
                 wrapComp.of(lineWrap ? EditorView.lineWrapping : []),
                 scrollPastEnd(),
                 search({ top: true }),
+                // Typing a quote over a selection wraps it instead of replacing.
+                wrapSelection,
+                // Julia-style `\latex`+Tab → Unicode (e.g. \sigma → σ).
+                ...(language === "julia" ? [latexInput] : []),
                 keymap.of([
                     ...extraKeymap,
                     {
