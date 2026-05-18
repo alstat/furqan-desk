@@ -246,6 +246,9 @@ async function blockForNode(
         case "code": {
             return codeBlockParagraphs(node);
         }
+        case "julia-cell": {
+            return await juliaCellBlocks(node);
+        }
         case "equation": {
             const eq = (node.equation as string) ?? "";
             const inline = (node.inline as boolean) ?? false;
@@ -493,6 +496,117 @@ async function imageParagraph(node: SerializedNode): Promise<Paragraph> {
     return new Paragraph({
         children: [new TextRun({ text: `[Image: ${altText || "missing"}]`, italics: true })],
     });
+}
+
+// Rasterize an image data URL (PNG or SVG) to PNG bytes and its pixel size,
+// so Julia plots export as a uniformly DOCX-supported image regardless of
+// the format the Julia display hook produced.
+function rasterizeToPng(
+    url: string,
+): Promise<{ bytes: Uint8Array; width: number; height: number } | null> {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const width = img.naturalWidth || DOCX_IMAGE_MAX_WIDTH;
+            const height = img.naturalHeight || Math.round(width * 0.75);
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                resolve(null);
+                return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            const base64 = canvas.toDataURL("image/png").split(",")[1] ?? "";
+            resolve({ bytes: base64ToBytes(base64), width, height });
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+    });
+}
+
+async function juliaPlotParagraph(plot: {
+    format: string;
+    data: string;
+}): Promise<Paragraph | null> {
+    const mime = plot.format === "svg" ? "image/svg+xml" : "image/png";
+    const raster = await rasterizeToPng(`data:${mime};base64,${plot.data}`);
+    if (!raster) return null;
+
+    let { width, height } = raster;
+    if (width > DOCX_IMAGE_MAX_WIDTH) {
+        height = Math.round(height * (DOCX_IMAGE_MAX_WIDTH / width));
+        width = DOCX_IMAGE_MAX_WIDTH;
+    }
+    try {
+        return new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+                new ImageRun({
+                    data: raster.bytes,
+                    transformation: { width, height },
+                    type: "png",
+                } as ConstructorParameters<typeof ImageRun>[0]),
+            ],
+        });
+    } catch (err) {
+        console.warn("[lexicalToDocx] Julia plot failed:", err);
+        return null;
+    }
+}
+
+// Export a Julia code cell honouring its on-screen display mode: the cell
+// contributes its source, its output, or both — matching what the editor
+// shows so the document mirrors the user's chosen view.
+async function juliaCellBlocks(node: SerializedNode): Promise<BlockChild[]> {
+    const displayMode = (node.displayMode as string) ?? "both";
+    const code = (node.code as string) ?? "";
+    const output = (node.output as string) ?? "";
+    const hasError = (node.hasError as boolean) ?? false;
+    const plots = Array.isArray(node.plots)
+        ? (node.plots as { format: string; data: string }[])
+        : [];
+
+    const out: BlockChild[] = [];
+
+    if (displayMode !== "output") {
+        out.push(
+            ...codeBlockParagraphs({ type: "code", code, language: "julia" }),
+        );
+    }
+
+    if (displayMode !== "code") {
+        if (output) {
+            const outColor = hasError ? "C0392B" : "5C6166";
+            for (const line of output.split("\n")) {
+                out.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: line,
+                                font: "Courier New",
+                                size: 20,
+                                color: outColor,
+                            }),
+                        ],
+                        shading: {
+                            type: ShadingType.CLEAR,
+                            color: "auto",
+                            fill: "F4F4F4",
+                        },
+                        spacing: { before: 0, after: 0 },
+                    }),
+                );
+            }
+        }
+        for (const plot of plots) {
+            const para = await juliaPlotParagraph(plot);
+            if (para) out.push(para);
+        }
+    }
+
+    return out;
 }
 
 const PX_TO_DXA = 15; // 1 px (96 dpi) ≈ 0.75 pt = 15 twips

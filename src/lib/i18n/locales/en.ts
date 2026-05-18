@@ -669,6 +669,17 @@ export const en: Record<string, string> = {
   "slash.quran_label": "Quran Verses",
   "slash.quran_desc":
     "Insert ayahs — e.g. /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
+  "slash.julia_label": "Julia Cell",
+  "slash.julia_desc": "Insert a runnable Julia code cell",
+  "julia_cell.title": "Julia",
+  "julia_cell.run": "Run",
+  "julia_cell.running": "Running…",
+  "julia_cell.placeholder": "Enter Julia code…",
+  "julia_cell.no_output": "No output",
+  "julia_cell.plot_alt": "Julia plot",
+  "julia_cell.mode_both": "Show code and output",
+  "julia_cell.mode_code": "Show code only",
+  "julia_cell.mode_output": "Show output only",
   // Account dialog
   // Authentication
   "auth.sign_in": "Sign In",
