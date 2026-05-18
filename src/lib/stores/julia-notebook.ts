@@ -9,8 +9,16 @@
  */
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { get } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { juliaIsRunning } from './julia-terminal.store';
+
+/**
+ * Shared display preferences for every Julia code cell. Adjusting the font
+ * size or line height on one cell updates all cells, since each cell reads
+ * from these stores rather than keeping its own local state.
+ */
+export const juliaCellFontSize = writable(12);
+export const juliaCellLineHeight = writable(1.4);
 
 export interface JuliaCellPlot {
     format: 'png' | 'svg';
