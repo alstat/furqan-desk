@@ -5,6 +5,8 @@
     import EquationPlugin from "$lexical/core/plugins/Equation/EquationPlugin.svelte";
     import { QuranBlockNode } from "$lexical/core/plugins/Quran/QuranBlockNode";
     import QuranBlockPlugin from "$lexical/core/plugins/Quran/QuranBlockPlugin.svelte";
+    import { JuliaCellNode } from "$lexical/core/plugins/JuliaCell/JuliaCellNode";
+    import JuliaCellPlugin from "$lexical/core/plugins/JuliaCell/JuliaCellPlugin.svelte";
     import AiSelectionPlugin from "$lexical/core/plugins/AiSelectionPlugin.svelte";
     // import {
     // 	Composer,
@@ -82,6 +84,7 @@
             ImageNode,
             EquationNode,
             QuranBlockNode,
+            JuliaCellNode,
             CodeNode,
             TableNode,
             TableRowNode,
@@ -131,6 +134,7 @@
             <MarkdownPastePlugin transformers={ALL_TRANSFORMERS} />
             <SlashCommandPlugin />
             <QuranBlockPlugin />
+            <JuliaCellPlugin />
             <EditorStorePlugin />
         </div>
     </div>

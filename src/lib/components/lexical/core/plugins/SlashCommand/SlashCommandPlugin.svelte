@@ -38,6 +38,7 @@
         $createQuranBlockNode as createQuranBlockNode,
         type QuranVerse,
     } from "../Quran/QuranBlockNode";
+    import { INSERT_JULIA_CELL_COMMAND } from "../JuliaCell/JuliaCellPlugin.svelte";
 
     const editor = getEditor();
 
@@ -84,6 +85,12 @@
             label: $t("slash.quran_label"),
             description: $t("slash.quran_desc"),
             icon: "solar:book-bold-duotone",
+        },
+        {
+            id: "julia",
+            label: $t("slash.julia_label"),
+            description: $t("slash.julia_desc"),
+            icon: "tabler:brand-julia",
         },
     ]);
 
@@ -232,6 +239,8 @@
 
         if (cmdId === "checklist") {
             editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined);
+        } else if (cmdId === "julia") {
+            editor.dispatchCommand(INSERT_JULIA_CELL_COMMAND, undefined);
         }
     }
 
