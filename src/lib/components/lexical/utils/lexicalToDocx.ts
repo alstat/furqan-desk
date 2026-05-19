@@ -246,6 +246,9 @@ async function blockForNode(
         case "code": {
             return codeBlockParagraphs(node);
         }
+        case "julia-cell": {
+            return await juliaCellBlocks(node);
+        }
         case "equation": {
             const eq = (node.equation as string) ?? "";
             const inline = (node.inline as boolean) ?? false;
@@ -395,13 +398,56 @@ async function inlineForNode(
     }
 }
 
+// Largest width (in px) an image is allowed to occupy in the exported
+// document, so oversized images are scaled down rather than overflowing.
+const DOCX_IMAGE_MAX_WIDTH = 480;
+
+// Decode the image bytes to obtain its intrinsic pixel dimensions, used to
+// preserve aspect ratio when the Lexical node carries no explicit size.
+async function decodeImageSize(
+    data: Uint8Array,
+    imageType: "png" | "jpg" | "gif" | "bmp",
+): Promise<{ width: number; height: number } | null> {
+    const mime = imageType === "jpg" ? "image/jpeg" : `image/${imageType}`;
+    const blob = new Blob([data as unknown as BlobPart], { type: mime });
+    try {
+        if (typeof createImageBitmap === "function") {
+            const bitmap = await createImageBitmap(blob);
+            const size = { width: bitmap.width, height: bitmap.height };
+            bitmap.close();
+            if (size.width > 0 && size.height > 0) return size;
+        }
+    } catch {
+        // fall through to the HTMLImageElement path
+    }
+    return new Promise((resolve) => {
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(
+                img.naturalWidth > 0 && img.naturalHeight > 0
+                    ? { width: img.naturalWidth, height: img.naturalHeight }
+                    : null,
+            );
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve(null);
+        };
+        img.src = url;
+    });
+}
+
 async function imageRunFromNode(node: SerializedNode): Promise<ParagraphChild | null> {
     const src = (node.src as string) ?? "";
     const altText = (node.altText as string) ?? "";
     const widthRaw = node.width;
     const heightRaw = node.height;
-    const width = typeof widthRaw === "number" && widthRaw > 0 ? widthRaw : 480;
-    const height = typeof heightRaw === "number" && heightRaw > 0 ? heightRaw : 360;
+    // `'inherit'` sizing is serialized as 0; treat anything non-positive as
+    // "unspecified" so we can derive it from the image's real aspect ratio.
+    let width = typeof widthRaw === "number" && widthRaw > 0 ? widthRaw : 0;
+    let height = typeof heightRaw === "number" && heightRaw > 0 ? heightRaw : 0;
 
     const data = await resolveImageSrc(src);
     if (!data) {
@@ -410,6 +456,22 @@ async function imageRunFromNode(node: SerializedNode): Promise<ParagraphChild | 
     }
 
     const imageType = detectImageType(src, data);
+
+    const natural = await decodeImageSize(data, imageType);
+    if (natural) {
+        const ratio = natural.height / natural.width;
+        if (width > 0 && height <= 0) {
+            height = Math.round(width * ratio);
+        } else if (height > 0 && width <= 0) {
+            width = Math.round(height / ratio);
+        } else if (width <= 0 && height <= 0) {
+            width = Math.min(natural.width, DOCX_IMAGE_MAX_WIDTH);
+            height = Math.round(width * ratio);
+        }
+    }
+    // Final guard for images that could not be decoded at all.
+    if (width <= 0) width = DOCX_IMAGE_MAX_WIDTH;
+    if (height <= 0) height = Math.round(width * 0.75);
     try {
         return new ImageRun({
             data,
@@ -434,6 +496,117 @@ async function imageParagraph(node: SerializedNode): Promise<Paragraph> {
     return new Paragraph({
         children: [new TextRun({ text: `[Image: ${altText || "missing"}]`, italics: true })],
     });
+}
+
+// Rasterize an image data URL (PNG or SVG) to PNG bytes and its pixel size,
+// so Julia plots export as a uniformly DOCX-supported image regardless of
+// the format the Julia display hook produced.
+function rasterizeToPng(
+    url: string,
+): Promise<{ bytes: Uint8Array; width: number; height: number } | null> {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const width = img.naturalWidth || DOCX_IMAGE_MAX_WIDTH;
+            const height = img.naturalHeight || Math.round(width * 0.75);
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                resolve(null);
+                return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            const base64 = canvas.toDataURL("image/png").split(",")[1] ?? "";
+            resolve({ bytes: base64ToBytes(base64), width, height });
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+    });
+}
+
+async function juliaPlotParagraph(plot: {
+    format: string;
+    data: string;
+}): Promise<Paragraph | null> {
+    const mime = plot.format === "svg" ? "image/svg+xml" : "image/png";
+    const raster = await rasterizeToPng(`data:${mime};base64,${plot.data}`);
+    if (!raster) return null;
+
+    let { width, height } = raster;
+    if (width > DOCX_IMAGE_MAX_WIDTH) {
+        height = Math.round(height * (DOCX_IMAGE_MAX_WIDTH / width));
+        width = DOCX_IMAGE_MAX_WIDTH;
+    }
+    try {
+        return new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+                new ImageRun({
+                    data: raster.bytes,
+                    transformation: { width, height },
+                    type: "png",
+                } as ConstructorParameters<typeof ImageRun>[0]),
+            ],
+        });
+    } catch (err) {
+        console.warn("[lexicalToDocx] Julia plot failed:", err);
+        return null;
+    }
+}
+
+// Export a Julia code cell honouring its on-screen display mode: the cell
+// contributes its source, its output, or both — matching what the editor
+// shows so the document mirrors the user's chosen view.
+async function juliaCellBlocks(node: SerializedNode): Promise<BlockChild[]> {
+    const displayMode = (node.displayMode as string) ?? "both";
+    const code = (node.code as string) ?? "";
+    const output = (node.output as string) ?? "";
+    const hasError = (node.hasError as boolean) ?? false;
+    const plots = Array.isArray(node.plots)
+        ? (node.plots as { format: string; data: string }[])
+        : [];
+
+    const out: BlockChild[] = [];
+
+    if (displayMode !== "output") {
+        out.push(
+            ...codeBlockParagraphs({ type: "code", code, language: "julia" }),
+        );
+    }
+
+    if (displayMode !== "code") {
+        if (output) {
+            const outColor = hasError ? "C0392B" : "5C6166";
+            for (const line of output.split("\n")) {
+                out.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: line,
+                                font: "Courier New",
+                                size: 20,
+                                color: outColor,
+                            }),
+                        ],
+                        shading: {
+                            type: ShadingType.CLEAR,
+                            color: "auto",
+                            fill: "F4F4F4",
+                        },
+                        spacing: { before: 0, after: 0 },
+                    }),
+                );
+            }
+        }
+        for (const plot of plots) {
+            const para = await juliaPlotParagraph(plot);
+            if (para) out.push(para);
+        }
+    }
+
+    return out;
 }
 
 const PX_TO_DXA = 15; // 1 px (96 dpi) ≈ 0.75 pt = 15 twips

@@ -339,7 +339,7 @@
                             onpointerdown={(e) => e.stopPropagation()}
                             role="menu"
                             tabindex="-1"
-                            class="absolute right-0 top-9 z-20 w-72 rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
+                            class="absolute right-0 top-9 z-20 w-72 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
                         >
                             <div class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2">
                                 <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]">
@@ -357,7 +357,7 @@
                                     <button onclick={decFontSize} disabled={$translationFontSize <= TRANSLATION_FONT_SIZE_BOUNDS.min} aria-label={$t("dialog.decrease_font_size")} class={adjustButtonClass}><svg width="10" height="2" viewBox="0 0 10 2" fill="none"><line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
                                     <span class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums">{$translationFontSize}px</span>
                                     <button onclick={incFontSize} disabled={$translationFontSize >= TRANSLATION_FONT_SIZE_BOUNDS.max} aria-label={$t("dialog.increase_font_size")} class={adjustButtonClass}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-                                    <button onclick={resetFontSize} aria-label={$t("dialog.reset_font_size")} title={$t("dialog.reset")} class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"><Icon icon="solar:restart-linear" width="0.9rem" /></button>
+                                    <button onclick={resetFontSize} aria-label={$t("dialog.reset_font_size")} title={$t("dialog.reset")} class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"><Icon icon="solar:restart-linear" width="0.9rem" /></button>
                                 </div>
                             </div>
 
@@ -367,7 +367,7 @@
                                     <button onclick={decLineSpacing} disabled={$translationLineSpacing <= TRANSLATION_LINE_SPACING_BOUNDS.min} aria-label={$t("dialog.decrease_line_spacing")} class={adjustButtonClass}><svg width="10" height="2" viewBox="0 0 10 2" fill="none"><line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
                                     <span class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums">{$translationLineSpacing.toFixed(1)}x</span>
                                     <button onclick={incLineSpacing} disabled={$translationLineSpacing >= TRANSLATION_LINE_SPACING_BOUNDS.max} aria-label={$t("dialog.increase_line_spacing")} class={adjustButtonClass}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-                                    <button onclick={resetLineSpacing} aria-label={$t("dialog.reset_line_spacing")} title={$t("dialog.reset")} class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"><Icon icon="solar:restart-linear" width="0.9rem" /></button>
+                                    <button onclick={resetLineSpacing} aria-label={$t("dialog.reset_line_spacing")} title={$t("dialog.reset")} class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"><Icon icon="solar:restart-linear" width="0.9rem" /></button>
                                 </div>
                             </div>
 

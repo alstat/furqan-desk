@@ -2,6 +2,8 @@
     import { onMount } from "svelte";
     import { fly } from "svelte/transition";
     import Icon from "@iconify/svelte";
+    // Registers the Julia slash-command icon offline (no Iconify API call).
+    import "$lib/icons/julia-cell-icons";
     import { icons } from "$lib/data/toolbar/toolbar.js";
     import { getEditor } from "$lexical/core/composerContext.js";
     import {
@@ -38,6 +40,7 @@
         $createQuranBlockNode as createQuranBlockNode,
         type QuranVerse,
     } from "../Quran/QuranBlockNode";
+    import { INSERT_JULIA_CELL_COMMAND } from "../JuliaCell/JuliaCellPlugin.svelte";
 
     const editor = getEditor();
 
@@ -84,6 +87,12 @@
             label: $t("slash.quran_label"),
             description: $t("slash.quran_desc"),
             icon: "solar:book-bold-duotone",
+        },
+        {
+            id: "julia",
+            label: $t("slash.julia_label"),
+            description: $t("slash.julia_desc"),
+            icon: "devicon-plain:julia",
         },
     ]);
 
@@ -232,6 +241,8 @@
 
         if (cmdId === "checklist") {
             editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined);
+        } else if (cmdId === "julia") {
+            editor.dispatchCommand(INSERT_JULIA_CELL_COMMAND, undefined);
         }
     }
 

@@ -6,13 +6,24 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         zenMode,
         customFontFamilies,
         typstPreviewDarkMode,
+        editorIndentSize,
     } from '$lib/stores/editor.store';
     import { openCustomFontDialog } from '$lib/stores/custom-font-dialog.store';
     import { restartTour } from '$lib/stores/tour.store';
     import { invoke } from '@tauri-apps/api/core';
     import { morphGlassEffect } from '$lib/stores/morphology.store';
-    import { onMount, onDestroy } from 'svelte';
-    import { listen } from '@tauri-apps/api/event';
+    import { onMount } from 'svelte';
+    import {
+        juliaInstalledVersion,
+        juliaLatestVersion,
+        juliaInstallState,
+        juliaInstallError,
+        juliaInstallMessage,
+        initJuliaInstallStore,
+        checkJuliaVersion,
+        updateJulia,
+        setJuliaVersion as setJuliaVersionStore,
+    } from '$lib/stores/julia-install.store';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { getVersion } from '@tauri-apps/api/app';
     import { locale, LOCALE_NAMES, t, type Locale } from '$lib/i18n';
@@ -51,12 +62,8 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     let appCheckState    = $state<'idle' | 'checking' | 'error'>('idle');
     let appCheckError    = $state('');
 
-    // ── Julia version state ───────────────────────────────────────────────────
-    let juliaInstalledVersion = $state<string | null>(null);
-    let juliaLatestVersion    = $state<string | null>(null);
-    let juliaCheckState       = $state<'idle' | 'checking' | 'updating' | 'error'>('idle');
-    let juliaCheckError       = $state('');
-    let juliaUpdateMessage    = $state('');
+    // ── Julia version state (lives in store so installs survive dialog close) ─
+    let juliaTargetVersion = $state('');
 
     function isNewer(latest: string, current: string): boolean {
         const parts = (v: string) => v.split('.').map(Number);
@@ -67,48 +74,16 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         return lc > cc;
     }
 
-    async function checkJuliaVersion() {
-        juliaCheckState = 'checking';
-        juliaCheckError = '';
-        juliaLatestVersion = null;
-        try {
-            juliaInstalledVersion = await invoke<string>('get_julia_version');
-            juliaLatestVersion = await invoke<string>('get_latest_julia_version');
-            juliaCheckState = 'idle';
-        } catch (e) {
-            juliaCheckError = String(e).slice(0, 180);
-            juliaCheckState = 'error';
-        }
+    async function setJuliaVersion() {
+        const target = juliaTargetVersion;
+        await setJuliaVersionStore(target);
+        if ($juliaInstallState === 'idle') juliaTargetVersion = '';
     }
-
-    async function updateJulia() {
-        juliaCheckState = 'updating';
-        juliaCheckError = '';
-        juliaUpdateMessage = '';
-        try {
-            await invoke('update_julia');
-            juliaInstalledVersion = await invoke<string>('get_julia_version');
-            juliaCheckState = 'idle';
-        } catch (e) {
-            juliaCheckError = String(e).slice(0, 180);
-            juliaCheckState = 'error';
-        }
-    }
-
-    let _unlisten: (() => void) | null = null;
 
     onMount(async () => {
         try { appVersion = await getVersion(); } catch {}
-        try { juliaInstalledVersion = await invoke<string>('get_julia_version'); } catch {}
         await refreshCacheSize();
-
-        _unlisten = await listen<{ message: string }>('julia-install-progress', (e) => {
-            juliaUpdateMessage = e.payload.message;
-        });
-    });
-
-    onDestroy(() => {
-        _unlisten?.();
+        await initJuliaInstallStore();
     });
 </script>
 
@@ -133,6 +108,35 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
                     <Icon icon="charm:chevron-down" width="0.75rem" />
                 </span>
+            </div>
+        </div>
+
+        <!-- Code Editor -->
+        <div class="py-2 border-b border-slate-100 dark:border-[#414559]">
+            <p class={sectionLabel}>Code Editor</p>
+            <div class="flex items-center justify-between gap-4">
+                <div>
+                    <span class={rowLabel}>Tab size</span>
+                    <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        Number of spaces inserted per indent level.
+                    </p>
+                </div>
+                <div class="relative shrink-0">
+                    <select
+                        value={String($editorIndentSize)}
+                        onchange={(e) =>
+                            editorIndentSize.set(
+                                e.currentTarget.value === '4' ? 4 : 2,
+                            )}
+                        class="appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#626880] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]"
+                    >
+                        <option value="2">2 spaces</option>
+                        <option value="4">4 spaces</option>
+                    </select>
+                    <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+                        <Icon icon="charm:chevron-down" width="0.75rem" />
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -325,18 +329,18 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             <div class="flex items-center justify-between mb-2">
                 <span class={rowLabel}>
                     {$t('settings.julia.installed')}
-                    {#if juliaInstalledVersion}
-                        <span class="ml-1 font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]">{juliaInstalledVersion}</span>
+                    {#if $juliaInstalledVersion}
+                        <span class="ml-1 font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]">{$juliaInstalledVersion}</span>
                     {:else}
                         <span class="ml-1 text-brand-charcoal-300 dark:text-[#838ba7]">{$t('settings.julia.not_installed')}</span>
                     {/if}
                 </span>
                 <button
                     onclick={checkJuliaVersion}
-                    disabled={juliaCheckState === 'checking' || juliaCheckState === 'updating'}
+                    disabled={$juliaInstallState === 'checking' || $juliaInstallState === 'updating'}
                     class={actionBtn}
                 >
-                    {#if juliaCheckState === 'checking'}
+                    {#if $juliaInstallState === 'checking'}
                         <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin" />
                         {$t('settings.julia.checking')}
                     {:else}
@@ -346,23 +350,23 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 </button>
             </div>
 
-            {#if juliaCheckState === 'updating'}
+            {#if $juliaInstallState === 'updating'}
                 <div class="flex items-center gap-2 text-xs text-brand-charcoal-400 dark:text-[#838ba7] mb-1">
                     <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin shrink-0" />
-                    <span>{juliaUpdateMessage || 'Updating…'}</span>
+                    <span>{$juliaInstallMessage || 'Updating…'}</span>
                 </div>
             {/if}
 
-            {#if juliaLatestVersion && juliaInstalledVersion}
+            {#if $juliaLatestVersion && $juliaInstalledVersion}
                 <div class="flex items-center justify-between mt-1">
                     <span class={rowLabel}>
                         {$t('settings.julia.latest')}
-                        <span class="ml-1 font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]">{juliaLatestVersion}</span>
+                        <span class="ml-1 font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]">{$juliaLatestVersion}</span>
                     </span>
-                    {#if isNewer(juliaLatestVersion, juliaInstalledVersion)}
+                    {#if isNewer($juliaLatestVersion, $juliaInstalledVersion)}
                         <button
                             onclick={updateJulia}
-                            disabled={juliaCheckState === 'updating'}
+                            disabled={$juliaInstallState === 'updating'}
                             class={actionBtn}
                         >
                             <Icon icon="solar:upload-bold-duotone" width="0.85rem" />
@@ -374,8 +378,40 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 </div>
             {/if}
 
-            {#if juliaCheckState === 'error'}
-                <p class="mt-1 text-[11px] text-red-500 dark:text-red-400 break-all">{juliaCheckError}</p>
+            <!-- Switch to a specific Julia version -->
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-[#414559]">
+                <div class="flex items-start justify-between gap-3 mb-1">
+                    <div class="min-w-0">
+                        <span class={rowLabel}>Switch version</span>
+                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                            Install and switch the default to a specific Julia version (e.g. <span class="font-mono">1.10.4</span>). Useful for downgrading.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input
+                        type="text"
+                        inputmode="decimal"
+                        spellcheck={false}
+                        placeholder="e.g. 1.10.4"
+                        bind:value={juliaTargetVersion}
+                        onkeydown={(e) => { if (e.key === 'Enter') setJuliaVersion(); }}
+                        disabled={$juliaInstallState === 'updating'}
+                        class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-xs font-mono text-brand-charcoal-700 dark:text-[#c6d0f5] placeholder:text-brand-charcoal-300 dark:placeholder:text-[#626880] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <button
+                        onclick={setJuliaVersion}
+                        disabled={$juliaInstallState === 'updating' || !juliaTargetVersion.trim()}
+                        class="{actionBtn} disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <Icon icon="solar:download-bold-duotone" width="0.85rem" />
+                        Switch
+                    </button>
+                </div>
+            </div>
+
+            {#if $juliaInstallState === 'error'}
+                <p class="mt-1 text-[11px] text-red-500 dark:text-red-400 break-all">{$juliaInstallError}</p>
             {/if}
         </div>
 

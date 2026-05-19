@@ -17,6 +17,11 @@
     "fs:allow-read-text-file",
     "fs:allow-read-dir",
     "fs:allow-exists",
-    "fs:scope-home-recursive"
+    "fs:allow-watch",
+    "fs:scope-home-recursive",
+    "clipboard-manager:allow-read-image",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-image",
+    "clipboard-manager:allow-write-text"
   ]
 }

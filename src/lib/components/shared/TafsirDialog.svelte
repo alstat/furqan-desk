@@ -5,6 +5,7 @@
     import {
         selectedSurahIdx,
         surahLabels,
+        surahMorphology,
         morphologyMultiSurahList,
     } from "$lib/stores/quran.svelte";
     import {
@@ -14,6 +15,9 @@
         availableTafsirAuthors,
     } from "$lib/stores/translation.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import { isPro } from "$lib/stores/auth.store";
+    import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
+    import { getSurahNameTashkeel } from "$lib/data/surah-names-tashkeel";
     import {
         customFontFamilies,
         tafsirFontSize,
@@ -296,6 +300,87 @@
             window.removeEventListener("pointermove", onResize);
         }
     });
+
+    // --- AI prompt about a tafsir entry (Pro) ---
+    let aiPromptOpen = $state(false);
+    let aiPromptX = $state(0);
+    let aiPromptY = $state(0);
+    let aiPromptText = $state("");
+    let aiPromptInput: HTMLInputElement | null = $state(null);
+    let aiPromptCtx: {
+        surah: number;
+        ayah: number;
+        arabic: string;
+        tafsir: string;
+    } | null = $state(null);
+
+    function getAyahArabic(surah: number, ayah: number): string {
+        const multi = $morphologyMultiSurahList;
+        if (multi) {
+            const s = multi.find((m) => m.surah === surah);
+            const a = s?.ayahs.find((x) => x.ayah === ayah);
+            if (a) return a.words.map((w) => w.combined_arabic).join(" ");
+        }
+        const sm = $surahMorphology;
+        if (sm && sm.surah === surah) {
+            const a = sm.ayahs.find((x) => x.ayah === ayah);
+            if (a) return a.words.map((w) => w.combined_arabic).join(" ");
+        }
+        return "";
+    }
+
+    function stripHtml(html: string): string {
+        const tmp = document.createElement("div");
+        tmp.innerHTML = html;
+        return (tmp.textContent ?? tmp.innerText ?? "").trim();
+    }
+
+    function openAiPromptForTafsir(
+        event: MouseEvent,
+        surah: number,
+        ayah: number,
+        tafsirHtml: string,
+    ) {
+        event.stopPropagation();
+        const arabic = getAyahArabic(surah, ayah);
+        const tafsir = stripHtml(tafsirHtml);
+        aiPromptCtx = { surah, ayah, arabic, tafsir };
+        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+        aiPromptX = rect.left + rect.width / 2;
+        aiPromptY = rect.bottom + 8;
+        aiPromptText = "";
+        aiPromptOpen = true;
+        queueMicrotask(() => aiPromptInput?.focus());
+    }
+
+    function closeAiPrompt() {
+        aiPromptOpen = false;
+        aiPromptCtx = null;
+        aiPromptText = "";
+    }
+
+    function submitAiPrompt() {
+        const prompt = aiPromptText.trim();
+        const ctx = aiPromptCtx;
+        if (!prompt || !ctx) return;
+        const surahName =
+            getSurahNameTashkeel(ctx.surah) ||
+            ($surahLabels[ctx.surah - 1]?.en ?? `Surah ${ctx.surah}`);
+        const lines: string[] = [`${surahName} · Ayah ${ctx.ayah}`];
+        if (ctx.arabic) lines.push(`Arabic: ${ctx.arabic}`);
+        if (ctx.tafsir) lines.push(`Tafsir:\n${ctx.tafsir}`);
+        const contextPrompt = lines.join("\n");
+        askAiAboutSelection({
+            prompt,
+            selectedText: ctx.arabic || `${surahName} ${ctx.ayah}`,
+            contextPrompt,
+        });
+        closeAiPrompt();
+    }
+
+    function handleAiPanelKeydown(e: KeyboardEvent) {
+        if (e.key === "Escape") closeAiPrompt();
+    }
 </script>
 
 {#if open}
@@ -381,7 +466,7 @@
                             onpointerdown={(e) => e.stopPropagation()}
                             role="menu"
                             tabindex="-1"
-                            class="absolute right-0 top-9 z-20 w-72 rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
+                            class="absolute right-0 top-9 z-20 w-72 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
                         >
                             <div class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2">
                                 <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]">
@@ -432,7 +517,7 @@
                                         onclick={resetFontSize}
                                         aria-label={$t("dialog.reset_font_size")}
                                         title={$t("dialog.reset")}
-                                        class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
+                                        class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
                                     >
                                         <Icon icon="solar:restart-linear" width="0.9rem" />
                                     </button>
@@ -474,7 +559,7 @@
                                         onclick={resetLineSpacing}
                                         aria-label={$t("dialog.reset_line_spacing")}
                                         title={$t("dialog.reset")}
-                                        class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-xl text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
+                                        class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
                                     >
                                         <Icon icon="solar:restart-linear" width="0.9rem" />
                                     </button>
@@ -569,10 +654,29 @@
                                 >
                                     <div class="mb-1.5 flex items-center gap-2">
                                         <span
-                                            class="inline-flex items-center justify-center min-w-[1.75rem] h-6 px-2 rounded-full bg-brand-gold-100 dark:bg-[#414559] text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890]"
+                                            class="inline-flex items-center justify-center min-w-[1.75rem] h-7 p-2 rounded-full bg-brand-gold-100 dark:bg-[#414559] text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890]"
                                         >
                                             {entry.ayah}
                                         </span>
+                                        {#if $isPro}
+                                            <button
+                                                onclick={(e) =>
+                                                    openAiPromptForTafsir(
+                                                        e,
+                                                        section.surah,
+                                                        entry.ayah,
+                                                        entry.text,
+                                                    )}
+                                                title={$t("morphology.ai_ask_tafsir")}
+                                                aria-label={$t("morphology.ai_ask_tafsir")}
+                                                class="cursor-pointer flex items-center justify-center h-7 w-7 p-1 rounded-full text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-100 dark:hover:bg-[#414559] transition-colors"
+                                            >
+                                                <Icon
+                                                    icon="ri:chat-smile-ai-fill"
+                                                    width="0.85rem"
+                                                />
+                                            </button>
+                                        {/if}
                                     </div>
                                     <div
                                         class="tafsir-content text-[13px] leading-relaxed text-brand-charcoal-500 dark:text-[#b5bfe2]"
@@ -599,6 +703,42 @@
                 </div>
             {/if}
         </div>
+
+        {#if aiPromptOpen && aiPromptCtx}
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div
+                role="presentation"
+                class="fixed z-[1000] flex w-80 items-center gap-1.5 rounded-3xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+                style="left:{aiPromptX}px; top:{aiPromptY}px; transform: translateX(-50%);"
+                onclick={(e) => e.stopPropagation()}
+                onpointerdown={(e) => e.stopPropagation()}
+                onkeydown={handleAiPanelKeydown}
+            >
+                <input
+                    bind:this={aiPromptInput}
+                    bind:value={aiPromptText}
+                    placeholder={$t("morphology.ai_prompt_placeholder")}
+                    class="min-w-0 flex-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+                    onkeydown={(e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            submitAiPrompt();
+                        } else if (e.key === "Escape") {
+                            closeAiPrompt();
+                        }
+                    }}
+                />
+                <button
+                    onclick={submitAiPrompt}
+                    disabled={!aiPromptText.trim()}
+                    aria-label={$t("morphology.ai_ask_tafsir")}
+                    title={$t("morphology.ai_ask_tafsir")}
+                    class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 hover:dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                    <Icon icon="solar:plain-bold-duotone" width="0.85rem" />
+                </button>
+            </div>
+        {/if}
 
         <!-- Resize handles -->
         <div

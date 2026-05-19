@@ -10,6 +10,9 @@
         $isRangeSelection as isRangeSelection,
         $isTextNode as isTextNode,
         $isElementNode as isElementNode,
+        $isDecoratorNode as isDecoratorNode,
+        $createTextNode as createTextNode,
+        $createParagraphNode as createParagraphNode,
         $getNodeByKey as getNodeByKey,
         $insertNodes as insertNodes,
         COMMAND_PRIORITY_LOW,
@@ -129,6 +132,46 @@
         return out;
     }
 
+    // Decorator nodes (equations, images, horizontal rules) cannot hold a
+    // caret, so when one is pasted at the edge of a paragraph — or as a
+    // standalone block — there is no adjacent position to click into and
+    // delete it from. Pad inline decorators with a space text node on each
+    // bare side, and surround block-level decorators with empty paragraphs,
+    // so the caret can always be placed next to pasted content.
+    function padForNavigation(nodes: LexicalNode[]): LexicalNode[] {
+        const padInlineDecorators = (element: LexicalNode): void => {
+            if (!isElementNode(element)) return;
+            for (const child of element.getChildren()) {
+                if (isElementNode(child)) {
+                    padInlineDecorators(child);
+                } else if (isDecoratorNode(child)) {
+                    if (!isTextNode(child.getPreviousSibling())) {
+                        child.insertBefore(createTextNode(" "));
+                    }
+                    if (!isTextNode(child.getNextSibling())) {
+                        child.insertAfter(createTextNode(" "));
+                    }
+                }
+            }
+        };
+
+        const out: LexicalNode[] = [];
+        for (const node of nodes) {
+            if (isDecoratorNode(node)) {
+                const prev = out[out.length - 1];
+                if (!prev || isDecoratorNode(prev)) {
+                    out.push(createParagraphNode());
+                }
+                out.push(node);
+                out.push(createParagraphNode());
+            } else {
+                padInlineDecorators(node);
+                out.push(node);
+            }
+        }
+        return out;
+    }
+
     function insertMarkdown(markdown: string): void {
         const sel = getSelection();
         let anchor:
@@ -156,6 +199,7 @@
         original.forEach((c) => root.append(c));
 
         parsed = substituteCodeBlocks(parsed, blocks);
+        parsed = padForNavigation(parsed);
 
         if (anchor) {
             const node = getNodeByKey(anchor.key);

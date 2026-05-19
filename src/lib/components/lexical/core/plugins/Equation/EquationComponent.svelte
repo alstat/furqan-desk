@@ -1,9 +1,13 @@
 <script lang="ts">
     import katex from "katex";
+    // KaTeX's stylesheet + bundled fonts — required for the HTML renderer to
+    // position accents (\bar, \hat, \overline, vectors) without overlap.
+    import "katex/dist/katex.min.css";
     import { onMount } from "svelte";
     import { getEditor } from "$lexical/core/composerContext.js";
     import { $isEquationNode as isEquationNode } from "./EquationNode";
     import { $getNodeByKey as getNodeByKey } from "lexical";
+    import { createNodeSelectionStore } from "../../nodeSelectionStore.js";
     import Icon from "@iconify/svelte";
     import { icons } from "$lib/data/toolbar/toolbar";
     import { t } from "$lib/i18n";
@@ -25,12 +29,17 @@
 
     const editor = getEditor();
 
+    // Tracks whether this equation falls within the current editor selection
+    // (range selection via Cmd/Ctrl+A or an explicit node selection) so the
+    // node gets a visible highlight like ordinary text.
+    const isSelected = createNodeSelectionStore(editor, nodeKey);
+
     function renderEquation() {
         if (element) {
             katex.render(equation, element, {
                 throwOnError: false,
                 displayMode: !isInline,
-                output: "mathml",
+                output: "htmlAndMathml",
             });
         }
     }
@@ -40,7 +49,7 @@
             katex.render(editableValue, previewEl, {
                 throwOnError: false,
                 displayMode: !isInline,
-                output: "mathml",
+                output: "htmlAndMathml",
             });
         } else if (previewEl) {
             previewEl.innerHTML = "";
@@ -189,6 +198,7 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <span
         class="SL_Theme__equation_inline cursor-pointer rounded px-0.5 hover:bg-brand-gold-100 hover:outline hover:outline-1 hover:outline-brand-gold-300 transition-colors"
+        class:equation-selected={$isSelected}
         bind:this={element}
         ondblclick={handleDoubleClick}
         title={$t('editor.dblclick_hint')}
@@ -197,8 +207,18 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         class="SL_Theme__equation_display cursor-pointer rounded-lg px-2 py-1 hover:bg-brand-gold-50 hover:outline hover:outline-1 hover:outline-brand-gold-300 transition-colors"
+        class:equation-selected={$isSelected}
         bind:this={element}
         ondblclick={handleDoubleClick}
         title={$t('editor.dblclick_hint')}
     ></div>
 {/if}
+
+<style>
+    /* Mirrors the browser's native text-selection highlight so users get
+       clear feedback that an equation is part of the current selection. */
+    .equation-selected {
+        background-color: rgba(99, 130, 233, 0.35);
+        outline: 2px solid rgba(99, 130, 233, 0.55);
+    }
+</style>

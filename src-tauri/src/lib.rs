@@ -2,7 +2,9 @@ mod buckwalter;
 mod commands;
 mod db;
 mod feedback;
+mod git;
 mod julia;
+mod pty;
 mod terminal;
 mod typst_world;
 
@@ -36,6 +38,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
             let resource_dir = app.path().resource_dir()
                 .expect("Failed to resolve resource directory");
@@ -55,6 +58,7 @@ pub fn run() {
             let julia_custom_path = julia::load_persisted_path(&app.handle());
             app.manage(julia::JuliaState::new(julia_custom_path));
             app.manage(terminal::TerminalState::new());
+            app.manage(pty::PtyState::new());
             app.manage(commands::DownloadState {
                 cancel: Arc::new(AtomicBool::new(false)),
             });
@@ -79,6 +83,7 @@ pub fn run() {
             commands::delete_highlight,
             commands::compile_typst_svg,
             commands::compile_typst_pdf,
+            commands::typst_format,
             commands::check_typst_package,
             commands::install_typst_package,
             commands::check_typst_fonts,
@@ -107,14 +112,23 @@ pub fn run() {
             julia::install_julia,
             julia::start_julia_repl,
             julia::run_julia_code,
+            julia::interrupt_julia,
             julia::julia_complete,
+            julia::julia_definition,
+            julia::julia_format,
             julia::stop_julia_repl,
             julia::get_julia_version,
             julia::get_latest_julia_version,
             julia::update_julia,
+            julia::set_julia_version,
             terminal::start_terminal,
             terminal::send_terminal_input,
+            terminal::signal_terminal,
             terminal::close_terminal,
+            pty::start_pty,
+            pty::pty_write,
+            pty::pty_resize,
+            pty::pty_kill,
             commands::search_quran,
             commands::get_manuscript_detail,
             commands::save_manuscript_to_downloads,
@@ -124,13 +138,14 @@ pub fn run() {
             commands::get_manuscript_demo_image,
             commands::get_system_font_families,
             feedback::send_feedback,
+            git::git_head_content,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
                 // Clean up Julia process to avoid zombies
                 if let Some(state) = window.try_state::<julia::JuliaState>() {
-                    if let Ok(mut guard) = state.process.lock() {
-                        guard.take(); // drop stdin → Julia exits
+                    if let Ok(mut guard) = state.processes.lock() {
+                        guard.clear(); // drop stdin of every kernel → Julia exits
                     }
                 }
             }

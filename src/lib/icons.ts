@@ -14,12 +14,14 @@ import solarData from '@iconify-json/solar/icons.json';
 import fluentData from '@iconify-json/fluent/icons.json';
 import gardenData from '@iconify-json/garden/icons.json';
 import iconParkData from '@iconify-json/icon-park-outline/icons.json';
+import iconParkTwotoneData from '@iconify-json/icon-park-twotone/icons.json';
 import charmData from '@iconify-json/charm/icons.json';
 import dashiconsData from '@iconify-json/dashicons/icons.json';
 import ggData from '@iconify-json/gg/icons.json';
 import gridiconsData from '@iconify-json/gridicons/icons.json';
 import icData from '@iconify-json/ic/icons.json';
 import iconamoonData from '@iconify-json/iconamoon/icons.json';
+import lucideData from '@iconify-json/lucide/icons.json';
 import materialData from '@iconify-json/material-symbols/icons.json';
 import mdiData from '@iconify-json/mdi/icons.json';
 import phData from '@iconify-json/ph/icons.json';
@@ -36,12 +38,14 @@ const collections: any[] = [
     fluentData,
     gardenData,
     iconParkData,
+    iconParkTwotoneData,
     charmData,
     dashiconsData,
     ggData,
     gridiconsData,
     icData,
     iconamoonData,
+    lucideData,
     materialData,
     mdiData,
     phData,

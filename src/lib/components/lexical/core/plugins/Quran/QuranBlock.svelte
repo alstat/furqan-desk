@@ -1,7 +1,13 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import { surahLabels } from "$lib/stores/quran.svelte";
+    import { surahLabels, selectedSurahIdx } from "$lib/stores/quran.svelte";
     import { getSurahNameTashkeel } from "$lib/data/surah-names-tashkeel";
+    import { pendingJumpAyah } from "$lib/stores/bookmarks.store";
+    import { requestPlayBlock } from "$lib/stores/recitation.store";
+    import { manuscriptsEnabled, manuscriptAyah, manuscriptViewerOpen } from "$lib/stores/manuscripts.store";
+    import { isPro } from "$lib/stores/auth.store";
+    import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
+    import { t } from "$lib/i18n";
     import { getEditor } from "$lexical/core/composerContext.js";
     import { $getNodeByKey as getNodeByKey } from "lexical";
     import {
@@ -94,10 +100,93 @@
     }
 
     function onWindowClick(e: MouseEvent) {
+        const target = e.target as (Node & HTMLElement) | null;
+        if (
+            aiPromptOpen &&
+            target &&
+            !(target as HTMLElement).closest?.("[data-quran-block-ai-prompt]")
+        ) {
+            closeAiPrompt();
+        }
         if (!showControls) return;
-        const target = e.target as Node | null;
         if (blockEl && target && blockEl.contains(target)) return;
         showControls = false;
+    }
+
+    function playAyah(e: MouseEvent, surah: number, ayah: number) {
+        e.preventDefault();
+        e.stopPropagation();
+        const playlist = verses.map((v) => ({ surah: v.surah, ayah: v.ayah }));
+        const startIdx = playlist.findIndex(
+            (p) => p.surah === surah && p.ayah === ayah,
+        );
+        if (startIdx < 0) return;
+        requestPlayBlock.set({ playlist, startIdx });
+    }
+
+    function viewInMorphology(e: MouseEvent, surah: number, ayah: number) {
+        e.preventDefault();
+        e.stopPropagation();
+        selectedSurahIdx.set(surah);
+        pendingJumpAyah.set(ayah);
+    }
+
+    function viewManuscripts(e: MouseEvent, surah: number, ayah: number) {
+        e.preventDefault();
+        e.stopPropagation();
+        manuscriptAyah.set({ surah, ayah });
+        manuscriptViewerOpen.set(true);
+    }
+
+    // --- AI prompt for an ayah (Pro) ---
+    let aiPromptOpen = $state(false);
+    let aiPromptX = $state(0);
+    let aiPromptY = $state(0);
+    let aiPromptText = $state("");
+    let aiPromptInput: HTMLInputElement | null = $state(null);
+    let aiPromptCtx: {
+        surah: number;
+        ayah: number;
+        arabic: string;
+    } | null = $state(null);
+
+    function openAiPromptForAyah(
+        e: MouseEvent,
+        surah: number,
+        ayah: number,
+        arabic: string,
+    ) {
+        e.preventDefault();
+        e.stopPropagation();
+        aiPromptCtx = { surah, ayah, arabic };
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        aiPromptX = rect.left + rect.width / 2;
+        aiPromptY = rect.bottom + 8;
+        aiPromptText = "";
+        aiPromptOpen = true;
+        queueMicrotask(() => aiPromptInput?.focus());
+    }
+
+    function closeAiPrompt() {
+        aiPromptOpen = false;
+        aiPromptCtx = null;
+        aiPromptText = "";
+    }
+
+    function submitAiPrompt() {
+        const prompt = aiPromptText.trim();
+        const ctx = aiPromptCtx;
+        if (!prompt || !ctx) return;
+        const surahName =
+            getSurahNameTashkeel(ctx.surah) ||
+            ($surahLabels[ctx.surah - 1]?.en ?? `Surah ${ctx.surah}`);
+        const contextPrompt = `${surahName} · Ayah ${ctx.ayah}\nArabic: ${ctx.arabic}`;
+        askAiAboutSelection({
+            prompt,
+            selectedText: ctx.arabic,
+            contextPrompt,
+        });
+        closeAiPrompt();
     }
 </script>
 
@@ -198,9 +287,54 @@
                 style="text-align-last: center; font-size: {verseFontSize};"
             >
                 {#each group.verses as v (v.surah + ':' + v.ayah)}
-                    <span>{v.arabic}</span><span
-                        class="font-scheherazade mx-1 text-[0.95em] text-brand-gold-600 dark:text-[#e5c890]"
-                        >&#x2060;﴿&#x2060;{arabicNumerals(v.ayah)}&#x2060;﴾&#x2060;</span
+                    <span
+                        data-surah={v.surah}
+                        data-ayah={v.ayah}
+                        class="quran-block-ayah"
+                        >{v.arabic}</span
+                    ><span
+                        class="group/ayah-num relative inline-block whitespace-nowrap"
+                        ><span
+                            class="font-scheherazade mx-1 text-[0.95em] text-brand-gold-600 dark:text-[#e5c890]"
+                            >&#x2060;﴿&#x2060;{arabicNumerals(v.ayah)}&#x2060;﴾&#x2060;</span
+                        ><span
+                            dir="ltr"
+                            class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"
+                            contenteditable="false"
+                            >{#if $isPro}<button
+                                    type="button"
+                                    onmousedown={(e) => e.preventDefault()}
+                                    onclick={(e) => openAiPromptForAyah(e, v.surah, v.ayah, v.arabic)}
+                                    title={$t("morphology.ai_ask_ayah", { ayah: String(v.ayah) })}
+                                    aria-label={$t("morphology.ai_ask_ayah", { ayah: String(v.ayah) })}
+                                    class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
+                                    ><Icon icon="ri:chat-smile-ai-fill" width="0.6rem" /></button
+                                >{/if}{#if $manuscriptsEnabled}<button
+                                    type="button"
+                                    onmousedown={(e) => e.preventDefault()}
+                                    onclick={(e) => viewManuscripts(e, v.surah, v.ayah)}
+                                    title={$t("morphology.view_manuscripts", { ayah: String(v.ayah) })}
+                                    aria-label={$t("morphology.view_manuscripts", { ayah: String(v.ayah) })}
+                                    class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
+                                    ><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button
+                                >{/if}<button
+                                type="button"
+                                onmousedown={(e) => e.preventDefault()}
+                                onclick={(e) => playAyah(e, v.surah, v.ayah)}
+                                title={$t("morphology.play_ayah", { ayah: String(v.ayah) })}
+                                aria-label={$t("morphology.play_ayah", { ayah: String(v.ayah) })}
+                                class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
+                                ><Icon icon="solar:play-bold" width="0.6rem" /></button
+                            ><button
+                                type="button"
+                                onmousedown={(e) => e.preventDefault()}
+                                onclick={(e) => viewInMorphology(e, v.surah, v.ayah)}
+                                title={$t("quran_block.view_in_quran", { ayah: String(v.ayah) })}
+                                aria-label={$t("quran_block.view_in_quran", { ayah: String(v.ayah) })}
+                                class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
+                                ><Icon icon="basil:book-open-solid" width="0.6rem" /></button
+                            ></span
+                        ></span
                     >{' '}
                 {/each}
             </div>
@@ -218,3 +352,38 @@
         <div class="h-px flex-1 bg-linear-to-l from-transparent to-brand-gold-200 dark:to-brand-gold-500/70"></div>
     </div>
 </div>
+
+{#if aiPromptOpen && aiPromptCtx}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+        data-quran-block-ai-prompt
+        contenteditable="false"
+        role="presentation"
+        class="fixed z-[9999] flex w-80 items-center gap-1.5 rounded-3xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+        style="left:{aiPromptX}px; top:{aiPromptY}px; transform: translateX(-50%);"
+        onclick={(e) => e.stopPropagation()}
+        onmousedown={(e) => e.stopPropagation()}
+        onkeydown={(e) => { if (e.key === 'Escape') closeAiPrompt(); }}
+    >
+        <input
+            bind:this={aiPromptInput}
+            bind:value={aiPromptText}
+            placeholder={$t("morphology.ai_prompt_placeholder")}
+            class="min-w-0 flex-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+            onkeydown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); submitAiPrompt(); }
+                else if (e.key === 'Escape') { closeAiPrompt(); }
+            }}
+        />
+        <button
+            type="button"
+            onclick={submitAiPrompt}
+            disabled={!aiPromptText.trim()}
+            aria-label={$t("morphology.ai_ask_ayah", { ayah: String(aiPromptCtx.ayah) })}
+            title={$t("morphology.ai_ask_ayah", { ayah: String(aiPromptCtx.ayah) })}
+            class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 hover:dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+            <Icon icon="solar:plain-bold-duotone" width="0.85rem" />
+        </button>
+    </div>
+{/if}

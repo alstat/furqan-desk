@@ -4,6 +4,7 @@
     import { writeFile } from "@tauri-apps/plugin-fs";
     import { get } from "svelte/store";
     import { onDestroy, tick } from "svelte";
+    import Icon from "@iconify/svelte";
     import {
         typstSource,
         typstRecompile,
@@ -14,6 +15,8 @@
         zenPeek,
         appDarkMode,
         typstPreviewDarkMode,
+        editorIndentSize,
+        codeMirrorViewInstance,
     } from "$lib/stores/editor.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
     import {
@@ -221,6 +224,46 @@
 
     let lineWrap = $state(true);
 
+    // ── Typst formatter ───────────────────────────────────────────────────────
+    let formatting = $state(false);
+    let formatError = $state("");
+    let formatErrorTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function showFormatError(msg: string) {
+        formatError = msg;
+        if (formatErrorTimer) clearTimeout(formatErrorTimer);
+        formatErrorTimer = setTimeout(() => (formatError = ""), 8000);
+    }
+
+    async function formatTypst() {
+        const view = get(codeMirrorViewInstance);
+        if (!view || formatting) return;
+        const code = view.state.doc.toString();
+        if (!code.trim()) return;
+        formatting = true;
+        formatError = "";
+        try {
+            const formatted = await invoke<string>("typst_format", {
+                source: code,
+                indent: get(editorIndentSize),
+            });
+            // Full-document replace, kept in the editor's undo history.
+            if (formatted !== view.state.doc.toString()) {
+                view.dispatch({
+                    changes: {
+                        from: 0,
+                        to: view.state.doc.length,
+                        insert: formatted,
+                    },
+                });
+            }
+        } catch (e) {
+            showFormatError(typeof e === "string" ? e : String(e));
+        } finally {
+            formatting = false;
+        }
+    }
+
     const aiContextPrompt =
         "This text is part of a typst file, so your output should be formatted as part of a typst file";
 
@@ -248,6 +291,7 @@
     }
     onDestroy(() => {
         window.removeEventListener("pointermove", onDrag);
+        if (formatErrorTimer) clearTimeout(formatErrorTimer);
     });
 </script>
 
@@ -267,36 +311,62 @@
                         *</span
                     >{/if}</span
             >
-            <button
-                onclick={() => (lineWrap = !lineWrap)}
-                title={lineWrap ? "Disable line wrap" : "Enable line wrap"}
-                class="{$zenMode
+            <div
+                class="flex items-center gap-1.5 {$zenMode
                     ? $zenPeek
                         ? 'opacity-50 transition-opacity duration-200'
                         : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
-                    : ''} flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
-                       {lineWrap
-                    ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'
-                    : 'bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25'}"
+                    : ''}"
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="11"
-                    height="11"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                <!-- Typst Formatter -->
+                <button
+                    onclick={formatTypst}
+                    disabled={formatting}
+                    title="Format with typstyle"
+                    class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
+                           bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400
+                           hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25
+                           disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <polyline points="3 6 21 6" /><path
-                        d="M3 12h15a3 3 0 0 1 0 6h-4"
-                    /><polyline points="8 15 5 18 8 21" />
-                </svg>
-                {lineWrap ? "Wrap" : "No Wrap"}
-            </button>
+                    <Icon icon="icon-park-twotone:format-brush" width="11" />
+                    {formatting ? "Formatting…" : "Format"}
+                </button>
+                <!-- Line wrap toggle -->
+                <button
+                    onclick={() => (lineWrap = !lineWrap)}
+                    title={lineWrap ? "Disable line wrap" : "Enable line wrap"}
+                    class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
+                           {lineWrap
+                        ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'
+                        : 'bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25'}"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="11"
+                        height="11"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <polyline points="3 6 21 6" /><path
+                            d="M3 12h15a3 3 0 0 1 0 6h-4"
+                        /><polyline points="8 15 5 18 8 21" />
+                    </svg>
+                    {lineWrap ? "Wrap" : "No Wrap"}
+                </button>
+            </div>
         </div>
+        {#if formatError}
+            <div
+                class="mx-2 mb-1 px-2 py-1 rounded-md text-[10px] text-red-500 dark:text-red-400
+                       bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40"
+            >
+                {formatError}
+            </div>
+        {/if}
         <CodeMirrorEditor
             value={$typstSource}
             language="typst"
@@ -304,6 +374,7 @@
             {lineWrap}
             aiSelectionTools={true}
             {aiContextPrompt}
+            filePath={effectiveTab?.path ?? null}
             onchange={handleInput}
             class={`${effectiveTab?.type !== "typst" ? "mb-4" : ""} ${sideBySide ? "mb-3" : ""} flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 font-mono`}
         />

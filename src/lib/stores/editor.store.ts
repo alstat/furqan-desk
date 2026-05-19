@@ -31,9 +31,86 @@ export const singlePageMargin = {
   },
 };
 
-// ── Editor theme (Ayu Light / Ayu Mirage) ────────────────────────────────────
+// ── Editor / right-panel split ratio ──────────────────────────────────────────
+// Percentage (0–100) of the row's width occupied by the SIDEBAR (the editor side).
+// Drives the draggable divider when Hide Quran Page is on and the active tab
+// is Julia or Typst (so the right panel is a REPL or Typst preview).
 
-export type EditorTheme = "ayu-light" | "ayu-mirage";
+const SPLIT_MIN = 20;
+const SPLIT_MAX = 80;
+
+function loadEditorSplitRatio(): number {
+  try {
+    const v = localStorage.getItem("editor-split-ratio");
+    if (v) {
+      const n = parseFloat(v);
+      if (Number.isFinite(n) && n >= SPLIT_MIN && n <= SPLIT_MAX) return n;
+    }
+  } catch {
+    /* ignore */
+  }
+  return 50;
+}
+
+const _editorSplitRatio = writable<number>(loadEditorSplitRatio());
+
+export const editorSplitRatio = {
+  subscribe: _editorSplitRatio.subscribe,
+  set(v: number) {
+    const clamped = Math.max(SPLIT_MIN, Math.min(SPLIT_MAX, v));
+    try {
+      localStorage.setItem("editor-split-ratio", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _editorSplitRatio.set(clamped);
+  },
+};
+
+// ── Editor theme ──────────────────────────────────────────────────────────────
+
+export type EditorTheme =
+  | "ayu-light"
+  | "ayu-mirage"
+  | "gruvbox-light"
+  | "gruvbox-dark"
+  | "monokai-light"
+  | "monokai-dark"
+  | "solarized-light"
+  | "solarized-dark"
+  | "tokyo-night-light"
+  | "tokyo-night-dark";
+
+export interface EditorThemeInfo {
+  id: EditorTheme;
+  label: string;
+  dark: boolean;
+  /** Editor background colour — used for the theme swatch in the picker. */
+  bg: string;
+  /** Accent colour — used for the swatch dot. */
+  accent: string;
+}
+
+/** All CodeMirror themes available to the editor, in display order. */
+export const ALL_EDITOR_THEMES: EditorThemeInfo[] = [
+  { id: "ayu-light", label: "Ayu Light", dark: false, bg: "#fafafa", accent: "#ff9940" },
+  { id: "ayu-mirage", label: "Ayu Mirage", dark: true, bg: "#1f2430", accent: "#ffcc66" },
+  { id: "gruvbox-light", label: "Gruvbox Light", dark: false, bg: "#fbf1c7", accent: "#b57614" },
+  { id: "gruvbox-dark", label: "Gruvbox Dark", dark: true, bg: "#282828", accent: "#fabd2f" },
+  { id: "monokai-light", label: "Monokai Light", dark: false, bg: "#fafaf6", accent: "#e0185a" },
+  { id: "monokai-dark", label: "Monokai Dark", dark: true, bg: "#272822", accent: "#f92672" },
+  { id: "solarized-light", label: "Solarized Light", dark: false, bg: "#fdf6e3", accent: "#b58900" },
+  { id: "solarized-dark", label: "Solarized Dark", dark: true, bg: "#002b36", accent: "#b58900" },
+  { id: "tokyo-night-light", label: "Tokyo Night Light", dark: false, bg: "#e1e2e7", accent: "#9854f1" },
+  { id: "tokyo-night-dark", label: "Tokyo Night", dark: true, bg: "#1a1b26", accent: "#bb9af7" },
+];
+
+function isEditorTheme(v: unknown): v is EditorTheme {
+  return (
+    typeof v === "string" &&
+    ALL_EDITOR_THEMES.some((t) => t.id === v)
+  );
+}
 
 // ── CodeMirror font size ──────────────────────────────────────────────────────
 
@@ -62,6 +139,66 @@ export const cmFontSize = {
       /* ignore */
     }
     _cmFontSize.set(clamped);
+  },
+};
+
+// ── REPL / Terminal font size ─────────────────────────────────────────────────
+
+function loadReplFontSize(): number {
+  try {
+    const v = localStorage.getItem("repl-font-size");
+    if (v) {
+      const n = parseInt(v, 10);
+      if (n >= 9 && n <= 24) return n;
+    }
+  } catch {
+    /* ignore */
+  }
+  return 12;
+}
+
+const _replFontSize = writable<number>(loadReplFontSize());
+
+export const replFontSize = {
+  subscribe: _replFontSize.subscribe,
+  set(v: number) {
+    const clamped = Math.max(9, Math.min(24, v));
+    try {
+      localStorage.setItem("repl-font-size", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _replFontSize.set(clamped);
+  },
+};
+
+// ── REPL / Terminal line spacing ──────────────────────────────────────────────
+
+function loadReplLineSpacing(): number {
+  try {
+    const v = localStorage.getItem("repl-line-spacing");
+    if (v) {
+      const n = parseFloat(v);
+      if (n >= 1 && n <= 2) return n;
+    }
+  } catch {
+    /* ignore */
+  }
+  return 1.3;
+}
+
+const _replLineSpacing = writable<number>(loadReplLineSpacing());
+
+export const replLineSpacing = {
+  subscribe: _replLineSpacing.subscribe,
+  set(v: number) {
+    const clamped = Math.max(1, Math.min(2, v));
+    try {
+      localStorage.setItem("repl-line-spacing", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _replLineSpacing.set(clamped);
   },
 };
 
@@ -124,7 +261,7 @@ export const typstPreviewDarkMode = {
 function loadTheme(): EditorTheme {
   try {
     const v = localStorage.getItem("editor-theme");
-    if (v === "ayu-light" || v === "ayu-mirage") return v;
+    if (isEditorTheme(v)) return v;
   } catch {
     /* ignore */
   }
@@ -145,13 +282,89 @@ export const editorTheme = {
   },
 };
 
+// ── Editor theme toolbar slots ───────────────────────────────────────────────
+// The two themes surfaced as quick-switch buttons in the Editor Toolbar.
+
+function loadThemeSlots(): [EditorTheme, EditorTheme] {
+  try {
+    const raw = localStorage.getItem("editor-theme-slots");
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (
+        Array.isArray(arr) &&
+        arr.length === 2 &&
+        isEditorTheme(arr[0]) &&
+        isEditorTheme(arr[1]) &&
+        arr[0] !== arr[1]
+      ) {
+        return [arr[0], arr[1]];
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return ["ayu-light", "ayu-mirage"];
+}
+
+const _editorThemeSlots = writable<[EditorTheme, EditorTheme]>(
+  loadThemeSlots(),
+);
+
+export const editorThemeSlots = {
+  subscribe: _editorThemeSlots.subscribe,
+  set(v: [EditorTheme, EditorTheme]) {
+    try {
+      localStorage.setItem("editor-theme-slots", JSON.stringify(v));
+    } catch {
+      /* ignore */
+    }
+    _editorThemeSlots.set(v);
+  },
+};
+
+// ── Code editor indent size ───────────────────────────────────────────────────
+// Number of spaces inserted per indent level (Tab key, auto-indent).
+
+export type IndentSize = 2 | 4;
+
+function loadIndentSize(): IndentSize {
+  try {
+    const v = localStorage.getItem("editor-indent-size");
+    if (v === "4") return 4;
+    if (v === "2") return 2;
+  } catch {
+    /* ignore */
+  }
+  return 2;
+}
+
+const _editorIndentSize = writable<IndentSize>(loadIndentSize());
+
+export const editorIndentSize = {
+  subscribe: _editorIndentSize.subscribe,
+  set(v: IndentSize) {
+    try {
+      localStorage.setItem("editor-indent-size", String(v));
+    } catch {
+      /* ignore */
+    }
+    _editorIndentSize.set(v);
+  },
+};
+
+export type ReplMode = "julia" | "pkg" | "shell" | "help";
+
 export interface ReplLine {
   text: string;
   kind: "input" | "output" | "error" | "warn";
+  /** Only meaningful when kind === "input". Defaults to "julia". */
+  mode?: ReplMode;
 }
 /** Shared REPL output lines for all Julia tabs */
 export const juliaReplHistory: Writable<ReplLine[]> = writable([]);
 export const juliaReplStarted: Writable<boolean> = writable(false);
+/** Active Julia project/environment name (empty string = default global env). */
+export const juliaActiveEnv: Writable<string> = writable("");
 
 export const typstMode = derived(
   activeTab,
@@ -487,8 +700,8 @@ export const TRANSLATION_LINE_SPACING_BOUNDS = {
 
 export interface JuliaPlot {
   id: string;
-  format: "png" | "svg";
-  data: string; // base64-encoded image bytes
+  format: "png" | "svg" | "plotly";
+  data: string; // base64 — image bytes for png/svg, an HTML document for plotly
   timestamp: number;
 }
 

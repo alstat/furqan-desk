@@ -52,13 +52,15 @@
     import Icon from "@iconify/svelte";
     import { buckwalterToArabic } from "$lib/functions/utils/utils";
     import { fly } from "svelte/transition";
-    import { onDestroy } from "svelte";
+    import { onDestroy, tick } from "svelte";
     import { morphGlassEffect } from "$lib/stores/morphology.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { locale, t } from '$lib/i18n';
     import { get } from 'svelte/store';
     import { openHelp } from '$lib/stores/help.store';
     import { lexicalEditorInstance } from '$lib/stores/editor.store';
+    import { isPro } from '$lib/stores/auth.store';
+    import { askAiAboutSelection } from '$lib/stores/ai-chat.store';
     import {
         $createTableNode as createTableNode,
         $createTableRowNode as createTableRowNode,
@@ -271,6 +273,7 @@
         'l:IMPV':'Imperative lam (li-)',
         'l:PRP': 'Purpose lam (li-)',
         'w:CONJ':'Conjunction (wa-)',
+        'w:REM': 'Resumption particle (wa-)',
         'f:CONJ':'Conjunction (fa-)',
         'w:P':   'Preposition (wa-)',
         'k:P':   'Preposition (ka-)',
@@ -381,6 +384,54 @@
             insertNodeToNearestRoot(createParagraphNode());
         });
     }
+
+    // --- AI prompt about this word (Pro) ---
+    let aiPromptOpen = $state(false);
+    let aiPromptText = $state('');
+    let aiPromptInput: HTMLInputElement | null = $state(null);
+
+    function buildWordMorphologyContext(): string {
+        const tFn = get(t);
+        const lines: string[] = [];
+        lines.push(`Surah ${surahNum}, Ayah ${ayahNum}, Word ${word.word}`);
+        lines.push(`Arabic: ${word.combined_arabic}`);
+        if (wordMeaning) lines.push(`Meaning: ${wordMeaning}`);
+        lines.push(`Tokens (${word.tokens.length}):`);
+        for (const token of word.tokens) {
+            lines.push(`- ${token.tag_name}: ${token.form_arabic} (${token.form_buckwalter})`);
+            for (const { key, labelKey, arabic } of FEATURES) {
+                const val = token.features[key];
+                if (!val) continue;
+                const rawVal = val as string;
+                const displayVal = arabic
+                    ? buckwalterToArabic(rawVal)
+                    : translateFeatureValue(tFn, key, rawVal);
+                lines.push(`    ${tFn(labelKey)}: ${displayVal}`);
+            }
+        }
+        return lines.join('\n');
+    }
+
+    async function toggleAiPrompt() {
+        aiPromptOpen = !aiPromptOpen;
+        if (aiPromptOpen) {
+            await tick();
+            aiPromptInput?.focus();
+        }
+    }
+
+    function submitAiPrompt() {
+        const prompt = aiPromptText.trim();
+        if (!prompt) return;
+        askAiAboutSelection({
+            prompt,
+            selectedText: word.combined_arabic,
+            contextPrompt: buildWordMorphologyContext(),
+        });
+        aiPromptOpen = false;
+        aiPromptText = '';
+        onClose();
+    }
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -427,7 +478,17 @@
                     title={$t('highlight.word_highlight')}
                     class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 dark:text-[#838ba7] transition-all hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-brand-gold-500 dark:hover:text-[#e5c890] active:scale-95"
                 >
-                    <Icon icon="solar:magic-stick-3-bold-duotone" width="14" />
+                    <Icon icon="solar:pen-new-square-bold-duotone" width="14" />
+                </button>
+            {/if}
+            {#if $isPro}
+                <button
+                    onclick={toggleAiPrompt}
+                    aria-label={$t('morphology.ai_ask_word')}
+                    title={$t('morphology.ai_ask_word')}
+                    class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 dark:text-[#838ba7] transition-all hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-brand-gold-500 dark:hover:text-[#e5c890] active:scale-95 {aiPromptOpen ? 'bg-slate-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]' : ''}"
+                >
+                    <Icon icon="ri:chat-smile-ai-fill" width="14" />
                 </button>
             {/if}
             {#if onPin}
@@ -448,6 +509,32 @@
             </button>
         </div>
     </div>
+
+    {#if aiPromptOpen}
+        <div class="shrink-0 border-b border-slate-100 dark:border-[#414559] bg-brand-sand-50/60 dark:bg-[#232634]/60 px-3 py-2">
+            <div class="flex items-center gap-1.5">
+                <input
+                    bind:this={aiPromptInput}
+                    bind:value={aiPromptText}
+                    placeholder={$t('morphology.ai_word_placeholder')}
+                    class="min-w-0 flex-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+                    onkeydown={(e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); submitAiPrompt(); }
+                        else if (e.key === 'Escape') { aiPromptOpen = false; }
+                    }}
+                />
+                <button
+                    onclick={submitAiPrompt}
+                    disabled={!aiPromptText.trim()}
+                    aria-label={$t('morphology.ai_ask_word')}
+                    title={$t('morphology.ai_ask_word')}
+                    class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 hover:dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                    <Icon icon="solar:plain-bold-duotone" width="0.85rem" />
+                </button>
+            </div>
+        </div>
+    {/if}
 
     <!-- Token list -->
     <div class="default-scroll flex-1 space-y-2.5 overflow-y-auto p-3">

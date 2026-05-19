@@ -4,10 +4,13 @@
     import GroupCards from "../cards/GroupCards.svelte";
     import {
         editorTheme,
+        editorThemeSlots,
+        ALL_EDITOR_THEMES,
         cmFontSize,
         appDarkMode,
         singlePageMargin,
     } from "$lib/stores/editor.store";
+    import EditorThemeSelectDialog from "./EditorThemeSelectDialog.svelte";
     import { createTab, tabs, activeTabId } from "$lib/stores/tabs.store";
     import { hideSurahPage, isSidebar, surahOrientation } from "$lib/stores/quran.svelte";
     import { rotateSpring } from "$lib/stores/animation";
@@ -16,6 +19,7 @@
 
     // ── create new tab ─────────────────────────────────────────────────────────
     let showNewOptions = $state(false);
+    let themeDialogOpen = $state(false);
 
     function createNew(type: "lexical" | "typst" | "julia") {
         const tab = createTab(type);
@@ -141,28 +145,37 @@
         <!-- Editor Theme -->
         <div>
             <span class={labelClass}>{$t('editor.editor_theme')}</span>
-            <div class="flex gap-2 mt-1.5">
-                <button
-                    onclick={() => editorTheme.set("ayu-light")}
-                    class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
-						${
-                            $editorTheme === "ayu-light"
-                                ? "bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90"
+            <div class="flex gap-2 mt-1.5 items-center">
+                {#each $editorThemeSlots as themeId (themeId)}
+                    {@const info = ALL_EDITOR_THEMES.find((t) => t.id === themeId)}
+                    <button
+                        onclick={() => editorTheme.set(themeId)}
+                        title={info?.label ?? themeId}
+                        class={`cursor-pointer flex-1 min-w-0 overflow-hidden px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors ${
+                            $editorTheme === themeId
+                                ? info?.dark
+                                    ? "bg-[#1f2430] text-[#ffa759] border-[#ffa759]"
+                                    : "bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 border-transparent"
                                 : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]"
                         }`}
-                >
-                    Ayu Light
-                </button>
+                    >
+                        <span
+                            class="block whitespace-nowrap [mask-image:linear-gradient(to_right,#000_82%,transparent)] [-webkit-mask-image:linear-gradient(to_right,#000_82%,transparent)]"
+                        >
+                            {info?.label ?? themeId}
+                        </span>
+                    </button>
+                {/each}
                 <button
-                    onclick={() => editorTheme.set("ayu-mirage")}
-                    class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
-						${
-                            $editorTheme === "ayu-mirage"
-                                ? "bg-[#1f2430] text-[#ffa759] border-[#ffa759]"
-                                : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]"
-                        }`}
+                    onclick={() => (themeDialogOpen = true)}
+                    title="Choose editor themes"
+                    aria-label="Choose editor themes"
+                    class="cursor-pointer shrink-0 flex h-7 w-7 items-center justify-center rounded-full border
+                           border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
+                           dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559]
+                           text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors"
                 >
-                    Ayu Mirage
+                    <Icon icon="solar:settings-bold-duotone" width="0.8rem" />
                 </button>
             </div>
         </div>
@@ -310,4 +323,9 @@
     {collapsedIcon}
     xPosition={"left"}
     id="tour-editor-toolbar"
+/>
+
+<EditorThemeSelectDialog
+    open={themeDialogOpen}
+    onClose={() => (themeDialogOpen = false)}
 />
