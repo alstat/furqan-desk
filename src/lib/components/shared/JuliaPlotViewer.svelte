@@ -15,6 +15,20 @@
     let plots = $derived($juliaPlots);
     let currentPlot = $derived<JuliaPlot | undefined>(plots[currentIndex]);
     let hasPlots = $derived(plots.length > 0);
+    // Plotly plots are an interactive HTML document — rendered in an iframe,
+    // so the image zoom/pan controls don't apply to them.
+    let isPlotly = $derived(currentPlot?.format === "plotly");
+
+    // Decode a base64 payload holding UTF-8 text (the Plotly HTML document).
+    function decodeB64Utf8(b64: string): string {
+        const bin = atob(b64);
+        const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+    }
+    // srcdoc for a Plotly plot — decoded HTML with a small margin reset.
+    function plotlyIframeDoc(b64: string): string {
+        return "<style>html,body{margin:0;}</style>" + decodeB64Utf8(b64);
+    }
 
     // Panel position (viewport px)
     let x = $state(0);
@@ -237,7 +251,16 @@
         onclick={() => (zoomed = false)}
         onkeydown={(e) => e.key === "Escape" && (zoomed = false)}
     >
-        {#if currentPlot.format === "svg"}
+        {#if currentPlot.format === "plotly"}
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+            <iframe
+                title={$t("julia.fullscreen_alt")}
+                srcdoc={plotlyIframeDoc(currentPlot.data)}
+                class="w-[94vw] h-[94vh] rounded-xl bg-white shadow-2xl"
+                sandbox="allow-scripts allow-same-origin"
+                onclick={(e) => e.stopPropagation()}
+            ></iframe>
+        {:else if currentPlot.format === "svg"}
             <div
                 role="presentation"
                 class="max-w-[94vw] max-h-[94vh] overflow-auto"
@@ -378,12 +401,20 @@
                     class="flex-1 min-h-0 overflow-hidden flex items-center justify-center relative
 			            bg-white dark:bg-[#1e2030] p-2
 			            {currentPlot && imgScale > 1 ? 'cursor-grab' : 'cursor-default'}"
-                    onwheel={currentPlot ? onWheel : undefined}
+                    onwheel={currentPlot && !isPlotly ? onWheel : undefined}
                     onpointerdown={currentPlot ? startPan : undefined}
                     onpointermove={currentPlot ? onPan : undefined}
                     onpointerup={stopPan}
                 >
-                    {#if currentPlot.format === "svg"}
+                    {#if currentPlot.format === "plotly"}
+                        <!-- Interactive Plotly figure embedded as an HTML doc. -->
+                        <iframe
+                            title={$t("julia.viewer_label")}
+                            srcdoc={plotlyIframeDoc(currentPlot.data)}
+                            class="w-full h-full rounded bg-white"
+                            sandbox="allow-scripts allow-same-origin"
+                        ></iframe>
+                    {:else if currentPlot.format === "svg"}
                         <div
                             class="max-w-full max-h-full select-none pointer-events-none"
                             style="transform: scale({imgScale}) translate({imgTranslateX /
@@ -411,6 +442,7 @@
 
                     <!-- Zoom controls (top-right overlay) -->
                     <div class="absolute top-3 right-3 flex flex-col gap-1">
+                        {#if !isPlotly}
                         <button
                             onclick={() =>
                                 (imgScale = Math.min(
@@ -460,6 +492,7 @@
                                     width="0.85rem"
                                 />
                             </button>
+                        {/if}
                         {/if}
                         <button
                             onclick={() => (zoomed = true)}

@@ -2,6 +2,8 @@
     import { onMount } from "svelte";
     import { fly } from "svelte/transition";
     import Icon from "@iconify/svelte";
+    // Registers the Julia slash-command icon offline (no Iconify API call).
+    import "$lib/icons/julia-cell-icons";
     import { icons } from "$lib/data/toolbar/toolbar.js";
     import { getEditor } from "$lexical/core/composerContext.js";
     import {
@@ -90,7 +92,7 @@
             id: "julia",
             label: $t("slash.julia_label"),
             description: $t("slash.julia_desc"),
-            icon: "tabler:brand-julia",
+            icon: "devicon-plain:julia",
         },
     ]);
 

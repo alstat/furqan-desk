@@ -780,10 +780,13 @@
 
     onMount(() => {
         const unlistenJulia = listen<{
+            kernel: string;
             chunk: string;
             is_done: boolean;
             error: string | null;
         }>("julia-output", (event) => {
+            // The notebook cells run on their own "cell" kernel — ignore those.
+            if (event.payload.kernel !== "repl") return;
             const { chunk, is_done, error } = event.payload;
             if (chunk) {
                 const lines = chunk.split("\n");
@@ -799,9 +802,14 @@
                         const cmd = JSON.parse(
                             cmdLine.slice("__AL_CMD__:".length),
                         );
-                        if (cmd.type === "plot") {
+                        if (
+                            cmd.type === "plot" &&
+                            (cmd.format === "png" ||
+                                cmd.format === "svg" ||
+                                cmd.format === "plotly")
+                        ) {
                             const { format, data } = cmd as {
-                                format: "png" | "svg";
+                                format: "png" | "svg" | "plotly";
                                 data: string;
                             };
                             juliaPlots.update((plots) => [

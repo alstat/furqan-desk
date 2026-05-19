@@ -700,8 +700,8 @@ export const TRANSLATION_LINE_SPACING_BOUNDS = {
 
 export interface JuliaPlot {
   id: string;
-  format: "png" | "svg";
-  data: string; // base64-encoded image bytes
+  format: "png" | "svg" | "plotly";
+  data: string; // base64 — image bytes for png/svg, an HTML document for plotly
   timestamp: number;
 }
 
