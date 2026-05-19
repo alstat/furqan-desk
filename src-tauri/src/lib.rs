@@ -112,6 +112,7 @@ pub fn run() {
             julia::install_julia,
             julia::start_julia_repl,
             julia::run_julia_code,
+            julia::interrupt_julia,
             julia::julia_complete,
             julia::julia_definition,
             julia::julia_format,
@@ -143,8 +144,8 @@ pub fn run() {
             if let tauri::WindowEvent::Destroyed = event {
                 // Clean up Julia process to avoid zombies
                 if let Some(state) = window.try_state::<julia::JuliaState>() {
-                    if let Ok(mut guard) = state.process.lock() {
-                        guard.take(); // drop stdin → Julia exits
+                    if let Ok(mut guard) = state.processes.lock() {
+                        guard.clear(); // drop stdin of every kernel → Julia exits
                     }
                 }
             }

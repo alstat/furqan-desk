@@ -1,6 +1,8 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
     import Icon from "@iconify/svelte";
+    // Registers the cell's icons offline so they render without the Iconify API.
+    import "$lib/icons/julia-cell-icons";
     import { EditorView, keymap, lineNumbers } from "@codemirror/view";
     import { EditorState, Compartment } from "@codemirror/state";
     import {
@@ -11,15 +13,24 @@
     } from "@codemirror/commands";
     import { syntaxHighlighting } from "@codemirror/language";
     import { getEditor } from "$lexical/core/composerContext.js";
-    import { $getNodeByKey as getNodeByKey } from "lexical";
+    import {
+        $getNodeByKey as getNodeByKey,
+        $getRoot as getRoot,
+        $isElementNode as isElementNode,
+        type LexicalNode,
+    } from "lexical";
     import {
         $isJuliaCellNode as isJuliaCellNode,
         type JuliaCellDisplayMode,
     } from "./JuliaCellNode";
     import {
         runJuliaCell,
+        interruptJuliaCell,
+        restartJuliaKernel,
         juliaCellFontSize,
         juliaCellLineHeight,
+        juliaCellRunners,
+        juliaCellClearers,
         type JuliaCellPlot,
     } from "$lib/stores/julia-notebook";
     import {
@@ -68,10 +79,18 @@
     let runCount = $state(0);
     let mode = $state<JuliaCellDisplayMode>(displayMode);
     let codeWrap = $state(true);
+    // Font size / line height controls stay collapsed by default — they're
+    // typically set once when the cell is created and rarely touched after.
+    let showSizeOptions = $state(false);
 
     let hasRun = $derived(runCount > 0 || output !== "" || plots.length > 0);
     let showCode = $derived(mode !== "output");
     let showOutput = $derived(mode !== "code");
+    // True when a plot is the visible output — used to drop the cell border
+    // and chrome so the plot is shown unobstructed.
+    let plotUnboxed = $derived(
+        showOutput && hasRun && livePlots.length > 0,
+    );
 
     // Caret colour follows the app theme — matches the code text in each mode.
     let caretColor = $derived($appDarkMode ? "#c6d0f5" : "#2f2f2f");
@@ -158,6 +177,23 @@
         { id: "output", icon: "tabler:terminal-2" },
     ];
 
+    // Decode a base64 payload that holds UTF-8 text (e.g. a Plotly HTML
+    // document) — plain atob() would mangle any non-ASCII bytes.
+    function decodeB64Utf8(b64: string): string {
+        const bin = atob(b64);
+        const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+    }
+
+    // Build the srcdoc for a Plotly plot — decode the HTML and inject a style
+    // reset so a fixed-width figure can't produce a horizontal scrollbar.
+    function plotlyIframeDoc(b64: string): string {
+        return (
+            "<style>html,body{margin:0;overflow-x:hidden;}</style>" +
+            decodeB64Utf8(b64)
+        );
+    }
+
     function highlightExt(dark: boolean) {
         return syntaxHighlighting(
             dark ? juliaDarkHighlight : juliaLightHighlight,
@@ -235,6 +271,89 @@
                 node.setResult(result.text, result.hasError, result.plots);
             }
         });
+    }
+
+    // Stop the running cell. Prefer a SIGINT-based interrupt (keeps the kernel
+    // and its state alive); fall back to a full kernel restart on platforms
+    // where interrupting isn't supported.
+    async function stop() {
+        if (!running) return;
+        try {
+            await interruptJuliaCell();
+        } catch {
+            await restartJuliaKernel();
+            running = false;
+        }
+    }
+
+    // Wipe this cell's output and run count, and clear the persisted result on
+    // the node so a kernel restart leaves no stale output behind.
+    function clearOutput() {
+        liveOutput = "";
+        liveError = false;
+        livePlots = [];
+        runCount = 0;
+        editor.update(() => {
+            const node = getNodeByKey(nodeKey);
+            if (node && isJuliaCellNode(node)) {
+                node.setResult("", false, []);
+            }
+        });
+    }
+
+    let restarting = $state(false);
+    // Restart the shared Julia kernel — clears all variables and loaded
+    // packages, and wipes every cell's output so the reset is visible.
+    async function restartKernel() {
+        if (restarting) return;
+        restarting = true;
+        try {
+            await restartJuliaKernel();
+            juliaCellClearers.forEach((clear) => clear());
+        } finally {
+            restarting = false;
+            running = false;
+        }
+    }
+
+    // Run-button split menu — lets the user pick "Run cell" vs "Run all".
+    // The menu is positioned `fixed` (anchored to the caret at open time) so
+    // it isn't clipped by the cell's `overflow-hidden` container, which would
+    // otherwise hide it on short/empty cells.
+    let showRunMenu = $state(false);
+    let runMenuPos = $state<{ x: number; y: number }>({ x: 0, y: 0 });
+
+    function toggleRunMenu(event: MouseEvent) {
+        if (showRunMenu) {
+            showRunMenu = false;
+            return;
+        }
+        const rect = (
+            event.currentTarget as HTMLElement
+        ).getBoundingClientRect();
+        runMenuPos = { x: rect.right, y: rect.bottom + 3 };
+        showRunMenu = true;
+    }
+
+    // Run every Julia cell in the document, in document order, starting from
+    // the first. Each cell's own run() drives its UI and persists its result;
+    // the shared kernel queue keeps execution strictly sequential.
+    async function runAll() {
+        showRunMenu = false;
+        const keys: string[] = [];
+        editor.getEditorState().read(() => {
+            const collect = (node: LexicalNode) => {
+                if (isJuliaCellNode(node)) {
+                    keys.push(node.getKey());
+                } else if (isElementNode(node)) {
+                    node.getChildren().forEach(collect);
+                }
+            };
+            getRoot().getChildren().forEach(collect);
+        });
+        for (const key of keys) {
+            await juliaCellRunners.get(key)?.();
+        }
     }
 
     // Re-theme the CodeMirror highlight whenever the app light/dark mode flips.
@@ -318,6 +437,11 @@
 
         view = new EditorView({ state, parent: editorHost });
 
+        // Expose this cell's run handler so "Run all" can drive it, and its
+        // clear handler so a kernel restart can wipe its output.
+        juliaCellRunners.set(nodeKey, run);
+        juliaCellClearers.set(nodeKey, clearOutput);
+
         if (autoEdit) {
             tick().then(() => view?.focus());
             editor.update(() => {
@@ -329,6 +453,8 @@
         }
 
         return () => {
+            juliaCellRunners.delete(nodeKey);
+            juliaCellClearers.delete(nodeKey);
             persistCode();
             view?.destroy();
             view = null;
@@ -337,17 +463,26 @@
 </script>
 
 <div
-    class="julia-cell my-0.5 flex flex-col overflow-hidden rounded-md border border-brand-sand-200 dark:border-[#363a4f]"
+    class="julia-cell my-0.5 flex flex-col overflow-hidden rounded-md {plotUnboxed
+        ? ''
+        : 'border border-brand-sand-200 dark:border-[#363a4f]'}"
     class:julia-cell-selected={$isSelected}
     style="--julia-cell-code-font-size: {$juliaCellFontSize}px; --julia-cell-code-line-height: {$juliaCellLineHeight}; --julia-cell-caret: {caretColor}"
 >
-    <!-- Header — kept low-contrast so the block recedes behind the code -->
+    <!-- Header + code input wrapper — when the output is shown unboxed, this
+         keeps the sand border around just the header and code, not the plot. -->
     <div
-        class="flex items-center justify-between border-b border-brand-sand-200 dark:border-[#363a4f] px-2 py-0.5"
+        class={plotUnboxed
+            ? "flex flex-col overflow-hidden rounded-md border border-brand-sand-200 dark:border-[#363a4f]"
+            : "contents"}
     >
+        <!-- Header — kept low-contrast so the block recedes behind the code -->
+        <div
+            class="flex items-center justify-between border-b border-brand-sand-200 dark:border-[#363a4f] px-2 py-0.5"
+        >
         <span class="flex items-center gap-1.5 select-none">
             <Icon
-                icon="tabler:brand-julia"
+                icon="devicon-plain:julia"
                 class="text-brand-charcoal-300 dark:text-[#626880]"
                 width="0.8rem"
             />
@@ -364,6 +499,22 @@
         </span>
 
         <span class="flex items-center gap-1.5">
+            <!-- Size-options toggle — collapses the font size / line height controls -->
+            <button
+                onclick={() => (showSizeOptions = !showSizeOptions)}
+                title={showSizeOptions
+                    ? "Hide text size options"
+                    : "Show text size options"}
+                aria-pressed={showSizeOptions}
+                aria-label="Toggle text size options"
+                class="flex h-[22px] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 transition-colors dark:border-[#414559] {showSizeOptions
+                    ? 'bg-brand-gold-200 text-brand-charcoal-900 dark:bg-[#414559] dark:text-[#c6d0f5]'
+                    : 'text-brand-charcoal-300 hover:bg-brand-sand-100 hover:text-brand-charcoal-900 dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]'}"
+            >
+                <Icon icon="tabler:text-size" width="0.8rem" />
+            </button>
+
+            {#if showSizeOptions}
             <!-- Code font size -->
             <span
                 class="flex h-[22px] items-center overflow-hidden rounded-md border border-brand-sand-200 dark:border-[#414559]"
@@ -423,6 +574,7 @@
                     />
                 </button>
             </span>
+            {/if}
 
             <!-- Line wrap toggle -->
             <button
@@ -460,39 +612,119 @@
                 {/each}
             </span>
 
-            <!-- Run -->
+            <!-- Restart kernel -->
             <button
-                onclick={run}
-                disabled={running}
-                title="{$t('julia_cell.run')} (Ctrl/Cmd+Enter)"
-                class="flex h-[22px] cursor-pointer items-center gap-1 rounded-md border border-brand-sand-200 px-2 font-sans text-[10px] font-semibold text-brand-gold-600 transition-colors hover:bg-brand-gold-100 disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent dark:border-[#414559] dark:text-brand-gold-400 dark:hover:bg-[#414559]"
+                onclick={restartKernel}
+                disabled={restarting}
+                title="Restart Julia kernel (clears all variables)"
+                aria-label="Restart Julia kernel"
+                class="flex h-[22px] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent dark:border-[#414559] dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
             >
-                {#if running}
-                    <Icon icon="svg-spinners:90-ring-with-bg" width="0.7rem" />
-                    {$t("julia_cell.running")}
-                {:else}
-                    <Icon icon="solar:play-bold" width="0.7rem" />
-                    {$t("julia_cell.run")}
-                {/if}
+                <Icon
+                    icon="solar:restart-bold"
+                    class={restarting ? "animate-spin" : ""}
+                    width="0.8rem"
+                />
             </button>
+
+            <!-- Run / Stop -->
+            {#if running}
+                <button
+                    onclick={stop}
+                    title="Stop the running cell"
+                    class="flex h-[22px] cursor-pointer items-center gap-1 rounded-md border border-red-200 px-2 font-sans text-[10px] font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-500/40 dark:text-red-400 dark:hover:bg-red-500/10"
+                >
+                    <Icon icon="solar:stop-bold" width="0.7rem" />
+                    {$t("julia_cell.stop")}
+                </button>
+            {:else}
+                <!-- Run split button — main runs this cell, caret opens options -->
+                <span class="relative flex items-center">
+                    <button
+                        onclick={run}
+                        title="{$t('julia_cell.run')} (Ctrl/Cmd+Enter)"
+                        class="flex h-[22px] cursor-pointer items-center gap-1 rounded-l-md border border-r-0 border-brand-sand-200 px-2 font-sans text-[10px] font-semibold text-brand-gold-600 transition-colors hover:bg-brand-gold-100 disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent dark:border-[#414559] dark:text-brand-gold-400 dark:hover:bg-[#414559]"
+                    >
+                        <Icon icon="solar:play-bold" width="0.7rem" />
+                        {$t("julia_cell.run")}
+                    </button>
+                    <button
+                        onclick={toggleRunMenu}
+                        title={$t("julia_cell.run_options")}
+                        aria-label={$t("julia_cell.run_options")}
+                        aria-expanded={showRunMenu}
+                        class="flex h-[22px] w-5 cursor-pointer items-center justify-center rounded-r-md border border-brand-sand-200 text-brand-gold-600 transition-colors hover:bg-brand-gold-100 dark:border-[#414559] dark:text-brand-gold-400 dark:hover:bg-[#414559]"
+                    >
+                        <Icon icon="tabler:chevron-down" width="0.65rem" />
+                    </button>
+
+                    {#if showRunMenu}
+                        <!-- Click-away backdrop -->
+                        <button
+                            class="fixed inset-0 z-[60] cursor-default"
+                            aria-label="Close run menu"
+                            onclick={() => (showRunMenu = false)}
+                        ></button>
+                        <div
+                            class="fixed z-[61] flex min-w-[7rem] -translate-x-full flex-col overflow-hidden rounded-md border border-brand-sand-200 bg-white py-0.5 shadow-md dark:border-[#414559] dark:bg-[#292c3c]"
+                            style="left: {runMenuPos.x}px; top: {runMenuPos.y}px;"
+                        >
+                            <button
+                                onclick={() => {
+                                    showRunMenu = false;
+                                    void run();
+                                }}
+                                class="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-left font-sans text-[10px] text-brand-charcoal-700 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                            >
+                                <Icon icon="solar:play-bold" width="0.7rem" />
+                                {$t("julia_cell.run_cell")}
+                            </button>
+                            <button
+                                onclick={runAll}
+                                class="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-left font-sans text-[10px] text-brand-charcoal-700 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                            >
+                                <Icon
+                                    icon="solar:play-stream-bold"
+                                    width="0.7rem"
+                                />
+                                {$t("julia_cell.run_all")}
+                            </button>
+                        </div>
+                    {/if}
+                </span>
+            {/if}
         </span>
     </div>
 
     <!-- Code input — host stays mounted (hidden) so the editor survives toggles -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- Stop keyboard/clipboard events from bubbling to the Lexical root —
+         otherwise a paste into CodeMirror is also handled by Lexical, which
+         inserts the same text as a paragraph below the cell. -->
     <div
         bind:this={editorHost}
         dir="ltr"
         onkeydown={(e) => e.stopPropagation()}
+        onpaste={(e) => e.stopPropagation()}
+        oncopy={(e) => e.stopPropagation()}
+        oncut={(e) => e.stopPropagation()}
         class="julia-cell-editor px-2 py-1.5 bg-brand-sand-50 dark:bg-[#232634] text-brand-charcoal-900 dark:text-[#c6d0f5]"
         class:hidden={!showCode}
         style={!showCode ? "display:none" : ""}
     ></div>
+    </div>
+    <!-- end header + code input wrapper -->
 
-    <!-- Output -->
-    {#if showOutput && hasRun}
+    <!-- Output — only rendered when the run actually produced something, so a
+         cell like `using Statistics` shows no empty output panel -->
+    {#if showOutput && hasRun && (liveOutput || livePlots.length > 0)}
+        <!-- The negative bottom margin is dropped for plots: with a white
+             plot background it would bleed under the paragraphs below the
+             cell, hiding the editor caret on empty lines. -->
         <div
-            class="flow-root border-t border-brand-sand-200 dark:border-[#363a4f] py-1 -mb-5.5 bg-brand-sand-50 dark:bg-[#1e2030] px-2"
+            class="flow-root py-1 px-2 {livePlots.length > 0
+                ? 'bg-white dark:bg-white'
+                : '-mb-5.5 border-t border-brand-sand-200 dark:border-[#363a4f] bg-brand-sand-50 dark:bg-[#1e2030]'}"
             class:border-t-0={!showCode}
         >
             {#if liveOutput}
@@ -501,13 +733,36 @@
                         ? 'text-red-600 dark:text-red-400'
                         : 'text-brand-charcoal-900 dark:text-[#c6d0f5]'}">{liveOutput}</pre>
             {/if}
-            {#each livePlots as plot (plot.data)}
-                {#if plot.format === "svg"}
+            {#each livePlots as plot, i (plot.url ?? plot.data ?? i)}
+                {#if plot.format === "html" && plot.url}
+                    <!-- Interactive WGLMakie/Bonito plot served by the kernel.
+                         allow-scripts + allow-same-origin are required for
+                         WebGL and the Bonito WebSocket connection. -->
+                    <iframe
+                        class="mt-0.5 w-full rounded"
+                        style="height: 420px;"
+                        src={plot.url}
+                        title={$t("julia_cell.plot_alt")}
+                        sandbox="allow-scripts allow-same-origin"
+                    ></iframe>
+                {:else if plot.format === "plotly" && plot.data}
+                    <!-- Interactive PlotlyJS figure — a self-contained HTML
+                         document embedded via srcdoc. allow-scripts runs the
+                         inline Plotly bootstrap; allow-same-origin lets it
+                         load the Plotly library. -->
+                    <iframe
+                        class="mt-0.5 w-full rounded"
+                        style="height: 520px;"
+                        srcdoc={plotlyIframeDoc(plot.data)}
+                        title={$t("julia_cell.plot_alt")}
+                        sandbox="allow-scripts allow-same-origin"
+                    ></iframe>
+                {:else if plot.format === "svg" && plot.data}
                     <div class="mt-0.5 max-w-full overflow-auto">
                         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                         {@html atob(plot.data)}
                     </div>
-                {:else}
+                {:else if plot.data}
                     <img
                         class="mt-0.5 max-w-full rounded"
                         src="data:image/png;base64,{plot.data}"
@@ -523,18 +778,18 @@
             {/if}
         </div>
     {/if}
-</div>
 
-{#if $isPro && aiSelection}
-    <AiSelectionToolbar
-        selectedText={aiSelection.text}
-        x={aiSelection.x}
-        y={aiSelection.y}
-        contextPrompt={`This text is a selection from a Julia code cell. Full cell source:\n\n${editCode}`}
-        onReplace={replaceAiSelection}
-        onClose={() => (aiSelection = null)}
-    />
-{/if}
+    {#if $isPro && aiSelection}
+        <AiSelectionToolbar
+            selectedText={aiSelection.text}
+            x={aiSelection.x}
+            y={aiSelection.y}
+            contextPrompt={`This text is a selection from a Julia code cell. Full cell source:\n\n${editCode}`}
+            onReplace={replaceAiSelection}
+            onClose={() => (aiSelection = null)}
+        />
+    {/if}
+</div>
 
 <style>
     .julia-cell-editor :global(.cm-editor) {

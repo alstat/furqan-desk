@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -7,9 +8,14 @@ use tokio::sync::mpsc;
 
 // ── State ────────────────────────────────────────────────────────────────────
 
+/// Default kernel name when a command doesn't specify one.
+const DEFAULT_KERNEL: &str = "repl";
+
 pub struct JuliaState {
-    /// The running REPL process, if any.
-    pub process: Mutex<Option<JuliaProcess>>,
+    /// Running Julia processes, keyed by kernel name. There are two:
+    /// `"repl"` backs the REPL pane, `"cell"` backs the notebook code cells,
+    /// so the two have independent variables and loaded packages.
+    pub processes: Mutex<HashMap<String, JuliaProcess>>,
     /// User-specified binary path, persisted across sessions.
     pub custom_path: Mutex<Option<PathBuf>>,
 }
@@ -17,9 +23,18 @@ pub struct JuliaState {
 impl JuliaState {
     pub fn new(custom_path: Option<PathBuf>) -> Self {
         Self {
-            process: Mutex::new(None),
+            processes: Mutex::new(HashMap::new()),
             custom_path: Mutex::new(custom_path),
         }
+    }
+}
+
+/// Bonito server port for interactive WGLMakie plots — distinct per kernel so
+/// two kernels loading WGLMakie don't fight over the same socket.
+fn bonito_port(kernel: &str) -> u16 {
+    match kernel {
+        "cell" => 9182,
+        _ => 9181,
     }
 }
 
@@ -27,6 +42,8 @@ pub struct JuliaProcess {
     /// Wrapped in Arc<tokio::sync::Mutex> so we can clone the handle,
     /// drop the outer std::sync::MutexGuard, then await the write.
     stdin: Arc<tokio::sync::Mutex<tokio::process::ChildStdin>>,
+    /// OS process id of the kernel — used to deliver SIGINT for `interrupt_julia`.
+    pid: Option<u32>,
     abort_tx: mpsc::Sender<()>,
     /// One-shot channel slot: set by `julia_complete`, consumed by the stdout reader.
     completion_tx: Arc<std::sync::Mutex<Option<tokio::sync::oneshot::Sender<Vec<String>>>>>,
@@ -386,6 +403,93 @@ end
 # Re-entrancy guard: prevents recursive display calls (e.g. when a show method
 # internally calls display(), which would loop back here).
 const _al_rendering = Ref(false)
+
+# ── Interactive (WGLMakie + Bonito) plotting ─────────────────────────────────
+# When the user has loaded WGLMakie, Makie figures are served as an interactive
+# WebGL page by a Bonito server running inside this kernel; the cell embeds that
+# page in an <iframe>. GLMakie and CairoMakie figures instead fall through to
+# the PNG/SVG path below — GLMakie cannot embed in a webview, so the best it can
+# do here is a static frame rendered offscreen via show(MIME"image/png").
+const _AL_BONITO_PORT = parse(Int, get(ENV, "AL_BONITO_PORT", "9181"))
+const _al_bonito_server = Ref{Any}(nothing)
+const _al_bonito_seq = Ref(0)
+
+# Look up an already-loaded module by name WITHOUT triggering a package load,
+# so probing never force-imports Makie/WGLMakie/Bonito.
+function _al_loaded(name::Symbol)
+  isdefined(Main, name) && return getfield(Main, name)
+  for m in values(Base.loaded_modules)
+    try; nameof(m) === name && return m; catch; end
+  end
+  return nothing
+end
+
+function _al_is_makie(x)
+  M = _al_loaded(:Makie)
+  M === nothing && return false
+  try
+    return x isa M.Figure || x isa M.FigureAxisPlot ||
+           x isa M.Scene  || x isa M.AbstractPlot
+  catch
+    return false
+  end
+end
+
+# Render a PlotlyJS plot as a self-contained interactive HTML document.
+# Returns the HTML string, or nothing when PlotlyJS isn't loaded or `x` is
+# not a PlotlyJS plot — so non-plot objects (DataFrames, etc.) never get
+# routed here even though they may also define a text/html show method.
+function _al_plotly_html(x)
+  P = _al_loaded(:PlotlyJS)
+  P === nothing && return nothing
+  isplotly = try
+    (isdefined(P, :Plot) && x isa P.Plot) ||
+    (isdefined(P, :SyncPlot) && x isa P.SyncPlot)
+  catch
+    false
+  end
+  isplotly || return nothing
+  # PlotlyJS `plot(...)` returns a SyncPlot wrapping a Plot; `to_html`/show
+  # for text/html is defined on the inner Plot.
+  plt = x
+  try
+    if isdefined(P, :SyncPlot) && x isa P.SyncPlot
+      plt = x.plot
+    end
+  catch
+  end
+  io = IOBuffer()
+  ok = try
+    Base.invokelatest(show, io, MIME("text/html"), plt)
+    true
+  catch
+    false
+  end
+  ok && position(io) > 0 ? String(take!(io)) : nothing
+end
+
+# Serve `x` as an interactive Bonito page; returns its localhost URL, or
+# nothing when WGLMakie/Bonito are unavailable or serving fails.
+function _al_try_interactive(x)
+  Bonito   = _al_loaded(:Bonito)
+  WGLMakie = _al_loaded(:WGLMakie)
+  (Bonito === nothing || WGLMakie === nothing) && return nothing
+  _al_is_makie(x) || return nothing
+  try
+    if _al_bonito_server[] === nothing
+      _al_bonito_server[] =
+        Base.invokelatest(Bonito.Server, "127.0.0.1", _AL_BONITO_PORT)
+    end
+    _al_bonito_seq[] += 1
+    route = "/cell/" * string(_al_bonito_seq[])
+    app = Base.invokelatest(Bonito.App, x)
+    Base.invokelatest(Bonito.route!, _al_bonito_server[], route => app)
+    return "http://127.0.0.1:" * string(_AL_BONITO_PORT) * route
+  catch
+    return nothing
+  end
+end
+
 # Returns :ok (rendered), :skip (re-entrant — caller does nothing),
 #         or :text (no image support — caller may use text display).
 # Does NOT use showable(): CairoMakie defines show for Figure but not always
@@ -400,15 +504,37 @@ function _al_try_plot(x)
   local cands = Any[x]
   try; hasproperty(x, :figure) && push!(cands, x.figure); catch; end
   try
-    for obj in cands
-      io = IOBuffer()
-      ok = try; Base.invokelatest(show, io, MIME("image/png"), obj); true; catch; false; end
-      if ok && position(io) > 0
-        b64 = Base64.base64encode(take!(io))
-        println(stdout, "__AL_CMD__:{\"type\":\"plot\",\"format\":\"png\",\"data\":\"" * b64 * "\"}")
+    # Interactive WGLMakie page takes precedence when available.
+    url = _al_try_interactive(x)
+    if url !== nothing
+      esc = replace(url, "\"" => "\\\"")
+      println(stdout, "__AL_CMD__:{\"type\":\"plot\",\"format\":\"html\",\"url\":\"" * esc * "\"}")
+      flush(stdout)
+      ret = :ok
+    end
+    # Interactive PlotlyJS figure — emit a self-contained HTML page the cell
+    # embeds in an <iframe>. Tried before the PNG path so a static image
+    # (via Kaleido) doesn't pre-empt the interactive version.
+    if ret === :text
+      phtml = _al_plotly_html(x)
+      if phtml !== nothing
+        b64 = Base64.base64encode(phtml)
+        println(stdout, "__AL_CMD__:{\"type\":\"plot\",\"format\":\"plotly\",\"data\":\"" * b64 * "\"}")
         flush(stdout)
         ret = :ok
-        break
+      end
+    end
+    if ret === :text
+      for obj in cands
+        io = IOBuffer()
+        ok = try; Base.invokelatest(show, io, MIME("image/png"), obj); true; catch; false; end
+        if ok && position(io) > 0
+          b64 = Base64.base64encode(take!(io))
+          println(stdout, "__AL_CMD__:{\"type\":\"plot\",\"format\":\"png\",\"data\":\"" * b64 * "\"}")
+          flush(stdout)
+          ret = :ok
+          break
+        end
       end
     end
     if ret === :text
@@ -603,6 +729,9 @@ end
 
 #[derive(Clone, serde::Serialize)]
 struct JuliaOutput {
+    /// Which kernel produced this output — frontends filter on it so the
+    /// REPL pane and the notebook cells only see their own kernel's output.
+    kernel: String,
     chunk: String,
     is_done: bool,
     error: Option<String>,
@@ -612,12 +741,15 @@ struct JuliaOutput {
 pub async fn start_julia_repl(
     app: AppHandle,
     cwd: Option<String>,
+    kernel: Option<String>,
     state: State<'_, JuliaState>,
 ) -> Result<(), String> {
-    // Check if already running (sync block — guard dropped before any await)
+    let kernel = kernel.unwrap_or_else(|| DEFAULT_KERNEL.to_string());
+
+    // Check if this kernel is already running (guard dropped before any await)
     {
-        let guard = state.process.lock().map_err(|e| e.to_string())?;
-        if guard.is_some() {
+        let guard = state.processes.lock().map_err(|e| e.to_string())?;
+        if guard.contains_key(&kernel) {
             return Ok(());
         }
     }
@@ -634,6 +766,7 @@ pub async fn start_julia_repl(
     cmd.arg("--startup-file=no")
         .arg("-e")
         .arg(BOOT_SCRIPT)
+        .env("AL_BONITO_PORT", bonito_port(&kernel).to_string())
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped());
@@ -648,6 +781,8 @@ pub async fn start_julia_repl(
     }
     let mut child = cmd.spawn()
         .map_err(|e| format!("Failed to spawn Julia: {e}"))?;
+
+    let pid = child.id();
 
     let stdin  = child.stdin.take().ok_or("No stdin")?;
     let stdout = child.stdout.take().ok_or("No stdout")?;
@@ -665,6 +800,7 @@ pub async fn start_julia_repl(
 
     // stdout reader task
     let app_stdout = app.clone();
+    let kernel_stdout = kernel.clone();
     tokio::spawn(async move {
         let reader = BufReader::new(stdout);
         let mut lines = reader.lines();
@@ -698,6 +834,7 @@ pub async fn start_julia_repl(
                                     let chunk = output_buf[start..].join("\n");
                                     output_buf.clear();
                                     let _ = app_stdout.emit("julia-output", JuliaOutput {
+                                        kernel: kernel_stdout.clone(),
                                         chunk,
                                         is_done: true,
                                         error: None,
@@ -716,6 +853,7 @@ pub async fn start_julia_repl(
 
     // stderr reader task
     let app_stderr = app.clone();
+    let kernel_stderr = kernel.clone();
     tokio::spawn(async move {
         let reader = BufReader::new(stderr);
         let mut lines = reader.lines();
@@ -726,6 +864,7 @@ pub async fn start_julia_repl(
                     match result {
                         Ok(Some(l)) => {
                             let _ = app_stderr.emit("julia-output", JuliaOutput {
+                                kernel: kernel_stderr.clone(),
                                 chunk: l.clone(),
                                 is_done: false,
                                 error: Some(l),
@@ -740,8 +879,11 @@ pub async fn start_julia_repl(
 
     // Store process — no await after this point
     {
-        let mut guard = state.process.lock().map_err(|e| e.to_string())?;
-        *guard = Some(JuliaProcess { stdin: stdin_arc, abort_tx, completion_tx: completion_tx_arc });
+        let mut guard = state.processes.lock().map_err(|e| e.to_string())?;
+        guard.insert(
+            kernel,
+            JuliaProcess { stdin: stdin_arc, pid, abort_tx, completion_tx: completion_tx_arc },
+        );
     }
 
     std::mem::forget(abort_tx2);
@@ -756,11 +898,13 @@ pub async fn start_julia_repl(
 #[tauri::command]
 pub async fn run_julia_code(
     code: String,
+    kernel: Option<String>,
     state: State<'_, JuliaState>,
 ) -> Result<(), String> {
+    let kernel = kernel.unwrap_or_else(|| DEFAULT_KERNEL.to_string());
     let stdin_arc = {
-        let guard = state.process.lock().map_err(|e| e.to_string())?;
-        let proc = guard.as_ref().ok_or("Julia REPL is not started")?;
+        let guard = state.processes.lock().map_err(|e| e.to_string())?;
+        let proc = guard.get(&kernel).ok_or("Julia REPL is not started")?;
         Arc::clone(&proc.stdin)
     }; // std::sync::MutexGuard dropped here
 
@@ -774,6 +918,45 @@ pub async fn run_julia_code(
     Ok(())
 }
 
+/// Interrupt the cell currently running in the Julia kernel.
+///
+/// Delivers SIGINT to the kernel process, which Julia turns into an
+/// `InterruptException` in the evaluating task. The kernel's eval loop catches
+/// it, reports the error and emits `__JULIA_DONE__`, so the cell finishes
+/// normally while the kernel stays alive (variables and loaded packages are
+/// preserved). On non-Unix platforms per-process console interrupts aren't
+/// reliably available — callers should restart the kernel instead.
+#[tauri::command]
+pub async fn interrupt_julia(
+    kernel: Option<String>,
+    state: State<'_, JuliaState>,
+) -> Result<(), String> {
+    let kernel = kernel.unwrap_or_else(|| DEFAULT_KERNEL.to_string());
+    let pid = {
+        let guard = state.processes.lock().map_err(|e| e.to_string())?;
+        let proc = guard.get(&kernel).ok_or("Julia REPL is not started")?;
+        proc.pid.ok_or("Julia process id is unavailable")?
+    };
+
+    #[cfg(unix)]
+    {
+        // SAFETY: kill(2) with a valid pid and a standard signal number.
+        let rc = unsafe { libc::kill(pid as libc::pid_t, libc::SIGINT) };
+        if rc != 0 {
+            return Err(format!(
+                "Failed to interrupt Julia (pid {pid}): {}",
+                std::io::Error::last_os_error()
+            ));
+        }
+        Ok(())
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = pid;
+        Err("Interrupting a running cell is not supported on this platform; restart the kernel instead.".into())
+    }
+}
+
 /// Request tab-completions from the running Julia REPL for the given prefix.
 /// Returns the list of completion strings, or an error if the REPL is not
 /// running or the request times out.
@@ -785,8 +968,10 @@ pub async fn julia_complete(
     let (tx, rx) = tokio::sync::oneshot::channel::<Vec<String>>();
 
     let stdin_arc = {
-        let guard = state.process.lock().map_err(|e| e.to_string())?;
-        let proc = guard.as_ref().ok_or("Julia REPL is not started")?;
+        // Completions / definitions / formatting always target the REPL kernel,
+        // which backs the standalone Julia (.jl) editor.
+        let guard = state.processes.lock().map_err(|e| e.to_string())?;
+        let proc = guard.get(DEFAULT_KERNEL).ok_or("Julia REPL is not started")?;
         {
             let mut slot = proc.completion_tx.lock().unwrap();
             *slot = Some(tx);
@@ -822,8 +1007,10 @@ pub async fn julia_definition(
     let (tx, rx) = tokio::sync::oneshot::channel::<Vec<String>>();
 
     let stdin_arc = {
-        let guard = state.process.lock().map_err(|e| e.to_string())?;
-        let proc = guard.as_ref().ok_or("Julia REPL is not started")?;
+        // Completions / definitions / formatting always target the REPL kernel,
+        // which backs the standalone Julia (.jl) editor.
+        let guard = state.processes.lock().map_err(|e| e.to_string())?;
+        let proc = guard.get(DEFAULT_KERNEL).ok_or("Julia REPL is not started")?;
         {
             let mut slot = proc.completion_tx.lock().unwrap();
             *slot = Some(tx);
@@ -860,8 +1047,10 @@ pub async fn julia_format(
     let (tx, rx) = tokio::sync::oneshot::channel::<Vec<String>>();
 
     let stdin_arc = {
-        let guard = state.process.lock().map_err(|e| e.to_string())?;
-        let proc = guard.as_ref().ok_or("Julia REPL is not started")?;
+        // Completions / definitions / formatting always target the REPL kernel,
+        // which backs the standalone Julia (.jl) editor.
+        let guard = state.processes.lock().map_err(|e| e.to_string())?;
+        let proc = guard.get(DEFAULT_KERNEL).ok_or("Julia REPL is not started")?;
         {
             let mut slot = proc.completion_tx.lock().unwrap();
             *slot = Some(tx);
@@ -893,10 +1082,14 @@ pub async fn julia_format(
 }
 
 #[tauri::command]
-pub async fn stop_julia_repl(state: State<'_, JuliaState>) -> Result<(), String> {
+pub async fn stop_julia_repl(
+    kernel: Option<String>,
+    state: State<'_, JuliaState>,
+) -> Result<(), String> {
+    let kernel = kernel.unwrap_or_else(|| DEFAULT_KERNEL.to_string());
     let proc = {
-        let mut guard = state.process.lock().map_err(|e| e.to_string())?;
-        guard.take()
+        let mut guard = state.processes.lock().map_err(|e| e.to_string())?;
+        guard.remove(&kernel)
     }; // guard dropped here
 
     if let Some(proc) = proc {
