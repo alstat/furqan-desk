@@ -57,6 +57,23 @@ export const juliaCellRunners = new Map<string, () => Promise<void>>();
  */
 export const juliaCellClearers = new Map<string, () => void>();
 
+/**
+ * Live iframes for currently-mounted interactive plots, keyed by the plot's
+ * identity (`url` for Bonito/WGLMakie, base64 `data` for PlotlyJS/Gadfly).
+ * The DOCX exporter uses this so plots that are normally just embedded HTML
+ * (Gadfly, PlotlyJS) can be snapshotted to PNG in their *current*
+ * (rotated/panned/zoomed) state.
+ */
+export const juliaPlotIframes = new Map<string, HTMLIFrameElement>();
+
+export function registerJuliaPlotIframe(
+    key: string,
+    el: HTMLIFrameElement | null,
+): void {
+    if (el) juliaPlotIframes.set(key, el);
+    else juliaPlotIframes.delete(key);
+}
+
 export interface JuliaCellPlot {
     format: 'png' | 'svg' | 'html' | 'plotly';
     /** base64 payload — image bytes for `png`/`svg`, an HTML document for `plotly`. */

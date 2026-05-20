@@ -349,11 +349,67 @@
             </div>
         </div>
         {#if formatError}
+            {@const isReplDown =
+                /repl|kernel|not started|not running|connect/i.test(
+                    formatError,
+                )}
             <div
-                class="mx-2 mb-1 px-2 py-1 rounded-md text-[10px] text-red-500 dark:text-red-400
-                       bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40"
+                role="alert"
+                class="julia-format-alert font-sans mx-2 mb-1.5 flex items-start gap-2 px-2.5 py-2
+                       rounded-md border shadow-sm
+                       {isReplDown
+                    ? 'bg-amber-50/90 dark:bg-amber-900/15 border-amber-200/80 dark:border-amber-700/40'
+                    : 'bg-red-50/90 dark:bg-red-900/15 border-red-200/80 dark:border-red-700/40'}"
             >
-                {formatError}
+                <span
+                    class="mt-[1px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full
+                           {isReplDown
+                        ? 'bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-300'
+                        : 'bg-red-100 dark:bg-red-800/40 text-red-600 dark:text-red-300'}"
+                >
+                    <Icon
+                        icon={isReplDown
+                            ? "lucide:plug-zap"
+                            : "lucide:alert-triangle"}
+                        width="0.7rem"
+                        height="0.7rem"
+                    />
+                </span>
+                <div class="min-w-0 flex-1 leading-tight">
+                    <div
+                        class="text-[11px] font-semibold
+                               {isReplDown
+                            ? 'text-amber-800 dark:text-amber-200'
+                            : 'text-red-700 dark:text-red-200'}"
+                    >
+                        {isReplDown
+                            ? "Julia REPL is not running"
+                            : "Couldn’t format this file"}
+                    </div>
+                    <div
+                        class="mt-1.5 text-[10.5px] break-words
+                               {isReplDown
+                            ? 'text-amber-700/90 dark:text-amber-300/90'
+                            : 'text-red-600/90 dark:text-red-300/90'}"
+                    >
+                        {isReplDown
+                            ? "Start the REPL in the bottom panel, then try formatting again."
+                            : formatError}
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    aria-label="Dismiss"
+                    onclick={() => {
+                        formatError = "";
+                        if (formatErrorTimer) clearTimeout(formatErrorTimer);
+                    }}
+                    class="shrink-0 -mr-0.5 -mt-0.5 p-1 rounded
+                           text-current opacity-60 hover:opacity-100
+                           hover:bg-black/5 dark:hover:bg-white/10 transition"
+                >
+                    <Icon icon="lucide:x" width="0.7rem" height="0.7rem" />
+                </button>
             </div>
         {/if}
         {#if effectiveTab}
@@ -399,3 +455,19 @@
         </div>
     {/if}
 </div>
+
+<style>
+    .julia-format-alert {
+        animation: julia-format-alert-in 160ms ease-out;
+    }
+    @keyframes julia-format-alert-in {
+        from {
+            opacity: 0;
+            transform: translateY(-2px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
