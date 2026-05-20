@@ -11,6 +11,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { get, writable } from 'svelte/store';
+import { browser } from '$app/environment';
 
 /** Kernel name for the notebook cells — kept distinct from the REPL pane's. */
 const CELL_KERNEL = 'cell';
@@ -21,10 +22,26 @@ let cellKernelStarted = false;
 /**
  * Shared display preferences for every Julia code cell. Adjusting the font
  * size or line height on one cell updates all cells, since each cell reads
- * from these stores rather than keeping its own local state.
+ * from these stores rather than keeping its own local state. Persisted to
+ * localStorage so the user's last choice carries across sessions and files.
  */
-export const juliaCellFontSize = writable(12);
-export const juliaCellLineHeight = writable(1.4);
+function readNumber(key: string, fallback: number): number {
+    if (!browser) return fallback;
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : fallback;
+}
+
+export const juliaCellFontSize = writable(readNumber('juliaCellFontSize', 12));
+juliaCellFontSize.subscribe(v => {
+    if (browser) localStorage.setItem('juliaCellFontSize', String(v));
+});
+
+export const juliaCellLineHeight = writable(readNumber('juliaCellLineHeight', 1.4));
+juliaCellLineHeight.subscribe(v => {
+    if (browser) localStorage.setItem('juliaCellLineHeight', String(v));
+});
 
 /**
  * Registry of every mounted Julia cell's run handler, keyed by its Lexical
