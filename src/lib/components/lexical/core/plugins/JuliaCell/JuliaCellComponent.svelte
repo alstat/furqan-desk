@@ -41,7 +41,8 @@
     import { latexInput } from "$lib/codemirror/latexInput";
     import { wrapSelection } from "$lib/codemirror/wrapSelection";
     import { createNodeSelectionStore } from "../../nodeSelectionStore.js";
-    import { appDarkMode } from "$lib/stores/editor.store";
+    import { appDarkMode, editorIndentSize } from "$lib/stores/editor.store";
+    import { get } from "svelte/store";
     import { isPro } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
     import { t } from "$lib/i18n";
@@ -297,6 +298,71 @@
                 node.setResult("", false, []);
             }
         });
+    }
+
+    // ── Julia formatter ───────────────────────────────────────────────────────
+    let formatting = $state(false);
+    let formatError = $state("");
+    let formatErrorTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function showFormatError(msg: string) {
+        formatError = msg;
+        if (formatErrorTimer) clearTimeout(formatErrorTimer);
+        formatErrorTimer = setTimeout(() => (formatError = ""), 8000);
+    }
+
+    // UTF-8 ⇄ base64 — the formatter request carries the source through the
+    // line-based REPL protocol, so it must be encoded to a single line.
+    function utf8ToB64(s: string): string {
+        const bytes = new TextEncoder().encode(s);
+        let bin = "";
+        for (let i = 0; i < bytes.length; i++) {
+            bin += String.fromCharCode(bytes[i]);
+        }
+        return btoa(bin);
+    }
+    function b64ToUtf8(b64: string): string {
+        const bin = atob(b64);
+        const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+    }
+
+    async function formatJulia() {
+        if (!view || formatting) return;
+        const code = view.state.doc.toString();
+        if (!code.trim()) return;
+        formatting = true;
+        formatError = "";
+        try {
+            const { invoke } = await import("@tauri-apps/api/core");
+            const line = await invoke<string>("julia_format", {
+                codeB64: utf8ToB64(code),
+                indent: get(editorIndentSize),
+                kernel: "cell",
+            });
+            if (line.startsWith("OK:")) {
+                const formatted = b64ToUtf8(line.slice(3));
+                if (formatted !== view.state.doc.toString()) {
+                    view.dispatch({
+                        changes: {
+                            from: 0,
+                            to: view.state.doc.length,
+                            insert: formatted,
+                        },
+                    });
+                    editCode = formatted;
+                    persistCode();
+                }
+            } else if (line.startsWith("ERR:")) {
+                showFormatError(b64ToUtf8(line.slice(4)));
+            } else {
+                showFormatError("Unexpected formatter response.");
+            }
+        } catch (e) {
+            showFormatError(typeof e === "string" ? e : String(e));
+        } finally {
+            formatting = false;
+        }
     }
 
     let restarting = $state(false);
@@ -574,6 +640,21 @@
                     </span>
                 {/if}
 
+                <!-- Julia formatter -->
+                <button
+                    onclick={formatJulia}
+                    disabled={formatting}
+                    title="Format with JuliaFormatter.jl"
+                    aria-label="Format Julia code"
+                    class="flex h-[22px] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent dark:border-[#414559] dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
+                >
+                    <Icon
+                        icon="icon-park-twotone:format-brush"
+                        class={formatting ? "animate-pulse" : ""}
+                        width="0.8rem"
+                    />
+                </button>
+
                 <!-- Line wrap toggle -->
                 <button
                     onclick={toggleWrap}
@@ -696,6 +777,15 @@
                 {/if}
             </span>
         </div>
+
+        {#if formatError}
+            <div
+                class="mx-2 mt-1 px-2 py-1 rounded-md text-[10px] text-red-500 dark:text-red-400
+                       bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40"
+            >
+                {formatError}
+            </div>
+        {/if}
 
         <!-- Code input — host stays mounted (hidden) so the editor survives toggles -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
