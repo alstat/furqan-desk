@@ -49,7 +49,7 @@
 		ariaRequired = undefined,
 		autoCapitalize = undefined,
 		// className = 'ContentEditable__root',
-        className = 'ContentEditable__root relative block top-2 px-4 w-full outline-none border-0 text-[#555555] dark:text-[#949cbb] default-scroll',
+        className = 'ContentEditable__root relative block top-2 px-4 w-full outline-none border-0 text-[#3a3a3a] dark:text-[#b5bfe2] default-scroll',
 		id = undefined,
 		role = 'textbox',
 		spellCheck = true,

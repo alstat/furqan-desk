@@ -36,7 +36,7 @@
         MarkdownPastePlugin,
         ALL_TRANSFORMERS,
     } from "../lexical";
-    import { locale } from '$lib/i18n';
+    import { locale } from "$lib/i18n";
     import TableCellResizerPlugin from "$lexical/core/plugins/Table/TableCellResizerPlugin.svelte";
     import {
         HeadingNode,
@@ -67,8 +67,10 @@
     const historyState = createEmptyHistoryState();
     lexicalHistoryState.set(historyState);
 
-    const RTL_LOCALES = ['ar', 'fa', 'ur'];
-    let editorDir = $derived(RTL_LOCALES.includes($locale) ? 'rtl' as const : 'ltr' as const);
+    const RTL_LOCALES = ["ar", "fa", "ur"];
+    let editorDir = $derived(
+        RTL_LOCALES.includes($locale) ? ("rtl" as const) : ("ltr" as const),
+    );
 
     let editorShell = $state<HTMLDivElement | null>(null);
 
@@ -106,7 +108,10 @@
 </script>
 
 <Composer {initialConfig}>
-    <div class="editor-shell p-2 relative overflow-visible" bind:this={editorShell}>
+    <div
+        class="editor-shell p-2 relative overflow-visible"
+        bind:this={editorShell}
+    >
         <ToolbarRichText />
         <div class="editor-container flex flex-col justify-stretch">
             <div class="editor-scroller">
@@ -128,7 +133,10 @@
             <TablePlugin />
             <TableCellResizerPlugin />
             {#if editorShell}
-                <TableActionMenuPlugin anchorElem={editorShell} cellMerge={true} />
+                <TableActionMenuPlugin
+                    anchorElem={editorShell}
+                    cellMerge={true}
+                />
             {/if}
             <MarkdownShortcutPlugin transformers={ALL_TRANSFORMERS} />
             <MarkdownPastePlugin transformers={ALL_TRANSFORMERS} />
