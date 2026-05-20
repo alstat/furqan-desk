@@ -31,6 +31,7 @@
         juliaCellLineHeight,
         juliaCellRunners,
         juliaCellClearers,
+        registerJuliaPlotIframe,
         type JuliaCellPlot,
     } from "$lib/stores/julia-notebook";
     import {
@@ -182,6 +183,26 @@
         const bin = atob(b64);
         const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
         return new TextDecoder().decode(bytes);
+    }
+
+    // Svelte action — keeps the global iframe registry in sync with whatever
+    // plots are currently mounted, so the DOCX exporter can read the live
+    // (rotated/panned/zoomed) state of interactive Plotly/Gadfly/WGLMakie
+    // figures at export time.
+    function trackPlotIframe(node: HTMLIFrameElement, key: string) {
+        let currentKey = key;
+        registerJuliaPlotIframe(currentKey, node);
+        return {
+            update(nextKey: string) {
+                if (nextKey === currentKey) return;
+                registerJuliaPlotIframe(currentKey, null);
+                currentKey = nextKey;
+                registerJuliaPlotIframe(currentKey, node);
+            },
+            destroy() {
+                registerJuliaPlotIframe(currentKey, null);
+            },
+        };
     }
 
     // Build the srcdoc for a Plotly plot — decode the HTML and inject a style
@@ -374,6 +395,10 @@
         try {
             await restartJuliaKernel();
             juliaCellClearers.forEach((clear) => clear());
+            // Kernel info reflects the live kernel — drop it so the next open
+            // re-probes the fresh process.
+            kernelInfoText = "";
+            kernelInfoError = "";
         } finally {
             restarting = false;
             running = false;
@@ -418,6 +443,59 @@
         for (const key of keys) {
             await juliaCellRunners.get(key)?.();
         }
+    }
+
+    // ── Kernel info dialog ────────────────────────────────────────────────────
+    // Runs `versioninfo()` plus the active project path inside the cell
+    // kernel and renders the captured text in a modal. Results are cached
+    // for the lifetime of the component since they don't change unless the
+    // kernel restarts; restartKernel() invalidates the cache.
+    let showKernelInfo = $state(false);
+    let kernelInfoLoading = $state(false);
+    let kernelInfoText = $state("");
+    let kernelInfoError = $state("");
+
+    async function openKernelInfo() {
+        showRunMenu = false;
+        showKernelInfo = true;
+        if (kernelInfoText || kernelInfoLoading) return;
+        kernelInfoLoading = true;
+        kernelInfoError = "";
+        const probe = `import InteractiveUtils
+let
+    io = IOBuffer()
+    InteractiveUtils.versioninfo(io)
+    proj = try Base.active_project() catch; nothing end
+    println(io)
+    println(io, "Active project: ", proj === nothing ? "(none)" : proj)
+    print(String(take!(io)))
+end
+`;
+        try {
+            const result = await runJuliaCell(probe, () => {});
+            if (result.hasError) {
+                kernelInfoError =
+                    result.text || "Failed to read kernel info.";
+            } else {
+                kernelInfoText = result.text.trim();
+            }
+        } catch (e) {
+            kernelInfoError = typeof e === "string" ? e : String(e);
+        } finally {
+            kernelInfoLoading = false;
+        }
+    }
+
+    function closeKernelInfo() {
+        showKernelInfo = false;
+    }
+
+    function onKernelInfoKeydown(e: KeyboardEvent) {
+        if (e.key === "Escape") closeKernelInfo();
+    }
+
+    function onKernelInfoBackdropClick(e: MouseEvent) {
+        if (e.target === e.currentTarget) closeKernelInfo();
     }
 
     // Re-theme the CodeMirror highlight whenever the app light/dark mode flips.
@@ -771,6 +849,19 @@
                                     />
                                     {$t("julia_cell.run_all")}
                                 </button>
+                                <div
+                                    class="my-0.5 h-px bg-brand-sand-200 dark:bg-[#414559]"
+                                ></div>
+                                <button
+                                    onclick={openKernelInfo}
+                                    class="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-left font-sans text-[10px] text-brand-charcoal-700 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                                >
+                                    <Icon
+                                        icon="solar:info-circle-bold"
+                                        width="0.7rem"
+                                    />
+                                    Kernel info
+                                </button>
                             </div>
                         {/if}
                     </span>
@@ -779,11 +870,67 @@
         </div>
 
         {#if formatError}
+            {@const isReplDown =
+                /repl|kernel|not started|not running|connect/i.test(
+                    formatError,
+                )}
             <div
-                class="mx-2 mt-1 px-2 py-1 rounded-md text-[10px] text-red-500 dark:text-red-400
-                       bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40"
+                role="alert"
+                class="julia-format-alert font-sans mx-2 mt-1.5 mb-1.5 flex items-start gap-2 px-2.5 py-2
+                       rounded-md border shadow-sm
+                       {isReplDown
+                    ? 'bg-amber-50/90 dark:bg-amber-900/15 border-amber-200/80 dark:border-amber-700/40'
+                    : 'bg-red-50/90 dark:bg-red-900/15 border-red-200/80 dark:border-red-700/40'}"
             >
-                {formatError}
+                <span
+                    class="mt-[1px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full
+                           {isReplDown
+                        ? 'bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-300'
+                        : 'bg-red-100 dark:bg-red-800/40 text-red-600 dark:text-red-300'}"
+                >
+                    <Icon
+                        icon={isReplDown
+                            ? "lucide:plug-zap"
+                            : "lucide:alert-triangle"}
+                        width="0.7rem"
+                        height="0.7rem"
+                    />
+                </span>
+                <div class="min-w-0 flex-1 leading-tight">
+                    <div
+                        class="text-[11px] font-semibold
+                               {isReplDown
+                            ? 'text-amber-800 dark:text-amber-200'
+                            : 'text-red-700 dark:text-red-200'}"
+                    >
+                        {isReplDown
+                            ? "Julia REPL is not running"
+                            : "Couldn’t format this cell"}
+                    </div>
+                    <div
+                        class="-mt-3 text-[10.5px] break-words
+                               {isReplDown
+                            ? 'text-amber-700/90 dark:text-amber-300/90'
+                            : 'text-red-600/90 dark:text-red-300/90'}"
+                    >
+                        {isReplDown
+                            ? "Start the kernel by running this cell, then try formatting again."
+                            : formatError}
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    aria-label="Dismiss"
+                    onclick={() => {
+                        formatError = "";
+                        if (formatErrorTimer) clearTimeout(formatErrorTimer);
+                    }}
+                    class="shrink-0 -mr-0.5 -mt-0.5 p-1 rounded
+                           text-current opacity-60 hover:opacity-100
+                           hover:bg-black/5 dark:hover:bg-white/10 transition"
+                >
+                    <Icon icon="lucide:x" width="0.7rem" height="0.7rem" />
+                </button>
             </div>
         {/if}
 
@@ -835,6 +982,7 @@
                         src={plot.url}
                         title={$t("julia_cell.plot_alt")}
                         sandbox="allow-scripts allow-same-origin"
+                        use:trackPlotIframe={plot.url}
                     ></iframe>
                 {:else if plot.format === "plotly" && plot.data}
                     <!-- Interactive PlotlyJS figure — a self-contained HTML
@@ -847,6 +995,7 @@
                         srcdoc={plotlyIframeDoc(plot.data)}
                         title={$t("julia_cell.plot_alt")}
                         sandbox="allow-scripts allow-same-origin"
+                        use:trackPlotIframe={plot.data}
                     ></iframe>
                 {:else if plot.format === "svg" && plot.data}
                     <div class="mt-0.5 max-w-full overflow-auto">
@@ -882,7 +1031,125 @@
     {/if}
 </div>
 
+{#if showKernelInfo}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+        class="julia-kernel-info-backdrop fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
+        onclick={onKernelInfoBackdropClick}
+        onkeydown={onKernelInfoKeydown}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="julia-kernel-info-title"
+        tabindex="-1"
+    >
+        <div
+            class="julia-kernel-info-panel font-sans flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40"
+        >
+            <!-- Header — matches JuliaPlotViewer -->
+            <div
+                class="flex items-center justify-between px-4 py-1.75 shrink-0
+                       border-b border-brand-gold-200 dark:border-[#414559]
+                       bg-brand-gold-100 dark:bg-[#292c3c]
+                       select-none rounded-t-2xl"
+                role="banner"
+            >
+                <div class="flex items-center gap-2">
+                    <Icon
+                        icon="solar:cpu-bolt-bold-duotone"
+                        width="1.1rem"
+                        class="text-brand-gold-500"
+                    />
+                    <span
+                        id="julia-kernel-info-title"
+                        class="text-[11px] py-2 font-semibold uppercase tracking-wide
+                               text-brand-charcoal-500 dark:text-[#838ba7]"
+                    >
+                        Julia kernel info
+                    </span>
+                </div>
+
+                <button
+                    onclick={closeKernelInfo}
+                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
+                           bg-brand-gold-200 dark:bg-[#414559]
+                           text-brand-gold-600 dark:text-[#c6d0f5]
+                           hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                    aria-label="Close"
+                    title="Close"
+                >
+                    <Icon
+                        icon="solar:close-circle-bold-duotone"
+                        width="0.85rem"
+                    />
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="px-4 py-3 max-h-[60vh] overflow-y-auto">
+                {#if kernelInfoLoading}
+                    <div
+                        class="flex items-center gap-2 text-[12px] text-brand-charcoal-600 dark:text-[#a5adcb]"
+                    >
+                        <Icon icon="svg-spinners:180-ring" width="0.9rem" />
+                        Probing the kernel…
+                    </div>
+                {:else if kernelInfoError}
+                    <div
+                        class="rounded-md border border-red-200/80 dark:border-red-700/40 bg-red-50/90 dark:bg-red-900/15 px-3 py-2 text-[11.5px] text-red-700 dark:text-red-200 whitespace-pre-wrap break-words"
+                    >
+                        {kernelInfoError}
+                    </div>
+                {:else if kernelInfoText}
+                    <pre
+                        class="m-0 whitespace-pre-wrap break-words font-mono text-[11.5px] leading-snug text-brand-charcoal-800 dark:text-[#c6d0f5]">{kernelInfoText}</pre>
+                {:else}
+                    <div
+                        class="text-[12px] text-brand-charcoal-500 dark:text-[#a5adcb]"
+                    >
+                        No information available.
+                    </div>
+                {/if}
+            </div>
+        </div>
+    </div>
+{/if}
+
 <style>
+    .julia-format-alert {
+        animation: julia-format-alert-in 160ms ease-out;
+    }
+    @keyframes julia-format-alert-in {
+        from {
+            opacity: 0;
+            transform: translateY(-2px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .julia-kernel-info-backdrop {
+        animation: julia-kernel-info-fade 140ms ease-out;
+    }
+    .julia-kernel-info-panel {
+        animation: julia-kernel-info-rise 180ms ease-out;
+    }
+    @keyframes julia-kernel-info-fade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes julia-kernel-info-rise {
+        from {
+            opacity: 0;
+            transform: translateY(6px) scale(0.98);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
     .julia-cell-editor :global(.cm-editor) {
         margin-block: 0 !important;
     }
