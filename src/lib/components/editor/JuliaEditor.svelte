@@ -122,6 +122,7 @@
     let effectiveTab = $derived(
         tabId ? ($tabs.find((t) => t.id === tabId) ?? null) : $activeTab,
     );
+    let editorScrollKey = $derived(effectiveTab?.path ?? effectiveTab?.id ?? null);
 
     // ── Completion source ─────────────────────────────────────────────────────
 
@@ -428,6 +429,7 @@
                     {aiContextPrompt}
                     {askAiContextPrompt}
                     filePath={effectiveTab.path ?? null}
+                    scrollKey={editorScrollKey}
                     onchange={handleInput}
                     class="h-full font-mono"
                 />

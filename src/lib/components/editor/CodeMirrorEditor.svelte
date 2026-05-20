@@ -78,6 +78,7 @@
         aiContextPrompt,
         askAiContextPrompt,
         filePath,
+        scrollKey = null,
         onchange,
     }: {
         value?: string;
@@ -90,8 +91,23 @@
         aiContextPrompt?: string;
         askAiContextPrompt?: string;
         filePath?: string | null;
+        scrollKey?: string | null;
         onchange?: (newValue: string) => void;
     } = $props();
+
+    type ScrollMap = Map<string, number>;
+    const SCROLL_BY_KEY: ScrollMap = (() => {
+        const g = globalThis as unknown as {
+            __codeMirrorScrollByKey?: ScrollMap;
+        };
+        if (g.__codeMirrorScrollByKey instanceof Map)
+            return g.__codeMirrorScrollByKey;
+        const m: ScrollMap = new Map();
+        g.__codeMirrorScrollByKey = m;
+        return m;
+    })();
+    let lastScrollKey: string | null = null;
+    let restoringScroll = false;
 
     let aiSelection = $state<{
         from: number;
@@ -1010,6 +1026,41 @@
     let container: HTMLDivElement;
     let view: EditorView;
 
+    function saveScroll(key: string | null = lastScrollKey): void {
+        if (!key || !view || restoringScroll) return;
+        SCROLL_BY_KEY.set(key, view.scrollDOM.scrollTop);
+    }
+
+    function restoreScroll(key: string): void {
+        if (!view) return;
+        const target = SCROLL_BY_KEY.get(key);
+        if (target === undefined) return;
+
+        restoringScroll = true;
+        let attempts = 0;
+        let stableFrames = 0;
+        const MAX_ATTEMPTS = 30;
+        const apply = () => {
+            if (!view || lastScrollKey !== key) {
+                restoringScroll = false;
+                return;
+            }
+            view.scrollDOM.scrollTop = target;
+            const drift = Math.abs(view.scrollDOM.scrollTop - target);
+            stableFrames = drift <= 1 ? stableFrames + 1 : 0;
+            attempts += 1;
+            if (stableFrames < 2 && attempts < MAX_ATTEMPTS) {
+                requestAnimationFrame(apply);
+            } else {
+                requestAnimationFrame(() => {
+                    restoringScroll = false;
+                });
+            }
+        };
+
+        requestAnimationFrame(apply);
+    }
+
     function updateAiSelection() {
         if (!aiSelectionTools || !view || !$isPro) {
             aiSelection = null;
@@ -1329,8 +1380,18 @@
         codeMirrorViewInstance.set(view);
         codeMirrorCanUndo.set(false);
         codeMirrorCanRedo.set(false);
+        lastScrollKey = scrollKey;
+
+        const onScroll = () => saveScroll();
+        view.scrollDOM.addEventListener("scroll", onScroll, { passive: true });
+
+        if (scrollKey) {
+            restoreScroll(scrollKey);
+        }
 
         return () => {
+            saveScroll();
+            view.scrollDOM.removeEventListener("scroll", onScroll);
             codeMirrorViewInstance.set(null);
             codeMirrorCanUndo.set(false);
             codeMirrorCanRedo.set(false);
@@ -1356,6 +1417,18 @@
                 },
                 annotations: Transaction.addToHistory.of(false),
             });
+        }
+    });
+
+    $effect(() => {
+        if (!view) return;
+        const nextKey = scrollKey;
+        if (lastScrollKey !== null && lastScrollKey !== nextKey) {
+            saveScroll(lastScrollKey);
+        }
+        lastScrollKey = nextKey;
+        if (nextKey) {
+            restoreScroll(nextKey);
         }
     });
 

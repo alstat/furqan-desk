@@ -88,53 +88,64 @@
     let lastTabId: string | null = null;
     let lastScrollKey: string | null = null;
     // True while we're actively restoring scroll — the scroll listener
-    // checks this so Lexical's caret-into-view scroll (caused by setEditorState)
-    // doesn't immediately overwrite the saved offset with 0.
+    // checks this so any save during Lexical's caret-into-view phase doesn't
+    // overwrite the saved offset with 0.
     let restoring = false;
     let editorShell = $state<HTMLDivElement | null>(null);
+    let contentScroller: HTMLElement | null = null;
+    let scrollCleanup: (() => void) | null = null;
 
     function scrollKeyForTab(tab: EditorTab): string {
         return tab.path ?? tab.id;
     }
 
+    function getContentScroller(): HTMLElement | null {
+        const el =
+            editorShell?.querySelector<HTMLElement>(".ContentEditable__root") ??
+            null;
+        if (el) contentScroller = el;
+        return el;
+    }
+
     function currentScrollTop(): number {
-        return (
-            window.scrollY ||
-            document.scrollingElement?.scrollTop ||
-            document.documentElement.scrollTop ||
-            0
-        );
+        const el = contentScroller ?? getContentScroller();
+        return el ? el.scrollTop : 0;
+    }
+
+    function applyScrollTop(value: number): void {
+        const el = contentScroller ?? getContentScroller();
+        if (el) {
+            el.scrollTop = value;
+        }
     }
 
     function saveScroll(key: string | null = lastScrollKey): void {
         if (!key || restoring) return;
-        SCROLL_BY_TAB.set(key, currentScrollTop());
+        const el = contentScroller ?? getContentScroller();
+        if (!el) return;
+        SCROLL_BY_TAB.set(key, el.scrollTop);
     }
 
-    // Restore the saved offset for a tab. The retry budget needs to outlast
-    // both Lexical's setEditorState() (called by Sidebar.svelte:117 on tab
-    // change — which can scroll the caret into view at the document top) and
-    // any deferred layout work like image/equation rendering that grows the
-    // document height. ~1 s is empirically enough on a slow machine.
     function restoreScroll(tabId: string, key: string): void {
         const target = SCROLL_BY_TAB.get(key);
         if (target === undefined) return;
 
         restoring = true;
         let attempts = 0;
-        const MAX_ATTEMPTS = 60; // ~1 s @ 60fps
+        let stableFrames = 0;
+        const MAX_ATTEMPTS = 45;
         const apply = () => {
             if (lastTabId !== tabId) {
                 restoring = false;
                 return;
             }
-            window.scrollTo({ top: target, left: 0, behavior: "auto" });
+            applyScrollTop(target);
+            const drift = Math.abs(currentScrollTop() - target);
+            stableFrames = drift <= 1 ? stableFrames + 1 : 0;
             attempts += 1;
-            if (attempts < MAX_ATTEMPTS) {
+            if (stableFrames < 3 && attempts < MAX_ATTEMPTS) {
                 requestAnimationFrame(apply);
             } else {
-                // Give Lexical one more frame to settle, then release the lock
-                // so genuine user scrolls start saving again.
                 requestAnimationFrame(() => {
                     restoring = false;
                 });
@@ -144,10 +155,6 @@
         void tick().then(() => requestAnimationFrame(apply));
     }
 
-    // Save on tab change + arm restore. Restoration itself is gated on the
-    // editor instance being available (see the next $effect), since Lexical
-    // pushes a new EditorState after the tab swap that would otherwise scroll
-    // the caret (at root start) into view and clobber our restore.
     $effect(() => {
         const tab = $activeTab;
         const next = tab?.id ?? null;
@@ -159,53 +166,71 @@
         lastScrollKey = nextKey;
     });
 
-    // Trigger restore once the editor has applied the new tab's EditorState.
-    // Sidebar.svelte's Effect C calls editor.setEditorState() after the tab
-    // change — we hook the first updateListener fire after that to restore
-    // scroll *after* Lexical has reflowed the new document.
     $effect(() => {
         const tab = $activeTab;
         const editor = $lexicalEditorInstance;
         if (!tab || !editor) return;
+
         const tabId = tab.id;
         const key = scrollKeyForTab(tab);
-
         let done = false;
-        const unregister = editor.registerUpdateListener(() => {
+        let fallback1 = 0;
+        let fallback2 = 0;
+
+        const trigger = () => {
             if (done) return;
             done = true;
-            unregister();
             restoreScroll(tabId, key);
+        };
+
+        const unregister = editor.registerUpdateListener(() => {
+            requestAnimationFrame(trigger);
         });
 
-        // If no update fires (e.g. tab content is identical to what's already
-        // loaded), still restore after the next frame so a remount of the
-        // component doesn't leave the scroll stuck at the top.
-        const fallback = requestAnimationFrame(() => {
-            if (done) return;
-            done = true;
-            unregister();
-            restoreScroll(tabId, key);
+        // If Lexical doesn't emit an update for this mount, still restore once
+        // the DOM has settled after remount.
+        fallback1 = requestAnimationFrame(() => {
+            fallback2 = requestAnimationFrame(trigger);
         });
 
         return () => {
+            done = true;
             unregister();
-            cancelAnimationFrame(fallback);
+            cancelAnimationFrame(fallback1);
+            cancelAnimationFrame(fallback2);
         };
     });
 
     $effect(() => {
         const tab = $activeTab;
-        const tabKey = tab ? scrollKeyForTab(tab) : null;
-        if (!tabKey) return;
+        const shell = editorShell;
+        const key = tab ? scrollKeyForTab(tab) : null;
+        if (!shell || !key) return;
 
-        const onScroll = () => saveScroll(tabKey);
-        window.addEventListener("scroll", onScroll, { passive: true });
-        return () => window.removeEventListener("scroll", onScroll);
+        let cancelled = false;
+        scrollCleanup?.();
+        scrollCleanup = null;
+
+        void tick().then(() => {
+            if (cancelled) return;
+            const el = getContentScroller();
+            if (!el) return;
+            const onScroll = () => saveScroll(key);
+            el.addEventListener("scroll", onScroll, { passive: true });
+            scrollCleanup = () => el.removeEventListener("scroll", onScroll);
+        });
+
+        return () => {
+            cancelled = true;
+            scrollCleanup?.();
+            scrollCleanup = null;
+        };
     });
 
     onDestroy(() => {
         saveScroll();
+        scrollCleanup?.();
+        scrollCleanup = null;
     });
 
     const historyState = createEmptyHistoryState();
