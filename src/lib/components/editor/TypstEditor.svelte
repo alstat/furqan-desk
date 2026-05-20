@@ -41,6 +41,7 @@
     let effectiveTab = $derived(
         tabId ? ($tabs.find((t) => t.id === tabId) ?? null) : $activeTab,
     );
+    let editorScrollKey = $derived(effectiveTab?.path ?? effectiveTab?.id ?? null);
 
     // True when the preview is displayed in the Parchment area (side-by-side mode).
     // Suppressed when this editor is the host in a cross pair (shows inline preview instead).
@@ -375,6 +376,7 @@
             aiSelectionTools={true}
             {aiContextPrompt}
             filePath={effectiveTab?.path ?? null}
+            scrollKey={editorScrollKey}
             onchange={handleInput}
             class={`${effectiveTab?.type !== "typst" ? "mb-4" : ""} ${sideBySide ? "mb-3" : ""} flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 font-mono`}
         />
