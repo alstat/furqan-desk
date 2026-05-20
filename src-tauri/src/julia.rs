@@ -468,6 +468,46 @@ function _al_plotly_html(x)
   ok && position(io) > 0 ? String(take!(io)) : nothing
 end
 
+# Render a Gadfly plot as a self-contained interactive HTML document.
+# Returns the HTML string, or nothing when Gadfly isn't loaded or `x` is not a
+# Gadfly Plot. Gadfly's `show(MIME"text/html", ::Plot)` writes an SVGJS-backed
+# interactive SVG with embedded JavaScript (hover tooltips, pan, zoom). We wrap
+# it in a minimal HTML page so the iframe srcdoc executes the embedded scripts.
+function _al_gadfly_html(x)
+  G = _al_loaded(:Gadfly)
+  G === nothing && return nothing
+  # Accept both Gadfly.Plot and Compose.Context — the latter is what
+  # vstack/hstack/gridstack/title return, and Compose's text/html show method
+  # also routes through the interactive SVGJS backend.
+  C = _al_loaded(:Compose)
+  isgadfly = try
+    (isdefined(G, :Plot) && x isa G.Plot) ||
+    (C !== nothing && isdefined(C, :Context) && x isa C.Context)
+  catch
+    false
+  end
+  isgadfly || return nothing
+  io = IOBuffer()
+  ok = try
+    Base.invokelatest(show, io, MIME("text/html"), x)
+    true
+  catch
+    false
+  end
+  (ok && position(io) > 0) || return nothing
+  svg_html = String(take!(io))
+  # Strip a leading XML declaration — we're embedding in HTML, not standalone XML.
+  svg_html = replace(svg_html, r"^\s*<\?xml[^>]*\?>\s*" => "")
+  return string(
+    "<!doctype html><html><head><meta charset=\"utf-8\">",
+    "<style>html,body{margin:0;padding:0;background:#fff;}",
+    "svg{display:block;max-width:100%;height:auto;}</style>",
+    "</head><body>",
+    svg_html,
+    "</body></html>",
+  )
+end
+
 # Serve `x` as an interactive Bonito page; returns its localhost URL, or
 # nothing when WGLMakie/Bonito are unavailable or serving fails.
 function _al_try_interactive(x)
@@ -519,6 +559,17 @@ function _al_try_plot(x)
       phtml = _al_plotly_html(x)
       if phtml !== nothing
         b64 = Base64.base64encode(phtml)
+        println(stdout, "__AL_CMD__:{\"type\":\"plot\",\"format\":\"plotly\",\"data\":\"" * b64 * "\"}")
+        flush(stdout)
+        ret = :ok
+      end
+    end
+    # Gadfly: route to its interactive SVGJS HTML before the PNG path so a
+    # Cairo-rendered static image doesn't pre-empt the interactive version.
+    if ret === :text
+      ghtml = _al_gadfly_html(x)
+      if ghtml !== nothing
+        b64 = Base64.base64encode(ghtml)
         println(stdout, "__AL_CMD__:{\"type\":\"plot\",\"format\":\"plotly\",\"data\":\"" * b64 * "\"}")
         flush(stdout)
         ret = :ok
