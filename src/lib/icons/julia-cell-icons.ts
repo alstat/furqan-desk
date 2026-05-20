@@ -88,6 +88,17 @@ addCollection({
 });
 
 addCollection({
+    prefix: 'icon-park-twotone',
+    width: 48,
+    height: 48,
+    icons: {
+        'format-brush': {
+            body: '<defs><mask id="juliaCellFormatBrushMask"><g fill="none" stroke="#fff" stroke-linejoin="round" stroke-width="4"><path fill="#555" d="M34 5H6v15h28z"/><path stroke-linecap="round" d="M34.025 12H43v16.101l-24 3.1V43"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#juliaCellFormatBrushMask)"/>',
+        },
+    },
+});
+
+addCollection({
     prefix: 'devicon-plain',
     width: 128,
     height: 128,

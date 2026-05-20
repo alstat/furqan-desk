@@ -1093,15 +1093,17 @@ pub async fn julia_definition(
 pub async fn julia_format(
     code_b64: String,
     indent: u32,
+    kernel: Option<String>,
     state: State<'_, JuliaState>,
 ) -> Result<String, String> {
     let (tx, rx) = tokio::sync::oneshot::channel::<Vec<String>>();
+    let kernel = kernel.unwrap_or_else(|| DEFAULT_KERNEL.to_string());
 
     let stdin_arc = {
-        // Completions / definitions / formatting always target the REPL kernel,
-        // which backs the standalone Julia (.jl) editor.
+        // Formatting targets whichever kernel the caller specified — the REPL
+        // kernel for the standalone .jl editor, the cell kernel for notebooks.
         let guard = state.processes.lock().map_err(|e| e.to_string())?;
-        let proc = guard.get(DEFAULT_KERNEL).ok_or("Julia REPL is not started")?;
+        let proc = guard.get(&kernel).ok_or("Julia REPL is not started")?;
         {
             let mut slot = proc.completion_tx.lock().unwrap();
             *slot = Some(tx);

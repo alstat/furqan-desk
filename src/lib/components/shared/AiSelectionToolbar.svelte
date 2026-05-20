@@ -191,8 +191,11 @@
 
     {#if promptOpen}
         <div
-            class="flex w-80 items-center gap-1.5 rounded-3xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+            class="relative flex w-80 items-center gap-1.5 rounded-3xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
         >
+            {#if busyAction === "prompt"}
+                <span class="prompt-runborder" aria-hidden="true"></span>
+            {/if}
             <input
                 bind:this={promptInput}
                 bind:value={promptText}
@@ -247,3 +250,67 @@
         </div>
     {/if}
 </div>
+
+<style>
+    /* Animated gradient border that traces the prompt input container while
+       the prompt action is running. Same brand-gold tones as
+       .julia-cell-runbar in JuliaCellComponent — gold in light mode and a
+       softened pastel mix in dark. A rotating conic-gradient is masked to
+       only fill the ring (padding area), so the colour appears to travel
+       around the rounded rectangle border. */
+    @property --runborder-angle {
+        syntax: "<angle>";
+        inherits: false;
+        initial-value: 0deg;
+    }
+
+    .prompt-runborder {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1.5px;
+        pointer-events: none;
+        background: conic-gradient(
+            from var(--runborder-angle),
+            transparent 0deg,
+            var(--color-brand-gold-400) 60deg,
+            var(--color-brand-gold-500) 90deg,
+            var(--color-brand-gold-400) 120deg,
+            transparent 180deg,
+            transparent 360deg
+        );
+        -webkit-mask:
+            linear-gradient(#000 0 0) content-box,
+            linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask:
+            linear-gradient(#000 0 0) content-box,
+            linear-gradient(#000 0 0);
+        mask-composite: exclude;
+        animation: prompt-runborder-spin 1.4s linear infinite;
+    }
+
+    :global(.dark) .prompt-runborder {
+        background: conic-gradient(
+            from var(--runborder-angle),
+            transparent 0deg,
+            #8caaee 60deg,
+            #e5c890 90deg,
+            #8caaee 120deg,
+            transparent 180deg,
+            transparent 360deg
+        );
+    }
+
+    @keyframes prompt-runborder-spin {
+        to {
+            --runborder-angle: 360deg;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .prompt-runborder {
+            animation: none;
+        }
+    }
+</style>
