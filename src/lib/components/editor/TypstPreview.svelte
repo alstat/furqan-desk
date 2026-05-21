@@ -14,12 +14,21 @@
         appDarkMode,
         typstPreviewDarkMode,
     } from "$lib/stores/editor.store";
+    import { activeTab } from "$lib/stores/tabs.store";
     import Icon from "@iconify/svelte";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
 
     let { embedded = false }: { embedded?: boolean } = $props();
     let previewScrollEl: HTMLDivElement | null = $state(null);
     let currentPreviewPage = $state(1);
+    let lastPreviewScrollTop = 0;
+
+    function handlePreviewScroll(): void {
+        if (previewScrollEl && previewScrollEl.scrollHeight > previewScrollEl.clientHeight) {
+            lastPreviewScrollTop = previewScrollEl.scrollTop;
+        }
+        updateCurrentPreviewPage();
+    }
 
     function updateCurrentPreviewPage(): void {
         if (!previewScrollEl || $typstSvgPages.length === 0) {
@@ -55,7 +64,20 @@
             return;
         }
 
-        tick().then(updateCurrentPreviewPage);
+        tick().then(() => {
+            if (previewScrollEl && lastPreviewScrollTop > 0) {
+                const maxScroll =
+                    previewScrollEl.scrollHeight -
+                    previewScrollEl.clientHeight;
+                if (maxScroll > 0) {
+                    previewScrollEl.scrollTop = Math.min(
+                        lastPreviewScrollTop,
+                        maxScroll,
+                    );
+                }
+            }
+            updateCurrentPreviewPage();
+        });
     });
 
     async function exportPdf() {
@@ -63,6 +85,7 @@
         try {
             const bytes = await invoke<number[]>("compile_typst_pdf", {
                 source: get(typstSource),
+                path: get(activeTab)?.path ?? null,
             });
             const path = await save({
                 filters: [{ name: "PDF", extensions: ["pdf"] }],
@@ -140,7 +163,7 @@
             {/if}
             <div
                 bind:this={previewScrollEl}
-                onscroll={updateCurrentPreviewPage}
+                onscroll={handlePreviewScroll}
                 class={$zenMode
                     ? "default-scroll h-full overflow-y-auto px-6"
                     : "default-scroll h-full overflow-y-auto px-6 pt-4"}

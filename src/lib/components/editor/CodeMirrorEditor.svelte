@@ -108,6 +108,7 @@
     })();
     let lastScrollKey: string | null = null;
     let restoringScroll = false;
+    let suppressOnChange = false;
 
     let aiSelection = $state<{
         from: number;
@@ -1360,7 +1361,7 @@
                 gitDiffGutter(),
                 ...extraExtensions,
                 EditorView.updateListener.of((update) => {
-                    if (update.docChanged) {
+                    if (update.docChanged && !suppressOnChange) {
                         onchange?.(update.state.doc.toString());
                     }
                     if (
@@ -1409,14 +1410,19 @@
         if (newValue !== currentDoc) {
             const { main } = view.state.selection;
             const len = newValue.length;
-            view.dispatch({
-                changes: { from: 0, to: currentDoc.length, insert: newValue },
-                selection: {
-                    anchor: Math.min(main.anchor, len),
-                    head: Math.min(main.head, len),
-                },
-                annotations: Transaction.addToHistory.of(false),
-            });
+            suppressOnChange = true;
+            try {
+                view.dispatch({
+                    changes: { from: 0, to: currentDoc.length, insert: newValue },
+                    selection: {
+                        anchor: Math.min(main.anchor, len),
+                        head: Math.min(main.head, len),
+                    },
+                    annotations: Transaction.addToHistory.of(false),
+                });
+            } finally {
+                suppressOnChange = false;
+            }
         }
     });
 

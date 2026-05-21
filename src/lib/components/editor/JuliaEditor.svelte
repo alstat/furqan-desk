@@ -28,6 +28,7 @@
     import type { Text } from "@codemirror/state";
     import {
         autocompletion,
+        type Completion,
         type CompletionSource,
     } from "@codemirror/autocomplete";
     import { JULIA_COMPLETIONS } from "$lib/completions/julia";
@@ -129,38 +130,180 @@
     let isRunning = $derived($juliaIsRunning);
     let isFlashing = $derived($flashingTabId === effectiveTab?.id);
 
+    const JULIA_IDENTIFIER_RE = /^[A-Za-z_]\w*[!?]?$/;
+
+    function addDocumentCompletion(
+        completions: Map<string, Completion>,
+        label: string,
+        type: Completion["type"],
+        detail: string,
+    ): void {
+        const normalized = label.trim();
+        if (!JULIA_IDENTIFIER_RE.test(normalized)) return;
+        if (completions.has(normalized)) return;
+        completions.set(normalized, {
+            label: normalized,
+            type,
+            detail,
+            boost: 99,
+        });
+    }
+
+    function collectNamesFromList(
+        rawList: string,
+        completions: Map<string, Completion>,
+        type: Completion["type"],
+        detail: string,
+    ): void {
+        for (const segment of rawList.replace(/;/g, ",").split(",")) {
+            const match = segment
+                .trim()
+                .match(/^([A-Za-z_]\w*[!?]?)(?=\s*(?:::\s*[^=]+)?(?:=|$))/);
+            if (match) addDocumentCompletion(completions, match[1], type, detail);
+        }
+    }
+
+    function collectFunctionArgs(
+        rawArgs: string,
+        completions: Map<string, Completion>,
+    ): void {
+        collectNamesFromList(rawArgs, completions, "variable", "argument");
+    }
+
+    function collectDocumentCompletions(
+        source: string,
+        prefix: string,
+    ): Completion[] {
+        const completions = new Map<string, Completion>();
+
+        for (const rawLine of source.split("\n")) {
+            const line = rawLine.replace(/#.*$/, "").trim();
+            if (!line) continue;
+
+            const functionMatch = line.match(
+                /^function\s+([A-Za-z_]\w*[!?]?)\s*\(([^)]*)\)/,
+            );
+            if (functionMatch) {
+                addDocumentCompletion(
+                    completions,
+                    functionMatch[1],
+                    "function",
+                    "defined in file",
+                );
+                collectFunctionArgs(functionMatch[2], completions);
+                continue;
+            }
+
+            const shortFunctionMatch = line.match(
+                /^([A-Za-z_]\w*[!?]?)\s*\(([^)]*)\)\s*=/,
+            );
+            if (shortFunctionMatch) {
+                addDocumentCompletion(
+                    completions,
+                    shortFunctionMatch[1],
+                    "function",
+                    "defined in file",
+                );
+                collectFunctionArgs(shortFunctionMatch[2], completions);
+            }
+
+            const assignmentMatch = line.match(
+                /^(?:const|local|global)\s+(.+)$|^([A-Za-z_]\w*[!?]?)\s*(?:::\s*[^=]+)?=(?!=)/,
+            );
+            if (assignmentMatch?.[1]) {
+                collectNamesFromList(
+                    assignmentMatch[1],
+                    completions,
+                    "variable",
+                    "defined in file",
+                );
+            } else if (assignmentMatch?.[2]) {
+                addDocumentCompletion(
+                    completions,
+                    assignmentMatch[2],
+                    "variable",
+                    "defined in file",
+                );
+            }
+
+            const letMatch = line.match(/^let\s+(.+)$/);
+            if (letMatch) {
+                collectNamesFromList(
+                    letMatch[1],
+                    completions,
+                    "variable",
+                    "let binding",
+                );
+            }
+
+            const forMatch = line.match(/^for\s+(.+?)\s+in\b/);
+            if (forMatch) {
+                collectNamesFromList(
+                    forMatch[1].replace(/[()]/g, ""),
+                    completions,
+                    "variable",
+                    "loop variable",
+                );
+            }
+        }
+
+        const lowerPrefix = prefix.toLowerCase();
+        return [...completions.values()].filter((completion) =>
+            completion.label.toLowerCase().startsWith(lowerPrefix),
+        );
+    }
+
+    function mergeCompletions(...groups: Completion[][]): Completion[] {
+        const merged = new Map<string, Completion>();
+        for (const group of groups) {
+            for (const completion of group) {
+                if (!merged.has(completion.label)) {
+                    merged.set(completion.label, completion);
+                }
+            }
+        }
+        return [...merged.values()];
+    }
+
     const juliaCompletionSource: CompletionSource = async (context) => {
         const word = context.matchBefore(/\w+/);
         if (!word || (word.from === word.to && !context.explicit)) return null;
 
+        const documentCompletions = collectDocumentCompletions(
+            context.state.doc.toString(),
+            word.text,
+        );
+
+        let replCompletions: Completion[] = [];
+
         if (get(juliaReplStarted) && !get(juliaIsRunning)) {
             try {
                 const { invoke } = await import("@tauri-apps/api/core");
-                const replCompletions = await invoke<string[]>(
+                const labels = await invoke<string[]>(
                     "julia_complete",
                     { prefix: word.text },
                 );
-                if (replCompletions.length > 0) {
-                    return {
-                        from: word.from,
-                        options: replCompletions.map((label) => ({
-                            label,
-                            type: "function",
-                        })),
-                        validFor: /^\w*$/,
-                    };
-                }
+                replCompletions = labels.map((label) => ({
+                    label,
+                    type: "function",
+                }));
             } catch {
                 // fall through to static completions
             }
         }
 
         const lower = word.text.toLowerCase();
-        const filtered = JULIA_COMPLETIONS.filter((c) =>
+        const staticCompletions = JULIA_COMPLETIONS.filter((c) =>
             c.label.toLowerCase().startsWith(lower),
         );
-        if (filtered.length === 0) return null;
-        return { from: word.from, options: filtered, validFor: /^\w*$/ };
+        const options = mergeCompletions(
+            documentCompletions,
+            replCompletions,
+            staticCompletions,
+        );
+
+        if (options.length === 0) return null;
+        return { from: word.from, options, validFor: /^\w*$/ };
     };
 
     const juliaCompletionExtension = autocompletion({
