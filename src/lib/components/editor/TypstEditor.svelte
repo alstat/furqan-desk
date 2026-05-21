@@ -50,6 +50,14 @@
     let debounceTimer: ReturnType<typeof setTimeout> | undefined;
     let embeddedPreviewScrollEl: HTMLDivElement | null = $state(null);
     let currentEmbeddedPreviewPage = $state(1);
+    let lastPreviewScrollTop = 0;
+
+    function handlePreviewScroll(): void {
+        if (embeddedPreviewScrollEl && embeddedPreviewScrollEl.scrollHeight > embeddedPreviewScrollEl.clientHeight) {
+            lastPreviewScrollTop = embeddedPreviewScrollEl.scrollTop;
+        }
+        updateCurrentEmbeddedPreviewPage();
+    }
 
     function updateCurrentEmbeddedPreviewPage(): void {
         if (!embeddedPreviewScrollEl || $typstSvgPages.length === 0) {
@@ -107,7 +115,20 @@
             return;
         }
 
-        tick().then(updateCurrentEmbeddedPreviewPage);
+        tick().then(() => {
+            if (embeddedPreviewScrollEl && lastPreviewScrollTop > 0) {
+                const maxScroll =
+                    embeddedPreviewScrollEl.scrollHeight -
+                    embeddedPreviewScrollEl.clientHeight;
+                if (maxScroll > 0) {
+                    embeddedPreviewScrollEl.scrollTop = Math.min(
+                        lastPreviewScrollTop,
+                        maxScroll,
+                    );
+                }
+            }
+            updateCurrentEmbeddedPreviewPage();
+        });
     });
 
     const IMPORT_RE = /#import\s+"@([\w-]+)\/([\w-]+):([\d.]+)"/g;
@@ -148,7 +169,10 @@
         try {
             await ensurePackagesInstalled(src);
             typstSvgPages.set(
-                await invoke<string[]>("compile_typst_svg", { source: src }),
+                await invoke<string[]>("compile_typst_svg", {
+                    source: src,
+                    path: effectiveTab?.path ?? null,
+                }),
             );
         } catch (e) {
             typstCompileError.set(String(e));
@@ -165,6 +189,7 @@
             await ensurePackagesInstalled(src);
             const bytes = await invoke<number[]>("compile_typst_pdf", {
                 source: src,
+                path: effectiveTab?.path ?? null,
             });
             const path = await save({
                 filters: [{ name: "PDF", extensions: ["pdf"] }],
@@ -412,7 +437,7 @@
                 {/if}
                 <div
                     bind:this={embeddedPreviewScrollEl}
-                    onscroll={updateCurrentEmbeddedPreviewPage}
+                    onscroll={handlePreviewScroll}
                     class="default-scroll h-full overflow-auto"
                 >
                     {#if $typstIsCompiling}

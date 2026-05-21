@@ -1592,9 +1592,18 @@ pub fn install_typst_fonts() -> Result<(), String> {
 
 // ── Typst compile commands ────────────────────────────────────────────────────
 
+fn project_root_from_path(path: Option<String>) -> Option<std::path::PathBuf> {
+    let p = std::path::PathBuf::from(path?);
+    p.parent().map(|d| d.to_path_buf())
+}
+
 #[tauri::command]
-pub fn compile_typst_svg(source: String) -> Result<Vec<String>, String> {
+pub fn compile_typst_svg(
+    source: String,
+    path: Option<String>,
+) -> Result<Vec<String>, String> {
     let world = get_world();
+    world.set_project_root(project_root_from_path(path));
     world.set_source(source);
     let doc = typst::compile::<typst::layout::PagedDocument>(world)
         .output
@@ -1603,8 +1612,12 @@ pub fn compile_typst_svg(source: String) -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
-pub fn compile_typst_pdf(source: String) -> Result<Vec<u8>, String> {
+pub fn compile_typst_pdf(
+    source: String,
+    path: Option<String>,
+) -> Result<Vec<u8>, String> {
     let world = get_world();
+    world.set_project_root(project_root_from_path(path));
     world.set_source(source);
     let doc = typst::compile::<typst::layout::PagedDocument>(world)
         .output

@@ -14,6 +14,9 @@ pub struct MinimalWorld {
     fonts: Vec<Font>,
     main_id: FileId,
     source_text: Mutex<String>,
+    /// Filesystem directory used to resolve relative imports / includes
+    /// from the main source. Set per-compile by the frontend.
+    project_root: Mutex<Option<PathBuf>>,
     /// Root of the local typst package cache, e.g.
     ///   macOS  → ~/Library/Application Support/typst/packages
     ///   Linux  → ~/.local/share/typst/packages
@@ -54,12 +57,33 @@ impl MinimalWorld {
             fonts,
             main_id,
             source_text: Mutex::new(String::new()),
+            project_root: Mutex::new(None),
             packages_root,
         }
     }
 
     pub fn set_source(&self, s: String) {
         *self.source_text.lock().unwrap() = s;
+    }
+
+    /// Configure the directory used to resolve relative `#import` / `#include`
+    /// paths from the main source. Pass `None` to clear it.
+    pub fn set_project_root(&self, root: Option<PathBuf>) {
+        *self.project_root.lock().unwrap() = root;
+    }
+
+    /// Resolve a non-package `FileId` (a relative import/include from the main
+    /// source) to an absolute path under the current project root.
+    fn resolve_project_path(&self, id: FileId) -> FileResult<PathBuf> {
+        let root = self
+            .project_root
+            .lock()
+            .unwrap()
+            .clone()
+            .ok_or_else(|| FileError::NotFound(PathBuf::new()))?;
+        id.vpath()
+            .resolve(&root)
+            .ok_or_else(|| FileError::NotFound(root))
     }
 
     /// Resolve a `FileId` that belongs to a package to an absolute path in the
@@ -109,7 +133,11 @@ impl typst::World for MinimalWorld {
                 .map_err(|_| FileError::NotFound(path))?;
             return Ok(Source::new(id, text));
         }
-        Err(FileError::NotFound(PathBuf::new()))
+        // Relative import/include from the main source.
+        let path = self.resolve_project_path(id)?;
+        let text = std::fs::read_to_string(&path)
+            .map_err(|_| FileError::NotFound(path))?;
+        Ok(Source::new(id, text))
     }
 
     fn file(&self, id: FileId) -> FileResult<Bytes> {
@@ -119,7 +147,10 @@ impl typst::World for MinimalWorld {
                 .map_err(|_| FileError::NotFound(path))?;
             return Ok(Bytes::new(data));
         }
-        Err(FileError::Other(None))
+        let path = self.resolve_project_path(id)?;
+        let data = std::fs::read(&path)
+            .map_err(|_| FileError::NotFound(path))?;
+        Ok(Bytes::new(data))
     }
 
     fn font(&self, index: usize) -> Option<Font> {
