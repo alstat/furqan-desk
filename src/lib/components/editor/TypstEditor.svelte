@@ -331,7 +331,7 @@
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
                 >{effectiveTab?.name ??
-                    "Editor"}{#if effectiveTab?.isDirty}<span
+                    $t("typst.fallback_name")}{#if effectiveTab?.isDirty}<span
                         class="text-brand-gold-500 dark:text-[#e5c890]"
                     >
                         *</span
@@ -348,19 +348,19 @@
                 <button
                     onclick={formatTypst}
                     disabled={formatting}
-                    title="Format with typstyle"
+                    title={$t("typst.format_title")}
                     class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                            bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400
                            hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25
                            disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Icon icon="icon-park-twotone:format-brush" width="11" />
-                    {formatting ? "Formatting…" : "Format"}
+                    {formatting ? $t("typst.formatting") : $t("typst.format")}
                 </button>
                 <!-- Line wrap toggle -->
                 <button
                     onclick={() => (lineWrap = !lineWrap)}
-                    title={lineWrap ? "Disable line wrap" : "Enable line wrap"}
+                    title={lineWrap ? $t("julia_cell.disable_wrap") : $t("julia_cell.enable_wrap")}
                     class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                            {lineWrap
                         ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'
@@ -381,7 +381,7 @@
                             d="M3 12h15a3 3 0 0 1 0 6h-4"
                         /><polyline points="8 15 5 18 8 21" />
                     </svg>
-                    {lineWrap ? "Wrap" : "No Wrap"}
+                    {lineWrap ? $t("julia_editor.wrap") : $t("julia_editor.no_wrap")}
                 </button>
             </div>
         </div>
@@ -425,12 +425,12 @@
             class="flex-none flex flex-col p-2"
             style:height="{previewHeight}px"
         >
-            <span class={labelClass}>Preview</span>
+            <span class={labelClass}>{$t("typst.preview")}</span>
             <div class="relative flex-1 min-h-0">
                 {#if $typstSvgPages.length > 0}
                     <div
                         class="pointer-events-none absolute right-2 top-2 z-20 rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none text-brand-charcoal-300 backdrop-blur-md"
-                        aria-label="Page {currentEmbeddedPreviewPage} of {$typstSvgPages.length}"
+                        aria-label={$t("typst.page_of").replace("{current}", String(currentEmbeddedPreviewPage)).replace("{total}", String($typstSvgPages.length))}
                     >
                         {currentEmbeddedPreviewPage} / {$typstSvgPages.length}
                     </div>
@@ -442,7 +442,7 @@
                 >
                     {#if $typstIsCompiling}
                         <p class="text-xs text-brand-charcoal-300 italic">
-                            Compiling…
+                            {$t("typst.compiling")}
                         </p>
                     {:else if $typstCompileError}
                         <pre
@@ -462,7 +462,7 @@
                         </div>
                     {:else}
                         <p class="text-xs text-brand-charcoal-300 italic">
-                            Preview will appear here.
+                            {$t("typst.preview_placeholder")}
                         </p>
                     {/if}
                 </div>
@@ -476,7 +476,7 @@
             class="h-10 flex items-center justify-end px-3 border-t border-brand-sand-200 gap-2"
         >
             {#if $typstCompileError}
-                <span class="text-xs text-red-500">Compile error</span>
+                <span class="text-xs text-red-500">{$t("typst.compile_error")}</span>
             {/if}
             <button
                 onclick={exportPdf}

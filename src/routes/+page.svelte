@@ -113,6 +113,7 @@
             const stateData = parsed.editorState ?? parsed;
             editor.setEditorState(
                 editor.parseEditorState(JSON.stringify(stateData)),
+                { tag: 'history-merge' },
             );
         } catch {
             /* ignore */
@@ -129,8 +130,9 @@
         if ($activeTabId === cg.partnerTabId) return; // partner is active — normal save applies
         const lexicalTabId = cg.partnerTabId;
         const unregister = editor.registerUpdateListener(
-            ({ dirtyElements, dirtyLeaves }) => {
+            ({ dirtyElements, dirtyLeaves, tags }) => {
                 if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
+                if (tags.has('history-merge')) return;
                 const json = JSON.stringify(editor.getEditorState().toJSON());
                 tabs.update((ts) =>
                     ts.map((t) =>

@@ -165,7 +165,7 @@
                             disabled:opacity-40 disabled:cursor-not-allowed
                             ${
                                 isSelected && !isOtherSlot
-                                    ? "border-brand-gold-300 dark:border-[#e5c890]/40 bg-brand-gold-50 dark:bg-[#3b3757]"
+                                    ? "border-brand-gold-400 dark:border-[#e5c890]/40 bg-brand-gold-50 dark:bg-[#3b3757]"
                                     : "border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] hover:border-brand-gold-200 dark:hover:border-[#51576d] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757]"
                             }`}
                         aria-pressed={isSelected}

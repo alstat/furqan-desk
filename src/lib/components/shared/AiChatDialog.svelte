@@ -29,6 +29,7 @@
     import "katex/dist/katex.min.css";
     import ChatSidebar from "./ChatSidebar.svelte";
     import ChatLockScreen from "./ChatLockScreen.svelte";
+    import { confirm as tauriConfirm } from "@tauri-apps/plugin-dialog";
 
     interface Props {
         open: boolean;
@@ -319,7 +320,11 @@
     }
 
     async function handleDeleteChat(id: string) {
-        if (!confirm($t("ai_chat.confirm_delete"))) return;
+        const ok = await tauriConfirm($t("ai_chat.confirm_delete"), {
+            title: $t("ai_chat.title"),
+            kind: "warning",
+        });
+        if (!ok) return;
         const userId = $authUser?.id;
         if (!userId) return;
         await deleteChat(id, userId);
