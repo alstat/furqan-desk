@@ -548,8 +548,9 @@
     async function addTerminal() {
         ts.termCounter++;
         const id = `pty-${ts.termCounter}-${Date.now()}`;
-        const label = `Terminal ${ts.termCounter}`;
-        ts.termTabs = [...ts.termTabs, { id, label }];
+        const count = ts.termCounter;
+        const label = $t("terminal.tab_label", { count });
+        ts.termTabs = [...ts.termTabs, { id, label, count }];
         ts.termExited[id] = false;
         ts.activePanel = id;
         // The xterm instance is attached by the $effect once the container
@@ -1176,7 +1177,7 @@
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                                 ></path>
                             </svg>
-                            <span class="text-[10px] italic">Running…</span>
+                            <span class="text-[10px] italic">{$t("julia_repl.running")}</span>
                         </span>
                     {/if}
                     <button
@@ -1185,7 +1186,7 @@
                             clearRepl();
                         }}
                         class="cursor-pointer pr-1 text-[10px] font-medium text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] transition-colors select-none"
-                        title="Clear REPL output">Clear</button
+                        title={$t("julia_repl.clear_title")}>{$t("julia_repl.clear")}</button
                     >
                     <button
                         onclick={(e) => {
@@ -1193,7 +1194,7 @@
                             restartRepl();
                         }}
                         class="cursor-pointer px-2 flex items-center gap-0.5 text-[10px] font-medium text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 dark:hover:text-red-400 transition-colors select-none"
-                        title="Kill and restart Julia REPL"
+                        title={$t("julia_repl.restart_title")}
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -1211,7 +1212,7 @@
                             />
                             <path d="M3 3v5h5" />
                         </svg>
-                        Restart
+                        {$t("julia_repl.restart")}
                     </button>
                 {/if}
             </div>
@@ -1230,7 +1231,9 @@
                            {ts.activePanel === tab.id
                             ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
                             : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
-                        >{tab.label}</button
+                        >{tab.count !== undefined
+                            ? $t("terminal.tab_label", { count: tab.count })
+                            : tab.label}</button
                     >
                     <button
                         onclick={(e) => {
@@ -1238,7 +1241,7 @@
                             closeTerminal(tab.id);
                         }}
                         class="cursor-pointer pr-2 py-1 text-[10px] leading-none text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 transition-colors"
-                        title="Close terminal">×</button
+                        title={$t("terminal.close")}>×</button
                     >
                 </div>
             {/each}
@@ -1249,8 +1252,8 @@
             {#if ts.activePanel !== "julia" && !ts.termExited[ts.activePanel]}
                 <button
                     onclick={killActiveTerm}
-                    aria-label="Send Ctrl+C"
-                    title="Send Ctrl+C (SIGINT) to the foreground process"
+                    aria-label={$t("terminal.send_ctrl_c")}
+                    title={$t("julia_repl.send_ctrl_c_full_title")}
                     class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md
                            text-brand-charcoal-300 dark:text-brand-charcoal-300
                            hover:text-red-500 dark:hover:text-red-400
@@ -1270,8 +1273,8 @@
                            {showSettings
                         ? 'bg-brand-sand-100 dark:bg-brand-sand-200 text-brand-gold-600 dark:text-brand-gold-400'
                         : ''}"
-                    title="Display settings"
-                    aria-label="Display settings"
+                    title={$t("julia_repl.display_settings")}
+                    aria-label={$t("julia_repl.display_settings")}
                     aria-expanded={showSettings}
                 >
                     <Icon icon="solar:settings-bold-duotone" width="0.9rem" />
@@ -1489,8 +1492,8 @@
                            {showSearch
                         ? 'bg-brand-sand-100 dark:bg-brand-sand-200 text-brand-gold-600 dark:text-brand-gold-400'
                         : ''}"
-                    title="Search active pane"
-                    aria-label="Search active pane"
+                    title={$t("julia_repl.search_active_pane")}
+                    aria-label={$t("julia_repl.search_active_pane")}
                     aria-expanded={showSearch}
                 >
                     <Icon icon="solar:magnifer-bold-duotone" width="0.9rem" />
@@ -1506,10 +1509,10 @@
                             oninput={refreshSearchMatches}
                             onkeydown={handleSearchKeydown}
                             class="h-7 w-44 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#232634] px-2 text-xs text-brand-charcoal-700 dark:text-[#c6d0f5] outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 dark:focus:border-[#e5c890]"
-                            placeholder="Search {ts.activePanel === 'julia'
-                                ? 'REPL'
-                                : 'terminal'}"
-                            aria-label="Search active pane"
+                            placeholder={ts.activePanel === 'julia'
+                                ? $t("julia_repl.search_repl")
+                                : $t("julia_repl.search_terminal")}
+                            aria-label={$t("julia_repl.search_active_pane")}
                         />
                         <span
                             class="min-w-11 text-center text-[10px] tabular-nums text-brand-charcoal-300 dark:text-[#838ba7]"
@@ -1522,8 +1525,8 @@
                             onclick={() => stepSearch(-1)}
                             disabled={searchMatches.length === 0}
                             class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
-                            title="Previous match"
-                            aria-label="Previous match"
+                            title={$t("julia_repl.previous_match")}
+                            aria-label={$t("julia_repl.previous_match")}
                         >
                             <Icon
                                 icon="solar:alt-arrow-up-linear"
@@ -1534,8 +1537,8 @@
                             onclick={() => stepSearch(1)}
                             disabled={searchMatches.length === 0}
                             class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
-                            title="Next match"
-                            aria-label="Next match"
+                            title={$t("julia_repl.next_match")}
+                            aria-label={$t("julia_repl.next_match")}
                         >
                             <Icon
                                 icon="solar:alt-arrow-down-linear"
@@ -1549,8 +1552,8 @@
             <button
                 onclick={addTerminal}
                 class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-brand-charcoal-300 hover:text-brand-gold-600 dark:hover:text-brand-gold-400 hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 shrink-0 transition-colors"
-                title="Add terminal"
-                aria-label="Add terminal"
+                title={$t("terminal.add")}
+                aria-label={$t("terminal.add")}
             >
                 <Icon icon="ic:outline-plus" width="0.9rem" />
             </button>
@@ -1565,14 +1568,13 @@
                 bind:this={replOutputEl}
                 class="default-scroll flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono repl-mono"
                 role="log"
-                aria-label="REPL output"
+                aria-label={$t("julia_repl.output_label")}
             >
                 {#if replLines.length === 0}
                     <p
                         class="text-brand-charcoal-300 dark:text-[#626880] italic select-none"
                     >
-                        Press {IS_APPLE ? "⌘Enter" : "Ctrl+Enter"} in the editor,
-                        or type below and press Enter.
+                        {$t("julia_repl.empty_hint").replace("{shortcut}", IS_APPLE ? "⌘Enter" : "Ctrl+Enter")}
                     </p>
                 {:else}
                     {#each replLines as line}
@@ -1620,14 +1622,14 @@
                     {#if precompile.active}
                         <div
                             role="status"
-                            aria-label="Precompiling packages"
+                            aria-label={$t("julia_repl.precompiling_packages")}
                             aria-live="polite"
                             class="mt-2 pl-[3.2rem] space-y-1 select-none"
                         >
                             <div class="flex items-center gap-2">
                                 <span
                                     class="text-[10px] text-brand-charcoal-300 dark:text-[#626880]"
-                                    >Precompiling</span
+                                    >{$t("julia_repl.precompiling")}</span
                                 >
                                 <div
                                     role="progressbar"
@@ -1680,7 +1682,7 @@
                     {:else if isRunning || isStreaming}
                         <div
                             role="status"
-                            aria-label="Running"
+                            aria-label={$t("julia_repl.running_label")}
                             aria-live="polite"
                             class="flex items-center gap-1.5 mt-1 select-none pl-[3.2rem]"
                         >
@@ -1691,7 +1693,7 @@
                             >
                             <span
                                 class="text-[11px] italic text-brand-charcoal-300 dark:text-[#626880]"
-                                >Running…</span
+                                >{$t("julia_repl.running")}</span
                             >
                         </div>
                     {/if}
@@ -1702,7 +1704,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <div
                 role="group"
-                aria-label="REPL input"
+                aria-label={$t("julia_repl.input_label")}
                 class="flex items-start gap-2 px-3 py-1.5 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-200 dark:border-[#414559] shrink-0"
                 onclick={() => replInputEl?.focus()}
                 onkeydown={(e) => {
@@ -1719,12 +1721,12 @@
                             ? 'text-purple-500 dark:text-[#ca9ee6]'
                             : 'text-brand-gold-600'}"
                     title={replMode === "pkg"
-                        ? "Pkg mode — Backspace to exit"
+                        ? $t("julia_repl.pkg_mode_hint")
                         : replMode === "shell"
-                          ? "Shell mode — Backspace to exit"
+                          ? $t("julia_repl.shell_mode_hint")
                           : replMode === "help"
-                            ? "Help mode — Backspace to exit"
-                            : "Julia — type ] for pkg, ; for shell, ? for help"}
+                            ? $t("julia_repl.help_mode_hint")
+                            : $t("julia_repl.julia_mode_hint")}
                     >{replMode === "pkg"
                         ? $juliaActiveEnv
                             ? `(${$juliaActiveEnv}) pkg>`
@@ -1756,14 +1758,14 @@
                     }}
                     rows={replInputRows}
                     placeholder={isRunning || isStreaming
-                        ? "Running…"
+                        ? $t("julia_repl.running")
                         : replMode === "pkg"
-                          ? "pkg command, e.g. add DataFrames"
+                          ? $t("julia_repl.placeholder_pkg")
                           : replMode === "shell"
-                            ? "shell command"
+                            ? $t("julia_repl.placeholder_shell")
                             : replMode === "help"
-                              ? "function or type, e.g. sin"
-                              : "Enter code, Shift+Enter for newline"}
+                              ? $t("julia_repl.placeholder_help")
+                              : $t("julia_repl.placeholder_julia")}
                     use:noAutocorrect
                     spellcheck={false}
                     class="flex-1 resize-none bg-transparent font-mono repl-mono text-brand-charcoal-700 dark:text-[#c6d0f5]

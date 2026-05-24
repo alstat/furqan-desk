@@ -29,7 +29,7 @@
 
     let { open, onClose }: Props = $props();
 
-    type TermTab = { id: string; label: string };
+    type TermTab = { id: string; label: string; count?: number };
 
     let tabs = $state<TermTab[]>([]);
     let activeId = $state<string | null>(null);
@@ -276,7 +276,7 @@
         counter++;
         const id = `dialog-pty-${counter}-${Date.now()}`;
         const label = $t("terminal.tab_label", { count: counter });
-        tabs = [...tabs, { id, label }];
+        tabs = [...tabs, { id, label, count: counter }];
         exited[id] = false;
         activeId = id;
         // The xterm instance is attached by the $effect once the container
@@ -912,7 +912,9 @@
                             ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
                             : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
                     >
-                         {tab.label}{exited[tab.id] ? ` (${$t("terminal.exited")})` : ''}
+                         {tab.count !== undefined
+                            ? $t("terminal.tab_label", { count: tab.count })
+                            : tab.label}{exited[tab.id] ? ` (${$t("terminal.exited")})` : ''}
                     </button>
                     <button
                         onclick={(e) => { e.stopPropagation(); closeTerminal(tab.id); }}

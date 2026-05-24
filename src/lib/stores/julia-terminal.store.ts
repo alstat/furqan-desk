@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type TermTab = { id: string; label: string };
+export type TermTab = { id: string; label: string; count?: number };
 
 export interface SharedTermState {
     activePanel: string;

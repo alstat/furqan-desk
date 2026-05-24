@@ -32,6 +32,7 @@
         type CompletionSource,
     } from "@codemirror/autocomplete";
     import { JULIA_COMPLETIONS } from "$lib/completions/julia";
+    import { t } from "$lib/i18n";
 
     /**
      * tabId  — when set, this editor shows a specific (secondary/split) tab
@@ -104,7 +105,7 @@
             } else if (line.startsWith("ERR:")) {
                 showFormatError(b64ToUtf8(line.slice(4)));
             } else {
-                showFormatError("Unexpected formatter response.");
+                showFormatError($t("julia_editor.unexpected_formatter_response"));
             }
         } catch (e) {
             showFormatError(typeof e === "string" ? e : String(e));
@@ -438,7 +439,7 @@
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
                 >{effectiveTab?.name ??
-                    "Julia Editor"}{#if effectiveTab?.isDirty}<span
+                    $t("julia_editor.fallback_name")}{#if effectiveTab?.isDirty}<span
                         class="text-brand-gold-500 dark:text-[#e5c890]"
                     >
                         *</span
@@ -455,19 +456,19 @@
                 <button
                     onclick={formatJulia}
                     disabled={formatting}
-                    title="Format with JuliaFormatter.jl"
+                    title={$t("julia_cell.format")}
                     class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                            bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400
                            hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25
                            disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Icon icon="icon-park-twotone:format-brush" width="11" />
-                    {formatting ? "Formatting…" : "Format"}
+                    {formatting ? $t("julia_editor.formatting") : $t("julia_editor.format")}
                 </button>
                 <!-- Line wrap toggle -->
                 <button
                     onclick={() => (lineWrap = !lineWrap)}
-                    title={lineWrap ? "Disable line wrap" : "Enable line wrap"}
+                    title={lineWrap ? $t("julia_cell.disable_wrap") : $t("julia_cell.enable_wrap")}
                     class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                        {lineWrap
                         ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'
@@ -488,7 +489,7 @@
                             d="M3 12h15a3 3 0 0 1 0 6h-4"
                         /><polyline points="8 15 5 18 8 21" />
                     </svg>
-                    {lineWrap ? "Wrap" : "No Wrap"}
+                    {lineWrap ? $t("julia_editor.wrap") : $t("julia_editor.no_wrap")}
                 </button>
             </div>
         </div>
@@ -527,8 +528,8 @@
                             : 'text-red-700 dark:text-red-200'}"
                     >
                         {isReplDown
-                            ? "Julia REPL is not running"
-                            : "Couldn’t format this file"}
+                            ? $t("julia_cell.repl_not_running")
+                            : $t("julia_editor.format_failed_file")}
                     </div>
                     <div
                         class="mt-1.5 text-[10.5px] break-words
@@ -537,13 +538,13 @@
                             : 'text-red-600/90 dark:text-red-300/90'}"
                     >
                         {isReplDown
-                            ? "Start the REPL in the bottom panel, then try formatting again."
+                            ? $t("julia_editor.start_repl_then_format")
                             : formatError}
                     </div>
                 </div>
                 <button
                     type="button"
-                    aria-label="Dismiss"
+                    aria-label={$t("common.close")}
                     onclick={() => {
                         formatError = "";
                         if (formatErrorTimer) clearTimeout(formatErrorTimer);

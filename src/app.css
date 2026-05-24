@@ -54,6 +54,9 @@
     --color-brand-charcoal-900: #2f2f2f;
 
     --ayah-flash-bg: var(--color-brand-gold-100);
+
+    /* Custom slate intermediate (between slate-300 #cbd5e1 and slate-400 #94a3b8) */
+    --color-slate-350: #b0bccc;
 }
 
 /* ── App dark theme (Catppuccin Frappe) ──────────────────────────────────────── */

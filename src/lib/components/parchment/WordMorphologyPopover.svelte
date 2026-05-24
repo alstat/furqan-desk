@@ -486,7 +486,7 @@
                     onclick={toggleAiPrompt}
                     aria-label={$t('morphology.ai_ask_word')}
                     title={$t('morphology.ai_ask_word')}
-                    class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 dark:text-[#838ba7] transition-all hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-brand-gold-500 dark:hover:text-[#e5c890] active:scale-95 {aiPromptOpen ? 'bg-slate-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]' : ''}"
+                    class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-350  dark:text-[#838ba7] transition-all hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-brand-gold-500 dark:hover:text-[#e5c890] active:scale-95 {aiPromptOpen ? 'bg-slate-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]' : ''}"
                 >
                     <Icon icon="ri:chat-smile-ai-fill" width="14" />
                 </button>

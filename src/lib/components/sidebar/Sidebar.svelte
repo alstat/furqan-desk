@@ -197,12 +197,16 @@
                 const stateData = parsed.editorState ?? parsed;
                 editor.setEditorState(
                     editor.parseEditorState(JSON.stringify(stateData)),
+                    { tag: 'history-merge' },
                 );
             } catch {
                 /* ignore parse errors — leave editor as-is */
             }
         } else {
-            editor.setEditorState(editor.parseEditorState(emptyLexicalState));
+            editor.setEditorState(
+                editor.parseEditorState(emptyLexicalState),
+                { tag: 'history-merge' },
+            );
         }
 
         const hs = get(lexicalHistoryState);
@@ -249,6 +253,7 @@
             const stateData = parsed.editorState ?? parsed;
             editor.setEditorState(
                 editor.parseEditorState(JSON.stringify(stateData)),
+                { tag: 'history-merge' },
             );
         } catch {
             /* ignore */
@@ -264,8 +269,9 @@
         if ($activeTabId === cg.hostTabId) return; // host is active — normal save applies
         const hostTabId = cg.hostTabId;
         const unregister = editor.registerUpdateListener(
-            ({ dirtyElements, dirtyLeaves }) => {
+            ({ dirtyElements, dirtyLeaves, tags }) => {
                 if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
+                if (tags.has('history-merge')) return;
                 const json = JSON.stringify(editor.getEditorState().toJSON());
                 tabs.update((ts) =>
                     ts.map((t) =>

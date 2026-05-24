@@ -17,6 +17,7 @@
     import { activeTab } from "$lib/stores/tabs.store";
     import Icon from "@iconify/svelte";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
+    import { t } from "$lib/i18n";
 
     let { embedded = false }: { embedded?: boolean } = $props();
     let previewScrollEl: HTMLDivElement | null = $state(null);
@@ -141,12 +142,12 @@
                             width="0.85rem"
                             class="animate-spin"
                         />
-                        Compiling…
+                        {$t("typst.compiling")}
                     </span>
                 {:else if $typstCompileError}
-                    <span class="text-red-500">Compile error</span>
+                    <span class="text-red-500">{$t("typst.compile_error")}</span>
                 {:else}
-                    Preview
+                    {$t("typst.preview")}
                 {/if}
             </span>
         </div>
@@ -156,7 +157,7 @@
             {#if $typstSvgPages.length > 0}
                 <div
                     class="pointer-events-none absolute right-8 top-2 z-20 rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none text-brand-charcoal-300 backdrop-blur-md"
-                    aria-label="Page {currentPreviewPage} of {$typstSvgPages.length}"
+                    aria-label={$t("typst.page_of").replace("{current}", String(currentPreviewPage)).replace("{total}", String($typstSvgPages.length))}
                 >
                     {currentPreviewPage} / {$typstSvgPages.length}
                 </div>
@@ -186,7 +187,7 @@
                     </div>
                 {:else if !$typstIsCompiling}
                     <p class="text-xs text-brand-charcoal-300 italic">
-                        Start typing in the editor to see a preview.
+                        {$t("typst.preview_start_typing")}
                     </p>
                 {/if}
             </div>
