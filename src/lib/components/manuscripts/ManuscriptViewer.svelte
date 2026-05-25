@@ -408,6 +408,14 @@
         selectedManuscript?.pages?.[folioIdx] ?? null,
     );
     const selectedImage = $derived(selectedPage?.images?.[0] ?? null);
+    // True when the selected page exists but has no usable image_url from Corpus Coranicum.
+    const selectedImageMissing = $derived(
+        !!selectedManuscript &&
+            (!selectedImage || !selectedImage.image_url?.trim()),
+    );
+    function manuscriptHasAnyImage(ms: ManuscriptEntry): boolean {
+        return ms.pages.some((p) => !!p.images?.[0]?.image_url?.trim());
+    }
     const selectedDetail = $derived(
         selectedManuscript
             ? (detailMap.get(selectedManuscript.manuscript_id) ?? null)
@@ -493,6 +501,19 @@
         if (!img) {
             imageSrc = null;
             imageSource = "";
+            imageLoading = false;
+            imageError = false;
+            return;
+        }
+        // Corpus Coranicum sometimes returns entries with no image_url — render a
+        // dedicated "no image" state instead of attempting a fetch that will fail.
+        if (!img.image_url?.trim() && !demoMode) {
+            imageSrc = null;
+            thumbnailBytes = null;
+            imageSource = img.image_source?.trim() ?? "";
+            imageLoading = false;
+            imageError = false;
+            resetZoom();
             return;
         }
         imageLoading = true;
@@ -1100,6 +1121,7 @@
                             {@const isSelected =
                                 selectedManuscript?.manuscript_id ===
                                 ms.manuscript_id}
+                            {@const hasAnyImage = manuscriptHasAnyImage(ms)}
                             <button
                                 onclick={() => {
                                     selectedId = ms.manuscript_id;
@@ -1133,6 +1155,18 @@
                                                         "manuscript.image_loaded",
                                                     )}
                                                 ></span>
+                                            {:else if !hasAnyImage}
+                                                <span
+                                                    class="shrink-0 inline-flex items-center text-brand-charcoal-300 dark:text-[#626880]"
+                                                    title={$t(
+                                                        "manuscript.no_image_indicator",
+                                                    )}
+                                                >
+                                                    <Icon
+                                                        icon="solar:gallery-remove-bold-duotone"
+                                                        width="0.75rem"
+                                                    />
+                                                </span>
                                             {/if}
                                         </p>
                                         {#if dateStr}
@@ -1223,6 +1257,38 @@
                                     class="mx-auto mb-1"
                                 />
                                 {$t("manuscript.image_error")}
+                            </div>
+                        {:else if selectedImageMissing}
+                            <div
+                                class="flex flex-col items-center gap-2 px-6 text-center text-xs text-brand-charcoal-300 dark:text-[#838ba7]"
+                            >
+                                <Icon
+                                    icon="solar:gallery-remove-bold-duotone"
+                                    width="2rem"
+                                    class="text-brand-sand-400 dark:text-[#626880]"
+                                />
+                                <span
+                                    class="font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]"
+                                >
+                                    {$t("manuscript.no_image_available")}
+                                </span>
+                                <span class="leading-relaxed">
+                                    {$t("manuscript.no_image_hint")}
+                                </span>
+                                {#if buildCorpusCoranicumUrl()}
+                                    <a
+                                        href={buildCorpusCoranicumUrl()}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        class="mt-1 inline-flex items-center gap-1 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100/70 dark:bg-[#292c3c] px-2 py-0.5 text-[10px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
+                                    >
+                                        {$t("manuscript.corpus_coranicum")}
+                                        <Icon
+                                            icon="solar:arrow-right-up-linear"
+                                            width="0.65rem"
+                                        />
+                                    </a>
+                                {/if}
                             </div>
                         {:else if imageSrc}
                             <img

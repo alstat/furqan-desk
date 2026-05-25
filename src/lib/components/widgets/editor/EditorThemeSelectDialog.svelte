@@ -1,6 +1,7 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { fly } from "svelte/transition";
+    import { t } from "$lib/i18n";
     import {
         editorTheme,
         editorThemeSlots,
@@ -96,18 +97,18 @@
                                 id="editor-theme-select-title"
                                 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                             >
-                                Editor Themes
+                                {$t("editor_theme_select.title")}
                             </h2>
                             <p
                                 class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
-                                Pick two themes for the toolbar
+                                {$t("editor_theme_select.subtitle")}
                             </p>
                         </div>
                     </div>
                     <button
                         onclick={onClose}
-                        aria-label="Close"
+                        aria-label={$t("common.close")}
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
                         <Icon icon="solar:close-circle-bold" width="1rem" />
@@ -141,7 +142,7 @@
                             >
                                 {slotIdx + 1}
                             </span>
-                            {info?.label ?? `Slot ${slotIdx + 1}`}
+                            {info?.label ?? $t("editor_theme_select.slot_n", { n: String(slotIdx + 1) })}
                         </button>
                     {/each}
                 </div>
@@ -193,7 +194,7 @@
                                 <p
                                     class="text-[10px] text-brand-charcoal-300 dark:text-[#626880] mt-0.5"
                                 >
-                                    {theme.dark ? "Dark" : "Light"}
+                                    {theme.dark ? $t("editor_theme_select.dark") : $t("editor_theme_select.light")}
                                 </p>
                             </div>
                         </div>
@@ -230,7 +231,7 @@
                     class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 transition-colors"
                 >
                     <Icon icon="solar:check-circle-bold" width="0.9rem" />
-                    Done
+                    {$t("editor_theme_select.done")}
                 </button>
             </div>
         </div>
