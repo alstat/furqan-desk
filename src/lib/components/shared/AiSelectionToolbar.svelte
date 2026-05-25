@@ -178,13 +178,13 @@
             class="group relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-brand-gold-200 p-0 shadow-md transition-colors text-brand-gold-600 hover:bg-brand-gold-400 active:bg-brand-gold-500 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:bg-[#363a4f] dark:text-brand-gold-400 dark:hover:bg-[#4a4e5c] dark:active:bg-[#414559] disabled:opacity-50"
             disabled={busyAction !== null}
             onclick={toggleAskPrompt}
-            aria-label="Ask AI"
+            aria-label={$t("ai_selection.ask_ai")}
         >
             <Icon icon="ri:chat-smile-ai-fill" width="1rem" />
             <span
                 class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-brand-charcoal-900 px-2 py-1 text-[10px] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-[#1e2030] dark:text-[#c6d0f5]"
             >
-                Ask AI
+                {$t("ai_selection.ask_ai")}
             </span>
         </button>
     </div>
@@ -224,7 +224,7 @@
             <input
                 bind:this={askPromptInput}
                 bind:value={askPromptText}
-                placeholder="Ask AI about this selection..."
+                placeholder={$t("ai_selection.ask_placeholder")}
                 class="min-w-0 flex-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
                 onkeydown={(e) => {
                     if (e.key === "Enter") submitAskPrompt();
@@ -235,7 +235,7 @@
                 class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 hover:dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 disabled={!askPromptText.trim() || busyAction !== null}
                 onclick={submitAskPrompt}
-                title="Ask AI"
+                title={$t("ai_selection.ask_ai")}
             >
                 <Icon icon="solar:plain-bold-duotone" width="0.85rem" />
             </button>

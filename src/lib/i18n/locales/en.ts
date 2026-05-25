@@ -18,6 +18,8 @@ export const en: Record<string, string> = {
   "ai_selection.prompt": "Prompt",
   "ai_selection.prompt_placeholder": "Tell AI what to do...",
   "ai_selection.run_prompt": "Run prompt",
+  "ai_selection.ask_ai": "Ask AI",
+  "ai_selection.ask_placeholder": "Ask AI about this selection...",
   "settings.custom_fonts": "Custom Fonts",
   "settings.custom_fonts.desc":
     "Add system font family names to use in the editor font dropdown.",
@@ -353,6 +355,13 @@ export const en: Record<string, string> = {
   "reciter_select.manage": "Manage reciters",
   "reciter_select.seek_badge": "Streaming only — no offline",
   "reciter_select.assigned_slot": "In slot {n}",
+  // Editor theme select dialog
+  "editor_theme_select.title": "Editor Themes",
+  "editor_theme_select.subtitle": "Pick two themes for the toolbar",
+  "editor_theme_select.slot_n": "Slot {n}",
+  "editor_theme_select.dark": "Dark",
+  "editor_theme_select.light": "Light",
+  "editor_theme_select.done": "Done",
   // Recitation download dialog
   "recitation_dl.title": "Offline Recitation",
   "recitation_dl.subtitle": "Download for offline playback",
@@ -446,6 +455,9 @@ export const en: Record<string, string> = {
   "manuscript.count_one": "1 manuscript",
   "manuscript.count_many": "{n} manuscripts",
   "manuscript.image_error": "Failed to load image",
+  "manuscript.no_image_available": "No image available",
+  "manuscript.no_image_hint": "Corpus Coranicum has cataloged this manuscript but no digitized image is published for this folio.",
+  "manuscript.no_image_indicator": "No image available",
   "manuscript.zoom_in": "Zoom in",
   "manuscript.zoom_out": "Zoom out",
   "manuscript.zoom_reset": "Reset zoom",
