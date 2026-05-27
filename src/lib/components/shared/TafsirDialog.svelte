@@ -339,6 +339,15 @@
         tafsirHtml: string,
     ) {
         event.stopPropagation();
+        if (
+            aiPromptOpen &&
+            aiPromptCtx &&
+            aiPromptCtx.surah === surah &&
+            aiPromptCtx.ayah === ayah
+        ) {
+            closeAiPrompt();
+            return;
+        }
         const arabic = getAyahArabic(surah, ayah);
         const tafsir = stripHtml(tafsirHtml);
         aiPromptCtx = { surah, ayah, arabic, tafsir };

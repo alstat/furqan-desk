@@ -125,7 +125,7 @@
         "cursor-pointer flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors";
 </script>
 
-<div class="flex w-full flex-col gap-4">
+<div class="flex w-full flex-col gap-4 pb-5">
     <!-- Avatar + identity -->
     <div class="flex items-center gap-3">
         <div
@@ -196,16 +196,16 @@
             {#if !usage || !limits}
                 {#if loadingUsage}
                     <div
-                        class="flex items-center gap-2 text-sm {descriptionText}"
+                        class="flex flex-col items-center justify-center gap-2 py-4 text-sm {descriptionText}"
                         role="status"
                         aria-label={$t("explorer.loading")}
                     >
                         <Icon
-                            icon="solar:waterdrop-bold-duotone"
+                            icon="ic:round-token"
                             class="animate-pulse text-brand-gold-400/70 dark:text-[#e5c890]/70"
-                            width="1.15rem"
+                            width="1.75rem"
                         />
-                        <span class="sr-only">{$t("explorer.loading")}</span>
+                        <span>Loading token...</span>
                     </div>
                 {:else}
                     <p class="text-sm {descriptionText}">
@@ -276,7 +276,7 @@
     <!-- Sign out -->
     <button
         onclick={handleSignOut}
-        class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+        class="cursor-pointer flex w-full items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
     >
         {$t("account.sign_out")}
     </button>
