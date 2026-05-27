@@ -395,6 +395,16 @@
         wbwMap: Map<string, string> | null | undefined,
     ) {
         event.stopPropagation();
+        if (
+            aiPromptOpen &&
+            aiPromptContext &&
+            aiPromptContext.surah === surah &&
+            aiPromptContext.ayahNum === ayahNum &&
+            aiPromptContext.tafsir === null
+        ) {
+            closeAiPrompt();
+            return;
+        }
         const arabic = words.map(w => w.combined_arabic).join(' ');
         const translit = translitMap?.get(ayahNum) ?? null;
         const translation = transMap?.get(ayahNum)?.text ?? null;
@@ -427,6 +437,16 @@
         tafsirHtml: string,
     ) {
         event.stopPropagation();
+        if (
+            aiPromptOpen &&
+            aiPromptContext &&
+            aiPromptContext.surah === surah &&
+            aiPromptContext.ayahNum === ayahNum &&
+            aiPromptContext.tafsir !== null
+        ) {
+            closeAiPrompt();
+            return;
+        }
         const arabic = words.map(w => w.combined_arabic).join(' ');
         const tafsir = stripHtml(tafsirHtml);
         aiPromptContext = {

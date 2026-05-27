@@ -34,6 +34,9 @@
         return null;
     }
 
+    const lightThemes = ALL_EDITOR_THEMES.filter((th) => !th.dark);
+    const darkThemes = ALL_EDITOR_THEMES.filter((th) => th.dark);
+
     function assignTheme(theme: EditorThemeInfo) {
         // The same theme can't occupy both slots.
         const otherSlot = focusedSlot === 0 ? 1 : 0;
@@ -150,9 +153,9 @@
 
             <!-- Theme list -->
             <div
-                class="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-2 bg-brand-sand-50 dark:bg-[#232634]"
+                class="flex-1 min-h-0 overflow-y-auto px-5 py-4 bg-brand-sand-50 dark:bg-[#232634]"
             >
-                {#each ALL_EDITOR_THEMES as theme (theme.id)}
+                {#snippet themeItem(theme: EditorThemeInfo)}
                     {@const slotIdx = slotIndexOf(theme.id)}
                     {@const isOtherSlot =
                         slotIdx !== null && slotIdx !== focusedSlot}
@@ -191,11 +194,6 @@
                                 >
                                     {theme.label}
                                 </p>
-                                <p
-                                    class="text-[10px] text-brand-charcoal-300 dark:text-[#626880] mt-0.5"
-                                >
-                                    {theme.dark ? $t("editor_theme_select.dark") : $t("editor_theme_select.light")}
-                                </p>
                             </div>
                         </div>
 
@@ -219,7 +217,43 @@
                             </span>
                         {/if}
                     </button>
-                {/each}
+                {/snippet}
+
+                {#snippet groupHeader(icon: string, label: string)}
+                    <div
+                        class="flex items-center gap-1.5 px-1 pt-1 pb-2 text-[10px] font-bold uppercase tracking-wider text-brand-charcoal-300 dark:text-[#838ba7]"
+                    >
+                        <Icon {icon} width="0.85rem" />
+                        <span>{label}</span>
+                        <div
+                            class="flex-1 h-px bg-brand-sand-200 dark:bg-[#414559] ml-1"
+                        ></div>
+                    </div>
+                {/snippet}
+
+                {#if lightThemes.length}
+                    {@render groupHeader(
+                        "solar:sun-bold-duotone",
+                        $t("editor_theme_select.light"),
+                    )}
+                    <div class="space-y-2 mb-4">
+                        {#each lightThemes as theme (theme.id)}
+                            {@render themeItem(theme)}
+                        {/each}
+                    </div>
+                {/if}
+
+                {#if darkThemes.length}
+                    {@render groupHeader(
+                        "solar:moon-bold-duotone",
+                        $t("editor_theme_select.dark"),
+                    )}
+                    <div class="space-y-2">
+                        {#each darkThemes as theme (theme.id)}
+                            {@render themeItem(theme)}
+                        {/each}
+                    </div>
+                {/if}
             </div>
 
             <!-- Footer -->
