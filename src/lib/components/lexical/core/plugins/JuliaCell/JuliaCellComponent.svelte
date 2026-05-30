@@ -16,9 +16,16 @@
     import {
         $getNodeByKey as getNodeByKey,
         $getRoot as getRoot,
+        $getSelection as getSelection,
         $isElementNode as isElementNode,
+        $isNodeSelection as isNodeSelection,
+        CLICK_COMMAND,
+        KEY_DELETE_COMMAND,
+        KEY_BACKSPACE_COMMAND,
+        COMMAND_PRIORITY_LOW,
         type LexicalNode,
     } from "lexical";
+    import { mergeRegister } from "@lexical/utils";
     import {
         $isJuliaCellNode as isJuliaCellNode,
         type JuliaCellDisplayMode,
@@ -41,7 +48,7 @@
     } from "$lib/codemirror/julia";
     import { latexInput } from "$lib/codemirror/latexInput";
     import { wrapSelection } from "$lib/codemirror/wrapSelection";
-    import { createNodeSelectionStore } from "../../nodeSelectionStore.js";
+    import { clearSelection, createNodeSelectionStore } from "../../nodeSelectionStore.js";
     import { appDarkMode, editorIndentSize } from "$lib/stores/editor.store";
     import { get } from "svelte/store";
     import { isPro } from "$lib/stores/auth.store";
@@ -536,8 +543,63 @@ end
         ".cm-activeLineGutter": { backgroundColor: "transparent" },
     });
 
+    // Root element of the rendered cell — used to detect clicks on the cell's
+    // chrome (border, header, output) so the whole node can be selected.
+    let wrapperEl: HTMLElement | null = $state(null);
+
+    // Clicking the cell — anywhere except the code editor or an interactive
+    // control — selects the whole node, so a following Delete/Backspace removes
+    // it. Shift-click toggles, matching the image/decorator selection pattern.
+    const onCellClick = (payload: MouseEvent): boolean => {
+        const target = payload.target as HTMLElement | null;
+        if (!target || !wrapperEl || !wrapperEl.contains(target)) return false;
+        // Editing the code or using a control must keep their normal behaviour.
+        if (editorHost?.contains(target)) return false;
+        if (target.closest("button, a, input, select, textarea, iframe"))
+            return false;
+
+        if (payload.shiftKey) {
+            $isSelected = !$isSelected;
+        } else {
+            clearSelection(editor);
+            $isSelected = true;
+        }
+        return true;
+    };
+
+    // Delete/Backspace removes the cell, but only when it is node-selected (so
+    // the keys still edit text normally while the code editor has focus).
+    const onCellDelete = (event: KeyboardEvent): boolean => {
+        if (!$isSelected || !isNodeSelection(getSelection())) return false;
+        event.preventDefault();
+        const node = getNodeByKey(nodeKey);
+        if (isJuliaCellNode(node)) {
+            node.remove();
+            return true;
+        }
+        return false;
+    };
+
     onMount(() => {
-        if (!editorHost) return;
+        const unregisterCommands = mergeRegister(
+            editor.registerCommand(
+                CLICK_COMMAND,
+                onCellClick,
+                COMMAND_PRIORITY_LOW,
+            ),
+            editor.registerCommand(
+                KEY_DELETE_COMMAND,
+                onCellDelete,
+                COMMAND_PRIORITY_LOW,
+            ),
+            editor.registerCommand(
+                KEY_BACKSPACE_COMMAND,
+                onCellDelete,
+                COMMAND_PRIORITY_LOW,
+            ),
+        );
+
+        if (!editorHost) return unregisterCommands;
 
         const runKeymap = keymap.of([
             {
@@ -595,6 +657,7 @@ end
         }
 
         return () => {
+            unregisterCommands();
             juliaCellRunners.delete(nodeKey);
             juliaCellClearers.delete(nodeKey);
             persistCode();
@@ -605,6 +668,7 @@ end
 </script>
 
 <div
+    bind:this={wrapperEl}
     class="julia-cell my-0.5 flex flex-col overflow-hidden rounded-md {plotUnboxed
         ? ''
         : 'border border-brand-sand-200 dark:border-[#363a4f]'}"
