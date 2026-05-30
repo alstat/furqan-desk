@@ -17,8 +17,6 @@
     import JuliaPlotViewer from "$lib/components/shared/JuliaPlotViewer.svelte";
     import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
     import CustomFontDialog from "$lib/components/settings/CustomFontDialog.svelte";
-    import HelpDialog from "$lib/components/help/HelpDialog.svelte";
-    import { helpStore, openHelp, closeHelp } from "$lib/stores/help.store";
     import {
         customFontDialogOpen,
         closeCustomFontDialog,
@@ -54,7 +52,6 @@
         typeof window !== "undefined" ? window.innerHeight : 600,
     );
     let showSettings = $state(false);
-    // showHelp is now driven by helpStore (so any component can open the help dialog)
     let isLoading = $state(true);
 
     onMount(async () => {
@@ -244,16 +241,10 @@
 <SettingsDialog
     open={showSettings}
     onClose={() => (showSettings = false)}
-    onOpenHelp={() => openHelp()}
 />
 <CustomFontDialog
     open={$customFontDialogOpen}
     onClose={closeCustomFontDialog}
-/>
-<HelpDialog
-    open={$helpStore.open}
-    initialSection={$helpStore.section}
-    onClose={closeHelp}
 />
 <ManuscriptViewer
     open={$manuscriptViewerOpen}

@@ -32,10 +32,9 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     interface Props {
         open: boolean;
         onClose: () => void;
-        onOpenHelp: () => void;
     }
 
-    let { open, onClose, onOpenHelp }: Props = $props();
+    let { open, onClose }: Props = $props();
 
     function handleRestartTour() {
         onClose();
@@ -145,7 +144,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             <p class={sectionLabel}>{$t('settings.help')}</p>
             <div class="flex items-center justify-between">
                 <span class={rowLabel}>{$t('settings.help.browse')}</span>
-                <button onclick={onOpenHelp} class={actionBtn}>
+                <button onclick={() => openUrl('https://www.ayahlab.com/docs')} class={actionBtn}>
                     <Icon icon="solar:question-circle-bold-duotone" width="0.85rem" />
                     {$t('settings.help.open')}
                 </button>
