@@ -12,6 +12,19 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { get, writable } from 'svelte/store';
 import { browser } from '$app/environment';
+import {
+    selectedSurahIdx,
+    morphologyAyahFilter,
+    morphologyMultiSurahList,
+} from './quran.svelte';
+import { recitationPlaylist } from './recitation.store';
+import {
+    multiSurahTranslationMap,
+    multiSurahTransliterationMap,
+    multiSurahWordByWordMap,
+} from './translation.store';
+import { juliaActiveEnv } from './editor.store';
+import type { SurahMorphology } from '$lib/types/morphology';
 
 /** Kernel name for the notebook cells — kept distinct from the REPL pane's. */
 const CELL_KERNEL = 'cell';
@@ -90,6 +103,72 @@ export interface JuliaCellResult {
 
 type CellUpdate = (partial: JuliaCellResult) => void;
 
+/**
+ * Apply an `AL.surah` / `AL.ayah` navigation command emitted by a cell (the
+ * Julia display hook writes these as `__AL_CMD__:{"type":"display",…}` lines).
+ * Mirrors the REPL pane's handling so the same APIs drive the MorphologyView
+ * whether they're run from the REPL or a notebook cell. `onError` surfaces
+ * load/validation problems back to the originating cell.
+ */
+function applyAlDisplayCommand(
+    surahs: number[],
+    ayahs: number[] | null,
+    onError: (message: string) => void,
+): void {
+    if (surahs.length === 1 && ayahs === null) {
+        // Simple single-surah navigation — let SurahWidget load it.
+        morphologyMultiSurahList.set(null);
+        morphologyAyahFilter.set(null);
+        recitationPlaylist.set(null);
+        multiSurahTranslationMap.set(null);
+        multiSurahTransliterationMap.set(null);
+        multiSurahWordByWordMap.set(null);
+        selectedSurahIdx.set(surahs[0]);
+        return;
+    }
+
+    // Load surahs, validate ayah numbers, display.
+    void (async () => {
+        const ayahFilter = ayahs;
+        const loaded: SurahMorphology[] = [];
+        for (const surahNum of surahs) {
+            try {
+                const data = await invoke<SurahMorphology>(
+                    'get_surah_morphology',
+                    { surahNumber: surahNum },
+                );
+                if (ayahFilter !== null) {
+                    const maxAyah = Math.max(...data.ayahs.map((a) => a.ayah));
+                    const missing = ayahFilter.filter((n) => n > maxAyah);
+                    if (missing.length > 0) {
+                        onError(
+                            `Surah ${surahNum} has only ${maxAyah} ayahs — requested: ${missing.join(', ')}`,
+                        );
+                    }
+                }
+                loaded.push(data);
+            } catch (e) {
+                onError(`Failed to load surah ${surahNum}: ${e}`);
+            }
+        }
+        if (loaded.length === 0) return;
+        morphologyMultiSurahList.set(loaded);
+        morphologyAyahFilter.set(ayahFilter);
+        if (surahs.length === 1) selectedSurahIdx.set(surahs[0]);
+        // Build an ordered playlist from the displayed ayahs.
+        const playlist: { surah: number; ayah: number }[] = [];
+        for (const surahData of loaded) {
+            const surahAyahs = ayahFilter
+                ? surahData.ayahs.filter((a) => ayahFilter.includes(a.ayah))
+                : surahData.ayahs;
+            for (const a of surahAyahs) {
+                playlist.push({ surah: surahData.surah, ayah: a.ayah });
+            }
+        }
+        recitationPlaylist.set(playlist.length > 0 ? playlist : null);
+    })();
+}
+
 interface Job {
     code: string;
     onUpdate: CellUpdate;
@@ -145,8 +224,10 @@ async function processQueue(): Promise<void> {
             const rest: string[] = [];
             for (const line of chunk.split('\n')) {
                 if (line.startsWith('__AL_CMD__:')) {
-                    // Sidecar commands (plots, env, …) emitted by the Julia
-                    // display hook. Only plots are surfaced inside a cell.
+                    // Sidecar commands (plots, env, display) emitted by the
+                    // Julia display hook. Plots render inline in the cell;
+                    // `display` (AL.surah/AL.ayah) drives the MorphologyView,
+                    // and `env` updates the active-environment indicator.
                     try {
                         const cmd = JSON.parse(line.slice('__AL_CMD__:'.length));
                         if (cmd.type === 'plot') {
@@ -155,6 +236,22 @@ async function processQueue(): Promise<void> {
                                 data: cmd.data,
                                 url: cmd.url,
                             });
+                        } else if (cmd.type === 'env') {
+                            juliaActiveEnv.set(String(cmd.name ?? ''));
+                        } else if (cmd.type === 'display') {
+                            applyAlDisplayCommand(
+                                cmd.surahs,
+                                cmd.ayahs,
+                                (message) => {
+                                    text += text ? `\n${message}` : message;
+                                    hasError = true;
+                                    job.onUpdate({
+                                        text,
+                                        hasError,
+                                        plots: [...plots],
+                                    });
+                                },
+                            );
                         }
                     } catch {
                         /* ignore malformed sidecar command */
