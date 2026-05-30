@@ -49,8 +49,13 @@
     /* Charcoal */
     --color-brand-charcoal-50: #f2f2f2;
     --color-brand-charcoal-100: #e0e0e0;
+    --color-brand-charcoal-200: #c8c8c8;
     --color-brand-charcoal-300: #ababab;
+    --color-brand-charcoal-400: #8d8d8d;
     --color-brand-charcoal-500: #707070;
+    --color-brand-charcoal-600: #5c5c5c;
+    --color-brand-charcoal-700: #4a4a4a;
+    --color-brand-charcoal-800: #3a3a3a;
     --color-brand-charcoal-900: #2f2f2f;
 
     --ayah-flash-bg: var(--color-brand-gold-100);
@@ -84,8 +89,13 @@ html.dark {
     /* Charcoal → Frappe text scale */
     --color-brand-charcoal-50: #c6d0f5; /* Text */
     --color-brand-charcoal-100: #b5bfe2; /* Subtext1 */
+    --color-brand-charcoal-200: #9ca3c0; /* between Subtext1 and Overlay2 */
     --color-brand-charcoal-300: #838ba7; /* Overlay1 — labels, muted */
+    --color-brand-charcoal-400: #949cbb; /* Overlay2 — muted-to-body */
     --color-brand-charcoal-500: #a5adce; /* Subtext0 — body text */
+    --color-brand-charcoal-600: #b5bfe2; /* Subtext1 — emphasised body */
+    --color-brand-charcoal-700: #c6d0f5; /* Text — strong */
+    --color-brand-charcoal-800: #d7def7; /* between Text and heading */
     --color-brand-charcoal-900: #e8edff; /* near-white headings */
 
     --ayah-flash-bg: color-mix(in srgb, var(--color-brand-gold-400) 25%, transparent);

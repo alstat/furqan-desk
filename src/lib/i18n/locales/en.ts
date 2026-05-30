@@ -1,5 +1,10 @@
 export const en: Record<string, string> = {
   // Settings
+  "settings.group.general": "General",
+  "settings.group.editor": "Editor & Writing",
+  "settings.group.environments": "Environments",
+  "settings.group.storage": "Storage",
+  "settings.group.about": "App & Support",
   "settings.language": "Language",
   "settings.language.desc": "Change the display language of the app",
   "settings.help": "Help",
