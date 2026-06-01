@@ -28,9 +28,11 @@
     import type { Text } from "@codemirror/state";
     import {
         autocompletion,
+        type Completion,
         type CompletionSource,
     } from "@codemirror/autocomplete";
     import { JULIA_COMPLETIONS } from "$lib/completions/julia";
+    import { t } from "$lib/i18n";
 
     /**
      * tabId  — when set, this editor shows a specific (secondary/split) tab
@@ -103,7 +105,7 @@
             } else if (line.startsWith("ERR:")) {
                 showFormatError(b64ToUtf8(line.slice(4)));
             } else {
-                showFormatError("Unexpected formatter response.");
+                showFormatError($t("julia_editor.unexpected_formatter_response"));
             }
         } catch (e) {
             showFormatError(typeof e === "string" ? e : String(e));
@@ -122,48 +124,231 @@
     let effectiveTab = $derived(
         tabId ? ($tabs.find((t) => t.id === tabId) ?? null) : $activeTab,
     );
+    let editorScrollKey = $derived(effectiveTab?.path ?? effectiveTab?.id ?? null);
 
     // ── Completion source ─────────────────────────────────────────────────────
 
     let isRunning = $derived($juliaIsRunning);
     let isFlashing = $derived($flashingTabId === effectiveTab?.id);
 
+    const JULIA_IDENTIFIER_RE = /^[A-Za-z_]\w*[!?]?$/;
+
+    function addDocumentCompletion(
+        completions: Map<string, Completion>,
+        label: string,
+        type: Completion["type"],
+        detail: string,
+    ): void {
+        const normalized = label.trim();
+        if (!JULIA_IDENTIFIER_RE.test(normalized)) return;
+        if (completions.has(normalized)) return;
+        completions.set(normalized, {
+            label: normalized,
+            type,
+            detail,
+            boost: 99,
+        });
+    }
+
+    function collectNamesFromList(
+        rawList: string,
+        completions: Map<string, Completion>,
+        type: Completion["type"],
+        detail: string,
+    ): void {
+        for (const segment of rawList.replace(/;/g, ",").split(",")) {
+            const match = segment
+                .trim()
+                .match(/^([A-Za-z_]\w*[!?]?)(?=\s*(?:::\s*[^=]+)?(?:=|$))/);
+            if (match) addDocumentCompletion(completions, match[1], type, detail);
+        }
+    }
+
+    function collectFunctionArgs(
+        rawArgs: string,
+        completions: Map<string, Completion>,
+    ): void {
+        collectNamesFromList(rawArgs, completions, "variable", "argument");
+    }
+
+    // Scanning the whole document (split + several regexes per line) is the
+    // bulk of a completion query's cost. CodeMirror re-invokes the source on
+    // every new word and on deletions, so memoize the last scan: while the
+    // document text is unchanged, successive queries (different prefixes, REPL
+    // retries, info rendering) reuse the parsed name set instead of re-parsing.
+    let docScanCacheSource: string | null = null;
+    let docScanCache: Map<string, Completion> = new Map();
+
+    function scanDocumentCompletions(source: string): Map<string, Completion> {
+        if (source === docScanCacheSource) return docScanCache;
+        const completions = new Map<string, Completion>();
+        scanDocumentInto(source, completions);
+        docScanCacheSource = source;
+        docScanCache = completions;
+        return completions;
+    }
+
+    function collectDocumentCompletions(
+        source: string,
+        prefix: string,
+    ): Completion[] {
+        const completions = scanDocumentCompletions(source);
+        const lowerPrefix = prefix.toLowerCase();
+        const out: Completion[] = [];
+        for (const completion of completions.values()) {
+            if (completion.label.toLowerCase().startsWith(lowerPrefix)) {
+                out.push(completion);
+            }
+        }
+        return out;
+    }
+
+    function scanDocumentInto(
+        source: string,
+        completions: Map<string, Completion>,
+    ): void {
+        for (const rawLine of source.split("\n")) {
+            const line = rawLine.replace(/#.*$/, "").trim();
+            if (!line) continue;
+
+            const functionMatch = line.match(
+                /^function\s+([A-Za-z_]\w*[!?]?)\s*\(([^)]*)\)/,
+            );
+            if (functionMatch) {
+                addDocumentCompletion(
+                    completions,
+                    functionMatch[1],
+                    "function",
+                    "defined in file",
+                );
+                collectFunctionArgs(functionMatch[2], completions);
+                continue;
+            }
+
+            const shortFunctionMatch = line.match(
+                /^([A-Za-z_]\w*[!?]?)\s*\(([^)]*)\)\s*=/,
+            );
+            if (shortFunctionMatch) {
+                addDocumentCompletion(
+                    completions,
+                    shortFunctionMatch[1],
+                    "function",
+                    "defined in file",
+                );
+                collectFunctionArgs(shortFunctionMatch[2], completions);
+            }
+
+            const assignmentMatch = line.match(
+                /^(?:const|local|global)\s+(.+)$|^([A-Za-z_]\w*[!?]?)\s*(?:::\s*[^=]+)?=(?!=)/,
+            );
+            if (assignmentMatch?.[1]) {
+                collectNamesFromList(
+                    assignmentMatch[1],
+                    completions,
+                    "variable",
+                    "defined in file",
+                );
+            } else if (assignmentMatch?.[2]) {
+                addDocumentCompletion(
+                    completions,
+                    assignmentMatch[2],
+                    "variable",
+                    "defined in file",
+                );
+            }
+
+            const letMatch = line.match(/^let\s+(.+)$/);
+            if (letMatch) {
+                collectNamesFromList(
+                    letMatch[1],
+                    completions,
+                    "variable",
+                    "let binding",
+                );
+            }
+
+            const forMatch = line.match(/^for\s+(.+?)\s+in\b/);
+            if (forMatch) {
+                collectNamesFromList(
+                    forMatch[1].replace(/[()]/g, ""),
+                    completions,
+                    "variable",
+                    "loop variable",
+                );
+            }
+        }
+    }
+
+    function mergeCompletions(...groups: Completion[][]): Completion[] {
+        const merged = new Map<string, Completion>();
+        for (const group of groups) {
+            for (const completion of group) {
+                if (!merged.has(completion.label)) {
+                    merged.set(completion.label, completion);
+                }
+            }
+        }
+        return [...merged.values()];
+    }
+
+    // Precompute each static completion's lowercased label once, so prefix
+    // filtering on every query is a plain compare instead of ~400 toLowerCase()
+    // allocations per keystroke.
+    const JULIA_COMPLETIONS_INDEXED = JULIA_COMPLETIONS.map((c) => ({
+        completion: c,
+        lower: c.label.toLowerCase(),
+    }));
+
     const juliaCompletionSource: CompletionSource = async (context) => {
         const word = context.matchBefore(/\w+/);
         if (!word || (word.from === word.to && !context.explicit)) return null;
 
+        const documentCompletions = collectDocumentCompletions(
+            context.state.doc.toString(),
+            word.text,
+        );
+
+        let replCompletions: Completion[] = [];
+
         if (get(juliaReplStarted) && !get(juliaIsRunning)) {
             try {
                 const { invoke } = await import("@tauri-apps/api/core");
-                const replCompletions = await invoke<string[]>(
+                const labels = await invoke<string[]>(
                     "julia_complete",
                     { prefix: word.text },
                 );
-                if (replCompletions.length > 0) {
-                    return {
-                        from: word.from,
-                        options: replCompletions.map((label) => ({
-                            label,
-                            type: "function",
-                        })),
-                        validFor: /^\w*$/,
-                    };
-                }
+                replCompletions = labels.map((label) => ({
+                    label,
+                    type: "function",
+                }));
             } catch {
                 // fall through to static completions
             }
         }
 
         const lower = word.text.toLowerCase();
-        const filtered = JULIA_COMPLETIONS.filter((c) =>
-            c.label.toLowerCase().startsWith(lower),
+        const staticCompletions: Completion[] = [];
+        for (const entry of JULIA_COMPLETIONS_INDEXED) {
+            if (entry.lower.startsWith(lower)) {
+                staticCompletions.push(entry.completion);
+            }
+        }
+        const options = mergeCompletions(
+            documentCompletions,
+            replCompletions,
+            staticCompletions,
         );
-        if (filtered.length === 0) return null;
-        return { from: word.from, options: filtered, validFor: /^\w*$/ };
+
+        if (options.length === 0) return null;
+        return { from: word.from, options, validFor: /^\w*$/ };
     };
 
     const juliaCompletionExtension = autocompletion({
         override: [juliaCompletionSource],
+        // Debounce so a typing/deleting burst doesn't fire the (document-scan +
+        // REPL IPC) source on every keystroke, and cap rendered DOM options.
+        activateOnTypingDelay: 150,
+        maxRenderedOptions: 50,
     });
 
     // ── Content change handler ────────────────────────────────────────────────
@@ -294,7 +479,7 @@
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
                 >{effectiveTab?.name ??
-                    "Julia Editor"}{#if effectiveTab?.isDirty}<span
+                    $t("julia_editor.fallback_name")}{#if effectiveTab?.isDirty}<span
                         class="text-brand-gold-500 dark:text-[#e5c890]"
                     >
                         *</span
@@ -311,19 +496,19 @@
                 <button
                     onclick={formatJulia}
                     disabled={formatting}
-                    title="Format with JuliaFormatter.jl"
+                    title={$t("julia_cell.format")}
                     class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                            bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400
                            hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25
                            disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Icon icon="icon-park-twotone:format-brush" width="11" />
-                    {formatting ? "Formatting…" : "Format"}
+                    {formatting ? $t("julia_editor.formatting") : $t("julia_editor.format")}
                 </button>
                 <!-- Line wrap toggle -->
                 <button
                     onclick={() => (lineWrap = !lineWrap)}
-                    title={lineWrap ? "Disable line wrap" : "Enable line wrap"}
+                    title={lineWrap ? $t("julia_cell.disable_wrap") : $t("julia_cell.enable_wrap")}
                     class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                        {lineWrap
                         ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'
@@ -344,16 +529,72 @@
                             d="M3 12h15a3 3 0 0 1 0 6h-4"
                         /><polyline points="8 15 5 18 8 21" />
                     </svg>
-                    {lineWrap ? "Wrap" : "No Wrap"}
+                    {lineWrap ? $t("julia_editor.wrap") : $t("julia_editor.no_wrap")}
                 </button>
             </div>
         </div>
         {#if formatError}
+            {@const isReplDown =
+                /repl|kernel|not started|not running|connect/i.test(
+                    formatError,
+                )}
             <div
-                class="mx-2 mb-1 px-2 py-1 rounded-md text-[10px] text-red-500 dark:text-red-400
-                       bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40"
+                role="alert"
+                class="julia-format-alert font-sans mx-2 mb-1.5 flex items-start gap-2 px-2.5 py-2
+                       rounded-md border shadow-sm
+                       {isReplDown
+                    ? 'bg-amber-50/90 dark:bg-amber-900/15 border-amber-200/80 dark:border-amber-700/40'
+                    : 'bg-red-50/90 dark:bg-red-900/15 border-red-200/80 dark:border-red-700/40'}"
             >
-                {formatError}
+                <span
+                    class="mt-[1px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full
+                           {isReplDown
+                        ? 'bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-300'
+                        : 'bg-red-100 dark:bg-red-800/40 text-red-600 dark:text-red-300'}"
+                >
+                    <Icon
+                        icon={isReplDown
+                            ? "lucide:plug-zap"
+                            : "lucide:alert-triangle"}
+                        width="0.7rem"
+                        height="0.7rem"
+                    />
+                </span>
+                <div class="min-w-0 flex-1 leading-tight">
+                    <div
+                        class="text-[11px] font-semibold
+                               {isReplDown
+                            ? 'text-amber-800 dark:text-amber-200'
+                            : 'text-red-700 dark:text-red-200'}"
+                    >
+                        {isReplDown
+                            ? $t("julia_cell.repl_not_running")
+                            : $t("julia_editor.format_failed_file")}
+                    </div>
+                    <div
+                        class="mt-1.5 text-[10.5px] break-words
+                               {isReplDown
+                            ? 'text-amber-700/90 dark:text-amber-300/90'
+                            : 'text-red-600/90 dark:text-red-300/90'}"
+                    >
+                        {isReplDown
+                            ? $t("julia_editor.start_repl_then_format")
+                            : formatError}
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    aria-label={$t("common.close")}
+                    onclick={() => {
+                        formatError = "";
+                        if (formatErrorTimer) clearTimeout(formatErrorTimer);
+                    }}
+                    class="shrink-0 -mr-0.5 -mt-0.5 p-1 rounded
+                           text-current opacity-60 hover:opacity-100
+                           hover:bg-black/5 dark:hover:bg-white/10 transition"
+                >
+                    <Icon icon="lucide:x" width="0.7rem" height="0.7rem" />
+                </button>
             </div>
         {/if}
         {#if effectiveTab}
@@ -372,6 +613,7 @@
                     {aiContextPrompt}
                     {askAiContextPrompt}
                     filePath={effectiveTab.path ?? null}
+                    scrollKey={editorScrollKey}
                     onchange={handleInput}
                     class="h-full font-mono"
                 />
@@ -399,3 +641,19 @@
         </div>
     {/if}
 </div>
+
+<style>
+    .julia-format-alert {
+        animation: julia-format-alert-in 160ms ease-out;
+    }
+    @keyframes julia-format-alert-in {
+        from {
+            opacity: 0;
+            transform: translateY(-2px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>

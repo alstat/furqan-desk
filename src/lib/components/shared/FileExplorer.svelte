@@ -4,7 +4,7 @@
 	import { readDir, readTextFile, watchImmediate, type UnwatchFn } from '@tauri-apps/plugin-fs';
 	import { onDestroy } from 'svelte';
 	import Icon from '@iconify/svelte';
-	import { openFolderPath, folderRefreshTrigger, openPreviewTab, openOrFocusTab, isFlatFile, isImageFile, isPdfFile } from '$lib/stores/tabs.store';
+	import { openFolderPath, folderRefreshTrigger, openPreviewTab, openOrFocusTab, isFlatFile, isImageFile, isPdfFile, tabs, syncCleanTabsFromDisk } from '$lib/stores/tabs.store';
 	import MediaViewerDialog from './MediaViewerDialog.svelte';
 	import { surahOrientation } from '$lib/stores/quran.svelte';
     import { actionBtnStyle } from '$lib/data/toolbar/toolbar';
@@ -119,10 +119,32 @@
 		collectExpanded(rootNodes, expanded);
 		try {
 			rootNodes = await buildWithExpanded(folder, expanded);
+			await refreshOpenTabsFromDisk(folder);
 			loadError = '';
 		} catch (e) {
 			loadError = String(e);
 		}
+	}
+
+	async function refreshOpenTabsFromDisk(folder: string) {
+		const normalizedFolder = folder.replace(/\\/g, '/').replace(/\/+$/, '');
+		const openFileTabs = $tabs.filter((tab) => {
+			if (!tab.path) return false;
+			const normalizedPath = tab.path.replace(/\\/g, '/');
+			return normalizedPath.startsWith(`${normalizedFolder}/`);
+		});
+
+		await Promise.all(
+			openFileTabs.map(async (tab) => {
+				if (!tab.path) return;
+				try {
+					const content = await readTextFile(tab.path);
+					syncCleanTabsFromDisk(tab.path, content);
+				} catch {
+					// Ignore tabs whose files were removed or are temporarily inaccessible.
+				}
+			})
+		);
 	}
 
 	function buildNodes(

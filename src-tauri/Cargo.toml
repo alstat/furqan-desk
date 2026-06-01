@@ -24,6 +24,8 @@ tauri = { version = "2", features = ["devtools"] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
+tauri-plugin-clipboard-manager = "2.3.2"
+base64       = "0.22"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rusqlite = { version = "0.38", features = ["bundled", "functions"] }
@@ -39,13 +41,13 @@ flate2    = "1"
 tar       = "0.4"
 tokio     = { version = "1", features = ["process", "io-util", "sync", "rt", "macros", "time", "fs"] }
 fontdb    = "0.23"
+# portable-pty supports Unix (forkpty) and Windows (ConPTY); keep it cross-platform
+# so the integrated terminal works on Windows too.
+portable-pty = "0.8"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 git2      = { version = "0.19", default-features = false, features = ["vendored-libgit2"] }
-portable-pty = "0.8"
-base64       = "0.22"
-tauri-plugin-clipboard-manager = "2.3.2"
 
 [target.'cfg(target_os = "android")'.dependencies]
 ndk         = "0.9"

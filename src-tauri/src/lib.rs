@@ -2,8 +2,10 @@ mod buckwalter;
 mod commands;
 mod db;
 mod feedback;
+#[cfg(unix)]
 mod git;
 mod julia;
+#[cfg(any(unix, windows))]
 mod pty;
 mod terminal;
 mod typst_world;
@@ -26,12 +28,15 @@ pub fn run() {
             // SAFETY: single-threaded at this point (before Tauri spawns workers).
             unsafe { std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1") };
         }
-        // Disable GTK overlay scrollbars so WebKit CSS scrollbar rules take effect.
-        // Without this, Fedora/GNOME renders native GTK scrollbars that ignore
-        // ::-webkit-scrollbar pseudo-elements and the app's dark-mode theme entirely.
-        if std::env::var_os("GTK_OVERLAY_SCROLLING").is_none() {
-            unsafe { std::env::set_var("GTK_OVERLAY_SCROLLING", "0") };
-        }
+        // NOTE: We deliberately do NOT set GTK_OVERLAY_SCROLLING=0 here.
+        // Forcing overlay scrolling off pushes WebKitGTK onto its legacy native
+        // GTK scrollbar path, which draws a wide, always-visible trough themed by
+        // the GTK system theme — light regardless of the app's dark mode, and it
+        // ignores both ::-webkit-scrollbar pseudo-elements *and* the standard
+        // scrollbar-width/scrollbar-color CSS. Modern WebKitGTK (≥ 2.44, e.g.
+        // Debian 13 / current Fedora) supports the standard scrollbar-* CSS
+        // properties on its overlay scrollbars, so leaving overlay scrolling at
+        // the GNOME default lets the rules in app.css style scrollbars correctly.
     }
 
     tauri::Builder::default()
@@ -58,6 +63,7 @@ pub fn run() {
             let julia_custom_path = julia::load_persisted_path(&app.handle());
             app.manage(julia::JuliaState::new(julia_custom_path));
             app.manage(terminal::TerminalState::new());
+            #[cfg(any(unix, windows))]
             app.manage(pty::PtyState::new());
             app.manage(commands::DownloadState {
                 cancel: Arc::new(AtomicBool::new(false)),
@@ -125,9 +131,13 @@ pub fn run() {
             terminal::send_terminal_input,
             terminal::signal_terminal,
             terminal::close_terminal,
+            #[cfg(any(unix, windows))]
             pty::start_pty,
+            #[cfg(any(unix, windows))]
             pty::pty_write,
+            #[cfg(any(unix, windows))]
             pty::pty_resize,
+            #[cfg(any(unix, windows))]
             pty::pty_kill,
             commands::search_quran,
             commands::get_manuscript_detail,
@@ -138,6 +148,7 @@ pub fn run() {
             commands::get_manuscript_demo_image,
             commands::get_system_font_families,
             feedback::send_feedback,
+            #[cfg(unix)]
             git::git_head_content,
         ])
         .on_window_event(|window, event| {

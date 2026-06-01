@@ -83,7 +83,7 @@
 
             <!-- Body -->
             <div
-                class="flex-1 overflow-y-auto bg-brand-sand-50 dark:bg-[#232634] px-5 py-5"
+                class="flex-1 overflow-y-auto bg-brand-sand-50 dark:bg-[#232634] px-5 pt-5"
             >
                 {#if view === "login"}
                     <LoginView />

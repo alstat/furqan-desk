@@ -395,6 +395,16 @@
         wbwMap: Map<string, string> | null | undefined,
     ) {
         event.stopPropagation();
+        if (
+            aiPromptOpen &&
+            aiPromptContext &&
+            aiPromptContext.surah === surah &&
+            aiPromptContext.ayahNum === ayahNum &&
+            aiPromptContext.tafsir === null
+        ) {
+            closeAiPrompt();
+            return;
+        }
         const arabic = words.map(w => w.combined_arabic).join(' ');
         const translit = translitMap?.get(ayahNum) ?? null;
         const translation = transMap?.get(ayahNum)?.text ?? null;
@@ -427,6 +437,16 @@
         tafsirHtml: string,
     ) {
         event.stopPropagation();
+        if (
+            aiPromptOpen &&
+            aiPromptContext &&
+            aiPromptContext.surah === surah &&
+            aiPromptContext.ayahNum === ayahNum &&
+            aiPromptContext.tafsir !== null
+        ) {
+            closeAiPrompt();
+            return;
+        }
         const arabic = words.map(w => w.combined_arabic).join(' ');
         const tafsir = stripHtml(tafsirHtml);
         aiPromptContext = {
@@ -640,7 +660,7 @@
                                                 onclick={(e) => openAiPromptForTafsir(e, surahData.surah, ayahData.ayah, ayahData.words, multiTafsir.get(ayahData.ayah)!)}
                                                 title={$t('morphology.ai_ask_tafsir')}
                                                 aria-label={$t('morphology.ai_ask_tafsir')}
-                                                class="cursor-pointer flex items-center gap-0.5 text-brand-gold-600 dark:text-[#e5c890] hover:text-brand-gold-500 dark:hover:text-[#e5c890]/80 transition-colors"
+                                                class="cursor-pointer flex items-center gap-0.5 text-slate-350 dark:text-[#838ba7] transition-all hover:bg-brand-gold-50 dark:hover:bg-[#414559] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
                                             >
                                                 <Icon icon="ri:chat-smile-ai-fill" width="0.75rem" />
                                             </button>
@@ -777,7 +797,7 @@
                                             onclick={(e) => openAiPromptForTafsir(e, $surahMorphology!.surah, ayahData.ayah, ayahData.words, tafsirMap.get(ayahData.ayah)!)}
                                             title={$t('morphology.ai_ask_tafsir')}
                                             aria-label={$t('morphology.ai_ask_tafsir')}
-                                            class="cursor-pointer flex items-center gap-0.5 text-brand-gold-600 dark:text-[#e5c890] hover:text-brand-gold-500 dark:hover:text-[#e5c890]/80 transition-colors"
+                                            class="cursor-pointer flex items-center gap-0.5 text-slate-350 dark:text-[#838ba7] transition-all hover:bg-brand-gold-50 dark:hover:bg-[#414559] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
                                         >
                                             <Icon icon="ri:chat-smile-ai-fill" width="0.75rem" />
                                         </button>

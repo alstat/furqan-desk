@@ -21,6 +21,7 @@ import { readFile } from "@tauri-apps/plugin-fs";
 import { codeBlockParagraphs } from "./docxCodeHighlight";
 import { cssColorToHex, textRunStyleFromNode } from "./docxInlineStyle";
 import { getSurahNameTashkeel } from "$lib/data/surah-names-tashkeel";
+import { juliaPlotIframes } from "$lib/stores/julia-notebook";
 
 type BlockChild = Paragraph | Table;
 type InlineStyle = { italic?: boolean; defaultColor?: string };
@@ -526,12 +527,106 @@ function rasterizeToPng(
     });
 }
 
+// Snapshot an interactive plot's iframe to PNG bytes, capturing whatever
+// rotation/pan/zoom the user has applied. PlotlyJS exposes `Plotly.toImage`
+// inside the srcdoc iframe; Gadfly's SVGJS output mutates an inline <svg> we
+// serialize directly; WGLMakie's Bonito canvas is read via `toDataURL` when
+// the webview lets us. Returns `null` if the iframe isn't mounted or the
+// snapshot can't be taken (e.g. tainted canvas).
+async function captureInteractivePlot(
+    key: string,
+): Promise<{ bytes: Uint8Array; width: number; height: number } | null> {
+    const iframe = juliaPlotIframes.get(key);
+    if (!iframe) return null;
+    let doc: Document | null;
+    let win: Window | null;
+    try {
+        doc = iframe.contentDocument;
+        win = iframe.contentWindow;
+    } catch {
+        return null;
+    }
+    if (!doc || !win) return null;
+
+    // PlotlyJS — call into the iframe's Plotly to render the live state.
+    const plotly = (win as unknown as { Plotly?: { toImage: (gd: HTMLElement, opts: Record<string, unknown>) => Promise<string> } }).Plotly;
+    if (plotly) {
+        const gd = (doc.querySelector(".js-plotly-plot") ??
+            doc.querySelector(".plotly-graph-div")) as HTMLElement | null;
+        if (gd) {
+            try {
+                const rect = gd.getBoundingClientRect();
+                const w = Math.max(400, Math.round(rect.width || gd.clientWidth || 1000));
+                const h = Math.max(300, Math.round(rect.height || gd.clientHeight || 600));
+                const dataUrl = await plotly.toImage(gd, {
+                    format: "png",
+                    width: w,
+                    height: h,
+                });
+                const raster = await rasterizeToPng(dataUrl);
+                if (raster) return raster;
+            } catch (err) {
+                console.warn("[lexicalToDocx] Plotly.toImage failed:", err);
+            }
+        }
+    }
+
+    // Gadfly / generic SVG — serialize the live SVG (transforms applied by
+    // SVGJS hover/zoom code are part of the DOM, so this preserves the state).
+    const svg = doc.querySelector("svg") as SVGElement | null;
+    if (svg) {
+        try {
+            const cloned = svg.cloneNode(true) as SVGElement;
+            if (!cloned.getAttribute("xmlns")) {
+                cloned.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+            }
+            const xml = new XMLSerializer().serializeToString(cloned);
+            const dataUrl =
+                "data:image/svg+xml;base64," +
+                btoa(unescape(encodeURIComponent(xml)));
+            const raster = await rasterizeToPng(dataUrl);
+            if (raster) return raster;
+        } catch (err) {
+            console.warn("[lexicalToDocx] SVG snapshot failed:", err);
+        }
+    }
+
+    // WGLMakie / Bonito — grab the canvas if the webview considers it
+    // same-origin. Tainted canvases throw on toDataURL; we silently fall
+    // back to whatever the cell originally captured.
+    const canvas = doc.querySelector("canvas") as HTMLCanvasElement | null;
+    if (canvas) {
+        try {
+            const dataUrl = canvas.toDataURL("image/png");
+            const raster = await rasterizeToPng(dataUrl);
+            if (raster) return raster;
+        } catch (err) {
+            console.warn("[lexicalToDocx] canvas snapshot failed:", err);
+        }
+    }
+
+    return null;
+}
+
 async function juliaPlotParagraph(plot: {
     format: string;
-    data: string;
+    data?: string;
+    url?: string;
 }): Promise<Paragraph | null> {
-    const mime = plot.format === "svg" ? "image/svg+xml" : "image/png";
-    const raster = await rasterizeToPng(`data:${mime};base64,${plot.data}`);
+    const key = plot.url ?? plot.data ?? "";
+    let raster: { bytes: Uint8Array; width: number; height: number } | null =
+        null;
+
+    // Prefer the live iframe state for interactive plots so any rotation/
+    // pan/zoom done in the editor is reflected in the exported image.
+    if (key && (plot.format === "plotly" || plot.format === "html")) {
+        raster = await captureInteractivePlot(key);
+    }
+
+    if (!raster && plot.data) {
+        const mime = plot.format === "svg" ? "image/svg+xml" : "image/png";
+        raster = await rasterizeToPng(`data:${mime};base64,${plot.data}`);
+    }
     if (!raster) return null;
 
     let { width, height } = raster;
@@ -565,7 +660,7 @@ async function juliaCellBlocks(node: SerializedNode): Promise<BlockChild[]> {
     const output = (node.output as string) ?? "";
     const hasError = (node.hasError as boolean) ?? false;
     const plots = Array.isArray(node.plots)
-        ? (node.plots as { format: string; data: string }[])
+        ? (node.plots as { format: string; data?: string; url?: string }[])
         : [];
 
     const out: BlockChild[] = [];

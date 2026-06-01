@@ -76,10 +76,7 @@
         if (!showOptions) return;
         const target = e.target as Node | null;
         if (!target) return;
-        if (
-            optionsPanel?.contains(target) ||
-            optionsBtn?.contains(target)
-        )
+        if (optionsPanel?.contains(target) || optionsBtn?.contains(target))
             return;
         showOptions = false;
     }
@@ -342,10 +339,21 @@
         tafsirHtml: string,
     ) {
         event.stopPropagation();
+        if (
+            aiPromptOpen &&
+            aiPromptCtx &&
+            aiPromptCtx.surah === surah &&
+            aiPromptCtx.ayah === ayah
+        ) {
+            closeAiPrompt();
+            return;
+        }
         const arabic = getAyahArabic(surah, ayah);
         const tafsir = stripHtml(tafsirHtml);
         aiPromptCtx = { surah, ayah, arabic, tafsir };
-        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+        const rect = (
+            event.currentTarget as HTMLElement
+        ).getBoundingClientRect();
         aiPromptX = rect.left + rect.width / 2;
         aiPromptY = rect.bottom + 8;
         aiPromptText = "";
@@ -457,7 +465,10 @@
                         aria-label={$t("common.close")}
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
-                        <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
+                        <Icon
+                            icon="solar:close-circle-bold-duotone"
+                            width="1rem"
+                        />
                     </button>
 
                     {#if showOptions}
@@ -468,15 +479,26 @@
                             tabindex="-1"
                             class="absolute right-0 top-9 z-20 w-72 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
                         >
-                            <div class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2">
-                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]">
-                                    <Icon icon="solar:settings-bold-duotone" width="1rem" />
+                            <div
+                                class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2"
+                            >
+                                <div
+                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]"
+                                >
+                                    <Icon
+                                        icon="solar:settings-bold-duotone"
+                                        width="1rem"
+                                    />
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    <p
+                                        class="text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                                    >
                                         {$t("dialog.display_options")}
                                     </p>
-                                    <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                                    <p
+                                        class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                    >
                                         {$t("tafsir.reading_style")}
                                     </p>
                                 </div>
@@ -489,12 +511,28 @@
                                 <div class="flex items-center gap-2">
                                     <button
                                         onclick={decFontSize}
-                                        disabled={$tafsirFontSize <= TAFSIR_FONT_SIZE_BOUNDS.min}
-                                        aria-label={$t("dialog.decrease_font_size")}
+                                        disabled={$tafsirFontSize <=
+                                            TAFSIR_FONT_SIZE_BOUNDS.min}
+                                        aria-label={$t(
+                                            "dialog.decrease_font_size",
+                                        )}
                                         class={adjustButtonClass}
                                     >
-                                        <svg width="10" height="2" viewBox="0 0 10 2" fill="none">
-                                            <line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <svg
+                                            width="10"
+                                            height="2"
+                                            viewBox="0 0 10 2"
+                                            fill="none"
+                                        >
+                                            <line
+                                                x1="0"
+                                                y1="1"
+                                                x2="10"
+                                                y2="1"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                            />
                                         </svg>
                                     </button>
                                     <span
@@ -504,22 +542,51 @@
                                     </span>
                                     <button
                                         onclick={incFontSize}
-                                        disabled={$tafsirFontSize >= TAFSIR_FONT_SIZE_BOUNDS.max}
-                                        aria-label={$t("dialog.increase_font_size")}
+                                        disabled={$tafsirFontSize >=
+                                            TAFSIR_FONT_SIZE_BOUNDS.max}
+                                        aria-label={$t(
+                                            "dialog.increase_font_size",
+                                        )}
                                         class={adjustButtonClass}
                                     >
-                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                            <line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                            <line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <svg
+                                            width="10"
+                                            height="10"
+                                            viewBox="0 0 10 10"
+                                            fill="none"
+                                        >
+                                            <line
+                                                x1="5"
+                                                y1="0"
+                                                x2="5"
+                                                y2="10"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                            />
+                                            <line
+                                                x1="0"
+                                                y1="5"
+                                                x2="10"
+                                                y2="5"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                            />
                                         </svg>
                                     </button>
                                     <button
                                         onclick={resetFontSize}
-                                        aria-label={$t("dialog.reset_font_size")}
+                                        aria-label={$t(
+                                            "dialog.reset_font_size",
+                                        )}
                                         title={$t("dialog.reset")}
                                         class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
                                     >
-                                        <Icon icon="solar:restart-linear" width="0.9rem" />
+                                        <Icon
+                                            icon="solar:restart-linear"
+                                            width="0.9rem"
+                                        />
                                     </button>
                                 </div>
                             </div>
@@ -531,12 +598,28 @@
                                 <div class="flex items-center gap-2">
                                     <button
                                         onclick={decLineSpacing}
-                                        disabled={$tafsirLineSpacing <= TAFSIR_LINE_SPACING_BOUNDS.min}
-                                        aria-label={$t("dialog.decrease_line_spacing")}
+                                        disabled={$tafsirLineSpacing <=
+                                            TAFSIR_LINE_SPACING_BOUNDS.min}
+                                        aria-label={$t(
+                                            "dialog.decrease_line_spacing",
+                                        )}
                                         class={adjustButtonClass}
                                     >
-                                        <svg width="10" height="2" viewBox="0 0 10 2" fill="none">
-                                            <line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <svg
+                                            width="10"
+                                            height="2"
+                                            viewBox="0 0 10 2"
+                                            fill="none"
+                                        >
+                                            <line
+                                                x1="0"
+                                                y1="1"
+                                                x2="10"
+                                                y2="1"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                            />
                                         </svg>
                                     </button>
                                     <span
@@ -546,28 +629,60 @@
                                     </span>
                                     <button
                                         onclick={incLineSpacing}
-                                        disabled={$tafsirLineSpacing >= TAFSIR_LINE_SPACING_BOUNDS.max}
-                                        aria-label={$t("dialog.increase_line_spacing")}
+                                        disabled={$tafsirLineSpacing >=
+                                            TAFSIR_LINE_SPACING_BOUNDS.max}
+                                        aria-label={$t(
+                                            "dialog.increase_line_spacing",
+                                        )}
                                         class={adjustButtonClass}
                                     >
-                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                            <line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                            <line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <svg
+                                            width="10"
+                                            height="10"
+                                            viewBox="0 0 10 10"
+                                            fill="none"
+                                        >
+                                            <line
+                                                x1="5"
+                                                y1="0"
+                                                x2="5"
+                                                y2="10"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                            />
+                                            <line
+                                                x1="0"
+                                                y1="5"
+                                                x2="10"
+                                                y2="5"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                            />
                                         </svg>
                                     </button>
                                     <button
                                         onclick={resetLineSpacing}
-                                        aria-label={$t("dialog.reset_line_spacing")}
+                                        aria-label={$t(
+                                            "dialog.reset_line_spacing",
+                                        )}
                                         title={$t("dialog.reset")}
                                         class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
                                     >
-                                        <Icon icon="solar:restart-linear" width="0.9rem" />
+                                        <Icon
+                                            icon="solar:restart-linear"
+                                            width="0.9rem"
+                                        />
                                     </button>
                                 </div>
                             </div>
 
                             <div>
-                                <label for="tafsir-font-family" class={labelClass}>
+                                <label
+                                    for="tafsir-font-family"
+                                    class={labelClass}
+                                >
                                     {$t("dialog.font_family")}
                                 </label>
                                 <div class="relative">
@@ -576,11 +691,15 @@
                                         value={$tafsirFontFamily}
                                         onchange={(e) =>
                                             tafsirFontFamily.set(
-                                                (e.currentTarget as HTMLSelectElement).value,
+                                                (
+                                                    e.currentTarget as HTMLSelectElement
+                                                ).value,
                                             )}
                                         class={selectClass}
                                     >
-                                        <option value="">{$t("dialog.default")}</option>
+                                        <option value=""
+                                            >{$t("dialog.default")}</option
+                                        >
                                         {#each fontFamilyOptions as font}
                                             <option value={font}>{font}</option>
                                         {/each}
@@ -588,7 +707,10 @@
                                     <span
                                         class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300 dark:text-[#838ba7]"
                                     >
-                                        <Icon icon="charm:chevron-down" width="0.75rem" />
+                                        <Icon
+                                            icon="charm:chevron-down"
+                                            width="0.75rem"
+                                        />
                                     </span>
                                 </div>
                                 <button
@@ -598,8 +720,11 @@
                                     }}
                                     class="cursor-pointer mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#e5c890]/30 bg-brand-gold-100/80 dark:bg-[#414559] px-3 py-1.5 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] transition-all hover:bg-brand-gold-200 dark:hover:bg-[#51576d]"
                                 >
-                                    <Icon icon="solar:add-circle-linear" width="0.8rem" />
-                                    {$t('settings.custom_fonts.add_custom')}
+                                    <Icon
+                                        icon="solar:add-circle-linear"
+                                        width="0.8rem"
+                                    />
+                                    {$t("settings.custom_fonts.add_custom")}
                                 </button>
                             </div>
                         </div>
@@ -667,9 +792,13 @@
                                                         entry.ayah,
                                                         entry.text,
                                                     )}
-                                                title={$t("morphology.ai_ask_tafsir")}
-                                                aria-label={$t("morphology.ai_ask_tafsir")}
-                                                class="cursor-pointer flex items-center justify-center h-7 w-7 p-1 rounded-full text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-100 dark:hover:bg-[#414559] transition-colors"
+                                                title={$t(
+                                                    "morphology.ai_ask_tafsir",
+                                                )}
+                                                aria-label={$t(
+                                                    "morphology.ai_ask_tafsir",
+                                                )}
+                                                class="cursor-pointer flex items-center justify-center h-7 w-7 p-1 rounded-full text-slate-350 dark:text-[#838ba7] transition-all hover:bg-brand-gold-50 dark:hover:bg-[#414559] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
                                             >
                                                 <Icon
                                                     icon="ri:chat-smile-ai-fill"

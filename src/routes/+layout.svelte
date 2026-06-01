@@ -2,6 +2,7 @@
 	import '../app.css';
 	import '$lib/icons';
 	import { appDarkMode, zenMode } from '$lib/stores/editor.store';
+	import OpenTabFileWatcher from '$lib/components/shared/OpenTabFileWatcher.svelte';
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 	import { tabs } from '$lib/stores/tabs.store';
@@ -50,6 +51,7 @@
 </script>
 
 <div class="bg-gradient-radial h-screen overflow-hidden">
+	<OpenTabFileWatcher />
 	{@render children()}
 </div>
 

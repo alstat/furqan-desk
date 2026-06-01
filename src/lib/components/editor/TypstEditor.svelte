@@ -41,6 +41,7 @@
     let effectiveTab = $derived(
         tabId ? ($tabs.find((t) => t.id === tabId) ?? null) : $activeTab,
     );
+    let editorScrollKey = $derived(effectiveTab?.path ?? effectiveTab?.id ?? null);
 
     // True when the preview is displayed in the Parchment area (side-by-side mode).
     // Suppressed when this editor is the host in a cross pair (shows inline preview instead).
@@ -49,6 +50,14 @@
     let debounceTimer: ReturnType<typeof setTimeout> | undefined;
     let embeddedPreviewScrollEl: HTMLDivElement | null = $state(null);
     let currentEmbeddedPreviewPage = $state(1);
+    let lastPreviewScrollTop = 0;
+
+    function handlePreviewScroll(): void {
+        if (embeddedPreviewScrollEl && embeddedPreviewScrollEl.scrollHeight > embeddedPreviewScrollEl.clientHeight) {
+            lastPreviewScrollTop = embeddedPreviewScrollEl.scrollTop;
+        }
+        updateCurrentEmbeddedPreviewPage();
+    }
 
     function updateCurrentEmbeddedPreviewPage(): void {
         if (!embeddedPreviewScrollEl || $typstSvgPages.length === 0) {
@@ -106,7 +115,20 @@
             return;
         }
 
-        tick().then(updateCurrentEmbeddedPreviewPage);
+        tick().then(() => {
+            if (embeddedPreviewScrollEl && lastPreviewScrollTop > 0) {
+                const maxScroll =
+                    embeddedPreviewScrollEl.scrollHeight -
+                    embeddedPreviewScrollEl.clientHeight;
+                if (maxScroll > 0) {
+                    embeddedPreviewScrollEl.scrollTop = Math.min(
+                        lastPreviewScrollTop,
+                        maxScroll,
+                    );
+                }
+            }
+            updateCurrentEmbeddedPreviewPage();
+        });
     });
 
     const IMPORT_RE = /#import\s+"@([\w-]+)\/([\w-]+):([\d.]+)"/g;
@@ -147,7 +169,10 @@
         try {
             await ensurePackagesInstalled(src);
             typstSvgPages.set(
-                await invoke<string[]>("compile_typst_svg", { source: src }),
+                await invoke<string[]>("compile_typst_svg", {
+                    source: src,
+                    path: effectiveTab?.path ?? null,
+                }),
             );
         } catch (e) {
             typstCompileError.set(String(e));
@@ -164,6 +189,7 @@
             await ensurePackagesInstalled(src);
             const bytes = await invoke<number[]>("compile_typst_pdf", {
                 source: src,
+                path: effectiveTab?.path ?? null,
             });
             const path = await save({
                 filters: [{ name: "PDF", extensions: ["pdf"] }],
@@ -181,16 +207,32 @@
     }
 
     // ── Completion source ─────────────────────────────────────────────────────
-    // Match after # (e.g. #pa → suggests page, pad, …) or plain identifiers.
+    // Precompute the lowercased label for each completion once, so filtering on
+    // every keystroke is a plain string compare instead of 200+ toLowerCase()
+    // allocations per query.
+    const TYPST_COMPLETIONS_INDEXED = TYPST_COMPLETIONS.map((c) => ({
+        completion: c,
+        lower: c.label.toLowerCase(),
+    }));
+
+    function filterCompletions(prefix: string) {
+        const out: typeof TYPST_COMPLETIONS = [];
+        for (const entry of TYPST_COMPLETIONS_INDEXED) {
+            if (entry.lower.startsWith(prefix)) out.push(entry.completion);
+        }
+        return out;
+    }
+
+    // Auto-pop only after `#` (Typst code mode, e.g. #pa → page, pad, …). A
+    // Typst document body is prose, so auto-triggering on every plain word made
+    // the popup recompute and reposition on each keystroke/deletion — that is
+    // what caused the typing lag. Bare-word completion is still available, but
+    // only when explicitly requested (Ctrl-Space).
     const typstCompletionSource: CompletionSource = (context) => {
         const hashMatch = context.matchBefore(/#[\w-]*/);
-        const wordMatch = context.matchBefore(/[\w-]+/);
-
         if (hashMatch) {
             const prefix = hashMatch.text.slice(1).toLowerCase();
-            const filtered = TYPST_COMPLETIONS.filter((c) =>
-                c.label.toLowerCase().startsWith(prefix),
-            );
+            const filtered = filterCompletions(prefix);
             if (filtered.length === 0 && !context.explicit) return null;
             return {
                 from: hashMatch.from + 1,
@@ -199,24 +241,23 @@
             };
         }
 
-        if (wordMatch && (wordMatch.to > wordMatch.from || context.explicit)) {
-            const prefix = wordMatch.text.toLowerCase();
-            const filtered = TYPST_COMPLETIONS.filter((c) =>
-                c.label.toLowerCase().startsWith(prefix),
-            );
-            if (filtered.length === 0) return null;
-            return {
-                from: wordMatch.from,
-                options: filtered,
-                validFor: /^[\w-]*$/,
-            };
-        }
+        if (!context.explicit) return null;
 
-        return null;
+        const wordMatch = context.matchBefore(/[\w-]+/);
+        const from = wordMatch ? wordMatch.from : context.pos;
+        const filtered = filterCompletions(
+            wordMatch ? wordMatch.text.toLowerCase() : "",
+        );
+        if (filtered.length === 0) return null;
+        return { from, options: filtered, validFor: /^[\w-]*$/ };
     };
 
     const typstCompletionExtension = autocompletion({
         override: [typstCompletionSource],
+        // Wait a touch longer after typing before querying, and cap how many
+        // options hit the DOM, so a fast typist never blocks on the popup.
+        activateOnTypingDelay: 150,
+        maxRenderedOptions: 50,
     });
 
     const labelClass =
@@ -305,7 +346,7 @@
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
                 >{effectiveTab?.name ??
-                    "Editor"}{#if effectiveTab?.isDirty}<span
+                    $t("typst.fallback_name")}{#if effectiveTab?.isDirty}<span
                         class="text-brand-gold-500 dark:text-[#e5c890]"
                     >
                         *</span
@@ -322,19 +363,19 @@
                 <button
                     onclick={formatTypst}
                     disabled={formatting}
-                    title="Format with typstyle"
+                    title={$t("typst.format_title")}
                     class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                            bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400
                            hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25
                            disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Icon icon="icon-park-twotone:format-brush" width="11" />
-                    {formatting ? "Formatting…" : "Format"}
+                    {formatting ? $t("typst.formatting") : $t("typst.format")}
                 </button>
                 <!-- Line wrap toggle -->
                 <button
                     onclick={() => (lineWrap = !lineWrap)}
-                    title={lineWrap ? "Disable line wrap" : "Enable line wrap"}
+                    title={lineWrap ? $t("julia_cell.disable_wrap") : $t("julia_cell.enable_wrap")}
                     class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                            {lineWrap
                         ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'
@@ -355,7 +396,7 @@
                             d="M3 12h15a3 3 0 0 1 0 6h-4"
                         /><polyline points="8 15 5 18 8 21" />
                     </svg>
-                    {lineWrap ? "Wrap" : "No Wrap"}
+                    {lineWrap ? $t("julia_editor.wrap") : $t("julia_editor.no_wrap")}
                 </button>
             </div>
         </div>
@@ -375,6 +416,7 @@
             aiSelectionTools={true}
             {aiContextPrompt}
             filePath={effectiveTab?.path ?? null}
+            scrollKey={editorScrollKey}
             onchange={handleInput}
             class={`${effectiveTab?.type !== "typst" ? "mb-4" : ""} ${sideBySide ? "mb-3" : ""} flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 font-mono`}
         />
@@ -398,24 +440,24 @@
             class="flex-none flex flex-col p-2"
             style:height="{previewHeight}px"
         >
-            <span class={labelClass}>Preview</span>
+            <span class={labelClass}>{$t("typst.preview")}</span>
             <div class="relative flex-1 min-h-0">
                 {#if $typstSvgPages.length > 0}
                     <div
                         class="pointer-events-none absolute right-2 top-2 z-20 rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none text-brand-charcoal-300 backdrop-blur-md"
-                        aria-label="Page {currentEmbeddedPreviewPage} of {$typstSvgPages.length}"
+                        aria-label={$t("typst.page_of").replace("{current}", String(currentEmbeddedPreviewPage)).replace("{total}", String($typstSvgPages.length))}
                     >
                         {currentEmbeddedPreviewPage} / {$typstSvgPages.length}
                     </div>
                 {/if}
                 <div
                     bind:this={embeddedPreviewScrollEl}
-                    onscroll={updateCurrentEmbeddedPreviewPage}
+                    onscroll={handlePreviewScroll}
                     class="default-scroll h-full overflow-auto"
                 >
                     {#if $typstIsCompiling}
                         <p class="text-xs text-brand-charcoal-300 italic">
-                            Compiling…
+                            {$t("typst.compiling")}
                         </p>
                     {:else if $typstCompileError}
                         <pre
@@ -435,7 +477,7 @@
                         </div>
                     {:else}
                         <p class="text-xs text-brand-charcoal-300 italic">
-                            Preview will appear here.
+                            {$t("typst.preview_placeholder")}
                         </p>
                     {/if}
                 </div>
@@ -449,7 +491,7 @@
             class="h-10 flex items-center justify-end px-3 border-t border-brand-sand-200 gap-2"
         >
             {#if $typstCompileError}
-                <span class="text-xs text-red-500">Compile error</span>
+                <span class="text-xs text-red-500">{$t("typst.compile_error")}</span>
             {/if}
             <button
                 onclick={exportPdf}

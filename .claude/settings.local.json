@@ -194,7 +194,11 @@
       "WebFetch(domain:crates.io)",
       "Bash(cargo add *)",
       "Bash(sed -n '1,60p' src/lib/components/lexical/core/plugins/CodeHighlighter/CodeNode.ts)",
-      "Bash(sed -n '1,80p' src/lib/components/lexical/core/plugins/CodeHighlighter/CodeComponent.svelte)"
+      "Bash(sed -n '1,80p' src/lib/components/lexical/core/plugins/CodeHighlighter/CodeComponent.svelte)",
+      "Bash(sort -t- -k5)",
+      "Bash(awk -F: '{print $NF}')",
+      "WebFetch(domain:bugs.webkit.org)",
+      "WebFetch(domain:webkitgtk.org)"
     ]
   }
 }

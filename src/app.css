@@ -49,11 +49,19 @@
     /* Charcoal */
     --color-brand-charcoal-50: #f2f2f2;
     --color-brand-charcoal-100: #e0e0e0;
+    --color-brand-charcoal-200: #c8c8c8;
     --color-brand-charcoal-300: #ababab;
+    --color-brand-charcoal-400: #8d8d8d;
     --color-brand-charcoal-500: #707070;
+    --color-brand-charcoal-600: #5c5c5c;
+    --color-brand-charcoal-700: #4a4a4a;
+    --color-brand-charcoal-800: #3a3a3a;
     --color-brand-charcoal-900: #2f2f2f;
 
     --ayah-flash-bg: var(--color-brand-gold-100);
+
+    /* Custom slate intermediate (between slate-300 #cbd5e1 and slate-400 #94a3b8) */
+    --color-slate-350: #b0bccc;
 }
 
 /* ── App dark theme (Catppuccin Frappe) ──────────────────────────────────────── */
@@ -81,8 +89,13 @@ html.dark {
     /* Charcoal → Frappe text scale */
     --color-brand-charcoal-50: #c6d0f5; /* Text */
     --color-brand-charcoal-100: #b5bfe2; /* Subtext1 */
+    --color-brand-charcoal-200: #9ca3c0; /* between Subtext1 and Overlay2 */
     --color-brand-charcoal-300: #838ba7; /* Overlay1 — labels, muted */
+    --color-brand-charcoal-400: #949cbb; /* Overlay2 — muted-to-body */
     --color-brand-charcoal-500: #a5adce; /* Subtext0 — body text */
+    --color-brand-charcoal-600: #b5bfe2; /* Subtext1 — emphasised body */
+    --color-brand-charcoal-700: #c6d0f5; /* Text — strong */
+    --color-brand-charcoal-800: #d7def7; /* between Text and heading */
     --color-brand-charcoal-900: #e8edff; /* near-white headings */
 
     --ayah-flash-bg: color-mix(in srgb, var(--color-brand-gold-400) 25%, transparent);
@@ -94,8 +107,10 @@ html.dark .bg-gradient-radial {
 }
 
 /* ── Light mode scrollbars (global baseline) ─────────────────────────────── */
-/* Standard CSS scrollbar API — also the fallback once GTK_OVERLAY_SCROLLING=0
-   is set on Linux, which hands scrollbar rendering back to WebKit.            */
+/* Standard CSS scrollbar API (scrollbar-width/scrollbar-color). This is what
+   actually styles scrollbars on Linux: WebKitGTK ignores ::-webkit-scrollbar
+   pseudo-elements entirely but honors these standard properties (≥ 2.44).
+   The ::-webkit-scrollbar rules below are for the Windows WebView2 path.       */
 * {
     scrollbar-width: thin;
     scrollbar-color: #c6c6c582 transparent;

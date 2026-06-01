@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { get } from "svelte/store";
     import CollapsibleSidebar from "$lib/components/shared/CollapsibleSidebar.svelte";
     import RichTextEditor from "$lib/components/editor/EditorComposer.svelte";
@@ -43,12 +43,82 @@
     type HistorySnapshot = Pick<HistoryState, "undoStack" | "redoStack">;
     const lexicalTabHistories = new Map<string, HistorySnapshot>();
 
+    // Cross-type switches can also change the overall page viewport, not just
+    // the editor-local scroller. Keep a lightweight per-tab window scroll
+    // snapshot so returning to a tab restores the same screen position.
+    type WindowScrollMap = Map<string, number>;
+    const WINDOW_SCROLL_BY_TAB: WindowScrollMap = (() => {
+        const g = globalThis as unknown as {
+            __sidebarWindowScrollByTab?: WindowScrollMap;
+        };
+        if (g.__sidebarWindowScrollByTab instanceof Map) {
+            return g.__sidebarWindowScrollByTab;
+        }
+        const m: WindowScrollMap = new Map();
+        g.__sidebarWindowScrollByTab = m;
+        return m;
+    })();
+    let lastWindowTabId: string | null = null;
+    let lastWindowScrollKey: string | null = null;
+    let restoringWindowScroll = false;
+
+    function scrollKeyForTab(tab: EditorTab): string {
+        return tab.path ?? tab.id;
+    }
+
+    function currentWindowScrollTop(): number {
+        return (
+            window.scrollY ||
+            document.scrollingElement?.scrollTop ||
+            document.documentElement.scrollTop ||
+            0
+        );
+    }
+
+    function saveWindowScroll(key: string | null = lastWindowScrollKey): void {
+        if (!key || restoringWindowScroll) return;
+        WINDOW_SCROLL_BY_TAB.set(key, currentWindowScrollTop());
+    }
+
+    function restoreWindowScroll(tabId: string, key: string): void {
+        const target = WINDOW_SCROLL_BY_TAB.get(key);
+        if (target === undefined) return;
+
+        restoringWindowScroll = true;
+        let attempts = 0;
+        let stableFrames = 0;
+        const MAX_ATTEMPTS = 20;
+        const apply = () => {
+            if (lastWindowTabId !== tabId) {
+                restoringWindowScroll = false;
+                return;
+            }
+            window.scrollTo({ top: target, left: 0, behavior: "auto" });
+            const drift = Math.abs(currentWindowScrollTop() - target);
+            stableFrames = drift <= 1 ? stableFrames + 1 : 0;
+            attempts += 1;
+            if (stableFrames < 2 && attempts < MAX_ATTEMPTS) {
+                requestAnimationFrame(apply);
+            } else {
+                requestAnimationFrame(() => {
+                    restoringWindowScroll = false;
+                });
+            }
+        };
+
+        void tick().then(() => requestAnimationFrame(apply));
+    }
+
     // When active tab changes: sync editor state
     // Effect A: runs BEFORE DOM mutations so the lexical editor is still alive when saving
     let prevTabIdPre: string | null = null;
     $effect.pre(() => {
         const tab = $activeTab;
         if (!tab || tab.id === prevTabIdPre) return;
+
+        if (lastWindowTabId !== null && lastWindowTabId !== tab.id) {
+            saveWindowScroll(lastWindowScrollKey);
+        }
 
         // Save departing lexical tab state + history before the editor unmounts
         if (prevTabIdPre) {
@@ -75,6 +145,17 @@
             }
         }
         prevTabIdPre = tab.id;
+    });
+
+    $effect(() => {
+        const tab = $activeTab;
+        const next = tab?.id ?? null;
+        const nextKey = tab ? scrollKeyForTab(tab) : null;
+        lastWindowTabId = next;
+        lastWindowScrollKey = nextKey;
+        if (next !== null && nextKey !== null) {
+            restoreWindowScroll(next, nextKey);
+        }
     });
 
     // Effect B: restore non-lexical tab state after DOM updates
@@ -116,12 +197,16 @@
                 const stateData = parsed.editorState ?? parsed;
                 editor.setEditorState(
                     editor.parseEditorState(JSON.stringify(stateData)),
+                    { tag: 'history-merge' },
                 );
             } catch {
                 /* ignore parse errors — leave editor as-is */
             }
         } else {
-            editor.setEditorState(editor.parseEditorState(emptyLexicalState));
+            editor.setEditorState(
+                editor.parseEditorState(emptyLexicalState),
+                { tag: 'history-merge' },
+            );
         }
 
         const hs = get(lexicalHistoryState);
@@ -168,6 +253,7 @@
             const stateData = parsed.editorState ?? parsed;
             editor.setEditorState(
                 editor.parseEditorState(JSON.stringify(stateData)),
+                { tag: 'history-merge' },
             );
         } catch {
             /* ignore */
@@ -183,8 +269,9 @@
         if ($activeTabId === cg.hostTabId) return; // host is active — normal save applies
         const hostTabId = cg.hostTabId;
         const unregister = editor.registerUpdateListener(
-            ({ dirtyElements, dirtyLeaves }) => {
+            ({ dirtyElements, dirtyLeaves, tags }) => {
                 if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
+                if (tags.has('history-merge')) return;
                 const json = JSON.stringify(editor.getEditorState().toJSON());
                 tabs.update((ts) =>
                     ts.map((t) =>

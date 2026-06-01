@@ -1,6 +1,7 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { fly } from "svelte/transition";
+    import { t } from "$lib/i18n";
     import {
         editorTheme,
         editorThemeSlots,
@@ -32,6 +33,9 @@
         if (dialogSlots[1] === id) return 1;
         return null;
     }
+
+    const lightThemes = ALL_EDITOR_THEMES.filter((th) => !th.dark);
+    const darkThemes = ALL_EDITOR_THEMES.filter((th) => th.dark);
 
     function assignTheme(theme: EditorThemeInfo) {
         // The same theme can't occupy both slots.
@@ -96,18 +100,18 @@
                                 id="editor-theme-select-title"
                                 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                             >
-                                Editor Themes
+                                {$t("editor_theme_select.title")}
                             </h2>
                             <p
                                 class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
-                                Pick two themes for the toolbar
+                                {$t("editor_theme_select.subtitle")}
                             </p>
                         </div>
                     </div>
                     <button
                         onclick={onClose}
-                        aria-label="Close"
+                        aria-label={$t("common.close")}
                         class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                     >
                         <Icon icon="solar:close-circle-bold" width="1rem" />
@@ -141,7 +145,7 @@
                             >
                                 {slotIdx + 1}
                             </span>
-                            {info?.label ?? `Slot ${slotIdx + 1}`}
+                            {info?.label ?? $t("editor_theme_select.slot_n", { n: String(slotIdx + 1) })}
                         </button>
                     {/each}
                 </div>
@@ -149,9 +153,9 @@
 
             <!-- Theme list -->
             <div
-                class="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-2 bg-brand-sand-50 dark:bg-[#232634]"
+                class="flex-1 min-h-0 overflow-y-auto px-5 py-4 bg-brand-sand-50 dark:bg-[#232634]"
             >
-                {#each ALL_EDITOR_THEMES as theme (theme.id)}
+                {#snippet themeItem(theme: EditorThemeInfo)}
                     {@const slotIdx = slotIndexOf(theme.id)}
                     {@const isOtherSlot =
                         slotIdx !== null && slotIdx !== focusedSlot}
@@ -165,7 +169,7 @@
                             disabled:opacity-40 disabled:cursor-not-allowed
                             ${
                                 isSelected && !isOtherSlot
-                                    ? "border-brand-gold-300 dark:border-[#e5c890]/40 bg-brand-gold-50 dark:bg-[#3b3757]"
+                                    ? "border-brand-gold-400 dark:border-[#e5c890]/40 bg-brand-gold-50 dark:bg-[#3b3757]"
                                     : "border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] hover:border-brand-gold-200 dark:hover:border-[#51576d] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757]"
                             }`}
                         aria-pressed={isSelected}
@@ -190,11 +194,6 @@
                                 >
                                     {theme.label}
                                 </p>
-                                <p
-                                    class="text-[10px] text-brand-charcoal-300 dark:text-[#626880] mt-0.5"
-                                >
-                                    {theme.dark ? "Dark" : "Light"}
-                                </p>
                             </div>
                         </div>
 
@@ -218,7 +217,43 @@
                             </span>
                         {/if}
                     </button>
-                {/each}
+                {/snippet}
+
+                {#snippet groupHeader(icon: string, label: string)}
+                    <div
+                        class="flex items-center gap-1.5 px-1 pt-1 pb-2 text-[10px] font-bold uppercase tracking-wider text-brand-charcoal-300 dark:text-[#838ba7]"
+                    >
+                        <Icon {icon} width="0.85rem" />
+                        <span>{label}</span>
+                        <div
+                            class="flex-1 h-px bg-brand-sand-200 dark:bg-[#414559] ml-1"
+                        ></div>
+                    </div>
+                {/snippet}
+
+                {#if lightThemes.length}
+                    {@render groupHeader(
+                        "solar:sun-bold-duotone",
+                        $t("editor_theme_select.light"),
+                    )}
+                    <div class="space-y-2 mb-4">
+                        {#each lightThemes as theme (theme.id)}
+                            {@render themeItem(theme)}
+                        {/each}
+                    </div>
+                {/if}
+
+                {#if darkThemes.length}
+                    {@render groupHeader(
+                        "solar:moon-bold-duotone",
+                        $t("editor_theme_select.dark"),
+                    )}
+                    <div class="space-y-2">
+                        {#each darkThemes as theme (theme.id)}
+                            {@render themeItem(theme)}
+                        {/each}
+                    </div>
+                {/if}
             </div>
 
             <!-- Footer -->
@@ -230,7 +265,7 @@
                     class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 transition-colors"
                 >
                     <Icon icon="solar:check-circle-bold" width="0.9rem" />
-                    Done
+                    {$t("editor_theme_select.done")}
                 </button>
             </div>
         </div>

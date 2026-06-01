@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "AyahLab (v1.4.0)",
+        "title": "AyahLab (v1.4.0 beta)",
         "width": 1380,
         "height": 800,
         "minWidth": 1250,

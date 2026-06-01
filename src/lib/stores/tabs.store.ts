@@ -284,6 +284,15 @@ export function markTabSaved(id: string, path: string): void {
 	}
 }
 
+export function syncCleanTabsFromDisk(path: string, content: string): void {
+	tabs.update(ts =>
+		ts.map(t => {
+			if (t.path !== path || t.isDirty || t.content === content) return t;
+			return { ...t, content };
+		})
+	);
+}
+
 function isPathInsideFolder(path: string, folder: string): boolean {
 	const normalizedPath = path.replace(/\\/g, '/');
 	const normalizedFolder = folder.replace(/\\/g, '/').replace(/\/+$/, '');

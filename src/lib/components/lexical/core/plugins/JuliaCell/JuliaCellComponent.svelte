@@ -16,9 +16,16 @@
     import {
         $getNodeByKey as getNodeByKey,
         $getRoot as getRoot,
+        $getSelection as getSelection,
         $isElementNode as isElementNode,
+        $isNodeSelection as isNodeSelection,
+        CLICK_COMMAND,
+        KEY_DELETE_COMMAND,
+        KEY_BACKSPACE_COMMAND,
+        COMMAND_PRIORITY_LOW,
         type LexicalNode,
     } from "lexical";
+    import { mergeRegister } from "@lexical/utils";
     import {
         $isJuliaCellNode as isJuliaCellNode,
         type JuliaCellDisplayMode,
@@ -31,6 +38,7 @@
         juliaCellLineHeight,
         juliaCellRunners,
         juliaCellClearers,
+        registerJuliaPlotIframe,
         type JuliaCellPlot,
     } from "$lib/stores/julia-notebook";
     import {
@@ -40,8 +48,9 @@
     } from "$lib/codemirror/julia";
     import { latexInput } from "$lib/codemirror/latexInput";
     import { wrapSelection } from "$lib/codemirror/wrapSelection";
-    import { createNodeSelectionStore } from "../../nodeSelectionStore.js";
-    import { appDarkMode } from "$lib/stores/editor.store";
+    import { clearSelection, createNodeSelectionStore } from "../../nodeSelectionStore.js";
+    import { appDarkMode, editorIndentSize } from "$lib/stores/editor.store";
+    import { get } from "svelte/store";
     import { isPro } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
     import { t } from "$lib/i18n";
@@ -183,6 +192,26 @@
         return new TextDecoder().decode(bytes);
     }
 
+    // Svelte action — keeps the global iframe registry in sync with whatever
+    // plots are currently mounted, so the DOCX exporter can read the live
+    // (rotated/panned/zoomed) state of interactive Plotly/Gadfly/WGLMakie
+    // figures at export time.
+    function trackPlotIframe(node: HTMLIFrameElement, key: string) {
+        let currentKey = key;
+        registerJuliaPlotIframe(currentKey, node);
+        return {
+            update(nextKey: string) {
+                if (nextKey === currentKey) return;
+                registerJuliaPlotIframe(currentKey, null);
+                currentKey = nextKey;
+                registerJuliaPlotIframe(currentKey, node);
+            },
+            destroy() {
+                registerJuliaPlotIframe(currentKey, null);
+            },
+        };
+    }
+
     // Build the srcdoc for a Plotly plot — decode the HTML and inject a style
     // reset so a fixed-width figure can't produce a horizontal scrollbar.
     function plotlyIframeDoc(b64: string): string {
@@ -299,6 +328,71 @@
         });
     }
 
+    // ── Julia formatter ───────────────────────────────────────────────────────
+    let formatting = $state(false);
+    let formatError = $state("");
+    let formatErrorTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function showFormatError(msg: string) {
+        formatError = msg;
+        if (formatErrorTimer) clearTimeout(formatErrorTimer);
+        formatErrorTimer = setTimeout(() => (formatError = ""), 8000);
+    }
+
+    // UTF-8 ⇄ base64 — the formatter request carries the source through the
+    // line-based REPL protocol, so it must be encoded to a single line.
+    function utf8ToB64(s: string): string {
+        const bytes = new TextEncoder().encode(s);
+        let bin = "";
+        for (let i = 0; i < bytes.length; i++) {
+            bin += String.fromCharCode(bytes[i]);
+        }
+        return btoa(bin);
+    }
+    function b64ToUtf8(b64: string): string {
+        const bin = atob(b64);
+        const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+    }
+
+    async function formatJulia() {
+        if (!view || formatting) return;
+        const code = view.state.doc.toString();
+        if (!code.trim()) return;
+        formatting = true;
+        formatError = "";
+        try {
+            const { invoke } = await import("@tauri-apps/api/core");
+            const line = await invoke<string>("julia_format", {
+                codeB64: utf8ToB64(code),
+                indent: get(editorIndentSize),
+                kernel: "cell",
+            });
+            if (line.startsWith("OK:")) {
+                const formatted = b64ToUtf8(line.slice(3));
+                if (formatted !== view.state.doc.toString()) {
+                    view.dispatch({
+                        changes: {
+                            from: 0,
+                            to: view.state.doc.length,
+                            insert: formatted,
+                        },
+                    });
+                    editCode = formatted;
+                    persistCode();
+                }
+            } else if (line.startsWith("ERR:")) {
+                showFormatError(b64ToUtf8(line.slice(4)));
+            } else {
+                showFormatError("Unexpected formatter response.");
+            }
+        } catch (e) {
+            showFormatError(typeof e === "string" ? e : String(e));
+        } finally {
+            formatting = false;
+        }
+    }
+
     let restarting = $state(false);
     // Restart the shared Julia kernel — clears all variables and loaded
     // packages, and wipes every cell's output so the reset is visible.
@@ -308,6 +402,10 @@
         try {
             await restartJuliaKernel();
             juliaCellClearers.forEach((clear) => clear());
+            // Kernel info reflects the live kernel — drop it so the next open
+            // re-probes the fresh process.
+            kernelInfoText = "";
+            kernelInfoError = "";
         } finally {
             restarting = false;
             running = false;
@@ -354,6 +452,59 @@
         }
     }
 
+    // ── Kernel info dialog ────────────────────────────────────────────────────
+    // Runs `versioninfo()` plus the active project path inside the cell
+    // kernel and renders the captured text in a modal. Results are cached
+    // for the lifetime of the component since they don't change unless the
+    // kernel restarts; restartKernel() invalidates the cache.
+    let showKernelInfo = $state(false);
+    let kernelInfoLoading = $state(false);
+    let kernelInfoText = $state("");
+    let kernelInfoError = $state("");
+
+    async function openKernelInfo() {
+        showRunMenu = false;
+        showKernelInfo = true;
+        if (kernelInfoText || kernelInfoLoading) return;
+        kernelInfoLoading = true;
+        kernelInfoError = "";
+        const probe = `import InteractiveUtils
+let
+    io = IOBuffer()
+    InteractiveUtils.versioninfo(io)
+    proj = try Base.active_project() catch; nothing end
+    println(io)
+    println(io, "Active project: ", proj === nothing ? "(none)" : proj)
+    print(String(take!(io)))
+end
+`;
+        try {
+            const result = await runJuliaCell(probe, () => {});
+            if (result.hasError) {
+                kernelInfoError =
+                    result.text || "Failed to read kernel info.";
+            } else {
+                kernelInfoText = result.text.trim();
+            }
+        } catch (e) {
+            kernelInfoError = typeof e === "string" ? e : String(e);
+        } finally {
+            kernelInfoLoading = false;
+        }
+    }
+
+    function closeKernelInfo() {
+        showKernelInfo = false;
+    }
+
+    function onKernelInfoKeydown(e: KeyboardEvent) {
+        if (e.key === "Escape") closeKernelInfo();
+    }
+
+    function onKernelInfoBackdropClick(e: MouseEvent) {
+        if (e.target === e.currentTarget) closeKernelInfo();
+    }
+
     // Re-theme the CodeMirror highlight whenever the app light/dark mode flips.
     $effect(() => {
         const dark = $appDarkMode;
@@ -392,8 +543,63 @@
         ".cm-activeLineGutter": { backgroundColor: "transparent" },
     });
 
+    // Root element of the rendered cell — used to detect clicks on the cell's
+    // chrome (border, header, output) so the whole node can be selected.
+    let wrapperEl: HTMLElement | null = $state(null);
+
+    // Clicking the cell — anywhere except the code editor or an interactive
+    // control — selects the whole node, so a following Delete/Backspace removes
+    // it. Shift-click toggles, matching the image/decorator selection pattern.
+    const onCellClick = (payload: MouseEvent): boolean => {
+        const target = payload.target as HTMLElement | null;
+        if (!target || !wrapperEl || !wrapperEl.contains(target)) return false;
+        // Editing the code or using a control must keep their normal behaviour.
+        if (editorHost?.contains(target)) return false;
+        if (target.closest("button, a, input, select, textarea, iframe"))
+            return false;
+
+        if (payload.shiftKey) {
+            $isSelected = !$isSelected;
+        } else {
+            clearSelection(editor);
+            $isSelected = true;
+        }
+        return true;
+    };
+
+    // Delete/Backspace removes the cell, but only when it is node-selected (so
+    // the keys still edit text normally while the code editor has focus).
+    const onCellDelete = (event: KeyboardEvent): boolean => {
+        if (!$isSelected || !isNodeSelection(getSelection())) return false;
+        event.preventDefault();
+        const node = getNodeByKey(nodeKey);
+        if (isJuliaCellNode(node)) {
+            node.remove();
+            return true;
+        }
+        return false;
+    };
+
     onMount(() => {
-        if (!editorHost) return;
+        const unregisterCommands = mergeRegister(
+            editor.registerCommand(
+                CLICK_COMMAND,
+                onCellClick,
+                COMMAND_PRIORITY_LOW,
+            ),
+            editor.registerCommand(
+                KEY_DELETE_COMMAND,
+                onCellDelete,
+                COMMAND_PRIORITY_LOW,
+            ),
+            editor.registerCommand(
+                KEY_BACKSPACE_COMMAND,
+                onCellDelete,
+                COMMAND_PRIORITY_LOW,
+            ),
+        );
+
+        if (!editorHost) return unregisterCommands;
 
         const runKeymap = keymap.of([
             {
@@ -451,6 +657,7 @@
         }
 
         return () => {
+            unregisterCommands();
             juliaCellRunners.delete(nodeKey);
             juliaCellClearers.delete(nodeKey);
             persistCode();
@@ -461,6 +668,7 @@
 </script>
 
 <div
+    bind:this={wrapperEl}
     class="julia-cell my-0.5 flex flex-col overflow-hidden rounded-md {plotUnboxed
         ? ''
         : 'border border-brand-sand-200 dark:border-[#363a4f]'}"
@@ -501,10 +709,10 @@
                 <button
                     onclick={() => (showSizeOptions = !showSizeOptions)}
                     title={showSizeOptions
-                        ? "Hide text size options"
-                        : "Show text size options"}
+                        ? $t("julia_cell.hide_text_size_options")
+                        : $t("julia_cell.show_text_size_options")}
                     aria-pressed={showSizeOptions}
-                    aria-label="Toggle text size options"
+                    aria-label={$t("julia_cell.toggle_text_size_options")}
                     class="flex h-[22px] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 transition-colors dark:border-[#414559] {showSizeOptions
                         ? 'bg-brand-gold-200 text-brand-charcoal-900 dark:bg-[#414559] dark:text-[#c6d0f5]'
                         : 'text-brand-charcoal-300 hover:bg-brand-sand-100 hover:text-brand-charcoal-900 dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]'}"
@@ -516,12 +724,12 @@
                     <!-- Code font size -->
                     <span
                         class="flex h-[22px] items-center overflow-hidden rounded-md border border-brand-sand-200 dark:border-[#414559]"
-                        title="Code font size"
+                        title={$t("julia_cell.code_font_size")}
                     >
                         <button
                             onclick={() => adjustCodeFontSize(-1)}
                             disabled={$juliaCellFontSize <= 9}
-                            aria-label="Decrease code font size"
+                            aria-label={$t("julia_cell.decrease_code_font_size")}
                             class="flex h-full w-[22px] cursor-pointer items-center justify-center text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
                         >
                             <Icon icon="mdi:minus" width="0.7rem" />
@@ -533,7 +741,7 @@
                         <button
                             onclick={() => adjustCodeFontSize(1)}
                             disabled={$juliaCellFontSize >= 18}
-                            aria-label="Increase code font size"
+                            aria-label={$t("julia_cell.increase_code_font_size")}
                             class="flex h-full w-[22px] cursor-pointer items-center justify-center text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
                         >
                             <Icon icon="mdi:plus" width="0.7rem" />
@@ -543,12 +751,12 @@
                     <!-- Code line height -->
                     <span
                         class="flex h-[22px] items-center overflow-hidden rounded-md border border-brand-sand-200 dark:border-[#414559]"
-                        title="Code line height"
+                        title={$t("julia_cell.code_line_height")}
                     >
                         <button
                             onclick={() => adjustCodeLineHeight(-0.1)}
                             disabled={$juliaCellLineHeight <= 1}
-                            aria-label="Decrease code line height"
+                            aria-label={$t("julia_cell.decrease_code_line_height")}
                             class="flex h-full w-[22px] cursor-pointer items-center justify-center text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
                         >
                             <Icon
@@ -563,7 +771,7 @@
                         <button
                             onclick={() => adjustCodeLineHeight(0.1)}
                             disabled={$juliaCellLineHeight >= 2.5}
-                            aria-label="Increase code line height"
+                            aria-label={$t("julia_cell.increase_code_line_height")}
                             class="flex h-full w-[22px] cursor-pointer items-center justify-center text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
                         >
                             <Icon
@@ -574,10 +782,27 @@
                     </span>
                 {/if}
 
+                <!-- Julia formatter -->
+                <button
+                    onclick={formatJulia}
+                    disabled={formatting}
+                    title={$t("julia_cell.format")}
+                    aria-label={$t("julia_cell.format_code")}
+                    class="flex h-[22px] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent dark:border-[#414559] dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
+                >
+                    <Icon
+                        icon="icon-park-twotone:format-brush"
+                        class={formatting ? "animate-pulse" : ""}
+                        width="0.8rem"
+                    />
+                </button>
+
                 <!-- Line wrap toggle -->
                 <button
                     onclick={toggleWrap}
-                    title={codeWrap ? "Disable line wrap" : "Enable line wrap"}
+                    title={codeWrap
+                        ? $t("julia_cell.disable_wrap")
+                        : $t("julia_cell.enable_wrap")}
                     aria-pressed={codeWrap}
                     class="flex h-[22px] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 transition-colors dark:border-[#414559] {codeWrap
                         ? 'bg-brand-gold-200 text-brand-charcoal-900 dark:bg-[#414559] dark:text-[#c6d0f5]'
@@ -614,8 +839,8 @@
                 <button
                     onclick={restartKernel}
                     disabled={restarting}
-                    title="Restart Julia kernel (clears all variables)"
-                    aria-label="Restart Julia kernel"
+                    title={$t("julia_cell.restart_kernel_clear")}
+                    aria-label={$t("julia_cell.restart_kernel")}
                     class="flex h-[22px] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent dark:border-[#414559] dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
                 >
                     <Icon
@@ -629,7 +854,7 @@
                 {#if running}
                     <button
                         onclick={stop}
-                        title="Stop the running cell"
+                        title={$t("julia_cell.stop_running")}
                         class="flex h-[22px] cursor-pointer items-center gap-1 rounded-md border border-red-200 px-2 font-sans text-[10px] font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-500/40 dark:text-red-400 dark:hover:bg-red-500/10"
                     >
                         <Icon icon="solar:stop-bold" width="0.7rem" />
@@ -660,7 +885,7 @@
                             <!-- Click-away backdrop -->
                             <button
                                 class="fixed inset-0 z-[60] cursor-default"
-                                aria-label="Close run menu"
+                                aria-label={$t("julia_cell.close_run_menu")}
                                 onclick={() => (showRunMenu = false)}
                             ></button>
                             <div
@@ -690,12 +915,90 @@
                                     />
                                     {$t("julia_cell.run_all")}
                                 </button>
+                                <div
+                                    class="my-0.5 h-px bg-brand-sand-200 dark:bg-[#414559]"
+                                ></div>
+                                <button
+                                    onclick={openKernelInfo}
+                                    class="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-left font-sans text-[10px] text-brand-charcoal-700 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                                >
+                                    <Icon
+                                        icon="solar:info-circle-bold"
+                                        width="0.7rem"
+                                    />
+                                    {$t("julia_cell.kernel_info")}
+                                </button>
                             </div>
                         {/if}
                     </span>
                 {/if}
             </span>
         </div>
+
+        {#if formatError}
+            {@const isReplDown =
+                /repl|kernel|not started|not running|connect/i.test(
+                    formatError,
+                )}
+            <div
+                role="alert"
+                class="julia-format-alert font-sans mx-2 mt-1.5 mb-1.5 flex items-start gap-2 px-2.5 py-2
+                       rounded-md border shadow-sm
+                       {isReplDown
+                    ? 'bg-amber-50/90 dark:bg-amber-900/15 border-amber-200/80 dark:border-amber-700/40'
+                    : 'bg-red-50/90 dark:bg-red-900/15 border-red-200/80 dark:border-red-700/40'}"
+            >
+                <span
+                    class="mt-[1px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full
+                           {isReplDown
+                        ? 'bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-300'
+                        : 'bg-red-100 dark:bg-red-800/40 text-red-600 dark:text-red-300'}"
+                >
+                    <Icon
+                        icon={isReplDown
+                            ? "lucide:plug-zap"
+                            : "lucide:alert-triangle"}
+                        width="0.7rem"
+                        height="0.7rem"
+                    />
+                </span>
+                <div class="min-w-0 flex-1 leading-tight">
+                    <div
+                        class="text-[11px] font-semibold
+                               {isReplDown
+                            ? 'text-amber-800 dark:text-amber-200'
+                            : 'text-red-700 dark:text-red-200'}"
+                    >
+                        {isReplDown
+                            ? $t("julia_cell.repl_not_running")
+                            : $t("julia_cell.format_failed")}
+                    </div>
+                    <div
+                        class="-mt-3 text-[10.5px] break-words
+                               {isReplDown
+                            ? 'text-amber-700/90 dark:text-amber-300/90'
+                            : 'text-red-600/90 dark:text-red-300/90'}"
+                    >
+                        {isReplDown
+                            ? $t("julia_cell.start_kernel_then_format")
+                            : formatError}
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    aria-label={$t("common.close")}
+                    onclick={() => {
+                        formatError = "";
+                        if (formatErrorTimer) clearTimeout(formatErrorTimer);
+                    }}
+                    class="shrink-0 -mr-0.5 -mt-0.5 p-1 rounded
+                           text-current opacity-60 hover:opacity-100
+                           hover:bg-black/5 dark:hover:bg-white/10 transition"
+                >
+                    <Icon icon="lucide:x" width="0.7rem" height="0.7rem" />
+                </button>
+            </div>
+        {/if}
 
         <!-- Code input — host stays mounted (hidden) so the editor survives toggles -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -745,6 +1048,7 @@
                         src={plot.url}
                         title={$t("julia_cell.plot_alt")}
                         sandbox="allow-scripts allow-same-origin"
+                        use:trackPlotIframe={plot.url}
                     ></iframe>
                 {:else if plot.format === "plotly" && plot.data}
                     <!-- Interactive PlotlyJS figure — a self-contained HTML
@@ -757,6 +1061,7 @@
                         srcdoc={plotlyIframeDoc(plot.data)}
                         title={$t("julia_cell.plot_alt")}
                         sandbox="allow-scripts allow-same-origin"
+                        use:trackPlotIframe={plot.data}
                     ></iframe>
                 {:else if plot.format === "svg" && plot.data}
                     <div class="mt-0.5 max-w-full overflow-auto">
@@ -792,7 +1097,125 @@
     {/if}
 </div>
 
+{#if showKernelInfo}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+        class="julia-kernel-info-backdrop fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
+        onclick={onKernelInfoBackdropClick}
+        onkeydown={onKernelInfoKeydown}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="julia-kernel-info-title"
+        tabindex="-1"
+    >
+        <div
+            class="julia-kernel-info-panel font-sans flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40"
+        >
+            <!-- Header — matches JuliaPlotViewer -->
+            <div
+                class="flex items-center justify-between px-4 py-1.75 shrink-0
+                       border-b border-brand-gold-200 dark:border-[#414559]
+                       bg-brand-gold-100 dark:bg-[#292c3c]
+                       select-none rounded-t-2xl"
+                role="banner"
+            >
+                <div class="flex items-center gap-2">
+                    <Icon
+                        icon="solar:cpu-bolt-bold-duotone"
+                        width="1.1rem"
+                        class="text-brand-gold-500"
+                    />
+                    <span
+                        id="julia-kernel-info-title"
+                        class="text-[11px] py-2 font-semibold uppercase tracking-wide
+                               text-brand-charcoal-500 dark:text-[#838ba7]"
+                    >
+                        {$t("julia_cell.kernel_info_title")}
+                    </span>
+                </div>
+
+                <button
+                    onclick={closeKernelInfo}
+                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
+                           bg-brand-gold-200 dark:bg-[#414559]
+                           text-brand-gold-600 dark:text-[#c6d0f5]
+                           hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                    aria-label={$t("common.close")}
+                    title={$t("common.close")}
+                >
+                    <Icon
+                        icon="solar:close-circle-bold-duotone"
+                        width="0.85rem"
+                    />
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="px-4 py-3 max-h-[60vh] overflow-y-auto">
+                {#if kernelInfoLoading}
+                    <div
+                        class="flex items-center gap-2 text-[12px] text-brand-charcoal-600 dark:text-[#a5adcb]"
+                    >
+                        <Icon icon="svg-spinners:180-ring" width="0.9rem" />
+                        {$t("julia_cell.probing_kernel")}
+                    </div>
+                {:else if kernelInfoError}
+                    <div
+                        class="rounded-md border border-red-200/80 dark:border-red-700/40 bg-red-50/90 dark:bg-red-900/15 px-3 py-2 text-[11.5px] text-red-700 dark:text-red-200 whitespace-pre-wrap break-words"
+                    >
+                        {kernelInfoError}
+                    </div>
+                {:else if kernelInfoText}
+                    <pre
+                        class="m-0 whitespace-pre-wrap break-words font-mono text-[11.5px] leading-snug text-brand-charcoal-800 dark:text-[#c6d0f5]">{kernelInfoText}</pre>
+                {:else}
+                    <div
+                        class="text-[12px] text-brand-charcoal-500 dark:text-[#a5adcb]"
+                    >
+                        {$t("julia_cell.no_kernel_info")}
+                    </div>
+                {/if}
+            </div>
+        </div>
+    </div>
+{/if}
+
 <style>
+    .julia-format-alert {
+        animation: julia-format-alert-in 160ms ease-out;
+    }
+    @keyframes julia-format-alert-in {
+        from {
+            opacity: 0;
+            transform: translateY(-2px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .julia-kernel-info-backdrop {
+        animation: julia-kernel-info-fade 140ms ease-out;
+    }
+    .julia-kernel-info-panel {
+        animation: julia-kernel-info-rise 180ms ease-out;
+    }
+    @keyframes julia-kernel-info-fade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes julia-kernel-info-rise {
+        from {
+            opacity: 0;
+            transform: translateY(6px) scale(0.98);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
     .julia-cell-editor :global(.cm-editor) {
         margin-block: 0 !important;
     }
