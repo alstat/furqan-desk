@@ -41,11 +41,13 @@ flate2    = "1"
 tar       = "0.4"
 tokio     = { version = "1", features = ["process", "io-util", "sync", "rt", "macros", "time", "fs"] }
 fontdb    = "0.23"
+# portable-pty supports Unix (forkpty) and Windows (ConPTY); keep it cross-platform
+# so the integrated terminal works on Windows too.
+portable-pty = "0.8"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 git2      = { version = "0.19", default-features = false, features = ["vendored-libgit2"] }
-portable-pty = "0.8"
 
 [target.'cfg(target_os = "android")'.dependencies]
 ndk         = "0.9"

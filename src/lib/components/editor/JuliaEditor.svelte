@@ -171,12 +171,42 @@
         collectNamesFromList(rawArgs, completions, "variable", "argument");
     }
 
+    // Scanning the whole document (split + several regexes per line) is the
+    // bulk of a completion query's cost. CodeMirror re-invokes the source on
+    // every new word and on deletions, so memoize the last scan: while the
+    // document text is unchanged, successive queries (different prefixes, REPL
+    // retries, info rendering) reuse the parsed name set instead of re-parsing.
+    let docScanCacheSource: string | null = null;
+    let docScanCache: Map<string, Completion> = new Map();
+
+    function scanDocumentCompletions(source: string): Map<string, Completion> {
+        if (source === docScanCacheSource) return docScanCache;
+        const completions = new Map<string, Completion>();
+        scanDocumentInto(source, completions);
+        docScanCacheSource = source;
+        docScanCache = completions;
+        return completions;
+    }
+
     function collectDocumentCompletions(
         source: string,
         prefix: string,
     ): Completion[] {
-        const completions = new Map<string, Completion>();
+        const completions = scanDocumentCompletions(source);
+        const lowerPrefix = prefix.toLowerCase();
+        const out: Completion[] = [];
+        for (const completion of completions.values()) {
+            if (completion.label.toLowerCase().startsWith(lowerPrefix)) {
+                out.push(completion);
+            }
+        }
+        return out;
+    }
 
+    function scanDocumentInto(
+        source: string,
+        completions: Map<string, Completion>,
+    ): void {
         for (const rawLine of source.split("\n")) {
             const line = rawLine.replace(/#.*$/, "").trim();
             if (!line) continue;
@@ -247,11 +277,6 @@
                 );
             }
         }
-
-        const lowerPrefix = prefix.toLowerCase();
-        return [...completions.values()].filter((completion) =>
-            completion.label.toLowerCase().startsWith(lowerPrefix),
-        );
     }
 
     function mergeCompletions(...groups: Completion[][]): Completion[] {
@@ -265,6 +290,14 @@
         }
         return [...merged.values()];
     }
+
+    // Precompute each static completion's lowercased label once, so prefix
+    // filtering on every query is a plain compare instead of ~400 toLowerCase()
+    // allocations per keystroke.
+    const JULIA_COMPLETIONS_INDEXED = JULIA_COMPLETIONS.map((c) => ({
+        completion: c,
+        lower: c.label.toLowerCase(),
+    }));
 
     const juliaCompletionSource: CompletionSource = async (context) => {
         const word = context.matchBefore(/\w+/);
@@ -294,9 +327,12 @@
         }
 
         const lower = word.text.toLowerCase();
-        const staticCompletions = JULIA_COMPLETIONS.filter((c) =>
-            c.label.toLowerCase().startsWith(lower),
-        );
+        const staticCompletions: Completion[] = [];
+        for (const entry of JULIA_COMPLETIONS_INDEXED) {
+            if (entry.lower.startsWith(lower)) {
+                staticCompletions.push(entry.completion);
+            }
+        }
         const options = mergeCompletions(
             documentCompletions,
             replCompletions,
@@ -309,6 +345,10 @@
 
     const juliaCompletionExtension = autocompletion({
         override: [juliaCompletionSource],
+        // Debounce so a typing/deleting burst doesn't fire the (document-scan +
+        // REPL IPC) source on every keystroke, and cap rendered DOM options.
+        activateOnTypingDelay: 150,
+        maxRenderedOptions: 50,
     });
 
     // ── Content change handler ────────────────────────────────────────────────

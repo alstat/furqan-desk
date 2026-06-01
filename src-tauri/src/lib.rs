@@ -5,7 +5,7 @@ mod feedback;
 #[cfg(unix)]
 mod git;
 mod julia;
-#[cfg(unix)]
+#[cfg(any(unix, windows))]
 mod pty;
 mod terminal;
 mod typst_world;
@@ -60,7 +60,7 @@ pub fn run() {
             let julia_custom_path = julia::load_persisted_path(&app.handle());
             app.manage(julia::JuliaState::new(julia_custom_path));
             app.manage(terminal::TerminalState::new());
-            #[cfg(unix)]
+            #[cfg(any(unix, windows))]
             app.manage(pty::PtyState::new());
             app.manage(commands::DownloadState {
                 cancel: Arc::new(AtomicBool::new(false)),
@@ -128,13 +128,13 @@ pub fn run() {
             terminal::send_terminal_input,
             terminal::signal_terminal,
             terminal::close_terminal,
-            #[cfg(unix)]
+            #[cfg(any(unix, windows))]
             pty::start_pty,
-            #[cfg(unix)]
+            #[cfg(any(unix, windows))]
             pty::pty_write,
-            #[cfg(unix)]
+            #[cfg(any(unix, windows))]
             pty::pty_resize,
-            #[cfg(unix)]
+            #[cfg(any(unix, windows))]
             pty::pty_kill,
             commands::search_quran,
             commands::get_manuscript_detail,

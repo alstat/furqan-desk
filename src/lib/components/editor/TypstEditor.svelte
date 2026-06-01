@@ -207,16 +207,32 @@
     }
 
     // ── Completion source ─────────────────────────────────────────────────────
-    // Match after # (e.g. #pa → suggests page, pad, …) or plain identifiers.
+    // Precompute the lowercased label for each completion once, so filtering on
+    // every keystroke is a plain string compare instead of 200+ toLowerCase()
+    // allocations per query.
+    const TYPST_COMPLETIONS_INDEXED = TYPST_COMPLETIONS.map((c) => ({
+        completion: c,
+        lower: c.label.toLowerCase(),
+    }));
+
+    function filterCompletions(prefix: string) {
+        const out: typeof TYPST_COMPLETIONS = [];
+        for (const entry of TYPST_COMPLETIONS_INDEXED) {
+            if (entry.lower.startsWith(prefix)) out.push(entry.completion);
+        }
+        return out;
+    }
+
+    // Auto-pop only after `#` (Typst code mode, e.g. #pa → page, pad, …). A
+    // Typst document body is prose, so auto-triggering on every plain word made
+    // the popup recompute and reposition on each keystroke/deletion — that is
+    // what caused the typing lag. Bare-word completion is still available, but
+    // only when explicitly requested (Ctrl-Space).
     const typstCompletionSource: CompletionSource = (context) => {
         const hashMatch = context.matchBefore(/#[\w-]*/);
-        const wordMatch = context.matchBefore(/[\w-]+/);
-
         if (hashMatch) {
             const prefix = hashMatch.text.slice(1).toLowerCase();
-            const filtered = TYPST_COMPLETIONS.filter((c) =>
-                c.label.toLowerCase().startsWith(prefix),
-            );
+            const filtered = filterCompletions(prefix);
             if (filtered.length === 0 && !context.explicit) return null;
             return {
                 from: hashMatch.from + 1,
@@ -225,24 +241,23 @@
             };
         }
 
-        if (wordMatch && (wordMatch.to > wordMatch.from || context.explicit)) {
-            const prefix = wordMatch.text.toLowerCase();
-            const filtered = TYPST_COMPLETIONS.filter((c) =>
-                c.label.toLowerCase().startsWith(prefix),
-            );
-            if (filtered.length === 0) return null;
-            return {
-                from: wordMatch.from,
-                options: filtered,
-                validFor: /^[\w-]*$/,
-            };
-        }
+        if (!context.explicit) return null;
 
-        return null;
+        const wordMatch = context.matchBefore(/[\w-]+/);
+        const from = wordMatch ? wordMatch.from : context.pos;
+        const filtered = filterCompletions(
+            wordMatch ? wordMatch.text.toLowerCase() : "",
+        );
+        if (filtered.length === 0) return null;
+        return { from, options: filtered, validFor: /^[\w-]*$/ };
     };
 
     const typstCompletionExtension = autocompletion({
         override: [typstCompletionSource],
+        // Wait a touch longer after typing before querying, and cap how many
+        // options hit the DOM, so a fast typist never blocks on the popup.
+        activateOnTypingDelay: 150,
+        maxRenderedOptions: 50,
     });
 
     const labelClass =
