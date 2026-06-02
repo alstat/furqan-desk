@@ -332,7 +332,7 @@
                                 title={$t("quran_block.view_in_quran", { ayah: String(v.ayah) })}
                                 aria-label={$t("quran_block.view_in_quran", { ayah: String(v.ayah) })}
                                 class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
-                                ><Icon icon="basil:book-open-solid" width="0.6rem" /></button
+                                ><Icon icon="ph:book-open-fill" width="0.6rem" /></button
                             ></span
                         ></span
                     >{' '}
