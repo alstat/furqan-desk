@@ -2,15 +2,10 @@
     import { supabase } from "$lib/supabase";
     import { t } from "$lib/i18n";
     import Icon from "@iconify/svelte";
-
-    let tab: "signin" | "signup" = $state("signin");
+    import PasswordInput from "./PasswordInput.svelte";
 
     let signinEmail = $state("");
     let signinPassword = $state("");
-
-    let signupName = $state("");
-    let signupEmail = $state("");
-    let signupPassword = $state("");
 
     let loading = $state(false);
     let error = $state("");
@@ -39,26 +34,6 @@
         if (err) error = err.message;
     }
 
-    async function handleSignUp() {
-        clearMessages();
-        if (!signupEmail || !signupPassword) {
-            error = $t("auth.error_email_password_required");
-            return;
-        }
-        loading = true;
-        const { error: err } = await supabase.auth.signUp({
-            email: signupEmail,
-            password: signupPassword,
-            options: { data: { full_name: signupName } },
-        });
-        loading = false;
-        if (err) {
-            error = err.message;
-        } else {
-            successMsg = $t("auth.signup_confirm_email");
-        }
-    }
-
     async function handleForgotPassword() {
         clearMessages();
         if (!signinEmail) {
@@ -78,105 +53,44 @@
 </script>
 
 <div class="flex w-full flex-col gap-4 pb-5">
-    <!-- Tab switcher -->
-    <div
-        class="flex rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#292c3c] p-0.5"
-    >
-        <button
-            onclick={() => {
-                tab = "signin";
-                clearMessages();
+    <div class="flex flex-col gap-2.5">
+        <input
+            type="email"
+            placeholder={$t("auth.email_address")}
+            bind:value={signinEmail}
+            class={inputClass}
+        />
+        <PasswordInput
+            placeholder={$t("auth.password")}
+            bind:value={signinPassword}
+            onkeydown={(e: KeyboardEvent) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSignIn();
+                }
             }}
-            class="flex-1 rounded-full py-1 text-[11px] font-semibold transition-colors
-                   {tab === 'signin'
-                ? 'bg-brand-gold-400 text-gray-100 shadow-sm'
-                : 'text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#303446]'}"
+            class={inputClass}
+        />
+        <button
+            onclick={handleSignIn}
+            disabled={loading}
+            class="cursor-pointer mt-1 w-full rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 py-1.5
+                   text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100
+                   hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 active:bg-brand-gold-600/90 transition-colors
+                   disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
         >
+            {#if loading}
+                <Icon icon="svg-spinners:ring-resize" width="0.85rem" />
+            {/if}
             {$t("auth.sign_in")}
         </button>
         <button
-            onclick={() => {
-                tab = "signup";
-                clearMessages();
-            }}
-            class="flex-1 rounded-full py-1 text-[11px] font-semibold transition-colors
-                   {tab === 'signup'
-                ? 'bg-brand-gold-400 text-gray-100 shadow-sm'
-                : 'text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#303446]'}"
+            onclick={handleForgotPassword}
+            class="cursor-pointer text-center text-[11px] text-brand-charcoal-400 dark:text-[#8087a2] hover:text-brand-gold-500 transition-colors"
         >
-            {$t("auth.sign_up")}
+            {$t("auth.forgot_password")}
         </button>
     </div>
-
-    {#if tab === "signin"}
-        <div class="flex flex-col gap-2.5">
-            <input
-                type="email"
-                placeholder={$t("auth.email_address")}
-                bind:value={signinEmail}
-                class={inputClass}
-            />
-            <input
-                type="password"
-                placeholder={$t("auth.password")}
-                bind:value={signinPassword}
-                class={inputClass}
-            />
-            <button
-                onclick={handleSignIn}
-                disabled={loading}
-                class="cursor-pointer mt-1 w-full rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 py-1.5
-                       text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100
-                       hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 active:bg-brand-gold-600/90 transition-colors
-                       disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-            >
-                {#if loading}
-                    <Icon icon="svg-spinners:ring-resize" width="0.85rem" />
-                {/if}
-                {$t("auth.sign_in")}
-            </button>
-            <button
-                onclick={handleForgotPassword}
-                class="cursor-pointer text-center text-[11px] text-brand-charcoal-400 dark:text-[#8087a2] hover:text-brand-gold-500 transition-colors"
-            >
-                {$t("auth.forgot_password")}
-            </button>
-        </div>
-    {:else}
-        <div class="flex flex-col gap-2.5">
-            <input
-                type="text"
-                placeholder={$t("auth.full_name")}
-                bind:value={signupName}
-                class={inputClass}
-            />
-            <input
-                type="email"
-                placeholder={$t("auth.email_address")}
-                bind:value={signupEmail}
-                class={inputClass}
-            />
-            <input
-                type="password"
-                placeholder={$t("auth.password")}
-                bind:value={signupPassword}
-                class={inputClass}
-            />
-            <button
-                onclick={handleSignUp}
-                disabled={loading}
-                class="cursor-pointer mt-1 w-full rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 py-1.5
-                       text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100
-                       hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 active:bg-brand-gold-600/90 transition-colors
-                       disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-            >
-                {#if loading}
-                    <Icon icon="svg-spinners:ring-resize" width="0.85rem" />
-                {/if}
-                {$t("auth.create_account")}
-            </button>
-        </div>
-    {/if}
 
     {#if error}
         <p class="text-[11px] text-red-500 dark:text-red-400 text-center">

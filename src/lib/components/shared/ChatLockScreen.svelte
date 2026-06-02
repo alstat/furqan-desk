@@ -1,6 +1,7 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { t } from "$lib/i18n";
+    import PasswordInput from "./PasswordInput.svelte";
     import {
         keyState,
         keyError,
@@ -109,8 +110,7 @@
         </div>
 
         <div class="flex flex-col gap-2">
-            <input
-                type="password"
+            <PasswordInput
                 bind:value={passphrase}
                 onkeydown={handleKeydown}
                 placeholder={$t("ai_chat.lock.passphrase")}
@@ -119,8 +119,7 @@
                 class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#1e2030] px-3 py-2 text-[12px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
             />
             {#if isSetup}
-                <input
-                    type="password"
+                <PasswordInput
                     bind:value={confirmPassphrase}
                     onkeydown={handleKeydown}
                     placeholder={$t("ai_chat.lock.confirm")}
