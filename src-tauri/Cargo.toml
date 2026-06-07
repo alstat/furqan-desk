@@ -25,6 +25,7 @@ tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-clipboard-manager = "2.3.2"
+tauri-plugin-deep-link = "2"
 base64       = "0.22"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -44,6 +45,12 @@ fontdb    = "0.23"
 # portable-pty supports Unix (forkpty) and Windows (ConPTY); keep it cross-platform
 # so the integrated terminal works on Windows too.
 portable-pty = "0.8"
+
+# On Linux/Windows a deep link launches a fresh process; single-instance (with
+# the deep-link feature) forwards the URL to the already-running app instead.
+# macOS delivers the URL to the running app directly, so it isn't needed there.
+[target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
