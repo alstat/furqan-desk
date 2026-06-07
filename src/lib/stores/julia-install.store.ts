@@ -10,6 +10,20 @@ export const juliaInstallState     = writable<JuliaInstallState>('idle');
 export const juliaInstallError     = writable<string>('');
 export const juliaInstallMessage   = writable<string>('');
 
+/** Controls the "Julia is not installed" prompt shown when a run is attempted
+ *  without a Julia binary available. See JuliaInstallPrompt.svelte. */
+export const juliaPromptOpen = writable(false);
+
+export function openJuliaInstallPrompt(): void {
+    juliaPromptOpen.set(true);
+}
+
+export function closeJuliaInstallPrompt(): void {
+    // Leave an in-progress install running; just hide the dialog if idle.
+    if (_runningInstall) return;
+    juliaPromptOpen.set(false);
+}
+
 let _unlisten: UnlistenFn | null = null;
 let _listenerPromise: Promise<void> | null = null;
 
@@ -95,6 +109,32 @@ export function setJuliaVersion(version: string): Promise<void> {
         } catch (e) {
             juliaInstallError.set(String(e).slice(0, 220));
             juliaInstallState.set('error');
+        } finally {
+            _runningInstall = null;
+        }
+    })();
+    return _runningInstall;
+}
+
+/** Fresh install of Julia (via juliaup) for users who don't have it yet.
+ *  Used by JuliaInstallPrompt.svelte. Emits progress on 'julia-install-progress'. */
+export function installJulia(): Promise<void> {
+    if (_runningInstall) return _runningInstall;
+    _runningInstall = (async () => {
+        await ensureProgressListener();
+        juliaInstallState.set('updating');
+        juliaInstallError.set('');
+        juliaInstallMessage.set('');
+        try {
+            await invoke('install_julia');
+            try {
+                juliaInstalledVersion.set(await invoke<string>('get_julia_version'));
+            } catch {}
+            juliaInstallState.set('idle');
+        } catch (e) {
+            juliaInstallError.set(String(e).slice(0, 220));
+            juliaInstallState.set('error');
+            throw e;
         } finally {
             _runningInstall = null;
         }

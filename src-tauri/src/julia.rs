@@ -274,7 +274,10 @@ struct InstallProgress {
 }
 
 #[tauri::command]
-pub async fn install_julia(app: AppHandle) -> Result<(), String> {
+pub async fn install_julia(
+    app: AppHandle,
+    state: State<'_, JuliaState>,
+) -> Result<(), String> {
     let emit = |msg: &str| {
         let _ = app.emit(
             "julia-install-progress",
@@ -282,84 +285,150 @@ pub async fn install_julia(app: AppHandle) -> Result<(), String> {
         );
     };
 
-    // ── macOS / Linux: download juliaup CLI binary and run `juliaup add lts` ──
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    // juliaup ships as a portable .tar.gz on GitHub releases whose root holds
+    // two binaries: `juliaup`/`juliaup.exe` (the version manager) and
+    // `julia`/`julia.exe` (the launcher that dispatches to the selected
+    // channel). The same flow — download, extract, `juliaup add lts`, then
+    // point the app at the extracted launcher — works on macOS, Linux and
+    // Windows, so we keep it unified rather than per-platform.
+    use std::io::Read;
+
+    emit("Downloading juliaup…");
+
+    // Resolve the latest stable juliaup so the URL doesn't go stale, falling
+    // back to a known-good pin if the GitHub lookup fails.
+    let juliaup_version = get_latest_stable_release("JuliaLang/juliaup")
+        .await
+        .unwrap_or_else(|_| "1.20.4".to_string());
+
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    let target = "aarch64-apple-darwin";
+    #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+    let target = "x86_64-apple-darwin";
+    #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+    let target = "aarch64-unknown-linux-musl";
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+    let target = "x86_64-unknown-linux-musl";
+    #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
+    let target = "x86_64-pc-windows-gnu";
+    #[cfg(all(target_os = "windows", target_arch = "x86"))]
+    let target = "i686-pc-windows-gnu";
+    // Any other platform/arch (e.g. Windows on ARM) has no portable build.
+    #[cfg(not(any(
+        all(target_os = "macos", target_arch = "aarch64"),
+        all(target_os = "macos", target_arch = "x86_64"),
+        all(target_os = "linux", target_arch = "aarch64"),
+        all(target_os = "linux", target_arch = "x86_64"),
+        all(target_os = "windows", target_arch = "x86_64"),
+        all(target_os = "windows", target_arch = "x86"),
+    )))]
+    let target = "";
+
+    if target.is_empty() {
+        return Err(
+            "Automatic install isn't available for this platform. Please install Julia \
+             from https://julialang.org/downloads/ and set the path manually."
+                .to_string(),
+        );
+    }
+
+    #[cfg(windows)]
+    let exe = ".exe";
+    #[cfg(not(windows))]
+    let exe = "";
+
+    let url = format!(
+        "https://github.com/JuliaLang/juliaup/releases/download/v{juliaup_version}/\
+         juliaup-{juliaup_version}-{target}-portable.tar.gz"
+    );
+
+    let response = reqwest::get(&url)
+        .await
+        .map_err(|e| format!("Network error: {e}"))?;
+    if !response.status().is_success() {
+        return Err(format!("Download failed (HTTP {})", response.status()));
+    }
+    let bytes = response.bytes().await
+        .map_err(|e| format!("Failed to read download: {e}"))?;
+
+    let app_data = app.path().app_data_dir()
+        .map_err(|e| format!("Cannot find app data dir: {e}"))?;
+    std::fs::create_dir_all(&app_data)
+        .map_err(|e| format!("Cannot create app data dir: {e}"))?;
+    let juliaup_path = app_data.join(format!("juliaup{exe}"));
+    let julia_launcher = app_data.join(format!("julia{exe}"));
+
+    emit("Extracting juliaup…");
+
+    // Unpack just the two binaries we need from the archive root.
+    let juliaup_name = format!("juliaup{exe}");
+    let julia_name = format!("julia{exe}");
+    let decoder = flate2::read::GzDecoder::new(std::io::Cursor::new(&bytes[..]));
+    let mut archive = tar::Archive::new(decoder);
+    let (mut got_juliaup, mut got_julia) = (false, false);
+    for entry in archive.entries().map_err(|e| format!("Bad archive: {e}"))? {
+        let mut entry = entry.map_err(|e| format!("Bad archive entry: {e}"))?;
+        let name = entry
+            .path()
+            .ok()
+            .and_then(|p| p.file_name().and_then(|n| n.to_str()).map(str::to_string));
+        let dest = if name.as_deref() == Some(juliaup_name.as_str()) {
+            got_juliaup = true;
+            &juliaup_path
+        } else if name.as_deref() == Some(julia_name.as_str()) {
+            got_julia = true;
+            &julia_launcher
+        } else {
+            continue;
+        };
+        let mut buf = Vec::new();
+        entry.read_to_end(&mut buf)
+            .map_err(|e| format!("Failed to read archive: {e}"))?;
+        std::fs::write(dest, &buf)
+            .map_err(|e| format!("Failed to write binary: {e}"))?;
+    }
+    if !got_juliaup || !got_julia {
+        return Err("juliaup archive did not contain the expected binaries".to_string());
+    }
+
+    #[cfg(unix)]
     {
-        emit("Downloading juliaup installer…");
-
-        #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-        let url = "https://install.julialang.org/juliaup-aarch64-apple-darwin";
-        #[cfg(all(target_os = "macos", not(target_arch = "aarch64")))]
-        let url = "https://install.julialang.org/juliaup-x86_64-apple-darwin";
-        #[cfg(target_os = "linux")]
-        let url = "https://install.julialang.org/juliaup-x86_64-unknown-linux-musl";
-
-        let response = reqwest::get(url)
-            .await
-            .map_err(|e| format!("Network error: {e}"))?;
-        if !response.status().is_success() {
-            return Err(format!("Download failed (HTTP {})", response.status()));
-        }
-        let bytes = response.bytes().await
-            .map_err(|e| format!("Failed to read download: {e}"))?;
-
-        let app_data = app.path().app_data_dir()
-            .map_err(|e| format!("Cannot find app data dir: {e}"))?;
-        let juliaup_path = app_data.join("juliaup");
-
-        std::fs::write(&juliaup_path, &bytes)
-            .map_err(|e| format!("Failed to write juliaup binary: {e}"))?;
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            std::fs::set_permissions(&juliaup_path, std::fs::Permissions::from_mode(0o755))
+        use std::os::unix::fs::PermissionsExt;
+        for p in [&juliaup_path, &julia_launcher] {
+            std::fs::set_permissions(p, std::fs::Permissions::from_mode(0o755))
                 .map_err(|e| format!("chmod failed: {e}"))?;
         }
-
-        emit("Installing Julia LTS via juliaup (this may take a few minutes)…");
-
-        let status = std::process::Command::new(&juliaup_path)
-            .arg("add")
-            .arg("lts")
-            .status()
-            .map_err(|e| format!("Failed to run juliaup: {e}"))?;
-        if !status.success() {
-            return Err("juliaup add lts failed".to_string());
-        }
-
-        emit("Julia LTS installed successfully.");
     }
 
-    // ── Windows: try winget; otherwise guide the user ─────────────────────────
-    #[cfg(target_os = "windows")]
-    {
-        emit("Trying to install via winget…");
+    emit("Installing Julia LTS (this may take a few minutes)…");
 
-        let status = std::process::Command::new("winget")
-            .args([
-                "install",
-                "--id", "Julialang.Juliaup",
-                "--accept-package-agreements",
-                "--accept-source-agreements",
-                "--silent",
-            ])
-            .status();
-
-        match status {
-            Ok(s) if s.success() => {
-                emit("Julia installed via winget. You may need to restart the app.");
-            }
-            _ => {
-                return Err(
-                    "winget is not available or installation failed. \
-                     Please install Julia from https://julialang.org/downloads/ \
-                     and use the 'Set path manually' field below."
-                        .to_string(),
-                );
-            }
+    let run_juliaup = |args: &[&str]| -> Result<(), String> {
+        let mut cmd = std::process::Command::new(&juliaup_path);
+        cmd.args(args);
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
         }
+        let status = cmd.status().map_err(|e| format!("Failed to run juliaup: {e}"))?;
+        if status.success() {
+            Ok(())
+        } else {
+            Err(format!("juliaup {} failed", args.join(" ")))
+        }
+    };
+    run_juliaup(&["add", "lts"])?;
+    // Ensure the launcher resolves `julia` to the channel we just installed.
+    let _ = run_juliaup(&["default", "lts"]);
+
+    // The portable install doesn't create ~/.juliaup/bin/julia or touch PATH,
+    // so point the app directly at the launcher we extracted and persist it.
+    if let Ok(mut guard) = state.custom_path.lock() {
+        *guard = Some(julia_launcher.clone());
     }
+    save_persisted_path(&app, &julia_launcher);
+
+    emit("Julia LTS installed successfully.");
 
     Ok(())
 }

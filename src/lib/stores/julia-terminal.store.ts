@@ -231,10 +231,36 @@ export async function executeJuliaCode(
 
     juliaReplHistory.update(h => [...h, { text: snippet, kind: 'input' as const, mode }]);
 
-    if (!get(juliaReplStarted)) {
-        const { openFolderPath } = await import('./tabs.store');
-        await invoke('start_julia_repl', { cwd: get(openFolderPath) });
-        juliaReplStarted.set(true);
+    try {
+        if (!get(juliaReplStarted)) {
+            // Verify Julia exists before spawning the REPL. Without this guard a
+            // missing binary rejects `start_julia_repl`, leaving `juliaIsRunning`
+            // stuck true (spinner forever) and surfacing as an unhandled rejection.
+            const status = await invoke<string>('check_julia');
+            if (status !== 'installed') {
+                juliaIsRunning.set(false);
+                juliaReplHistory.update(h => [
+                    ...h,
+                    { text: 'Julia is not installed.', kind: 'error' as const },
+                ]);
+                const { openJuliaInstallPrompt } = await import('./julia-install.store');
+                openJuliaInstallPrompt();
+                return;
+            }
+            const { openFolderPath } = await import('./tabs.store');
+            await invoke('start_julia_repl', { cwd: get(openFolderPath) });
+            juliaReplStarted.set(true);
+        }
+        await invoke('run_julia_code', { code: wrapForMode(snippet, mode) });
+    } catch (e) {
+        // Stop the spinner and report the failure inline instead of letting the
+        // rejection go unhandled.
+        juliaIsRunning.set(false);
+        const msg = String(e);
+        juliaReplHistory.update(h => [...h, { text: msg, kind: 'error' as const }]);
+        if (/not installed|set the path/i.test(msg)) {
+            const { openJuliaInstallPrompt } = await import('./julia-install.store');
+            openJuliaInstallPrompt();
+        }
     }
-    await invoke('run_julia_code', { code: wrapForMode(snippet, mode) });
 }

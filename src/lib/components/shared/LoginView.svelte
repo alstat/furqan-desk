@@ -91,7 +91,7 @@
                hover:bg-brand-sand-50 dark:hover:bg-[#414559] transition-colors
                disabled:opacity-50 disabled:cursor-not-allowed"
     >
-        <Icon icon="logos:google-icon" width="0.95rem" />
+        <Icon icon="mdi:google" width="0.95rem" />
         {$t("auth.continue_with_google")}
     </button>
 

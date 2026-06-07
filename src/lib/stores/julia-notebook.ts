@@ -283,6 +283,10 @@ async function processQueue(): Promise<void> {
         text += text ? `\n${err}` : String(err);
         hasError = true;
         finish(unlisten);
+        if (/not installed|set the path/i.test(String(err))) {
+            const { openJuliaInstallPrompt } = await import('./julia-install.store');
+            openJuliaInstallPrompt();
+        }
     }
 }
 

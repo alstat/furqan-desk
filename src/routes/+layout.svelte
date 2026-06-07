@@ -3,6 +3,7 @@
 	import '$lib/icons';
 	import { appDarkMode, zenMode } from '$lib/stores/editor.store';
 	import OpenTabFileWatcher from '$lib/components/shared/OpenTabFileWatcher.svelte';
+	import JuliaInstallPrompt from '$lib/components/shared/JuliaInstallPrompt.svelte';
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 	import { tabs } from '$lib/stores/tabs.store';
@@ -88,6 +89,8 @@
 	<OpenTabFileWatcher />
 	{@render children()}
 </div>
+
+<JuliaInstallPrompt />
 
 <style>
 
