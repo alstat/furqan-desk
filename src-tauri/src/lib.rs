@@ -39,11 +39,29 @@ pub fn run() {
         // the GNOME default lets the rules in app.css style scrollbars correctly.
     }
 
-    tauri::Builder::default()
+    #[allow(unused_mut)]
+    let mut builder = tauri::Builder::default();
+
+    // single-instance must be the FIRST plugin registered so it can intercept a
+    // second launch (e.g. the OS opening our deep link) and forward it to the
+    // already-running app. Only needed/available on Linux and Windows; macOS
+    // delivers deep links to the running process directly.
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            use tauri::Manager;
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_focus();
+            }
+        }));
+    }
+
+    builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_deep_link::init())
         .setup(|app| {
             let resource_dir = app.path().resource_dir()
                 .expect("Failed to resolve resource directory");
