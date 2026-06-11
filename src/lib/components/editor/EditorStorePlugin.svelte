@@ -16,6 +16,10 @@
 			if (tags.has('history-merge')) return;
 			const id = get(activeTabId);
 			if (!id) return;
+			// Already dirty — skip the store write so activeTab subscribers
+			// (e.g. EditorComposer's scroll effects) don't churn on every keystroke.
+			const current = get(tabs).find(t => t.id === id);
+			if (!current || current.isDirty) return;
 			tabs.update(ts => ts.map(t => t.id === id ? { ...t, isDirty: true } : t));
 		});
 
