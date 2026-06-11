@@ -50,11 +50,34 @@
     let debounceTimer: ReturnType<typeof setTimeout> | undefined;
     let embeddedPreviewScrollEl: HTMLDivElement | null = $state(null);
     let currentEmbeddedPreviewPage = $state(1);
-    let lastPreviewScrollTop = 0;
+
+    // Per-tab embedded-preview scroll memory shared across remounts of this
+    // component (cross-type tab switches unmount the editor). Lives on
+    // globalThis so the map survives Svelte's HMR.
+    type ScrollMap = Map<string, number>;
+    const EMBEDDED_PREVIEW_SCROLL_BY_KEY: ScrollMap = (() => {
+        const g = globalThis as unknown as {
+            __typstEmbeddedPreviewScrollByKey?: ScrollMap;
+        };
+        if (g.__typstEmbeddedPreviewScrollByKey instanceof Map)
+            return g.__typstEmbeddedPreviewScrollByKey;
+        const m: ScrollMap = new Map();
+        g.__typstEmbeddedPreviewScrollByKey = m;
+        return m;
+    })();
 
     function handlePreviewScroll(): void {
-        if (embeddedPreviewScrollEl && embeddedPreviewScrollEl.scrollHeight > embeddedPreviewScrollEl.clientHeight) {
-            lastPreviewScrollTop = embeddedPreviewScrollEl.scrollTop;
+        if (
+            editorScrollKey &&
+            embeddedPreviewScrollEl &&
+            embeddedPreviewScrollEl.isConnected &&
+            embeddedPreviewScrollEl.scrollHeight >
+                embeddedPreviewScrollEl.clientHeight
+        ) {
+            EMBEDDED_PREVIEW_SCROLL_BY_KEY.set(
+                editorScrollKey,
+                embeddedPreviewScrollEl.scrollTop,
+            );
         }
         updateCurrentEmbeddedPreviewPage();
     }
@@ -110,19 +133,21 @@
 
     $effect(() => {
         const pageCount = $typstSvgPages.length;
+        const key = editorScrollKey;
         if (pageCount === 0) {
             currentEmbeddedPreviewPage = 1;
             return;
         }
 
         tick().then(() => {
-            if (embeddedPreviewScrollEl && lastPreviewScrollTop > 0) {
+            if (embeddedPreviewScrollEl && key) {
+                const target = EMBEDDED_PREVIEW_SCROLL_BY_KEY.get(key) ?? 0;
                 const maxScroll =
                     embeddedPreviewScrollEl.scrollHeight -
                     embeddedPreviewScrollEl.clientHeight;
                 if (maxScroll > 0) {
                     embeddedPreviewScrollEl.scrollTop = Math.min(
-                        lastPreviewScrollTop,
+                        target,
                         maxScroll,
                     );
                 }

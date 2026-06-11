@@ -22,11 +22,33 @@
     let { embedded = false }: { embedded?: boolean } = $props();
     let previewScrollEl: HTMLDivElement | null = $state(null);
     let currentPreviewPage = $state(1);
-    let lastPreviewScrollTop = 0;
+
+    // Per-tab preview-scroll memory shared across remounts of this component
+    // (cross-type tab switches unmount the preview). Lives on globalThis so
+    // the map survives Svelte's HMR.
+    type ScrollMap = Map<string, number>;
+    const PREVIEW_SCROLL_BY_KEY: ScrollMap = (() => {
+        const g = globalThis as unknown as {
+            __typstPreviewScrollByKey?: ScrollMap;
+        };
+        if (g.__typstPreviewScrollByKey instanceof Map)
+            return g.__typstPreviewScrollByKey;
+        const m: ScrollMap = new Map();
+        g.__typstPreviewScrollByKey = m;
+        return m;
+    })();
+    let scrollKey = $derived(
+        $activeTab ? ($activeTab.path ?? $activeTab.id) : null,
+    );
 
     function handlePreviewScroll(): void {
-        if (previewScrollEl && previewScrollEl.scrollHeight > previewScrollEl.clientHeight) {
-            lastPreviewScrollTop = previewScrollEl.scrollTop;
+        if (
+            scrollKey &&
+            previewScrollEl &&
+            previewScrollEl.isConnected &&
+            previewScrollEl.scrollHeight > previewScrollEl.clientHeight
+        ) {
+            PREVIEW_SCROLL_BY_KEY.set(scrollKey, previewScrollEl.scrollTop);
         }
         updateCurrentPreviewPage();
     }
@@ -60,21 +82,20 @@
 
     $effect(() => {
         const pageCount = $typstSvgPages.length;
+        const key = scrollKey;
         if (pageCount === 0) {
             currentPreviewPage = 1;
             return;
         }
 
         tick().then(() => {
-            if (previewScrollEl && lastPreviewScrollTop > 0) {
+            if (previewScrollEl && key) {
+                const target = PREVIEW_SCROLL_BY_KEY.get(key) ?? 0;
                 const maxScroll =
                     previewScrollEl.scrollHeight -
                     previewScrollEl.clientHeight;
                 if (maxScroll > 0) {
-                    previewScrollEl.scrollTop = Math.min(
-                        lastPreviewScrollTop,
-                        maxScroll,
-                    );
+                    previewScrollEl.scrollTop = Math.min(target, maxScroll);
                 }
             }
             updateCurrentPreviewPage();

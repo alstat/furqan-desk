@@ -203,7 +203,8 @@
       "Bash(rm -rf juliaup-probe)",
       "Bash(mkdir juliaup-probe *)",
       "Bash(tar -xzf juliaup-test.tar.gz -C juliaup-probe)",
-      "Bash(./juliaup-probe/juliaup --help)"
+      "Bash(./juliaup-probe/juliaup --help)",
+      "Bash(git -C /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk log --oneline -8 -- src/lib/components/editor/EditorComposer.svelte)"
     ]
   }
 }
