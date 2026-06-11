@@ -132,6 +132,10 @@
         if (!key || restoring) return;
         const el = contentScroller ?? getContentScroller();
         if (!el) return;
+        // Svelte 5 detaches the DOM before onDestroy/effect teardown runs, and
+        // a detached element reads scrollTop 0 — saving then would clobber the
+        // real offset the scroll listener captured while the editor was live.
+        if (!el.isConnected) return;
         SCROLL_BY_TAB.set(key, el.scrollTop);
     }
 
