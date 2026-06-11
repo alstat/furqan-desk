@@ -3,6 +3,7 @@
     import Icon from "@iconify/svelte";
     import { fly } from "svelte/transition";
     import { t } from "$lib/i18n";
+    import { isPro } from "$lib/stores/auth.store";
 
     interface Props {
         open: boolean;
@@ -35,7 +36,7 @@
     async function handleSend() {
         error = "";
         if (!subject.trim() || !message.trim()) {
-            error = $t('feedback.error_required');
+            error = $t("feedback.error_required");
             return;
         }
 
@@ -45,13 +46,11 @@
                 subject: subject.trim(),
                 message: message.trim(),
                 fromEmail: fromEmail.trim() || null,
+                isPro: $isPro,
             });
             sent = true;
         } catch (e) {
-            error =
-                typeof e === "string"
-                    ? e
-                    : $t('feedback.error_network');
+            error = typeof e === "string" ? e : $t("feedback.error_network");
         } finally {
             sending = false;
         }
@@ -62,7 +61,7 @@
     <div
         role="dialog"
         aria-modal="true"
-        aria-label={$t('feedback.title')}
+        aria-label={$t("feedback.title")}
         tabindex="-1"
         class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-brand-charcoal-900/30 backdrop-blur-sm"
         onclick={(e) => {
@@ -96,25 +95,43 @@
                             <h2
                                 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                             >
-                                {$t('feedback.title')}
+                                {$t("feedback.title")}
                             </h2>
                             <p
                                 class="text-[11px] text-brand-charcoal-300 dark:text-[#8087a2]"
                             >
-                                {$t('feedback.subtitle')}
+                                {$t("feedback.subtitle")}
                             </p>
                         </div>
                     </div>
-                    <button
-                        onclick={handleClose}
-                        aria-label={$t('common.close')}
-                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    >
-                        <Icon
-                            icon="solar:close-circle-bold-duotone"
-                            width="1rem"
-                        />
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <!-- Account tier indicator -->
+                        {#if $isPro}
+                            <div
+                                class="flex h-7 items-center gap-1 rounded-lg bg-brand-gold-400 dark:bg-brand-gold-500 px-2 text-[10px] font-semibold text-gray-100 dark:text-gray-800"
+                            >
+                                <Icon icon="solar:crown-bold" width="1rem" />
+                                Pro
+                            </div>
+                        {:else}
+                            <div
+                                class="flex h-7 items-center gap-1 rounded-lg bg-brand-sand-100 dark:bg-[#414559] px-2 text-[10px] font-semibold text-brand-charcoal-400 dark:text-[#a5adce]"
+                            >
+                                <Icon icon="solar:user-bold" width="1rem" />
+                                Free
+                            </div>
+                        {/if}
+                        <button
+                            onclick={handleClose}
+                            aria-label={$t("common.close")}
+                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                        >
+                            <Icon
+                                icon="solar:close-circle-bold-duotone"
+                                width="1rem"
+                            />
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -140,12 +157,12 @@
                             <p
                                 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                             >
-                                {$t('feedback.success_title')}
+                                {$t("feedback.success_title")}
                             </p>
                             <p
                                 class="mt-1 text-[11px] text-brand-charcoal-300 dark:text-[#8087a2] leading-relaxed"
                             >
-                                {$t('feedback.success_message')}
+                                {$t("feedback.success_message")}
                             </p>
                         </div>
                         <button
@@ -166,7 +183,7 @@
                             for="feedback-email"
                             class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#8087a2]"
                         >
-                            {$t('feedback.email')}
+                            {$t("feedback.email")}
                         </label>
                         <div
                             class="flex items-center gap-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-brand-gold-900/30 transition-colors"
@@ -192,7 +209,8 @@
                             for="feedback-subject"
                             class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#8087a2]"
                         >
-                            {$t('feedback.subject')} <span class="text-red-400">*</span>
+                            {$t("feedback.subject")}
+                            <span class="text-red-400">*</span>
                         </label>
                         <div
                             class="flex items-center gap-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-brand-gold-900/30 transition-colors"
@@ -206,7 +224,7 @@
                                 id="feedback-subject"
                                 type="text"
                                 bind:value={subject}
-                                placeholder={$t('feedback.subject_placeholder')}
+                                placeholder={$t("feedback.subject_placeholder")}
                                 class="flex-1 bg-transparent text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:outline-none"
                             />
                         </div>
@@ -218,13 +236,14 @@
                             for="feedback-message"
                             class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#8087a2]"
                         >
-                            {$t('feedback.message')} <span class="text-red-400">*</span>
+                            {$t("feedback.message")}
+                            <span class="text-red-400">*</span>
                         </label>
                         <textarea
                             id="feedback-message"
                             bind:value={message}
                             rows="5"
-                            placeholder={$t('feedback.message_placeholder')}
+                            placeholder={$t("feedback.message_placeholder")}
                             class="w-full resize-none rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30 hover:border-brand-sand-400 dark:hover:border-[#51576d] transition-all"
                         ></textarea>
                     </div>
@@ -252,7 +271,7 @@
                         onclick={handleClose}
                         class="cursor-pointer px-4 py-1.5 rounded-full text-[11px] font-medium text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#303446] transition-colors"
                     >
-                        {$t('common.cancel')}
+                        {$t("common.cancel")}
                     </button>
                     <button
                         onclick={handleSend}
@@ -265,13 +284,13 @@
                                 class="animate-spin"
                                 width="0.85rem"
                             />
-                            {$t('feedback.sending')}
+                            {$t("feedback.sending")}
                         {:else}
                             <Icon
                                 icon="solar:plain-bold-duotone"
                                 width="0.85rem"
                             />
-                            {$t('feedback.send')}
+                            {$t("feedback.send")}
                         {/if}
                     </button>
                 </div>
