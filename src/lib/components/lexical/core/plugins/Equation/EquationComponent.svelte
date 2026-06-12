@@ -202,7 +202,7 @@
                     </span>
                     <span
                         class="font-sans text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
-                        >{$t('editor.equation.edit_title')}</span
+                        >{$t("editor.equation.edit_title")}</span
                     >
                 </span>
                 <span class="flex items-center gap-0.5">
@@ -212,15 +212,22 @@
                         title="{$t('common.save')} (Enter)"
                         class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-0.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 font-sans active:bg-brand-gold-600/90 transition-colors"
                     >
-                        {$t('common.save')}
+                        {$t("common.save")}
                     </button>
                     <!-- Cancel -->
                     <button
                         onclick={handleCancel}
                         title="{$t('common.cancel')} (Esc)"
-                        class="cursor-pointer text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900/60 dark:hover:text-[#c6d0f5] transition-colors ml-3 mr-1"
+                        aria-label={$t("common.cancel")}
+                        class="cursor-pointer flex h-5 w-5 items-center justify-center rounded-lg
+                               bg-brand-gold-200 dark:bg-[#414559]
+                               text-brand-gold-600 dark:text-[#c6d0f5]
+                               hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors ml-2"
                     >
-                        <Icon icon="solar:close-circle-bold" width="0.8rem" />
+                        <Icon
+                            icon="solar:close-circle-bold-duotone"
+                            width="0.8rem"
+                        />
                     </button>
                 </span>
             </span>
@@ -240,7 +247,7 @@
                     autocorrect="off"
                     dir="ltr"
                     rows="2"
-                    placeholder={$t('editor.equation.placeholder')}
+                    placeholder={$t("editor.equation.placeholder")}
                     class="w-full resize-none rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-2 font-mono text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                 ></textarea>
             </span>
@@ -257,7 +264,7 @@
                 {:else}
                     <span
                         class="text-[10px] text-brand-charcoal-300 dark:text-[#626880]"
-                        >{$t('editor.equation.preview_placeholder')}</span
+                        >{$t("editor.equation.preview_placeholder")}</span
                     >
                 {/if}
             </span>
@@ -280,7 +287,7 @@
         class:equation-selected={$isSelected}
         bind:this={element}
         ondblclick={handleDoubleClick}
-        title={$t('editor.dblclick_hint')}
+        title={$t("editor.dblclick_hint")}
     ></span>
 {:else}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -289,7 +296,7 @@
         class:equation-selected={$isSelected}
         bind:this={element}
         ondblclick={handleDoubleClick}
-        title={$t('editor.dblclick_hint')}
+        title={$t("editor.dblclick_hint")}
     ></div>
 {/if}
 
