@@ -9,6 +9,7 @@
     import {
         getTokenUsageStats,
         getTierLimits,
+        sessionCapFromDaily,
         type TokenUsageStats,
         type TierLimits,
     } from "$lib/stores/chat-storage";
@@ -213,7 +214,7 @@
                     </p>
                 {/if}
             {:else}
-                {#each [{ heading: $t("account.usage.section_standard"), sub: $t("account.usage.section_standard_sub"), rows: [{ label: $t("account.usage.daily"), used: usage.standard.daily.used, cap: limits.daily_tokens, reset: usage.standard.daily.resetInSeconds }, { label: $t("account.usage.weekly"), used: usage.standard.weekly.used, cap: limits.weekly_tokens, reset: usage.standard.weekly.resetInSeconds }, { label: $t("account.usage.monthly"), used: usage.standard.monthly.used, cap: limits.monthly_tokens, reset: usage.standard.monthly.resetInSeconds }] }, { heading: $t("account.usage.section_advanced"), sub: $t("account.usage.section_advanced_sub"), rows: [{ label: $t("account.usage.daily"), used: usage.advanced.daily.used, cap: limits.advanced_daily_tokens, reset: usage.advanced.daily.resetInSeconds }, { label: $t("account.usage.weekly"), used: usage.advanced.weekly.used, cap: limits.advanced_weekly_tokens, reset: usage.advanced.weekly.resetInSeconds }, { label: $t("account.usage.monthly"), used: usage.advanced.monthly.used, cap: limits.advanced_monthly_tokens, reset: usage.advanced.monthly.resetInSeconds }] }] as section (section.heading)}
+                {#each [{ heading: $t("account.usage.section_standard"), sub: $t("account.usage.section_standard_sub"), rows: [{ label: $t("account.usage.session"), used: usage.standard.session.used, cap: sessionCapFromDaily(limits.daily_tokens), reset: usage.standard.session.resetInSeconds }, { label: $t("account.usage.daily"), used: usage.standard.daily.used, cap: limits.daily_tokens, reset: usage.standard.daily.resetInSeconds }, { label: $t("account.usage.weekly"), used: usage.standard.weekly.used, cap: limits.weekly_tokens, reset: usage.standard.weekly.resetInSeconds }, { label: $t("account.usage.monthly"), used: usage.standard.monthly.used, cap: limits.monthly_tokens, reset: usage.standard.monthly.resetInSeconds }] }, { heading: $t("account.usage.section_advanced"), sub: $t("account.usage.section_advanced_sub"), rows: [{ label: $t("account.usage.session"), used: usage.advanced.session.used, cap: sessionCapFromDaily(limits.advanced_daily_tokens), reset: usage.advanced.session.resetInSeconds }, { label: $t("account.usage.daily"), used: usage.advanced.daily.used, cap: limits.advanced_daily_tokens, reset: usage.advanced.daily.resetInSeconds }, { label: $t("account.usage.weekly"), used: usage.advanced.weekly.used, cap: limits.advanced_weekly_tokens, reset: usage.advanced.weekly.resetInSeconds }, { label: $t("account.usage.monthly"), used: usage.advanced.monthly.used, cap: limits.advanced_monthly_tokens, reset: usage.advanced.monthly.resetInSeconds }] }] as section (section.heading)}
                     <div
                         class="flex flex-col gap-3 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] p-3"
                     >

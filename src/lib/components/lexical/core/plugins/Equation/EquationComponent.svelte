@@ -3,7 +3,7 @@
     // KaTeX's stylesheet + bundled fonts — required for the HTML renderer to
     // position accents (\bar, \hat, \overline, vectors) without overlap.
     import "katex/dist/katex.min.css";
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { getEditor } from "$lexical/core/composerContext.js";
     import { $isEquationNode as isEquationNode } from "./EquationNode";
     import { $getNodeByKey as getNodeByKey } from "lexical";
@@ -11,6 +11,8 @@
     import Icon from "@iconify/svelte";
     import { icons } from "$lib/data/toolbar/toolbar";
     import { t } from "$lib/i18n";
+    import { isPro } from "$lib/stores/auth.store";
+    import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
 
     interface Props {
         equation: string;
@@ -56,6 +58,63 @@
         }
     }
 
+    // ── AI selection toolbar (pro users) ─────────────────────────────────────
+    let aiSelection = $state<{
+        start: number;
+        end: number;
+        text: string;
+        x: number;
+        y: number;
+    } | null>(null);
+
+    // Anchor the floating toolbar above the LaTeX textarea whenever it holds
+    // a non-empty selection. Textareas don't expose per-character coordinates,
+    // so the editor card itself is the anchor.
+    function updateAiSelection() {
+        if (!$isPro || !textareaEl) {
+            aiSelection = null;
+            return;
+        }
+        const start = textareaEl.selectionStart ?? 0;
+        const end = textareaEl.selectionEnd ?? 0;
+        if (start === end) {
+            aiSelection = null;
+            return;
+        }
+        const text = textareaEl.value.slice(start, end);
+        if (!text.trim()) {
+            aiSelection = null;
+            return;
+        }
+        const rect = textareaEl.getBoundingClientRect();
+        const viewportWidth = window.innerWidth || 0;
+        aiSelection = {
+            start,
+            end,
+            text,
+            x: Math.max(
+                180,
+                Math.min(viewportWidth - 180, rect.left + rect.width / 2),
+            ),
+            y: Math.max(12, rect.top - 8),
+        };
+    }
+
+    function replaceAiSelection(replacement: string) {
+        if (!aiSelection) return;
+        const { start, end } = aiSelection;
+        editableValue =
+            editableValue.slice(0, start) +
+            replacement +
+            editableValue.slice(end);
+        aiSelection = null;
+        const caret = start + replacement.length;
+        tick().then(() => {
+            textareaEl?.focus();
+            textareaEl?.setSelectionRange(caret, caret);
+        });
+    }
+
     function handleDoubleClick() {
         isEditing = true;
         editableValue = equation;
@@ -69,11 +128,13 @@
             }
         });
         isEditing = false;
+        aiSelection = null;
     }
 
     function handleCancel() {
         isEditing = false;
         editableValue = equation;
+        aiSelection = null;
     }
 
     function handleKeydown(event: KeyboardEvent) {
@@ -83,6 +144,10 @@
             handleSave();
         } else if (event.key === "Escape") {
             event.preventDefault();
+            if (aiSelection) {
+                aiSelection = null;
+                return;
+            }
             handleCancel();
         }
     }
@@ -167,6 +232,10 @@
                     bind:this={textareaEl}
                     bind:value={editableValue}
                     onkeydown={handleKeydown}
+                    onselect={updateAiSelection}
+                    onkeyup={updateAiSelection}
+                    onmouseup={updateAiSelection}
+                    oninput={updateAiSelection}
                     autofocus
                     autocorrect="off"
                     dir="ltr"
@@ -194,6 +263,16 @@
             </span>
         </span>
     </span>
+    {#if $isPro && aiSelection}
+        <AiSelectionToolbar
+            selectedText={aiSelection.text}
+            x={aiSelection.x}
+            y={aiSelection.y}
+            contextPrompt={`This text is a selection from a LaTeX equation (rendered with KaTeX). Keep the result as valid LaTeX. Full equation source:\n\n${editableValue}`}
+            onReplace={replaceAiSelection}
+            onClose={() => (aiSelection = null)}
+        />
+    {/if}
 {:else if isInline}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <span

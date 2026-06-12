@@ -14,6 +14,8 @@
     import { t } from "$lib/i18n";
     import { get } from "svelte/store";
     import { icons } from "$lib/data/toolbar/toolbar";
+    import { isPro } from "$lib/stores/auth.store";
+    import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
 
     const editor = getEditor();
     const activeEditor = getActiveEditor();
@@ -33,16 +35,74 @@
     let isDisabled = $derived(equation === "");
     let error = $state("");
     let previewEl = $state<HTMLElement | undefined>(undefined);
+    let textareaEl = $state<HTMLTextAreaElement | null>(null);
+
+    // ── AI selection toolbar (pro users) ─────────────────────────────────────
+    let aiSelection = $state<{
+        start: number;
+        end: number;
+        text: string;
+        x: number;
+        y: number;
+    } | null>(null);
+
+    // Anchor the floating toolbar above the LaTeX textarea whenever it holds
+    // a non-empty selection. Textareas don't expose per-character coordinates,
+    // so the textarea itself is the anchor.
+    function updateAiSelection() {
+        if (!$isPro || !textareaEl) {
+            aiSelection = null;
+            return;
+        }
+        const start = textareaEl.selectionStart ?? 0;
+        const end = textareaEl.selectionEnd ?? 0;
+        if (start === end) {
+            aiSelection = null;
+            return;
+        }
+        const text = textareaEl.value.slice(start, end);
+        if (!text.trim()) {
+            aiSelection = null;
+            return;
+        }
+        const rect = textareaEl.getBoundingClientRect();
+        const viewportWidth = window.innerWidth || 0;
+        aiSelection = {
+            start,
+            end,
+            text,
+            x: Math.max(
+                180,
+                Math.min(viewportWidth - 180, rect.left + rect.width / 2),
+            ),
+            y: Math.max(12, rect.top - 8),
+        };
+    }
+
+    function replaceAiSelection(replacement: string) {
+        if (!aiSelection) return;
+        const { start, end } = aiSelection;
+        equation =
+            equation.slice(0, start) + replacement + equation.slice(end);
+        aiSelection = null;
+        const caret = start + replacement.length;
+        tick().then(() => {
+            textareaEl?.focus();
+            textareaEl?.setSelectionRange(caret, caret);
+        });
+    }
 
     export function open() {
         equation = "";
         mathStyle = "inline";
         error = "";
+        aiSelection = null;
         showModal = true;
     }
 
     async function close() {
         showModal = false;
+        aiSelection = null;
         await tick();
         getCommands().FocusEditor.execute(editor);
     }
@@ -99,6 +159,7 @@
 
     function startDrag(e: PointerEvent) {
         isDragging = true;
+        aiSelection = null;
         dragStartX = e.clientX;
         dragStartY = e.clientY;
         startX = x;
@@ -149,7 +210,13 @@
             zIndex = bringToFront();
         }}
         onkeydown={(e) => {
-            if (e.key === "Escape") close();
+            if (e.key === "Escape") {
+                if (aiSelection) {
+                    aiSelection = null;
+                    return;
+                }
+                close();
+            }
         }}
     >
         <!-- Header -->
@@ -175,8 +242,15 @@
                     id="equation-input"
                     placeholder={$t("dialog.equation_placeholder")}
                     rows="3"
+                    bind:this={textareaEl}
                     bind:value={equation}
-                    oninput={() => updatePreview()}
+                    oninput={() => {
+                        updatePreview();
+                        updateAiSelection();
+                    }}
+                    onselect={updateAiSelection}
+                    onkeyup={updateAiSelection}
+                    onmouseup={updateAiSelection}
                     data-test-id="equation-modal-input"
                     class="w-full resize-none rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                 ></textarea>
@@ -246,5 +320,16 @@
                 </button>
             </div>
         </div>
+
+        {#if $isPro && aiSelection}
+            <AiSelectionToolbar
+                selectedText={aiSelection.text}
+                x={aiSelection.x}
+                y={aiSelection.y}
+                contextPrompt={`This text is a selection from a LaTeX equation (rendered with KaTeX). Keep the result as valid LaTeX. Full equation source:\n\n${equation}`}
+                onReplace={replaceAiSelection}
+                onClose={() => (aiSelection = null)}
+            />
+        {/if}
     </div>
 {/if}

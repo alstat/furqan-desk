@@ -120,9 +120,13 @@
                 >
                     {#each [0, 1] as slotIdx (slotIdx)}
                         {@const slotId = dialogSlots[slotIdx]}
-                        {@const info = $availableReciters.find((r) => r.id === slotId)}
+                        {@const info = $availableReciters.find(
+                            (r) => r.id === slotId,
+                        )}
                         <button
-                            onclick={() => { focusedSlot = slotIdx as 0 | 1; }}
+                            onclick={() => {
+                                focusedSlot = slotIdx as 0 | 1;
+                            }}
                             class={`flex-1 cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors ${
                                 focusedSlot === slotIdx
                                     ? "bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm"
@@ -132,12 +136,13 @@
                             <span
                                 class="flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold
                                        {focusedSlot === slotIdx
-                                           ? 'bg-brand-gold-400 dark:bg-[#e5c890] text-white dark:text-[#292c3c]'
-                                           : 'bg-brand-gold-200 dark:bg-[#51576d] text-brand-gold-600 dark:text-[#838ba7]'}"
+                                    ? 'bg-brand-gold-400 dark:bg-[#e5c890] text-white dark:text-[#292c3c]'
+                                    : 'bg-brand-gold-200 dark:bg-[#51576d] text-brand-gold-600 dark:text-[#838ba7]'}"
                             >
                                 {slotIdx + 1}
                             </span>
-                            {info?.short_name ?? $t("reciter_select.slot" + (slotIdx + 1))}
+                            {info?.short_name ??
+                                $t("reciter_select.slot" + (slotIdx + 1))}
                         </button>
                     {/each}
                 </div>
@@ -147,9 +152,11 @@
             <div class="px-5 py-4 space-y-2 bg-brand-sand-50 dark:bg-[#232634]">
                 {#each $availableReciters as reciter (reciter.id)}
                     {@const slotIdx = slotIndexOf(reciter.id)}
-                    {@const isOtherSlot = slotIdx !== null && slotIdx !== focusedSlot}
+                    {@const isOtherSlot =
+                        slotIdx !== null && slotIdx !== focusedSlot}
                     {@const isSelected = slotIdx !== null}
-                    {@const isSameAsOther = dialogSlots[focusedSlot === 0 ? 1 : 0] === reciter.id}
+                    {@const isSameAsOther =
+                        dialogSlots[focusedSlot === 0 ? 1 : 0] === reciter.id}
                     <button
                         onclick={() => assignReciter(reciter)}
                         disabled={isSameAsOther}
@@ -162,15 +169,17 @@
                             }`}
                         aria-pressed={isSelected}
                         aria-label={isSelected
-                            ? $t("reciter_select.assigned_slot", { n: String((slotIdx ?? 0) + 1) })
+                            ? $t("reciter_select.assigned_slot", {
+                                  n: String((slotIdx ?? 0) + 1),
+                              })
                             : reciter.name}
                     >
                         <div class="flex items-center gap-2.5 min-w-0">
                             <div
                                 class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl
                                        {isSelected && !isOtherSlot
-                                           ? 'bg-brand-gold-200 dark:bg-[#51576d]'
-                                           : 'bg-brand-sand-100 dark:bg-[#414559]'}"
+                                    ? 'bg-brand-gold-200 dark:bg-[#51576d]'
+                                    : 'bg-brand-sand-100 dark:bg-[#414559]'}"
                             >
                                 <Icon
                                     icon="solar:microphone-bold-duotone"
@@ -184,8 +193,8 @@
                                 <p
                                     class="text-[11px] font-semibold truncate
                                            {isSelected && !isOtherSlot
-                                               ? 'text-brand-charcoal-900 dark:text-[#c6d0f5]'
-                                               : 'text-brand-charcoal-500 dark:text-[#a5adce]'}"
+                                        ? 'text-brand-charcoal-900 dark:text-[#c6d0f5]'
+                                        : 'text-brand-charcoal-500 dark:text-[#a5adce]'}"
                                 >
                                     {reciter.name}
                                 </p>
@@ -204,8 +213,8 @@
                             <span
                                 class="shrink-0 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold
                                        {isOtherSlot
-                                           ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-300 dark:text-[#626880]'
-                                           : 'bg-brand-gold-400 dark:bg-[#e5c890] text-white dark:text-[#292c3c]'}"
+                                    ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-300 dark:text-[#626880]'
+                                    : 'bg-brand-gold-400 dark:bg-[#e5c890] text-white dark:text-[#292c3c]'}"
                                 aria-hidden="true"
                             >
                                 {(slotIdx ?? 0) + 1}

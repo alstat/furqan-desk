@@ -1,16 +1,75 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { fly } from "svelte/transition";
+    import { tick } from "svelte";
     import { addHighlight } from "$lib/functions/bookmarks";
     import { pendingHighlight } from "$lib/stores/bookmarks.store";
     import { surahLabels } from "$lib/stores/quran.svelte";
     import { t } from "$lib/i18n";
     import { get } from "svelte/store";
     import { formatMorphNote } from "$lib/functions/utils/morphNote";
+    import { isPro } from "$lib/stores/auth.store";
+    import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
 
     let noteInput = $state("");
     let saving = $state(false);
     let saveError = $state("");
+    let textareaEl = $state<HTMLTextAreaElement | null>(null);
+
+    // ── AI selection toolbar (pro users) ─────────────────────────────────────
+    let aiSelection = $state<{
+        start: number;
+        end: number;
+        text: string;
+        x: number;
+        y: number;
+    } | null>(null);
+
+    // Anchor the floating toolbar above the note textarea whenever it holds
+    // a non-empty selection. Textareas don't expose per-character coordinates,
+    // so the textarea itself is the anchor.
+    function updateAiSelection() {
+        if (!$isPro || !textareaEl) {
+            aiSelection = null;
+            return;
+        }
+        const start = textareaEl.selectionStart ?? 0;
+        const end = textareaEl.selectionEnd ?? 0;
+        if (start === end) {
+            aiSelection = null;
+            return;
+        }
+        const text = textareaEl.value.slice(start, end);
+        if (!text.trim()) {
+            aiSelection = null;
+            return;
+        }
+        const rect = textareaEl.getBoundingClientRect();
+        const viewportWidth = window.innerWidth || 0;
+        aiSelection = {
+            start,
+            end,
+            text,
+            x: Math.max(
+                180,
+                Math.min(viewportWidth - 180, rect.left + rect.width / 2),
+            ),
+            y: Math.max(12, rect.top - 8),
+        };
+    }
+
+    function replaceAiSelection(replacement: string) {
+        if (!aiSelection) return;
+        const { start, end } = aiSelection;
+        noteInput =
+            noteInput.slice(0, start) + replacement + noteInput.slice(end);
+        aiSelection = null;
+        const caret = start + replacement.length;
+        tick().then(() => {
+            textareaEl?.focus();
+            textareaEl?.setSelectionRange(caret, caret);
+        });
+    }
 
     $effect(() => {
         if ($pendingHighlight) {
@@ -18,6 +77,7 @@
                 ? formatMorphNote($pendingHighlight.word, get(t))
                 : "";
             saveError = "";
+            aiSelection = null;
         }
     });
 
@@ -62,7 +122,13 @@
             if (e.target === e.currentTarget) handleCancel();
         }}
         onkeydown={(e) => {
-            if (e.key === "Escape") handleCancel();
+            if (e.key === "Escape") {
+                if (aiSelection) {
+                    aiSelection = null;
+                    return;
+                }
+                handleCancel();
+            }
         }}
     >
         <!-- Card -->
@@ -142,7 +208,12 @@
                 <!-- Notes textarea -->
                 <textarea
                     placeholder={$t("highlight.note_placeholder")}
+                    bind:this={textareaEl}
                     bind:value={noteInput}
+                    onselect={updateAiSelection}
+                    onkeyup={updateAiSelection}
+                    onmouseup={updateAiSelection}
+                    oninput={updateAiSelection}
                     rows="3"
                     class="mb-3 w-full resize-none rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30 hover:border-brand-sand-400 dark:hover:border-[#51576d] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c] transition-all"
                 ></textarea>
@@ -180,5 +251,16 @@
                 </div>
             </div>
         </div>
+
+        {#if $isPro && aiSelection}
+            <AiSelectionToolbar
+                selectedText={aiSelection.text}
+                x={aiSelection.x}
+                y={aiSelection.y}
+                contextPrompt={`This text is a selection from a personal note attached to a highlighted Quran passage (${surahName($pendingHighlight.surah)}, Ayah ${$pendingHighlight.ayah}). Highlighted Arabic text:\n\n${$pendingHighlight.text}\n\nFull note:\n\n${noteInput}`}
+                onReplace={replaceAiSelection}
+                onClose={() => (aiSelection = null)}
+            />
+        {/if}
     </div>
 {/if}
