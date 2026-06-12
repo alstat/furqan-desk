@@ -38,7 +38,12 @@
         autoEdit?: boolean;
     }
 
-    let { code = "", language = "javascript", nodeKey = "", autoEdit = false }: Props = $props();
+    let {
+        code = "",
+        language = "javascript",
+        nodeKey = "",
+        autoEdit = false,
+    }: Props = $props();
 
     const editor = getEditor();
 
@@ -153,7 +158,7 @@
                     </span>
                     <span
                         class="font-sans text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
-                        >{$t('editor.code.edit_title')}</span
+                        >{$t("editor.code.edit_title")}</span
                     >
                 </span>
                 <span class="flex items-center gap-0.5">
@@ -180,18 +185,25 @@
                     <!-- Save -->
                     <button
                         onclick={handleSave}
-                        title={$t('common.save')}
+                        title={$t("common.save")}
                         class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 font-sans active:bg-brand-gold-600/90 transition-colors"
                     >
-                        {$t('common.save')}
+                        {$t("common.save")}
                     </button>
                     <!-- Cancel -->
                     <button
                         onclick={handleCancel}
-                        title={$t('common.cancel')}
-                        class="cursor-pointer text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900/60 dark:hover:text-[#c6d0f5] transition-colors ml-3 mr-1"
+                        title={$t("common.cancel")}
+                        aria-label={$t("common.cancel")}
+                        class="cursor-pointer flex h-5 w-5 items-center justify-center rounded-lg
+                               bg-brand-gold-200 dark:bg-[#414559]
+                               text-brand-gold-600 dark:text-[#c6d0f5]
+                               hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors ml-2"
                     >
-                        <Icon icon="solar:close-circle-bold" width="0.8rem" />
+                        <Icon
+                            icon="solar:close-circle-bold-duotone"
+                            width="0.8rem"
+                        />
                     </button>
                 </span>
             </span>
@@ -206,7 +218,7 @@
                     autocorrect="off"
                     dir="ltr"
                     rows="10"
-                    placeholder={$t('dialog.insert_code.placeholder')}
+                    placeholder={$t("dialog.insert_code.placeholder")}
                     class="w-full resize-y rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-2 font-mono text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                 ></textarea>
             </span>
@@ -217,7 +229,6 @@
     <pre
         dir="ltr"
         class="language-{language} cursor-pointer"
-        title={$t('editor.dblclick_hint')}
-        ondblclick={handleDoubleClick}
-    ><code bind:this={codeEl}></code></pre>
+        title={$t("editor.dblclick_hint")}
+        ondblclick={handleDoubleClick}><code bind:this={codeEl}></code></pre>
 {/if}
