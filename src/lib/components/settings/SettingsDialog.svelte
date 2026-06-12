@@ -87,7 +87,12 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     });
 </script>
 
-<Dialog {open} title="Settings" {onClose}>
+<Dialog
+    {open}
+    title="Settings"
+    {onClose}
+    maxWidth="max-w-md md:max-w-xl lg:max-w-2xl xl:max-w-3xl"
+>
     {#snippet children()}
         <div class="space-y-1">
 
