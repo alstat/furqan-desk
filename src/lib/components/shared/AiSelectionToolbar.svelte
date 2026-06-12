@@ -3,6 +3,7 @@
     import {
         runAiTextTransform,
         type AiTextAction,
+        type AiTextTone,
     } from "$lib/stores/ai-text-transform.store";
     import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
     import { tick } from "svelte";
@@ -37,6 +38,7 @@
     let promptInput: HTMLInputElement | null = $state(null);
     let askPromptInput: HTMLInputElement | null = $state(null);
     let busyAction = $state<AiTextAction | null>(null);
+    let toneMenuAction = $state<Exclude<AiTextAction, "prompt"> | null>(null);
     let error = $state("");
 
     const actions: Array<{
@@ -61,7 +63,19 @@
         },
     ];
 
-    async function run(action: AiTextAction, customPrompt?: string) {
+    const tones: Array<{ id: AiTextTone; labelKey: string }> = [
+        { id: "academic", labelKey: "ai_selection.tone_academic" },
+        { id: "casual", labelKey: "ai_selection.tone_casual" },
+        { id: "persuasive", labelKey: "ai_selection.tone_persuasive" },
+        { id: "bold", labelKey: "ai_selection.tone_bold" },
+        { id: "friendly", labelKey: "ai_selection.tone_friendly" },
+    ];
+
+    async function run(
+        action: AiTextAction,
+        customPrompt?: string,
+        tone?: AiTextTone,
+    ) {
         if (busyAction) return;
         busyAction = action;
         error = "";
@@ -71,6 +85,7 @@
                 selectedText,
                 customPrompt,
                 contextPrompt,
+                tone,
             });
             onReplace?.(replacement);
             onClose?.();
@@ -79,6 +94,26 @@
         } finally {
             busyAction = null;
         }
+    }
+
+    function handleActionClick(id: Exclude<AiTextAction, "prompt">) {
+        if (busyAction) return;
+        if (toneMenuAction === id) {
+            // Second click on the same action: run it plain, as before.
+            toneMenuAction = null;
+            run(id);
+            return;
+        }
+        toneMenuAction = id;
+        promptOpen = false;
+        askPromptOpen = false;
+    }
+
+    function runWithTone(tone: AiTextTone) {
+        if (!toneMenuAction) return;
+        const action = toneMenuAction;
+        toneMenuAction = null;
+        run(action, undefined, tone);
     }
 
     function handlePointerDown(e: PointerEvent) {
@@ -107,7 +142,10 @@
 
     async function togglePrompt() {
         promptOpen = !promptOpen;
-        if (promptOpen) askPromptOpen = false;
+        if (promptOpen) {
+            askPromptOpen = false;
+            toneMenuAction = null;
+        }
         if (!promptOpen) return;
 
         await tick();
@@ -116,7 +154,10 @@
 
     async function toggleAskPrompt() {
         askPromptOpen = !askPromptOpen;
-        if (askPromptOpen) promptOpen = false;
+        if (askPromptOpen) {
+            promptOpen = false;
+            toneMenuAction = null;
+        }
         if (!askPromptOpen) return;
 
         await tick();
@@ -127,7 +168,7 @@
 <div
     data-ai-selection-toolbar
     role="presentation"
-    class="fixed z-9999 flex flex-col items-center gap-2"
+    class="fixed z-9999 flex flex-col items-center gap-2 font-sans"
     style="left:{x}px; top:{y}px; transform: translate(-50%, -100%);"
     onpointerdown={handlePointerDown}
 >
@@ -135,9 +176,12 @@
         {#if !askOnly}
             {#each actions as action (action.id)}
                 <button
-                    class="group relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-brand-gold-200 p-0 shadow-md transition-colors text-brand-gold-600 hover:bg-brand-gold-400 active:bg-brand-gold-500 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:bg-[#363a4f] dark:text-brand-gold-400 dark:hover:bg-[#4a4e5c] dark:active:bg-[#414559] disabled:cursor-wait disabled:opacity-50"
+                    class="group relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full p-0 shadow-md transition-colors text-brand-gold-600 hover:bg-brand-gold-400 active:bg-brand-gold-500 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:text-brand-gold-400 dark:hover:bg-[#4a4e5c] dark:active:bg-[#414559] disabled:cursor-wait disabled:opacity-50 {toneMenuAction ===
+                    action.id
+                        ? 'bg-brand-gold-400 dark:bg-[#4a4e5c]'
+                        : 'bg-brand-gold-200 dark:bg-[#363a4f]'}"
                     disabled={busyAction !== null}
-                    onclick={() => run(action.id)}
+                    onclick={() => handleActionClick(action.id)}
                     aria-label={$t(action.labelKey)}
                 >
                     <Icon
@@ -188,6 +232,22 @@
             </span>
         </button>
     </div>
+
+    {#if toneMenuAction && !askOnly}
+        <div
+            class="flex items-center gap-1 rounded-3xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+        >
+            {#each tones as tone (tone.id)}
+                <button
+                    class="cursor-pointer whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium text-brand-charcoal-700 transition-colors hover:bg-brand-gold-200 hover:text-brand-gold-700 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:text-[#c6d0f5] dark:hover:bg-[#4a4e5c] dark:hover:text-brand-gold-400 disabled:cursor-wait disabled:opacity-50"
+                    disabled={busyAction !== null}
+                    onclick={() => runWithTone(tone.id)}
+                >
+                    {$t(tone.labelKey)}
+                </button>
+            {/each}
+        </div>
+    {/if}
 
     {#if promptOpen}
         <div

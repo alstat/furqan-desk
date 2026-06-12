@@ -305,7 +305,7 @@
     >
         <!-- Header -->
         <div
-            class="flex items-center justify-between px-4 py-1.75 shrink-0
+            class="flex items-center justify-between px-4 py-1.5 shrink-0
                border-b border-brand-gold-200 dark:border-[#414559]
                bg-brand-gold-100 dark:bg-[#292c3c]
                select-none rounded-t-3xl
@@ -320,7 +320,7 @@
                     class="text-brand-gold-500"
                 />
                 <span
-                    class="text-[11px] py-2 font-semibold uppercase tracking-wide
+                    class="text-[11px] py-1 font-semibold uppercase tracking-wide
 			             text-brand-charcoal-500 dark:text-[#838ba7]"
                 >
                     {$t("julia.plots")}
@@ -429,7 +429,9 @@
                     {:else}
                         <img
                             src="data:image/png;base64,{currentPlot.data}"
-                            alt={$t("julia.plot_alt", { index: currentIndex + 1 })}
+                            alt={$t("julia.plot_alt", {
+                                index: currentIndex + 1,
+                            })}
                             class="max-w-full max-h-full object-contain select-none pointer-events-none"
                             style="transform: scale({imgScale}) translate({imgTranslateX /
                                 imgScale}px, {imgTranslateY / imgScale}px);
@@ -443,56 +445,59 @@
                     <!-- Zoom controls (top-right overlay) -->
                     <div class="absolute top-3 right-3 flex flex-col gap-1">
                         {#if !isPlotly}
-                        <button
-                            onclick={() =>
-                                (imgScale = Math.min(
-                                    MAX_SCALE,
-                                    imgScale * 1.3,
-                                ))}
-                            title={$t("manuscript.zoom_in")}
-                            class="cursor-pointer p-1.5 rounded-full bg-white/90 dark:bg-[#292c3c]/90
+                            <button
+                                onclick={() =>
+                                    (imgScale = Math.min(
+                                        MAX_SCALE,
+                                        imgScale * 1.3,
+                                    ))}
+                                title={$t("manuscript.zoom_in")}
+                                class="cursor-pointer p-1.5 rounded-full bg-white/90 dark:bg-[#292c3c]/90
                                    border border-slate-200 dark:border-[#414559]
                                    text-brand-charcoal-400 dark:text-[#8caaee]
                                    hover:bg-white dark:hover:bg-[#292c3c] transition-colors shadow-sm"
-                        >
-                            <Icon
-                                icon="solar:add-circle-bold-duotone"
-                                width="0.85rem"
-                            />
-                        </button>
-                        <button
-                            onclick={() => {
-                                imgScale = Math.max(MIN_SCALE, imgScale / 1.3);
-                                if (imgScale <= MIN_SCALE) resetZoom();
-                            }}
-                            disabled={imgScale <= MIN_SCALE}
-                            title={$t("manuscript.zoom_out")}
-                            class="cursor-pointer p-1.5 rounded-full bg-white/90 dark:bg-[#292c3c]/90
+                            >
+                                <Icon
+                                    icon="solar:add-circle-bold-duotone"
+                                    width="0.85rem"
+                                />
+                            </button>
+                            <button
+                                onclick={() => {
+                                    imgScale = Math.max(
+                                        MIN_SCALE,
+                                        imgScale / 1.3,
+                                    );
+                                    if (imgScale <= MIN_SCALE) resetZoom();
+                                }}
+                                disabled={imgScale <= MIN_SCALE}
+                                title={$t("manuscript.zoom_out")}
+                                class="cursor-pointer p-1.5 rounded-full bg-white/90 dark:bg-[#292c3c]/90
                                    border border-slate-200 dark:border-[#414559]
                                    text-brand-charcoal-400 dark:text-[#8caaee]
                                    hover:bg-white dark:hover:bg-[#292c3c] transition-colors shadow-sm
                                    disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                            <Icon
-                                icon="solar:minus-circle-bold-duotone"
-                                width="0.85rem"
-                            />
-                        </button>
-                        {#if imgScale > 1}
-                            <button
-                                onclick={resetZoom}
-                                title={$t("manuscript.zoom_reset")}
-                                class="cursor-pointer p-1.5 rounded-full bg-white/90 dark:bg-[#292c3c]/90
-                                       border border-slate-200 dark:border-[#414559]
-                                       text-brand-charcoal-400 dark:text-[#8caaee]
-                                       hover:bg-white dark:hover:bg-[#292c3c] transition-colors shadow-sm"
                             >
                                 <Icon
-                                    icon="solar:minimize-square-bold-duotone"
+                                    icon="solar:minus-circle-bold-duotone"
                                     width="0.85rem"
                                 />
                             </button>
-                        {/if}
+                            {#if imgScale > 1}
+                                <button
+                                    onclick={resetZoom}
+                                    title={$t("manuscript.zoom_reset")}
+                                    class="cursor-pointer p-1.5 rounded-full bg-white/90 dark:bg-[#292c3c]/90
+                                       border border-slate-200 dark:border-[#414559]
+                                       text-brand-charcoal-400 dark:text-[#8caaee]
+                                       hover:bg-white dark:hover:bg-[#292c3c] transition-colors shadow-sm"
+                                >
+                                    <Icon
+                                        icon="solar:minimize-square-bold-duotone"
+                                        width="0.85rem"
+                                    />
+                                </button>
+                            {/if}
                         {/if}
                         <button
                             onclick={() => (zoomed = true)}
@@ -545,7 +550,9 @@
                                     Math.max(0, currentIndex - 3) + dotOffset}
                                 <button
                                     onclick={() => (currentIndex = dotIdx)}
-                                    aria-label={$t("julia.go_to_plot", { index: dotIdx + 1 })}
+                                    aria-label={$t("julia.go_to_plot", {
+                                        index: dotIdx + 1,
+                                    })}
                                     class="cursor-pointer w-1.5 h-1.5 rounded-full transition-colors
 								       {dotIdx === currentIndex
                                         ? 'bg-brand-gold-500 dark:bg-[#e5c890]'
