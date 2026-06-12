@@ -211,11 +211,18 @@
             >
                 <TypstPreview embedded={true} />
             </div>
-        {:else}
-            <div class="flex-1 min-w-0 h-full">
-                <Parchment />
-            </div>
         {/if}
+        <!-- Parchment stays mounted (hidden) in the alternate modes so the
+             recitation audio and its floating mini player keep running. -->
+        <div
+            class="flex-1 min-w-0 h-full {activeCrossGroup ||
+            juliaReplMode ||
+            typstMode
+                ? 'hidden'
+                : ''}"
+        >
+            <Parchment />
+        </div>
         {#if $zenMode && $isSidebar}
             <div
                 class="self-stretch flex-shrink-0 w-px relative"
