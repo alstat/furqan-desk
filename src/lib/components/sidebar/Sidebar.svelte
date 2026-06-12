@@ -28,6 +28,7 @@
     import Icon from "@iconify/svelte";
     import type { EditorTab } from "$lib/stores/tabs.store";
     import { CAN_UNDO_COMMAND, CAN_REDO_COMMAND } from "lexical";
+    import type { LexicalEditor } from "lexical";
     import type { HistoryState } from "@lexical/history";
 
     // Bootstrap: ensure at least one tab exists
@@ -177,6 +178,7 @@
     const emptyLexicalState =
         '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"type":"root","version":1}}';
     let lastRestoredForTabId: string | null = null;
+    let lastRestoredEditor: LexicalEditor | null = null;
     $effect(() => {
         const editor = $lexicalEditorInstance;
         const tab = $activeTab;
@@ -184,12 +186,19 @@
         if (!editor) {
             // Editor unmounted; reset so the next mount triggers restore
             lastRestoredForTabId = null;
+            lastRestoredEditor = null;
             return;
         }
         if (!tab || tab.type !== "lexical") return;
-        if (lastRestoredForTabId === tab.id) return; // already restored for this tab
+        // Already restored for this tab AND this editor instance. The editor
+        // is keyed too because a cross-group create/remove remounts the
+        // RichTextEditor without a tab switch — the new (empty) instance must
+        // be restored even though the tab id is unchanged.
+        if (lastRestoredForTabId === tab.id && lastRestoredEditor === editor)
+            return;
 
         lastRestoredForTabId = tab.id;
+        lastRestoredEditor = editor;
 
         if (tab.content) {
             try {
@@ -233,6 +242,53 @@
     let juliaMode = $derived(
         $hideSurahPage() && $activeTab?.type === "julia" && !activeCrossGroup,
     );
+
+    // Entering/leaving a cross group swaps the editor markup branch, which
+    // destroys and remounts the RichTextEditor WITHOUT a tab switch — so
+    // Effect A never fires and any unsaved Lexical state would be lost with
+    // the old editor instance. Flush it into its tab before the DOM swap,
+    // while the old editor is still alive ($effect.pre).
+    let prevCrossKey: string | null | undefined = undefined;
+    let prevCrossLexicalTabId: string | null = null;
+    $effect.pre(() => {
+        const cg = activeCrossGroup;
+        const key = cg?.id ?? null;
+        if (prevCrossKey !== undefined && key !== prevCrossKey) {
+            const editor = get(lexicalEditorInstance);
+            // Tab the live editor was displaying before this change: the old
+            // group's lexical member, or the active lexical tab if ungrouped.
+            const displayedId =
+                prevCrossKey !== null
+                    ? prevCrossLexicalTabId
+                    : (get(tabs).find((t) => t.id === get(activeTabId))
+                            ?.type === "lexical"
+                        ? get(activeTabId)
+                        : null);
+            if (editor && displayedId) {
+                const json = JSON.stringify(editor.getEditorState().toJSON());
+                tabs.update((ts) =>
+                    ts.map((t) =>
+                        t.id === displayedId ? { ...t, content: json } : t,
+                    ),
+                );
+                const hs = get(lexicalHistoryState);
+                if (hs) {
+                    lexicalTabHistories.set(displayedId, {
+                        undoStack: [...hs.undoStack],
+                        redoStack: [...hs.redoStack],
+                    });
+                }
+            }
+        }
+        prevCrossKey = key;
+        prevCrossLexicalTabId = cg
+            ? (get(tabs).find(
+                  (t) =>
+                      (t.id === cg.hostTabId || t.id === cg.partnerTabId) &&
+                      t.type === "lexical",
+              )?.id ?? null)
+            : null;
+    });
 
     // When host=Lexical and the partner tab is active, load and auto-save Lexical host content
     const emptyLexicalStateCross =
