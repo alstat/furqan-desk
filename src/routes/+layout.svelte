@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import '$lib/icons';
-	import { appDarkMode, zenMode } from '$lib/stores/editor.store';
+	import { appDarkMode, zenMode, uiFontScale } from '$lib/stores/editor.store';
 	import OpenTabFileWatcher from '$lib/components/shared/OpenTabFileWatcher.svelte';
 	import JuliaInstallPrompt from '$lib/components/shared/JuliaInstallPrompt.svelte';
 	import { onMount } from 'svelte';
@@ -9,6 +9,7 @@
 	import { tabs } from '$lib/stores/tabs.store';
 	import { t as i18n } from '$lib/i18n';
 	import { supabase, isSupabaseConfigured } from '$lib/supabase';
+	import { openFile, openFolder, saveFile, saveAs } from '$lib/actions/fileActions';
 
 	let { children } = $props();
 
@@ -50,11 +51,31 @@
 		}
 	});
 
+	// Accessibility: scale the whole interface by adjusting the root font-size.
+	// A percentage on :root is relative to the browser default (16px), so every
+	// rem-based size in the UI scales proportionally. vh-based layout (h-screen)
+	// is unaffected, so the app frame stays put while its contents resize.
+	$effect(() => {
+		document.documentElement.style.fontSize = `${$uiFontScale * 100}%`;
+	});
+
 	onMount(async () => {
 		if (typeof window === 'undefined') return;
 		try {
 			const { getCurrentWindow } = await import('@tauri-apps/api/window');
 			const { ask } = await import('@tauri-apps/plugin-dialog');
+
+			// Native menu (File > Open File / Open Folder / Save / Save As) emits
+			// these events; run the same actions as the action-bar buttons.
+			try {
+				const { listen } = await import('@tauri-apps/api/event');
+				await listen('menu-open-file', () => void openFile());
+				await listen('menu-open-folder', () => void openFolder());
+				await listen('menu-save', () => void saveFile());
+				await listen('menu-save-as', () => void saveAs());
+			} catch (e) {
+				console.error('menu listener setup failed', e);
+			}
 
 			// OAuth deep-link handling: catch both a URL that cold-started the
 			// app and any delivered while it's already running.

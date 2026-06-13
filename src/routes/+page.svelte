@@ -35,12 +35,23 @@
     } from "$lib/stores/quran.svelte";
     import type { SurahLabel } from "$lib/stores/quran.svelte";
     import { activeTab, activeTabId, tabs } from "$lib/stores/tabs.store";
-    import { crossGroups } from "$lib/stores/julia-terminal.store";
-    import type { CrossGroup } from "$lib/stores/julia-terminal.store";
+    import {
+        crossGroups,
+        juliaGroups,
+        typstGroups,
+    } from "$lib/stores/julia-terminal.store";
+    import type {
+        CrossGroup,
+        JuliaGroup,
+        TypstGroup,
+    } from "$lib/stores/julia-terminal.store";
     import {
         lexicalEditorInstance,
         singlePageMargin,
+        juliaRightSplitRatio,
+        typstRightSplitRatio,
     } from "$lib/stores/editor.store";
+    import StackSplitDivider from "$lib/components/shared/StackSplitDivider.svelte";
     import { get } from "svelte/store";
     import { checkFirstRun } from "$lib/stores/tour.store";
     import { zenMode, appDarkMode } from "$lib/stores/editor.store";
@@ -89,8 +100,34 @@
     let juliaReplMode = $derived(
         $hideSurahPage() && $activeTab?.type === "julia" && !activeCrossGroup,
     );
+
+    // Julia group whose member is the active tab — drives the third editor that
+    // stacks above the REPL in the right column (the quad split layout).
+    let activeJuliaGroup = $derived(
+        juliaReplMode
+            ? ($juliaGroups.find(
+                  (g: JuliaGroup) =>
+                      g.tabA === $activeTabId ||
+                      g.tabB === $activeTabId ||
+                      g.tabC === $activeTabId,
+              ) ?? null)
+            : null,
+    );
     let typstMode = $derived(
         $hideSurahPage() && $activeTab?.type === "typst" && !activeCrossGroup,
+    );
+
+    // Typst group whose member is the active tab — drives the third editor that
+    // stacks above the shared preview in the right column.
+    let activeTypstGroup = $derived(
+        typstMode
+            ? ($typstGroups.find(
+                  (g: TypstGroup) =>
+                      g.tabA === $activeTabId ||
+                      g.tabB === $activeTabId ||
+                      g.tabC === $activeTabId,
+              ) ?? null)
+            : null,
     );
 
     // Lexical state management for Julia+Lexical cross-type mode
@@ -181,7 +218,9 @@
                 {/if}
             </div>
         {:else if juliaReplMode}
-            <!-- Julia REPL panel on the right (or left in RTL layout) — shared by all tabs -->
+            <!-- Julia REPL panel on the right (or left in RTL layout) — shared by all tabs.
+                 When the active Julia group has a third file, it stacks above the REPL,
+                 separated by a draggable horizontal divider (quad split layout). -->
             <div
                 class="relative z-1 flex flex-col items-center
                         flex-1 min-w-0 rounded-r-md
@@ -189,6 +228,17 @@
                     ? ''
                     : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]'}"
             >
+                {#if activeJuliaGroup?.tabC}
+                    <div
+                        class="w-full min-h-0 overflow-visible px-1"
+                        style="flex: 0 0 {$juliaRightSplitRatio}%"
+                    >
+                        <JuliaEditor tabId={activeJuliaGroup.tabC} hideRepl={true} />
+                    </div>
+                    <StackSplitDivider
+                        setRatio={(p) => juliaRightSplitRatio.set(p)}
+                    />
+                {/if}
                 <div
                     class=" mb-5
                             w-full flex-1 flex flex-col min-h-0 pt-1 pb-2 px-3 overflow-hidden"
@@ -206,10 +256,35 @@
                 </div>
             </div>
         {:else if typstMode}
+            <!-- Typst preview on the right. When the active Typst group has a third
+                 file, it stacks above the preview (resizable). The preview always
+                 reflects whichever Typst editor is the active tab. -->
             <div
-                class="flex-1 min-w-0 h-full flex flex-col sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"
+                class="flex-1 min-w-0 h-full flex flex-col {$zenMode
+                    ? ''
+                    : 'sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30'}"
             >
-                <TypstPreview embedded={true} />
+                {#if activeTypstGroup?.tabC}
+                    <div
+                        class="w-full min-h-0 overflow-visible px-1 {$zenMode
+                            ? ''
+                            : 'border-t border-x border-stone-200 dark:border-[#414559] rounded-tr-md'}"
+                        style="flex: 0 0 {$typstRightSplitRatio}%"
+                    >
+                        <TypstEditor tabId={activeTypstGroup.tabC} />
+                    </div>
+                    <StackSplitDivider
+                        setRatio={(p) => typstRightSplitRatio.set(p)}
+                    />
+                    <!-- flex flex-col so TypstPreview's flex-1 root gets a bounded
+                         height and its internal scroller works. The top border is
+                         dropped since the divider already separates it from tabC. -->
+                    <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
+                        <TypstPreview embedded={true} noTopBorder={true} />
+                    </div>
+                {:else}
+                    <TypstPreview embedded={true} />
+                {/if}
             </div>
         {/if}
         <!-- Parchment stays mounted (hidden) in the alternate modes so the

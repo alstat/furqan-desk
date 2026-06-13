@@ -19,7 +19,12 @@
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
     import { t } from "$lib/i18n";
 
-    let { embedded = false }: { embedded?: boolean } = $props();
+    // noTopBorder: drop the preview's top border when it sits below another pane
+    // (e.g. the third editor in a three-file Typst split), so the seam isn't doubled.
+    let {
+        embedded = false,
+        noTopBorder = false,
+    }: { embedded?: boolean; noTopBorder?: boolean } = $props();
     let previewScrollEl: HTMLDivElement | null = $state(null);
     let currentPreviewPage = $state(1);
 
@@ -92,8 +97,7 @@
             if (previewScrollEl && key) {
                 const target = PREVIEW_SCROLL_BY_KEY.get(key) ?? 0;
                 const maxScroll =
-                    previewScrollEl.scrollHeight -
-                    previewScrollEl.clientHeight;
+                    previewScrollEl.scrollHeight - previewScrollEl.clientHeight;
                 if (maxScroll > 0) {
                     previewScrollEl.scrollTop = Math.min(target, maxScroll);
                 }
@@ -122,7 +126,7 @@
 <!-- Outer: matches Parchment's outer wrapper exactly; stripped when embedded in a split panel -->
 <div
     class={embedded
-        ? "flex-1 flex flex-col min-h-0 w-full"
+        ? "relative flex-1 flex flex-col min-h-0 w-full"
         : ($zenMode
               ? ""
               : "sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]") +
@@ -132,7 +136,12 @@
     <div
         class="{$zenMode
             ? ''
-            : 'border border-stone-200 dark:border-[#414559]'} default-scroll w-full flex-1 overflow-y-auto rounded-r-md flex flex-col min-h-0"
+            : 'border border-stone-200 dark:border-[#414559]' +
+              (noTopBorder
+                  ? ' border-t-0'
+                  : '')} default-scroll w-full flex-1 overflow-y-auto {noTopBorder
+            ? 'rounded-br-md'
+            : 'rounded-r-md'} flex flex-col min-h-0"
     >
         <!-- Toolbar inside the border -->
         <div
@@ -145,9 +154,9 @@
                 class={$zenMode
                     ? actionBtnStyle +
                       ($zenPeek
-                          ? " absolute top-1 left-11/12 opacity-50 transition-opacity duration-200"
-                          : " absolute top-1 left-11/12 opacity-0 hover:opacity-100 transition-opacity duration-200")
-                    : actionBtnStyle + " absolute top-1 left-11/12"}
+                          ? " absolute top-1 left-11/12 z-30 opacity-50 transition-opacity duration-200"
+                          : " absolute top-1 left-11/12 z-30 opacity-0 hover:opacity-100 transition-opacity duration-200")
+                    : actionBtnStyle + " absolute top-1 left-11/12 z-30"}
             >
                 <Icon icon="ph:file-pdf-bold" />
             </button>
@@ -166,7 +175,8 @@
                         {$t("typst.compiling")}
                     </span>
                 {:else if $typstCompileError}
-                    <span class="text-red-500">{$t("typst.compile_error")}</span>
+                    <span class="text-red-500">{$t("typst.compile_error")}</span
+                    >
                 {:else}
                     {$t("typst.preview")}
                 {/if}
@@ -178,7 +188,9 @@
             {#if $typstSvgPages.length > 0}
                 <div
                     class="pointer-events-none absolute right-8 top-2 z-20 rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none text-brand-charcoal-300 backdrop-blur-md"
-                    aria-label={$t("typst.page_of").replace("{current}", String(currentPreviewPage)).replace("{total}", String($typstSvgPages.length))}
+                    aria-label={$t("typst.page_of")
+                        .replace("{current}", String(currentPreviewPage))
+                        .replace("{total}", String($typstSvgPages.length))}
                 >
                     {currentPreviewPage} / {$typstSvgPages.length}
                 </div>

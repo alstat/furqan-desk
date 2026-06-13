@@ -57,6 +57,14 @@ export const en: Record<string, string> = {
   "settings.appearance.typst_preview_dark.desc":
     "When app dark mode is on, also darken the Typst preview pages.",
 
+  "settings.accessibility": "Accessibility",
+  "settings.accessibility.ui_font": "Interface font size",
+  "settings.accessibility.ui_font.desc":
+    "Scale the app's interface text up or down for readability.",
+  "settings.accessibility.ui_font.decrease": "Decrease interface font size",
+  "settings.accessibility.ui_font.increase": "Increase interface font size",
+  "settings.accessibility.ui_font.reset": "Reset",
+
   "settings.manuscripts": "Manuscripts",
   "settings.manuscripts.browse": "Browse early Quranic manuscripts",
   "settings.manuscripts.cache": "Clear cached manuscript images",

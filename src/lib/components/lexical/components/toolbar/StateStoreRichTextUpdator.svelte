@@ -121,7 +121,7 @@
 
 		//TODO: create a separate toolbar updator that doesn't suppprt tables (doesn't use isTableSelection) and save on package size
 		if (isRangeSelection(selection) || isTableSelection(selection)) {
-			$fontSize = getSelectionStyleValueForProperty(selection, 'font-size', '16px');
+			$fontSize = getSelectionStyleValueForProperty(selection, 'font-size', '18px');
 			$lineHeight = getSelectionStyleValueForProperty(selection, 'line-height', '');
 		}
 	};

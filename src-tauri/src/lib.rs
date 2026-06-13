@@ -11,7 +11,8 @@ mod terminal;
 mod typst_world;
 
 use std::sync::{atomic::AtomicBool, Arc};
-use tauri::Manager;
+use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+use tauri::{Emitter, Manager};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -87,6 +88,73 @@ pub fn run() {
                 cancel: Arc::new(AtomicBool::new(false)),
             });
             app.manage(commands::HttpClient::new());
+
+            // --- Native application menu --------------------------------
+            // By default macOS shows only "Close" under the File menu. Build a
+            // richer File menu (Open File / Open Folder / Save / Save As) and
+            // keep the standard App/Edit menus so Quit and Copy/Paste continue
+            // to work. Each custom item emits an event the frontend listens for
+            // (see src/routes/+layout.svelte); the accelerators also drive the
+            // same shortcuts on every platform.
+            let handle = app.handle().clone();
+
+            let open_file = MenuItemBuilder::with_id("open_file", "Open File…")
+                .accelerator("CmdOrCtrl+O")
+                .build(&handle)?;
+            let open_folder = MenuItemBuilder::with_id("open_folder", "Open Folder…")
+                .accelerator("CmdOrCtrl+Shift+O")
+                .build(&handle)?;
+            let save = MenuItemBuilder::with_id("save", "Save")
+                .accelerator("CmdOrCtrl+S")
+                .build(&handle)?;
+            let save_as = MenuItemBuilder::with_id("save_as", "Save As…")
+                .accelerator("CmdOrCtrl+Shift+S")
+                .build(&handle)?;
+
+            #[allow(unused_mut)]
+            let mut file_builder = SubmenuBuilder::new(&handle, "File")
+                .item(&open_file)
+                .item(&open_folder)
+                .separator()
+                .item(&save)
+                .item(&save_as)
+                .separator()
+                .close_window();
+            #[cfg(not(target_os = "macos"))]
+            {
+                file_builder = file_builder.separator().quit();
+            }
+            let file_menu = file_builder.build()?;
+
+            let edit_menu = SubmenuBuilder::new(&handle, "Edit")
+                .undo()
+                .redo()
+                .separator()
+                .cut()
+                .copy()
+                .paste()
+                .select_all()
+                .build()?;
+
+            #[allow(unused_mut)]
+            let mut menu_builder = MenuBuilder::new(&handle);
+            #[cfg(target_os = "macos")]
+            {
+                let app_menu = SubmenuBuilder::new(&handle, "AyahLab")
+                    .about(None)
+                    .separator()
+                    .services()
+                    .separator()
+                    .hide()
+                    .hide_others()
+                    .show_all()
+                    .separator()
+                    .quit()
+                    .build()?;
+                menu_builder = menu_builder.item(&app_menu);
+            }
+            let menu = menu_builder.item(&file_menu).item(&edit_menu).build()?;
+            app.set_menu(menu)?;
 
             Ok(())
         })
@@ -169,6 +237,20 @@ pub fn run() {
             #[cfg(unix)]
             git::git_head_content,
         ])
+        .on_menu_event(|app, event| {
+            // Forward File-menu clicks to the frontend, which runs the same
+            // actions as the action-bar buttons (see fileActions.ts).
+            let event_name = match event.id().as_ref() {
+                "open_file" => Some("menu-open-file"),
+                "open_folder" => Some("menu-open-folder"),
+                "save" => Some("menu-save"),
+                "save_as" => Some("menu-save-as"),
+                _ => None,
+            };
+            if let Some(name) = event_name {
+                let _ = app.emit(name, ());
+            }
+        })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
                 // Clean up Julia process to avoid zombies

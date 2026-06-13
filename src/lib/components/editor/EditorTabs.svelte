@@ -12,13 +12,48 @@
         createJuliaGroup,
         removeJuliaGroup,
         removeJuliaGroupByTab,
+        addThirdToJuliaGroup,
+        detachThirdFromJuliaGroup,
+        typstGroups,
+        createTypstGroup,
+        removeTypstGroup,
+        removeTypstGroupByTab,
+        addThirdToTypstGroup,
+        detachThirdFromTypstGroup,
         flashingTabId,
         crossGroups,
         createCrossGroup,
         removeCrossGroup,
         removeCrossGroupByTab,
     } from "$lib/stores/julia-terminal.store";
-    import type { JuliaGroup, CrossGroup } from "$lib/stores/julia-terminal.store";
+    import type { JuliaGroup, TypstGroup, CrossGroup } from "$lib/stores/julia-terminal.store";
+
+    // Julia and Typst groups stack identically in the tab strip — only creation
+    // and the fourth pane (REPL vs preview) differ. Treat them uniformly here.
+    type StackKind = "julia" | "typst";
+    type StackGroup = (JuliaGroup | TypstGroup) & { kind: StackKind };
+
+    function stackMembers(g: { tabA: string; tabB: string; tabC?: string }): string[] {
+        return g.tabC ? [g.tabA, g.tabB, g.tabC] : [g.tabA, g.tabB];
+    }
+
+    let stackGroups = $derived<StackGroup[]>([
+        ...$juliaGroups.map((g) => ({ ...g, kind: "julia" as const })),
+        ...$typstGroups.map((g) => ({ ...g, kind: "typst" as const })),
+    ]);
+
+    function removeStackGroup(g: StackGroup): void {
+        if (g.kind === "julia") removeJuliaGroup(g.id);
+        else removeTypstGroup(g.id);
+    }
+    function detachThirdStack(g: StackGroup): void {
+        if (g.kind === "julia") detachThirdFromJuliaGroup(g.id);
+        else detachThirdFromTypstGroup(g.id);
+    }
+    function addThirdStack(g: StackGroup, tabCId: string): void {
+        if (g.kind === "julia") addThirdToJuliaGroup(g.id, tabCId);
+        else addThirdToTypstGroup(g.id, tabCId);
+    }
     import Icon from "@iconify/svelte";
     import { confirm } from "@tauri-apps/plugin-dialog";
     import { singlePageMargin, zenMode, zenPeek } from "$lib/stores/editor.store";
@@ -89,6 +124,63 @@
     let pickerForTabId = $state<string | null>(null);
     let pickerPos = $state<{ x: number; y: number } | null>(null);
 
+    // "Add third file" affordance (the + on a two-file Julia/Typst group).
+    let addThirdForGroupId = $state<string | null>(null);
+    let addThirdPos = $state<{ x: number; y: number } | null>(null);
+
+    /** Ungrouped files of the group's own type that can join it as a third. */
+    function availableThirdFiles(group: StackGroup): EditorTab[] {
+        const grouped = new Set([
+            ...stackGroups.flatMap((g) => stackMembers(g)),
+            ...$crossGroups.flatMap((g) => [g.hostTabId, g.partnerTabId]),
+        ]);
+        return $tabs.filter(
+            (t) => t.type === group.kind && !grouped.has(t.id),
+        );
+    }
+
+    /** Move tabC directly after the group's last primary member in the strip. */
+    function ensureThirdAdjacent(tabCId: string, tabAId: string, tabBId: string) {
+        tabs.update((ts) => {
+            const idxA = ts.findIndex((t) => t.id === tabAId);
+            const idxB = ts.findIndex((t) => t.id === tabBId);
+            const trailing = idxA >= idxB ? tabAId : tabBId;
+            const result = ts.filter((t) => t.id !== tabCId);
+            const moved = ts.find((t) => t.id === tabCId);
+            if (!moved) return ts;
+            const insertAt = result.findIndex((t) => t.id === trailing) + 1;
+            result.splice(insertAt, 0, moved);
+            return result;
+        });
+    }
+
+    function attachThird(group: StackGroup, tabCId: string) {
+        addThirdStack(group, tabCId);
+        ensureThirdAdjacent(tabCId, group.tabA, group.tabB);
+        addThirdForGroupId = null;
+        addThirdPos = null;
+    }
+
+    function handleAddThirdClick(group: StackGroup, e: MouseEvent) {
+        const candidates = availableThirdFiles(group);
+        if (candidates.length === 0) return;
+        if (candidates.length === 1) {
+            attachThird(group, candidates[0].id);
+            return;
+        }
+        if (addThirdForGroupId === group.id) {
+            addThirdForGroupId = null;
+            addThirdPos = null;
+        } else {
+            const anchor = (e.currentTarget as HTMLElement).closest(
+                "[data-tab-id]",
+            );
+            const rect = anchor?.getBoundingClientRect();
+            addThirdForGroupId = group.id;
+            addThirdPos = rect ? { x: rect.right, y: rect.top } : null;
+        }
+    }
+
     async function tryClose(id: string) {
         const tab = $tabs.find((t) => t.id === id);
         if (tab?.isDirty) {
@@ -99,6 +191,7 @@
             if (!ok) return;
         }
         removeJuliaGroupByTab(id);
+        removeTypstGroupByTab(id);
         removeCrossGroupByTab(id);
         closeTab(id);
     }
@@ -118,7 +211,7 @@
     function handleSplitClick(tabId: string, e: MouseEvent) {
         const hostType = $tabs.find(t => t.id === tabId)?.type;
         const allGroupedIds = new Set([
-            ...$juliaGroups.flatMap((g) => [g.tabA, g.tabB]),
+            ...stackGroups.flatMap((g) => stackMembers(g)),
             ...$crossGroups.flatMap((g) => [g.hostTabId, g.partnerTabId]),
         ]);
         const available = $tabs.filter(
@@ -126,16 +219,17 @@
                 (t.type === "julia" || t.type === "typst" || t.type === "lexical") &&
                 t.id !== tabId &&
                 !allGroupedIds.has(t.id) &&
-                // Avoid same-type conflicts for Typst/Lexical (shared global store state)
-                !(hostType === "typst" && t.type === "typst") &&
+                // Lexical still shares global editor state, so no Lexical+Lexical.
                 !(hostType === "lexical" && t.type === "lexical"),
         );
         if (available.length === 0) return;
         if (available.length === 1) {
             const p = available[0];
-            // Julia+Julia → existing stacked behaviour; anything else → cross pair
+            // Julia+Julia and Typst+Typst → stacked group; anything else → cross pair
             if (hostType === "julia" && p.type === "julia") {
                 createJuliaGroup(tabId, p.id);
+            } else if (hostType === "typst" && p.type === "typst") {
+                createTypstGroup(tabId, p.id);
             } else {
                 createCrossGroup(tabId, p.id);
             }
@@ -174,14 +268,22 @@
     })
 
     function onWindowPointerDown(e: PointerEvent) {
-        if (pickerForTabId === null) return;
         const target = e.target as HTMLElement;
         if (
+            pickerForTabId !== null &&
             !target.closest("[data-picker-anchor]") &&
             !target.closest("[data-picker-dropdown]")
         ) {
             pickerForTabId = null;
             pickerPos = null;
+        }
+        if (
+            addThirdForGroupId !== null &&
+            !target.closest("[data-add-third-anchor]") &&
+            !target.closest("[data-add-third-dropdown]")
+        ) {
+            addThirdForGroupId = null;
+            addThirdPos = null;
         }
     }
 
@@ -201,8 +303,16 @@
     let _dragJustCompleted = false;
     const DRAG_THRESHOLD   = 5; // px before drag activates
 
-    function getGroupOf(tabId: string): JuliaGroup | null {
-        return $juliaGroups.find((g: JuliaGroup) => g.tabA === tabId || g.tabB === tabId) ?? null;
+    function getGroupOf(tabId: string): StackGroup | null {
+        return stackGroups.find((g) => stackMembers(g).includes(tabId)) ?? null;
+    }
+
+    /** Group members ordered by their current position in the tab strip. */
+    function orderedGroupIds(g: StackGroup): string[] {
+        return stackMembers(g)
+            .map((id) => ({ id, idx: $tabs.findIndex((t) => t.id === id) }))
+            .sort((a, b) => a.idx - b.idx)
+            .map((m) => m.id);
     }
 
     function getCrossGroupOf(tabId: string): CrossGroup | null {
@@ -214,9 +324,7 @@
     function getDraggedIds(draggedTabId: string): string[] {
         const jGroup = getGroupOf(draggedTabId);
         if (jGroup) {
-            const aIdx = $tabs.findIndex((t: EditorTab) => t.id === jGroup.tabA);
-            const bIdx = $tabs.findIndex((t: EditorTab) => t.id === jGroup.tabB);
-            return aIdx <= bIdx ? [jGroup.tabA, jGroup.tabB] : [jGroup.tabB, jGroup.tabA];
+            return orderedGroupIds(jGroup);
         }
         const cGroup = getCrossGroupOf(draggedTabId);
         if (cGroup) {
@@ -237,13 +345,15 @@
     /** Returns the effective drop position, snapping so we never land BETWEEN a linked pair. */
     function getEffectiveDropInfo(targetId: string, rawSide: DropSide): EffectiveDropInfo {
         const idx = $tabs.findIndex((t: EditorTab) => t.id === targetId);
+        const sameStack = (a: string, b: string) =>
+            stackGroups.some((g) => {
+                const m = stackMembers(g);
+                return m.includes(a) && m.includes(b);
+            });
         if (rawSide === "after") {
             const next: EditorTab | undefined = $tabs[idx + 1];
             if (next && (
-                $juliaGroups.find((g: JuliaGroup) =>
-                    (g.tabA === targetId && g.tabB === next.id) ||
-                    (g.tabB === targetId && g.tabA === next.id)
-                ) ||
+                sameStack(targetId, next.id) ||
                 $crossGroups.find((g: CrossGroup) =>
                     (g.hostTabId === targetId && g.partnerTabId === next.id) ||
                     (g.partnerTabId === targetId && g.hostTabId === next.id)
@@ -252,10 +362,7 @@
         } else {
             const prev: EditorTab | undefined = idx > 0 ? $tabs[idx - 1] : undefined;
             if (prev && (
-                $juliaGroups.find((g: JuliaGroup) =>
-                    (g.tabA === prev.id && g.tabB === targetId) ||
-                    (g.tabB === prev.id && g.tabA === targetId)
-                ) ||
+                sameStack(prev.id, targetId) ||
                 $crossGroups.find((g: CrossGroup) =>
                     (g.hostTabId === prev.id && g.partnerTabId === targetId) ||
                     (g.partnerTabId === prev.id && g.hostTabId === targetId)
@@ -266,19 +373,20 @@
     }
 
     function performReorder(draggedTabId: string, targetTabId: string, side: DropSide): void {
-        const groups: JuliaGroup[] = $juliaGroups;
+        const groups: StackGroup[] = stackGroups;
         const cGroups: CrossGroup[] = $crossGroups;
         tabs.update((ts: EditorTab[]) => {
-            const jGroup = groups.find(
-                (g: JuliaGroup) => g.tabA === draggedTabId || g.tabB === draggedTabId,
+            const jGroup = groups.find((g) =>
+                stackMembers(g).includes(draggedTabId),
             );
             const cGroup = cGroups.find(
                 (g: CrossGroup) => g.hostTabId === draggedTabId || g.partnerTabId === draggedTabId,
             );
             const idsToMove: string[] = jGroup
-                ? (ts.findIndex(t => t.id === jGroup.tabA) <= ts.findIndex(t => t.id === jGroup.tabB)
-                    ? [jGroup.tabA, jGroup.tabB]
-                    : [jGroup.tabB, jGroup.tabA])
+                ? stackMembers(jGroup)
+                      .map((id) => ({ id, idx: ts.findIndex((t) => t.id === id) }))
+                      .sort((a, b) => a.idx - b.idx)
+                      .map((m) => m.id)
                 : cGroup
                     ? (ts.findIndex(t => t.id === cGroup.hostTabId) <= ts.findIndex(t => t.id === cGroup.partnerTabId)
                         ? [cGroup.hostTabId, cGroup.partnerTabId]
@@ -379,38 +487,50 @@
 >
     {#each $tabs as tab, i (tab.id)}
         {@const nextTab = $tabs[i + 1]}
-        {@const juliaGroup = $juliaGroups.find(
-            (g) => g.tabA === tab.id || g.tabB === tab.id,
+        {@const stackGroup = stackGroups.find(
+            (g) => stackMembers(g).includes(tab.id),
         ) ?? null}
         {@const crossGroupForTab = $crossGroups.find(
             (g) => g.hostTabId === tab.id || g.partnerTabId === tab.id,
         ) ?? null}
-        {@const group = juliaGroup ?? crossGroupForTab}
+        {@const group = stackGroup ?? crossGroupForTab}
         {@const color = group
             ? GROUP_COLORS[group.colorIdx % GROUP_COLORS.length]
             : null}
         {@const allGroupedIds = new Set([
-            ...$juliaGroups.flatMap((g) => [g.tabA, g.tabB]),
+            ...stackGroups.flatMap((g) => stackMembers(g)),
             ...$crossGroups.flatMap((g) => [g.hostTabId, g.partnerTabId]),
         ])}
         {@const isUngroupedSplittable =
             (tab.type === "julia" || tab.type === "typst" || tab.type === "lexical") &&
-            !juliaGroup && !crossGroupForTab}
+            !stackGroup && !crossGroupForTab}
         {@const availablePartners = $tabs.filter(
             (t) =>
                 (t.type === "julia" || t.type === "typst" || t.type === "lexical") &&
                 t.id !== tab.id &&
                 !allGroupedIds.has(t.id) &&
-                !(tab.type === "typst" && t.type === "typst") &&
                 !(tab.type === "lexical" && t.type === "lexical"),
         )}
-        {@const adjacentJuliaGroup = nextTab
-            ? ($juliaGroups.find(
-                  (g) =>
-                      (g.tabA === tab.id && g.tabB === nextTab.id) ||
-                      (g.tabB === tab.id && g.tabA === nextTab.id),
-              ) ?? null)
+        {@const adjacentStackGroup = nextTab
+            ? (stackGroups.find((g) => {
+                  const m = stackMembers(g);
+                  return m.includes(tab.id) && m.includes(nextTab.id);
+              }) ?? null)
             : null}
+        {@const stackGroupMemberIdxs = stackGroup
+            ? stackMembers(stackGroup).map((id) =>
+                  $tabs.findIndex((t) => t.id === id),
+              )
+            : []}
+        {@const isTrailingStackMember =
+            stackGroup &&
+            Math.max(...stackGroupMemberIdxs) === i}
+        {@const canAddThird =
+            !!stackGroup &&
+            !stackGroup.tabC &&
+            isTrailingStackMember &&
+            canShowSplit &&
+            availableThirdFiles(stackGroup).length > 0}
         {@const adjacentCrossGroup = nextTab
             ? ($crossGroups.find(
                   (g) =>
@@ -418,7 +538,7 @@
                       (g.partnerTabId === tab.id && g.hostTabId === nextTab.id),
               ) ?? null)
             : null}
-        {@const adjacentGroup = adjacentJuliaGroup ?? adjacentCrossGroup}
+        {@const adjacentGroup = adjacentStackGroup ?? adjacentCrossGroup}
 
         <div
             role="tab"
@@ -525,8 +645,17 @@
                 <button
                     data-no-drag
                     onclick={() => {
-                        if (adjacentJuliaGroup) removeJuliaGroup(adjacentJuliaGroup.id);
-                        else if (adjacentCrossGroup) removeCrossGroup(adjacentCrossGroup.id);
+                        if (adjacentStackGroup) {
+                            // Unlinking at the seam next to the third file only
+                            // detaches that file; elsewhere dissolves the group.
+                            const involvesThird =
+                                adjacentStackGroup.tabC === tab.id ||
+                                adjacentStackGroup.tabC === nextTab?.id;
+                            if (involvesThird)
+                                detachThirdStack(adjacentStackGroup);
+                            else removeStackGroup(adjacentStackGroup);
+                        } else if (adjacentCrossGroup)
+                            removeCrossGroup(adjacentCrossGroup.id);
                     }}
                     class="group/link absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-20 cursor-pointer px-1"
                     title="Unlink"
@@ -549,6 +678,32 @@
                     </span>
                 </button>
             {/if}
+            {#if canAddThird}
+                <!-- Add a third Julia file (right column, above the REPL) -->
+                <button
+                    data-no-drag
+                    data-add-third-anchor
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        handleAddThirdClick(stackGroup!, e);
+                    }}
+                    class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-20 cursor-pointer px-1"
+                    title="Add a third Julia file to this split"
+                >
+                    <span
+                        class="w-4 h-4 rounded-full flex items-center justify-center
+                                 bg-white dark:bg-[#292c3c]
+                                 border border-stone-200 dark:border-[#414559] shadow-sm
+                                 hover:scale-110 transition-transform"
+                    >
+                        <Icon
+                            icon="solar:add-circle-bold-duotone"
+                            class={color?.text ?? "text-brand-charcoal-400"}
+                            width="0.7rem"
+                        />
+                    </span>
+                </button>
+            {/if}
         </div>
     {/each}
 </div><!-- end inner scroll div -->
@@ -562,7 +717,7 @@
 {#if pickerForTabId !== null && pickerPos !== null}
     {@const pickerTab = $tabs.find((t) => t.id === pickerForTabId)}
     {@const pickerAllGroupedIds = new Set([
-        ...$juliaGroups.flatMap((g) => [g.tabA, g.tabB]),
+        ...stackGroups.flatMap((g) => stackMembers(g)),
         ...$crossGroups.flatMap((g) => [g.hostTabId, g.partnerTabId]),
     ])}
     {@const pickerHostType = pickerTab?.type}
@@ -571,7 +726,6 @@
             (t.type === "julia" || t.type === "typst" || t.type === "lexical") &&
             t.id !== pickerForTabId &&
             !pickerAllGroupedIds.has(t.id) &&
-            !(pickerHostType === "typst" && t.type === "typst") &&
             !(pickerHostType === "lexical" && t.type === "lexical"),
     )}
     {#if pickerTab && pickerPartners.length > 1}
@@ -586,6 +740,8 @@
                         const hostType = $tabs.find(t => t.id === pickerForTabId)?.type;
                         if (hostType === "julia" && partner.type === "julia") {
                             createJuliaGroup(pickerForTabId!, partner.id);
+                        } else if (hostType === "typst" && partner.type === "typst") {
+                            createTypstGroup(pickerForTabId!, partner.id);
                         } else {
                             createCrossGroup(pickerForTabId!, partner.id);
                         }
@@ -605,6 +761,35 @@
                         class="shrink-0"
                     />
                     {partner.name}
+                </button>
+            {/each}
+        </div>
+    {/if}
+{/if}
+
+<!-- Add-third picker — choose which file joins the group as its third member -->
+{#if addThirdForGroupId !== null && addThirdPos !== null}
+    {@const addThirdGroup = stackGroups.find((g) => g.id === addThirdForGroupId)}
+    {@const thirdCandidates = addThirdGroup ? availableThirdFiles(addThirdGroup) : []}
+    {#if addThirdGroup && thirdCandidates.length > 0}
+        <div
+            data-add-third-dropdown
+            style="position: fixed; left: {addThirdPos.x}px; top: {addThirdPos.y}px; transform: translate(-100%, calc(-100% - 4px)); z-index: 9999;"
+            class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-3xl shadow-xl p-3 min-w-40"
+        >
+            {#each thirdCandidates as candidate}
+                <button
+                    onclick={() => attachThird(addThirdGroup, candidate.id)}
+                    class="cursor-pointer w-full flex items-center gap-2 p-1 m-1 text-xs rounded-full px-3 text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] active:bg-brand-sand-400"
+                >
+                    <Icon
+                        icon={candidate.type === "typst"
+                            ? "solar:document-text-bold-duotone"
+                            : "solar:code-bold-duotone"}
+                        width="0.75rem"
+                        class="shrink-0"
+                    />
+                    {candidate.name}
                 </button>
             {/each}
         </div>

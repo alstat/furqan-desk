@@ -67,6 +67,127 @@ export const editorSplitRatio = {
   },
 };
 
+// ── Julia split (two stacked Julia editors) height ratio ──────────────────────
+// Percentage (20–80) of the stack's height occupied by the TOP Julia editor
+// when two Julia files are split-stacked. Drives the horizontal divider.
+
+const JULIA_SPLIT_MIN = 20;
+const JULIA_SPLIT_MAX = 80;
+
+function loadJuliaSplitRatio(): number {
+  try {
+    const v = localStorage.getItem("julia-split-ratio");
+    if (v) {
+      const n = parseFloat(v);
+      if (Number.isFinite(n) && n >= JULIA_SPLIT_MIN && n <= JULIA_SPLIT_MAX) {
+        return n;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return 50;
+}
+
+const _juliaSplitRatio = writable<number>(loadJuliaSplitRatio());
+
+export const juliaSplitRatio = {
+  subscribe: _juliaSplitRatio.subscribe,
+  set(v: number) {
+    const clamped = Math.max(JULIA_SPLIT_MIN, Math.min(JULIA_SPLIT_MAX, v));
+    try {
+      localStorage.setItem("julia-split-ratio", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _juliaSplitRatio.set(clamped);
+  },
+};
+
+// Right column of a three-file Julia split: percentage (20–80) of the column's
+// height given to the third editor (tabC), stacked above the shared REPL.
+
+function loadJuliaRightSplitRatio(): number {
+  try {
+    const v = localStorage.getItem("julia-right-split-ratio");
+    if (v) {
+      const n = parseFloat(v);
+      if (Number.isFinite(n) && n >= JULIA_SPLIT_MIN && n <= JULIA_SPLIT_MAX) {
+        return n;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return 50;
+}
+
+const _juliaRightSplitRatio = writable<number>(loadJuliaRightSplitRatio());
+
+export const juliaRightSplitRatio = {
+  subscribe: _juliaRightSplitRatio.subscribe,
+  set(v: number) {
+    const clamped = Math.max(JULIA_SPLIT_MIN, Math.min(JULIA_SPLIT_MAX, v));
+    try {
+      localStorage.setItem("julia-right-split-ratio", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _juliaRightSplitRatio.set(clamped);
+  },
+};
+
+// ── Typst split (two/three stacked Typst editors) height ratios ───────────────
+// Mirrors the Julia split: left column = tabA/tabB, right column = tabC above
+// the shared Typst preview. Same 20–80 clamp.
+
+function loadRatio(key: string): number {
+  try {
+    const v = localStorage.getItem(key);
+    if (v) {
+      const n = parseFloat(v);
+      if (Number.isFinite(n) && n >= JULIA_SPLIT_MIN && n <= JULIA_SPLIT_MAX) {
+        return n;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return 50;
+}
+
+const _typstSplitRatio = writable<number>(loadRatio("typst-split-ratio"));
+
+export const typstSplitRatio = {
+  subscribe: _typstSplitRatio.subscribe,
+  set(v: number) {
+    const clamped = Math.max(JULIA_SPLIT_MIN, Math.min(JULIA_SPLIT_MAX, v));
+    try {
+      localStorage.setItem("typst-split-ratio", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _typstSplitRatio.set(clamped);
+  },
+};
+
+const _typstRightSplitRatio = writable<number>(
+  loadRatio("typst-right-split-ratio"),
+);
+
+export const typstRightSplitRatio = {
+  subscribe: _typstRightSplitRatio.subscribe,
+  set(v: number) {
+    const clamped = Math.max(JULIA_SPLIT_MIN, Math.min(JULIA_SPLIT_MAX, v));
+    try {
+      localStorage.setItem("typst-right-split-ratio", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _typstRightSplitRatio.set(clamped);
+  },
+};
+
 // ── Editor theme ──────────────────────────────────────────────────────────────
 
 export type EditorTheme =
@@ -350,6 +471,58 @@ export const editorIndentSize = {
     }
     _editorIndentSize.set(v);
   },
+};
+
+// ── UI font scale (accessibility) ─────────────────────────────────────────────
+// Multiplier applied to the document root font-size so the whole interface
+// (all rem-based text and spacing) scales up or down. 1.0 = default.
+
+const UI_FONT_SCALE_KEY = "ui-font-scale";
+const UI_FONT_SCALE_MIN = 0.8;
+const UI_FONT_SCALE_MAX = 1.4;
+const UI_FONT_SCALE_DEFAULT = 1.0;
+const UI_FONT_SCALE_STEP = 0.05;
+
+function loadUiFontScale(): number {
+  try {
+    const v = localStorage.getItem(UI_FONT_SCALE_KEY);
+    if (v) {
+      const n = parseFloat(v);
+      if (Number.isFinite(n) && n >= UI_FONT_SCALE_MIN && n <= UI_FONT_SCALE_MAX) {
+        return n;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return UI_FONT_SCALE_DEFAULT;
+}
+
+const _uiFontScale = writable<number>(loadUiFontScale());
+
+export const uiFontScale = {
+  subscribe: _uiFontScale.subscribe,
+  set(v: number) {
+    // Snap to the step grid to avoid float drift (e.g. 1.0500000001).
+    const snapped = Math.round(v / UI_FONT_SCALE_STEP) * UI_FONT_SCALE_STEP;
+    const clamped = Math.max(
+      UI_FONT_SCALE_MIN,
+      Math.min(UI_FONT_SCALE_MAX, Math.round(snapped * 100) / 100),
+    );
+    try {
+      localStorage.setItem(UI_FONT_SCALE_KEY, String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _uiFontScale.set(clamped);
+  },
+};
+
+export const UI_FONT_SCALE_BOUNDS = {
+  min: UI_FONT_SCALE_MIN,
+  max: UI_FONT_SCALE_MAX,
+  default: UI_FONT_SCALE_DEFAULT,
+  step: UI_FONT_SCALE_STEP,
 };
 
 export type ReplMode = "julia" | "pkg" | "shell" | "help";
