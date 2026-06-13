@@ -198,7 +198,16 @@
       "Bash(sort -t- -k5)",
       "Bash(awk -F: '{print $NF}')",
       "WebFetch(domain:bugs.webkit.org)",
-      "WebFetch(domain:webkitgtk.org)"
+      "WebFetch(domain:webkitgtk.org)",
+      "Bash(tar -tzf juliaup-test.tar.gz)",
+      "Bash(rm -rf juliaup-probe)",
+      "Bash(mkdir juliaup-probe *)",
+      "Bash(tar -xzf juliaup-test.tar.gz -C juliaup-probe)",
+      "Bash(./juliaup-probe/juliaup --help)",
+      "Bash(git -C /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk log --oneline -8 -- src/lib/components/editor/EditorComposer.svelte)",
+      "Bash(sort -t: -k3 -n)",
+      "Bash(git mv *)",
+      "Bash(git log *)"
     ]
   }
 }

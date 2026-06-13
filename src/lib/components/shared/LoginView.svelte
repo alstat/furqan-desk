@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { supabase } from "$lib/supabase";
+    import { supabase, OAUTH_REDIRECT_URL } from "$lib/supabase";
+    import { openUrl } from "@tauri-apps/plugin-opener";
     import { t } from "$lib/i18n";
     import Icon from "@iconify/svelte";
     import PasswordInput from "./PasswordInput.svelte";
@@ -34,6 +35,35 @@
         if (err) error = err.message;
     }
 
+    async function handleGoogleSignIn() {
+        clearMessages();
+        loading = true;
+        // Ask Supabase for the Google authorization URL but skip its own
+        // redirect — in a desktop app we open it in the system browser and let
+        // it return to our custom scheme, which the deep-link handler catches.
+        const { data, error: err } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+                redirectTo: OAUTH_REDIRECT_URL,
+                skipBrowserRedirect: true,
+            },
+        });
+        if (err || !data?.url) {
+            loading = false;
+            error = err?.message ?? $t("auth.error_google_signin");
+            return;
+        }
+        try {
+            await openUrl(data.url);
+        } catch {
+            loading = false;
+            error = $t("auth.error_google_signin");
+            return;
+        }
+        // Leave `loading` on: the session arrives asynchronously via the
+        // deep-link callback and onAuthStateChange swaps this view out.
+    }
+
     async function handleForgotPassword() {
         clearMessages();
         if (!signinEmail) {
@@ -53,6 +83,26 @@
 </script>
 
 <div class="flex w-full flex-col gap-4 pb-5">
+    <button
+        onclick={handleGoogleSignIn}
+        disabled={loading}
+        class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-xl border border-brand-sand-200 dark:border-[#414559]
+               bg-white dark:bg-[#303446] py-2 text-[12px] font-medium text-brand-charcoal-500 dark:text-[#c6d0f5]
+               hover:bg-brand-sand-50 dark:hover:bg-[#414559] transition-colors
+               disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+        <Icon icon="mdi:google" width="0.95rem" />
+        {$t("auth.continue_with_google")}
+    </button>
+
+    <div class="flex items-center gap-3">
+        <span class="h-px flex-1 bg-brand-sand-200 dark:bg-[#414559]"></span>
+        <span class="text-[11px] text-brand-charcoal-200 dark:text-[#626880]"
+            >{$t("auth.or")}</span
+        >
+        <span class="h-px flex-1 bg-brand-sand-200 dark:bg-[#414559]"></span>
+    </div>
+
     <div class="flex flex-col gap-2.5">
         <input
             type="email"

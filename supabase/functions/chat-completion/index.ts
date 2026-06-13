@@ -63,23 +63,52 @@ function estimateTokensFromMessages(messages: ChatMessage[]): number {
     return Math.ceil(chars / 4);
 }
 
+// Rolling 4-hour session window (Claude-style): paces usage inside the day so
+// the daily quota can't be exhausted in one sitting. The session cap is derived
+// from the daily cap — keep SESSION_CAP_FRACTION_OF_DAILY in sync with
+// sessionCapFromDaily() in src/lib/stores/chat-storage.ts.
+const SEC_SESSION = 4 * 3600;
+const SESSION_CAP_FRACTION_OF_DAILY = 1 / 3;
+
+interface WindowUsage {
+    used: number;
+    /** created_at of the oldest counted row, in ms; null when none. */
+    oldestMs: number | null;
+}
+
 async function getUsageSince(
     admin: ReturnType<typeof createClient>,
     userId: string,
     seconds: number,
     modelClass: ModelClass,
-): Promise<number> {
+): Promise<WindowUsage> {
     const since = new Date(Date.now() - seconds * 1000).toISOString();
     const { data, error } = await admin
         .from("token_usage")
-        .select("total_tokens")
+        .select("total_tokens, created_at")
         .eq("user_id", userId)
         .eq("model_class", modelClass)
         .gte("created_at", since);
     if (error) throw new Error(`usage query failed: ${error.message}`);
-    return (data ?? []).reduce(
-        (s: number, r: { total_tokens: number }) => s + (r.total_tokens ?? 0),
+    let used = 0;
+    let oldestMs: number | null = null;
+    for (const r of (data ?? []) as {
+        total_tokens: number;
+        created_at: string;
+    }[]) {
+        used += r.total_tokens ?? 0;
+        const ts = new Date(r.created_at).getTime();
+        if (oldestMs === null || ts < oldestMs) oldestMs = ts;
+    }
+    return { used, oldestMs };
+}
+
+/** Seconds until the oldest counted tokens age out of a rolling window. */
+function secondsUntilFree(usage: WindowUsage, windowSec: number): number {
+    if (usage.oldestMs === null) return windowSec;
+    return Math.max(
         0,
+        Math.ceil((usage.oldestMs + windowSec * 1000 - Date.now()) / 1000),
     );
 }
 
@@ -192,31 +221,42 @@ Deno.serve(async (req) => {
             ? limitsRow.advanced_monthly_tokens
             : limitsRow.monthly_tokens;
 
+    const sessionCap =
+        dailyCap > 0 ? Math.ceil(dailyCap * SESSION_CAP_FRACTION_OF_DAILY) : 0;
+
     try {
-        const [daily, weekly, monthly] = await Promise.all([
+        const [session, daily, weekly, monthly] = await Promise.all([
+            getUsageSince(admin, user.id, SEC_SESSION, modelClass),
             getUsageSince(admin, user.id, 24 * 3600, modelClass),
             getUsageSince(admin, user.id, 7 * 24 * 3600, modelClass),
             getUsageSince(admin, user.id, 30 * 24 * 3600, modelClass),
         ]);
-        if (daily >= dailyCap) {
+        if (sessionCap > 0 && session.used >= sessionCap) {
+            return jsonError(429, "Session token limit reached", {
+                scope: "session",
+                model_class: modelClass,
+                retry_after_seconds: secondsUntilFree(session, SEC_SESSION),
+            });
+        }
+        if (daily.used >= dailyCap) {
             return jsonError(429, "Daily token limit reached", {
                 scope: "daily",
                 model_class: modelClass,
-                retry_after_seconds: 24 * 3600,
+                retry_after_seconds: secondsUntilFree(daily, 24 * 3600),
             });
         }
-        if (weekly >= weeklyCap) {
+        if (weekly.used >= weeklyCap) {
             return jsonError(429, "Weekly token limit reached", {
                 scope: "weekly",
                 model_class: modelClass,
-                retry_after_seconds: 7 * 24 * 3600,
+                retry_after_seconds: secondsUntilFree(weekly, 7 * 24 * 3600),
             });
         }
-        if (monthly >= monthlyCap) {
+        if (monthly.used >= monthlyCap) {
             return jsonError(429, "Monthly token limit reached", {
                 scope: "monthly",
                 model_class: modelClass,
-                retry_after_seconds: 30 * 24 * 3600,
+                retry_after_seconds: secondsUntilFree(monthly, 30 * 24 * 3600),
             });
         }
     } catch (e) {

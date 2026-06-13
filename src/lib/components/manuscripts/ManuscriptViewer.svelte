@@ -944,7 +944,7 @@
                 />
                 {#if demoMode}
                     <span
-                        class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                        class="text-[11px] py-1 font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
                     >
                         {$t("manuscript.demo_title")}
                         <span
@@ -964,7 +964,7 @@
                     </span>
                 {:else}
                     <span
-                        class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                        class="text-[11px] py-1 font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
                     >
                         {$t("manuscript.title")}
                     </span>

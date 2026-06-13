@@ -7,16 +7,19 @@ pub async fn send_feedback(
     subject: String,
     message: String,
     from_email: Option<String>,
+    is_pro: bool,
 ) -> Result<(), String> {
     let body_text = match &from_email {
         Some(e) if !e.is_empty() => format!("From: {e}\n\n{message}"),
         _ => message.clone(),
     };
 
+    let tier = if is_pro { "Pro" } else { "Free" };
+
     let mut payload = serde_json::json!({
         "from":    RESEND_FROM,
         "to":      [RESEND_TO],
-        "subject": format!("[AyahLab Feedback] {subject}"),
+        "subject": format!("[AyahLab Feedback] [{tier}] {subject}"),
         "text":    body_text,
     });
     if let Some(e) = &from_email {

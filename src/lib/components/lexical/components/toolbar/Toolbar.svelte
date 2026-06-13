@@ -33,7 +33,7 @@
 
 	setContext('selectedElementKey', writable<NodeKey | null>(null));
 
-	setContext('fontSize', writable('16px'));
+	setContext('fontSize', writable('18px'));
 	setContext('fontFamily', writable('EB Garamond'));
 	setContext('fontColor', writable('#707070'));
 	setContext('bgColor', writable('#fff'));

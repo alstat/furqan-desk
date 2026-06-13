@@ -19,9 +19,11 @@
         codeMirrorViewInstance,
     } from "$lib/stores/editor.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
+    import { flashingTabId } from "$lib/stores/julia-terminal.store";
     import {
         tabs,
         activeTab,
+        activeTabId,
         setActiveTabContent,
         setTabContent,
     } from "$lib/stores/tabs.store";
@@ -43,6 +45,22 @@
     );
     let editorScrollKey = $derived(effectiveTab?.path ?? effectiveTab?.id ?? null);
 
+    // In a Typst split, several editors are mounted at once but they share one
+    // global compile pipeline + preview. Only the editor whose tab is active
+    // "drives" that pipeline; the others just edit their own file. Focusing a
+    // pane activates its tab (see activateThisTab), so the preview follows you.
+    let isDriver = $derived(effectiveTab != null && effectiveTab.id === $activeTabId);
+
+    // Brief gold flash on the editor box when its tab is clicked in a split
+    // group — guides the eye to the matching pane. Mirrors JuliaEditor.
+    let isFlashing = $derived($flashingTabId === effectiveTab?.id);
+
+    function activateThisTab() {
+        if (effectiveTab && effectiveTab.id !== $activeTabId) {
+            activeTabId.set(effectiveTab.id);
+        }
+    }
+
     // True when the preview is displayed in the Parchment area (side-by-side mode).
     // Suppressed when this editor is the host in a cross pair (shows inline preview instead).
     const sideBySide = $derived($hideSurahPage() && !inCrossHost);
@@ -50,11 +68,34 @@
     let debounceTimer: ReturnType<typeof setTimeout> | undefined;
     let embeddedPreviewScrollEl: HTMLDivElement | null = $state(null);
     let currentEmbeddedPreviewPage = $state(1);
-    let lastPreviewScrollTop = 0;
+
+    // Per-tab embedded-preview scroll memory shared across remounts of this
+    // component (cross-type tab switches unmount the editor). Lives on
+    // globalThis so the map survives Svelte's HMR.
+    type ScrollMap = Map<string, number>;
+    const EMBEDDED_PREVIEW_SCROLL_BY_KEY: ScrollMap = (() => {
+        const g = globalThis as unknown as {
+            __typstEmbeddedPreviewScrollByKey?: ScrollMap;
+        };
+        if (g.__typstEmbeddedPreviewScrollByKey instanceof Map)
+            return g.__typstEmbeddedPreviewScrollByKey;
+        const m: ScrollMap = new Map();
+        g.__typstEmbeddedPreviewScrollByKey = m;
+        return m;
+    })();
 
     function handlePreviewScroll(): void {
-        if (embeddedPreviewScrollEl && embeddedPreviewScrollEl.scrollHeight > embeddedPreviewScrollEl.clientHeight) {
-            lastPreviewScrollTop = embeddedPreviewScrollEl.scrollTop;
+        if (
+            editorScrollKey &&
+            embeddedPreviewScrollEl &&
+            embeddedPreviewScrollEl.isConnected &&
+            embeddedPreviewScrollEl.scrollHeight >
+                embeddedPreviewScrollEl.clientHeight
+        ) {
+            EMBEDDED_PREVIEW_SCROLL_BY_KEY.set(
+                editorScrollKey,
+                embeddedPreviewScrollEl.scrollTop,
+            );
         }
         updateCurrentEmbeddedPreviewPage();
     }
@@ -88,14 +129,19 @@
         currentEmbeddedPreviewPage = nearestPage + 1;
     }
 
-    // Keep typstSource in sync with effective tab content
+    // Keep typstSource in sync with effective tab content — only the active
+    // (driving) editor owns the global source/preview.
     $effect(() => {
-        if (effectiveTab?.type === "typst" || effectiveTab?.type === "text") {
+        if (
+            isDriver &&
+            (effectiveTab?.type === "typst" || effectiveTab?.type === "text")
+        ) {
             typstSource.set(effectiveTab.content);
         }
     });
 
     $effect(() => {
+        if (!isDriver) return;
         void $typstRecompile;
         if (effectiveTab?.type !== "typst") {
             typstSvgPages.set([]);
@@ -110,19 +156,21 @@
 
     $effect(() => {
         const pageCount = $typstSvgPages.length;
+        const key = editorScrollKey;
         if (pageCount === 0) {
             currentEmbeddedPreviewPage = 1;
             return;
         }
 
         tick().then(() => {
-            if (embeddedPreviewScrollEl && lastPreviewScrollTop > 0) {
+            if (embeddedPreviewScrollEl && key) {
+                const target = EMBEDDED_PREVIEW_SCROLL_BY_KEY.get(key) ?? 0;
                 const maxScroll =
                     embeddedPreviewScrollEl.scrollHeight -
                     embeddedPreviewScrollEl.clientHeight;
                 if (maxScroll > 0) {
                     embeddedPreviewScrollEl.scrollTop = Math.min(
-                        lastPreviewScrollTop,
+                        target,
                         maxScroll,
                     );
                 }
@@ -201,9 +249,11 @@
     }
 
     function handleInput(newContent: string) {
-        typstSource.set(newContent);
+        // Always persist to this editor's own tab…
         if (tabId) setTabContent(tabId, newContent);
         else setActiveTabContent(newContent);
+        // …but only the active editor feeds the shared preview pipeline.
+        if (isDriver) typstSource.set(newContent);
     }
 
     // ── Completion source ─────────────────────────────────────────────────────
@@ -338,6 +388,7 @@
 
 <div
     bind:this={containerEl}
+    onfocusin={activateThisTab}
     class="relative overflow-visible flex flex-col h-full"
 >
     <!-- Editor — always visible -->
@@ -409,7 +460,7 @@
             </div>
         {/if}
         <CodeMirrorEditor
-            value={$typstSource}
+            value={effectiveTab?.content ?? ""}
             language="typst"
             extensions={[typstCompletionExtension]}
             {lineWrap}
@@ -418,7 +469,7 @@
             filePath={effectiveTab?.path ?? null}
             scrollKey={editorScrollKey}
             onchange={handleInput}
-            class={`${effectiveTab?.type !== "typst" ? "mb-4" : ""} ${sideBySide ? "mb-3" : ""} flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 font-mono`}
+            class={`${effectiveTab?.type !== "typst" ? "mb-4" : ""} ${sideBySide ? "mb-3" : ""} ${isFlashing ? "flash-border-anim" : ""} flex-1 min-h-0 overflow-hidden border border-brand-sand-200 rounded-md mx-2 font-mono`}
         />
     </div>
 

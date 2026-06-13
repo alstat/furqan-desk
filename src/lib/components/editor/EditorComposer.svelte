@@ -95,6 +95,15 @@
     let contentScroller: HTMLElement | null = null;
     let scrollCleanup: (() => void) | null = null;
 
+    // Primitive projections of the active tab. The tabs store replaces tab
+    // objects on edits (dirty flag, content sync), so effects must key off
+    // these strings — depending on $activeTab directly would re-run the
+    // scroll-restore on keystrokes and fight Lexical's caret-into-view scroll.
+    let activeTabIdValue = $derived($activeTab?.id ?? null);
+    let activeScrollKey = $derived(
+        $activeTab ? scrollKeyForTab($activeTab) : null,
+    );
+
     function scrollKeyForTab(tab: EditorTab): string {
         return tab.path ?? tab.id;
     }
@@ -123,6 +132,10 @@
         if (!key || restoring) return;
         const el = contentScroller ?? getContentScroller();
         if (!el) return;
+        // Svelte 5 detaches the DOM before onDestroy/effect teardown runs, and
+        // a detached element reads scrollTop 0 — saving then would clobber the
+        // real offset the scroll listener captured while the editor was live.
+        if (!el.isConnected) return;
         SCROLL_BY_TAB.set(key, el.scrollTop);
     }
 
@@ -156,9 +169,8 @@
     }
 
     $effect(() => {
-        const tab = $activeTab;
-        const next = tab?.id ?? null;
-        const nextKey = tab ? scrollKeyForTab(tab) : null;
+        const next = activeTabIdValue;
+        const nextKey = activeScrollKey;
         if (lastTabId !== null && lastTabId !== next) {
             saveScroll(lastScrollKey);
         }
@@ -167,12 +179,10 @@
     });
 
     $effect(() => {
-        const tab = $activeTab;
+        const tabId = activeTabIdValue;
+        const key = activeScrollKey;
         const editor = $lexicalEditorInstance;
-        if (!tab || !editor) return;
-
-        const tabId = tab.id;
-        const key = scrollKeyForTab(tab);
+        if (!tabId || !key || !editor) return;
         let done = false;
         let fallback1 = 0;
         let fallback2 = 0;
@@ -202,9 +212,8 @@
     });
 
     $effect(() => {
-        const tab = $activeTab;
         const shell = editorShell;
-        const key = tab ? scrollKeyForTab(tab) : null;
+        const key = activeScrollKey;
         if (!shell || !key) return;
 
         let cancelled = false;

@@ -64,7 +64,8 @@
         if (!showOptions) return;
         const target = e.target as Node | null;
         if (!target) return;
-        if (optionsPanel?.contains(target) || optionsBtn?.contains(target)) return;
+        if (optionsPanel?.contains(target) || optionsBtn?.contains(target))
+            return;
         showOptions = false;
     }
 
@@ -214,26 +215,34 @@
         const existing = bundles.get(id);
         if (existing?.attached) return;
 
-        const term = existing?.term ?? new Terminal({
-            cursorBlink: true,
-            fontFamily:
-                "Menlo, Monaco, 'JetBrainsMono Nerd Font', 'JetBrains Mono', 'Fira Code', monospace",
-            fontSize: termFontSize,
-            lineHeight: termLineHeight,
-            theme: termTheme($appDarkMode),
-            allowProposedApi: true,
-            scrollback: 5000,
-        });
+        const term =
+            existing?.term ??
+            new Terminal({
+                cursorBlink: true,
+                fontFamily:
+                    "Menlo, Monaco, 'JetBrainsMono Nerd Font', 'JetBrains Mono', 'Fira Code', monospace",
+                fontSize: termFontSize,
+                lineHeight: termLineHeight,
+                theme: termTheme($appDarkMode),
+                allowProposedApi: true,
+                scrollback: 5000,
+            });
         const fit = existing?.fit ?? new FitAddon();
         if (!existing) term.loadAddon(fit);
 
         term.open(container);
         // First fit needs a measurable container; wait one frame.
         await tick();
-        try { fit.fit(); } catch { /* ignore */ }
+        try {
+            fit.fit();
+        } catch {
+            /* ignore */
+        }
 
         const onData = term.onData((data) => {
-            invoke("pty_write", { id, dataB64: strToB64(data) }).catch(() => {});
+            invoke("pty_write", { id, dataB64: strToB64(data) }).catch(
+                () => {},
+            );
         });
 
         bundles.set(id, {
@@ -253,8 +262,14 @@
             });
             // Resize once more in case rc files printed before our first resize.
             try {
-                await invoke("pty_resize", { id, cols: term.cols, rows: term.rows });
-            } catch { /* ignore */ }
+                await invoke("pty_resize", {
+                    id,
+                    cols: term.cols,
+                    rows: term.rows,
+                });
+            } catch {
+                /* ignore */
+            }
         } catch (e) {
             term.writeln(`\r\n\x1b[31m${String(e)}\x1b[0m`);
             exited[id] = true;
@@ -284,7 +299,11 @@
     }
 
     async function closeTerminal(id: string) {
-        try { await invoke("pty_kill", { id }); } catch { /* ignore */ }
+        try {
+            await invoke("pty_kill", { id });
+        } catch {
+            /* ignore */
+        }
         disposeBundle(id);
         tabs = tabs.filter((t) => t.id !== id);
         const { [id]: _e, ...restE } = exited;
@@ -299,8 +318,13 @@
         // Send ^C (ETX, 0x03). With a real PTY the line discipline turns this
         // into SIGINT for the foreground process group automatically.
         try {
-            await invoke("pty_write", { id, dataB64: bytesToB64(new Uint8Array([0x03])) });
-        } catch { /* ignore */ }
+            await invoke("pty_write", {
+                id,
+                dataB64: bytesToB64(new Uint8Array([0x03])),
+            });
+        } catch {
+            /* ignore */
+        }
         bundles.get(id)?.term.focus();
     }
 
@@ -453,11 +477,17 @@
     function onDrag(e: PointerEvent) {
         x = Math.max(
             0,
-            Math.min(window.innerWidth - panelW, startX + (e.clientX - dragStartX)),
+            Math.min(
+                window.innerWidth - panelW,
+                startX + (e.clientX - dragStartX),
+            ),
         );
         y = Math.max(
             0,
-            Math.min(window.innerHeight - 60, startY + (e.clientY - dragStartY)),
+            Math.min(
+                window.innerHeight - 60,
+                startY + (e.clientY - dragStartY),
+            ),
         );
     }
     function stopDrag() {
@@ -517,8 +547,14 @@
         if (!b) return;
         try {
             b.fit.fit();
-            invoke("pty_resize", { id, cols: b.term.cols, rows: b.term.rows }).catch(() => {});
-        } catch { /* ignore */ }
+            invoke("pty_resize", {
+                id,
+                cols: b.term.cols,
+                rows: b.term.rows,
+            }).catch(() => {});
+        } catch {
+            /* ignore */
+        }
     }
 
     // ── Event listeners ──────────────────────────────────────────────────────
@@ -649,347 +685,575 @@
     xterm.js terminals keep their DOM attachment and scrollback when the user
     closes and reopens the panel. The underlying PTYs also stay alive.
 -->
-    <div
-        role="dialog"
-        aria-label={$t("terminal.title")}
-        class="fixed flex-col overflow-hidden rounded-3xl
+<div
+    role="dialog"
+    aria-label={$t("terminal.title")}
+    class="fixed flex-col overflow-hidden rounded-3xl
                bg-white dark:bg-[#292c3c]
                border border-brand-sand-200 dark:border-[#414559]
                shadow-xl dark:shadow-black/40 transition-opacity duration-150
                {open ? 'flex opacity-100' : 'opacity-0 pointer-events-none'}"
-        style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex}; display:{open ? 'flex' : 'none'};"
-        onpointerdown={() => { zIndex = bringToFront(); }}
-        onkeydown={(e) => { if (e.key === "Escape" && (e.target as HTMLElement).tagName !== 'CANVAS') handleClose(); }}
-        tabindex="-1"
-    >
-        <!-- Header (drag handle) -->
-        <div
-            role="banner"
-            class="flex items-center gap-2 px-4 py-1.75 shrink-0
+    style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex}; display:{open
+        ? 'flex'
+        : 'none'};"
+    onpointerdown={() => {
+        zIndex = bringToFront();
+    }}
+    onkeydown={(e) => {
+        if (
+            e.key === "Escape" &&
+            (e.target as HTMLElement).tagName !== "CANVAS"
+        )
+            handleClose();
+    }}
+    tabindex="-1"
+>
+    <!-- Header (drag handle) -->
+    <div
+        role="banner"
+        class="flex items-center gap-2 px-4 py-1.5 shrink-0
                    bg-brand-gold-100 dark:bg-[#292c3c]
                    border-b border-brand-gold-200 dark:border-[#414559]
                    select-none rounded-t-3xl
                    {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
-            onpointerdown={startDrag}
+        onpointerdown={startDrag}
+    >
+        <Icon
+            icon="icon-park-twotone:terminal"
+            width="1.1rem"
+            class="text-brand-gold-500"
+        />
+        <span
+            class="text-[11px] py-1 font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
         >
-            <Icon
-                icon="icon-park-twotone:terminal"
-                width="1.1rem"
-                class="text-brand-gold-500"
-            />
-            <span
-                class="text-[11px] py-2 font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
-            >
-                {$t("terminal.title")}
-            </span>
-            <div class="ml-auto flex items-center gap-1.5 relative">
-                {#if activeId && !exited[activeId]}
-                    <button
-                        onclick={(e) => { e.stopPropagation(); killCommand(activeId!); }}
-                        aria-label={$t("terminal.send_ctrl_c")}
-                        title={$t("terminal.send_ctrl_c_title")}
-                        class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
+            {$t("terminal.title")}
+        </span>
+        <div class="ml-auto flex items-center gap-1.5 relative">
+            {#if activeId && !exited[activeId]}
+                <button
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        killCommand(activeId!);
+                    }}
+                    aria-label={$t("terminal.send_ctrl_c")}
+                    title={$t("terminal.send_ctrl_c_title")}
+                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
                                bg-brand-gold-200 dark:bg-[#414559]
                                text-brand-gold-600 dark:text-[#c6d0f5]
                                hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    >
-                        <Icon icon="solar:stop-circle-bold-duotone" width="0.85rem" />
-                    </button>
-                {/if}
-                <div class="relative">
-                    <button
-                        onclick={showSearch ? closeSearch : openSearch}
-                        onpointerdown={(e) => e.stopPropagation()}
-                        aria-label="Search active terminal"
-                        title="Search active terminal"
-                        aria-expanded={showSearch}
-                        class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
+                >
+                    <Icon
+                        icon="solar:stop-circle-bold-duotone"
+                        width="0.85rem"
+                    />
+                </button>
+            {/if}
+            <div class="relative">
+                <button
+                    onclick={showSearch ? closeSearch : openSearch}
+                    onpointerdown={(e) => e.stopPropagation()}
+                    aria-label="Search active terminal"
+                    title="Search active terminal"
+                    aria-expanded={showSearch}
+                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
                                bg-brand-gold-200 dark:bg-[#414559]
                                text-brand-gold-600 dark:text-[#c6d0f5]
                                hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors
-                               {showSearch ? 'ring-2 ring-brand-gold-300 dark:ring-[#e5c890]/50' : ''}"
-                    >
-                        <Icon icon="solar:magnifer-bold-duotone" width="0.85rem" />
-                    </button>
-
-                    {#if showSearch}
-                        <div
-                            onpointerdown={(e) => e.stopPropagation()}
-                            role="group"
-                            aria-label="Terminal search"
-                            class="absolute right-0 top-9 z-30 flex items-center gap-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-1 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur"
-                        >
-                            <input
-                                bind:this={searchInputEl}
-                                bind:value={searchQuery}
-                                oninput={refreshSearchMatches}
-                                onkeydown={handleSearchKeydown}
-                                class="h-7 w-44 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-2 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 dark:focus:border-[#e5c890]"
-                                placeholder="Search terminal"
-                                aria-label="Search active terminal"
-                            />
-                            <span
-                                class="min-w-11 text-center text-[10px] tabular-nums text-brand-charcoal-300 dark:text-[#838ba7]"
-                            >
-                                {searchMatches.length > 0
-                                    ? `${searchIndex + 1}/${searchMatches.length}`
-                                    : "0/0"}
-                            </span>
-                            <button
-                                onclick={() => stepSearch(-1)}
-                                disabled={searchMatches.length === 0}
-                                class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
-                                title="Previous match"
-                                aria-label="Previous match"
-                            >
-                                <Icon
-                                    icon="solar:alt-arrow-up-linear"
-                                    width="0.85rem"
-                                />
-                            </button>
-                            <button
-                                onclick={() => stepSearch(1)}
-                                disabled={searchMatches.length === 0}
-                                class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
-                                title="Next match"
-                                aria-label="Next match"
-                            >
-                                <Icon
-                                    icon="solar:alt-arrow-down-linear"
-                                    width="0.85rem"
-                                />
-                            </button>
-                        </div>
-                    {/if}
-                </div>
-                <button
-                    bind:this={optionsBtn}
-                    onclick={toggleOptions}
-                    onpointerdown={(e) => e.stopPropagation()}
-                    aria-label={$t("terminal.display_options")}
-                    title={$t("terminal.display_options")}
-                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
-                           bg-brand-gold-200 dark:bg-[#414559]
-                           text-brand-gold-600 dark:text-[#c6d0f5]
-                           hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors
-                           {showOptions ? 'ring-2 ring-brand-gold-300 dark:ring-[#e5c890]/50' : ''}"
+                               {showSearch
+                        ? 'ring-2 ring-brand-gold-300 dark:ring-[#e5c890]/50'
+                        : ''}"
                 >
-                    <Icon icon="solar:settings-bold-duotone" width="0.85rem" />
-                </button>
-                <button
-                    onclick={handleClose}
-                    aria-label={$t("terminal.close")}
-                    title={$t("common.close")}
-                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
-                           bg-brand-gold-200 dark:bg-[#414559]
-                           text-brand-gold-600 dark:text-[#c6d0f5]
-                           hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                >
-                    <Icon icon="solar:close-circle-bold-duotone" width="0.85rem" />
+                    <Icon icon="solar:magnifer-bold-duotone" width="0.85rem" />
                 </button>
 
-                {#if showOptions}
+                {#if showSearch}
                     <div
-                        bind:this={optionsPanel}
                         onpointerdown={(e) => e.stopPropagation()}
-                        role="menu"
-                        tabindex="-1"
-                        class="absolute right-0 top-9 z-20 w-72 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
+                        role="group"
+                        aria-label="Terminal search"
+                        class="absolute right-0 top-9 z-30 flex items-center gap-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-1 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur"
                     >
-                        <div class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2">
-                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]">
-                                <Icon icon="solar:settings-bold-duotone" width="1rem" />
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
-                                     {$t("terminal.display_options")}
-                                </p>
-                                <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]">
-                                     {$t("terminal.text_size_spacing")}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div>
-                             <span class={labelClass}>{$t("terminal.font_size")}</span>
-                            <div class="flex items-center gap-2">
-                                <button
-                                    onclick={decFontSize}
-                                    disabled={termFontSize <= TERM_FONT_BOUNDS.min}
-                                     aria-label={$t("terminal.decrease_font_size")}
-                                    class={adjustButtonClass}
-                                >
-                                    <svg width="10" height="2" viewBox="0 0 10 2" fill="none">
-                                        <line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                    </svg>
-                                </button>
-                                <span
-                                    class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
-                                >
-                                    {termFontSize}px
-                                </span>
-                                <button
-                                    onclick={incFontSize}
-                                    disabled={termFontSize >= TERM_FONT_BOUNDS.max}
-                                     aria-label={$t("terminal.increase_font_size")}
-                                    class={adjustButtonClass}
-                                >
-                                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                        <line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                        <line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                    </svg>
-                                </button>
-                                <button
-                                    onclick={resetFontSize}
-                                     aria-label={$t("terminal.reset_font_size")}
-                                     title={$t("terminal.reset")}
-                                    class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
-                                >
-                                    <Icon icon="solar:restart-linear" width="0.9rem" />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                             <span class={labelClass}>{$t("terminal.line_spacing")}</span>
-                            <div class="flex items-center gap-2">
-                                <button
-                                    onclick={decLineSpacing}
-                                    disabled={termLineHeight <= TERM_LINE_BOUNDS.min}
-                                     aria-label={$t("terminal.decrease_line_spacing")}
-                                    class={adjustButtonClass}
-                                >
-                                    <svg width="10" height="2" viewBox="0 0 10 2" fill="none">
-                                        <line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                    </svg>
-                                </button>
-                                <span
-                                    class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
-                                >
-                                    {termLineHeight.toFixed(1)}x
-                                </span>
-                                <button
-                                    onclick={incLineSpacing}
-                                    disabled={termLineHeight >= TERM_LINE_BOUNDS.max}
-                                     aria-label={$t("terminal.increase_line_spacing")}
-                                    class={adjustButtonClass}
-                                >
-                                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                        <line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                        <line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                    </svg>
-                                </button>
-                                <button
-                                    onclick={resetLineSpacing}
-                                     aria-label={$t("terminal.reset_line_spacing")}
-                                     title={$t("terminal.reset")}
-                                    class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
-                                >
-                                    <Icon icon="solar:restart-linear" width="0.9rem" />
-                                </button>
-                            </div>
-                        </div>
+                        <input
+                            bind:this={searchInputEl}
+                            bind:value={searchQuery}
+                            oninput={refreshSearchMatches}
+                            onkeydown={handleSearchKeydown}
+                            class="h-7 w-44 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-2 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 dark:focus:border-[#e5c890]"
+                            placeholder="Search terminal"
+                            aria-label="Search active terminal"
+                        />
+                        <span
+                            class="min-w-11 text-center text-[10px] tabular-nums text-brand-charcoal-300 dark:text-[#838ba7]"
+                        >
+                            {searchMatches.length > 0
+                                ? `${searchIndex + 1}/${searchMatches.length}`
+                                : "0/0"}
+                        </span>
+                        <button
+                            onclick={() => stepSearch(-1)}
+                            disabled={searchMatches.length === 0}
+                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
+                            title="Previous match"
+                            aria-label="Previous match"
+                        >
+                            <Icon
+                                icon="solar:alt-arrow-up-linear"
+                                width="0.85rem"
+                            />
+                        </button>
+                        <button
+                            onclick={() => stepSearch(1)}
+                            disabled={searchMatches.length === 0}
+                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
+                            title="Next match"
+                            aria-label="Next match"
+                        >
+                            <Icon
+                                icon="solar:alt-arrow-down-linear"
+                                width="0.85rem"
+                            />
+                        </button>
                     </div>
                 {/if}
             </div>
-        </div>
-
-        <!-- Tab bar -->
-        <div
-            class="flex items-center px-2 bg-brand-sand-100 dark:bg-[#292c3c] border-b border-brand-sand-200 dark:border-[#414559] shrink-0 overflow-x-auto"
-        >
-            {#each tabs as tab (tab.id)}
-                <div
-                    class="flex items-center flex-none mr-2 rounded-full border-r border-brand-sand-400 dark:border-[#414559]
-                        {activeId === tab.id
-                        ? 'bg-brand-sand-50 dark:bg-[#414559]'
-                        : 'hover:bg-brand-sand-100 dark:hover:bg-[#303446]'}"
-                >
-                    <button
-                        onclick={() => (activeId = tab.id)}
-                        class="cursor-pointer px-3 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none
-                            {activeId === tab.id
-                            ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
-                            : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
-                    >
-                         {tab.count !== undefined
-                            ? $t("terminal.tab_label", { count: tab.count })
-                            : tab.label}{exited[tab.id] ? ` (${$t("terminal.exited")})` : ''}
-                    </button>
-                    <button
-                        onclick={(e) => { e.stopPropagation(); closeTerminal(tab.id); }}
-                        class="cursor-pointer pr-2 py-1.5 text-[12px] leading-none text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 transition-colors"
-                         title={$t("terminal.close")}>×</button
-                    >
-                </div>
-            {/each}
-
             <button
-                onclick={addTerminal}
-                class="cursor-pointer ml-auto px-3 py-1.5 text-sm font-medium text-brand-charcoal-400 dark:text-[#838ba7] hover:text-brand-charcoal-700 dark:hover:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] shrink-0 transition-colors"
-                 title={$t("terminal.add")}>+</button
+                bind:this={optionsBtn}
+                onclick={toggleOptions}
+                onpointerdown={(e) => e.stopPropagation()}
+                aria-label={$t("terminal.display_options")}
+                title={$t("terminal.display_options")}
+                class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
+                           bg-brand-gold-200 dark:bg-[#414559]
+                           text-brand-gold-600 dark:text-[#c6d0f5]
+                           hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors
+                           {showOptions
+                    ? 'ring-2 ring-brand-gold-300 dark:ring-[#e5c890]/50'
+                    : ''}"
             >
-        </div>
+                <Icon icon="solar:settings-bold-duotone" width="0.85rem" />
+            </button>
+            <button
+                onclick={handleClose}
+                aria-label={$t("terminal.close")}
+                title={$t("common.close")}
+                class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
+                           bg-brand-gold-200 dark:bg-[#414559]
+                           text-brand-gold-600 dark:text-[#c6d0f5]
+                           hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+            >
+                <Icon icon="solar:close-circle-bold-duotone" width="0.85rem" />
+            </button>
 
-        {#if $isPro && terminalAiSelection}
-            <AiSelectionToolbar
-                selectedText={terminalAiSelection.text}
-                x={terminalAiSelection.x}
-                y={terminalAiSelection.y}
-                {askAiContextPrompt}
-                askOnly={true}
-                onClose={() => (terminalAiSelection = null)}
-            />
-        {/if}
-
-        <!-- Terminal stack: every container is mounted; only the active one is visible. -->
-        <div class="relative flex-1 min-h-0 bg-white dark:bg-[#292c3c]">
-            {#each tabs as tab (tab.id)}
+            {#if showOptions}
                 <div
-                    bind:this={containerEls[tab.id]}
-                    onpointerup={updateTerminalAiSelection}
-                    role="presentation"
-                    class="absolute inset-0 {activeId === tab.id ? 'visible z-1' : 'invisible z-0 pointer-events-none'}"
-                ></div>
-            {/each}
-        </div>
+                    bind:this={optionsPanel}
+                    onpointerdown={(e) => e.stopPropagation()}
+                    role="menu"
+                    tabindex="-1"
+                    class="absolute right-0 top-9 z-20 w-72 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
+                >
+                    <div
+                        class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2"
+                    >
+                        <div
+                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]"
+                        >
+                            <Icon
+                                icon="solar:settings-bold-duotone"
+                                width="1rem"
+                            />
+                        </div>
+                        <div class="min-w-0">
+                            <p
+                                class="text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                            >
+                                {$t("terminal.display_options")}
+                            </p>
+                            <p
+                                class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                            >
+                                {$t("terminal.text_size_spacing")}
+                            </p>
+                        </div>
+                    </div>
 
-        <!-- Resize handles -->
-        <div aria-hidden="true" class="resize-handle resize-n" onpointerdown={(e) => startResize(e, { n: true, s: false, e: false, w: false })}></div>
-        <div aria-hidden="true" class="resize-handle resize-s" onpointerdown={(e) => startResize(e, { n: false, s: true, e: false, w: false })}></div>
-        <div aria-hidden="true" class="resize-handle resize-e" onpointerdown={(e) => startResize(e, { n: false, s: false, e: true, w: false })}></div>
-        <div aria-hidden="true" class="resize-handle resize-w" onpointerdown={(e) => startResize(e, { n: false, s: false, e: false, w: true })}></div>
-        <div aria-hidden="true" class="resize-handle resize-ne" onpointerdown={(e) => startResize(e, { n: true, s: false, e: true, w: false })}></div>
-        <div aria-hidden="true" class="resize-handle resize-se" onpointerdown={(e) => startResize(e, { n: false, s: true, e: true, w: false })}></div>
-        <div aria-hidden="true" class="resize-handle resize-sw" onpointerdown={(e) => startResize(e, { n: false, s: true, e: false, w: true })}></div>
-        <div aria-hidden="true" class="resize-handle resize-nw" onpointerdown={(e) => startResize(e, { n: true, s: false, e: false, w: true })}></div>
+                    <div>
+                        <span class={labelClass}
+                            >{$t("terminal.font_size")}</span
+                        >
+                        <div class="flex items-center gap-2">
+                            <button
+                                onclick={decFontSize}
+                                disabled={termFontSize <= TERM_FONT_BOUNDS.min}
+                                aria-label={$t("terminal.decrease_font_size")}
+                                class={adjustButtonClass}
+                            >
+                                <svg
+                                    width="10"
+                                    height="2"
+                                    viewBox="0 0 10 2"
+                                    fill="none"
+                                >
+                                    <line
+                                        x1="0"
+                                        y1="1"
+                                        x2="10"
+                                        y2="1"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+                                </svg>
+                            </button>
+                            <span
+                                class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
+                            >
+                                {termFontSize}px
+                            </span>
+                            <button
+                                onclick={incFontSize}
+                                disabled={termFontSize >= TERM_FONT_BOUNDS.max}
+                                aria-label={$t("terminal.increase_font_size")}
+                                class={adjustButtonClass}
+                            >
+                                <svg
+                                    width="10"
+                                    height="10"
+                                    viewBox="0 0 10 10"
+                                    fill="none"
+                                >
+                                    <line
+                                        x1="5"
+                                        y1="0"
+                                        x2="5"
+                                        y2="10"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+                                    <line
+                                        x1="0"
+                                        y1="5"
+                                        x2="10"
+                                        y2="5"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+                                </svg>
+                            </button>
+                            <button
+                                onclick={resetFontSize}
+                                aria-label={$t("terminal.reset_font_size")}
+                                title={$t("terminal.reset")}
+                                class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
+                            >
+                                <Icon
+                                    icon="solar:restart-linear"
+                                    width="0.9rem"
+                                />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class={labelClass}
+                            >{$t("terminal.line_spacing")}</span
+                        >
+                        <div class="flex items-center gap-2">
+                            <button
+                                onclick={decLineSpacing}
+                                disabled={termLineHeight <=
+                                    TERM_LINE_BOUNDS.min}
+                                aria-label={$t(
+                                    "terminal.decrease_line_spacing",
+                                )}
+                                class={adjustButtonClass}
+                            >
+                                <svg
+                                    width="10"
+                                    height="2"
+                                    viewBox="0 0 10 2"
+                                    fill="none"
+                                >
+                                    <line
+                                        x1="0"
+                                        y1="1"
+                                        x2="10"
+                                        y2="1"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+                                </svg>
+                            </button>
+                            <span
+                                class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
+                            >
+                                {termLineHeight.toFixed(1)}x
+                            </span>
+                            <button
+                                onclick={incLineSpacing}
+                                disabled={termLineHeight >=
+                                    TERM_LINE_BOUNDS.max}
+                                aria-label={$t(
+                                    "terminal.increase_line_spacing",
+                                )}
+                                class={adjustButtonClass}
+                            >
+                                <svg
+                                    width="10"
+                                    height="10"
+                                    viewBox="0 0 10 10"
+                                    fill="none"
+                                >
+                                    <line
+                                        x1="5"
+                                        y1="0"
+                                        x2="5"
+                                        y2="10"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+                                    <line
+                                        x1="0"
+                                        y1="5"
+                                        x2="10"
+                                        y2="5"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+                                </svg>
+                            </button>
+                            <button
+                                onclick={resetLineSpacing}
+                                aria-label={$t("terminal.reset_line_spacing")}
+                                title={$t("terminal.reset")}
+                                class="cursor-pointer flex h-8 w-8 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] transition-all hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
+                            >
+                                <Icon
+                                    icon="solar:restart-linear"
+                                    width="0.9rem"
+                                />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {/if}
+        </div>
     </div>
 
+    <!-- Tab bar -->
+    <div
+        class="flex items-center px-2 bg-brand-sand-100 dark:bg-[#292c3c] border-b border-brand-sand-200 dark:border-[#414559] shrink-0 overflow-x-auto"
+    >
+        {#each tabs as tab (tab.id)}
+            <div
+                class="flex items-center flex-none mr-2 rounded-full border-r border-brand-sand-400 dark:border-[#414559]
+                        {activeId === tab.id
+                    ? 'bg-brand-sand-50 dark:bg-[#414559]'
+                    : 'hover:bg-brand-sand-100 dark:hover:bg-[#303446]'}"
+            >
+                <button
+                    onclick={() => (activeId = tab.id)}
+                    class="cursor-pointer px-3 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none
+                            {activeId === tab.id
+                        ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
+                        : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
+                >
+                    {tab.count !== undefined
+                        ? $t("terminal.tab_label", { count: tab.count })
+                        : tab.label}{exited[tab.id]
+                        ? ` (${$t("terminal.exited")})`
+                        : ""}
+                </button>
+                <button
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        closeTerminal(tab.id);
+                    }}
+                    class="cursor-pointer pr-2 py-1.5 text-[12px] leading-none text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 transition-colors"
+                    title={$t("terminal.close")}>×</button
+                >
+            </div>
+        {/each}
+
+        <button
+            onclick={addTerminal}
+            class="cursor-pointer ml-auto px-3 py-1.5 text-sm font-medium text-brand-charcoal-400 dark:text-[#838ba7] hover:text-brand-charcoal-700 dark:hover:text-[#c6d0f5] hover:bg-brand-sand-100 dark:hover:bg-[#303446] shrink-0 transition-colors"
+            title={$t("terminal.add")}>+</button
+        >
+    </div>
+
+    {#if $isPro && terminalAiSelection}
+        <AiSelectionToolbar
+            selectedText={terminalAiSelection.text}
+            x={terminalAiSelection.x}
+            y={terminalAiSelection.y}
+            {askAiContextPrompt}
+            askOnly={true}
+            onClose={() => (terminalAiSelection = null)}
+        />
+    {/if}
+
+    <!-- Terminal stack: every container is mounted; only the active one is visible. -->
+    <div class="relative flex-1 min-h-0 bg-white dark:bg-[#292c3c]">
+        {#each tabs as tab (tab.id)}
+            <div
+                bind:this={containerEls[tab.id]}
+                onpointerup={updateTerminalAiSelection}
+                role="presentation"
+                class="absolute inset-0 {activeId === tab.id
+                    ? 'visible z-1'
+                    : 'invisible z-0 pointer-events-none'}"
+            ></div>
+        {/each}
+    </div>
+
+    <!-- Resize handles -->
+    <div
+        aria-hidden="true"
+        class="resize-handle resize-n"
+        onpointerdown={(e) =>
+            startResize(e, { n: true, s: false, e: false, w: false })}
+    ></div>
+    <div
+        aria-hidden="true"
+        class="resize-handle resize-s"
+        onpointerdown={(e) =>
+            startResize(e, { n: false, s: true, e: false, w: false })}
+    ></div>
+    <div
+        aria-hidden="true"
+        class="resize-handle resize-e"
+        onpointerdown={(e) =>
+            startResize(e, { n: false, s: false, e: true, w: false })}
+    ></div>
+    <div
+        aria-hidden="true"
+        class="resize-handle resize-w"
+        onpointerdown={(e) =>
+            startResize(e, { n: false, s: false, e: false, w: true })}
+    ></div>
+    <div
+        aria-hidden="true"
+        class="resize-handle resize-ne"
+        onpointerdown={(e) =>
+            startResize(e, { n: true, s: false, e: true, w: false })}
+    ></div>
+    <div
+        aria-hidden="true"
+        class="resize-handle resize-se"
+        onpointerdown={(e) =>
+            startResize(e, { n: false, s: true, e: true, w: false })}
+    ></div>
+    <div
+        aria-hidden="true"
+        class="resize-handle resize-sw"
+        onpointerdown={(e) =>
+            startResize(e, { n: false, s: true, e: false, w: true })}
+    ></div>
+    <div
+        aria-hidden="true"
+        class="resize-handle resize-nw"
+        onpointerdown={(e) =>
+            startResize(e, { n: true, s: false, e: false, w: true })}
+    ></div>
+</div>
+
 <style>
-    .resize-handle { position: absolute; z-index: 10; }
-    .resize-n  { top: 0; left: 6px; right: 6px; height: 6px; cursor: n-resize; }
-    .resize-s  { bottom: 0; left: 6px; right: 6px; height: 6px; cursor: s-resize; }
-    .resize-e  { top: 6px; right: 0; bottom: 6px; width: 6px; cursor: e-resize; }
-    .resize-w  { top: 6px; left: 0; bottom: 6px; width: 6px; cursor: w-resize; }
-    .resize-ne { top: 0; right: 0; width: 12px; height: 12px; cursor: ne-resize; }
-    .resize-se { bottom: 0; right: 0; width: 20px; height: 20px; cursor: se-resize; }
-    .resize-sw { bottom: 0; left: 0; width: 12px; height: 12px; cursor: sw-resize; }
-    .resize-nw { top: 0; left: 0; width: 12px; height: 12px; cursor: nw-resize; }
+    .resize-handle {
+        position: absolute;
+        z-index: 10;
+    }
+    .resize-n {
+        top: 0;
+        left: 6px;
+        right: 6px;
+        height: 6px;
+        cursor: n-resize;
+    }
+    .resize-s {
+        bottom: 0;
+        left: 6px;
+        right: 6px;
+        height: 6px;
+        cursor: s-resize;
+    }
+    .resize-e {
+        top: 6px;
+        right: 0;
+        bottom: 6px;
+        width: 6px;
+        cursor: e-resize;
+    }
+    .resize-w {
+        top: 6px;
+        left: 0;
+        bottom: 6px;
+        width: 6px;
+        cursor: w-resize;
+    }
+    .resize-ne {
+        top: 0;
+        right: 0;
+        width: 12px;
+        height: 12px;
+        cursor: ne-resize;
+    }
+    .resize-se {
+        bottom: 0;
+        right: 0;
+        width: 20px;
+        height: 20px;
+        cursor: se-resize;
+    }
+    .resize-sw {
+        bottom: 0;
+        left: 0;
+        width: 12px;
+        height: 12px;
+        cursor: sw-resize;
+    }
+    .resize-nw {
+        top: 0;
+        left: 0;
+        width: 12px;
+        height: 12px;
+        cursor: nw-resize;
+    }
     .resize-se::before {
-        content: ""; position: absolute; bottom: 12px; right: 12px;
-        width: 5px; height: 5px;
-        border-bottom: 1.5px solid rgba(130,130,130,0.4);
-        border-right:  1.5px solid rgba(130,130,130,0.4);
-        border-bottom-right-radius: 5px; pointer-events: none;
+        content: "";
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        width: 5px;
+        height: 5px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-bottom-right-radius: 5px;
+        pointer-events: none;
     }
     .resize-se::after {
-        content: ""; position: absolute; bottom: 8px; right: 8px;
-        width: 9px; height: 9px;
-        border-bottom: 1.5px solid rgba(130,130,130,0.55);
-        border-right:  1.5px solid rgba(130,130,130,0.55);
-        border-bottom-right-radius: 9px; pointer-events: none;
+        content: "";
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        width: 9px;
+        height: 9px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-bottom-right-radius: 9px;
+        pointer-events: none;
     }
-    :global(.xterm) { height: 100%; padding: 6px 8px; }
+    :global(.xterm) {
+        height: 100%;
+        padding: 6px 8px;
+    }
     :global(.xterm .xterm-viewport),
-    :global(.xterm .xterm-screen) { background-color: transparent !important; }
+    :global(.xterm .xterm-screen) {
+        background-color: transparent !important;
+    }
 </style>

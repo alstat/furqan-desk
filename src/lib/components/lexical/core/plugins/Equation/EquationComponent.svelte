@@ -3,7 +3,7 @@
     // KaTeX's stylesheet + bundled fonts — required for the HTML renderer to
     // position accents (\bar, \hat, \overline, vectors) without overlap.
     import "katex/dist/katex.min.css";
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { getEditor } from "$lexical/core/composerContext.js";
     import { $isEquationNode as isEquationNode } from "./EquationNode";
     import { $getNodeByKey as getNodeByKey } from "lexical";
@@ -11,6 +11,8 @@
     import Icon from "@iconify/svelte";
     import { icons } from "$lib/data/toolbar/toolbar";
     import { t } from "$lib/i18n";
+    import { isPro } from "$lib/stores/auth.store";
+    import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
 
     interface Props {
         equation: string;
@@ -56,6 +58,63 @@
         }
     }
 
+    // ── AI selection toolbar (pro users) ─────────────────────────────────────
+    let aiSelection = $state<{
+        start: number;
+        end: number;
+        text: string;
+        x: number;
+        y: number;
+    } | null>(null);
+
+    // Anchor the floating toolbar above the LaTeX textarea whenever it holds
+    // a non-empty selection. Textareas don't expose per-character coordinates,
+    // so the editor card itself is the anchor.
+    function updateAiSelection() {
+        if (!$isPro || !textareaEl) {
+            aiSelection = null;
+            return;
+        }
+        const start = textareaEl.selectionStart ?? 0;
+        const end = textareaEl.selectionEnd ?? 0;
+        if (start === end) {
+            aiSelection = null;
+            return;
+        }
+        const text = textareaEl.value.slice(start, end);
+        if (!text.trim()) {
+            aiSelection = null;
+            return;
+        }
+        const rect = textareaEl.getBoundingClientRect();
+        const viewportWidth = window.innerWidth || 0;
+        aiSelection = {
+            start,
+            end,
+            text,
+            x: Math.max(
+                180,
+                Math.min(viewportWidth - 180, rect.left + rect.width / 2),
+            ),
+            y: Math.max(12, rect.top - 8),
+        };
+    }
+
+    function replaceAiSelection(replacement: string) {
+        if (!aiSelection) return;
+        const { start, end } = aiSelection;
+        editableValue =
+            editableValue.slice(0, start) +
+            replacement +
+            editableValue.slice(end);
+        aiSelection = null;
+        const caret = start + replacement.length;
+        tick().then(() => {
+            textareaEl?.focus();
+            textareaEl?.setSelectionRange(caret, caret);
+        });
+    }
+
     function handleDoubleClick() {
         isEditing = true;
         editableValue = equation;
@@ -69,11 +128,13 @@
             }
         });
         isEditing = false;
+        aiSelection = null;
     }
 
     function handleCancel() {
         isEditing = false;
         editableValue = equation;
+        aiSelection = null;
     }
 
     function handleKeydown(event: KeyboardEvent) {
@@ -83,6 +144,10 @@
             handleSave();
         } else if (event.key === "Escape") {
             event.preventDefault();
+            if (aiSelection) {
+                aiSelection = null;
+                return;
+            }
             handleCancel();
         }
     }
@@ -137,7 +202,7 @@
                     </span>
                     <span
                         class="font-sans text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
-                        >{$t('editor.equation.edit_title')}</span
+                        >{$t("editor.equation.edit_title")}</span
                     >
                 </span>
                 <span class="flex items-center gap-0.5">
@@ -147,15 +212,22 @@
                         title="{$t('common.save')} (Enter)"
                         class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-0.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 font-sans active:bg-brand-gold-600/90 transition-colors"
                     >
-                        {$t('common.save')}
+                        {$t("common.save")}
                     </button>
                     <!-- Cancel -->
                     <button
                         onclick={handleCancel}
                         title="{$t('common.cancel')} (Esc)"
-                        class="cursor-pointer text-brand-charcoal-300 dark:text-[#626880] hover:text-brand-charcoal-900/60 dark:hover:text-[#c6d0f5] transition-colors ml-3 mr-1"
+                        aria-label={$t("common.cancel")}
+                        class="cursor-pointer flex h-5 w-5 items-center justify-center rounded-lg
+                               bg-brand-gold-200 dark:bg-[#414559]
+                               text-brand-gold-600 dark:text-[#c6d0f5]
+                               hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors ml-2"
                     >
-                        <Icon icon="solar:close-circle-bold" width="0.8rem" />
+                        <Icon
+                            icon="solar:close-circle-bold-duotone"
+                            width="0.8rem"
+                        />
                     </button>
                 </span>
             </span>
@@ -167,11 +239,15 @@
                     bind:this={textareaEl}
                     bind:value={editableValue}
                     onkeydown={handleKeydown}
+                    onselect={updateAiSelection}
+                    onkeyup={updateAiSelection}
+                    onmouseup={updateAiSelection}
+                    oninput={updateAiSelection}
                     autofocus
                     autocorrect="off"
                     dir="ltr"
                     rows="2"
-                    placeholder={$t('editor.equation.placeholder')}
+                    placeholder={$t("editor.equation.placeholder")}
                     class="w-full resize-none rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-2 font-mono text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                 ></textarea>
             </span>
@@ -188,12 +264,22 @@
                 {:else}
                     <span
                         class="text-[10px] text-brand-charcoal-300 dark:text-[#626880]"
-                        >{$t('editor.equation.preview_placeholder')}</span
+                        >{$t("editor.equation.preview_placeholder")}</span
                     >
                 {/if}
             </span>
         </span>
     </span>
+    {#if $isPro && aiSelection}
+        <AiSelectionToolbar
+            selectedText={aiSelection.text}
+            x={aiSelection.x}
+            y={aiSelection.y}
+            contextPrompt={`This text is a selection from a LaTeX equation (rendered with KaTeX). Keep the result as valid LaTeX. Full equation source:\n\n${editableValue}`}
+            onReplace={replaceAiSelection}
+            onClose={() => (aiSelection = null)}
+        />
+    {/if}
 {:else if isInline}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <span
@@ -201,7 +287,7 @@
         class:equation-selected={$isSelected}
         bind:this={element}
         ondblclick={handleDoubleClick}
-        title={$t('editor.dblclick_hint')}
+        title={$t("editor.dblclick_hint")}
     ></span>
 {:else}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -210,7 +296,7 @@
         class:equation-selected={$isSelected}
         bind:this={element}
         ondblclick={handleDoubleClick}
-        title={$t('editor.dblclick_hint')}
+        title={$t("editor.dblclick_hint")}
     ></div>
 {/if}
 

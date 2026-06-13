@@ -34,6 +34,7 @@ export interface UsageWindow {
 }
 
 export interface UsageByClass {
+    session: UsageWindow;
     daily: UsageWindow;
     weekly: UsageWindow;
     monthly: UsageWindow;
@@ -47,6 +48,15 @@ export interface TokenUsageStats {
 const SEC_DAY = 24 * 3600;
 const SEC_WEEK = 7 * SEC_DAY;
 const SEC_MONTH = 30 * SEC_DAY;
+/** Rolling 4-hour session window — paces usage so the daily quota can't be
+ *  exhausted in one sitting. */
+export const SEC_SESSION = 4 * 3600;
+
+/** Session cap derived from the daily cap. Keep in sync with
+ *  SESSION_CAP_FRACTION_OF_DAILY in supabase/functions/chat-completion. */
+export function sessionCapFromDaily(dailyTokens: number): number {
+    return dailyTokens > 0 ? Math.ceil(dailyTokens / 3) : 0;
+}
 
 export async function getTokenUsageStats(
     userId: string,
@@ -92,11 +102,13 @@ export async function getTokenUsageStats(
 
     return {
         standard: {
+            session: aggregate("standard", SEC_SESSION),
             daily: aggregate("standard", SEC_DAY),
             weekly: aggregate("standard", SEC_WEEK),
             monthly: aggregate("standard", SEC_MONTH),
         },
         advanced: {
+            session: aggregate("advanced", SEC_SESSION),
             daily: aggregate("advanced", SEC_DAY),
             weekly: aggregate("advanced", SEC_WEEK),
             monthly: aggregate("advanced", SEC_MONTH),

@@ -1029,6 +1029,10 @@
 
     function saveScroll(key: string | null = lastScrollKey): void {
         if (!key || !view || restoringScroll) return;
+        // Svelte 5 detaches the DOM before effect teardown runs, and a
+        // detached scrollDOM reads scrollTop 0 — saving then would clobber
+        // the offset captured by the scroll listener while the view was live.
+        if (!view.scrollDOM.isConnected) return;
         SCROLL_BY_KEY.set(key, view.scrollDOM.scrollTop);
     }
 

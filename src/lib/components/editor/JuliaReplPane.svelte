@@ -349,36 +349,85 @@
         inProgress: [],
     });
 
+    // Names of packages already reported done. Dedupes Julia's fancy-mode
+    // redraws (which reprint the same ✓ lines) so the count stays accurate, and
+    // over a pipe — where Julia emits no live counter — it's the only signal we
+    // have for how many packages have finished.
+    let precompileCompleted = new Set<string>();
+
+    function resetPrecompile(): void {
+        precompile = { active: false, total: 0, done: 0, inProgress: [] };
+        precompileCompleted = new Set();
+    }
+
+    // Julia's Pkg precompiler redraws its progress UI with ANSI escape codes and
+    // carriage returns. Strip the escapes and collapse each line to the text
+    // after its last carriage return (what a terminal would actually show) so the
+    // REPL view stays clean and the progress parser sees real values.
+    // eslint-disable-next-line no-control-regex
+    const ANSI_RE = /\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\))/g;
+    function cleanTerminalLine(line: string): string {
+        // Drop a trailing CR first (CRLF line endings), then collapse any
+        // in-place progress redraws by keeping the text after the last CR.
+        let s = line.endsWith("\r") ? line.slice(0, -1) : line;
+        if (s.includes("\r")) s = s.slice(s.lastIndexOf("\r") + 1);
+        return s.replace(ANSI_RE, "");
+    }
+
     function parsePrecompileChunk(text: string): void {
         for (const line of text.split("\n")) {
-            if (/^\s*Precompiling/.test(line)) {
+            // Activate on "Precompiling …" anywhere (covers both
+            // "Precompiling project…" and "[ Info: Precompiling Foo …]").
+            if (/Precompiling\b/.test(line)) {
                 precompile.active = true;
-                const countMatch = line.match(/(\d+)\s+package/);
-                if (countMatch && precompile.total === 0) {
+                const countMatch = line.match(/(\d+)\s+(?:package|dependenc)/i);
+                if (countMatch) {
                     precompile.total = parseInt(countMatch[1]);
                 }
             }
             if (!precompile.active) continue;
-            // In-progress package: ◒ ⌛ ●
-            const inProgressMatch = line.match(/^\s*[◒⌛●]\s+(\S+)/);
+
+            // When Julia is attached to a TTY it prints an authoritative
+            // "done/total" counter — prefer it for BOTH values so the bar
+            // tracks real progress rather than our ✓-counting estimate.
+            const frac = line.match(/\b(\d+)\s*\/\s*(\d+)\b/);
+            if (frac) {
+                precompile.done = parseInt(frac[1]);
+                precompile.total = parseInt(frac[2]);
+            }
+
+            // In-progress package spinner: ◒ ◓ ◑ ◐ ⌛ ⏳ ● ○ (matched anywhere
+            // in case a stray control char survives cleaning).
+            const inProgressMatch = line.match(/[◒◓◑◐⌛⏳●○]\s+(\S+)/);
             if (inProgressMatch) {
                 const pkg = inProgressMatch[1];
-                if (!precompile.inProgress.includes(pkg)) {
+                if (
+                    !precompileCompleted.has(pkg) &&
+                    !precompile.inProgress.includes(pkg)
+                ) {
                     precompile.inProgress = [...precompile.inProgress, pkg];
                 }
             }
-            // Completed package: ✓ PackageName
-            const doneMatch = line.match(/✓\s+(\S+)/);
+            // Completed package: ✓ / ✔ PackageName, matched anywhere in the line.
+            // Dedupe by name so redraws don't over-count; over a pipe this count
+            // is the only progress signal (no live "done/total" counter exists).
+            const doneMatch = line.match(/[✓✔]\s+(\S+)/);
             if (doneMatch) {
-                precompile.done++;
+                const pkg = doneMatch[1];
                 precompile.inProgress = precompile.inProgress.filter(
-                    (p) => p !== doneMatch[1],
+                    (p) => p !== pkg,
                 );
+                if (!precompileCompleted.has(pkg)) {
+                    precompileCompleted.add(pkg);
+                    if (!frac) precompile.done = precompileCompleted.size;
+                }
             }
-            // Total from "done/total" counter
-            const slashMatch = line.match(/(\d+)\/(\d+)/);
-            if (slashMatch && precompile.total === 0) {
-                precompile.total = parseInt(slashMatch[2]);
+            // Final summary line carries the total even in non-TTY mode.
+            const summary = line.match(
+                /(\d+)\s+(?:dependenc\w+|packages?)\s+successfully\s+precompiled/i,
+            );
+            if (summary && precompile.total === 0) {
+                precompile.total = parseInt(summary[1]);
             }
         }
     }
@@ -430,6 +479,7 @@
         juliaReplStarted.set(false);
         juliaReplHistory.set([]);
         juliaActiveEnv.set("");
+        resetPrecompile();
     }
 
     async function runReplInput() {
@@ -790,7 +840,7 @@
             if (event.payload.kernel !== "repl") return;
             const { chunk, is_done, error } = event.payload;
             if (chunk) {
-                const lines = chunk.split("\n");
+                const lines = chunk.split("\n").map(cleanTerminalLine);
                 const alLines = lines.filter((l) =>
                     l.startsWith("__AL_CMD__:"),
                 );
@@ -939,12 +989,7 @@
             if (is_done) {
                 juliaIsRunning.set(false);
                 isStreaming = false;
-                precompile = {
-                    active: false,
-                    total: 0,
-                    done: 0,
-                    inProgress: [],
-                };
+                resetPrecompile();
                 if (streamingTimer) {
                     clearTimeout(streamingTimer);
                     streamingTimer = null;
@@ -1653,8 +1698,13 @@
                                             )}%"
                                         ></div>
                                     {:else}
+                                        <!-- Total is unknown (Julia pipes its
+                                             output, so Pkg emits no live counter);
+                                             slide an indeterminate bar so it's
+                                             clearly active rather than appearing
+                                             stuck. -->
                                         <div
-                                            class="h-full w-1/3 bg-brand-gold-400 rounded-full animate-pulse"
+                                            class="repl-indeterminate h-full w-1/3 bg-brand-gold-400 rounded-full"
                                         ></div>
                                     {/if}
                                 </div>
@@ -1810,5 +1860,25 @@
     :global(.repl-mono) {
         font-size: var(--repl-font-size, 12px);
         line-height: var(--repl-line-height, 1.3);
+    }
+
+    /* Indeterminate precompile bar: slide left→right so it reads as "working"
+       when the total package count isn't known. */
+    .repl-indeterminate {
+        animation: repl-indeterminate 1.1s ease-in-out infinite;
+        will-change: transform;
+    }
+    @keyframes repl-indeterminate {
+        0% {
+            transform: translateX(-110%);
+        }
+        100% {
+            transform: translateX(320%);
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .repl-indeterminate {
+            animation-duration: 2.2s;
+        }
     }
 </style>

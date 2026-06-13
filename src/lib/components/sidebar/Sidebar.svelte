@@ -10,11 +10,14 @@
     import FileExplorer from "$lib/components/shared/FileExplorer.svelte";
     import GlobalSearch from "$lib/components/shared/GlobalSearch.svelte";
     import TableOfContents from "$lib/components/editor/TableOfContents.svelte";
+    import StackSplitDivider from "$lib/components/shared/StackSplitDivider.svelte";
     import {
         lexicalEditorInstance,
         lexicalHistoryState,
         typstSource,
         zenMode,
+        juliaSplitRatio,
+        typstSplitRatio,
     } from "$lib/stores/editor.store";
     import {
         tabs,
@@ -23,11 +26,16 @@
         createTab,
     } from "$lib/stores/tabs.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
-    import { juliaGroups, crossGroups } from "$lib/stores/julia-terminal.store";
+    import {
+        juliaGroups,
+        typstGroups,
+        crossGroups,
+    } from "$lib/stores/julia-terminal.store";
     import type { CrossGroup } from "$lib/stores/julia-terminal.store";
     import Icon from "@iconify/svelte";
     import type { EditorTab } from "$lib/stores/tabs.store";
     import { CAN_UNDO_COMMAND, CAN_REDO_COMMAND } from "lexical";
+    import type { LexicalEditor } from "lexical";
     import type { HistoryState } from "@lexical/history";
 
     // Bootstrap: ensure at least one tab exists
@@ -177,6 +185,7 @@
     const emptyLexicalState =
         '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"type":"root","version":1}}';
     let lastRestoredForTabId: string | null = null;
+    let lastRestoredEditor: LexicalEditor | null = null;
     $effect(() => {
         const editor = $lexicalEditorInstance;
         const tab = $activeTab;
@@ -184,12 +193,19 @@
         if (!editor) {
             // Editor unmounted; reset so the next mount triggers restore
             lastRestoredForTabId = null;
+            lastRestoredEditor = null;
             return;
         }
         if (!tab || tab.type !== "lexical") return;
-        if (lastRestoredForTabId === tab.id) return; // already restored for this tab
+        // Already restored for this tab AND this editor instance. The editor
+        // is keyed too because a cross-group create/remove remounts the
+        // RichTextEditor without a tab switch — the new (empty) instance must
+        // be restored even though the tab id is unchanged.
+        if (lastRestoredForTabId === tab.id && lastRestoredEditor === editor)
+            return;
 
         lastRestoredForTabId = tab.id;
+        lastRestoredEditor = editor;
 
         if (tab.content) {
             try {
@@ -233,6 +249,53 @@
     let juliaMode = $derived(
         $hideSurahPage() && $activeTab?.type === "julia" && !activeCrossGroup,
     );
+
+    // Entering/leaving a cross group swaps the editor markup branch, which
+    // destroys and remounts the RichTextEditor WITHOUT a tab switch — so
+    // Effect A never fires and any unsaved Lexical state would be lost with
+    // the old editor instance. Flush it into its tab before the DOM swap,
+    // while the old editor is still alive ($effect.pre).
+    let prevCrossKey: string | null | undefined = undefined;
+    let prevCrossLexicalTabId: string | null = null;
+    $effect.pre(() => {
+        const cg = activeCrossGroup;
+        const key = cg?.id ?? null;
+        if (prevCrossKey !== undefined && key !== prevCrossKey) {
+            const editor = get(lexicalEditorInstance);
+            // Tab the live editor was displaying before this change: the old
+            // group's lexical member, or the active lexical tab if ungrouped.
+            const displayedId =
+                prevCrossKey !== null
+                    ? prevCrossLexicalTabId
+                    : (get(tabs).find((t) => t.id === get(activeTabId))
+                            ?.type === "lexical"
+                        ? get(activeTabId)
+                        : null);
+            if (editor && displayedId) {
+                const json = JSON.stringify(editor.getEditorState().toJSON());
+                tabs.update((ts) =>
+                    ts.map((t) =>
+                        t.id === displayedId ? { ...t, content: json } : t,
+                    ),
+                );
+                const hs = get(lexicalHistoryState);
+                if (hs) {
+                    lexicalTabHistories.set(displayedId, {
+                        undoStack: [...hs.undoStack],
+                        redoStack: [...hs.redoStack],
+                    });
+                }
+            }
+        }
+        prevCrossKey = key;
+        prevCrossLexicalTabId = cg
+            ? (get(tabs).find(
+                  (t) =>
+                      (t.id === cg.hostTabId || t.id === cg.partnerTabId) &&
+                      t.type === "lexical",
+              )?.id ?? null)
+            : null;
+    });
 
     // When host=Lexical and the partner tab is active, load and auto-save Lexical host content
     const emptyLexicalStateCross =
@@ -396,26 +459,64 @@
                     <RichTextEditor />
                 {/if}
             {:else if $activeTab?.type === "typst" || $activeTab?.type === "text"}
-                <TypstEditor />
+                {@const activeTypstGroup = $typstGroups.find(
+                    (g) =>
+                        g.tabA === $activeTabId ||
+                        g.tabB === $activeTabId ||
+                        g.tabC === $activeTabId,
+                )}
+                {#if activeTypstGroup}
+                    <!-- Split view: the two primary Typst editors stack in this
+                         (left) column; the shared preview — and an optional third
+                         editor — live in the right column. tabA/tabB are explicit so
+                         the layout is stable regardless of which member is active. -->
+                    <div class="flex flex-col h-full">
+                        <div
+                            class="min-h-0 overflow-visible"
+                            style="flex: 0 0 {$typstSplitRatio}%"
+                        >
+                            <TypstEditor tabId={activeTypstGroup.tabA} />
+                        </div>
+                        <StackSplitDivider
+                            setRatio={(p) => typstSplitRatio.set(p)}
+                        />
+                        <div class="flex-1 min-h-0 overflow-visible">
+                            <TypstEditor tabId={activeTypstGroup.tabB} />
+                        </div>
+                    </div>
+                {:else}
+                    <TypstEditor />
+                {/if}
             {:else if $activeTab?.type === "julia"}
                 {@const activeGroup = $juliaGroups.find(
-                    (g) => g.tabA === $activeTabId || g.tabB === $activeTabId,
+                    (g) =>
+                        g.tabA === $activeTabId ||
+                        g.tabB === $activeTabId ||
+                        g.tabC === $activeTabId,
                 )}
-                {@const splitTabId = activeGroup
-                    ? activeGroup.tabA === $activeTabId
-                        ? activeGroup.tabB
-                        : activeGroup.tabA
-                    : null}
                 {#if juliaMode}
-                    {#if splitTabId}
-                        <!-- Split view: two Julia editors stacked, REPL panels on the right -->
+                    {#if activeGroup}
+                        <!-- Split view: the two primary Julia editors stack in this
+                             (left) column, REPL — and an optional third editor — on the
+                             right. The horizontal divider resizes the top/bottom heights.
+                             tabA/tabB are rendered explicitly so the layout is stable no
+                             matter which group member is the active tab. -->
                         <div class="flex flex-col h-full">
-                            <div class="flex-1 min-h-0 overflow-visible">
-                                <JuliaEditor hideRepl={true} />
+                            <div
+                                class="min-h-0 overflow-visible"
+                                style="flex: 0 0 {$juliaSplitRatio}%"
+                            >
+                                <JuliaEditor
+                                    tabId={activeGroup.tabA}
+                                    hideRepl={true}
+                                />
                             </div>
+                            <StackSplitDivider
+                                setRatio={(p) => juliaSplitRatio.set(p)}
+                            />
                             <div class="flex-1 min-h-0 overflow-visible">
                                 <JuliaEditor
-                                    tabId={splitTabId}
+                                    tabId={activeGroup.tabB}
                                     hideRepl={true}
                                 />
                             </div>

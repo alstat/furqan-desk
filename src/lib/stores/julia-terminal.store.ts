@@ -24,15 +24,28 @@ export const sharedTermState = writable<SharedTermState>({
     termCounter: 0,
 });
 
-/** A paired group of two Julia editors sharing split view */
+/**
+ * A group of Julia editors sharing split view. tabA/tabB stack in the left
+ * column; the optional tabC stacks on top of the shared REPL in the right
+ * column, giving a quad layout:
+ *
+ *     tabA | tabC
+ *     tabB | repl
+ */
 export type JuliaGroup = {
     id: string;       // unique group id
-    tabA: string;     // first tab id
-    tabB: string;     // second tab id
+    tabA: string;     // first tab id  (left column, top)
+    tabB: string;     // second tab id (left column, bottom)
+    tabC?: string;    // optional third tab (right column, above the REPL)
     colorIdx: number; // index into GROUP_COLORS palette
 };
 
 export const juliaGroups = writable<JuliaGroup[]>([]);
+
+/** All tab ids that belong to a Julia group (including the optional third). */
+export function juliaGroupMembers(g: JuliaGroup): string[] {
+    return g.tabC ? [g.tabA, g.tabB, g.tabC] : [g.tabA, g.tabB];
+}
 
 export function createJuliaGroup(tabA: string, tabB: string): void {
     juliaGroups.update(gs => {
@@ -43,12 +56,87 @@ export function createJuliaGroup(tabA: string, tabB: string): void {
     });
 }
 
+/** Attach a third Julia file to an existing group (right column, above REPL). */
+export function addThirdToJuliaGroup(groupId: string, tabC: string): void {
+    juliaGroups.update(gs =>
+        gs.map(g => (g.id === groupId ? { ...g, tabC } : g)),
+    );
+}
+
+/** Detach the third Julia file, leaving the two-file split intact. */
+export function detachThirdFromJuliaGroup(groupId: string): void {
+    juliaGroups.update(gs =>
+        gs.map(g => (g.id === groupId ? { ...g, tabC: undefined } : g)),
+    );
+}
+
 export function removeJuliaGroup(groupId: string): void {
     juliaGroups.update(gs => gs.filter(g => g.id !== groupId));
 }
 
 export function removeJuliaGroupByTab(tabId: string): void {
-    juliaGroups.update(gs => gs.filter(g => g.tabA !== tabId && g.tabB !== tabId));
+    juliaGroups.update(gs =>
+        gs
+            // Closing the third file degrades the group back to a two-file split…
+            .map(g => (g.tabC === tabId ? { ...g, tabC: undefined } : g))
+            // …but closing either primary file dissolves the whole group.
+            .filter(g => g.tabA !== tabId && g.tabB !== tabId),
+    );
+}
+
+/**
+ * A group of Typst editors sharing split view — structurally identical to a
+ * JuliaGroup, but the fourth pane is the shared Typst preview (which follows
+ * whichever member is the active tab) instead of the REPL:
+ *
+ *     tabA | tabC
+ *     tabB | preview
+ */
+export type TypstGroup = {
+    id: string;
+    tabA: string;
+    tabB: string;
+    tabC?: string;
+    colorIdx: number;
+};
+
+export const typstGroups = writable<TypstGroup[]>([]);
+
+export function typstGroupMembers(g: TypstGroup): string[] {
+    return g.tabC ? [g.tabA, g.tabB, g.tabC] : [g.tabA, g.tabB];
+}
+
+export function createTypstGroup(tabA: string, tabB: string): void {
+    typstGroups.update(gs => {
+        const usedColors = new Set(gs.map(g => g.colorIdx));
+        let colorIdx = 0;
+        while (usedColors.has(colorIdx)) colorIdx++;
+        return [...gs, { id: crypto.randomUUID(), tabA, tabB, colorIdx }];
+    });
+}
+
+export function addThirdToTypstGroup(groupId: string, tabC: string): void {
+    typstGroups.update(gs =>
+        gs.map(g => (g.id === groupId ? { ...g, tabC } : g)),
+    );
+}
+
+export function detachThirdFromTypstGroup(groupId: string): void {
+    typstGroups.update(gs =>
+        gs.map(g => (g.id === groupId ? { ...g, tabC: undefined } : g)),
+    );
+}
+
+export function removeTypstGroup(groupId: string): void {
+    typstGroups.update(gs => gs.filter(g => g.id !== groupId));
+}
+
+export function removeTypstGroupByTab(tabId: string): void {
+    typstGroups.update(gs =>
+        gs
+            .map(g => (g.tabC === tabId ? { ...g, tabC: undefined } : g))
+            .filter(g => g.tabA !== tabId && g.tabB !== tabId),
+    );
 }
 
 /**
@@ -231,10 +319,36 @@ export async function executeJuliaCode(
 
     juliaReplHistory.update(h => [...h, { text: snippet, kind: 'input' as const, mode }]);
 
-    if (!get(juliaReplStarted)) {
-        const { openFolderPath } = await import('./tabs.store');
-        await invoke('start_julia_repl', { cwd: get(openFolderPath) });
-        juliaReplStarted.set(true);
+    try {
+        if (!get(juliaReplStarted)) {
+            // Verify Julia exists before spawning the REPL. Without this guard a
+            // missing binary rejects `start_julia_repl`, leaving `juliaIsRunning`
+            // stuck true (spinner forever) and surfacing as an unhandled rejection.
+            const status = await invoke<string>('check_julia');
+            if (status !== 'installed') {
+                juliaIsRunning.set(false);
+                juliaReplHistory.update(h => [
+                    ...h,
+                    { text: 'Julia is not installed.', kind: 'error' as const },
+                ]);
+                const { openJuliaInstallPrompt } = await import('./julia-install.store');
+                openJuliaInstallPrompt();
+                return;
+            }
+            const { openFolderPath } = await import('./tabs.store');
+            await invoke('start_julia_repl', { cwd: get(openFolderPath) });
+            juliaReplStarted.set(true);
+        }
+        await invoke('run_julia_code', { code: wrapForMode(snippet, mode) });
+    } catch (e) {
+        // Stop the spinner and report the failure inline instead of letting the
+        // rejection go unhandled.
+        juliaIsRunning.set(false);
+        const msg = String(e);
+        juliaReplHistory.update(h => [...h, { text: msg, kind: 'error' as const }]);
+        if (/not installed|set the path/i.test(msg)) {
+            const { openJuliaInstallPrompt } = await import('./julia-install.store');
+            openJuliaInstallPrompt();
+        }
     }
-    await invoke('run_julia_code', { code: wrapForMode(snippet, mode) });
 }
