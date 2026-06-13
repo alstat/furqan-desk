@@ -10,6 +10,7 @@
     import { actionBtnStyle } from '$lib/data/toolbar/toolbar';
 	import { t } from '$lib/i18n';
     import { zenMode, zenPeek } from '$lib/stores/editor.store';
+	import { bringToFront } from '$lib/stores/window-manager.store';
 
 	interface FileTreeNode {
 		name: string;
@@ -26,6 +27,126 @@
 	let rootNodes = $state<FileTreeNode[]>([]);
 	let isLoadingRoot = $state(false);
 	let loadError = $state('');
+
+	// Pinning keeps the panel open when clicking outside (no backdrop) and lets
+	// the user drag it anywhere by its header. `panelPos` is null while the panel
+	// sits at its default anchored position; once dragged it switches to fixed
+	// positioning at the stored viewport coordinates.
+	let isPinned = $state(false);
+	let panelPos = $state<{ x: number; y: number } | null>(null);
+	let panelEl = $state<HTMLElement | null>(null);
+	let _dragging = false;
+	let _dragOffsetX = 0;
+	let _dragOffsetY = 0;
+
+	// Share the global window-manager stack so clicking the panel raises it above
+	// any open dialogs (which use the same `bringToFront()` counter, base 500).
+	let zIndex = $state(50);
+	function focusPanel() {
+		zIndex = bringToFront();
+	}
+
+	function startDrag(e: PointerEvent) {
+		if (!isPinned || !panelEl) return;
+		// Let header buttons (change folder, pin, …) handle their own clicks.
+		if ((e.target as HTMLElement).closest('button')) return;
+		const rect = panelEl.getBoundingClientRect();
+		if (!panelPos) panelPos = { x: rect.left, y: rect.top };
+		_dragOffsetX = e.clientX - panelPos.x;
+		_dragOffsetY = e.clientY - panelPos.y;
+		_dragging = true;
+		window.addEventListener('pointermove', onDrag);
+		window.addEventListener('pointerup', endDrag);
+		e.preventDefault();
+	}
+
+	function onDrag(e: PointerEvent) {
+		if (!_dragging || !panelEl) return;
+		const w = panelEl.offsetWidth;
+		const h = panelEl.offsetHeight;
+		const x = Math.max(0, Math.min(e.clientX - _dragOffsetX, window.innerWidth - w));
+		const y = Math.max(0, Math.min(e.clientY - _dragOffsetY, window.innerHeight - h));
+		panelPos = { x, y };
+	}
+
+	function endDrag() {
+		_dragging = false;
+		window.removeEventListener('pointermove', onDrag);
+		window.removeEventListener('pointerup', endDrag);
+	}
+
+	// Resizing (pinned only). Like dragging, the panel keeps its default Tailwind
+	// size until the first resize, then switches to an explicit width/height. The
+	// n/w handles move the top-left corner, so resizing initialises `panelPos`
+	// (switching to fixed positioning) the same way dragging does.
+	const MIN_W = 200;
+	const MIN_H = 160;
+	let panelSize = $state<{ w: number; h: number } | null>(null);
+
+	type ResizeDir = { e: boolean; w: boolean; n: boolean; s: boolean };
+	const resizeHandles: Array<{ cls: string; dir: ResizeDir }> = [
+		{ cls: 'resize-n', dir: { n: true, s: false, e: false, w: false } },
+		{ cls: 'resize-s', dir: { n: false, s: true, e: false, w: false } },
+		{ cls: 'resize-e', dir: { n: false, s: false, e: true, w: false } },
+		{ cls: 'resize-w', dir: { n: false, s: false, e: false, w: true } },
+		{ cls: 'resize-ne', dir: { n: true, s: false, e: true, w: false } },
+		{ cls: 'resize-se', dir: { n: false, s: true, e: true, w: false } },
+		{ cls: 'resize-sw', dir: { n: false, s: true, e: false, w: true } },
+		{ cls: 'resize-nw', dir: { n: true, s: false, e: false, w: true } },
+	];
+	let _resizeDir: ResizeDir = { e: false, w: false, n: false, s: false };
+	let _resizeStartX = 0,
+		_resizeStartY = 0,
+		_resizeStartW = 0,
+		_resizeStartH = 0,
+		_resizeStartPanelX = 0,
+		_resizeStartPanelY = 0;
+
+	function startResize(e: PointerEvent, dir: ResizeDir) {
+		if (!panelEl) return;
+		e.preventDefault();
+		e.stopPropagation();
+		const rect = panelEl.getBoundingClientRect();
+		if (!panelPos) panelPos = { x: rect.left, y: rect.top };
+		if (!panelSize) panelSize = { w: rect.width, h: rect.height };
+		_resizeDir = dir;
+		_resizeStartX = e.clientX;
+		_resizeStartY = e.clientY;
+		_resizeStartW = panelSize.w;
+		_resizeStartH = panelSize.h;
+		_resizeStartPanelX = panelPos.x;
+		_resizeStartPanelY = panelPos.y;
+		document.body.style.userSelect = 'none';
+		window.addEventListener('pointermove', onResize);
+		window.addEventListener('pointerup', stopResize, { once: true });
+	}
+
+	function onResize(e: PointerEvent) {
+		if (!panelSize || !panelPos) return;
+		const dx = e.clientX - _resizeStartX;
+		const dy = e.clientY - _resizeStartY;
+		let newW = _resizeStartW;
+		let newH = _resizeStartH;
+		let newX = _resizeStartPanelX;
+		let newY = _resizeStartPanelY;
+		if (_resizeDir.e) newW = Math.max(MIN_W, _resizeStartW + dx);
+		if (_resizeDir.s) newH = Math.max(MIN_H, _resizeStartH + dy);
+		if (_resizeDir.w) {
+			newW = Math.max(MIN_W, _resizeStartW - dx);
+			newX = _resizeStartPanelX + (_resizeStartW - newW);
+		}
+		if (_resizeDir.n) {
+			newH = Math.max(MIN_H, _resizeStartH - dy);
+			newY = _resizeStartPanelY + (_resizeStartH - newH);
+		}
+		panelSize = { w: newW, h: newH };
+		panelPos = { x: newX, y: newY };
+	}
+
+	function stopResize() {
+		document.body.style.userSelect = '';
+		window.removeEventListener('pointermove', onResize);
+	}
 
 	let folderName = $derived($openFolderPath?.split('/').pop() ?? '');
 	let isRtl = $derived($surahOrientation() === 'flex-row-reverse');
@@ -65,6 +186,10 @@
 	onDestroy(() => {
 		if (_unwatch) _unwatch();
 		if (_refreshTimer) clearTimeout(_refreshTimer);
+		window.removeEventListener('pointermove', onDrag);
+		window.removeEventListener('pointerup', endDrag);
+		window.removeEventListener('pointermove', onResize);
+		document.body.style.userSelect = '';
 	});
 
 	async function setupWatcher(folder: string) {
@@ -270,64 +395,94 @@
 		}
 		return false;
 	}
+
+	function togglePanel() {
+		isOpen = !isOpen;
+		// A fresh open always returns to the default anchored position and size,
+		// discarding any spot/size from a previous (pinned) session.
+		if (isOpen) {
+			panelPos = null;
+			panelSize = null;
+		}
+	}
 </script>
 
 <!-- File Explorer button — outside the editor content div on the left (LTR) or right (RTL), same vertical level as CollapsibleSidebar toggle -->
 <button
 	class="cursor-pointer absolute -left-5 top-1/3 z-3 {actionBtnStyle} {isOpen ? 'bg-brand-gold-400 dark:bg-[#363a4f]' : ''} {$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}"
-	onclick={() => (isOpen = !isOpen)}
+	onclick={togglePanel}
 	aria-label="File Explorer"
 	title="File Explorer"
 >
 	<Icon icon="solar:folder-with-files-bold-duotone" class="h-4 w-4" />
 </button>
 
-<!-- Backdrop -->
-{#if isOpen}
+<!-- Backdrop — omitted while pinned so the panel stays open on outside clicks -->
+{#if isOpen && !isPinned}
 	<div role="presentation" class="fixed inset-0 z-10" onclick={() => (isOpen = false)} onkeydown={() => {}}></div>
 {/if}
 
 <!-- Floating panel — opens to the left (LTR) or right (RTL) of the editor, ~1/3 height -->
 {#if isOpen}
 	<div
+		bind:this={panelEl}
+		role="presentation"
+		onpointerdown={focusPanel}
 		transition:fly={{ x: isRtl ? 8 : -8, duration: 180, opacity: 0 }}
-		class="absolute top-1/3 left-1.5 ml-2 z-50 rounded-3xl w-60 max-h-[33vh] bg-white dark:bg-[#292c3c]
+		class="{panelPos ? 'fixed' : 'absolute top-1/3 left-1.5 ml-2'} rounded-3xl {panelSize ? '' : 'w-60 max-h-[33vh]'} bg-white dark:bg-[#292c3c]
 		       border border-stone-200 dark:border-[#414559]
 		       shadow-xl shadow-black/15 dark:shadow-black/40
 		       flex flex-col overflow-hidden"
+		style="z-index:{zIndex};{panelPos ? ` left:${panelPos.x}px; top:${panelPos.y}px;` : ''}{panelSize ? ` width:${panelSize.w}px; height:${panelSize.h}px;` : ''}"
 	>
-		<!-- Panel header -->
-		<div class="shrink-0 px-3 py-2 border-b border-stone-200 dark:border-[#414559]
-		            bg-brand-sand-50 dark:bg-[#232634] flex items-center justify-between gap-2">
-			{#if $openFolderPath}
-				<span
-					class="text-[10px] font-semibold uppercase tracking-wide
-					       text-brand-charcoal-300 dark:text-[#838ba7] truncate flex-1"
-					title={$openFolderPath}
-				>
-					{folderName}
-				</span>
-				<button
-					onclick={openFolder}
-					class="cursor-pointer shrink-0 text-[10px] font-semibold text-brand-charcoal-300
-					       dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890]
-					       transition-colors"
-				>
-					{$t('explorer.change')}
-				</button>
-			{:else}
-				<button
-					onclick={openFolder}
-					class="cursor-pointer w-full px-3 py-1 text-[11px] font-semibold rounded-full
-					       border border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
-					       dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559]
-					       text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors
-					       flex items-center justify-center gap-1.5"
-				>
-					<Icon icon="solar:folder-with-files-bold-duotone" width="0.85rem" />
-					{$t('explorer.open_folder')}
-				</button>
-			{/if}
+		<!-- Panel header — doubles as the drag handle while pinned -->
+		<div
+			role="presentation"
+			onpointerdown={startDrag}
+			class="shrink-0 px-3 py-2 border-b border-stone-200 dark:border-[#414559]
+			       bg-brand-sand-50 dark:bg-[#232634] flex items-center justify-between gap-2 select-none {isPinned ? 'cursor-move' : ''}"
+		>
+			<div class="flex items-center gap-2 flex-1 min-w-0">
+				{#if $openFolderPath}
+					<span
+						class="text-[10px] font-semibold uppercase tracking-wide
+						       text-brand-charcoal-300 dark:text-[#838ba7] truncate flex-1"
+						title={$openFolderPath}
+					>
+						{folderName}
+					</span>
+					<button
+						onclick={openFolder}
+						class="cursor-pointer shrink-0 text-[10px] font-semibold text-brand-charcoal-300
+						       dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890]
+						       transition-colors"
+					>
+						{$t('explorer.change')}
+					</button>
+				{:else}
+					<button
+						onclick={openFolder}
+						class="cursor-pointer w-full px-3 py-1 text-[11px] font-semibold rounded-full
+						       border border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
+						       dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559]
+						       text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors
+						       flex items-center justify-center gap-1.5"
+					>
+						<Icon icon="solar:folder-with-files-bold-duotone" width="0.85rem" />
+						{$t('explorer.open_folder')}
+					</button>
+				{/if}
+			</div>
+			<button
+				onclick={() => (isPinned = !isPinned)}
+				class="cursor-pointer shrink-0 rounded-full p-1 transition-colors {isPinned
+					? 'text-brand-gold-500 dark:text-[#e5c890] bg-brand-gold-100 dark:bg-[#363a4f]'
+					: 'text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890]'}"
+				title={isPinned ? 'Unpin panel' : 'Pin panel'}
+				aria-label={isPinned ? 'Unpin panel' : 'Pin panel'}
+			>
+				<Icon icon="solar:pin-bold-duotone" width="0.85rem" />
+			</button>
 		</div>
 
 		<!-- Root-level error banner with Back / Retry actions -->
@@ -377,6 +532,17 @@
 				{@render treeNodes(rootNodes, 0)}
 			{/if}
 		</div>
+
+		<!-- Resize handles — only while pinned so the panel can be sized to taste -->
+		{#if isPinned}
+			{#each resizeHandles as { cls, dir }}
+				<div
+					aria-hidden="true"
+					class="resize-handle {cls}"
+					onpointerdown={(e) => startResize(e, dir)}
+				></div>
+			{/each}
+		{/if}
 	</div>
 {/if}
 
@@ -482,3 +648,39 @@
 		{/if}
 	{/each}
 {/snippet}
+
+<style>
+	.resize-handle { position: absolute; z-index: 10; }
+	.resize-n { top: 0; left: 10px; right: 10px; height: 6px; cursor: n-resize; }
+	.resize-s { bottom: 0; left: 10px; right: 10px; height: 6px; cursor: s-resize; }
+	.resize-e { top: 10px; right: 0; bottom: 10px; width: 6px; cursor: e-resize; }
+	.resize-w { top: 10px; left: 0; bottom: 10px; width: 6px; cursor: w-resize; }
+	.resize-ne { top: 0; right: 0; width: 14px; height: 14px; cursor: ne-resize; }
+	.resize-se { bottom: 0; right: 0; width: 20px; height: 20px; cursor: se-resize; }
+	.resize-sw { bottom: 0; left: 0; width: 14px; height: 14px; cursor: sw-resize; }
+	.resize-nw { top: 0; left: 0; width: 14px; height: 14px; cursor: nw-resize; }
+	.resize-se::before {
+		content: "";
+		position: absolute;
+		bottom: 11px;
+		right: 11px;
+		width: 5px;
+		height: 5px;
+		border-bottom: 1.5px solid rgba(130, 130, 130, 0.4);
+		border-right: 1.5px solid rgba(130, 130, 130, 0.4);
+		border-bottom-right-radius: 5px;
+		pointer-events: none;
+	}
+	.resize-se::after {
+		content: "";
+		position: absolute;
+		bottom: 7px;
+		right: 7px;
+		width: 9px;
+		height: 9px;
+		border-bottom: 1.5px solid rgba(130, 130, 130, 0.55);
+		border-right: 1.5px solid rgba(130, 130, 130, 0.55);
+		border-bottom-right-radius: 9px;
+		pointer-events: none;
+	}
+</style>

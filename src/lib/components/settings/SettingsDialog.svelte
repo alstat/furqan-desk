@@ -7,6 +7,8 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         customFontFamilies,
         typstPreviewDarkMode,
         editorIndentSize,
+        uiFontScale,
+        UI_FONT_SCALE_BOUNDS,
     } from '$lib/stores/editor.store';
     import { openCustomFontDialog } from '$lib/stores/custom-font-dialog.store';
     import { restartTour } from '$lib/stores/tour.store';
@@ -46,6 +48,19 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     const rowLabel = 'text-xs text-slate-600 dark:text-[#c6d0f5]';
     const actionBtn =
         'cursor-pointer flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors';
+    const stepBtn =
+        'cursor-pointer flex items-center justify-center w-7 h-7 rounded-full border border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
+
+    // ── UI font scale (accessibility) ────────────────────────────────────────
+    function decUiFontScale() {
+        uiFontScale.set($uiFontScale - UI_FONT_SCALE_BOUNDS.step);
+    }
+    function incUiFontScale() {
+        uiFontScale.set($uiFontScale + UI_FONT_SCALE_BOUNDS.step);
+    }
+    function resetUiFontScale() {
+        uiFontScale.set(UI_FONT_SCALE_BOUNDS.default);
+    }
 
     // ── Manuscript cache size ─────────────────────────────────────────────────
     let manuscriptCacheSize = $state<string | null>(null);
@@ -212,6 +227,54 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                                     : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                         >
                             {$t('common.enabled')}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accessibility -->
+            <div>
+                <p class={sectionLabel}>{$t('settings.accessibility')}</p>
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <span class={rowLabel}>{$t('settings.accessibility.ui_font')}</span>
+                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                            {$t('settings.accessibility.ui_font.desc')}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button
+                            onclick={decUiFontScale}
+                            disabled={$uiFontScale <= UI_FONT_SCALE_BOUNDS.min}
+                            class={stepBtn}
+                            aria-label={$t('settings.accessibility.ui_font.decrease')}
+                            title={$t('settings.accessibility.ui_font.decrease')}
+                        >
+                            <svg width="10" height="2" viewBox="0 0 10 2" fill="none">
+                                <line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                        <span class="w-11 text-center text-xs font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]">
+                            {Math.round($uiFontScale * 100)}%
+                        </span>
+                        <button
+                            onclick={incUiFontScale}
+                            disabled={$uiFontScale >= UI_FONT_SCALE_BOUNDS.max}
+                            class={stepBtn}
+                            aria-label={$t('settings.accessibility.ui_font.increase')}
+                            title={$t('settings.accessibility.ui_font.increase')}
+                        >
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                <line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                        <button
+                            onclick={resetUiFontScale}
+                            disabled={$uiFontScale === UI_FONT_SCALE_BOUNDS.default}
+                            class="{actionBtn} disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            {$t('settings.accessibility.ui_font.reset')}
                         </button>
                     </div>
                 </div>

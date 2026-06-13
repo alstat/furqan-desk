@@ -1,22 +1,8 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
-	import { open as openDialog } from '@tauri-apps/plugin-dialog';
-	import { readTextFile } from '@tauri-apps/plugin-fs';
-	import { openOrFocusTab } from '$lib/stores/tabs.store';
+	import { openFile } from '$lib/actions/fileActions';
 	import { actionBtnStyle } from '$lib/data/toolbar/toolbar';
 	import { t } from '$lib/i18n';
-
-	async function openFile() {
-		const result = await openDialog({
-			multiple: false,
-			filters: [
-				{ name: 'All Supported Files', extensions: ['typ', 'bib', 'txt', 'md', 'lexical', 'json', 'jl'] }
-			]
-		});
-		if (!result || Array.isArray(result)) return;
-		const content = await readTextFile(result as string);
-		openOrFocusTab(result as string, content);
-	}
 </script>
 
 <button

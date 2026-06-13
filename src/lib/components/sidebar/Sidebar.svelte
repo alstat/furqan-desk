@@ -10,11 +10,14 @@
     import FileExplorer from "$lib/components/shared/FileExplorer.svelte";
     import GlobalSearch from "$lib/components/shared/GlobalSearch.svelte";
     import TableOfContents from "$lib/components/editor/TableOfContents.svelte";
+    import StackSplitDivider from "$lib/components/shared/StackSplitDivider.svelte";
     import {
         lexicalEditorInstance,
         lexicalHistoryState,
         typstSource,
         zenMode,
+        juliaSplitRatio,
+        typstSplitRatio,
     } from "$lib/stores/editor.store";
     import {
         tabs,
@@ -23,7 +26,11 @@
         createTab,
     } from "$lib/stores/tabs.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
-    import { juliaGroups, crossGroups } from "$lib/stores/julia-terminal.store";
+    import {
+        juliaGroups,
+        typstGroups,
+        crossGroups,
+    } from "$lib/stores/julia-terminal.store";
     import type { CrossGroup } from "$lib/stores/julia-terminal.store";
     import Icon from "@iconify/svelte";
     import type { EditorTab } from "$lib/stores/tabs.store";
@@ -452,26 +459,64 @@
                     <RichTextEditor />
                 {/if}
             {:else if $activeTab?.type === "typst" || $activeTab?.type === "text"}
-                <TypstEditor />
+                {@const activeTypstGroup = $typstGroups.find(
+                    (g) =>
+                        g.tabA === $activeTabId ||
+                        g.tabB === $activeTabId ||
+                        g.tabC === $activeTabId,
+                )}
+                {#if activeTypstGroup}
+                    <!-- Split view: the two primary Typst editors stack in this
+                         (left) column; the shared preview — and an optional third
+                         editor — live in the right column. tabA/tabB are explicit so
+                         the layout is stable regardless of which member is active. -->
+                    <div class="flex flex-col h-full">
+                        <div
+                            class="min-h-0 overflow-visible"
+                            style="flex: 0 0 {$typstSplitRatio}%"
+                        >
+                            <TypstEditor tabId={activeTypstGroup.tabA} />
+                        </div>
+                        <StackSplitDivider
+                            setRatio={(p) => typstSplitRatio.set(p)}
+                        />
+                        <div class="flex-1 min-h-0 overflow-visible">
+                            <TypstEditor tabId={activeTypstGroup.tabB} />
+                        </div>
+                    </div>
+                {:else}
+                    <TypstEditor />
+                {/if}
             {:else if $activeTab?.type === "julia"}
                 {@const activeGroup = $juliaGroups.find(
-                    (g) => g.tabA === $activeTabId || g.tabB === $activeTabId,
+                    (g) =>
+                        g.tabA === $activeTabId ||
+                        g.tabB === $activeTabId ||
+                        g.tabC === $activeTabId,
                 )}
-                {@const splitTabId = activeGroup
-                    ? activeGroup.tabA === $activeTabId
-                        ? activeGroup.tabB
-                        : activeGroup.tabA
-                    : null}
                 {#if juliaMode}
-                    {#if splitTabId}
-                        <!-- Split view: two Julia editors stacked, REPL panels on the right -->
+                    {#if activeGroup}
+                        <!-- Split view: the two primary Julia editors stack in this
+                             (left) column, REPL — and an optional third editor — on the
+                             right. The horizontal divider resizes the top/bottom heights.
+                             tabA/tabB are rendered explicitly so the layout is stable no
+                             matter which group member is the active tab. -->
                         <div class="flex flex-col h-full">
-                            <div class="flex-1 min-h-0 overflow-visible">
-                                <JuliaEditor hideRepl={true} />
+                            <div
+                                class="min-h-0 overflow-visible"
+                                style="flex: 0 0 {$juliaSplitRatio}%"
+                            >
+                                <JuliaEditor
+                                    tabId={activeGroup.tabA}
+                                    hideRepl={true}
+                                />
                             </div>
+                            <StackSplitDivider
+                                setRatio={(p) => juliaSplitRatio.set(p)}
+                            />
                             <div class="flex-1 min-h-0 overflow-visible">
                                 <JuliaEditor
-                                    tabId={splitTabId}
+                                    tabId={activeGroup.tabB}
                                     hideRepl={true}
                                 />
                             </div>
