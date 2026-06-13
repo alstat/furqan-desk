@@ -100,7 +100,7 @@
             return {
                 background: "#303446",
                 foreground: "#a5adce",
-                cursor: "#f4b8e4",
+                cursor: "#e5c890",
                 cursorAccent: "#303446",
                 selectionBackground: "#3a3f57",
                 black: "#51576d",
@@ -124,7 +124,7 @@
         return {
             background: "#faf7f2",
             foreground: "#707070",
-            cursor: "#d33682",
+            cursor: "#c8a96a",
             cursorAccent: "#faf7f2",
             selectionBackground: "#cfe3ff",
             black: "#707070",

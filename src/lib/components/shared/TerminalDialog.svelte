@@ -163,7 +163,7 @@
             return {
                 background: "#292c3c",
                 foreground: "#c6d0f5",
-                cursor: "#f4b8e4",
+                cursor: "#e5c890",
                 cursorAccent: "#232634",
                 selectionBackground: "#3a3f57",
                 black: "#51576d",
@@ -187,7 +187,7 @@
         return {
             background: "#ffffff",
             foreground: "#3c3c3c",
-            cursor: "#d33682",
+            cursor: "#c8a96a",
             cursorAccent: "#fafafa",
             selectionBackground: "#cfe3ff",
             black: "#3c3c3c",
