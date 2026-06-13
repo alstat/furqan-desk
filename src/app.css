@@ -336,6 +336,48 @@ html.dark .ayah-playing {
     -ms-overflow-style: -ms-autohiding-scrollbar;
 }
 
+/* ── Terminal (xterm) viewport ─────────────────────────────────────────────
+   xterm keeps a native viewport scrollbar plus its own generated scrollbar DOM.
+   Hide both visual scrollbars in terminal panes to avoid a persistent pale right
+   strip on systems that keep scrollbars visible. Wheel/trackpad scrollback still
+   works through xterm's scroll model. */
+.xterm .xterm-viewport {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.xterm .xterm-viewport::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+.xterm .xterm-viewport::-webkit-scrollbar-track,
+.xterm .xterm-viewport::-webkit-scrollbar-corner {
+    background: var(--terminal-bg, transparent);
+}
+.xterm .xterm-viewport::-webkit-scrollbar-thumb {
+    background-color: #c6c6c582;
+    border-radius: 9999px;
+    border: 2px solid var(--terminal-bg, transparent);
+    background-clip: padding-box;
+}
+.xterm .xterm-scrollable-element > .scrollbar {
+    display: none !important;
+}
+
+/* Dark mode: override the html.dark baseline for the native viewport scrollbar. */
+html.dark .xterm .xterm-viewport {
+    scrollbar-width: none;
+}
+html.dark .xterm .xterm-viewport::-webkit-scrollbar-track,
+html.dark .xterm .xterm-viewport::-webkit-scrollbar-corner {
+    background: var(--terminal-bg, transparent);
+}
+html.dark .xterm .xterm-viewport::-webkit-scrollbar-thumb {
+    background-color: #62688082;
+    border: 2px solid var(--terminal-bg, transparent);
+    background-clip: padding-box;
+}
+
 /* ── CodeMirror scroller (JuliaEditor, TypstEditor) ────────────────────────
    Mirrors .default-scroll: thin, hidden by default, reveals on hover.
    These rules need to come after the html.dark global rules above so they

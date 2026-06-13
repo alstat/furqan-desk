@@ -1842,6 +1842,7 @@
     {#if ts.termTabs.length > 0}
         <div
             class="relative flex-1 min-h-0 bg-brand-sand-50 dark:bg-[#303446]"
+            style:--terminal-bg={$appDarkMode ? "#303446" : "#faf7f2"}
             style="display: {ts.activePanel !== 'julia' ? 'block' : 'none'};"
         >
             {#each ts.termTabs as tab (tab.id)}
@@ -1860,6 +1861,19 @@
     :global(.repl-mono) {
         font-size: var(--repl-font-size, 12px);
         line-height: var(--repl-line-height, 1.3);
+    }
+
+    /* Keep every xterm-owned surface on the same background color so a
+       persistent scrollbar gutter blends into the terminal instead of reading as
+       a pale right border when the OS keeps scrollbars visible. */
+    :global(.xterm) {
+        background-color: var(--terminal-bg, transparent);
+    }
+    :global(.xterm .xterm-viewport),
+    :global(.xterm .xterm-screen),
+    :global(.xterm .xterm-scrollable-element),
+    :global(.xterm .xterm-scrollable-element > .scrollbar) {
+        background-color: var(--terminal-bg, transparent) !important;
     }
 
     /* Indeterminate precompile bar: slide left→right so it reads as "working"

@@ -285,6 +285,57 @@
             addThirdForGroupId = null;
             addThirdPos = null;
         }
+        if (
+            contextMenuTabId !== null &&
+            !target.closest("[data-context-menu]")
+        ) {
+            closeContextMenu();
+        }
+    }
+
+    // ── Right-click context menu (Close Others / Left / Right) ──
+    let contextMenuTabId = $state<string | null>(null);
+    let contextMenuPos = $state<{ x: number; y: number } | null>(null);
+
+    function openContextMenu(e: MouseEvent, tabId: string) {
+        e.preventDefault();
+        e.stopPropagation();
+        contextMenuTabId = tabId;
+        contextMenuPos = { x: e.clientX, y: e.clientY };
+    }
+
+    function closeContextMenu() {
+        contextMenuTabId = null;
+        contextMenuPos = null;
+    }
+
+    /** Close the given tabs sequentially so each unsaved-changes prompt resolves before the next. */
+    async function closeMany(ids: string[]) {
+        for (const id of ids) {
+            await tryClose(id);
+        }
+    }
+
+    function closeOthers(tabId: string) {
+        const ids = $tabs.filter((t) => t.id !== tabId).map((t) => t.id);
+        closeContextMenu();
+        closeMany(ids);
+    }
+
+    function closeLeft(tabId: string) {
+        const idx = $tabs.findIndex((t) => t.id === tabId);
+        if (idx < 0) return;
+        const ids = $tabs.slice(0, idx).map((t) => t.id);
+        closeContextMenu();
+        closeMany(ids);
+    }
+
+    function closeRight(tabId: string) {
+        const idx = $tabs.findIndex((t) => t.id === tabId);
+        if (idx < 0) return;
+        const ids = $tabs.slice(idx + 1).map((t) => t.id);
+        closeContextMenu();
+        closeMany(ids);
     }
 
     // ── Drag-to-reorder (pointer events — HTML5 DnD drop doesn't fire in WKWebView) ──
@@ -407,6 +458,8 @@
     }
 
     function handleTabPointerDown(e: PointerEvent, tabId: string): void {
+        // Only the primary (left) button initiates a drag — right-click opens the menu.
+        if (e.button !== 0) return;
         // Only skip the dedicated action buttons (close, split, unlink)
         if ((e.target as HTMLElement | null)?.closest('[data-no-drag]')) return;
         _pointerDownTabId = tabId;
@@ -550,6 +603,7 @@
             aria-roledescription="draggable tab"
             aria-label="{tab.name} tab, draggable"
             onpointerdown={(e) => handleTabPointerDown(e, tab.id)}
+            oncontextmenu={(e) => openContextMenu(e, tab.id)}
         >
             {#if dropTargetId === tab.id && dropSide === "before"}
                 <div aria-hidden="true" class="absolute left-0 top-0 bottom-0 w-0.5 bg-amber-400 z-50 pointer-events-none rounded-full"></div>
@@ -794,6 +848,44 @@
             {/each}
         </div>
     {/if}
+{/if}
+
+<!-- Tab context menu — Close Others / Close Left / Close Right -->
+{#if contextMenuTabId !== null && contextMenuPos !== null}
+    {@const ctxIdx = $tabs.findIndex((t) => t.id === contextMenuTabId)}
+    {@const hasOthers = $tabs.length > 1}
+    {@const hasLeft = ctxIdx > 0}
+    {@const hasRight = ctxIdx >= 0 && ctxIdx < $tabs.length - 1}
+    <div
+        data-context-menu
+        style="position: fixed; left: {contextMenuPos.x}px; top: {contextMenuPos.y}px; transform: translateY(calc(-100% - 4px)); z-index: 9999;"
+        class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-2xl shadow-xl p-1.5 min-w-40"
+    >
+        <button
+            disabled={!hasOthers}
+            onclick={() => closeOthers(contextMenuTabId!)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] disabled:opacity-40 disabled:cursor-default disabled:hover:bg-transparent disabled:dark:hover:bg-transparent"
+        >
+            <Icon icon="solar:close-circle-bold-duotone" width="0.85rem" class="shrink-0" />
+            Close Others
+        </button>
+        <button
+            disabled={!hasLeft}
+            onclick={() => closeLeft(contextMenuTabId!)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] disabled:opacity-40 disabled:cursor-default disabled:hover:bg-transparent disabled:dark:hover:bg-transparent"
+        >
+            <Icon icon="solar:square-arrow-left-bold-duotone" width="0.85rem" class="shrink-0" />
+            Close Left
+        </button>
+        <button
+            disabled={!hasRight}
+            onclick={() => closeRight(contextMenuTabId!)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] disabled:opacity-40 disabled:cursor-default disabled:hover:bg-transparent disabled:dark:hover:bg-transparent"
+        >
+            <Icon icon="solar:square-arrow-right-bold-duotone" width="0.85rem" class="shrink-0" />
+            Close Right
+        </button>
+    </div>
 {/if}
 
 <style>
