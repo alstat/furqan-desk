@@ -558,7 +558,7 @@
 		{#if node.isDirectory}
 			<button
 				onclick={() => toggleDirectory(node)}
-				class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[11px]
+				class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[13px]
 				       text-brand-charcoal-500 dark:text-[#c6d0f5]
 				       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
 				       rounded-full transition-colors font-mono text-left"
@@ -609,7 +609,7 @@
 		{:else if isImageFile(node.name) || isPdfFile(node.name)}
 			<button
 				ondblclick={() => openMedia(node)}
-				class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[11px]
+				class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[13px]
 				       text-brand-charcoal-500 dark:text-[#c6d0f5]
 				       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 				       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
@@ -630,7 +630,7 @@
 			<button
 				onclick={() => previewFile(node)}
 				ondblclick={() => openFile(node)}
-				class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[11px]
+				class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[13px]
 				       text-brand-charcoal-500 dark:text-[#c6d0f5]
 				       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 				       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
