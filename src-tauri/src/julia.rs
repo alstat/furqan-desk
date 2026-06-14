@@ -884,6 +884,14 @@ pub async fn start_julia_repl(
     // spawn() on TokioCommand is synchronous — no await needed
     let mut cmd = TokioCommand::new(julia);
     cmd.arg("--startup-file=no")
+        // Cap the GC heap target. Without this, Julia 1.10's GC sizes its heap
+        // relative to *total* physical RAM and is slow to return memory to the
+        // OS, so each kernel can balloon toward ~half of RAM. We run up to two
+        // kernels concurrently ("repl" + "cell"), so hint each to 25% of
+        // physical memory (≤50% combined). It's a hint, not a hard cap, so
+        // genuinely large workloads can still exceed it, but idle/typical RSS
+        // drops dramatically. Julia 1.10+ accepts the percentage form.
+        .arg("--heap-size-hint=25%")
         .arg("-e")
         .arg(BOOT_SCRIPT)
         .env("AL_BONITO_PORT", bonito_port(&kernel).to_string())

@@ -1111,7 +1111,7 @@
     });
 
     // ── Settings popover ──────────────────────────────────────────────────────
-    const REPL_FONT_BOUNDS = { min: 9, max: 24, default: 12 };
+    const REPL_FONT_BOUNDS = { min: 9, max: 24, default: 13 };
     const REPL_LINE_BOUNDS = { min: 1.0, max: 2.0, default: 1.3 };
 
     let showSettings = $state(false);
@@ -1859,7 +1859,7 @@
 
 <style>
     :global(.repl-mono) {
-        font-size: var(--repl-font-size, 12px);
+        font-size: var(--repl-font-size, 13px);
         line-height: var(--repl-line-height, 1.3);
     }
 

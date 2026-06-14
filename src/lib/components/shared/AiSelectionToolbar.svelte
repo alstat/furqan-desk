@@ -18,6 +18,9 @@
         onReplace?: (replacement: string) => void;
         onClose?: () => void;
         askOnly?: boolean;
+        /** Source language of the selection (e.g. "julia", "typst"); when set,
+         *  code transforms annotate their edits with brief inline comments. */
+        language?: string;
     }
 
     let {
@@ -29,6 +32,7 @@
         onReplace,
         onClose,
         askOnly = false,
+        language,
     }: Props = $props();
 
     let promptOpen = $state(false);
@@ -86,6 +90,7 @@
                 customPrompt,
                 contextPrompt,
                 tone,
+                language,
             });
             onReplace?.(replacement);
             onClose?.();

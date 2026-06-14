@@ -275,7 +275,7 @@ function loadReplFontSize(): number {
   } catch {
     /* ignore */
   }
-  return 12;
+  return 13;
 }
 
 const _replFontSize = writable<number>(loadReplFontSize());
