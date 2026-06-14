@@ -115,6 +115,13 @@ const diffGutter = gutter({
             default: return null;
         }
     },
+    // By default the gutter only recomputes markers on doc/viewport changes, so a
+    // baseline update (an effect-only transaction, e.g. when the git HEAD for a
+    // freshly-activated tab finishes loading) would leave stale bars until the
+    // next interaction. Refresh whenever the diff state changes identity.
+    lineMarkerChange: (update) =>
+        update.startState.field(diffField, false) !==
+        update.state.field(diffField, false),
     initialSpacer: () => spacerMarker,
 });
 
@@ -124,20 +131,31 @@ const diffTheme = EditorView.baseTheme({
         padding: '0',
         backgroundColor: 'transparent',
         border: 'none',
+        overflow: 'visible',
     },
-    '.cm-gitDiff-gutter .cm-gutterElement': { padding: '0' },
+    '.cm-gitDiff-gutter .cm-gutterElement': {
+        padding: '0',
+        position: 'relative',
+        overflow: 'visible',
+    },
     '.cm-gitDiff-bar': { width: '3px', height: '100%' },
     '.cm-gitDiff-added': { backgroundColor: '#3fb950' },
     '.cm-gitDiff-modified': { backgroundColor: '#d29922' },
-    '.cm-gitDiff-deletedAbove': {
+    // Deletions render as a small right-pointing red triangle anchored at the
+    // line seam (top edge for a deletion above, bottom edge for one below),
+    // matching the affordance used by VS Code / Zed.
+    '.cm-gitDiff-deletedAbove, .cm-gitDiff-deletedBelow': {
+        position: 'absolute',
+        left: '0',
+        width: '0',
         height: '0',
-        borderTop: '4px solid #f85149',
+        borderTop: '4px solid transparent',
+        borderBottom: '4px solid transparent',
+        borderLeft: '6px solid #f85149',
+        backgroundColor: 'transparent',
     },
-    '.cm-gitDiff-deletedBelow': {
-        height: '0',
-        marginTop: 'auto',
-        borderBottom: '4px solid #f85149',
-    },
+    '.cm-gitDiff-deletedAbove': { top: '-4px' },
+    '.cm-gitDiff-deletedBelow': { bottom: '-4px' },
 });
 
 export function gitDiffGutter(): Extension {

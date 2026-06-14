@@ -32,6 +32,8 @@
     }
 </script>
 
+<svelte:window onkeydown={(e) => { if (isOpen && e.key === 'Escape') onClose(); }} />
+
 {#if isOpen}
     <div
         role="dialog"

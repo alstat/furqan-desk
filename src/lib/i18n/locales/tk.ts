@@ -88,6 +88,8 @@ export const tk: Record<string, string> = {
   "sukun.show_icons": "Nyşanlary görkezmek",
   "settings.zen": "Sukūn re'jimy",
   "settings.zen.desc": "Ünsüňi bölmeýän redaktirlemek — serhetleri, kölegeleri aýyrýar we interfeýs nyşanlaryny garaňkyladýar",
+  "settings.zen.tabs_opacity": "Sukūn re'jiminde tablaryň durulygy",
+  "settings.zen.tabs_opacity.desc": "Sukūn re'jiminde redaktor tablarynyň durulygy (0% olaryň üstüne barylýança gizleýär)",
   "settings.privacy": "Gizlinlik",
   "settings.privacy.text":
     "AyahLab doly awtonom işleýär. Hasap ýok, telemetriýa ýok, analitika ýok. Bellikler, sahypa bellikleri we sazlamalar diňe enjamyňyzda saklanýar — awtor maglumatlarňyza girmek mümkinçiligine eýe däl.",

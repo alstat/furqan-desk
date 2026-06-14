@@ -275,7 +275,7 @@ function loadReplFontSize(): number {
   } catch {
     /* ignore */
   }
-  return 12;
+  return 13;
 }
 
 const _replFontSize = writable<number>(loadReplFontSize());
@@ -908,6 +908,46 @@ export const zenMode = {
 
 // ── Zen Peek (transient press-and-hold to reveal hidden icons) ────────────────
 export const zenPeek = writable<boolean>(false);
+
+// ── Editor tabs opacity in Zen Mode (0–100%) ──────────────────────────────────
+// The tab strip is shown at this opacity while in Zen Mode (0 = hidden until
+// hover, 100 = fully visible). Hovering always reveals it fully so the tabs stay
+// usable at low opacities.
+export const ZEN_TABS_OPACITY_BOUNDS = { min: 0, max: 100, step: 5, default: 70 };
+
+function loadZenTabsOpacity(): number {
+  try {
+    const v = localStorage.getItem("zen-tabs-opacity");
+    if (v !== null) {
+      const n = Number(v);
+      if (Number.isFinite(n)) {
+        return Math.min(
+          ZEN_TABS_OPACITY_BOUNDS.max,
+          Math.max(ZEN_TABS_OPACITY_BOUNDS.min, n),
+        );
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return ZEN_TABS_OPACITY_BOUNDS.default;
+}
+const _zenTabsOpacity = writable<number>(loadZenTabsOpacity());
+export const zenTabsOpacity = {
+  subscribe: _zenTabsOpacity.subscribe,
+  set(v: number) {
+    const clamped = Math.min(
+      ZEN_TABS_OPACITY_BOUNDS.max,
+      Math.max(ZEN_TABS_OPACITY_BOUNDS.min, Math.round(v)),
+    );
+    try {
+      localStorage.setItem("zen-tabs-opacity", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _zenTabsOpacity.set(clamped);
+  },
+};
 
 // ── TOC button anchor rect (set on click so the panel tracks the button) ─────
 export const tocAnchorRect = writable<DOMRect | null>(null);

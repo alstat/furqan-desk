@@ -88,6 +88,8 @@ export const vi: Record<string, string> = {
   "sukun.show_icons": "Hiển thị biểu tượng",
   "settings.zen": "Chế độ Sukūn",
   "settings.zen.desc": "Chỉnh sửa không phân tâm — xóa viền, bóng và làm mờ biểu tượng giao diện",
+  "settings.zen.tabs_opacity": "Độ mờ tab trong Chế độ Sukūn",
+  "settings.zen.tabs_opacity.desc": "Độ mờ của các tab trình soạn thảo khi ở Chế độ Sukūn (0% ẩn chúng cho đến khi di chuột qua)",
   "settings.privacy": "Quyền riêng tư",
   "settings.privacy.text":
     "AyahLab hoạt động hoàn toàn ngoại tuyến. Không tài khoản, không theo dõi, không phân tích. Ghi chú, dấu trang và cài đặt của bạn chỉ lưu trên thiết bị — tác giả không thể truy cập dữ liệu của bạn.",

@@ -98,7 +98,11 @@ html.dark {
     --color-brand-charcoal-800: #d7def7; /* between Text and heading */
     --color-brand-charcoal-900: #e8edff; /* near-white headings */
 
-    --ayah-flash-bg: color-mix(in srgb, var(--color-brand-gold-400) 25%, transparent);
+    --ayah-flash-bg: color-mix(
+        in srgb,
+        var(--color-brand-gold-400) 25%,
+        transparent
+    );
 }
 
 html.dark body,
@@ -171,36 +175,13 @@ html.dark ::-webkit-scrollbar-corner {
     background: #303446;
 }
 
-/* ── EditorTabs: opt out of dark-mode standard scrollbar API ───────────────
-   html.dark * sets scrollbar-color + scrollbar-width, which in Chrome/WebView2
-   disables ::-webkit-scrollbar pseudo-element control entirely.
-   Resetting both to `auto` re-enables webkit pseudo-element styling for this
-   element, then the rules below apply the thin auto-hiding style.           */
+/* ── EditorTabs: thin horizontal scrollbar (dark) ──────────────────────────
+   Uses the standard scrollbar API only — consistent across WKWebView /
+   WebView2 / WebKitGTK. Overrides the html.dark * track colour so the tab
+   strip keeps a transparent track. The thin width is set on .tabs-scroll. */
 html.dark .tabs-scroll {
-    scrollbar-color: auto;
-    scrollbar-width: auto;
-}
-
-html.dark .tabs-scroll::-webkit-scrollbar {
-    height: 3px !important;
-}
-
-html.dark .tabs-scroll::-webkit-scrollbar-track {
-    background: transparent !important;
-}
-
-html.dark .tabs-scroll::-webkit-scrollbar-thumb {
-    background: transparent !important;
-    border: none !important;
-    border-radius: 9999px !important;
-}
-
-html.dark .tabs-scroll:hover::-webkit-scrollbar-thumb {
-    background: rgba(130, 130, 130, 0.4) !important;
-}
-
-html.dark .tabs-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(130, 130, 130, 0.65) !important;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(150, 150, 150, 0.4) transparent;
 }
 
 /* ── LexicalEditor: scrollbar track matches its bg (#292c3c), not Parchment's (#303446) ── */
@@ -336,6 +317,48 @@ html.dark .ayah-playing {
     -ms-overflow-style: -ms-autohiding-scrollbar;
 }
 
+/* ── Terminal (xterm) viewport ─────────────────────────────────────────────
+   xterm keeps a native viewport scrollbar plus its own generated scrollbar DOM.
+   Hide both visual scrollbars in terminal panes to avoid a persistent pale right
+   strip on systems that keep scrollbars visible. Wheel/trackpad scrollback still
+   works through xterm's scroll model. */
+.xterm .xterm-viewport {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.xterm .xterm-viewport::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+.xterm .xterm-viewport::-webkit-scrollbar-track,
+.xterm .xterm-viewport::-webkit-scrollbar-corner {
+    background: var(--terminal-bg, transparent);
+}
+.xterm .xterm-viewport::-webkit-scrollbar-thumb {
+    background-color: #c6c6c582;
+    border-radius: 9999px;
+    border: 2px solid var(--terminal-bg, transparent);
+    background-clip: padding-box;
+}
+.xterm .xterm-scrollable-element > .scrollbar {
+    display: none !important;
+}
+
+/* Dark mode: override the html.dark baseline for the native viewport scrollbar. */
+html.dark .xterm .xterm-viewport {
+    scrollbar-width: none;
+}
+html.dark .xterm .xterm-viewport::-webkit-scrollbar-track,
+html.dark .xterm .xterm-viewport::-webkit-scrollbar-corner {
+    background: var(--terminal-bg, transparent);
+}
+html.dark .xterm .xterm-viewport::-webkit-scrollbar-thumb {
+    background-color: #62688082;
+    border: 2px solid var(--terminal-bg, transparent);
+    background-clip: padding-box;
+}
+
 /* ── CodeMirror scroller (JuliaEditor, TypstEditor) ────────────────────────
    Mirrors .default-scroll: thin, hidden by default, reveals on hover.
    These rules need to come after the html.dark global rules above so they
@@ -377,6 +400,47 @@ html.dark .cm-scroller::-webkit-scrollbar-thumb {
 html.dark .cm-scroller:hover::-webkit-scrollbar-thumb,
 html.dark .cm-scroller:active::-webkit-scrollbar-thumb {
     background-color: #62688082;
+}
+
+/* ── Opacity slider (Settings → Sukūn Mode tabs opacity) ───────────────────
+   Fully custom so the track + thumb follow the brand palette, which already
+   flips in dark mode (html.dark redefines the --color-brand-* variables). */
+.zen-opacity-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--color-brand-sand-200);
+    outline: none;
+}
+.zen-opacity-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 16px;
+    border-radius: 10px;
+    background: var(--color-brand-gold-400);
+    /*border: 2px solid var(--color-brand-sand-50);*/
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+.zen-opacity-slider::-moz-range-track {
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--color-brand-sand-200);
+}
+.zen-opacity-slider::-moz-range-thumb {
+    width: 20px;
+    height: 16px;
+    border-radius: 10px;
+    background: var(--color-brand-gold-400);
+    /*border: 2px solid var(--color-brand-sand-50);*/
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+.zen-opacity-slider:focus-visible {
+    outline: 2px solid var(--color-brand-gold-400);
+    outline-offset: 2px;
 }
 /*
 .parchment {

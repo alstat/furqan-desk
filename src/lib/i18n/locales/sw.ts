@@ -87,6 +87,8 @@ export const sw: Record<string, string> = {
   "sukun.show_icons": "Onyesha Ikoni",
   "settings.zen": "Hali ya Sukūn",
   "settings.zen.desc": "Uhariri bila usumbufu — huondoa mipaka, vivuli, na kupunguza ikoni",
+  "settings.zen.tabs_opacity": "Uwazi wa vichupo katika Hali ya Sukūn",
+  "settings.zen.tabs_opacity.desc": "Uwazi wa vichupo vya kihariri ukiwa katika Hali ya Sukūn (0% huvificha hadi uelekeze kipanya juu yake)",
   "settings.privacy": "Faragha",
   "settings.privacy.text": "AyahLab iko nje ya mtandao kabisa. Hakuna akaunti, hakuna telemetry, hakuna uchanganuzi. Maelezo yako, alamisho, na mipangilio inabaki kwenye kifaa chako tu.",
   "common.enabled": "Imewezeshwa",

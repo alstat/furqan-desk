@@ -58,12 +58,21 @@
     import SukunPeekToggle from "$lib/components/shared/SukunPeekToggle.svelte";
     import UpDownMargin from "$lib/components/shared/UpDownMargin.svelte";
     import SplitDivider from "$lib/components/shared/SplitDivider.svelte";
+    import QuickOpen from "$lib/components/shared/QuickOpen.svelte";
 
     let height: number = $state(
         typeof window !== "undefined" ? window.innerHeight : 600,
     );
     let showSettings = $state(false);
     let isLoading = $state(true);
+
+    // Cmd+, (macOS) / Ctrl+, (Win/Linux) opens Settings — standard convention.
+    function handleGlobalKeydown(e: KeyboardEvent) {
+        if ((e.metaKey || e.ctrlKey) && e.key === "," ) {
+            e.preventDefault();
+            showSettings = true;
+        }
+    }
 
     onMount(async () => {
         try {
@@ -181,7 +190,7 @@
     });
 </script>
 
-<svelte:window bind:innerHeight={height} />
+<svelte:window bind:innerHeight={height} onkeydown={handleGlobalKeydown} />
 <div
     class="max-w-[95%] rounded-r-md relative mx-auto sm:py-6"
     style:width="{Math.round(($singlePageMargin / 12) * 100)}%"
@@ -320,6 +329,7 @@
 <SurahWidget />
 <EditorToolbar onOpenSettings={() => (showSettings = true)} />
 <TourOverlay />
+<QuickOpen />
 <SettingsDialog
     open={showSettings}
     onClose={() => (showSettings = false)}

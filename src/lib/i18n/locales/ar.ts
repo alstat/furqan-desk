@@ -88,6 +88,8 @@ export const ar: Record<string, string> = {
     'sukun.show_icons': 'إظهار الأيقونات',
     'settings.zen': 'وضع السكون',
     'settings.zen.desc': 'تحرير خالٍ من التشتيت — يزيل الحدود والظلال ويخفف الأيقونات',
+    'settings.zen.tabs_opacity': 'شفافية التبويبات في وضع السكون',
+    'settings.zen.tabs_opacity.desc': 'شفافية تبويبات المحرر أثناء وضع السكون (0٪ يخفيها حتى تمرر المؤشر فوقها)',
     'settings.privacy': 'الخصوصية',
     'settings.privacy.text': 'لا يجمع AyahLab أي بيانات شخصية. تستخدم ميزة التغذية الراجعة Resend لإرسال رسالتك مباشرة إلى المطوّر — يُستخدم بريدك الإلكتروني فقط للرد عليك ولا يُخزَّن أو يُشارَك أبداً. لا تحليلات، لا تتبع.',
   // Navigation and Julia plots

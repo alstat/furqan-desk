@@ -477,9 +477,11 @@
                         >
                             <TypstEditor tabId={activeTypstGroup.tabA} />
                         </div>
-                        <StackSplitDivider
-                            setRatio={(p) => typstSplitRatio.set(p)}
-                        />
+                        <div class="-mx-1">
+                            <StackSplitDivider
+                                setRatio={(p) => typstSplitRatio.set(p)}
+                            />
+                        </div>
                         <div class="flex-1 min-h-0 overflow-visible">
                             <TypstEditor tabId={activeTypstGroup.tabB} />
                         </div>
@@ -512,6 +514,7 @@
                                 />
                             </div>
                             <StackSplitDivider
+                                class="-mx-1"
                                 setRatio={(p) => juliaSplitRatio.set(p)}
                             />
                             <div class="flex-1 min-h-0 overflow-visible">

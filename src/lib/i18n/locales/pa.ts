@@ -87,6 +87,8 @@ export const pa: Record<string, string> = {
   "sukun.show_icons": "ਆਈਕਾਨ ਦਿਖਾਓ",
   "settings.zen": "Sukūn ਮੋਡ",
   "settings.zen.desc": "ਧਿਆਨ-ਮੁਕਤ ਸੰਪਾਦਨ — ਹੱਦਾਂ, ਛਾਂ ਅਤੇ ਆਈਕੋਨਾਂ ਨੂੰ ਹਟਾਉਂਦਾ ਹੈ",
+  "settings.zen.tabs_opacity": "Sukūn ਮੋਡ ਵਿੱਚ ਟੈਬਾਂ ਦੀ ਅਪਾਰਦਰਸ਼ਤਾ",
+  "settings.zen.tabs_opacity.desc": "Sukūn ਮੋਡ ਵਿੱਚ ਐਡੀਟਰ ਟੈਬਾਂ ਦੀ ਅਪਾਰਦਰਸ਼ਤਾ (0% ਉਹਨਾਂ ਨੂੰ ਹੋਵਰ ਕਰਨ ਤੱਕ ਲੁਕਾਉਂਦਾ ਹੈ)",
   "settings.privacy": "ਗੋਪਨੀਯਤਾ",
   "settings.privacy.text": "AyahLab ਪੂਰੀ ਤਰ੍ਹਾਂ ਔਫਲਾਈਨ ਹੈ। ਕੋਈ ਖਾਤੇ ਨਹੀਂ, ਕੋਈ ਟੈਲੀਮੈਟ੍ਰੀ ਨਹੀਂ, ਕੋਈ ਵਿਸ਼ਲੇਸ਼ਣ ਨਹੀਂ। ਤੁਹਾਡੇ ਨੋਟ, ਬੁੱਕਮਾਰਕ ਅਤੇ ਸੈਟਿੰਗਾਂ ਸਿਰਫ਼ ਤੁਹਾਡੇ ਡਿਵਾਈਸ 'ਤੇ ਹੀ ਰਹਿੰਦੀਆਂ ਹਨ।",
   "common.enabled": "ਯੋਗ",

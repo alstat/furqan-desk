@@ -87,6 +87,8 @@ export const ku: Record<string, string> = {
   "sukun.show_icons": "ئایکۆنەکان پیشان بدە",
   "settings.zen": "دۆخی Sukūn",
   "settings.zen.desc": "دەسکاری بێ شلەوپەڵی — سنووری، سێبەری و ئایکۆنەکان لادەدەرێت",
+  "settings.zen.tabs_opacity": "ڕوونی بازدەرەکان لە دۆخی Sukūn",
+  "settings.zen.tabs_opacity.desc": "ڕوونی بازدەرەکانی دەستکاریکەر لە دۆخی Sukūn (0% دەیانشارێتەوە تا ماوس لەسەریان بێت)",
   "settings.privacy": "تایبەتمەندی",
   "settings.privacy.text": "AyahLab بەتەواوی ئۆفلاینە. بێ ئەکاونت، بێ تەلەمەتری، بێ ئانالیتیکس. تێبینی، بوکمارک و ڕێکخستنەکانت تەنها لەسەر ئامێرەکەت دەمێنن.",
   "common.enabled": "چالاک",

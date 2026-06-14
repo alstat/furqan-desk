@@ -1,5 +1,6 @@
 <script lang="ts">
     import { fly } from "svelte/transition";
+    import { onDestroy } from "svelte";
     import { readDir, readTextFile } from "@tauri-apps/plugin-fs";
     import Icon from "@iconify/svelte";
     import {
@@ -45,12 +46,100 @@
 
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
+    // Resizing. The panel keeps its default Tailwind size/position until the
+    // first resize, then switches to explicit fixed positioning with width/height.
+    // The n/w handles move the top-left corner, so resizing initialises `panelPos`.
+    let panelEl = $state<HTMLElement | null>(null);
+    const MIN_W = 240;
+    const MIN_H = 200;
+    let panelPos = $state<{ x: number; y: number } | null>(null);
+    let panelSize = $state<{ w: number; h: number } | null>(null);
+
+    type ResizeDir = { e: boolean; w: boolean; n: boolean; s: boolean };
+    const resizeHandles: Array<{ cls: string; dir: ResizeDir }> = [
+        { cls: "resize-n", dir: { n: true, s: false, e: false, w: false } },
+        { cls: "resize-s", dir: { n: false, s: true, e: false, w: false } },
+        { cls: "resize-e", dir: { n: false, s: false, e: true, w: false } },
+        { cls: "resize-w", dir: { n: false, s: false, e: false, w: true } },
+        { cls: "resize-ne", dir: { n: true, s: false, e: true, w: false } },
+        { cls: "resize-se", dir: { n: false, s: true, e: true, w: false } },
+        { cls: "resize-sw", dir: { n: false, s: true, e: false, w: true } },
+        { cls: "resize-nw", dir: { n: true, s: false, e: false, w: true } },
+    ];
+    let _resizeDir: ResizeDir = { e: false, w: false, n: false, s: false };
+    let _resizeStartX = 0,
+        _resizeStartY = 0,
+        _resizeStartW = 0,
+        _resizeStartH = 0,
+        _resizeStartPanelX = 0,
+        _resizeStartPanelY = 0;
+
+    function startResize(e: PointerEvent, dir: ResizeDir) {
+        if (!panelEl) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const rect = panelEl.getBoundingClientRect();
+        if (!panelPos) panelPos = { x: rect.left, y: rect.top };
+        if (!panelSize) panelSize = { w: rect.width, h: rect.height };
+        _resizeDir = dir;
+        _resizeStartX = e.clientX;
+        _resizeStartY = e.clientY;
+        _resizeStartW = panelSize.w;
+        _resizeStartH = panelSize.h;
+        _resizeStartPanelX = panelPos.x;
+        _resizeStartPanelY = panelPos.y;
+        document.body.style.userSelect = "none";
+        window.addEventListener("pointermove", onResize);
+        window.addEventListener("pointerup", stopResize, { once: true });
+    }
+
+    function onResize(e: PointerEvent) {
+        if (!panelSize || !panelPos) return;
+        const dx = e.clientX - _resizeStartX;
+        const dy = e.clientY - _resizeStartY;
+        let newW = _resizeStartW;
+        let newH = _resizeStartH;
+        let newX = _resizeStartPanelX;
+        let newY = _resizeStartPanelY;
+        if (_resizeDir.e) newW = Math.max(MIN_W, _resizeStartW + dx);
+        if (_resizeDir.s) newH = Math.max(MIN_H, _resizeStartH + dy);
+        if (_resizeDir.w) {
+            newW = Math.max(MIN_W, _resizeStartW - dx);
+            newX = _resizeStartPanelX + (_resizeStartW - newW);
+        }
+        if (_resizeDir.n) {
+            newH = Math.max(MIN_H, _resizeStartH - dy);
+            newY = _resizeStartPanelY + (_resizeStartH - newH);
+        }
+        panelSize = { w: newW, h: newH };
+        panelPos = { x: newX, y: newY };
+    }
+
+    function stopResize() {
+        document.body.style.userSelect = "";
+        window.removeEventListener("pointermove", onResize);
+    }
+
+    onDestroy(() => {
+        window.removeEventListener("pointermove", onResize);
+        document.body.style.userSelect = "";
+    });
+
     // Global keyboard shortcut: Ctrl+Shift+F / Cmd+Shift+F
     function handleWindowKeydown(e: KeyboardEvent) {
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "F") {
+        // Note: on macOS WebKit, Cmd suppresses Shift in e.key, so Cmd+Shift+F
+        // arrives as "f" rather than "F" — compare case-insensitively.
+        if (
+            (e.ctrlKey || e.metaKey) &&
+            e.shiftKey &&
+            e.key.toLowerCase() === "f"
+        ) {
             e.preventDefault();
             isOpen = !isOpen;
             if (isOpen) {
+                // A fresh open returns to the default anchored position/size.
+                panelPos = null;
+                panelSize = null;
                 // Focus the input on next tick
                 setTimeout(() => {
                     document.getElementById("global-search-input")?.focus();
@@ -200,6 +289,18 @@
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
+<!-- Zen-mode locator dot — marks where the (hidden) Global Search button sits. -->
+{#if $zenMode && !$zenPeek && !isOpen}
+    <div
+        aria-hidden="true"
+        class="pointer-events-none absolute -left-5 top-1/2 z-2 h-8 w-8 flex items-center justify-center"
+    >
+        <span
+            class="h-1.5 w-1.5 rounded-full bg-brand-charcoal-400 dark:bg-[#838ba7] opacity-15"
+        ></span>
+    </div>
+{/if}
+
 <!-- Global Search button — sits just outside the editor on the left, below the FileExplorer button -->
 <button
     class="cursor-pointer absolute -left-5 top-1/2 z-3 rounded-full {actionBtnStyle} {isOpen
@@ -211,6 +312,10 @@
         : ''}"
     onclick={() => {
         isOpen = !isOpen;
+        if (isOpen) {
+            panelPos = null;
+            panelSize = null;
+        }
     }}
     aria-label={IS_APPLE
         ? `${$t("search.global")} (⌘⇧F)`
@@ -235,11 +340,21 @@
 <!-- Floating panel -->
 {#if isOpen}
     <div
+        bind:this={panelEl}
         transition:fly={{ x: isRtl ? 8 : -8, duration: 180, opacity: 0 }}
-        class="absolute top-1/2 left-1.5 ml-2 z-50 rounded-3xl w-72 max-h-[50vh] bg-white dark:bg-[#292c3c]
+        class="{panelPos
+            ? 'fixed'
+            : 'absolute top-1/2 left-1.5 ml-2'} z-50 rounded-3xl {panelSize
+            ? ''
+            : 'w-72 max-h-[50vh]'} bg-white dark:bg-[#292c3c]
 		       border border-stone-200 dark:border-[#414559]
 		       shadow-xl shadow-black/15 dark:shadow-black/40
 		       flex flex-col overflow-hidden"
+        style="{panelPos
+            ? `left:${panelPos.x}px; top:${panelPos.y}px;`
+            : ''}{panelSize
+            ? ` width:${panelSize.w}px; height:${panelSize.h}px;`
+            : ''}"
     >
         <!-- Header -->
         <div
@@ -320,7 +435,7 @@
         </div>
 
         <!-- Results -->
-        <div class="flex-1 overflow-y-auto">
+        <div class="flex-1 min-h-0 overflow-y-auto">
             {#if !$openFolderPath}
                 <div
                     class="px-3 py-4 text-center text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
@@ -371,7 +486,7 @@
                             width="0.75rem"
                         />
                         <span
-                            class="text-[11px] font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5] truncate flex-1"
+                            class="text-[13px] font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5] truncate flex-1"
                         >
                             {result.fileName}
                         </span>
@@ -391,12 +506,12 @@
 								       hover:bg-brand-sand-50 dark:hover:bg-[#1e2030] transition-colors border-b border-stone-50 dark:border-[#363a4f]/50"
                             >
                                 <span
-                                    class="shrink-0 text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] w-6 text-right mt-0.5 font-mono"
+                                    class="shrink-0 text-[12px] text-brand-charcoal-300 dark:text-[#838ba7] w-6 text-right mt-0.5 font-mono"
                                 >
                                     {match.lineNumber}
                                 </span>
                                 <span
-                                    class="text-[11px] text-brand-charcoal-500 dark:text-[#a5adce] font-mono truncate"
+                                    class="text-[13px] text-brand-charcoal-500 dark:text-[#a5adce] font-mono truncate"
                                 >
                                     {match.lineText.slice(
                                         0,
@@ -415,11 +530,105 @@
                 {/each}
             {/if}
         </div>
+
+        <!-- Resize handles -->
+        {#each resizeHandles as { cls, dir }}
+            <div
+                aria-hidden="true"
+                class="resize-handle {cls}"
+                onpointerdown={(e) => startResize(e, dir)}
+            ></div>
+        {/each}
     </div>
 {/if}
 
 <style>
     mark {
         font-style: normal;
+    }
+
+    .resize-handle {
+        position: absolute;
+        z-index: 10;
+    }
+    .resize-n {
+        top: 0;
+        left: 10px;
+        right: 10px;
+        height: 6px;
+        cursor: n-resize;
+    }
+    .resize-s {
+        bottom: 0;
+        left: 10px;
+        right: 10px;
+        height: 6px;
+        cursor: s-resize;
+    }
+    .resize-e {
+        top: 10px;
+        right: 0;
+        bottom: 10px;
+        width: 6px;
+        cursor: e-resize;
+    }
+    .resize-w {
+        top: 10px;
+        left: 0;
+        bottom: 10px;
+        width: 6px;
+        cursor: w-resize;
+    }
+    .resize-ne {
+        top: 0;
+        right: 0;
+        width: 14px;
+        height: 14px;
+        cursor: ne-resize;
+    }
+    .resize-se {
+        bottom: 0;
+        right: 0;
+        width: 20px;
+        height: 20px;
+        cursor: se-resize;
+    }
+    .resize-sw {
+        bottom: 0;
+        left: 0;
+        width: 14px;
+        height: 14px;
+        cursor: sw-resize;
+    }
+    .resize-nw {
+        top: 0;
+        left: 0;
+        width: 14px;
+        height: 14px;
+        cursor: nw-resize;
+    }
+    .resize-se::before {
+        content: "";
+        position: absolute;
+        bottom: 11px;
+        right: 11px;
+        width: 5px;
+        height: 5px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-bottom-right-radius: 5px;
+        pointer-events: none;
+    }
+    .resize-se::after {
+        content: "";
+        position: absolute;
+        bottom: 7px;
+        right: 7px;
+        width: 9px;
+        height: 9px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-bottom-right-radius: 9px;
+        pointer-events: none;
     }
 </style>

@@ -16,6 +16,8 @@
     const { open, title, onClose, children, footer, maxWidth = 'max-w-md' }: Props = $props();
 </script>
 
+<svelte:window onkeydown={(e) => { if (open && e.key === 'Escape') onClose(); }} />
+
 {#if open}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div

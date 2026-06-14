@@ -56,7 +56,7 @@
     }
     import Icon from "@iconify/svelte";
     import { confirm } from "@tauri-apps/plugin-dialog";
-    import { singlePageMargin, zenMode, zenPeek } from "$lib/stores/editor.store";
+    import { singlePageMargin, zenMode, zenPeek, zenTabsOpacity } from "$lib/stores/editor.store";
 
     const GROUP_COLORS = [
         {
@@ -285,6 +285,62 @@
             addThirdForGroupId = null;
             addThirdPos = null;
         }
+        if (
+            contextMenuTabId !== null &&
+            !target.closest("[data-context-menu]")
+        ) {
+            closeContextMenu();
+        }
+    }
+
+    // ── Right-click context menu (Close Others / Left / Right) ──
+    let contextMenuTabId = $state<string | null>(null);
+    let contextMenuPos = $state<{ x: number; y: number } | null>(null);
+
+    function openContextMenu(e: MouseEvent, tabId: string) {
+        e.preventDefault();
+        e.stopPropagation();
+        contextMenuTabId = tabId;
+        contextMenuPos = { x: e.clientX, y: e.clientY };
+    }
+
+    function closeContextMenu() {
+        contextMenuTabId = null;
+        contextMenuPos = null;
+    }
+
+    /** Close the given tabs sequentially so each unsaved-changes prompt resolves before the next. */
+    async function closeMany(ids: string[]) {
+        for (const id of ids) {
+            await tryClose(id);
+        }
+    }
+
+    function closeThis(tabId: string) {
+        closeContextMenu();
+        tryClose(tabId);
+    }
+
+    function closeOthers(tabId: string) {
+        const ids = $tabs.filter((t) => t.id !== tabId).map((t) => t.id);
+        closeContextMenu();
+        closeMany(ids);
+    }
+
+    function closeLeft(tabId: string) {
+        const idx = $tabs.findIndex((t) => t.id === tabId);
+        if (idx < 0) return;
+        const ids = $tabs.slice(0, idx).map((t) => t.id);
+        closeContextMenu();
+        closeMany(ids);
+    }
+
+    function closeRight(tabId: string) {
+        const idx = $tabs.findIndex((t) => t.id === tabId);
+        if (idx < 0) return;
+        const ids = $tabs.slice(idx + 1).map((t) => t.id);
+        closeContextMenu();
+        closeMany(ids);
     }
 
     // ── Drag-to-reorder (pointer events — HTML5 DnD drop doesn't fire in WKWebView) ──
@@ -407,6 +463,8 @@
     }
 
     function handleTabPointerDown(e: PointerEvent, tabId: string): void {
+        // Only the primary (left) button initiates a drag — right-click opens the menu.
+        if (e.button !== 0) return;
         // Only skip the dedicated action buttons (close, split, unlink)
         if ((e.target as HTMLElement | null)?.closest('[data-no-drag]')) return;
         _pointerDownTabId = tabId;
@@ -477,7 +535,8 @@
 
 <!-- Outer: clips scrollbar thumb to the rounded-full boundary -->
 <div
-    class="{$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''} select-none absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(38rem,90%)] rounded-md border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30 overflow-hidden"
+    class="{$zenMode ? 'zen-tabs' : ''} select-none absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(38rem,90%)] rounded-md border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30 overflow-hidden"
+    style={$zenMode ? `--zen-tabs-opacity: ${$zenPeek ? 1 : $zenTabsOpacity / 100}` : ''}
 >
 <!-- Inner: handles horizontal scrolling -->
 <div
@@ -550,6 +609,7 @@
             aria-roledescription="draggable tab"
             aria-label="{tab.name} tab, draggable"
             onpointerdown={(e) => handleTabPointerDown(e, tab.id)}
+            oncontextmenu={(e) => openContextMenu(e, tab.id)}
         >
             {#if dropTargetId === tab.id && dropSide === "before"}
                 <div aria-hidden="true" class="absolute left-0 top-0 bottom-0 w-0.5 bg-amber-400 z-50 pointer-events-none rounded-full"></div>
@@ -565,7 +625,7 @@
                         setTimeout(() => flashingTabId.set(null), 1500);
                     }
                 }}
-                class="group cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-[11px] whitespace-nowrap
+                class="group cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-[13px] whitespace-nowrap
                        border-r border-stone-200 dark:border-[#414559] transition-colors
                        {group
                     ? `border-b-2 ${color?.border} ${color?.bg} pr-6`
@@ -796,36 +856,74 @@
     {/if}
 {/if}
 
+<!-- Tab context menu — Close Others / Close Left / Close Right -->
+{#if contextMenuTabId !== null && contextMenuPos !== null}
+    {@const ctxIdx = $tabs.findIndex((t) => t.id === contextMenuTabId)}
+    {@const hasOthers = $tabs.length > 1}
+    {@const hasLeft = ctxIdx > 0}
+    {@const hasRight = ctxIdx >= 0 && ctxIdx < $tabs.length - 1}
+    <div
+        data-context-menu
+        style="position: fixed; left: {contextMenuPos.x}px; top: {contextMenuPos.y}px; transform: translateY(calc(-100% - 4px)); z-index: 9999;"
+        class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-2xl shadow-xl p-1.5 min-w-40"
+    >
+        <button
+            onclick={() => closeThis(contextMenuTabId!)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+        >
+            <Icon icon="solar:close-square-bold-duotone" width="0.85rem" class="shrink-0" />
+            Close
+        </button>
+        <button
+            disabled={!hasOthers}
+            onclick={() => closeOthers(contextMenuTabId!)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] disabled:opacity-40 disabled:cursor-default disabled:hover:bg-transparent disabled:dark:hover:bg-transparent"
+        >
+            <Icon icon="solar:close-circle-bold-duotone" width="0.85rem" class="shrink-0" />
+            Close Others
+        </button>
+        <button
+            disabled={!hasLeft}
+            onclick={() => closeLeft(contextMenuTabId!)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] disabled:opacity-40 disabled:cursor-default disabled:hover:bg-transparent disabled:dark:hover:bg-transparent"
+        >
+            <Icon icon="solar:square-arrow-left-bold-duotone" width="0.85rem" class="shrink-0" />
+            Close Left
+        </button>
+        <button
+            disabled={!hasRight}
+            onclick={() => closeRight(contextMenuTabId!)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] disabled:opacity-40 disabled:cursor-default disabled:hover:bg-transparent disabled:dark:hover:bg-transparent"
+        >
+            <Icon icon="solar:square-arrow-right-bold-duotone" width="0.85rem" class="shrink-0" />
+            Close Right
+        </button>
+    </div>
+{/if}
+
 <style>
     /* Grab cursor on draggable tab wrappers */
     [data-tab-id] {
         cursor: grab;
     }
 
-    /* Overlay scrollbar: floats over content, doesn't affect layout height */
+    /* Thin horizontal scrollbar via the standard scrollbar API, which all three
+       webviews honor (WKWebView / WebView2 / WebKitGTK). `overflow: overlay` is
+       avoided on purpose — on macOS with a mouse attached it renders a thick,
+       non-styleable classic scrollbar. The dark-mode colour is set in app.css. */
     .tabs-scroll {
-        overflow-x: overlay;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(130, 130, 130, 0.4) transparent;
     }
 
-    .tabs-scroll::-webkit-scrollbar {
-        height: 3px;
+    /* Zen Mode: tab strip opacity is user-configurable (Settings → Sukūn Mode).
+       Hovering always reveals it fully so it stays usable at low opacities. */
+    .zen-tabs {
+        opacity: var(--zen-tabs-opacity, 1);
+        transition: opacity 0.2s ease;
     }
-
-    .tabs-scroll::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .tabs-scroll::-webkit-scrollbar-thumb {
-        background: transparent;
-        border-radius: 9999px;
-        transition: background 0.3s ease;
-    }
-
-    .tabs-scroll:hover::-webkit-scrollbar-thumb {
-        background: rgba(120, 120, 120, 0.35);
-    }
-
-    .tabs-scroll::-webkit-scrollbar-thumb:hover {
-        background: rgba(120, 120, 120, 0.6);
+    .zen-tabs:hover {
+        opacity: 1;
     }
 </style>

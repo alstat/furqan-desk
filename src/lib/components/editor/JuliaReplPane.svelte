@@ -100,7 +100,7 @@
             return {
                 background: "#303446",
                 foreground: "#a5adce",
-                cursor: "#f4b8e4",
+                cursor: "#e5c890",
                 cursorAccent: "#303446",
                 selectionBackground: "#3a3f57",
                 black: "#51576d",
@@ -124,7 +124,7 @@
         return {
             background: "#faf7f2",
             foreground: "#707070",
-            cursor: "#d33682",
+            cursor: "#c8a96a",
             cursorAccent: "#faf7f2",
             selectionBackground: "#cfe3ff",
             black: "#707070",
@@ -1111,7 +1111,7 @@
     });
 
     // ── Settings popover ──────────────────────────────────────────────────────
-    const REPL_FONT_BOUNDS = { min: 9, max: 24, default: 12 };
+    const REPL_FONT_BOUNDS = { min: 9, max: 24, default: 13 };
     const REPL_LINE_BOUNDS = { min: 1.0, max: 2.0, default: 1.3 };
 
     let showSettings = $state(false);
@@ -1842,6 +1842,7 @@
     {#if ts.termTabs.length > 0}
         <div
             class="relative flex-1 min-h-0 bg-brand-sand-50 dark:bg-[#303446]"
+            style:--terminal-bg={$appDarkMode ? "#303446" : "#faf7f2"}
             style="display: {ts.activePanel !== 'julia' ? 'block' : 'none'};"
         >
             {#each ts.termTabs as tab (tab.id)}
@@ -1858,8 +1859,21 @@
 
 <style>
     :global(.repl-mono) {
-        font-size: var(--repl-font-size, 12px);
+        font-size: var(--repl-font-size, 13px);
         line-height: var(--repl-line-height, 1.3);
+    }
+
+    /* Keep every xterm-owned surface on the same background color so a
+       persistent scrollbar gutter blends into the terminal instead of reading as
+       a pale right border when the OS keeps scrollbars visible. */
+    :global(.xterm) {
+        background-color: var(--terminal-bg, transparent);
+    }
+    :global(.xterm .xterm-viewport),
+    :global(.xterm .xterm-screen),
+    :global(.xterm .xterm-scrollable-element),
+    :global(.xterm .xterm-scrollable-element > .scrollbar) {
+        background-color: var(--terminal-bg, transparent) !important;
     }
 
     /* Indeterminate precompile bar: slide left→right so it reads as "working"

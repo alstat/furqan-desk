@@ -89,6 +89,9 @@ export const ja: Record<string, string> = {
   "settings.zen": "Sukūn モード",
   "settings.zen.desc":
     "集中編集 — ボーダー・シャドウを除去しアイコンを暗くします",
+  "settings.zen.tabs_opacity": "Sukūn モードでのタブの不透明度",
+  "settings.zen.tabs_opacity.desc":
+    "Sukūn モード中のエディタタブの不透明度（0% ではホバーするまで非表示）",
   "settings.privacy": "プライバシー",
   "settings.privacy.text":
     "AyahLab は個人データを一切収集しません。フィードバック機能は Resend を使用してメッセージを開発者に直接送信します。メールアドレスは返信にのみ使用され、保存・共有されることはありません。分析なし、追跡なし。",

@@ -163,7 +163,7 @@
             return {
                 background: "#292c3c",
                 foreground: "#c6d0f5",
-                cursor: "#f4b8e4",
+                cursor: "#e5c890",
                 cursorAccent: "#232634",
                 selectionBackground: "#3a3f57",
                 black: "#51576d",
@@ -187,7 +187,7 @@
         return {
             background: "#ffffff",
             foreground: "#3c3c3c",
-            cursor: "#d33682",
+            cursor: "#c8a96a",
             cursorAccent: "#fafafa",
             selectionBackground: "#cfe3ff",
             black: "#3c3c3c",
@@ -1099,7 +1099,10 @@
     {/if}
 
     <!-- Terminal stack: every container is mounted; only the active one is visible. -->
-    <div class="relative flex-1 min-h-0 bg-white dark:bg-[#292c3c]">
+    <div
+        class="relative flex-1 min-h-0 bg-white dark:bg-[#292c3c]"
+        style:--terminal-bg={$appDarkMode ? "#292c3c" : "#ffffff"}
+    >
         {#each tabs as tab (tab.id)}
             <div
                 bind:this={containerEls[tab.id]}
@@ -1251,9 +1254,15 @@
     :global(.xterm) {
         height: 100%;
         padding: 6px 8px;
+        background-color: var(--terminal-bg, transparent);
     }
+    /* Keep every xterm-owned surface on the same background color so a
+       persistent scrollbar gutter blends into the terminal instead of reading as
+       a pale right border when the OS keeps scrollbars visible. */
     :global(.xterm .xterm-viewport),
-    :global(.xterm .xterm-screen) {
-        background-color: transparent !important;
+    :global(.xterm .xterm-screen),
+    :global(.xterm .xterm-scrollable-element),
+    :global(.xterm .xterm-scrollable-element > .scrollbar) {
+        background-color: var(--terminal-bg, transparent) !important;
     }
 </style>
