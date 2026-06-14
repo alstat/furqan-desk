@@ -175,36 +175,13 @@ html.dark ::-webkit-scrollbar-corner {
     background: #303446;
 }
 
-/* ── EditorTabs: opt out of dark-mode standard scrollbar API ───────────────
-   html.dark * sets scrollbar-color + scrollbar-width, which in Chrome/WebView2
-   disables ::-webkit-scrollbar pseudo-element control entirely.
-   Resetting both to `auto` re-enables webkit pseudo-element styling for this
-   element, then the rules below apply the thin auto-hiding style.           */
+/* ── EditorTabs: thin horizontal scrollbar (dark) ──────────────────────────
+   Uses the standard scrollbar API only — consistent across WKWebView /
+   WebView2 / WebKitGTK. Overrides the html.dark * track colour so the tab
+   strip keeps a transparent track. The thin width is set on .tabs-scroll. */
 html.dark .tabs-scroll {
-    scrollbar-color: auto;
-    scrollbar-width: auto;
-}
-
-html.dark .tabs-scroll::-webkit-scrollbar {
-    height: 3px !important;
-}
-
-html.dark .tabs-scroll::-webkit-scrollbar-track {
-    background: transparent !important;
-}
-
-html.dark .tabs-scroll::-webkit-scrollbar-thumb {
-    background: transparent !important;
-    border: none !important;
-    border-radius: 9999px !important;
-}
-
-html.dark .tabs-scroll:hover::-webkit-scrollbar-thumb {
-    background: rgba(130, 130, 130, 0.4) !important;
-}
-
-html.dark .tabs-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(130, 130, 130, 0.65) !important;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(150, 150, 150, 0.4) transparent;
 }
 
 /* ── LexicalEditor: scrollbar track matches its bg (#292c3c), not Parchment's (#303446) ── */

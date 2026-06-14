@@ -66,6 +66,14 @@
     let showSettings = $state(false);
     let isLoading = $state(true);
 
+    // Cmd+, (macOS) / Ctrl+, (Win/Linux) opens Settings — standard convention.
+    function handleGlobalKeydown(e: KeyboardEvent) {
+        if ((e.metaKey || e.ctrlKey) && e.key === "," ) {
+            e.preventDefault();
+            showSettings = true;
+        }
+    }
+
     onMount(async () => {
         try {
             const [labels] = await Promise.all([
@@ -182,7 +190,7 @@
     });
 </script>
 
-<svelte:window bind:innerHeight={height} />
+<svelte:window bind:innerHeight={height} onkeydown={handleGlobalKeydown} />
 <div
     class="max-w-[95%] rounded-r-md relative mx-auto sm:py-6"
     style:width="{Math.round(($singlePageMargin / 12) * 100)}%"

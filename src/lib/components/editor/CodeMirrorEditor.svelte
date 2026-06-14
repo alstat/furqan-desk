@@ -18,6 +18,7 @@
         Transaction,
         StateField,
         StateEffect,
+        Prec,
         type Extension,
     } from "@codemirror/state";
     import {
@@ -39,6 +40,10 @@
         bracketMatching,
         indentOnInput,
         indentUnit,
+        codeFolding,
+        foldGutter,
+        foldKeymap,
+        foldService,
         type StreamParser,
         type StringStream,
     } from "@codemirror/language";
@@ -1017,6 +1022,80 @@
         return [];
     }
 
+    // ── Code folding ──────────────────────────────────────────────────────────
+    // The editor uses StreamLanguage modes (Julia / Typst) which don't expose a
+    // syntax tree for the default syntax-based folding, so fold ranges are
+    // derived from indentation: a line folds everything below it that is more
+    // deeply indented (bridging blank lines), VS Code–style.
+    function leadingIndent(text: string): number {
+        let i = 0;
+        while (i < text.length && (text[i] === " " || text[i] === "\t")) i++;
+        return i;
+    }
+
+    const indentFoldService = foldService.of((state, lineStart) => {
+        const line = state.doc.lineAt(lineStart);
+        if (line.text.trim() === "") return null;
+        const baseIndent = leadingIndent(line.text);
+        let end = line.to;
+        let foundDeeper = false;
+        for (let n = line.number + 1; n <= state.doc.lines; n++) {
+            const nl = state.doc.line(n);
+            if (nl.text.trim() === "") continue; // bridge blank lines
+            if (leadingIndent(nl.text) > baseIndent) {
+                end = nl.to;
+                foundDeeper = true;
+            } else {
+                break;
+            }
+        }
+        return foundDeeper ? { from: line.to, to: end } : null;
+    });
+
+    // Caret markers: a downward chevron when expanded, right-pointing when
+    // collapsed. The SVG strokes inherit the gutter's themed text color.
+    function foldMarkerDOM(open: boolean): HTMLElement {
+        const el = document.createElement("span");
+        el.className =
+            "cm-foldCaret " + (open ? "cm-foldCaret-open" : "cm-foldCaret-closed");
+        el.setAttribute("aria-hidden", "true");
+        el.innerHTML = open
+            ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+            : `<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        return el;
+    }
+
+    const foldStyleTheme = EditorView.baseTheme({
+        ".cm-foldGutter": { width: "14px" },
+        ".cm-foldGutter .cm-gutterElement": {
+            padding: "0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+        },
+        ".cm-foldCaret": {
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "opacity 0.15s ease",
+        },
+        // Expand carets stay hidden until the gutter is hovered (VS Code-style);
+        // collapsed carets are always visible so folded code is discoverable.
+        ".cm-foldCaret-open": { opacity: "0" },
+        ".cm-foldCaret-closed": { opacity: "0.85" },
+        ".cm-gutters:hover .cm-foldCaret-open": { opacity: "0.55" },
+        ".cm-gutters:hover .cm-foldCaret-open:hover, .cm-gutters:hover .cm-foldCaret-closed:hover":
+            { opacity: "1" },
+    });
+
+    const foldingExtension: Extension = [
+        codeFolding(),
+        indentFoldService,
+        foldGutter({ markerDOM: foldMarkerDOM }),
+        foldStyleTheme,
+    ];
+
     // ── Editor setup ──────────────────────────────────────────────────────────
 
     const themeComp = new Compartment();
@@ -1325,6 +1404,9 @@
             doc: value,
             extensions: [
                 lineNumbers(),
+                // Fold gutter is registered after lineNumbers (and at default
+                // precedence) so it sits to the right of the line numbers.
+                foldingExtension,
                 drawSelection(),
                 highlightActiveLine(),
                 highlightActiveLineGutter(),
@@ -1355,6 +1437,7 @@
                     indentWithTab,
                     ...historyKeymap,
                     ...searchKeymap,
+                    ...foldKeymap,
                     ...defaultKeymap,
                 ]),
                 themeComp.of(getThemeExt($editorTheme)),
@@ -1362,7 +1445,9 @@
                 ...(language === "julia"
                     ? [juliaGoToDefinition, defLinkField]
                     : []),
-                gitDiffGutter(),
+                // Higher precedence than the line-number gutter so the diff
+                // bars render at the very left edge, before the line numbers.
+                Prec.high(gitDiffGutter()),
                 ...extraExtensions,
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged && !suppressOnChange) {
@@ -1486,6 +1571,10 @@
             view.dispatch({ effects: setGitBaseline.of(null) });
             return;
         }
+        // Clear the previous file's baseline immediately so the gutter never
+        // diffs this file's content against the wrong (stale) HEAD while the new
+        // baseline is being fetched.
+        view.dispatch({ effects: setGitBaseline.of(null) });
         invoke<string | null>("git_head_content", { filePath: path })
             .then((baseline) => {
                 if (cancelled || !view) return;
