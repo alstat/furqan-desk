@@ -127,7 +127,9 @@
 
     // Global keyboard shortcut: Ctrl+Shift+F / Cmd+Shift+F
     function handleWindowKeydown(e: KeyboardEvent) {
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "F") {
+        // Note: on macOS WebKit, Cmd suppresses Shift in e.key, so Cmd+Shift+F
+        // arrives as "f" rather than "F" — compare case-insensitively.
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "f") {
             e.preventDefault();
             isOpen = !isOpen;
             if (isOpen) {

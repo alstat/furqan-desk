@@ -359,25 +359,51 @@
         "This text is part of a typst file, so your output should be formatted as part of a typst file";
 
     // ── Resize (preview pane) ─────────────────────────────────────────────────
+    const PREVIEW_DEFAULT_HEIGHT = 200;
     let containerEl: HTMLDivElement;
-    let previewHeight = $state(200); // 54 × 4px = 216px (replaces fixed h-54)
+    let previewHeight = $state(PREVIEW_DEFAULT_HEIGHT); // 54 × 4px = 216px (replaces fixed h-54)
     let dragStartY = 0;
     let dragStartHeight = 0;
 
+    // Cursor-following gradient highlight on the divider, matching StackSplitDivider.
+    let dividerHovering = $state(false);
+    let dividerDragging = $state(false);
+    let dividerCursorX = $state(0);
+    let dividerHandleEl: HTMLElement | null = null;
+    let dividerActive = $derived(dividerHovering || dividerDragging);
+    let highlightColor = $derived($appDarkMode ? "229, 200, 144" : "212, 161, 64");
+    let highlightStrength = $derived(dividerDragging ? 0.85 : 0.55);
+
+    function updateDividerCursorX(e: PointerEvent, el: HTMLElement) {
+        const rect = el.getBoundingClientRect();
+        dividerCursorX = e.clientX - rect.left;
+    }
+    function onDividerMove(e: PointerEvent) {
+        updateDividerCursorX(e, e.currentTarget as HTMLElement);
+    }
+
     function startDrag(e: PointerEvent) {
+        dividerHandleEl = e.currentTarget as HTMLElement;
+        dividerDragging = true;
+        try { dividerHandleEl.setPointerCapture(e.pointerId); } catch {}
         dragStartY = e.clientY;
         dragStartHeight = previewHeight;
         window.addEventListener("pointermove", onDrag);
         window.addEventListener("pointerup", stopDrag, { once: true });
     }
     function onDrag(e: PointerEvent) {
+        if (dividerHandleEl) updateDividerCursorX(e, dividerHandleEl);
         const delta = dragStartY - e.clientY;
         const maxH = containerEl
             ? Math.max(120, containerEl.offsetHeight - 120 - 6)
             : dragStartHeight * 2;
         previewHeight = Math.max(120, Math.min(maxH, dragStartHeight + delta));
     }
-    function stopDrag() {
+    function stopDrag(e: PointerEvent) {
+        dividerDragging = false;
+        if (dividerHandleEl) {
+            try { dividerHandleEl.releasePointerCapture(e.pointerId); } catch {}
+        }
         window.removeEventListener("pointermove", onDrag);
     }
     onDestroy(() => {
@@ -475,17 +501,35 @@
 
     <!-- Splitter + resizable preview pane — hidden when preview is in Parchment area -->
     {#if effectiveTab?.type === "typst" && !sideBySide}
-        <div
-            class="flex-none h-1.5 cursor-row-resize flex items-center justify-center group
-                   hover:bg-brand-gold-100 dark:hover:bg-brand-gold-100/10 transition-colors select-none"
-            onpointerdown={startDrag}
-            role="separator"
-            aria-orientation="horizontal"
-        >
+        <!-- Draggable splitter — cursor-following gradient highlight (matches
+             the split-mode StackSplitDivider for visual consistency). The -mx-1
+             extends the tail flush against the vertical column divider. -->
+        <div class="relative z-1 flex-none h-1.5 -mx-1 select-none">
+            <!-- Hit area: taller than visible, centered on the seam. -->
             <div
-                class="w-8 h-0.5 rounded-full bg-brand-sand-400 dark:bg-[#414559]
-                        group-hover:bg-brand-gold-400 transition-colors"
+                role="separator"
+                aria-orientation="horizontal"
+                aria-label="Resize the preview pane"
+                onpointerdown={startDrag}
+                onpointermove={onDividerMove}
+                onpointerenter={() => (dividerHovering = true)}
+                onpointerleave={() => (dividerHovering = false)}
+                ondblclick={() => (previewHeight = PREVIEW_DEFAULT_HEIGHT)}
+                title="Drag to resize · Double-click to reset"
+                class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-3 cursor-row-resize"
             ></div>
+            <!-- Cursor-following highlight, only visible while hovering / dragging. -->
+            <span
+                class="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 h-px
+                       transition-opacity duration-150"
+                style="opacity: {dividerActive ? 1 : 0};
+                       background: radial-gradient(
+                           circle at {dividerCursorX}px 50%,
+                           rgba({highlightColor}, {highlightStrength}) 0px,
+                           rgba({highlightColor}, {highlightStrength * 0.5}) 40px,
+                           rgba({highlightColor}, 0) 140px
+                       );"
+            ></span>
         </div>
         <div
             class="flex-none flex flex-col p-2"

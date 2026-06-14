@@ -513,11 +513,10 @@
                                     hideRepl={true}
                                 />
                             </div>
-                            <div class="-mx-1">
-                                <StackSplitDivider
-                                    setRatio={(p) => juliaSplitRatio.set(p)}
-                                />
-                            </div>
+                            <StackSplitDivider
+                                class="-mx-1"
+                                setRatio={(p) => juliaSplitRatio.set(p)}
+                            />
                             <div class="flex-1 min-h-0 overflow-visible">
                                 <JuliaEditor
                                     tabId={activeGroup.tabB}

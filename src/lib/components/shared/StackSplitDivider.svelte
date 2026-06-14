@@ -3,7 +3,13 @@
 
     // setRatio receives the new top-pane height as a percentage (0–100) of the
     // stack; the parent clamps and persists it (left vs. right column store).
-    let { setRatio }: { setRatio: (pct: number) => void } = $props();
+    // `class` is merged onto the root so callers can tweak margins (e.g. extend
+    // the divider's tail toward the column divider) without adding a wrapper —
+    // a wrapper would break the parentElement chain used to find the stack.
+    let { setRatio, class: className = "" }: {
+        setRatio: (pct: number) => void;
+        class?: string;
+    } = $props();
 
     let dragging = $state(false);
     let hovering = $state(false);
@@ -62,7 +68,7 @@
 </script>
 
 <div
-    class="relative z-1 self-stretch shrink-0 select-none"
+    class="relative z-1 self-stretch shrink-0 select-none {className}"
     style="height: 0"
 >
     <!-- Hit area: taller than visible, centered on the seam. -->

@@ -405,7 +405,22 @@
 			panelSize = null;
 		}
 	}
+
+	// Cmd+Shift+E / Ctrl+Shift+E toggles the File Explorer; Escape closes it.
+	function handleWindowKeydown(e: KeyboardEvent) {
+		// Note: on macOS WebKit, Cmd suppresses Shift in e.key, so Cmd+Shift+E
+		// arrives as "e" rather than "E" — compare case-insensitively.
+		if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "e") {
+			e.preventDefault();
+			togglePanel();
+		}
+		if (e.key === "Escape" && isOpen) {
+			isOpen = false;
+		}
+	}
 </script>
+
+<svelte:window onkeydown={handleWindowKeydown} />
 
 <!-- File Explorer button — outside the editor content div on the left (LTR) or right (RTL), same vertical level as CollapsibleSidebar toggle -->
 <button

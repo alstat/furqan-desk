@@ -625,7 +625,7 @@
                         setTimeout(() => flashingTabId.set(null), 1500);
                     }
                 }}
-                class="group cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-[11px] whitespace-nowrap
+                class="group cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-[13px] whitespace-nowrap
                        border-r border-stone-200 dark:border-[#414559] transition-colors
                        {group
                     ? `border-b-2 ${color?.border} ${color?.bg} pr-6`
@@ -907,31 +907,14 @@
         cursor: grab;
     }
 
-    /* Overlay scrollbar: floats over content, doesn't affect layout height */
+    /* Thin horizontal scrollbar via the standard scrollbar API, which all three
+       webviews honor (WKWebView / WebView2 / WebKitGTK). `overflow: overlay` is
+       avoided on purpose — on macOS with a mouse attached it renders a thick,
+       non-styleable classic scrollbar. The dark-mode colour is set in app.css. */
     .tabs-scroll {
-        overflow-x: overlay;
-    }
-
-    .tabs-scroll::-webkit-scrollbar {
-        height: 3px;
-    }
-
-    .tabs-scroll::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .tabs-scroll::-webkit-scrollbar-thumb {
-        background: transparent;
-        border-radius: 9999px;
-        transition: background 0.3s ease;
-    }
-
-    .tabs-scroll:hover::-webkit-scrollbar-thumb {
-        background: rgba(120, 120, 120, 0.35);
-    }
-
-    .tabs-scroll::-webkit-scrollbar-thumb:hover {
-        background: rgba(120, 120, 120, 0.6);
+        overflow-x: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(130, 130, 130, 0.4) transparent;
     }
 
     /* Zen Mode: tab strip opacity is user-configurable (Settings → Sukūn Mode).
