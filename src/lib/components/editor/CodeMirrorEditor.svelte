@@ -1603,6 +1603,7 @@
         y={aiSelection.y}
         contextPrompt={aiContextPrompt}
         askAiContextPrompt={askAiContextPrompt}
+        {language}
         onReplace={replaceAiSelection}
         onClose={() => (aiSelection = null)}
     />

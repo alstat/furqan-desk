@@ -129,7 +129,11 @@
     function handleWindowKeydown(e: KeyboardEvent) {
         // Note: on macOS WebKit, Cmd suppresses Shift in e.key, so Cmd+Shift+F
         // arrives as "f" rather than "F" — compare case-insensitively.
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "f") {
+        if (
+            (e.ctrlKey || e.metaKey) &&
+            e.shiftKey &&
+            e.key.toLowerCase() === "f"
+        ) {
             e.preventDefault();
             isOpen = !isOpen;
             if (isOpen) {
@@ -285,6 +289,18 @@
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
+<!-- Zen-mode locator dot — marks where the (hidden) Global Search button sits. -->
+{#if $zenMode && !$zenPeek && !isOpen}
+    <div
+        aria-hidden="true"
+        class="pointer-events-none absolute -left-5 top-1/2 z-2 h-8 w-8 flex items-center justify-center"
+    >
+        <span
+            class="h-1.5 w-1.5 rounded-full bg-brand-charcoal-400 dark:bg-[#838ba7] opacity-15"
+        ></span>
+    </div>
+{/if}
+
 <!-- Global Search button — sits just outside the editor on the left, below the FileExplorer button -->
 <button
     class="cursor-pointer absolute -left-5 top-1/2 z-3 rounded-full {actionBtnStyle} {isOpen
@@ -326,11 +342,19 @@
     <div
         bind:this={panelEl}
         transition:fly={{ x: isRtl ? 8 : -8, duration: 180, opacity: 0 }}
-        class="{panelPos ? 'fixed' : 'absolute top-1/2 left-1.5 ml-2'} z-50 rounded-3xl {panelSize ? '' : 'w-72 max-h-[50vh]'} bg-white dark:bg-[#292c3c]
+        class="{panelPos
+            ? 'fixed'
+            : 'absolute top-1/2 left-1.5 ml-2'} z-50 rounded-3xl {panelSize
+            ? ''
+            : 'w-72 max-h-[50vh]'} bg-white dark:bg-[#292c3c]
 		       border border-stone-200 dark:border-[#414559]
 		       shadow-xl shadow-black/15 dark:shadow-black/40
 		       flex flex-col overflow-hidden"
-        style="{panelPos ? `left:${panelPos.x}px; top:${panelPos.y}px;` : ''}{panelSize ? ` width:${panelSize.w}px; height:${panelSize.h}px;` : ''}"
+        style="{panelPos
+            ? `left:${panelPos.x}px; top:${panelPos.y}px;`
+            : ''}{panelSize
+            ? ` width:${panelSize.w}px; height:${panelSize.h}px;`
+            : ''}"
     >
         <!-- Header -->
         <div

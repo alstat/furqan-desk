@@ -69,18 +69,39 @@ function instructionFor(
     return tone ? `${instruction} ${toneInstructions[tone]}` : instruction;
 }
 
+// Languages for which AI transforms should annotate their edits with brief
+// inline comments. Maps each to the comment token used by that language.
+const CODE_COMMENT_TOKENS: Record<string, { name: string; token: string }> = {
+    julia: { name: "Julia", token: "#" },
+    typst: { name: "Typst", token: "//" },
+};
+
+function codeChangeDirective(language?: string): string {
+    const lang = language ? CODE_COMMENT_TOKENS[language] : undefined;
+    if (!lang) return "";
+    return (
+        `\n\nThe selected text is ${lang.name} source code. Return the full updated ` +
+        `${lang.name} code for the selection. At each place you modify, insert a brief ` +
+        `inline comment (using \`${lang.token}\`) that concisely explains what was changed ` +
+        `and why. Only add these comments where you actually made a change, and keep them short. ` +
+        `Do not wrap the output in markdown code fences.`
+    );
+}
+
 export async function runAiTextTransform({
     action,
     selectedText,
     customPrompt,
     contextPrompt,
     tone,
+    language,
 }: {
     action: AiTextAction;
     selectedText: string;
     customPrompt?: string;
     contextPrompt?: string;
     tone?: AiTextTone;
+    language?: string;
 }): Promise<string> {
     const text = selectedText.trim();
     if (!text) throw new Error("Select text first.");
@@ -90,6 +111,7 @@ export async function runAiTextTransform({
     if (!token) throw new Error("You must be signed in.");
 
     const instruction = instructionFor(action, customPrompt, tone);
+    const codeDirective = codeChangeDirective(language);
     const context = contextPrompt?.trim();
     const res = await fetch(FUNCTION_URL, {
         method: "POST",
@@ -108,7 +130,7 @@ export async function runAiTextTransform({
                 },
                 {
                     role: "user",
-                    content: `${context ? `Context:\n${context}\n\n` : ""}${instruction}\n\nSelected text:\n${text}`,
+                    content: `${context ? `Context:\n${context}\n\n` : ""}${instruction}${codeDirective}\n\nSelected text:\n${text}`,
                 },
             ],
         }),
