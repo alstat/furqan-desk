@@ -1,7 +1,6 @@
 mod buckwalter;
 mod commands;
 mod db;
-mod feedback;
 #[cfg(unix)]
 mod git;
 mod julia;
@@ -233,7 +232,6 @@ pub fn run() {
             commands::clear_manuscript_cache,
             commands::get_manuscript_demo_image,
             commands::get_system_font_families,
-            feedback::send_feedback,
             #[cfg(unix)]
             git::git_head_content,
         ])

@@ -56,7 +56,7 @@
     }
     import Icon from "@iconify/svelte";
     import { confirm } from "@tauri-apps/plugin-dialog";
-    import { singlePageMargin, zenMode, zenPeek } from "$lib/stores/editor.store";
+    import { singlePageMargin, zenMode, zenPeek, zenTabsOpacity } from "$lib/stores/editor.store";
 
     const GROUP_COLORS = [
         {
@@ -316,6 +316,11 @@
         }
     }
 
+    function closeThis(tabId: string) {
+        closeContextMenu();
+        tryClose(tabId);
+    }
+
     function closeOthers(tabId: string) {
         const ids = $tabs.filter((t) => t.id !== tabId).map((t) => t.id);
         closeContextMenu();
@@ -530,7 +535,8 @@
 
 <!-- Outer: clips scrollbar thumb to the rounded-full boundary -->
 <div
-    class="{$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''} select-none absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(38rem,90%)] rounded-md border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30 overflow-hidden"
+    class="{$zenMode ? 'zen-tabs' : ''} select-none absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(38rem,90%)] rounded-md border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30 overflow-hidden"
+    style={$zenMode ? `--zen-tabs-opacity: ${$zenPeek ? 1 : $zenTabsOpacity / 100}` : ''}
 >
 <!-- Inner: handles horizontal scrolling -->
 <div
@@ -862,6 +868,13 @@
         class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-2xl shadow-xl p-1.5 min-w-40"
     >
         <button
+            onclick={() => closeThis(contextMenuTabId!)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+        >
+            <Icon icon="solar:close-square-bold-duotone" width="0.85rem" class="shrink-0" />
+            Close
+        </button>
+        <button
             disabled={!hasOthers}
             onclick={() => closeOthers(contextMenuTabId!)}
             class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5] disabled:opacity-40 disabled:cursor-default disabled:hover:bg-transparent disabled:dark:hover:bg-transparent"
@@ -919,5 +932,15 @@
 
     .tabs-scroll::-webkit-scrollbar-thumb:hover {
         background: rgba(120, 120, 120, 0.6);
+    }
+
+    /* Zen Mode: tab strip opacity is user-configurable (Settings → Sukūn Mode).
+       Hovering always reveals it fully so it stays usable at low opacities. */
+    .zen-tabs {
+        opacity: var(--zen-tabs-opacity, 1);
+        transition: opacity 0.2s ease;
+    }
+    .zen-tabs:hover {
+        opacity: 1;
     }
 </style>

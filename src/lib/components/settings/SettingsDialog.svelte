@@ -4,6 +4,8 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     import {
         appDarkMode,
         zenMode,
+        zenTabsOpacity,
+        ZEN_TABS_OPACITY_BOUNDS,
         customFontFamilies,
         typstPreviewDarkMode,
         editorIndentSize,
@@ -228,6 +230,30 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                         >
                             {$t('common.enabled')}
                         </button>
+                    </div>
+                </div>
+                <!-- Editor Tabs Opacity in Zen Mode -->
+                <div class="flex items-center justify-between gap-4 mt-3">
+                    <div>
+                        <span class={rowLabel}>{$t('settings.zen.tabs_opacity')}</span>
+                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                            {$t('settings.zen.tabs_opacity.desc')}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <input
+                            type="range"
+                            min={ZEN_TABS_OPACITY_BOUNDS.min}
+                            max={ZEN_TABS_OPACITY_BOUNDS.max}
+                            step={ZEN_TABS_OPACITY_BOUNDS.step}
+                            value={$zenTabsOpacity}
+                            oninput={(e) => zenTabsOpacity.set(Number(e.currentTarget.value))}
+                            aria-label={$t('settings.zen.tabs_opacity')}
+                            class="zen-opacity-slider w-32 cursor-pointer"
+                        />
+                        <span class="w-11 text-center text-xs font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]">
+                            {$zenTabsOpacity}%
+                        </span>
                     </div>
                 </div>
             </div>

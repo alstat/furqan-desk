@@ -20,7 +20,6 @@
     } from "$lib/stores/editor.store";
     import { activeTab, activeTabId } from "$lib/stores/tabs.store";
     import { crossGroups } from "$lib/stores/julia-terminal.store";
-    import FeedbackDialog from "./FeedbackDialog.svelte";
     import DonationDialog from "./DonationDialog.svelte";
     import UserAccountDialog from "./UserAccountDialog.svelte";
     import AiChatDialog from "./AiChatDialog.svelte";
@@ -32,8 +31,8 @@
     import { zenMode, appDarkMode } from "$lib/stores/editor.store";
     import { authUser, isPro } from "$lib/stores/auth.store";
     import { aiChatDialogOpen } from "$lib/stores/ai-chat.store";
+    import { openUrl } from "@tauri-apps/plugin-opener";
 
-    let feedbackOpen = $state(false);
     let accountOpen = $state(false);
     let terminalOpen = $state(false);
     let tocBtnEl = $state<HTMLButtonElement | null>(null);
@@ -52,21 +51,35 @@
 
     let hasLeftPanel = $derived(
         !$hideSurahPage() ||
-        $crossGroups.some((g) => g.hostTabId === $activeTabId || g.partnerTabId === $activeTabId) ||
-        $activeTab?.type === "julia" ||
-        $activeTab?.type === "typst"
+            $crossGroups.some(
+                (g) =>
+                    g.hostTabId === $activeTabId ||
+                    g.partnerTabId === $activeTabId,
+            ) ||
+            $activeTab?.type === "julia" ||
+            $activeTab?.type === "typst",
     );
 
     // Hide Quran Page + Julia/Typst tab → right side hosts REPL or Typst preview.
     // In that mode the user can drag the divider, so the sidebar width is variable.
     let inResizableSplit = $derived(
         $hideSurahPage() &&
-        ($activeTab?.type === "julia" || $activeTab?.type === "typst") &&
-        !$crossGroups.some((g) => g.hostTabId === $activeTabId || g.partnerTabId === $activeTabId)
+            ($activeTab?.type === "julia" || $activeTab?.type === "typst") &&
+            !$crossGroups.some(
+                (g) =>
+                    g.hostTabId === $activeTabId ||
+                    g.partnerTabId === $activeTabId,
+            ),
     );
 
     let sidebarWidthPct = $derived(
-        !$isSidebar ? 0 : !hasLeftPanel ? 100 : inResizableSplit ? $editorSplitRatio : 50
+        !$isSidebar
+            ? 0
+            : !hasLeftPanel
+              ? 100
+              : inResizableSplit
+                ? $editorSplitRatio
+                : 50,
     );
 
     let windowWidth = $state(0);
@@ -81,14 +94,14 @@
         }
 
         if (!$hideSurahPage() && $isSidebar) {
-          if (windowWidth < 1800) {
-            singlePageMargin.set(12);
-            console.log(windowWidth)
-          } else if (windowWidth >= 1800 && windowWidth < 2000) {
-            singlePageMargin.set(10);
-          } else {
-            singlePageMargin.set(8);
-          }
+            if (windowWidth < 1800) {
+                singlePageMargin.set(12);
+                console.log(windowWidth);
+            } else if (windowWidth >= 1800 && windowWidth < 2000) {
+                singlePageMargin.set(10);
+            } else {
+                singlePageMargin.set(8);
+            }
         }
 
         $isSidebar = opening;
@@ -134,6 +147,7 @@
         };
     }
 </script>
+
 <svelte:window bind:innerWidth={windowWidth} />
 
 <div
@@ -143,7 +157,7 @@
 >
     <!-- Sidebar toggle (top) -->
     <button
-        class={`${$hideSurahPage() ? "hidden " : ""} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-4 z-200 rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559] ${$zenMode ? 'opacity-30 hover:opacity-100' : ''}`}
+        class={`${$hideSurahPage() ? "hidden " : ""} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-4 z-200 rounded-full bg-brand-gold-200 dark:bg-[#292c3c] p-2 shadow-md transition-colors text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-400 dark:hover:bg-[#363a4f] active:bg-brand-gold-500 dark:active:bg-[#414559] ${$zenMode ? "opacity-30 hover:opacity-100" : ""}`}
         onclick={toggleSidebar}
         aria-label={$isSidebar ? "Collapse sidebar" : "Expand sidebar"}
     >
@@ -159,39 +173,44 @@
         </svg>
     </button>
 
-
     <!-- AI Button -->
     <button
-        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-15 z-3 ${$aiChatDialogOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-15 z-3 ${$aiChatDialogOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? "opacity-50 transition-opacity duration-200" : "opacity-0 hover:opacity-100 transition-opacity duration-200") : ""}`}
         onclick={handleAiClick}
-        aria-label={$t('ai_chat.title')}
-        title={$t('ai_chat.title')}
+        aria-label={$t("ai_chat.title")}
+        title={$t("ai_chat.title")}
     >
-        <Icon icon="ri:chat-smile-ai-fill" class="h-4 w-4 text-brand-charcoal-300" />
+        <Icon
+            icon="ri:chat-smile-ai-fill"
+            class="h-4 w-4 text-brand-charcoal-300"
+        />
     </button>
 
     <!-- Terminal Button -->
     <button
-        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-26 z-3 ${terminalOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-26 z-3 ${terminalOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? "opacity-50 transition-opacity duration-200" : "opacity-0 hover:opacity-100 transition-opacity duration-200") : ""}`}
         onclick={() => (terminalOpen = !terminalOpen)}
         aria-label="Open terminal"
         title="Open terminal"
     >
-        <Icon icon="icon-park-twotone:terminal" class="h-4 w-4 text-brand-charcoal-300" />
+        <Icon
+            icon="icon-park-twotone:terminal"
+            class="h-4 w-4 text-brand-charcoal-300"
+        />
     </button>
-
 
     <!-- Table of Contents button -->
     {#if $isSidebar && $activeTab?.type === "lexical"}
         <button
             bind:this={tocBtnEl}
-            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-37 z-3 ${$tocOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-37 z-3 ${$tocOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? "opacity-50 transition-opacity duration-200" : "opacity-0 hover:opacity-100 transition-opacity duration-200") : ""}`}
             onclick={() => {
-                if (tocBtnEl) tocAnchorRect.set(tocBtnEl.getBoundingClientRect());
+                if (tocBtnEl)
+                    tocAnchorRect.set(tocBtnEl.getBoundingClientRect());
                 $tocOpen = !$tocOpen;
             }}
-            aria-label={$t('toc.button')}
-            title={$t('toc.button')}
+            aria-label={$t("toc.button")}
+            title={$t("toc.button")}
         >
             <Icon icon="solar:list-bold-duotone" class="h-4 w-4" />
         </button>
@@ -201,7 +220,7 @@
     {#if $juliaMode || $juliaViewerOpen}
         <button
             class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-37 z-3 rounded-full
-			       ${$juliaViewerOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+			       ${$juliaViewerOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? "opacity-50 transition-opacity duration-200" : "opacity-0 hover:opacity-100 transition-opacity duration-200") : ""}`}
             onclick={() => ($juliaViewerOpen = !$juliaViewerOpen)}
             aria-label="Julia Plot Viewer"
             title="Julia Plot Viewer"
@@ -210,7 +229,7 @@
             {#if $juliaPlots.length > 0}
                 <span
                     class="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center
-					       rounded-full bg-brand-gold-500 dark:bg-[#e5c890] text-gray-100  hover:dark:text-gray-100 dark:text-[#1a1d2e]
+					       rounded-full bg-brand-gold-500 dark:bg-[#e5c890] text-gray-100 hover:dark:text-gray-100 dark:text-[#1a1d2e]
 					       text-[8px] font-bold leading-none"
                 >
                     {$juliaPlots.length > 9 ? "9+" : $juliaPlots.length}
@@ -221,7 +240,7 @@
 
     <!-- User account button (above donation) -->
     <button
-        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-26 z-3 ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-26 z-3 ${$zenMode ? ($zenPeek ? "opacity-50 transition-opacity duration-200" : "opacity-0 hover:opacity-100 transition-opacity duration-200") : ""}`}
         onclick={() => (accountOpen = true)}
         aria-label={$t("account.title")}
         title={$t("account.title")}
@@ -231,7 +250,7 @@
 
     <!-- Donation button (above feedback) -->
     <button
-        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-15 z-3 ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-15 z-3 ${$zenMode ? ($zenPeek ? "opacity-50 transition-opacity duration-200" : "opacity-0 hover:opacity-100 transition-opacity duration-200") : ""}`}
         onclick={() => ($donationOpen = true)}
         aria-label="Support AyahLab"
         title="Donate / Support"
@@ -241,8 +260,8 @@
 
     <!-- Feedback button (bottom) — same strip as toggle, aligned vertically at bottom -->
     <button
-        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-4 z-3 ${$zenMode ? ($zenPeek ? 'opacity-50 transition-opacity duration-200' : 'opacity-0 hover:opacity-100 transition-opacity duration-200') : ''}`}
-        onclick={() => (feedbackOpen = true)}
+        class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-4 z-3 ${$zenMode ? ($zenPeek ? "opacity-50 transition-opacity duration-200" : "opacity-0 hover:opacity-100 transition-opacity duration-200") : ""}`}
+        onclick={() => openUrl("https://www.ayahlab.com/#feedback")}
         aria-label="Send feedback"
         title="Send feedback"
     >
@@ -252,10 +271,6 @@
     <DonationDialog
         open={$donationOpen}
         onClose={() => ($donationOpen = false)}
-    />
-    <FeedbackDialog
-        open={feedbackOpen}
-        onClose={() => (feedbackOpen = false)}
     />
     <UserAccountDialog
         open={accountOpen}
@@ -287,7 +302,10 @@
                         ? "right"
                         : "left", // or 'left' for left-to-right
             }}
-            class="relative w-full space-y-2 overflow-visible {$zenMode && $appDarkMode ? 'bg-transparent' : 'bg-white dark:bg-[#292c3c]'} px-1 pb-4 text-xl {$zenMode
+            class="relative w-full space-y-2 overflow-visible {$zenMode &&
+            $appDarkMode
+                ? 'bg-transparent'
+                : 'bg-white dark:bg-[#292c3c]'} px-1 pb-4 text-xl {$zenMode
                 ? ''
                 : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/40'} {roundRight &&
             $hideSurahPage() &&
@@ -298,7 +316,11 @@
             {#if $zenMode}
                 <div
                     class="absolute top-0 right-0 w-1/2 h-px z-10 pointer-events-none"
-                    style="background: linear-gradient(to right, transparent 0%, {$appDarkMode ? 'rgba(229,200,144,0.25)' : 'rgba(229,200,144,0.55)'} 20%, {$appDarkMode ? 'rgba(229,200,144,0.25)' : 'rgba(229,200,144,0.55)'} 80%, transparent 100%)"
+                    style="background: linear-gradient(to right, transparent 0%, {$appDarkMode
+                        ? 'rgba(229,200,144,0.25)'
+                        : 'rgba(229,200,144,0.55)'} 20%, {$appDarkMode
+                        ? 'rgba(229,200,144,0.25)'
+                        : 'rgba(229,200,144,0.55)'} 80%, transparent 100%)"
                 ></div>
             {/if}
             {@render children()}

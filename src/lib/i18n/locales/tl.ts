@@ -91,6 +91,9 @@ export const tl: Record<string, string> = {
   "settings.zen": "Sukūn Mode",
   "settings.zen.desc":
     "Pag-edit nang walang abala — tinatanggal ang mga hangganan, anino, at pinapahina ang mga icon ng interface",
+  "settings.zen.tabs_opacity": "Opacity ng mga tab sa Sukūn Mode",
+  "settings.zen.tabs_opacity.desc":
+    "Opacity ng mga tab ng editor habang nasa Sukūn Mode (0% ay nagtatago sa kanila hanggang i-hover)",
   "settings.privacy": "Privacy",
   "settings.privacy.text":
     "Ang AyahLab ay ganap na offline. Walang mga account, walang telemetry, walang analytics. Ang iyong mga tala, bookmark, at mga setting ay nananatili sa iyong device lamang.",

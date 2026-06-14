@@ -89,6 +89,9 @@ export const bn: Record<string, string> = {
   "settings.zen": "Sukūn মোড",
   "settings.zen.desc":
     "মনোযোগমুক্ত সম্পাদনা — বর্ডার, ছায়া সরায় এবং ইন্টারফেস আইকন ম্লান করে",
+  "settings.zen.tabs_opacity": "Sukūn মোডে ট্যাবের অস্বচ্ছতা",
+  "settings.zen.tabs_opacity.desc":
+    "Sukūn মোডে এডিটর ট্যাবের অস্বচ্ছতা (0% হোভার না করা পর্যন্ত সেগুলো লুকিয়ে রাখে)",
   "settings.privacy": "গোপনীয়তা",
   "settings.privacy.text":
     "AyahLab সম্পূর্ণ অফলাইন। কোনো অ্যাকাউন্ট নেই, কোনো টেলিমেট্রি নেই, কোনো বিশ্লেষণ নেই। আপনার নোট, বুকমার্ক এবং সেটিংস শুধুমাত্র আপনার ডিভাইসে থাকে।",

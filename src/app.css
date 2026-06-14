@@ -98,7 +98,11 @@ html.dark {
     --color-brand-charcoal-800: #d7def7; /* between Text and heading */
     --color-brand-charcoal-900: #e8edff; /* near-white headings */
 
-    --ayah-flash-bg: color-mix(in srgb, var(--color-brand-gold-400) 25%, transparent);
+    --ayah-flash-bg: color-mix(
+        in srgb,
+        var(--color-brand-gold-400) 25%,
+        transparent
+    );
 }
 
 html.dark body,
@@ -419,6 +423,47 @@ html.dark .cm-scroller::-webkit-scrollbar-thumb {
 html.dark .cm-scroller:hover::-webkit-scrollbar-thumb,
 html.dark .cm-scroller:active::-webkit-scrollbar-thumb {
     background-color: #62688082;
+}
+
+/* ── Opacity slider (Settings → Sukūn Mode tabs opacity) ───────────────────
+   Fully custom so the track + thumb follow the brand palette, which already
+   flips in dark mode (html.dark redefines the --color-brand-* variables). */
+.zen-opacity-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--color-brand-sand-200);
+    outline: none;
+}
+.zen-opacity-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 16px;
+    border-radius: 10px;
+    background: var(--color-brand-gold-400);
+    /*border: 2px solid var(--color-brand-sand-50);*/
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+.zen-opacity-slider::-moz-range-track {
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--color-brand-sand-200);
+}
+.zen-opacity-slider::-moz-range-thumb {
+    width: 20px;
+    height: 16px;
+    border-radius: 10px;
+    background: var(--color-brand-gold-400);
+    /*border: 2px solid var(--color-brand-sand-50);*/
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+.zen-opacity-slider:focus-visible {
+    outline: 2px solid var(--color-brand-gold-400);
+    outline-offset: 2px;
 }
 /*
 .parchment {

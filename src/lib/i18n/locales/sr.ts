@@ -87,6 +87,8 @@ export const sr: Record<string, string> = {
   "sukun.show_icons": "Прикажи иконе",
   "settings.zen": "Sukūn Режим",
   "settings.zen.desc": "Уређивање без ометања — уклања ивице, сенке и пригушује иконе",
+  "settings.zen.tabs_opacity": "Непрозирност картица у Sukūn режиму",
+  "settings.zen.tabs_opacity.desc": "Непрозирност картица уређивача у Sukūn режиму (0% их скрива док не пређете мишем преко њих)",
   "settings.privacy": "Приватност",
   "settings.privacy.text": "AyahLab је потпуно офлајн. Без налога, без телеметрије, без аналитике. Ваше белешке, обележивачи и подешавања остају само на вашем уређају.",
   "common.enabled": "Омогућено",

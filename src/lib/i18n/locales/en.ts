@@ -105,6 +105,9 @@ export const en: Record<string, string> = {
   "settings.zen": "Sukūn Mode",
   "settings.zen.desc":
     "Distraction-free editing — removes borders, shadows, and dims interface icons",
+  "settings.zen.tabs_opacity": "Tabs Opacity in Sukūn Mode",
+  "settings.zen.tabs_opacity.desc":
+    "Opacity of the editor tabs while in Sukūn Mode (0% hides them until hovered)",
   "settings.privacy": "Privacy",
   "settings.privacy.text":
     "AyahLab is fully offline. No accounts, no telemetry, no analytics. Your notes, bookmarks, and settings stay on your device only — the author has no way to access your data.",

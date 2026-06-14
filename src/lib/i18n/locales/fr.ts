@@ -88,6 +88,8 @@ export const fr: Record<string, string> = {
     'sukun.show_icons': 'Afficher les icônes',
     'settings.zen': 'Mode Sukūn',
     'settings.zen.desc': 'Édition sans distraction — supprime les bordures, ombres et atténue les icônes',
+    'settings.zen.tabs_opacity': 'Opacité des onglets en mode Sukūn',
+    'settings.zen.tabs_opacity.desc': 'Opacité des onglets de l’éditeur en mode Sukūn (0 % les masque jusqu’au survol)',
     'settings.privacy': 'Confidentialité',
     'settings.privacy.text': "AyahLab ne collecte aucune donnée personnelle. La fonction de retour utilise Resend pour envoyer votre message directement au développeur — votre adresse e-mail n'est utilisée que pour vous répondre et n'est jamais stockée ni partagée. Pas d'analyses, pas de suivi.",
   // Navigation and Julia plots

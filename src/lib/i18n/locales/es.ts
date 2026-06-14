@@ -90,6 +90,9 @@ export const es: Record<string, string> = {
   "settings.zen": "Modo Sukūn",
   "settings.zen.desc":
     "Edición sin distracciones — elimina bordes, sombras y atenúa los iconos",
+  "settings.zen.tabs_opacity": "Opacidad de las pestañas en Modo Sukūn",
+  "settings.zen.tabs_opacity.desc":
+    "Opacidad de las pestañas del editor en Modo Sukūn (0% las oculta hasta pasar el cursor)",
   "settings.privacy": "Privacidad",
   "settings.privacy.text":
     "AyahLab no recopila ningún dato personal. La función de comentarios usa Resend para enviar tu mensaje directamente al desarrollador — tu correo solo se usa para responderte y nunca se almacena ni comparte. Sin análisis, sin seguimiento.",

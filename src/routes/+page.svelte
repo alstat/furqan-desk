@@ -58,6 +58,7 @@
     import SukunPeekToggle from "$lib/components/shared/SukunPeekToggle.svelte";
     import UpDownMargin from "$lib/components/shared/UpDownMargin.svelte";
     import SplitDivider from "$lib/components/shared/SplitDivider.svelte";
+    import QuickOpen from "$lib/components/shared/QuickOpen.svelte";
 
     let height: number = $state(
         typeof window !== "undefined" ? window.innerHeight : 600,
@@ -320,6 +321,7 @@
 <SurahWidget />
 <EditorToolbar onOpenSettings={() => (showSettings = true)} />
 <TourOverlay />
+<QuickOpen />
 <SettingsDialog
     open={showSettings}
     onClose={() => (showSettings = false)}

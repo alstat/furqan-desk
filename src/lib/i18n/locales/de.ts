@@ -89,6 +89,9 @@ export const de: Record<string, string> = {
   "settings.zen": "Sukūn-Modus",
   "settings.zen.desc":
     "Ablenkungsfreies Arbeiten — entfernt Rahmen, Schatten und blendet Symbole ab",
+  "settings.zen.tabs_opacity": "Tab-Deckkraft im Sukūn-Modus",
+  "settings.zen.tabs_opacity.desc":
+    "Deckkraft der Editor-Tabs im Sukūn-Modus (0 % blendet sie aus, bis sie mit der Maus berührt werden)",
   "settings.privacy": "Datenschutz",
   "settings.privacy.text":
     "AyahLab sammelt keine persönlichen Daten. Die Feedback-Funktion nutzt Resend, um Ihre Nachricht direkt an den Entwickler zu senden – Ihre E-Mail-Adresse wird nur zur Antwort verwendet und niemals gespeichert oder weitergegeben. Keine Analysen, kein Tracking.",

@@ -89,6 +89,9 @@ export const pt: Record<string, string> = {
   "settings.zen": "Modo Sukūn",
   "settings.zen.desc":
     "Edição sem distrações — remove bordas, sombras e atenua ícones da interface",
+  "settings.zen.tabs_opacity": "Opacidade das abas no Modo Sukūn",
+  "settings.zen.tabs_opacity.desc":
+    "Opacidade das abas do editor no Modo Sukūn (0% as oculta até passar o cursor)",
   "settings.privacy": "Privacidade",
   "settings.privacy.text":
     "O AyahLab funciona completamente offline. Sem contas, sem telemetria, sem análises. Suas notas, marcadores e configurações permanecem apenas no seu dispositivo.",

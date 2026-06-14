@@ -89,6 +89,9 @@ export const ms: Record<string, string> = {
   "settings.zen": "Mod Sukūn",
   "settings.zen.desc":
     "Penyuntingan tanpa gangguan — membuang sempadan, bayang, dan meredupkan ikon antara muka",
+  "settings.zen.tabs_opacity": "Kelegapan tab dalam Mod Sukūn",
+  "settings.zen.tabs_opacity.desc":
+    "Kelegapan tab editor semasa dalam Mod Sukūn (0% menyembunyikannya sehingga dituding)",
   "settings.privacy": "Privasi",
   "settings.privacy.text":
     "AyahLab beroperasi sepenuhnya luar talian. Tiada akaun, tiada telemetri, tiada analitik. Nota, penanda buku, dan tetapan anda kekal di peranti anda sahaja.",

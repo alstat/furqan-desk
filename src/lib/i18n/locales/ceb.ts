@@ -88,6 +88,8 @@ export const ceb: Record<string, string> = {
   "sukun.show_icons": "Ipakita ang mga Icon",
   "settings.zen": "Sukūn Mode",
   "settings.zen.desc": "Pag-edit nga walay distraksiyon — kuhaa ang mga border, anino, ug i-dim ang mga icon sa interface",
+  "settings.zen.tabs_opacity": "Opacity sa mga tab sa Sukūn Mode",
+  "settings.zen.tabs_opacity.desc": "Opacity sa mga editor tab samtang naa sa Sukūn Mode (0% motago kanila hangtod i-hover)",
   "settings.privacy": "Privacy",
   "settings.privacy.text":
     "Ang AyahLab kay bug-os nga offline. Walay account, walay telemetry, walay analytics. Ang imong mga nota, bookmark, ug mga setting nagpabilin sa imong device lamang — ang tagsulat walay paagi sa pag-access sa imong datos.",
