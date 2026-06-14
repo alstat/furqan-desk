@@ -88,6 +88,8 @@ export const id: Record<string, string> = {
     'sukun.show_icons': 'Tampilkan Ikon',
     'settings.zen': 'Mode Sukūn',
     'settings.zen.desc': 'Pengeditan tanpa gangguan — menghapus batas, bayangan, dan meredup ikon antarmuka',
+    'settings.zen.tabs_opacity': 'Opasitas tab dalam Mode Sukūn',
+    'settings.zen.tabs_opacity.desc': 'Opasitas tab editor saat dalam Mode Sukūn (0% menyembunyikannya hingga diarahkan kursor)',
     'settings.privacy': 'Privasi',
     'settings.privacy.text': 'AyahLab sepenuhnya offline. Tidak ada akun, tidak ada telemetri, tidak ada analitik. Catatan, bookmark, dan pengaturan Anda hanya tersimpan di perangkat Anda.',
   // Navigation and Julia plots

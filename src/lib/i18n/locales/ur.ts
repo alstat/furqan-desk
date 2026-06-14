@@ -88,6 +88,8 @@ export const ur: Record<string, string> = {
     'sukun.show_icons': 'آئیکن دکھائیں',
     'settings.zen': 'سکون موڈ',
     'settings.zen.desc': 'خلفشار سے پاک ترمیم — حاشیے، سایے ہٹائے اور آئیکن دھندلے کرے',
+    'settings.zen.tabs_opacity': 'سکون موڈ میں ٹیبز کی غیر شفافیت',
+    'settings.zen.tabs_opacity.desc': 'سکون موڈ میں ایڈیٹر ٹیبز کی غیر شفافیت (0% انہیں ہوور کرنے تک چھپا دیتا ہے)',
     'settings.privacy': 'رازداری',
     'settings.privacy.text': 'AyahLab کوئی ذاتی ڈیٹا جمع نہیں کرتا۔ فیڈبیک فیچر Resend کو آپ کا پیغام براہ راست ڈویلپر کو بھیجنے کے لیے استعمال کرتا ہے — آپ کا ای میل صرف جواب دینے کے لیے استعمال ہوتا ہے اور کبھی محفوظ یا شیئر نہیں کیا جاتا۔ کوئی تجزیہ نہیں، کوئی ٹریکنگ نہیں۔',
   // Navigation and Julia plots

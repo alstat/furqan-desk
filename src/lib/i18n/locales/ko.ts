@@ -88,6 +88,8 @@ export const ko: Record<string, string> = {
     'sukun.show_icons': '아이콘 표시',
     'settings.zen': 'Sukūn 모드',
     'settings.zen.desc': '방해 없는 편집 — 테두리, 그림자를 제거하고 아이콘을 희미하게 합니다',
+    'settings.zen.tabs_opacity': 'Sukūn 모드의 탭 불투명도',
+    'settings.zen.tabs_opacity.desc': 'Sukūn 모드에서 편집기 탭의 불투명도 (0%는 마우스를 올릴 때까지 숨김)',
     'settings.privacy': '개인정보',
     'settings.privacy.text': 'AyahLab은 개인 데이터를 수집하지 않습니다. 피드백 기능은 Resend를 사용하여 메시지를 개발자에게 직접 전송합니다. 이메일은 답장 목적으로만 사용되며 저장하거나 공유하지 않습니다. 분석 없음, 추적 없음.',
   // Navigation and Julia plots

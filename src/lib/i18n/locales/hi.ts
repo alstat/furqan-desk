@@ -89,6 +89,9 @@ export const hi: Record<string, string> = {
   "settings.zen": "Sukūn मोड",
   "settings.zen.desc":
     "ध्यान-मुक्त संपादन — बॉर्डर, छाया हटाता है और इंटरफ़ेस आइकन धुंधले करता है",
+  "settings.zen.tabs_opacity": "Sukūn मोड में टैब की अपारदर्शिता",
+  "settings.zen.tabs_opacity.desc":
+    "Sukūn मोड में एडिटर टैब की अपारदर्शिता (0% उन्हें होवर करने तक छिपाता है)",
   "settings.privacy": "गोपनीयता",
   "settings.privacy.text":
     "AyahLab पूरी तरह ऑफलाइन है। कोई अकाउंट नहीं, कोई टेलीमेट्री नहीं, कोई एनालिटिक्स नहीं। आपके नोट्स, बुकमार्क और सेटिंग्स केवल आपके डिवाइस पर रहते हैं।",

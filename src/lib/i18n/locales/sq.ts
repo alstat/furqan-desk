@@ -87,6 +87,8 @@ export const sq: Record<string, string> = {
   "sukun.show_icons": "Shfaq ikonat",
   "settings.zen": "Mënyra Sukūn",
   "settings.zen.desc": "Redaktim pa shpërqendrim — heq kufijtë, hijet dhe zbeh ikonat",
+  "settings.zen.tabs_opacity": "Opaciteti i skedave në Mënyrën Sukūn",
+  "settings.zen.tabs_opacity.desc": "Opaciteti i skedave të editorit në Mënyrën Sukūn (0% i fsheh derisa të kaloni miun sipër)",
   "settings.privacy": "Privatësia",
   "settings.privacy.text": "AyahLab është plotësisht offline. Pa llogari, pa telemetri, pa analitikë. Shënimet, faqeshënuesit dhe cilësimet tuaja qëndrojnë vetëm në pajisjen tuaj.",
   "common.enabled": "Aktivizuar",

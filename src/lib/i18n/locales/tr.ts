@@ -88,6 +88,8 @@ export const tr: Record<string, string> = {
     'sukun.show_icons': 'Simgeleri Göster',
     'settings.zen': 'Sukūn Modu',
     'settings.zen.desc': 'Dikkat dağıtıcısız düzenleme — kenarlıkları, gölgeleri kaldırır ve arayüz simgelerini soluklaştırır',
+    'settings.zen.tabs_opacity': 'Sukūn Modunda sekme opaklığı',
+    'settings.zen.tabs_opacity.desc': 'Sukūn Modundayken düzenleyici sekmelerinin opaklığı (0% üzerine gelinene kadar gizler)',
     'settings.privacy': 'Gizlilik',
     'settings.privacy.text': 'AyahLab tamamen çevrimdışı çalışır. Hesap yok, telemetri yok, analitik yok. Notlarınız, yer imleriniz ve ayarlarınız yalnızca cihazınızda kalır.',
   // Navigation and Julia plots

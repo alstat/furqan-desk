@@ -88,6 +88,8 @@ export const uz: Record<string, string> = {
   "sukun.show_icons": "Ikonalarni ko'rsatish",
   "settings.zen": "Sukūn rejimi",
   "settings.zen.desc": "Chalg'itmalar olmay tahrirlash — chegara, soya olib tashlanadi va interfeys ikonalari xiralanadi",
+  "settings.zen.tabs_opacity": "Sukūn rejimida tablar shaffofligi",
+  "settings.zen.tabs_opacity.desc": "Sukūn rejimida muharrir tablarining shaffofligi (0% ularni ustiga olib borguncha yashiradi)",
   "settings.privacy": "Maxfiylik",
   "settings.privacy.text":
     "AyahLab to'liq oflayn ishlaydi. Hisob yo'q, telemetriya yo'q, tahlil yo'q. Eslatmalaringiz, xatchoʻplar va sozlamalar faqat qurilmangizda saqlanadi — muallif ma'lumotlaringizga kira olmaydi.",

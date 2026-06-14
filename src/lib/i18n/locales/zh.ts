@@ -88,6 +88,8 @@ export const zh: Record<string, string> = {
     'sukun.show_icons': '显示图标',
     'settings.zen': 'Sukūn 模式',
     'settings.zen.desc': '无干扰编辑 — 移除边框、阴影并淡化界面图标',
+    'settings.zen.tabs_opacity': 'Sukūn 模式下的标签不透明度',
+    'settings.zen.tabs_opacity.desc': 'Sukūn 模式下编辑器标签的不透明度（0% 会隐藏它们，直到悬停）',
     'settings.privacy': '隐私',
     'settings.privacy.text': 'AyahLab 不收集任何个人数据。反馈功能使用 Resend 将您的消息直接发送给开发者——您的电子邮件仅用于回复您，从不存储或共享。无分析，无追踪。',
   // Navigation and Julia plots
