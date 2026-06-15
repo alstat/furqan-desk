@@ -155,6 +155,13 @@ pub fn run() {
             let menu = menu_builder.item(&file_menu).item(&edit_menu).build()?;
             app.set_menu(menu)?;
 
+            // On Windows/Linux the menu renders as a bar below the title bar,
+            // wasting vertical space. Hide that bar while keeping the menu (and
+            // its keyboard accelerators such as Ctrl+O / Ctrl+S) installed, so
+            // shortcuts keep working. This is a no-op on macOS, where the menu
+            // lives in the global system menu bar.
+            app.hide_menu()?;
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
