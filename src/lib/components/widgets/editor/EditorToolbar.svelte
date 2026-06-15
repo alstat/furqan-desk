@@ -80,7 +80,7 @@
             }
         } else {
             if (windowWidth < 1800) {
-                singlePageMargin.set(5);
+                singlePageMargin.set(6);
             } else if (windowWidth >= 1800 && windowWidth < 2000) {
                 singlePageMargin.set(7);
             } else {

@@ -42,6 +42,7 @@
     --color-brand-gold-50: #fbf5e8;
     --color-brand-gold-100: #f3e5c0;
     --color-brand-gold-200: #e5cc90;
+    --color-brand-gold-300: #d6ba7d;
     --color-brand-gold-400: #c8a96a;
     --color-brand-gold-500: #b89558;
     --color-brand-gold-600: #9a7a40;
@@ -82,6 +83,7 @@ html.dark {
     --color-brand-gold-50: #2a2740;
     --color-brand-gold-100: #3b3757;
     --color-brand-gold-200: #534e70;
+    --color-brand-gold-300: #9c8b80;
     --color-brand-gold-400: #e5c890; /* Frappe Yellow — main accent */
     --color-brand-gold-500: #d4b57f;
     --color-brand-gold-600: #c4a26e;

@@ -208,7 +208,8 @@
       "Bash(sort -t: -k3 -n)",
       "Bash(git mv *)",
       "Bash(git log *)",
-      "Bash(xargs cat)"
+      "Bash(xargs cat)",
+      "Bash(echo \"exit: $?\")"
     ]
   }
 }
