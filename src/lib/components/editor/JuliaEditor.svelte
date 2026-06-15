@@ -4,6 +4,7 @@
     import { IS_APPLE } from "@lexical/utils";
     import {
         activeTab,
+        activeTabId,
         setActiveTabContent,
         setTabContent,
         tabs,
@@ -126,6 +127,16 @@
         tabId ? ($tabs.find((t) => t.id === tabId) ?? null) : $activeTab,
     );
     let editorScrollKey = $derived(effectiveTab?.path ?? effectiveTab?.id ?? null);
+
+    // In a Julia split several editors are mounted at once (tabA/tabB in the left
+    // column, an optional tabC on the right). Focusing a pane makes its tab the
+    // active tab so Save / Cmd+S targets the file you're actually editing and its
+    // dirty indicator clears. Mirrors TypstEditor's activateThisTab.
+    function activateThisTab() {
+        if (effectiveTab && effectiveTab.id !== $activeTabId) {
+            activeTabId.set(effectiveTab.id);
+        }
+    }
 
     // ── Completion source ─────────────────────────────────────────────────────
 
@@ -498,6 +509,7 @@
 
 <div
     bind:this={containerEl}
+    onfocusin={activateThisTab}
     class="relative overflow-visible flex flex-col h-full"
 >
     <!-- Editor area -->

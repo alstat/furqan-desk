@@ -34,7 +34,6 @@
         $isRangeSelection as isRangeSelection,
     } from "lexical";
     import { t } from "$lib/i18n";
-    import { hideSurahPage } from "$lib/stores/quran.svelte";
 
     let {
         windowWidth,
@@ -152,7 +151,7 @@
     });
 </script>
 
-{#if expanded && $hideSurahPage()}
+{#if expanded}
     <div class="flex items-center gap-1">
         <Indent />
         <Outdent />
