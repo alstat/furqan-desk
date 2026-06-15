@@ -92,6 +92,9 @@
     // overwrite the saved offset with 0.
     let restoring = false;
     let editorShell = $state<HTMLDivElement | null>(null);
+    // Measured width of the editor shell, fed to the toolbar so it can decide
+    // whether the overflow menu items render inline or collapse to a dropdown.
+    let editorWidth = $state(0);
     let contentScroller: HTMLElement | null = null;
     let scrollCleanup: (() => void) | null = null;
 
@@ -287,8 +290,9 @@
     <div
         class="editor-shell p-2 relative overflow-visible"
         bind:this={editorShell}
+        bind:clientWidth={editorWidth}
     >
-        <ToolbarRichText />
+        <ToolbarRichText {editorWidth} />
         <div class="editor-container flex flex-col justify-stretch">
             <div class="editor-scroller">
                 <div class="editor">
