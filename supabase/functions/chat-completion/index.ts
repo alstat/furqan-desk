@@ -13,6 +13,10 @@
 //   OPENAI_MODEL_ADVANCED       — premium model (e.g. "gpt-5.4"). Used when the
 //                                 request body sets advanced=true. Falls back to
 //                                 OPENAI_MODEL_STANDARD if not set.
+//   OPENAI_MODEL_STANDARD_PROPLUS — standard-class model for Pro+ (tier="pro_plus").
+//                                 Falls back to OPENAI_MODEL_STANDARD if not set.
+//   OPENAI_MODEL_ADVANCED_PROPLUS — advanced-class model for Pro+ (tier="pro_plus").
+//                                 Falls back to OPENAI_MODEL_ADVANCED if not set.
 //   OPENAI_MAX_COMPLETION_TOKENS — hard ceiling on output tokens per response.
 //                                 Defaults to 4000. Bounds worst-case output cost
 //                                 per request and prevents runaway essays. Set
@@ -191,7 +195,24 @@ Deno.serve(async (req) => {
         "gpt-4o-mini";
     const advancedModel =
         Deno.env.get("OPENAI_MODEL_ADVANCED") ?? standardModel;
-    const model = modelClass === "advanced" ? advancedModel : standardModel;
+
+    // Pro+ uses its own models (a different model, not more usage). Each falls
+    // back to the corresponding Pro model when its secret isn't set, so Pro+
+    // never breaks if only one of the two is configured.
+    const isProPlus = tier === "pro_plus";
+    const standardModelProPlus =
+        Deno.env.get("OPENAI_MODEL_STANDARD_PROPLUS") ?? standardModel;
+    const advancedModelProPlus =
+        Deno.env.get("OPENAI_MODEL_ADVANCED_PROPLUS") ?? advancedModel;
+
+    const model =
+        modelClass === "advanced"
+            ? isProPlus
+                ? advancedModelProPlus
+                : advancedModel
+            : isProPlus
+              ? standardModelProPlus
+              : standardModel;
 
     // Quota check — separate columns per model class.
     const { data: limitsRow, error: limitsErr } = await admin

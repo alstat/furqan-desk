@@ -238,7 +238,7 @@
 >
     {#if showControls}
         <div
-            class="absolute -top-3 right-1 z-10 flex items-center gap-0.5 rounded-full border border-brand-gold-300 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-md px-1 py-0.5"
+            class="absolute -top-3 right-1 z-10 flex items-center gap-0.5 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-md px-1 py-0.5"
             onclick={(e) => e.stopPropagation()}
             role="toolbar"
             aria-label="Quran block font size"

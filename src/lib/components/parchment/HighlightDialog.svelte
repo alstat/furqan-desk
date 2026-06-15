@@ -120,10 +120,23 @@
         if (typeof window !== "undefined")
             window.removeEventListener("pointermove", onDrag);
     });
+
+    // Rendered inside Parchment, whose root gets display:none when the surah
+    // page is hidden. Portal the dialog to <body> so it escapes that hidden
+    // subtree and stays usable while the surah page is hidden.
+    function portal(node: HTMLElement) {
+        document.body.appendChild(node);
+        return {
+            destroy() {
+                node.remove();
+            },
+        };
+    }
 </script>
 
 {#if open}
     <div
+        use:portal
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="true"
