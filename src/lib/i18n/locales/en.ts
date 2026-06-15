@@ -880,7 +880,6 @@ export const en: Record<string, string> = {
   "ai_chat.lock.too_short": "Passphrase must be at least 8 characters",
   "ai_chat.lock.forgot": "Forgot passphrase? Reset (deletes all chats)",
   "account.usage.title": "Token usage",
-  "account.usage.session": "Session (4h)",
   "account.usage.daily": "Daily",
   "account.usage.weekly": "Weekly",
   "account.usage.monthly": "Monthly",
