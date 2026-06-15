@@ -26,6 +26,7 @@
     } from "$lib/stores/recitation.store";
 
     import { t } from "$lib/i18n";
+    import { bringToFront } from "$lib/stores/window-manager.store";
 
     let { scrollContainer }: { scrollContainer: HTMLElement | null } = $props();
 
@@ -487,6 +488,10 @@
         if (!$hideSurahPage()) miniDismissed = false;
     });
     let miniDragging = $state(false);
+    // Resting below the floating widgets (z-[60]). Bumped via the window
+    // manager while dragging so the pill rides above other draggable panels
+    // (e.g. JuliaPlotViewer) but stays under fixed modals (z-9999).
+    let miniZ = $state(50);
     let miniDragStartX = 0,
         miniDragStartY = 0,
         miniStartX = 0,
@@ -517,6 +522,7 @@
     function miniStartDrag(e: PointerEvent) {
         miniDragging = true;
         miniUserMoved = true;
+        miniZ = bringToFront();
         miniDragStartX = e.clientX;
         miniDragStartY = e.clientY;
         miniStartX = miniX;
@@ -805,7 +811,7 @@
                border border-stone-200/70 dark:border-[#414559]/60
                shadow-lg shadow-stone-300/30 dark:shadow-black/30
                text-sm select-none"
-        style="left:{miniX}px; top:{miniY}px; z-index: 9000;"
+        style="left:{miniX}px; top:{miniY}px; z-index: {miniZ};"
     >
         <!-- Drag handle -->
         <div
