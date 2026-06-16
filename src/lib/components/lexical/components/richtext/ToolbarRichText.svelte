@@ -33,8 +33,13 @@
 	import TripleDotsDropDown from '../toolbar/TripleDots/TripleDotsDropDown.svelte';
     import TripleDotsDropDownSmall from '../toolbar/TripleDots/TripleDotsDropDownSmall.svelte';
 	import FontColorButton from '../toolbar/FontColorButton.svelte';
-	import { singlePageMargin } from '$lib/stores/editor.store';
     import { hideSurahPage } from '$lib/stores/quran.svelte';
+
+	// Width (px) of the EditorComposer at or above which the TripleDotsDropDownSmall
+	// items are shown inline in the toolbar; below it they collapse to a dropdown.
+	const INLINE_EXPAND_WIDTH = 900;
+
+	let { editorWidth = 0 }: { editorWidth?: number } = $props();
 
 	let imageDialog = $state<InsertImageDialog | undefined>(undefined);
 	let equationDialog = $state<InsertEquationDialog | undefined>(undefined);
@@ -79,7 +84,7 @@
 		<Divider />
 		<TripleDotsDropDownSmall
 			{windowWidth}
-			expanded={$singlePageMargin >= 9}
+			expanded={editorWidth >= INLINE_EXPAND_WIDTH}
 			onInsertImageClick={() => imageDialog?.open()}
 			onInsertEquationClick={() => equationDialog?.open()}
 		/>

@@ -44,11 +44,11 @@
         foldGutter,
         foldKeymap,
         foldService,
-        type StreamParser,
-        type StringStream,
     } from "@codemirror/language";
     import { tags } from "@lezer/highlight";
-    import { julia } from "@codemirror/legacy-modes/mode/julia";
+    // Shared, type-aware Julia language so the file editor and the editor's
+    // Julia code cells highlight identically from a single source of truth.
+    import { juliaLanguage, juliaCommentData } from "$lib/codemirror/julia";
     import {
         editorTheme,
         editorIndentSize,
@@ -954,64 +954,6 @@
         return themeExtensions[theme] ?? themeExtensions["ayu-light"];
     }
 
-    // The legacy Julia mode tags every identifier as plain `variable` (or
-    // `builtin` for `::Type` annotations), so type names and function calls
-    // never reach their highlight rules. Wrap the tokenizer to re-tag tokens:
-    //  • An identifier starting with an uppercase letter is, by Julia
-    //    convention, a type or constructor → `type` (→ typeName).
-    //  • A lowercase identifier immediately followed by `(` is a function
-    //    call → custom `functionCall` token (→ function(variableName)).
-    //  • A Julia symbol token like `:code` is re-tagged as `atom`. The legacy
-    //    mode only emits this when `:` starts a new expression, so ranges like
-    //    `1:end` remain plain operators/keywords rather than symbols.
-    // `NaN`/`Inf` are uppercase value literals and are kept as-is.
-    const NON_TYPE_BUILTINS = new Set(["NaN", "Inf"]);
-    const juliaTypeAware: StreamParser<unknown> = {
-        ...julia,
-        tokenTable: {
-            functionCall: tags.function(tags.variableName),
-            juliaSymbol: tags.atom,
-        },
-        token(stream: StringStream, state: unknown): string | null {
-            // The legacy mode's annotation tokenizer emits a separate
-            // `builtin` token per `{...}` nesting level, so a parametric
-            // type like `::Vector{String}` arrives as several fragments.
-            // Capture the nesting depth *before* tokenizing to recognise
-            // those continuation fragments.
-            const prevNested =
-                (state as { nestedParameters?: number }).nestedParameters ?? 0;
-            const style = julia.token ? julia.token(stream, state) : null;
-            if (style === "variable" || style === "builtin") {
-                // Strip a leading `::` so type annotations (`s::Ar`) are
-                // detected from the type name itself.
-                let probe = stream.current();
-                if (style === "builtin" && probe.startsWith(":")) {
-                    return "juliaSymbol";
-                }
-                const isAnnotation = probe.startsWith("::");
-                if (isAnnotation) probe = probe.slice(2);
-                // Every fragment of a type annotation — the leading
-                // `::Name`, nested `{`, inner type names, commas and the
-                // closing `}` — is re-tagged `type` so the whole
-                // annotation is highlighted uniformly.
-                if (style === "builtin" && (isAnnotation || prevNested > 0)) {
-                    return "type";
-                }
-                if (/^[A-Z]/.test(probe) && !NON_TYPE_BUILTINS.has(probe)) {
-                    return "type";
-                }
-                // Lowercase name directly followed by `(` → function call.
-                if (style === "variable" && stream.peek() === "(") {
-                    return "functionCall";
-                }
-            }
-            return style;
-        },
-    };
-    const juliaLanguage = StreamLanguage.define(juliaTypeAware);
-    const juliaCommentData = juliaLanguage.data.of({
-        commentTokens: { line: "#", block: { open: "#=", close: "=#" } },
-    });
     const typstCommentData = typstLanguage.data.of({
         commentTokens: { line: "//", block: { open: "/*", close: "*/" } },
     });

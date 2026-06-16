@@ -21,7 +21,7 @@ export interface ChatMessage {
 }
 
 export interface QuotaBlock {
-    scope: "session" | "daily" | "weekly" | "monthly" | "storage";
+    scope: "daily" | "weekly" | "monthly" | "storage";
     modelClass?: "standard" | "advanced";
     retryAfterSeconds?: number;
     message: string;

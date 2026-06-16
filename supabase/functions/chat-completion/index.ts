@@ -67,13 +67,6 @@ function estimateTokensFromMessages(messages: ChatMessage[]): number {
     return Math.ceil(chars / 4);
 }
 
-// Rolling 4-hour session window (Claude-style): paces usage inside the day so
-// the daily quota can't be exhausted in one sitting. The session cap is derived
-// from the daily cap — keep SESSION_CAP_FRACTION_OF_DAILY in sync with
-// sessionCapFromDaily() in src/lib/stores/chat-storage.ts.
-const SEC_SESSION = 4 * 3600;
-const SESSION_CAP_FRACTION_OF_DAILY = 1 / 3;
-
 interface WindowUsage {
     used: number;
     /** created_at of the oldest counted row, in ms; null when none. */
@@ -242,23 +235,12 @@ Deno.serve(async (req) => {
             ? limitsRow.advanced_monthly_tokens
             : limitsRow.monthly_tokens;
 
-    const sessionCap =
-        dailyCap > 0 ? Math.ceil(dailyCap * SESSION_CAP_FRACTION_OF_DAILY) : 0;
-
     try {
-        const [session, daily, weekly, monthly] = await Promise.all([
-            getUsageSince(admin, user.id, SEC_SESSION, modelClass),
+        const [daily, weekly, monthly] = await Promise.all([
             getUsageSince(admin, user.id, 24 * 3600, modelClass),
             getUsageSince(admin, user.id, 7 * 24 * 3600, modelClass),
             getUsageSince(admin, user.id, 30 * 24 * 3600, modelClass),
         ]);
-        if (sessionCap > 0 && session.used >= sessionCap) {
-            return jsonError(429, "Session token limit reached", {
-                scope: "session",
-                model_class: modelClass,
-                retry_after_seconds: secondsUntilFree(session, SEC_SESSION),
-            });
-        }
         if (daily.used >= dailyCap) {
             return jsonError(429, "Daily token limit reached", {
                 scope: "daily",
