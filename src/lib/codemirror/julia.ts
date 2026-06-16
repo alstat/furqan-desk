@@ -44,7 +44,15 @@ const juliaTypeAware: StreamParser<unknown> = {
         const style = julia.token ? julia.token(stream, state) : null;
         if (style === "variable" || style === "builtin") {
             let probe = stream.current();
-            if (style === "builtin" && probe.startsWith(":")) {
+            // A leading `:` marks a Julia symbol (`:code`), but a type
+            // annotation's first fragment also starts with `::` — exclude it
+            // so the annotation reaches the `type` rule below instead of being
+            // mis-tagged as a symbol.
+            if (
+                style === "builtin" &&
+                probe.startsWith(":") &&
+                !probe.startsWith("::")
+            ) {
                 return "juliaSymbol";
             }
             const isAnnotation = probe.startsWith("::");
