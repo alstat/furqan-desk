@@ -25,12 +25,6 @@
         onDelete,
     }: Props = $props();
 
-    function formatMB(bytes: number): string {
-        if (bytes < 1024) return `${bytes} B`;
-        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-        return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-    }
-
     function relativeTime(iso: string): string {
         const d = new Date(iso);
         const diff = Date.now() - d.getTime();
@@ -121,8 +115,8 @@
             <div
                 class="flex items-center justify-between text-xs text-brand-charcoal-300 dark:text-[#8087a2]"
             >
-                <span>{formatMB(usedBytes)} / {formatMB(totalBytes)}</span>
-                <span>{pct}%</span>
+                <span>{$t("ai_chat.storage_used_pct", { pct })}</span>
+                <span>{$t("ai_chat.storage_free_pct", { pct: 100 - pct })}</span>
             </div>
             <div
                 class="mt-1 h-1 w-full overflow-hidden rounded-full bg-brand-sand-200 dark:bg-[#292c3c]"

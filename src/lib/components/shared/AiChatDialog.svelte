@@ -614,15 +614,16 @@
                         {/each}
                     </div>
 
-                    <!-- Draggable splitter -->
+                    <!-- Draggable splitter — transparent hit area with only a
+                         subtle centered grip for a clean look -->
                     <div
-                        class="flex-none h-1.5 cursor-row-resize flex items-center justify-center group hover:bg-brand-gold-100 dark:hover:bg-brand-gold-100/10 transition-colors select-none"
+                        class="flex-none h-2 cursor-row-resize flex items-center justify-center group select-none bg-brand-sand-50 dark:bg-[#232634]"
                         onpointerdown={startInputResize}
                         role="separator"
                         aria-orientation="horizontal"
                     >
                         <div
-                            class="w-8 h-0.5 rounded-full bg-brand-sand-400 dark:bg-[#414559] group-hover:bg-brand-gold-400 transition-colors"
+                            class="w-8 h-0.5 rounded-full bg-brand-sand-400 dark:bg-[#414559]/60 group-hover:bg-brand-gold-400 transition-colors"
                         ></div>
                     </div>
 
@@ -702,6 +703,18 @@
                                 {/if}
                             </div>
                         </div>
+                    </div>
+
+                    <!-- AI accuracy disclaimer -->
+                    <div
+                        class="flex-none flex items-center justify-center gap-1.5 bg-brand-sand-50 dark:bg-[#232634] px-3 pb-2 text-center text-[10px] leading-tight text-brand-charcoal-300 dark:text-[#626880]"
+                    >
+                        <Icon
+                            icon="solar:info-circle-bold-duotone"
+                            width="0.7rem"
+                            class="shrink-0"
+                        />
+                        <span>{$t("ai_chat.disclaimer")}</span>
                     </div>
                 </div>
             </div>
