@@ -25,7 +25,10 @@
     } from "@lexical/utils";
     import { $createTableNodeWithDimensions as createTableNodeWithDimensions } from "@lexical/table";
     import { $createEquationNode as createEquationNode } from "../Equation/EquationNode.js";
-    import { $setBlocksType as setBlocksType } from "@lexical/selection";
+    import {
+        $setBlocksType as setBlocksType,
+        $patchStyleText as patchStyleText,
+    } from "@lexical/selection";
     import { $createQuoteNode as createQuoteNode } from "@lexical/rich-text";
     import { INSERT_CHECK_LIST_COMMAND } from "@lexical/list";
     import { t } from "$lib/i18n";
@@ -49,7 +52,215 @@
         label: string;
         description: string;
         icon: string;
+        // When set, selecting the command inserts this raw text in place of the
+        // slash query (used by the /s-* Arabic phrase shortcuts).
+        insertText?: string;
     }
+
+    // Commonly used Arabic / Islamic phrases. These are language-agnostic (the
+    // inserted text is always Arabic regardless of UI locale), so they are kept
+    // as a plain list with transliteration labels rather than i18n keys.
+    const SHORTCUT_ICON = "material-symbols:mosque-outline";
+    const ARABIC_SHORTCUTS: SlashCommand[] = [
+        {
+            id: "s-saw",
+            label: "Ṣallā Allāhu ʿalayhi wa sallam",
+            description: "صلى الله عليه وسلم",
+            icon: SHORTCUT_ICON,
+            insertText: "صلى الله عليه وسلم",
+        },
+        {
+            id: "s-rd",
+            label: "Raḍiya Allāhu ʿanhu (r.a.)",
+            description: "رضي الله عنه",
+            icon: SHORTCUT_ICON,
+            insertText: "رضي الله عنه",
+        },
+        {
+            id: "s-rha",
+            label: "Raḍiya Allāhu ʿanhā",
+            description: "رضي الله عنها",
+            icon: SHORTCUT_ICON,
+            insertText: "رضي الله عنها",
+        },
+        {
+            id: "s-rhm",
+            label: "Raḍiya Allāhu ʿanhum",
+            description: "رضي الله عنهم",
+            icon: SHORTCUT_ICON,
+            insertText: "رضي الله عنهم",
+        },
+        {
+            id: "s-as",
+            label: "ʿAlayhi as-salām",
+            description: "عليه السلام",
+            icon: SHORTCUT_ICON,
+            insertText: "عليه السلام",
+        },
+        {
+            id: "s-aha",
+            label: "ʿAlayhā as-salām",
+            description: "عليها السلام",
+            icon: SHORTCUT_ICON,
+            insertText: "عليها السلام",
+        },
+        {
+            id: "s-god",
+            label: "Allāh",
+            description: "الله",
+            icon: SHORTCUT_ICON,
+            insertText: "الله",
+        },
+        {
+            id: "s-swt",
+            label: "Subḥānahu wa taʿālā",
+            description: "سبحانه وتعالى",
+            icon: SHORTCUT_ICON,
+            insertText: "سبحانه وتعالى",
+        },
+        {
+            id: "s-azza",
+            label: "ʿAzza wa jall",
+            description: "عز وجل",
+            icon: SHORTCUT_ICON,
+            insertText: "عز وجل",
+        },
+        {
+            id: "s-jj",
+            label: "Jalla jalāluhu",
+            description: "جل جلاله",
+            icon: SHORTCUT_ICON,
+            insertText: "جل جلاله",
+        },
+        {
+            id: "s-rh",
+            label: "Raḥimahu Allāh",
+            description: "رحمه الله",
+            icon: SHORTCUT_ICON,
+            insertText: "رحمه الله",
+        },
+        {
+            id: "s-bmh",
+            label: "Bismillāh ar-Raḥmān ar-Raḥīm",
+            description: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+            icon: SHORTCUT_ICON,
+            insertText: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+        },
+        {
+            id: "s-isa",
+            label: "In shāʾ Allāh",
+            description: "إن شاء الله",
+            icon: SHORTCUT_ICON,
+            insertText: "إن شاء الله",
+        },
+        {
+            id: "s-msa",
+            label: "Mā shāʾ Allāh",
+            description: "ما شاء الله",
+            icon: SHORTCUT_ICON,
+            insertText: "ما شاء الله",
+        },
+        {
+            id: "s-alh",
+            label: "Al-ḥamdu lillāh",
+            description: "الحمد لله",
+            icon: SHORTCUT_ICON,
+            insertText: "الحمد لله",
+        },
+        {
+            id: "s-sub",
+            label: "Subḥān Allāh",
+            description: "سبحان الله",
+            icon: SHORTCUT_ICON,
+            insertText: "سبحان الله",
+        },
+        {
+            id: "s-akb",
+            label: "Allāhu akbar",
+            description: "الله أكبر",
+            icon: SHORTCUT_ICON,
+            insertText: "الله أكبر",
+        },
+        {
+            id: "s-tah",
+            label: "Lā ilāha illā Allāh",
+            description: "لا إله إلا الله",
+            icon: SHORTCUT_ICON,
+            insertText: "لا إله إلا الله",
+        },
+        {
+            id: "s-jzk",
+            label: "Jazāka Allāhu khayran",
+            description: "جزاك الله خيرا",
+            icon: SHORTCUT_ICON,
+            insertText: "جزاك الله خيرا",
+        },
+        {
+            id: "s-bfk",
+            label: "Bārak Allāhu fīk",
+            description: "بارك الله فيك",
+            icon: SHORTCUT_ICON,
+            insertText: "بارك الله فيك",
+        },
+        {
+            id: "s-stg",
+            label: "Astaghfiru Allāh",
+            description: "أستغفر الله",
+            icon: SHORTCUT_ICON,
+            insertText: "أستغفر الله",
+        },
+        {
+            id: "s-slm",
+            label: "As-salāmu ʿalaykum wa raḥmatullāhi wa barakātuh",
+            description: "السلام عليكم ورحمة الله وبركاته",
+            icon: SHORTCUT_ICON,
+            insertText: "السلام عليكم ورحمة الله وبركاته",
+        },
+        {
+            id: "s-inna",
+            label: "Innā lillāhi wa innā ilayhi rājiʿūn",
+            description: "إنا لله وإنا إليه راجعون",
+            icon: SHORTCUT_ICON,
+            insertText: "إنا لله وإنا إليه راجعون",
+        },
+        {
+            id: "s-hsb",
+            label: "Ḥasbunā Allāhu wa niʿma al-wakīl",
+            description: "حسبنا الله ونعم الوكيل",
+            icon: SHORTCUT_ICON,
+            insertText: "حسبنا الله ونعم الوكيل",
+        },
+        // Compressed single-glyph Unicode ligatures (Arabic Presentation
+        // Forms-A) for the most common honorifics — e.g. /sc-saw inserts ﷺ.
+        {
+            id: "sc-saw",
+            label: "ﷺ — Ṣallā Allāhu ʿalayhi wa sallam (ligature)",
+            description: "ﷺ",
+            icon: SHORTCUT_ICON,
+            insertText: "ﷺ",
+        },
+        {
+            id: "sc-jj",
+            label: "ﷻ — Jalla jalāluhu (ligature)",
+            description: "ﷻ",
+            icon: SHORTCUT_ICON,
+            insertText: "ﷻ",
+        },
+        {
+            id: "sc-bmh",
+            label: "﷽ — Bismillāh ar-Raḥmān ar-Raḥīm (ligature)",
+            description: "﷽",
+            icon: SHORTCUT_ICON,
+            insertText: "﷽",
+        },
+        {
+            id: "sc-god",
+            label: "ﷲ — Allāh (ligature)",
+            description: "ﷲ",
+            icon: SHORTCUT_ICON,
+            insertText: "ﷲ",
+        },
+    ];
 
     const COMMANDS: SlashCommand[] = $derived([
         {
@@ -94,12 +305,25 @@
             description: $t("slash.julia_desc"),
             icon: "devicon-plain:julia",
         },
+        ...ARABIC_SHORTCUTS,
     ]);
 
     let isOpen = $state(false);
     let query = $state("");
     let selectedIndex = $state(0);
     let menuRect = $state<DOMRect | null>(null);
+    let menuEl = $state<HTMLElement | null>(null);
+
+    // Keep the keyboard-selected option visible when the list is long enough to
+    // scroll (e.g. the /s-* shortcut list).
+    $effect(() => {
+        void selectedIndex;
+        if (!isOpen || !menuEl) return;
+        const selectedEl = menuEl.querySelector<HTMLElement>(
+            '[aria-selected="true"]',
+        );
+        selectedEl?.scrollIntoView({ block: "nearest" });
+    });
 
     // Captured each time the menu (re)opens
     let anchorNodeKey = "";
@@ -107,7 +331,9 @@
 
     let filteredCommands = $derived(
         COMMANDS.filter((cmd) => {
-            if (!query) return true;
+            // Keep the Arabic /s-* shortcuts out of the bare "/" menu; they only
+            // surface once the user starts typing (e.g. "/s").
+            if (!query) return !cmd.insertText;
             if (cmd.id === "table") return /^table(-\d+(-\d+)?)?$/.test(query);
             if (cmd.id === "quran") return QURAN_SLASH_REGEX.test(query);
             return cmd.id.startsWith(query);
@@ -191,6 +417,44 @@
 
         if (cmdId === "quran") {
             void insertQuranBlock(capturedKey, capturedOffset, capturedQuery);
+            return;
+        }
+
+        const command = COMMANDS.find((c) => c.id === cmdId);
+        if (command?.insertText) {
+            const phrase = command.insertText;
+            editor.update(() => {
+                const textNode = getNodeByKey(capturedKey);
+                if (!isTextNode(textNode)) return;
+                // Replace the slash + query with the phrase.
+                const sel = textNode.select(
+                    capturedOffset,
+                    capturedOffset + 1 + capturedQuery.length,
+                );
+                sel.insertText(phrase);
+
+                // Render Arabic phrases in Scheherazade New by default.
+                const insertedNode = getNodeByKey(capturedKey);
+                if (!isTextNode(insertedNode)) return;
+                const phraseSel = insertedNode.select(
+                    capturedOffset,
+                    capturedOffset + phrase.length,
+                );
+                patchStyleText(phraseSel, {
+                    "font-family": "Scheherazade New",
+                });
+
+                // Collapse the cursor to the end of the phrase so typing can
+                // continue right after it.
+                const finalSel = getSelection();
+                if (isRangeSelection(finalSel)) {
+                    finalSel.anchor.set(
+                        finalSel.focus.key,
+                        finalSel.focus.offset,
+                        finalSel.focus.type,
+                    );
+                }
+            });
             return;
         }
 
@@ -306,7 +570,7 @@
                         key: string;
                     };
                     const filtered = COMMANDS.filter((cmd) => {
-                        if (!q) return true;
+                        if (!q) return !cmd.insertText;
                         if (cmd.id === "table")
                             return /^table(-\d+(-\d+)?)?$/.test(q);
                         if (cmd.id === "quran") return QURAN_SLASH_REGEX.test(q);
@@ -397,9 +661,10 @@
     <!-- svelte-ignore a11y_interactive_supports_focus -->
     <div
         use:portal
+        bind:this={menuEl}
         transition:fly={{ y: 4, duration: 120, opacity: 0 }}
         role="listbox"
-        class="fixed z-50 w-64 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+        class="fixed z-50 w-64 max-h-72 overflow-y-auto rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40"
         style="top: {menuTop}px; left: {menuLeft}px;"
     >
         {#each filteredCommands as cmd, i}

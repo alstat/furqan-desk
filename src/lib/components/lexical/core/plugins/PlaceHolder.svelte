@@ -45,7 +45,9 @@
 
 <style>
   .Placeholder__root {
-    font-size: 15px;
+    /* Match the editor's default body font size (.ContentEditable__root) so the
+       hint aligns with the first line the user types. */
+    font-size: 18px;
     color: #999;
     overflow: hidden;
     position: absolute;
