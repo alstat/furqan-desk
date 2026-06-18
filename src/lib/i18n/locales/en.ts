@@ -307,6 +307,8 @@ export const en: Record<string, string> = {
   "toolbar.spacing_single": "Single",
   "toolbar.spacing_1_5": "1.5 Lines",
   "toolbar.spacing_double": "Double",
+  "toolbar.spacing_2_5": "2.5 Lines",
+  "toolbar.spacing_3": "3 Lines",
   // Insert dialogs (table / image / equation)
   "dialog.insert_table": "Insert Table",
   "dialog.rows": "Rows",
