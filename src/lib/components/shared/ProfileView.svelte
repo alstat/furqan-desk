@@ -235,9 +235,10 @@
                                         {row.label}
                                     </span>
                                     <span class="text-xs {descriptionText}">
-                                        {row.used.toLocaleString()} / {row.cap >
-                                        0
-                                            ? row.cap.toLocaleString()
+                                        {row.cap > 0
+                                            ? $t("account.usage.used_pct", {
+                                                  pct,
+                                              })
                                             : $t("account.usage.unlimited")}
                                     </span>
                                 </div>
