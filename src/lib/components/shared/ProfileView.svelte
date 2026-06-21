@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import Icon from "@iconify/svelte";
     import { supabase } from "$lib/supabase";
     import { authUser, isPro } from "$lib/stores/auth.store";
@@ -17,6 +17,13 @@
         $authUser?.user_metadata?.full_name ?? $authUser?.email ?? "",
     );
     let email = $derived($authUser?.email ?? "");
+
+    // The tier string lives in the JWT's app_metadata ("pro" | "pro_plus").
+    // isPro covers both paid tiers; isProPlus narrows to the top tier so the
+    // badge can render a distinct Pro+ style.
+    let isProPlus = $derived(
+        $isPro && $authUser?.app_metadata?.tier === "pro_plus",
+    );
 
     let initials = $derived(
         displayName
@@ -51,6 +58,17 @@
         }
     });
 
+    // The tier lives in the JWT's app_metadata, which is only a snapshot from
+    // when the token was issued. A tier change made on the website (e.g. a
+    // Pro -> Pro+ upgrade) won't reach us until the token is reissued, so
+    // refresh the session whenever the profile opens to pull the latest tier
+    // instead of waiting for the ~hourly auto-refresh. The TOKEN_REFRESHED
+    // event updates authUser, which retriggers the usage effect with the new
+    // tier.
+    onMount(() => {
+        void supabase.auth.refreshSession();
+    });
+
     onDestroy(() => {
         if (tickHandle !== null) {
             clearInterval(tickHandle);
@@ -77,8 +95,14 @@
     async function handleManualRefresh() {
         const userId = $authUser?.id;
         if (!userId) return;
+        // Reissue the token first so a tier change made on the website is
+        // reflected here; fall back to the store's tier if the refresh fails
+        // (e.g. offline) so usage still reloads.
+        const { data } = await supabase.auth.refreshSession();
         const tier =
-            ($authUser?.app_metadata?.tier as string | undefined) ?? "pro";
+            (data.user?.app_metadata?.tier as string | undefined) ??
+            ($authUser?.app_metadata?.tier as string | undefined) ??
+            "pro";
         await refreshUsage(userId, tier);
     }
 
@@ -143,15 +167,24 @@
         </div>
         {#if $isPro}
             <div class="ml-auto flex shrink-0 items-center gap-2">
-                <span
-                    class="inline-flex items-center gap-1.5 rounded-full border bg-linear-to-r from-brand-gold-400 via-brand-gold-500 to-brand-gold-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-gray-100 shadow-sm shadow-brand-gold-400/25 dark:from-[#e5c890] dark:via-[#d4b57f] dark:to-[#c4a26e] dark:text-[#292c3c] dark:shadow-black/20"
-                >
-                    <Icon
-                        icon="solar:crown-star-bold-duotone"
-                        width="0.85rem"
-                    />
-                    {$t("billing.tier.pro.name")}
-                </span>
+                {#if isProPlus}
+                    <span
+                        class="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-linear-to-r from-amber-500 via-brand-gold-500 to-amber-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-gray-100 shadow-sm shadow-amber-500/35 ring-1 ring-inset ring-white/20 dark:border-black/20 dark:from-[#f0d9a8] dark:via-[#e5c890] dark:to-[#d4b57f] dark:text-[#292c3c] dark:shadow-black/30 dark:ring-black/10"
+                    >
+                        <Icon icon="solar:crown-star-bold" width="0.85rem" />
+                        {$t("billing.tier.pro_plus.name")}
+                    </span>
+                {:else}
+                    <span
+                        class="inline-flex items-center gap-1.5 rounded-full border bg-linear-to-r from-brand-gold-400 via-brand-gold-500 to-brand-gold-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-gray-100 shadow-sm shadow-brand-gold-400/25 dark:from-[#e5c890] dark:via-[#d4b57f] dark:to-[#c4a26e] dark:text-[#292c3c] dark:shadow-black/20"
+                    >
+                        <Icon
+                            icon="solar:crown-star-bold-duotone"
+                            width="0.85rem"
+                        />
+                        {$t("billing.tier.pro.name")}
+                    </span>
+                {/if}
                 <button onclick={handleManage} class={actionBtn}>
                     <Icon
                         icon="solar:arrow-right-up-bold-duotone"
@@ -235,9 +268,10 @@
                                         {row.label}
                                     </span>
                                     <span class="text-xs {descriptionText}">
-                                        {row.used.toLocaleString()} / {row.cap >
-                                        0
-                                            ? row.cap.toLocaleString()
+                                        {row.cap > 0
+                                            ? $t("account.usage.used_pct", {
+                                                  pct,
+                                              })
                                             : $t("account.usage.unlimited")}
                                     </span>
                                 </div>

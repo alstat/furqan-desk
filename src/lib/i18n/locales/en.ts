@@ -307,6 +307,8 @@ export const en: Record<string, string> = {
   "toolbar.spacing_single": "Single",
   "toolbar.spacing_1_5": "1.5 Lines",
   "toolbar.spacing_double": "Double",
+  "toolbar.spacing_2_5": "2.5 Lines",
+  "toolbar.spacing_3": "3 Lines",
   // Insert dialogs (table / image / equation)
   "dialog.insert_table": "Insert Table",
   "dialog.rows": "Rows",
@@ -851,6 +853,7 @@ export const en: Record<string, string> = {
   "ai_chat.subtitle": "Ask anything — Pro feature",
   "ai_chat.placeholder": "Ask a question…",
   "ai_chat.send": "Send",
+  "ai_chat.disclaimer": "AI can make mistakes. Please double-check important answers against authentic sources.",
   "ai_chat.thinking": "Thinking…",
   "ai_chat.clear": "Clear chat",
   "ai_chat.copy": "Copy",
@@ -864,6 +867,8 @@ export const en: Record<string, string> = {
   "ai_chat.confirm_delete": "Delete this chat? This cannot be undone.",
   "ai_chat.stop": "Stop",
   "ai_chat.storage_used": "{used} / {total} used",
+  "ai_chat.storage_used_pct": "{pct}% used",
+  "ai_chat.storage_free_pct": "{pct}% free",
   "ai_chat.quota_warning":
     "You\'ve used {pct}% of your {scope} token allowance",
   "ai_chat.quota_blocked": "Token limit reached. Resets in {time}.",
@@ -888,6 +893,7 @@ export const en: Record<string, string> = {
   "account.usage.tokens": "{used} / {total} tokens",
   "account.usage.resets_in": "Frees in {time}",
   "account.usage.unlimited": "No limit",
+  "account.usage.used_pct": "{pct}% used",
   "account.usage.no_usage": "No usage yet",
   "account.usage.refresh": "Refresh",
   "ai_chat.model_standard": "Standard",

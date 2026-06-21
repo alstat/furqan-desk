@@ -51,6 +51,8 @@
         { label: $t("toolbar.spacing_single"), value: "1" },
         { label: $t("toolbar.spacing_1_5"), value: "1.5" },
         { label: $t("toolbar.spacing_double"), value: "2" },
+        { label: $t("toolbar.spacing_2_5"), value: "2.5" },
+        { label: $t("toolbar.spacing_3"), value: "3" },
     ];
 
     let isOpen = $state(false);

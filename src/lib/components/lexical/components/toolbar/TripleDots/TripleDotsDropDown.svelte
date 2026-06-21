@@ -281,7 +281,7 @@
                                 >{$t('toolbar.line_spacing')}</span
                             >
                             <div class="mt-1 flex flex-col space-y-1">
-                                {#each [{ label: $t('toolbar.spacing_single'), value: "1" }, { label: $t('toolbar.spacing_1_5'), value: "1.5" }, { label: $t('toolbar.spacing_double'), value: "2" }] as spacing}
+                                {#each [{ label: $t('toolbar.spacing_single'), value: "1" }, { label: $t('toolbar.spacing_1_5'), value: "1.5" }, { label: $t('toolbar.spacing_double'), value: "2" }, { label: $t('toolbar.spacing_2_5'), value: "2.5" }, { label: $t('toolbar.spacing_3'), value: "3" }] as spacing}
                                     <button
                                         class="cursor-pointer px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-full hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100 {$lineHeight ===
                                         spacing.value

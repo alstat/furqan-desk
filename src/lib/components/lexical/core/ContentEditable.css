@@ -1,6 +1,9 @@
 .ContentEditable__root {
   border: 0;
-  font-size: 15px;
+  /* Match the toolbar's default font size (18px). Unstyled paragraphs — e.g. a
+     new line created by pressing Enter after a heading — inherit this, so they
+     no longer render smaller than the reported default. */
+  font-size: 18px;
   font-family: 'EB Garamond', serif;
   display: block;
   position: relative;
