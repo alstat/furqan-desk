@@ -5,9 +5,12 @@
         readDir,
         readTextFile,
         watchImmediate,
+        mkdir,
+        writeTextFile,
+        exists,
         type UnwatchFn,
     } from "@tauri-apps/plugin-fs";
-    import { onDestroy } from "svelte";
+    import { onDestroy, untrack } from "svelte";
     import Icon from "@iconify/svelte";
     import {
         openFolderPath,
@@ -19,6 +22,8 @@
         isPdfFile,
         tabs,
         syncCleanTabsFromDisk,
+        renameFileByPath,
+        moveFileByPath,
     } from "$lib/stores/tabs.store";
     import MediaViewerDialog from "./MediaViewerDialog.svelte";
     import { surahOrientation } from "$lib/stores/quran.svelte";
@@ -96,7 +101,7 @@
         window.removeEventListener("pointerup", endDrag);
     }
 
-    // Resizing (pinned only). Like dragging, the panel keeps its default Tailwind
+    // Resizing (available pinned or not). Like dragging, the panel keeps its default Tailwind
     // size until the first resize, then switches to an explicit width/height. The
     // n/w handles move the top-left corner, so resizing initialises `panelPos`
     // (switching to fixed positioning) the same way dragging does.
@@ -203,16 +208,19 @@
     });
 
     // Manual refresh trigger (e.g. user re-picks the same folder via OpenFolderButton)
+    // `refreshTree` both reads and writes `rootNodes`, so it must run untracked —
+    // otherwise this effect would depend on `rootNodes` and loop endlessly.
     $effect(() => {
         const tick = $folderRefreshTrigger;
         if (tick === 0) return;
         const folder = $openFolderPath;
-        if (folder) refreshTree(folder);
+        if (folder) untrack(() => refreshTree(folder));
     });
 
     onDestroy(() => {
         if (_unwatch) _unwatch();
         if (_refreshTimer) clearTimeout(_refreshTimer);
+        if (_hoverExpandTimer) clearTimeout(_hoverExpandTimer);
         window.removeEventListener("pointermove", onDrag);
         window.removeEventListener("pointerup", endDrag);
         window.removeEventListener("pointermove", onResize);
@@ -419,6 +427,290 @@
         mediaViewerOpen = true;
     }
 
+    // ── Right-click context menu + inline rename ──
+    let ctxMenuNode = $state<FileTreeNode | null>(null);
+    let ctxMenuPos = $state<{ x: number; y: number } | null>(null);
+    let renamingPath = $state<string | null>(null);
+    let renameValue = $state("");
+    // Transient error for rename/create actions — distinct from `loadError`,
+    // whose banner offers a destructive "Back" that clears the whole folder.
+    let actionError = $state("");
+
+    function openNodeContextMenu(e: MouseEvent, node: FileTreeNode) {
+        e.preventDefault();
+        e.stopPropagation();
+        ctxMenuNode = node;
+        ctxMenuPos = { x: e.clientX, y: e.clientY };
+    }
+
+    function closeNodeContextMenu() {
+        ctxMenuNode = null;
+        ctxMenuPos = null;
+    }
+
+    function startRenameNode(node: FileTreeNode) {
+        closeNodeContextMenu();
+        actionError = "";
+        renamingPath = node.path;
+        renameValue = node.name;
+    }
+
+    async function commitRenameNode() {
+        const path = renamingPath;
+        if (!path) return;
+        const newName = renameValue.trim();
+        renamingPath = null;
+        const oldName = path.split("/").pop() ?? "";
+        if (!newName || newName === oldName) return;
+        try {
+            await renameFileByPath(path, newName);
+        } catch (e) {
+            actionError = String(e);
+        }
+    }
+
+    function cancelRenameNode() {
+        renamingPath = null;
+    }
+
+    // Autofocus the rename input and preselect the name (sans extension).
+    function autofocusSelect(node: HTMLInputElement) {
+        node.focus();
+        const dot = node.value.lastIndexOf(".");
+        if (dot > 0) node.setSelectionRange(0, dot);
+        else node.select();
+    }
+
+    // ── New File / New Folder (VS Code-style inline draft row) ──
+    let creating = $state<{ kind: "file" | "folder"; parentPath: string } | null>(
+        null,
+    );
+    let createValue = $state("");
+
+    /** Ensure a directory node is expanded and loaded so a draft row is visible. */
+    async function ensureExpanded(node: FileTreeNode): Promise<boolean> {
+        if (!node.isLoaded) {
+            try {
+                const entries = await readDir(node.path);
+                node.children = buildNodes(entries, node.path);
+                node.isLoaded = true;
+            } catch {
+                node.isForbidden = true;
+                return false;
+            }
+        }
+        node.isExpanded = true;
+        return true;
+    }
+
+    /**
+     * Begin creating a file/folder. `anchor` mirrors VS Code: right-clicking a
+     * folder creates inside it; a file creates a sibling; the toolbar (null)
+     * creates at the workspace root.
+     */
+    async function startCreate(
+        kind: "file" | "folder",
+        anchor: FileTreeNode | null,
+    ) {
+        closeNodeContextMenu();
+        renamingPath = null;
+        actionError = "";
+        const root = $openFolderPath;
+        if (!root) return;
+        let parentPath = root;
+        if (anchor) {
+            if (anchor.isDirectory) {
+                if (!(await ensureExpanded(anchor))) return;
+                parentPath = anchor.path;
+            } else {
+                parentPath =
+                    anchor.path.split("/").slice(0, -1).join("/") || root;
+            }
+        }
+        createValue = "";
+        creating = { kind, parentPath };
+    }
+
+    async function commitCreate() {
+        const c = creating;
+        if (!c) return;
+        const name = createValue.trim();
+        creating = null;
+        if (!name) return;
+        const newPath = `${c.parentPath}/${name}`;
+        try {
+            if (await exists(newPath)) {
+                actionError = `"${name}" already exists`;
+                return;
+            }
+            if (c.kind === "folder") {
+                await mkdir(newPath);
+            } else {
+                await writeTextFile(newPath, "");
+            }
+            const root = $openFolderPath;
+            if (root) await refreshTree(root);
+            // Open freshly created text files just like VS Code does.
+            if (c.kind === "file" && isFlatFile(name)) {
+                try {
+                    const content = await readTextFile(newPath);
+                    openOrFocusTab(newPath, content);
+                } catch {
+                    // Newly created but momentarily unreadable — ignore.
+                }
+            }
+        } catch (e) {
+            actionError = String(e);
+        }
+    }
+
+    function cancelCreate() {
+        creating = null;
+    }
+
+    // ── Drag a file/folder into a folder (VS Code-style, pointer-based) ──
+    // HTML5 DnD's `drop` doesn't fire in WKWebView, so we drive it with pointer
+    // events like the editor tab strip does.
+    let draggingPath = $state<string | null>(null);
+    // Resolved destination directory currently under the pointer (null = none).
+    // Empty-string sentinel is never used; the root folder path is stored as-is.
+    let dragOverDir = $state<string | null>(null);
+    let _dragCandidatePath: string | null = null;
+    let _dragStartX = 0;
+    let _dragStartY = 0;
+    let _draggingActive = false;
+    let _dragJustCompleted = false;
+    const DRAG_THRESHOLD = 5;
+
+    // Hover-to-expand: dwelling over a collapsed folder opens it mid-drag.
+    let _hoverExpandTimer: ReturnType<typeof setTimeout> | null = null;
+    let _hoverExpandPath: string | null = null;
+
+    function findNode(
+        nodes: FileTreeNode[],
+        path: string,
+    ): FileTreeNode | null {
+        for (const n of nodes) {
+            if (n.path === path) return n;
+            if (n.children.length) {
+                const found = findNode(n.children, path);
+                if (found) return found;
+            }
+        }
+        return null;
+    }
+
+    function dirOf(path: string): string {
+        return path.split("/").slice(0, -1).join("/");
+    }
+
+    function onNodePointerDown(e: PointerEvent, node: FileTreeNode) {
+        if (e.button !== 0) return;
+        // Don't start a drag from the inline rename input.
+        if ((e.target as HTMLElement).closest("input")) return;
+        _dragCandidatePath = node.path;
+        _dragStartX = e.clientX;
+        _dragStartY = e.clientY;
+    }
+
+    function clearHoverExpand() {
+        if (_hoverExpandTimer) clearTimeout(_hoverExpandTimer);
+        _hoverExpandTimer = null;
+        _hoverExpandPath = null;
+    }
+
+    function onWindowPointerMove(e: PointerEvent) {
+        if (!_dragCandidatePath) return;
+        if (
+            !_draggingActive &&
+            Math.hypot(e.clientX - _dragStartX, e.clientY - _dragStartY) <
+                DRAG_THRESHOLD
+        )
+            return;
+        if (!_draggingActive) {
+            _draggingActive = true;
+            draggingPath = _dragCandidatePath;
+            document.body.style.userSelect = "none";
+        }
+
+        const dragged = draggingPath!;
+        const draggedParent = dirOf(dragged);
+        const els = document.elementsFromPoint(e.clientX, e.clientY);
+        const nodeEl = els.find(
+            (el): el is HTMLElement =>
+                el instanceof HTMLElement && !!el.dataset.nodePath,
+        );
+
+        let dest: string | null = null;
+        if (nodeEl) {
+            const path = nodeEl.dataset.nodePath!;
+            dest =
+                nodeEl.dataset.nodeIsDir === "true" ? path : dirOf(path);
+        } else if (
+            els.some(
+                (el) => el instanceof HTMLElement && el.dataset.treeBody,
+            )
+        ) {
+            // Empty space inside the tree → move to the workspace root.
+            dest = $openFolderPath ?? null;
+        }
+
+        // Reject no-ops and moving a folder into itself or a descendant.
+        if (
+            dest === null ||
+            dest === draggedParent ||
+            dest === dragged ||
+            dest.startsWith(`${dragged}/`)
+        ) {
+            dragOverDir = null;
+            clearHoverExpand();
+            return;
+        }
+
+        dragOverDir = dest;
+
+        // Schedule hover-expand when dwelling over a collapsed folder.
+        if (dest !== _hoverExpandPath) {
+            clearHoverExpand();
+            _hoverExpandPath = dest;
+            _hoverExpandTimer = setTimeout(() => {
+                const n = findNode(rootNodes, dest!);
+                if (n && n.isDirectory && !n.isExpanded) void ensureExpanded(n);
+            }, 600);
+        }
+    }
+
+    function onWindowPointerUp() {
+        if (_draggingActive && draggingPath && dragOverDir !== null) {
+            void moveNode(draggingPath, dragOverDir);
+            _dragJustCompleted = true;
+            setTimeout(() => (_dragJustCompleted = false), 50);
+        }
+        _draggingActive = false;
+        draggingPath = null;
+        dragOverDir = null;
+        _dragCandidatePath = null;
+        document.body.style.userSelect = "";
+        clearHoverExpand();
+    }
+
+    async function moveNode(srcPath: string, destDir: string) {
+        actionError = "";
+        const name = srcPath.split("/").pop()!;
+        const newPath = `${destDir}/${name}`;
+        try {
+            if (await exists(newPath)) {
+                actionError = `"${name}" already exists in the destination`;
+                return;
+            }
+            // moveFileByPath bumps folderRefreshTrigger, which refreshes the
+            // tree via its effect — no explicit refresh needed here.
+            await moveFileByPath(srcPath, destDir);
+        } catch (e) {
+            actionError = String(e);
+        }
+    }
+
     function hasAnySupportedFile(nodes: FileTreeNode[]): boolean {
         for (const node of nodes) {
             if (!node.isDirectory) return true;
@@ -450,13 +742,29 @@
             e.preventDefault();
             togglePanel();
         }
-        if (e.key === "Escape" && isOpen) {
-            isOpen = false;
+        if (e.key === "Escape") {
+            if (ctxMenuNode) {
+                closeNodeContextMenu();
+                return;
+            }
+            if (renamingPath) {
+                cancelRenameNode();
+                return;
+            }
+            if (creating) {
+                cancelCreate();
+                return;
+            }
+            if (isOpen) isOpen = false;
         }
     }
 </script>
 
-<svelte:window onkeydown={handleWindowKeydown} />
+<svelte:window
+    onkeydown={handleWindowKeydown}
+    onpointermove={onWindowPointerMove}
+    onpointerup={onWindowPointerUp}
+/>
 
 <!-- Zen-mode locator dot — marks where the (hidden) File Explorer button sits. -->
 {#if $zenMode && !$zenPeek && !isOpen}
@@ -507,7 +815,7 @@
             ? 'fixed'
             : 'absolute top-1/3 left-1.5 ml-2'} rounded-3xl {panelSize
             ? ''
-            : 'w-60 max-h-[33vh]'} bg-white dark:bg-[#292c3c]
+            : 'w-72 max-h-[33vh]'} bg-white dark:bg-[#292c3c]
 		       border border-stone-200 dark:border-[#414559]
 		       shadow-xl shadow-black/15 dark:shadow-black/40
 		       flex flex-col overflow-hidden"
@@ -560,6 +868,26 @@
                     </button>
                 {/if}
             </div>
+            {#if $openFolderPath}
+                <button
+                    onclick={() => startCreate("file", null)}
+                    class="cursor-pointer shrink-0 rounded-full p-1 transition-colors
+                           text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
+                    title={$t("explorer.new_file")}
+                    aria-label={$t("explorer.new_file")}
+                >
+                    <Icon icon="solar:document-add-bold-duotone" width="0.9rem" />
+                </button>
+                <button
+                    onclick={() => startCreate("folder", null)}
+                    class="cursor-pointer shrink-0 rounded-full p-1 transition-colors
+                           text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890]"
+                    title={$t("explorer.new_folder")}
+                    aria-label={$t("explorer.new_folder")}
+                >
+                    <Icon icon="solar:add-folder-bold-duotone" width="0.9rem" />
+                </button>
+            {/if}
             <button
                 onclick={() => (isPinned = !isPinned)}
                 class="cursor-pointer shrink-0 rounded-full p-1 transition-colors {isPinned
@@ -612,8 +940,42 @@
             </div>
         {/if}
 
+        <!-- Transient action error (rename / create) — dismissible, non-destructive -->
+        {#if actionError}
+            <div
+                class="shrink-0 px-3 py-1.5 border-b border-red-200 dark:border-red-800/40
+			            bg-red-50 dark:bg-red-900/20 flex items-center gap-2"
+            >
+                <Icon
+                    icon="solar:danger-triangle-bold-duotone"
+                    width="0.75rem"
+                    class="shrink-0 text-red-400"
+                />
+                <span
+                    class="text-[10px] text-red-500 dark:text-red-400 flex-1 truncate"
+                    title={actionError}
+                >
+                    {actionError}
+                </span>
+                <button
+                    onclick={() => (actionError = "")}
+                    class="cursor-pointer shrink-0 text-red-400 hover:text-red-500 transition-colors"
+                    aria-label="Dismiss"
+                    title="Dismiss"
+                >
+                    <Icon icon="solar:close-circle-bold" width="0.85rem" />
+                </button>
+            </div>
+        {/if}
+
         <!-- Tree body -->
-        <div class="flex-1 min-h-0 overflow-y-auto py-1 px-1">
+        <div
+            data-tree-body="true"
+            class="flex-1 min-h-0 overflow-y-auto py-1 px-1 rounded-b-3xl {draggingPath &&
+            dragOverDir === $openFolderPath
+                ? 'ring-2 ring-inset ring-brand-gold-400 bg-brand-gold-50/40 dark:bg-[#363a4f]/40'
+                : ''}"
+        >
             {#if isLoadingRoot}
                 <p
                     class="text-[10px] italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2"
@@ -626,27 +988,28 @@
                 >
                     {$t("explorer.no_folder")}
                 </p>
-            {:else if !loadError && rootNodes.length === 0}
-                <p
-                    class="text-[10px] italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2"
-                >
-                    {$t("explorer.no_files")}
-                </p>
             {:else if !loadError}
-                {@render treeNodes(rootNodes, 0)}
+                {@render createRow($openFolderPath ?? "", 0)}
+                {#if rootNodes.length === 0 && !creating}
+                    <p
+                        class="text-[10px] italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2"
+                    >
+                        {$t("explorer.no_files")}
+                    </p>
+                {:else}
+                    {@render treeNodes(rootNodes, 0)}
+                {/if}
             {/if}
         </div>
 
-        <!-- Resize handles — only while pinned so the panel can be sized to taste -->
-        {#if isPinned}
-            {#each resizeHandles as { cls, dir }}
-                <div
-                    aria-hidden="true"
-                    class="resize-handle {cls}"
-                    onpointerdown={(e) => startResize(e, dir)}
-                ></div>
-            {/each}
-        {/if}
+        <!-- Resize handles — always available so the panel can be sized to taste, pinned or not -->
+        {#each resizeHandles as { cls, dir }}
+            <div
+                aria-hidden="true"
+                class="resize-handle {cls}"
+                onpointerdown={(e) => startResize(e, dir)}
+            ></div>
+        {/each}
     </div>
 {/if}
 
@@ -657,15 +1020,131 @@
     onClose={() => (mediaViewerOpen = false)}
 />
 
+<!-- File node context menu — Rename (rendered at top level so it escapes the panel's overflow) -->
+{#if ctxMenuNode && ctxMenuPos}
+    <div
+        role="presentation"
+        class="fixed inset-0"
+        style="z-index: 9998;"
+        onclick={closeNodeContextMenu}
+        oncontextmenu={(e) => {
+            e.preventDefault();
+            closeNodeContextMenu();
+        }}
+    ></div>
+    <div
+        style="position: fixed; left: {ctxMenuPos.x}px; top: {ctxMenuPos.y}px; z-index: 9999;"
+        class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-2xl shadow-xl p-1.5 min-w-36"
+    >
+        <button
+            onclick={() => startCreate("file", ctxMenuNode)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+        >
+            <Icon icon="solar:document-add-bold-duotone" width="0.85rem" class="shrink-0" />
+            {$t("explorer.new_file")}
+        </button>
+        <button
+            onclick={() => startCreate("folder", ctxMenuNode)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+        >
+            <Icon icon="solar:add-folder-bold-duotone" width="0.85rem" class="shrink-0" />
+            {$t("explorer.new_folder")}
+        </button>
+        <div class="my-1 border-t border-brand-sand-200 dark:border-[#414559]"></div>
+        <button
+            onclick={() => ctxMenuNode && startRenameNode(ctxMenuNode)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+        >
+            <Icon icon="solar:pen-bold-duotone" width="0.85rem" class="shrink-0" />
+            {$t("explorer.rename")}
+        </button>
+    </div>
+{/if}
+
+{#snippet createRow(parentPath: string, depth: number)}
+    {#if creating && creating.parentPath === parentPath}
+        <div
+            class="flex items-center gap-1 py-0.5"
+            style="padding-left: {0.5 + depth * 0.75}rem; padding-right: 0.5rem"
+        >
+            <Icon
+                icon={creating.kind === "folder"
+                    ? "solar:folder-bold-duotone"
+                    : "solar:file-text-bold-duotone"}
+                width="0.8rem"
+                class="shrink-0 {creating.kind === 'folder'
+                    ? 'text-brand-gold-500 dark:text-[#e5c890]'
+                    : 'text-brand-charcoal-300 dark:text-[#626880]'}"
+            />
+            <input
+                bind:value={createValue}
+                use:autofocusSelect
+                placeholder={creating.kind === "folder"
+                    ? $t("explorer.new_folder")
+                    : $t("explorer.new_file")}
+                onpointerdown={(e) => e.stopPropagation()}
+                onclick={(e) => e.stopPropagation()}
+                onblur={commitCreate}
+                onkeydown={(e) => {
+                    e.stopPropagation();
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        commitCreate();
+                    } else if (e.key === "Escape") {
+                        e.preventDefault();
+                        cancelCreate();
+                    }
+                }}
+                class="min-w-0 flex-1 bg-transparent border-b border-brand-gold-400 outline-none
+                       text-[13px] font-mono text-brand-charcoal-700 dark:text-[#c6d0f5]"
+            />
+        </div>
+    {/if}
+{/snippet}
+
+{#snippet nodeName(node: FileTreeNode, extraClass: string)}
+    {#if renamingPath === node.path}
+        <input
+            bind:value={renameValue}
+            use:autofocusSelect
+            onpointerdown={(e) => e.stopPropagation()}
+            onclick={(e) => e.stopPropagation()}
+            ondblclick={(e) => e.stopPropagation()}
+            onblur={commitRenameNode}
+            onkeydown={(e) => {
+                e.stopPropagation();
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitRenameNode();
+                } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    cancelRenameNode();
+                }
+            }}
+            class="min-w-0 flex-1 bg-transparent border-b border-brand-gold-400 outline-none
+                   text-[13px] font-mono text-brand-charcoal-700 dark:text-[#c6d0f5]"
+        />
+    {:else}
+        <span class="truncate {extraClass}" title={node.name}>{node.name}</span>
+    {/if}
+{/snippet}
+
 {#snippet treeNodes(nodes: FileTreeNode[], depth: number)}
-    {#each nodes as node}
+    {#each nodes as node (node.path)}
         {#if node.isDirectory}
             <button
-                onclick={() => toggleDirectory(node)}
+                data-node-path={node.path}
+                data-node-is-dir="true"
+                onpointerdown={(e) => onNodePointerDown(e, node)}
+                onclick={() => {
+                    if (_dragJustCompleted) return;
+                    toggleDirectory(node);
+                }}
+                oncontextmenu={(e) => openNodeContextMenu(e, node)}
                 class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[13px]
 				       text-brand-charcoal-500 dark:text-[#c6d0f5]
 				       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
-				       rounded-full transition-colors font-mono text-left"
+				       rounded-full transition-colors font-mono text-left {draggingPath === node.path ? 'opacity-40' : ''} {dragOverDir === node.path ? 'ring-2 ring-inset ring-brand-gold-400 bg-brand-gold-50 dark:bg-[#363a4f]' : ''}"
                 style="padding-left: {0.5 +
                     depth * 0.75}rem; padding-right: 0.5rem"
             >
@@ -699,13 +1178,14 @@
                         ? 'text-brand-charcoal-200 dark:text-[#414559]'
                         : 'text-brand-gold-500 dark:text-[#e5c890]'}"
                 />
-                <span
-                    class="truncate {node.isForbidden ? 'opacity-50' : ''}"
-                    title={node.name}>{node.name}</span
-                >
+                {@render nodeName(
+                    node,
+                    node.isForbidden ? "opacity-50" : "",
+                )}
             </button>
             {#if node.isExpanded && node.isLoaded}
-                {#if node.children.length === 0}
+                {@render createRow(node.path, depth + 1)}
+                {#if node.children.length === 0 && !(creating && creating.parentPath === node.path)}
                     <p
                         class="text-[10px] italic text-brand-charcoal-300 dark:text-[#838ba7]"
                         style="padding-left: {0.5 + (depth + 1) * 0.75}rem"
@@ -718,12 +1198,16 @@
             {/if}
         {:else if isImageFile(node.name) || isPdfFile(node.name)}
             <button
+                data-node-path={node.path}
+                data-node-is-dir="false"
+                onpointerdown={(e) => onNodePointerDown(e, node)}
                 ondblclick={() => openMedia(node)}
+                oncontextmenu={(e) => openNodeContextMenu(e, node)}
                 class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[13px]
 				       text-brand-charcoal-500 dark:text-[#c6d0f5]
 				       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 				       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
-				       rounded-full transition-colors font-mono text-left"
+				       rounded-full transition-colors font-mono text-left {draggingPath === node.path ? 'opacity-40' : ''} {dragOverDir === node.path ? 'ring-2 ring-inset ring-brand-gold-400 bg-brand-gold-50 dark:bg-[#363a4f]' : ''}"
                 style="padding-left: {0.5 +
                     depth * 0.75}rem; padding-right: 0.5rem"
                 title={node.name}
@@ -735,17 +1219,24 @@
                     width="0.8rem"
                     class="shrink-0 text-brand-gold-500 dark:text-[#e5c890]"
                 />
-                <span class="truncate" title={node.name}>{node.name}</span>
+                {@render nodeName(node, "")}
             </button>
         {:else if isFlatFile(node.name)}
             <button
-                onclick={() => previewFile(node)}
+                data-node-path={node.path}
+                data-node-is-dir="false"
+                onpointerdown={(e) => onNodePointerDown(e, node)}
+                onclick={() => {
+                    if (_dragJustCompleted) return;
+                    previewFile(node);
+                }}
                 ondblclick={() => openFile(node)}
+                oncontextmenu={(e) => openNodeContextMenu(e, node)}
                 class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[13px]
 				       text-brand-charcoal-500 dark:text-[#c6d0f5]
 				       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 				       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
-				       rounded-full transition-colors font-mono text-left"
+				       rounded-full transition-colors font-mono text-left {draggingPath === node.path ? 'opacity-40' : ''} {dragOverDir === node.path ? 'ring-2 ring-inset ring-brand-gold-400 bg-brand-gold-50 dark:bg-[#363a4f]' : ''}"
                 style="padding-left: {0.5 +
                     depth * 0.75}rem; padding-right: 0.5rem"
                 title={$t("explorer.file_hint")}
@@ -755,7 +1246,7 @@
                     width="0.8rem"
                     class="shrink-0 text-brand-charcoal-300 dark:text-[#626880]"
                 />
-                <span class="truncate" title={node.name}>{node.name}</span>
+                {@render nodeName(node, "")}
             </button>
         {/if}
     {/each}

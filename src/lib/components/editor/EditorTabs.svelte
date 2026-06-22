@@ -4,6 +4,7 @@
         activeTabId,
         activeTab,
         closeTab,
+        renameTab,
     } from "$lib/stores/tabs.store";
     import type { EditorTab } from "$lib/stores/tabs.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
@@ -307,6 +308,43 @@
     function closeContextMenu() {
         contextMenuTabId = null;
         contextMenuPos = null;
+    }
+
+    // ── Inline rename ──
+    let renamingTabId = $state<string | null>(null);
+    let renameValue = $state("");
+
+    function startRename(tabId: string) {
+        const tab = $tabs.find((t) => t.id === tabId);
+        closeContextMenu();
+        if (!tab) return;
+        renamingTabId = tabId;
+        renameValue = tab.name;
+    }
+
+    async function commitRename() {
+        const id = renamingTabId;
+        if (!id) return;
+        const newName = renameValue.trim();
+        renamingTabId = null;
+        if (!newName) return;
+        try {
+            await renameTab(id, newName);
+        } catch (e) {
+            console.error("Rename failed:", e);
+        }
+    }
+
+    function cancelRename() {
+        renamingTabId = null;
+    }
+
+    // Autofocus the rename input and preselect the name (sans extension).
+    function autofocusSelect(node: HTMLInputElement) {
+        node.focus();
+        const dot = node.value.lastIndexOf(".");
+        if (dot > 0) node.setSelectionRange(0, dot);
+        else node.select();
     }
 
     /** Close the given tabs sequentially so each unsaved-changes prompt resolves before the next. */
@@ -647,9 +685,32 @@
                     class="shrink-0 opacity-60"
                 />
 
-                <span class={tab.isPreview ? "italic" : ""}
-                    >{tab.name}{tab.isDirty ? " *" : ""}</span
-                >
+                {#if renamingTabId === tab.id}
+                    <input
+                        bind:value={renameValue}
+                        data-no-drag
+                        use:autofocusSelect
+                        onpointerdown={(e) => e.stopPropagation()}
+                        onclick={(e) => e.stopPropagation()}
+                        onblur={commitRename}
+                        onkeydown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === "Enter") {
+                                e.preventDefault();
+                                commitRename();
+                            } else if (e.key === "Escape") {
+                                e.preventDefault();
+                                cancelRename();
+                            }
+                        }}
+                        class="min-w-0 w-28 bg-transparent border-b border-brand-gold-400
+                               outline-none text-[13px] text-brand-charcoal-800 dark:text-[#e5c890]"
+                    />
+                {:else}
+                    <span class={tab.isPreview ? "italic" : ""}
+                        >{tab.name}{tab.isDirty ? " *" : ""}</span
+                    >
+                {/if}
 
                 <!-- Split button: shown on any ungrouped editor tab when partners are available -->
                 {#if isUngroupedSplittable && canShowSplit && availablePartners.length > 0}
@@ -867,6 +928,13 @@
         style="position: fixed; left: {contextMenuPos.x}px; top: {contextMenuPos.y}px; transform: translateY(calc(-100% - 4px)); z-index: 9999;"
         class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-2xl shadow-xl p-1.5 min-w-40"
     >
+        <button
+            onclick={() => startRename(contextMenuTabId!)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+        >
+            <Icon icon="solar:pen-bold-duotone" width="0.85rem" class="shrink-0" />
+            Rename
+        </button>
         <button
             onclick={() => closeThis(contextMenuTabId!)}
             class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
