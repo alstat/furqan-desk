@@ -1,4 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
+import { rename } from '@tauri-apps/plugin-fs';
 import { lexicalToTypst } from '$lib/functions/utils/typstConverters';
 
 export type TabType = 'typst' | 'lexical' | 'text' | 'julia';
@@ -281,6 +282,59 @@ export function markTabSaved(id: string, path: string): void {
 	const folder = get(openFolderPath);
 	if (folder && isPathInsideFolder(path, folder)) {
 		folderRefreshTrigger.update(n => n + 1);
+	}
+}
+
+/** Rename a file on disk and reflect the new path/name in any open tabs. */
+export async function renameFileByPath(oldPath: string, newName: string): Promise<void> {
+	const trimmed = newName.trim();
+	if (!trimmed) return;
+	const dir = oldPath.replace(/\\/g, '/').split('/').slice(0, -1).join('/');
+	const newPath = dir ? `${dir}/${trimmed}` : trimmed;
+	if (newPath === oldPath) return;
+	await rename(oldPath, newPath);
+	tabs.update(ts =>
+		ts.map(t => (t.path === oldPath ? { ...t, path: newPath, name: trimmed } : t))
+	);
+	const folder = get(openFolderPath);
+	if (folder) folderRefreshTrigger.update(n => n + 1);
+}
+
+/**
+ * Move a file or folder into `destDir` (keeping its name) and update any open
+ * tabs — both a moved file itself and files living inside a moved folder.
+ */
+export async function moveFileByPath(oldPath: string, destDir: string): Promise<void> {
+	const normalizedOld = oldPath.replace(/\\/g, '/');
+	const name = normalizedOld.split('/').pop()!;
+	const newPath = `${destDir.replace(/\\/g, '/').replace(/\/+$/, '')}/${name}`;
+	if (newPath === normalizedOld) return;
+	await rename(oldPath, newPath);
+	tabs.update(ts =>
+		ts.map(t => {
+			if (!t.path) return t;
+			const p = t.path.replace(/\\/g, '/');
+			if (p === normalizedOld) return { ...t, path: newPath };
+			if (p.startsWith(`${normalizedOld}/`)) {
+				return { ...t, path: newPath + p.slice(normalizedOld.length) };
+			}
+			return t;
+		})
+	);
+	const folder = get(openFolderPath);
+	if (folder) folderRefreshTrigger.update(n => n + 1);
+}
+
+/** Rename a tab — renames the backing file when saved, otherwise just the label. */
+export async function renameTab(id: string, newName: string): Promise<void> {
+	const tab = get(tabs).find(t => t.id === id);
+	if (!tab) return;
+	const trimmed = newName.trim();
+	if (!trimmed || trimmed === tab.name) return;
+	if (tab.path) {
+		await renameFileByPath(tab.path, trimmed);
+	} else {
+		tabs.update(ts => ts.map(t => (t.id === id ? { ...t, name: trimmed } : t)));
 	}
 }
 

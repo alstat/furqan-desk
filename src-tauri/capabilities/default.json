@@ -17,6 +17,8 @@
     "fs:allow-read-file",
     "fs:allow-read-text-file",
     "fs:allow-read-dir",
+    "fs:allow-rename",
+    "fs:allow-mkdir",
     "fs:allow-exists",
     "fs:allow-watch",
     "fs:scope-home-recursive",
