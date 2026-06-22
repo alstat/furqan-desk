@@ -212,6 +212,9 @@ export const en: Record<string, string> = {
   "explorer.no_files": "No files or folders found",
   "explorer.empty": "Empty",
   "explorer.file_hint": "Click to preview · Double-click to open",
+  "explorer.rename": "Rename",
+  "explorer.new_file": "New File",
+  "explorer.new_folder": "New Folder",
   // Feedback
   "feedback.title": "Send Feedback",
   "feedback.subtitle": "We'd love to hear from you",
