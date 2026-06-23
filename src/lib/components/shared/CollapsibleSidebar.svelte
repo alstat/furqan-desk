@@ -175,6 +175,7 @@
 
     <!-- AI Button -->
     <button
+        id="tour-ai-button"
         class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-15 z-3 ${$aiChatDialogOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? "opacity-50 transition-opacity duration-200" : "opacity-0 hover:opacity-100 transition-opacity duration-200") : ""}`}
         onclick={handleAiClick}
         aria-label={$t("ai_chat.title")}
@@ -188,6 +189,7 @@
 
     <!-- Terminal Button -->
     <button
+        id="tour-terminal-button"
         class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-26 z-3 ${terminalOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? "opacity-50 transition-opacity duration-200" : "opacity-0 hover:opacity-100 transition-opacity duration-200") : ""}`}
         onclick={() => (terminalOpen = !terminalOpen)}
         aria-label="Open terminal"
@@ -240,6 +242,7 @@
 
     <!-- User account button (above donation) -->
     <button
+        id="tour-account-button"
         class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-26 z-3 ${$zenMode ? ($zenPeek ? "opacity-50 transition-opacity duration-200" : "opacity-0 hover:opacity-100 transition-opacity duration-200") : ""}`}
         onclick={() => (accountOpen = true)}
         aria-label={$t("account.title")}

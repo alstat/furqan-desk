@@ -217,7 +217,13 @@
       "Bash(ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,bit_rate -show_entries format=duration,size -of default=noprint_wrappers=1 static/videos/arabic-phrase-slash-commands.mov)",
       "Bash(ffprobe -v error -show_entries stream=codec_name,width,height,pix_fmt -show_entries format=size -of default=noprint_wrappers=1 static/videos/export-to-word.mp4)",
       "Bash(ffmpeg -y -i static/videos/arabic-phrase-slash-commands.mov -vf \"scale=1280:-2,fps=30\" -c:v libx264 -profile:v high -pix_fmt yuv420p -crf 23 -preset slow -movflags +faststart -an static/videos/arabic-phrase-slash-commands.mp4)",
-      "Bash(ffprobe -v error -show_entries stream=codec_name,width,height,pix_fmt -show_entries format=duration,size -of default=noprint_wrappers=1 static/videos/arabic-phrase-slash-commands.mp4)"
+      "Bash(ffprobe -v error -show_entries stream=codec_name,width,height,pix_fmt -show_entries format=duration,size -of default=noprint_wrappers=1 static/videos/arabic-phrase-slash-commands.mp4)",
+      "Skill(run)",
+      "Bash(npx --no-install playwright --version)",
+      "Read(//Applications/Google Chrome.app/Contents/MacOS/**)",
+      "Read(//Applications/**)",
+      "Bash(pkill -f \"vite dev --port 5199\")",
+      "Bash(pkill -f \"Google Chrome.*9222\")"
     ]
   }
 }

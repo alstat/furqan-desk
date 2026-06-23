@@ -7,43 +7,43 @@
     } from "$lib/stores/tour.store";
     import { manuscriptDemoOpen } from "$lib/stores/manuscripts.store";
 
-    const MANUSCRIPT_STEP = 6; // index of the manuscript step
-    const AUTHOR_STEP = 8; // index of the author's note step
+    const MANUSCRIPT_STEP = 9; // index of the manuscript step
+    const AUTHOR_STEP = 11; // index of the author's note step
 
     const steps = [
         {
             targetId: null,
             title: "Welcome to AyahLab",
             description:
-                "Your all-in-one Quran study and research workspace — explore the text with full morphology, examine original manuscripts, compose publications with Typst, and run scientific computations with Julia.",
+                "Your all-in-one Quran study and research workspace — explore the text with full morphology, listen to multiple reciters, examine original manuscripts, ask a Quran-aware AI assistant, and compose publications with Typst or run scientific computations with Julia.",
             position: "center" as const,
         },
         {
             targetId: "tour-parchment",
             title: "The Quran Reader",
             description:
-                "Interactive Quran text with full morphology. Click any word to explore its root, grammar, and linguistic details.",
+                "Interactive Quran text with full morphology. Click any word to explore its root, grammar, and linguistic details — or select text to paraphrase, elaborate, or ask the AI about it inline.",
             position: "right" as const,
         },
         {
             targetId: "tour-action-bar",
             title: "Reader Actions",
             description:
-                "Bookmark ayahs, manage highlights, and search in Arabic or translation.",
+                "Bookmark ayahs, manage highlights, open the Manuscript Viewer, and search in Arabic or translation.",
             position: "bottom" as const,
         },
         {
             targetId: "tour-recitation",
             title: "Recitation Player",
             description:
-                "Audio playback of any surah. Appears at the bottom of the reader when a reciter is active.",
+                "Audio playback of any surah from a growing roster of reciters. Pick two reciters into side-by-side slots, switch between them, and download recitations for offline listening. Appears at the bottom of the reader when a reciter is active.",
             position: "top" as const,
         },
         {
             targetId: "tour-surah-widget",
-            title: "Surah & Translation Controls",
+            title: "Surah, Translation & Tafsir",
             description:
-                "Select surah, choose a translator, toggle word-by-word and transliteration, and adjust fonts.",
+                "Select a surah, choose a translator and tafsir, toggle word-by-word and transliteration, and adjust the Arabic and translation fonts.",
             position: "top" as const,
         },
         {
@@ -51,6 +51,27 @@
             title: "The Editor Panel",
             description:
                 "Multi-tab workspace with three editor types: Lexical for quick rich-text notes, Typst for beautifully typeset documents and research papers, and Julia for interactive scientific computing — with built-in APIs like AL.surah and AL.ayah to programmatically control the Quran reader.",
+            position: "left" as const,
+        },
+        {
+            targetId: "tour-ai-button",
+            title: "AI Assistant",
+            description:
+                "Chat with a Quran-aware AI assistant for tafsir, translation, and research questions — switch between Standard and Advanced models. The same intelligence powers the inline tools in your notes and the reader. A Pro feature — sign in to unlock it.",
+            position: "left" as const,
+        },
+        {
+            targetId: "tour-terminal-button",
+            title: "Built-in Terminal",
+            description:
+                "A full terminal right inside the workspace. Run shell commands and manage your Julia and Typst environments without ever leaving the app.",
+            position: "left" as const,
+        },
+        {
+            targetId: "tour-account-button",
+            title: "Your Account",
+            description:
+                "Sign in with Google to sync your account across devices and manage your subscription. Upgrade to Pro to unlock the AI assistant and other premium features.",
             position: "left" as const,
         },
         {
@@ -64,7 +85,7 @@
             targetId: "tour-editor-toolbar",
             title: "Editor Tools",
             description:
-                "Create new tabs, browse local files, configure Julia & Typst packages, and access settings.",
+                "Create new tabs, browse local files, configure Julia & Typst packages, switch themes, and access settings.",
             position: "top" as const,
         },
         {
