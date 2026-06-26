@@ -56,6 +56,38 @@
     let changedFiles = $state<Map<string, string>>(new Map());
     let changedDirs = $state<Set<string>>(new Set());
 
+    // git (libgit2) always reports forward-slash paths, while node paths on
+    // Windows mix separators (the dialog yields `C:\…`, joined with `/`).
+    // Normalising both sides to `/` makes every comparison work cross-platform.
+    const norm = (p: string) => p.replace(/\\/g, "/");
+
+    // Absolute paths git ignores (.gitignore etc.). Ignored directories are
+    // stored as a single entry; descendants are treated as ignored by walking
+    // ancestors in `isIgnored`. Used to gray out ignored files/folders.
+    let ignoredPaths = $state<Set<string>>(new Set());
+
+    // A node is ignored if its own path is ignored, or any ancestor directory
+    // is (so everything inside an ignored folder is grayed out too).
+    function isIgnored(path: string): boolean {
+        if (ignoredPaths.size === 0) return false;
+        let dir = norm(path);
+        if (ignoredPaths.has(dir)) return true;
+        while (dir.includes("/")) {
+            dir = dir.slice(0, dir.lastIndexOf("/"));
+            if (ignoredPaths.has(dir)) return true;
+        }
+        return false;
+    }
+
+    async function loadGitIgnored(folder: string) {
+        try {
+            const paths = await invoke<string[]>("git_ignored", { folder });
+            ignoredPaths = new Set(paths);
+        } catch {
+            ignoredPaths = new Set();
+        }
+    }
+
     // Tailwind text colours per git status, echoing VSCode's palette
     // (modified = gold, added/untracked = green, deleted = red, conflict = orange).
     const GIT_STATUS_CLASS: Record<string, string> = {
@@ -68,15 +100,19 @@
     };
 
     function fileStatusClass(path: string): string {
-        const s = changedFiles.get(path);
+        // Ignored files are grayed out and never carry a change colour.
+        if (isIgnored(path)) return "opacity-50";
+        const s = changedFiles.get(norm(path));
         return s ? (GIT_STATUS_CLASS[s] ?? "") : "";
     }
 
     // Collapsed folders containing changes get the "modified" colour so the user
     // sees there's something changed inside without opening them.
     function folderStatusClass(node: FileTreeNode): string {
+        // Ignored folders are grayed out (expanded or not).
+        if (isIgnored(node.path)) return "opacity-50";
         if (node.isExpanded) return "";
-        return changedDirs.has(node.path) ? "text-amber-600 dark:text-amber-300" : "";
+        return changedDirs.has(norm(node.path)) ? "text-amber-600 dark:text-amber-300" : "";
     }
 
     interface GitFileStatus {
@@ -91,7 +127,9 @@
             });
             const files = new Map<string, string>();
             const dirs = new Set<string>();
-            const root = folder.replace(/\/+$/, "");
+            // git paths are forward-slash; normalise the root to match so the
+            // ancestor walk works regardless of the OS path separator.
+            const root = norm(folder).replace(/\/+$/, "");
             for (const { path, status } of entries) {
                 files.set(path, status);
                 // Walk up the ancestors within the displayed tree only.
@@ -258,6 +296,7 @@
         loadError = "";
         changedFiles = new Map();
         changedDirs = new Set();
+        ignoredPaths = new Set();
         if (_unwatch) {
             _unwatch();
             _unwatch = null;
@@ -269,6 +308,7 @@
         if (!folder) return;
         loadRoot(folder);
         loadGitStatus(folder);
+        loadGitIgnored(folder);
         setupWatcher(folder);
     });
 
@@ -346,6 +386,7 @@
             rootNodes = await buildWithExpanded(folder, expanded);
             await refreshOpenTabsFromDisk(folder);
             loadGitStatus(folder);
+            loadGitIgnored(folder);
             loadError = "";
         } catch (e) {
             loadError = String(e);
@@ -469,18 +510,20 @@
     async function previewFile(node: FileTreeNode) {
         try {
             const content = await readTextFile(node.path);
+            actionError = "";
             openPreviewTab(node.path, content);
-        } catch {
-            // File not accessible — silently ignore
+        } catch (e) {
+            actionError = `Cannot open "${node.name}": ${e}`;
         }
     }
 
     async function openFile(node: FileTreeNode) {
         try {
             const content = await readTextFile(node.path);
+            actionError = "";
             openOrFocusTab(node.path, content);
-        } catch {
-            // File not accessible — silently ignore
+        } catch (e) {
+            actionError = `Cannot open "${node.name}": ${e}`;
         }
     }
 
