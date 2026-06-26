@@ -30,11 +30,12 @@ base64       = "0.22"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rusqlite = { version = "0.38", features = ["bundled", "functions"] }
-typst        = "0.14"
-typst-svg    = "0.14"
-typst-pdf    = "0.14"
-typst-assets = { version = "0.14", features = ["fonts"] }
-typstyle-core = "0.14"
+typst        = "0.15"
+typst-layout = "0.15"
+typst-svg    = "0.15"
+typst-pdf    = "0.15"
+typst-assets = { version = "0.15", features = ["fonts"] }
+typstyle-core = "0.15"
 once_cell = "1"
 dirs      = "5"
 reqwest   = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
@@ -54,6 +55,11 @@ tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
+
+# git2 powers the File Explorer's VCS integration (status highlighting +
+# .gitignore graying). Available on desktop (macOS/Linux via unix, plus
+# Windows); vendored libgit2 keeps the build self-contained on every OS.
+[target.'cfg(any(unix, windows))'.dependencies]
 git2      = { version = "0.19", default-features = false, features = ["vendored-libgit2"] }
 
 [target.'cfg(target_os = "android")'.dependencies]

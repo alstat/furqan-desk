@@ -1,7 +1,7 @@
 mod buckwalter;
 mod commands;
 mod db;
-#[cfg(unix)]
+#[cfg(any(unix, windows))]
 mod git;
 mod julia;
 #[cfg(any(unix, windows))]
@@ -239,8 +239,12 @@ pub fn run() {
             commands::clear_manuscript_cache,
             commands::get_manuscript_demo_image,
             commands::get_system_font_families,
-            #[cfg(unix)]
+            #[cfg(any(unix, windows))]
             git::git_head_content,
+            #[cfg(any(unix, windows))]
+            git::git_status,
+            #[cfg(any(unix, windows))]
+            git::git_ignored,
         ])
         .on_menu_event(|app, event| {
             // Forward File-menu clicks to the frontend, which runs the same

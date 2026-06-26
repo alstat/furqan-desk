@@ -5,6 +5,7 @@
         activeTab,
         closeTab,
         renameTab,
+        promoteTabToPermanent,
     } from "$lib/stores/tabs.store";
     import type { EditorTab } from "$lib/stores/tabs.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
@@ -56,6 +57,7 @@
         else addThirdToTypstGroup(g.id, tabCId);
     }
     import Icon from "@iconify/svelte";
+    import { t } from "$lib/i18n";
     import { confirm } from "@tauri-apps/plugin-dialog";
     import { singlePageMargin, zenMode, zenPeek, zenTabsOpacity } from "$lib/stores/editor.store";
 
@@ -663,6 +665,7 @@
                         setTimeout(() => flashingTabId.set(null), 1500);
                     }
                 }}
+                ondblclick={() => promoteTabToPermanent(tab.id)}
                 class="group cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-[13px] whitespace-nowrap
                        border-r border-stone-200 dark:border-[#414559] transition-colors
                        {group
@@ -933,7 +936,7 @@
             class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
         >
             <Icon icon="solar:pen-bold-duotone" width="0.85rem" class="shrink-0" />
-            Rename
+            {$t("explorer.rename")}
         </button>
         <button
             onclick={() => closeThis(contextMenuTabId!)}

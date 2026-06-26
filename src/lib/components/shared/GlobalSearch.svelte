@@ -22,6 +22,14 @@
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
     import { t } from "$lib/i18n";
     import { IS_APPLE } from "@lexical/utils";
+    import { bringToFront } from "$lib/stores/window-manager.store";
+
+    // Share the global window-manager stack so the search panel raises above the
+    // File Explorer (which uses the same counter). Raised on open and on click.
+    let zIndex = $state(50);
+    function focusPanel() {
+        zIndex = bringToFront();
+    }
 
     interface MatchLine {
         lineNumber: number;
@@ -140,6 +148,7 @@
                 // A fresh open returns to the default anchored position/size.
                 panelPos = null;
                 panelSize = null;
+                focusPanel();
                 // Focus the input on next tick
                 setTimeout(() => {
                     document.getElementById("global-search-input")?.focus();
@@ -315,6 +324,7 @@
         if (isOpen) {
             panelPos = null;
             panelSize = null;
+            focusPanel();
         }
     }}
     aria-label={IS_APPLE
@@ -341,17 +351,19 @@
 {#if isOpen}
     <div
         bind:this={panelEl}
+        role="presentation"
+        onpointerdown={focusPanel}
         transition:fly={{ x: isRtl ? 8 : -8, duration: 180, opacity: 0 }}
         class="{panelPos
             ? 'fixed'
-            : 'absolute top-1/2 left-1.5 ml-2'} z-50 rounded-3xl {panelSize
+            : 'absolute top-1/2 left-1.5 ml-2'} rounded-3xl {panelSize
             ? ''
             : 'w-72 max-h-[50vh]'} bg-white dark:bg-[#292c3c]
 		       border border-stone-200 dark:border-[#414559]
 		       shadow-xl shadow-black/15 dark:shadow-black/40
 		       flex flex-col overflow-hidden"
-        style="{panelPos
-            ? `left:${panelPos.x}px; top:${panelPos.y}px;`
+        style="z-index:{zIndex};{panelPos
+            ? ` left:${panelPos.x}px; top:${panelPos.y}px;`
             : ''}{panelSize
             ? ` width:${panelSize.w}px; height:${panelSize.h}px;`
             : ''}"

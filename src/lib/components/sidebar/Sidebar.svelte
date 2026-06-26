@@ -15,6 +15,10 @@
         lexicalEditorInstance,
         lexicalHistoryState,
         typstSource,
+        typstPreviewPath,
+        typstPreviewMode,
+        typstPinnedPath,
+        resolveTypstPreviewTab,
         zenMode,
         juliaSplitRatio,
         typstSplitRatio,
@@ -174,7 +178,19 @@
         prevTabId = tab.id;
 
         if (tab.type === "typst" || tab.type === "text") {
-            typstSource.set(tab.content);
+            // Feed the preview the resolved source: the pinned file (pinned mode)
+            // or the freshly-activated tab. Mirrors TypstEditor so switching tabs
+            // doesn't momentarily clobber a pinned preview with the active file.
+            const previewTab = resolveTypstPreviewTab(
+                $tabs,
+                tab,
+                $typstPreviewMode,
+                $typstPinnedPath,
+            );
+            if (previewTab) {
+                typstSource.set(previewTab.content);
+                typstPreviewPath.set(previewTab.path ?? null);
+            }
         }
         // Lexical restore is handled by Effect C below (waits for editor instance)
     });

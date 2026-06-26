@@ -1,6 +1,7 @@
 <script lang="ts">
     import Icon from '@iconify/svelte';
 import Dialog from '$lib/components/shared/Dialog.svelte';
+    import ShortcutsDialog from './ShortcutsDialog.svelte';
     import {
         appDarkMode,
         zenMode,
@@ -39,6 +40,8 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     }
 
     let { open, onClose }: Props = $props();
+
+    let showShortcuts = $state(false);
 
     function handleRestartTour() {
         onClose();
@@ -601,6 +604,18 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 </div>
             </div>
 
+            <!-- Keyboard Shortcuts -->
+            <div>
+                <p class={sectionLabel}>{$t('settings.shortcuts')}</p>
+                <div class="flex items-center justify-between">
+                    <span class={rowLabel}>{$t('settings.shortcuts.desc')}</span>
+                    <button onclick={() => (showShortcuts = true)} class={actionBtn}>
+                        <Icon icon="solar:keyboard-bold-duotone" width="0.85rem" />
+                        {$t('settings.shortcuts.open')}
+                    </button>
+                </div>
+            </div>
+
             <!-- Updates / Website -->
             <div>
                 <p class={sectionLabel}>{$t('settings.website')}</p>
@@ -683,3 +698,5 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         </div>
     {/snippet}
 </Dialog>
+
+<ShortcutsDialog open={showShortcuts} onClose={() => (showShortcuts = false)} />
