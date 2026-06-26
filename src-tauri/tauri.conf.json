@@ -28,6 +28,9 @@
       "desktop": {
         "schemes": ["ayahlab"]
       }
+    },
+    "fs": {
+      "requireLiteralLeadingDot": false
     }
   },
   "bundle": {

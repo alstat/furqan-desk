@@ -81,6 +81,55 @@ pub fn git_status(folder: String) -> Result<Vec<GitFileStatus>, String> {
     Ok(out)
 }
 
+/// Lists the paths ignored by git (via `.gitignore` and friends) for the
+/// repository that contains `folder`. Ignored directories are reported as a
+/// single entry (without recursing into them), so the caller can gray out a
+/// whole subtree by matching a node against any returned path or its ancestors.
+/// Returns an empty list when `folder` is not inside a git repository.
+#[tauri::command]
+pub fn git_ignored(folder: String) -> Result<Vec<String>, String> {
+    let base = PathBuf::from(&folder);
+    if !base.is_absolute() {
+        return Err("folder must be absolute".into());
+    }
+
+    let repo = match Repository::discover(&base) {
+        Ok(r) => r,
+        Err(_) => return Ok(vec![]),
+    };
+    let workdir = match repo.workdir() {
+        Some(w) => w.to_path_buf(),
+        None => return Ok(vec![]),
+    };
+
+    let mut opts = StatusOptions::new();
+    opts.include_untracked(true)
+        .include_ignored(true)
+        .recurse_ignored_dirs(false)
+        .recurse_untracked_dirs(false);
+
+    let statuses = repo
+        .statuses(Some(&mut opts))
+        .map_err(|e| format!("git: {e}"))?;
+
+    let mut out = Vec::new();
+    for entry in statuses.iter() {
+        if !entry.status().contains(Status::IGNORED) {
+            continue;
+        }
+        let rel = match entry.path() {
+            Some(p) => p,
+            None => continue,
+        };
+        // git reports ignored dirs with a trailing slash; trim it so the path
+        // matches the File Explorer's node paths exactly.
+        let abs = workdir.join(rel.trim_end_matches('/'));
+        out.push(abs.to_string_lossy().replace('\\', "/"));
+    }
+
+    Ok(out)
+}
+
 /// Returns the contents of `file_path` at the repository's HEAD, or `None` if
 /// the file is not tracked / not inside a git repository / repository has no
 /// commits yet. Errors (other than the above) surface as `Err`.

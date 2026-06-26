@@ -54,6 +54,11 @@ tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
+
+# git2 powers the File Explorer's VCS integration (status highlighting +
+# .gitignore graying). Available on desktop (macOS/Linux via unix, plus
+# Windows); vendored libgit2 keeps the build self-contained on every OS.
+[target.'cfg(any(unix, windows))'.dependencies]
 git2      = { version = "0.19", default-features = false, features = ["vendored-libgit2"] }
 
 [target.'cfg(target_os = "android")'.dependencies]
