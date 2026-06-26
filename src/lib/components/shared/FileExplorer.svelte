@@ -1,6 +1,7 @@
 <script lang="ts">
     import { fly } from "svelte/transition";
     import { open as openDialog } from "@tauri-apps/plugin-dialog";
+    import { invoke } from "@tauri-apps/api/core";
     import {
         readDir,
         readTextFile,
@@ -47,6 +48,67 @@
     let rootNodes = $state<FileTreeNode[]>([]);
     let isLoadingRoot = $state(false);
     let loadError = $state("");
+
+    // ── Git working-tree status (VSCode-style change highlighting) ──
+    // `changedFiles` maps an absolute file path → status label; `changedDirs`
+    // holds every ancestor directory of a changed file, so a collapsed folder
+    // that contains changes can be highlighted without expanding it.
+    let changedFiles = $state<Map<string, string>>(new Map());
+    let changedDirs = $state<Set<string>>(new Set());
+
+    // Tailwind text colours per git status, echoing VSCode's palette
+    // (modified = gold, added/untracked = green, deleted = red, conflict = orange).
+    const GIT_STATUS_CLASS: Record<string, string> = {
+        modified: "text-amber-600 dark:text-amber-300",
+        renamed: "text-amber-600 dark:text-amber-300",
+        added: "text-green-600 dark:text-green-400",
+        untracked: "text-green-600 dark:text-green-400",
+        deleted: "text-red-500 dark:text-red-400 line-through",
+        conflicted: "text-orange-600 dark:text-orange-400",
+    };
+
+    function fileStatusClass(path: string): string {
+        const s = changedFiles.get(path);
+        return s ? (GIT_STATUS_CLASS[s] ?? "") : "";
+    }
+
+    // Collapsed folders containing changes get the "modified" colour so the user
+    // sees there's something changed inside without opening them.
+    function folderStatusClass(node: FileTreeNode): string {
+        if (node.isExpanded) return "";
+        return changedDirs.has(node.path) ? "text-amber-600 dark:text-amber-300" : "";
+    }
+
+    interface GitFileStatus {
+        path: string;
+        status: string;
+    }
+
+    async function loadGitStatus(folder: string) {
+        try {
+            const entries = await invoke<GitFileStatus[]>("git_status", {
+                folder,
+            });
+            const files = new Map<string, string>();
+            const dirs = new Set<string>();
+            const root = folder.replace(/\/+$/, "");
+            for (const { path, status } of entries) {
+                files.set(path, status);
+                // Walk up the ancestors within the displayed tree only.
+                let dir = path.slice(0, path.lastIndexOf("/"));
+                while (dir.length > root.length && dir.startsWith(`${root}/`)) {
+                    dirs.add(dir);
+                    dir = dir.slice(0, dir.lastIndexOf("/"));
+                }
+            }
+            changedFiles = files;
+            changedDirs = dirs;
+        } catch {
+            // git command unavailable (e.g. non-unix build) or not a repo.
+            changedFiles = new Map();
+            changedDirs = new Set();
+        }
+    }
 
     // Pinning keeps the panel open when clicking outside (no backdrop) and lets
     // the user drag it anywhere by its header. `panelPos` is null while the panel
@@ -194,6 +256,8 @@
         const folder = $openFolderPath;
         rootNodes = [];
         loadError = "";
+        changedFiles = new Map();
+        changedDirs = new Set();
         if (_unwatch) {
             _unwatch();
             _unwatch = null;
@@ -204,6 +268,7 @@
         }
         if (!folder) return;
         loadRoot(folder);
+        loadGitStatus(folder);
         setupWatcher(folder);
     });
 
@@ -280,6 +345,7 @@
         try {
             rootNodes = await buildWithExpanded(folder, expanded);
             await refreshOpenTabsFromDisk(folder);
+            loadGitStatus(folder);
             loadError = "";
         } catch (e) {
             loadError = String(e);
@@ -730,6 +796,21 @@
         }
     }
 
+    // Close the panel when the user presses down anywhere outside it — the
+    // non-modal replacement for the old full-screen backdrop. Crucially this
+    // listener doesn't block wheel/scroll, so the editor behind stays usable.
+    function handleWindowPointerDown(e: PointerEvent) {
+        // Pinned panels intentionally stay open on outside interaction.
+        if (!isOpen || isPinned) return;
+        // While the panel owns a popover/dialog, let it manage its own clicks.
+        if (ctxMenuNode || mediaViewerOpen) return;
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
+        if (panelEl?.contains(target)) return; // clicks inside the panel
+        if (target.closest("[data-explorer-toggle]")) return; // the open/close button
+        isOpen = false;
+    }
+
     // Cmd+Shift+E / Ctrl+Shift+E toggles the File Explorer; Escape closes it.
     function handleWindowKeydown(e: KeyboardEvent) {
         // Note: on macOS WebKit, Cmd suppresses Shift in e.key, so Cmd+Shift+E
@@ -762,6 +843,7 @@
 
 <svelte:window
     onkeydown={handleWindowKeydown}
+    onpointerdown={handleWindowPointerDown}
     onpointermove={onWindowPointerMove}
     onpointerup={onWindowPointerUp}
 />
@@ -788,21 +870,16 @@
             : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
         : ''}"
     onclick={togglePanel}
+    data-explorer-toggle
     aria-label="File Explorer"
     title="File Explorer"
 >
     <Icon icon="solar:folder-with-files-bold-duotone" class="h-4 w-4" />
 </button>
 
-<!-- Backdrop — omitted while pinned so the panel stays open on outside clicks -->
-{#if isOpen && !isPinned}
-    <div
-        role="presentation"
-        class="fixed inset-0 z-10"
-        onclick={() => (isOpen = false)}
-        onkeydown={() => {}}
-    ></div>
-{/if}
+<!-- No modal backdrop: closing on outside click is handled by the window
+     pointerdown listener instead, so the editor behind the (non-pinned) panel
+     stays scrollable and clickable while the panel is open. -->
 
 <!-- Floating panel — opens to the left (LTR) or right (RTL) of the editor, ~1/3 height -->
 {#if isOpen}
@@ -1180,7 +1257,7 @@
                 />
                 {@render nodeName(
                     node,
-                    node.isForbidden ? "opacity-50" : "",
+                    node.isForbidden ? "opacity-50" : folderStatusClass(node),
                 )}
             </button>
             {#if node.isExpanded && node.isLoaded}
@@ -1219,7 +1296,7 @@
                     width="0.8rem"
                     class="shrink-0 text-brand-gold-500 dark:text-[#e5c890]"
                 />
-                {@render nodeName(node, "")}
+                {@render nodeName(node, fileStatusClass(node.path))}
             </button>
         {:else if isFlatFile(node.name)}
             <button
@@ -1246,7 +1323,7 @@
                     width="0.8rem"
                     class="shrink-0 text-brand-charcoal-300 dark:text-[#626880]"
                 />
-                {@render nodeName(node, "")}
+                {@render nodeName(node, fileStatusClass(node.path))}
             </button>
         {/if}
     {/each}

@@ -209,6 +209,13 @@ export function openOrFocusTab(path: string, content: string): void {
 	activeTabId.set(tab.id);
 }
 
+// Double-click on a tab: promote a preview tab to a permanent (non-preview) tab.
+export function promoteTabToPermanent(id: string): void {
+	tabs.update(ts =>
+		ts.map(t => (t.id === id && t.isPreview ? { ...t, isPreview: false } : t)),
+	);
+}
+
 // Update a specific tab's content by id, mark dirty, push to undo history
 export function setTabContent(id: string, content: string): void {
 	const current = get(tabs).find(t => t.id === id);
