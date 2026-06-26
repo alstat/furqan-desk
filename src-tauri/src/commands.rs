@@ -1605,10 +1605,11 @@ pub fn compile_typst_svg(
     let world = get_world();
     world.set_project_root(project_root_from_path(path));
     world.set_source(source);
-    let doc = typst::compile::<typst::layout::PagedDocument>(world)
+    let doc = typst::compile::<typst_layout::PagedDocument>(world)
         .output
         .map_err(|e| format!("{e:?}"))?;
-    Ok(doc.pages.iter().map(|p| typst_svg::svg(p)).collect())
+    let opts = typst_svg::SvgOptions::default();
+    Ok(doc.pages().iter().map(|p| typst_svg::svg(p, &opts)).collect())
 }
 
 #[tauri::command]
@@ -1619,7 +1620,7 @@ pub fn compile_typst_pdf(
     let world = get_world();
     world.set_project_root(project_root_from_path(path));
     world.set_source(source);
-    let doc = typst::compile::<typst::layout::PagedDocument>(world)
+    let doc = typst::compile::<typst_layout::PagedDocument>(world)
         .output
         .map_err(|e| format!("{e:?}"))?;
     typst_pdf::pdf(&doc, &typst_pdf::PdfOptions::default())
@@ -1849,7 +1850,7 @@ pub async fn clear_manuscript_cache(app: AppHandle) -> Result<(), String> {
 
 // ── Version queries ───────────────────────────────────────────────────────────
 
-const TYPST_BUNDLED_VERSION: &str = "0.14"; // update when bumping Cargo.toml
+const TYPST_BUNDLED_VERSION: &str = "0.15"; // update when bumping Cargo.toml
 
 /// Return the bundled Typst version (sync, no I/O).
 #[tauri::command]

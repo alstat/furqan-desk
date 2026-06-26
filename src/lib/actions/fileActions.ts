@@ -7,7 +7,7 @@ import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialo
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { serializedDocumentFromEditorState } from "@lexical/file";
 import { get } from "svelte/store";
-import { lexicalEditorInstance } from "$lib/stores/editor.store";
+import { lexicalEditorInstance, typstRecompile } from "$lib/stores/editor.store";
 import {
     openOrFocusTab,
     openFolderPath,
@@ -99,6 +99,11 @@ export async function saveFile(): Promise<void> {
         }
         await writeTextFile(path, tab.content);
         markTabSaved(get(activeTabId)!, path);
+        // A pinned preview (e.g. main.typ) imports other files from disk, so a
+        // recompile after saving picks up edits to the just-saved chapter file.
+        if (tab.type === "typst" || tab.type === "text") {
+            typstRecompile.update((n) => n + 1);
+        }
     }
 }
 

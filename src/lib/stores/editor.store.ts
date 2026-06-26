@@ -2,7 +2,7 @@ import { writable, derived, get, type Writable } from "svelte/store";
 import type { LexicalEditor } from "lexical";
 import type { HistoryState } from "@lexical/history";
 import type { EditorView } from "@codemirror/view";
-import { activeTab } from "./tabs.store";
+import { activeTab, type EditorTab } from "./tabs.store";
 
 // ── Page Width ────────────────────────────────────────
 function loadSinglePageMargin(): number {
@@ -556,6 +556,99 @@ export const codeMirrorCanUndo: Writable<boolean> = writable(false);
 export const codeMirrorCanRedo: Writable<boolean> = writable(false);
 /** Increment to force TypstEditor to recompile without changing the source. */
 export const typstRecompile: Writable<number> = writable(0);
+
+// ── Typst preview source selection ────────────────────────────────────────────
+// Two ways to choose what the Typst preview renders:
+//   • "active" (default) — the preview follows whichever Typst file is focused,
+//     so unrelated files each show their own output as you switch between them.
+//   • "pinned" — always render one chosen file (e.g. a main.typ that #includes
+//     the chapters), so editing chapter1.typ keeps previewing main.typ.
+export type TypstPreviewMode = "active" | "pinned";
+
+function loadTypstPreviewMode(): TypstPreviewMode {
+  try {
+    const v = localStorage.getItem("typst-preview-mode");
+    if (v === "pinned" || v === "active") return v;
+  } catch {
+    /* ignore */
+  }
+  return "active";
+}
+
+const _typstPreviewMode = writable<TypstPreviewMode>(loadTypstPreviewMode());
+
+export const typstPreviewMode = {
+  subscribe: _typstPreviewMode.subscribe,
+  set(v: TypstPreviewMode) {
+    try {
+      localStorage.setItem("typst-preview-mode", v);
+    } catch {
+      /* ignore */
+    }
+    _typstPreviewMode.set(v);
+  },
+};
+
+// Absolute path of the file pinned for preview (only honoured when
+// mode === "pinned"). Stored by path so the choice survives reloads — tab ids
+// are regenerated each session, paths are not.
+function loadTypstPinnedPath(): string | null {
+  try {
+    const v = localStorage.getItem("typst-pinned-path");
+    if (v) return v;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+const _typstPinnedPath = writable<string | null>(loadTypstPinnedPath());
+
+export const typstPinnedPath = {
+  subscribe: _typstPinnedPath.subscribe,
+  set(v: string | null) {
+    try {
+      if (v) localStorage.setItem("typst-pinned-path", v);
+      else localStorage.removeItem("typst-pinned-path");
+    } catch {
+      /* ignore */
+    }
+    _typstPinnedPath.set(v);
+  },
+};
+
+/**
+ * Path of the file currently feeding the preview pipeline — the companion to
+ * `typstSource`. Written by the driving editor; read by PDF export so it
+ * compiles the *previewed* file (resolving its imports), not necessarily the
+ * focused one.
+ */
+export const typstPreviewPath: Writable<string | null> = writable(null);
+
+/**
+ * Resolve which open tab the Typst preview should render.
+ *
+ * In "pinned" mode the pinned file is previewed whenever it is open; otherwise —
+ * and as a fallback when the pinned file isn't open — the active tab is used.
+ * Returning a tab (rather than just driving from the pinned file's own editor)
+ * lets the always-mounted active editor compile a pinned file that is open only
+ * in a background tab.
+ */
+export function resolveTypstPreviewTab(
+  allTabs: EditorTab[],
+  active: EditorTab | null,
+  mode: TypstPreviewMode,
+  pinnedPath: string | null,
+): EditorTab | null {
+  if (mode === "pinned" && pinnedPath) {
+    const pinned = allTabs.find(
+      (t) =>
+        t.path === pinnedPath && (t.type === "typst" || t.type === "text"),
+    );
+    if (pinned) return pinned;
+  }
+  return active;
+}
 
 // ── Custom editor font families ───────────────────────────────────────────────
 

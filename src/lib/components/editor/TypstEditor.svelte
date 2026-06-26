@@ -11,6 +11,10 @@
         typstSvgPages,
         typstCompileError,
         typstIsCompiling,
+        typstPreviewMode,
+        typstPinnedPath,
+        typstPreviewPath,
+        resolveTypstPreviewTab,
         zenMode,
         zenPeek,
         appDarkMode,
@@ -28,6 +32,7 @@
         setTabContent,
     } from "$lib/stores/tabs.store";
     import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
+    import TypstPreviewSourceSelector from "./TypstPreviewSourceSelector.svelte";
     import {
         autocompletion,
         type CompletionSource,
@@ -49,7 +54,16 @@
     // global compile pipeline + preview. Only the editor whose tab is active
     // "drives" that pipeline; the others just edit their own file. Focusing a
     // pane activates its tab (see activateThisTab), so the preview follows you.
+    // The active editor is always mounted, so it also drives the preview of a
+    // pinned file that is open only in a background tab.
     let isDriver = $derived(effectiveTab != null && effectiveTab.id === $activeTabId);
+
+    // The file the preview should render: the pinned file (pinned mode, when
+    // open) or otherwise the active file. The active editor compiles this, which
+    // is how editing chapter1.typ can keep previewing a pinned main.typ.
+    let previewTab = $derived(
+        resolveTypstPreviewTab($tabs, $activeTab, $typstPreviewMode, $typstPinnedPath),
+    );
 
     // Brief gold flash on the editor box when its tab is clicked in a split
     // group — guides the eye to the matching pane. Mirrors JuliaEditor.
@@ -129,28 +143,31 @@
         currentEmbeddedPreviewPage = nearestPage + 1;
     }
 
-    // Keep typstSource in sync with effective tab content — only the active
-    // (driving) editor owns the global source/preview.
+    // Keep typstSource (+ its path) in sync with the previewed file's content —
+    // only the active (driving) editor owns the global source/preview. In pinned
+    // mode the previewed file may differ from the file in this editor.
     $effect(() => {
         if (
             isDriver &&
-            (effectiveTab?.type === "typst" || effectiveTab?.type === "text")
+            (previewTab?.type === "typst" || previewTab?.type === "text")
         ) {
-            typstSource.set(effectiveTab.content);
+            typstSource.set(previewTab.content);
+            typstPreviewPath.set(previewTab.path ?? null);
         }
     });
 
     $effect(() => {
         if (!isDriver) return;
         void $typstRecompile;
-        if (effectiveTab?.type !== "typst") {
+        if (previewTab?.type !== "typst") {
             typstSvgPages.set([]);
             typstCompileError.set("");
             return;
         }
         const src = $typstSource;
+        const path = $typstPreviewPath;
         clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => compileToSvg(src), 300);
+        debounceTimer = setTimeout(() => compileToSvg(src, path), 300);
         return () => clearTimeout(debounceTimer);
     });
 
@@ -206,7 +223,7 @@
         );
     }
 
-    async function compileToSvg(src: string) {
+    async function compileToSvg(src: string, path: string | null) {
         if (!src.trim()) {
             typstSvgPages.set([]);
             typstCompileError.set("");
@@ -219,7 +236,7 @@
             typstSvgPages.set(
                 await invoke<string[]>("compile_typst_svg", {
                     source: src,
-                    path: effectiveTab?.path ?? null,
+                    path,
                 }),
             );
         } catch (e) {
@@ -237,7 +254,7 @@
             await ensurePackagesInstalled(src);
             const bytes = await invoke<number[]>("compile_typst_pdf", {
                 source: src,
-                path: effectiveTab?.path ?? null,
+                path: get(typstPreviewPath),
             });
             const path = await save({
                 filters: [{ name: "PDF", extensions: ["pdf"] }],
@@ -252,8 +269,13 @@
         // Always persist to this editor's own tab…
         if (tabId) setTabContent(tabId, newContent);
         else setActiveTabContent(newContent);
-        // …but only the active editor feeds the shared preview pipeline.
-        if (isDriver) typstSource.set(newContent);
+        // …but only the active editor feeds the shared preview pipeline, and
+        // only when it is the file being previewed (active mode, or pinned-to-
+        // self). When pinned to another file, edits here don't change the
+        // previewed source — though they will once the imported file is saved.
+        if (isDriver && previewTab?.id === effectiveTab?.id) {
+            typstSource.set(newContent);
+        }
     }
 
     // ── Completion source ─────────────────────────────────────────────────────
@@ -309,9 +331,6 @@
         activateOnTypingDelay: 150,
         maxRenderedOptions: 50,
     });
-
-    const labelClass =
-        "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
 
     let lineWrap = $state(true);
 
@@ -535,7 +554,30 @@
             class="flex-none flex flex-col p-2"
             style:height="{previewHeight}px"
         >
-            <span class={labelClass}>{$t("typst.preview")}</span>
+            <div class="mb-1.5 flex items-center justify-between gap-2">
+                <span
+                    class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
+                    >{$t("typst.preview")}</span
+                >
+                <div class="flex items-center gap-1.5">
+                    <button
+                        onclick={exportPdf}
+                        title={$t("typst.export_pdf")}
+                        class="flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors
+                               bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400
+                               hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25
+                               {$zenMode
+                            ? $zenPeek
+                                ? 'opacity-50 transition-opacity duration-200'
+                                : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
+                            : ''}"
+                    >
+                        <Icon icon="ph:file-pdf-bold" width="11" />
+                        {$t("typst.export_pdf")}
+                    </button>
+                    <TypstPreviewSourceSelector />
+                </div>
+            </div>
             <div class="relative flex-1 min-h-0">
                 {#if $typstSvgPages.length > 0}
                     <div
@@ -580,24 +622,6 @@
         </div>
     {/if}
 
-    <!-- Footer — always shown for .typ files -->
-    {#if effectiveTab?.type === "typst" && !sideBySide}
-        <div
-            class="h-10 flex items-center justify-end px-3 border-t border-brand-sand-200 gap-2"
-        >
-            {#if $typstCompileError}
-                <span class="text-xs text-red-500">{$t("typst.compile_error")}</span>
-            {/if}
-            <button
-                onclick={exportPdf}
-                class="{$zenMode
-                    ? 'opacity-25 hover:opacity-100'
-                    : ''} mr-3 cursor-pointer px-3 py-1 text-xs font-semibold rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 transition-colors"
-            >
-                {$t("typst.export_pdf")}
-            </button>
-        </div>
-    {/if}
 </div>
 
 <style>

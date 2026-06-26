@@ -2,8 +2,8 @@ use once_cell::sync::OnceCell;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use typst::diag::{FileError, FileResult};
-use typst::foundations::{Bytes, Datetime};
-use typst::syntax::{FileId, Source, VirtualPath};
+use typst::foundations::{Bytes, Datetime, Duration};
+use typst::syntax::{FileId, RootedPath, Source, VirtualPath, VirtualRoot};
 use typst::text::{Font, FontBook};
 use typst::utils::LazyHash;
 use typst::{Library, LibraryExt};
@@ -45,7 +45,10 @@ impl MinimalWorld {
             }
         }
 
-        let main_id = FileId::new(None, VirtualPath::new("main.typ"));
+        let main_id = FileId::new(RootedPath::new(
+            VirtualRoot::Project,
+            VirtualPath::new("main.typ").expect("valid virtual path"),
+        ));
 
         // Resolve typst's local package cache directory.
         // typst stores packages at: <data_dir>/typst/packages/<namespace>/<name>/<version>/
@@ -82,16 +85,19 @@ impl MinimalWorld {
             .clone()
             .ok_or_else(|| FileError::NotFound(PathBuf::new()))?;
         id.vpath()
-            .resolve(&root)
-            .ok_or_else(|| FileError::NotFound(root))
+            .realize(&root)
+            .map_err(|_| FileError::NotFound(root))
     }
 
     /// Resolve a `FileId` that belongs to a package to an absolute path in the
     /// local typst package cache.
     fn resolve_package_path(&self, id: FileId) -> FileResult<PathBuf> {
-        let pkg = id
-            .package()
-            .ok_or_else(|| FileError::Other(Some("no package spec".into())))?;
+        let pkg = match id.root() {
+            VirtualRoot::Package(pkg) => pkg,
+            VirtualRoot::Project => {
+                return Err(FileError::Other(Some("no package spec".into())))
+            }
+        };
         let root = self
             .packages_root
             .as_ref()
@@ -103,8 +109,8 @@ impl MinimalWorld {
             .join(pkg.version.to_string());
 
         id.vpath()
-            .resolve(&pkg_dir)
-            .ok_or_else(|| FileError::NotFound(pkg_dir))
+            .realize(&pkg_dir)
+            .map_err(|_| FileError::NotFound(pkg_dir))
     }
 }
 
@@ -127,7 +133,7 @@ impl typst::World for MinimalWorld {
             return Ok(Source::new(id, text));
         }
         // Package file (e.g. @preview/ilm:1.4.2)
-        if id.package().is_some() {
+        if matches!(id.root(), VirtualRoot::Package(_)) {
             let path = self.resolve_package_path(id)?;
             let text = std::fs::read_to_string(&path)
                 .map_err(|_| FileError::NotFound(path))?;
@@ -141,7 +147,7 @@ impl typst::World for MinimalWorld {
     }
 
     fn file(&self, id: FileId) -> FileResult<Bytes> {
-        if id.package().is_some() {
+        if matches!(id.root(), VirtualRoot::Package(_)) {
             let path = self.resolve_package_path(id)?;
             let data = std::fs::read(&path)
                 .map_err(|_| FileError::NotFound(path))?;
@@ -158,9 +164,9 @@ impl typst::World for MinimalWorld {
     }
 
     /// Return today's date derived from the system clock.
-    fn today(&self, offset: Option<i64>) -> Option<Datetime> {
+    fn today(&self, offset: Option<Duration>) -> Option<Datetime> {
         use std::time::{SystemTime, UNIX_EPOCH};
-        let offset_secs = offset.unwrap_or(0) * 3600;
+        let offset_secs = offset.map(|d| d.seconds() as i64).unwrap_or(0);
         let unix_secs = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .ok()?
