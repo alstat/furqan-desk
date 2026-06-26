@@ -223,7 +223,15 @@
       "Read(//Applications/Google Chrome.app/Contents/MacOS/**)",
       "Read(//Applications/**)",
       "Bash(pkill -f \"vite dev --port 5199\")",
-      "Bash(pkill -f \"Google Chrome.*9222\")"
+      "Bash(pkill -f \"Google Chrome.*9222\")",
+      "Bash(rustc --version)",
+      "Bash(cargo --version)",
+      "Bash(rustup --version)",
+      "Bash(rustup toolchain *)",
+      "Bash(rustup update *)",
+      "Bash(jobs)",
+      "Bash(rustup show *)",
+      "Bash(echo \"exit=$?\")"
     ]
   }
 }

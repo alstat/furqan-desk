@@ -13,11 +13,12 @@
         zenPeek,
         appDarkMode,
         typstPreviewDarkMode,
+        typstPreviewPath,
     } from "$lib/stores/editor.store";
     import { activeTab } from "$lib/stores/tabs.store";
     import Icon from "@iconify/svelte";
-    import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
     import { t } from "$lib/i18n";
+    import TypstPreviewSourceSelector from "./TypstPreviewSourceSelector.svelte";
 
     // noTopBorder: drop the preview's top border when it sits below another pane
     // (e.g. the third editor in a three-file Typst split), so the seam isn't doubled.
@@ -111,7 +112,7 @@
         try {
             const bytes = await invoke<number[]>("compile_typst_pdf", {
                 source: get(typstSource),
-                path: get(activeTab)?.path ?? null,
+                path: get(typstPreviewPath),
             });
             const path = await save({
                 filters: [{ name: "PDF", extensions: ["pdf"] }],
@@ -149,17 +150,6 @@
                 ? ''
                 : 'border-b border-stone-200 dark:border-[#414559]'} flex items-center justify-between px-4 py-1 shrink-0"
         >
-            <button
-                onclick={exportPdf}
-                class={$zenMode
-                    ? actionBtnStyle +
-                      ($zenPeek
-                          ? " absolute top-1 left-11/12 z-30 opacity-50 transition-opacity duration-200"
-                          : " absolute top-1 left-11/12 z-30 opacity-0 hover:opacity-100 transition-opacity duration-200")
-                    : actionBtnStyle + " absolute top-1 left-11/12 z-30"}
-            >
-                <Icon icon="ph:file-pdf-bold" />
-            </button>
             <span
                 class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
             >
@@ -181,6 +171,24 @@
                     {$t("typst.preview")}
                 {/if}
             </span>
+            <div class="flex items-center gap-1.5">
+                <button
+                    onclick={exportPdf}
+                    title={$t("typst.export_pdf")}
+                    class="flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors
+                           bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400
+                           hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25
+                           {$zenMode
+                        ? $zenPeek
+                            ? 'opacity-50 transition-opacity duration-200'
+                            : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
+                        : ''}"
+                >
+                    <Icon icon="ph:file-pdf-bold" width="11" />
+                    {$t("typst.export_pdf")}
+                </button>
+                <TypstPreviewSourceSelector />
+            </div>
         </div>
 
         <!-- Pages -->
