@@ -62,6 +62,7 @@
     import { invoke } from "@tauri-apps/api/core";
     import {
         gitDiffGutter,
+        gitDiffOverviewRuler,
         setGitBaseline,
     } from "$lib/codemirror/gitDiffGutter";
     import { latexInput } from "$lib/codemirror/latexInput";
@@ -1390,6 +1391,7 @@
                 // Higher precedence than the line-number gutter so the diff
                 // bars render at the very left edge, before the line numbers.
                 Prec.high(gitDiffGutter()),
+                gitDiffOverviewRuler(),
                 ...extraExtensions,
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged && !suppressOnChange) {

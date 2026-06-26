@@ -1,5 +1,5 @@
 import { StateField, StateEffect, type Extension } from '@codemirror/state';
-import { EditorView, gutter, GutterMarker } from '@codemirror/view';
+import { EditorView, gutter, GutterMarker, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
 export const setGitBaseline = StateEffect.define<string | null>();
 
@@ -160,4 +160,101 @@ const diffTheme = EditorView.baseTheme({
 
 export function gitDiffGutter(): Extension {
     return [diffField, diffGutter, diffTheme];
+}
+
+// ── Overview ruler ──────────────────────────────────────────────────────────
+// A full-height strip pinned to the editor's right edge that plots every
+// changed line at its proportional position in the document — like VS Code's
+// overview ruler. It overlays the scrollbar lane purely visually
+// (pointer-events: none) so the real scrollbar keeps working underneath; you
+// see where the edits are and drag the scrollbar straight to them.
+
+const overviewStatusClass: Record<LineStatus, string> = {
+    added: 'cm-gitDiff-overview-added',
+    modified: 'cm-gitDiff-overview-modified',
+    deletedAbove: 'cm-gitDiff-overview-deleted',
+    deletedBelow: 'cm-gitDiff-overview-deleted',
+};
+
+class OverviewRuler {
+    readonly dom: HTMLElement;
+
+    constructor(private readonly view: EditorView) {
+        this.dom = document.createElement('div');
+        this.dom.className = 'cm-gitDiff-overview';
+        view.dom.appendChild(this.dom);
+        this.render();
+    }
+
+    update(update: ViewUpdate) {
+        if (
+            update.docChanged ||
+            update.geometryChanged ||
+            update.viewportChanged ||
+            update.startState.field(diffField, false) !==
+                update.state.field(diffField, false)
+        ) {
+            this.render();
+        }
+    }
+
+    private render() {
+        const state = this.view.state.field(diffField, false);
+        this.dom.replaceChildren();
+        if (!state || state.baseline == null || state.byLine.size === 0) {
+            this.dom.style.display = 'none';
+            return;
+        }
+        this.dom.style.display = '';
+        const contentHeight = this.view.contentHeight;
+        if (contentHeight <= 0) return;
+        const doc = this.view.state.doc;
+        for (const [lineNum, status] of state.byLine) {
+            if (lineNum < 1 || lineNum > doc.lines) continue;
+            const top = this.view.lineBlockAt(doc.line(lineNum).from).top;
+            const mark = document.createElement('div');
+            mark.className = `cm-gitDiff-overview-mark ${overviewStatusClass[status]}`;
+            mark.style.top = `${(top / contentHeight) * 100}%`;
+            this.dom.appendChild(mark);
+        }
+    }
+
+    destroy() {
+        this.dom.remove();
+    }
+}
+
+const overviewPlugin = ViewPlugin.fromClass(OverviewRuler);
+
+const overviewTheme = EditorView.baseTheme({
+    // Sits over the 8px scrollbar lane on the right edge. pointer-events: none
+    // keeps the underlying scrollbar fully draggable — this strip is a visual
+    // map only.
+    '.cm-gitDiff-overview': {
+        position: 'absolute',
+        top: '0',
+        right: '0',
+        width: '8px',
+        height: '100%',
+        zIndex: '5',
+        pointerEvents: 'none',
+    },
+    '.cm-gitDiff-overview-mark': {
+        position: 'absolute',
+        right: '0',
+        width: '100%',
+        height: '3px',
+        minHeight: '2px',
+        borderRadius: '1px',
+        opacity: '0.5',
+    },
+    '.cm-gitDiff-overview-added': { backgroundColor: '#3fb950' },
+    '.cm-gitDiff-overview-modified': { backgroundColor: '#d29922' },
+    '.cm-gitDiff-overview-deleted': { backgroundColor: '#f85149' },
+});
+
+export function gitDiffOverviewRuler(): Extension {
+    // Shares `diffField` with gitDiffGutter(); CodeMirror dedupes the field by
+    // reference, so including it in both extensions is safe.
+    return [diffField, overviewPlugin, overviewTheme];
 }

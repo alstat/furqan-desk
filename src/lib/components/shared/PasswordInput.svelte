@@ -4,11 +4,16 @@
     interface Props {
         value: string;
         class?: string;
+        autofocus?: boolean;
         [key: string]: unknown;
     }
 
-    let { value = $bindable(""), class: className = "", ...rest }: Props =
-        $props();
+    let {
+        value = $bindable(""),
+        class: className = "",
+        autofocus = false,
+        ...rest
+    }: Props = $props();
 
     // Hold-to-reveal: the password is only visible while the peek button is
     // pressed; releasing (or leaving) the button hides it again.
@@ -21,11 +26,19 @@
     function hide() {
         revealed = false;
     }
+
+    // Focus the field on mount when requested. Deferred a frame so it works even
+    // while the host dialog is still running its open transition.
+    function maybeAutofocus(node: HTMLInputElement) {
+        if (!autofocus) return;
+        requestAnimationFrame(() => node.focus());
+    }
 </script>
 
 <div class="relative">
     <input
         {...rest}
+        use:maybeAutofocus
         type={revealed ? "text" : "password"}
         bind:value
         class={className}

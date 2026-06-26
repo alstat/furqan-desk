@@ -241,6 +241,8 @@ pub fn run() {
             commands::get_system_font_families,
             #[cfg(unix)]
             git::git_head_content,
+            #[cfg(unix)]
+            git::git_status,
         ])
         .on_menu_event(|app, event| {
             // Forward File-menu clicks to the frontend, which runs the same
