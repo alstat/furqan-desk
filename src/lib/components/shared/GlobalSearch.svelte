@@ -447,7 +447,7 @@
         </div>
 
         <!-- Results -->
-        <div class="flex-1 min-h-0 overflow-y-auto">
+        <div class="flex-1 min-h-0 overflow-y-auto bg-brand-sand-50 dark:bg-[#232634]">
             {#if !$openFolderPath}
                 <div
                     class="px-3 py-4 text-center text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"

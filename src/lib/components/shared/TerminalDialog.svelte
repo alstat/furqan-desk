@@ -161,7 +161,7 @@
     function termTheme(dark: boolean) {
         if (dark) {
             return {
-                background: "#292c3c",
+                background: "#232634",
                 foreground: "#c6d0f5",
                 cursor: "#e5c890",
                 cursorAccent: "#232634",
@@ -185,7 +185,7 @@
             };
         }
         return {
-            background: "#ffffff",
+            background: "#faf7f2",
             foreground: "#3c3c3c",
             cursor: "#c8a96a",
             cursorAccent: "#fafafa",
@@ -1100,8 +1100,8 @@
 
     <!-- Terminal stack: every container is mounted; only the active one is visible. -->
     <div
-        class="relative flex-1 min-h-0 bg-white dark:bg-[#292c3c]"
-        style:--terminal-bg={$appDarkMode ? "#292c3c" : "#ffffff"}
+        class="relative flex-1 min-h-0 bg-brand-sand-50 dark:bg-[#232634]"
+        style:--terminal-bg={$appDarkMode ? "#232634" : "#faf7f2"}
     >
         {#each tabs as tab (tab.id)}
             <div
