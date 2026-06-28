@@ -175,44 +175,48 @@
                         {$t("typst.preview_source.no_files")}
                     </div>
                 {:else}
-                    {#each pinnableTabs as tab (tab.id)}
-                        {@const isPinned =
-                            $typstPreviewMode === "pinned" &&
-                            tab.path === $typstPinnedPath}
-                        <button
-                            type="button"
-                            role="menuitemradio"
-                            aria-checked={isPinned}
-                            onclick={() => choosePinned(tab.path!)}
-                            class="w-full cursor-pointer flex items-center gap-2 px-3 py-1.5 text-left transition-colors border-b border-stone-50 dark:border-[#363a4f]/50
-                                   {isPinned
-                                ? 'bg-brand-gold-50 dark:bg-[#3b3757]'
-                                : 'hover:bg-brand-sand-50 dark:hover:bg-[#1e2030]'}"
-                        >
-                            <Icon
-                                icon="solar:file-text-bold-duotone"
-                                width="0.85rem"
-                                class="shrink-0 {isPinned
-                                    ? 'text-brand-gold-400 dark:text-[#e5c890]'
-                                    : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
-                            />
-                            <span
-                                class="min-w-0 flex-1 truncate text-[13px] {isPinned
-                                    ? 'font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5]'
-                                    : 'text-brand-charcoal-500 dark:text-[#a5adce]'}"
-                                title={tab.path}
+                    <!-- Cap the pickable file list so a long list scrolls within
+                         the menu instead of stretching it off-screen. -->
+                    <div class="max-h-[30vh] overflow-y-auto default-scroll">
+                        {#each pinnableTabs as tab (tab.id)}
+                            {@const isPinned =
+                                $typstPreviewMode === "pinned" &&
+                                tab.path === $typstPinnedPath}
+                            <button
+                                type="button"
+                                role="menuitemradio"
+                                aria-checked={isPinned}
+                                onclick={() => choosePinned(tab.path!)}
+                                class="w-full cursor-pointer flex items-center gap-2 px-3 py-1.5 text-left transition-colors border-b border-stone-50 dark:border-[#363a4f]/50
+                                       {isPinned
+                                    ? 'bg-brand-gold-50 dark:bg-[#3b3757]'
+                                    : 'hover:bg-brand-sand-50 dark:hover:bg-[#1e2030]'}"
                             >
-                                {tab.name}
-                            </span>
-                            {#if isPinned}
                                 <Icon
-                                    icon="solar:check-circle-bold"
-                                    width="0.9rem"
-                                    class="shrink-0 text-brand-gold-400 dark:text-[#e5c890]"
+                                    icon="solar:file-text-bold-duotone"
+                                    width="0.85rem"
+                                    class="shrink-0 {isPinned
+                                        ? 'text-brand-gold-400 dark:text-[#e5c890]'
+                                        : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
                                 />
-                            {/if}
-                        </button>
-                    {/each}
+                                <span
+                                    class="min-w-0 flex-1 truncate text-[13px] {isPinned
+                                        ? 'font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5]'
+                                        : 'text-brand-charcoal-500 dark:text-[#a5adce]'}"
+                                    title={tab.path}
+                                >
+                                    {tab.name}
+                                </span>
+                                {#if isPinned}
+                                    <Icon
+                                        icon="solar:check-circle-bold"
+                                        width="0.9rem"
+                                        class="shrink-0 text-brand-gold-400 dark:text-[#e5c890]"
+                                    />
+                                {/if}
+                            </button>
+                        {/each}
+                    </div>
                 {/if}
 
                 {#if pinnedMissing}

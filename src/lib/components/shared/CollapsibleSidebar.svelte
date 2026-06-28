@@ -24,6 +24,11 @@
     import UserAccountDialog from "./UserAccountDialog.svelte";
     import AiChatDialog from "./AiChatDialog.svelte";
     import TerminalDialog from "./TerminalDialog.svelte";
+    import ReferencesDialog from "./ReferencesDialog.svelte";
+    import {
+        referencesOpen,
+        referencesAnchorRect,
+    } from "$lib/stores/references.store";
     import Icon from "@iconify/svelte";
     import { donationOpen } from "$lib/stores/tour.store";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
@@ -36,6 +41,7 @@
     let accountOpen = $state(false);
     let terminalOpen = $state(false);
     let tocBtnEl = $state<HTMLButtonElement | null>(null);
+    let referencesBtnEl = $state<HTMLButtonElement | null>(null);
 
     function handleAiClick() {
         if (!$authUser || !$isPro) {
@@ -218,6 +224,25 @@
         </button>
     {/if}
 
+    <!-- References button (below Table of Contents) -->
+    {#if $isSidebar && ($activeTab?.type === "lexical" || $activeTab?.type === "typst")}
+        <button
+            bind:this={referencesBtnEl}
+            class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} ${$activeTab?.type === "typst" ? "top-37" : "top-48"} z-3 ${$referencesOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? "opacity-50 transition-opacity duration-200" : "opacity-0 hover:opacity-100 transition-opacity duration-200") : ""}`}
+            onclick={() => {
+                if (referencesBtnEl)
+                    referencesAnchorRect.set(
+                        referencesBtnEl.getBoundingClientRect(),
+                    );
+                $referencesOpen = !$referencesOpen;
+            }}
+            aria-label={$t("references.button")}
+            title={$t("references.button")}
+        >
+            <Icon icon="solar:bookmark-square-bold-duotone" class="h-4 w-4" />
+        </button>
+    {/if}
+
     <!-- Julia Plot Viewer button -->
     {#if $juliaMode || $juliaViewerOpen}
         <button
@@ -287,6 +312,7 @@
         open={terminalOpen}
         onClose={() => (terminalOpen = false)}
     />
+    <ReferencesDialog />
 
     <div class={$isSidebar ? `flex flex-row w-full` : `hidden`}>
         <!-- Sidebar Content -->

@@ -231,7 +231,8 @@
       "Bash(rustup update *)",
       "Bash(jobs)",
       "Bash(rustup show *)",
-      "Bash(echo \"exit=$?\")"
+      "Bash(echo \"exit=$?\")",
+      "Bash(awk '/<style>/,/<\\\\/style>/' src/lib/components/manuscripts/ManuscriptViewer.svelte)"
     ]
   }
 }
