@@ -217,7 +217,7 @@
                         aria-pressed={activeTab === "file"}
                         class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors
                             {activeTab === 'file'
-                            ? 'bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm'
+                            ? 'bg-white dark:bg-[#51576d] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm'
                             : 'text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]'}"
                     >
                         <Icon icon="solar:folder-open-bold" width="0.75rem" />
@@ -228,7 +228,7 @@
                         aria-pressed={activeTab === "url"}
                         class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors
                             {activeTab === 'url'
-                            ? 'bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm'
+                            ? 'bg-white dark:bg-[#51576d] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm'
                             : 'text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]'}"
                     >
                         <Icon icon="solar:link-bold" width="0.75rem" />

@@ -188,7 +188,7 @@
         </div>
 
         <!-- List -->
-        <div class="flex-1 overflow-y-auto bg-brand-sand-50">
+        <div class="flex-1 overflow-y-auto bg-brand-sand-50 dark:bg-[#232634]">
             {#if $highlights.length === 0}
                 <div
                     class="flex flex-col items-center gap-3 py-16 text-center px-6"

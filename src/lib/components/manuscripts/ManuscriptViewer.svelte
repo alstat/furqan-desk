@@ -164,8 +164,8 @@
         ],
     ]);
 
-    let panelW = $state(660);
-    let panelH = $state(560);
+    let panelW = $state(960);
+    let panelH = $state(760);
     const MIN_W = 380;
     const MIN_H = 300;
 
@@ -818,6 +818,10 @@
         if (typeof window === "undefined") return;
         if (open) {
             if (!initialized) {
+                // Clamp the (larger) default size to the viewport so it always
+                // fits, then centre it.
+                panelW = Math.max(MIN_W, Math.min(panelW, window.innerWidth - 32));
+                panelH = Math.max(MIN_H, Math.min(panelH, window.innerHeight - 32));
                 x = Math.max(0, (window.innerWidth - panelW) / 2);
                 // In demo mode, shift down so the tour tooltip at top-12px has room
                 y = demoMode
@@ -915,7 +919,7 @@
 {#if open}
     <div
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-        class="fixed flex flex-col rounded-3xl shadow-xl dark:shadow-black/40
+        class="fixed flex flex-col rounded-3xl overflow-hidden shadow-xl dark:shadow-black/40
            bg-white dark:bg-[#303446]
            border border-brand-sand-200 dark:border-[#414559]
            {demoMode ? 'z-9998' : ''}"
@@ -1083,7 +1087,7 @@
         {/if}
 
         <!-- Body -->
-        <div class="flex flex-1 min-h-0">
+        <div class="flex flex-1 min-h-0 bg-brand-sand-50 dark:bg-[#232634]">
             <!-- Left rail (collapsible) -->
             <div
                 class="shrink-0 overflow-hidden
@@ -1145,8 +1149,8 @@
                                 }}
                                 class="cursor-pointer w-full text-left px-3 py-2 transition-colors
                                    {isSelected
-                                    ? 'bg-brand-sand-100 dark:bg-[#363a4f]'
-                                    : 'hover:bg-brand-sand-50 dark:hover:bg-[#292c3c]'}"
+                                    ? 'bg-brand-sand-200 dark:bg-[#363a4f]'
+                                    : 'hover:bg-brand-sand-100 dark:hover:bg-[#292c3c]'}"
                             >
                                 <div class="flex items-start gap-1.5">
                                     <span
@@ -1242,6 +1246,7 @@
                     <!-- svelte-ignore a11y_no_static_element_interactions -->
                     <div
                         class="relative flex-1 flex items-center justify-center p-2 min-h-0 overflow-hidden
+                           bg-brand-sand-50 dark:bg-[#232634]
                            {imageSrc && !imageLoading
                             ? imgScale > 1
                                 ? 'cursor-grab'

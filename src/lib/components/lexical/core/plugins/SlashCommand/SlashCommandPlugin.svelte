@@ -44,6 +44,7 @@
         type QuranVerse,
     } from "../Quran/QuranBlockNode";
     import { INSERT_JULIA_CELL_COMMAND } from "../JuliaCell/JuliaCellPlugin.svelte";
+    import { OPEN_CITE_MENU_COMMAND } from "../Cite/CiteMenuPlugin.svelte";
 
     const editor = getEditor();
 
@@ -305,6 +306,12 @@
             description: $t("slash.julia_desc"),
             icon: "devicon-plain:julia",
         },
+        {
+            id: "cite",
+            label: $t("slash.cite_label"),
+            description: $t("slash.cite_desc"),
+            icon: "solar:bookmark-square-bold-duotone",
+        },
         ...ARABIC_SHORTCUTS,
     ]);
 
@@ -417,6 +424,18 @@
 
         if (cmdId === "quran") {
             void insertQuranBlock(capturedKey, capturedOffset, capturedQuery);
+            return;
+        }
+
+        if (cmdId === "cite") {
+            // Hand off to the Cite plugin, which shows the reference/style
+            // picker and replaces the "/cite" token with the chosen citation.
+            editor.dispatchCommand(OPEN_CITE_MENU_COMMAND, {
+                key: capturedKey,
+                offset: capturedOffset,
+                tokenLen: 1 + capturedQuery.length,
+                rect: menuRect,
+            });
             return;
         }
 

@@ -2336,3 +2336,44 @@ pub fn get_system_font_families() -> Result<Vec<String>, String> {
 
     Ok(families.into_iter().collect())
 }
+
+// ── File Explorer: soft delete + copy ──────────────────────────────────────────
+
+/// Soft-delete a file or folder by moving it to the OS Trash / Recycle Bin.
+///
+/// Unlike a permanent `remove`, this is recoverable: the user can restore the
+/// item from their system Trash. Works for both files and directories.
+#[cfg(any(unix, windows))]
+#[tauri::command]
+pub fn move_to_trash(path: String) -> Result<(), String> {
+    trash::delete(&path).map_err(|e| e.to_string())
+}
+
+/// Recursively copy a file or directory from `src` to `dst`.
+///
+/// The Tauri fs plugin's `copyFile` only handles single files; this command
+/// backs the File Explorer's copy/paste so that whole folders can be duplicated.
+/// `dst` is the full destination path (caller resolves name collisions).
+#[tauri::command]
+pub fn copy_path(src: String, dst: String) -> Result<(), String> {
+    let src = std::path::Path::new(&src);
+    let dst = std::path::Path::new(&dst);
+    copy_recursive(src, dst).map_err(|e| e.to_string())
+}
+
+fn copy_recursive(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<()> {
+    if src.is_dir() {
+        std::fs::create_dir_all(dst)?;
+        for entry in std::fs::read_dir(src)? {
+            let entry = entry?;
+            let child_dst = dst.join(entry.file_name());
+            copy_recursive(&entry.path(), &child_dst)?;
+        }
+    } else {
+        if let Some(parent) = dst.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::copy(src, dst)?;
+    }
+    Ok(())
+}

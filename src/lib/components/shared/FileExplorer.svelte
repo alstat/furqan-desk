@@ -1,6 +1,9 @@
 <script lang="ts">
     import { fly } from "svelte/transition";
-    import { open as openDialog } from "@tauri-apps/plugin-dialog";
+    import {
+        open as openDialog,
+        confirm as confirmDialog,
+    } from "@tauri-apps/plugin-dialog";
     import { invoke } from "@tauri-apps/api/core";
     import {
         readDir,
@@ -25,6 +28,9 @@
         syncCleanTabsFromDisk,
         renameFileByPath,
         moveFileByPath,
+        deleteFileByPath,
+        copyPathInto,
+        cutPathInto,
     } from "$lib/stores/tabs.store";
     import MediaViewerDialog from "./MediaViewerDialog.svelte";
     import { surahOrientation } from "$lib/stores/quran.svelte";
@@ -435,11 +441,10 @@
                     isForbidden: false,
                     children: [],
                 });
-            } else if (
-                isFlatFile(entry.name) ||
-                isImageFile(entry.name) ||
-                isPdfFile(entry.name)
-            ) {
+            } else {
+                // Every file is listed so the user sees the full folder
+                // contents. Unsupported types (handled in the template) are
+                // shown grayed out and warn on click rather than opening.
                 files.push({
                     name: entry.name,
                     path: fullPath,
@@ -536,6 +541,13 @@
         mediaViewerOpen = true;
     }
 
+    // Files the app can't render (binaries, archives, office docs, …) are still
+    // listed so the user sees the folder's full contents, but clicking them just
+    // surfaces a warning instead of trying to open them.
+    function warnUnsupported(node: FileTreeNode) {
+        actionError = $t("explorer.cannot_open", { name: node.name });
+    }
+
     // ── Right-click context menu + inline rename ──
     let ctxMenuNode = $state<FileTreeNode | null>(null);
     let ctxMenuPos = $state<{ x: number; y: number } | null>(null);
@@ -580,6 +592,85 @@
 
     function cancelRenameNode() {
         renamingPath = null;
+    }
+
+    // ── Copy / Cut / Paste (VS Code-style) ──
+    // A single in-app clipboard holds the path plus whether it's a copy or a
+    // move. Pasting targets the right-clicked folder (or a file's parent dir),
+    // mirroring VS Code; cut entries clear once pasted.
+    let clipboard = $state<{ path: string; mode: "copy" | "cut" } | null>(null);
+
+    function copyNode(node: FileTreeNode) {
+        closeNodeContextMenu();
+        clipboard = { path: node.path, mode: "copy" };
+    }
+
+    function cutNode(node: FileTreeNode) {
+        closeNodeContextMenu();
+        clipboard = { path: node.path, mode: "cut" };
+    }
+
+    // Where a paste lands: into a folder itself, or into a file's parent dir.
+    function pasteTargetDir(node: FileTreeNode | null): string {
+        const root = $openFolderPath ?? "";
+        if (!node) return root;
+        return node.isDirectory ? node.path : dirOf(node.path);
+    }
+
+    async function pasteIntoNode(node: FileTreeNode | null) {
+        const clip = clipboard;
+        closeNodeContextMenu();
+        if (!clip) return;
+        const destDir = pasteTargetDir(node);
+        // Reject pasting a folder into itself or one of its own descendants.
+        if (
+            clip.mode === "cut" &&
+            (destDir === clip.path || destDir.startsWith(`${clip.path}/`))
+        ) {
+            actionError = "Cannot move a folder into itself";
+            return;
+        }
+        actionError = "";
+        try {
+            // Make sure a folder target is expanded so the result is visible.
+            if (node?.isDirectory) await ensureExpanded(node);
+            if (clip.mode === "copy") {
+                await copyPathInto(clip.path, destDir);
+            } else {
+                await cutPathInto(clip.path, destDir);
+                clipboard = null; // a cut item moves only once
+            }
+        } catch (e) {
+            actionError = String(e);
+        }
+    }
+
+    // ── Soft delete (move to Trash / Recycle Bin) with confirmation ──
+    // Uses the OS-native confirmation dialog so the warning matches the
+    // platform's look and feel, emphasising that the item goes to the Trash.
+    async function requestDeleteNode(node: FileTreeNode) {
+        closeNodeContextMenu();
+        const message = $t(
+            node.isDirectory
+                ? "explorer.delete_confirm_folder"
+                : "explorer.delete_confirm_file",
+            { name: node.name },
+        );
+        const confirmed = await confirmDialog(message, {
+            title: $t("explorer.delete_confirm_title"),
+            kind: "warning",
+            okLabel: $t("explorer.delete_confirm"),
+            cancelLabel: $t("explorer.delete_cancel"),
+        });
+        if (!confirmed) return;
+        actionError = "";
+        try {
+            await deleteFileByPath(node.path);
+            // Drop the deleted item from the clipboard if it was queued.
+            if (clipboard?.path === node.path) clipboard = null;
+        } catch (e) {
+            actionError = String(e);
+        }
     }
 
     // Autofocus the rename input and preselect the name (sans extension).
@@ -1091,7 +1182,7 @@
         <!-- Tree body -->
         <div
             data-tree-body="true"
-            class="flex-1 min-h-0 overflow-y-auto py-1 px-1 rounded-b-3xl {draggingPath &&
+            class="flex-1 min-h-0 overflow-y-auto py-1 px-1 rounded-b-3xl bg-brand-sand-50 dark:bg-[#232634] {draggingPath &&
             dragOverDir === $openFolderPath
                 ? 'ring-2 ring-inset ring-brand-gold-400 bg-brand-gold-50/40 dark:bg-[#363a4f]/40'
                 : ''}"
@@ -1177,6 +1268,38 @@
         >
             <Icon icon="solar:pen-bold-duotone" width="0.85rem" class="shrink-0" />
             {$t("explorer.rename")}
+        </button>
+        <div class="my-1 border-t border-brand-sand-200 dark:border-[#414559]"></div>
+        <button
+            onclick={() => ctxMenuNode && copyNode(ctxMenuNode)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+        >
+            <Icon icon="solar:copy-bold-duotone" width="0.85rem" class="shrink-0" />
+            {$t("explorer.copy")}
+        </button>
+        <button
+            onclick={() => ctxMenuNode && cutNode(ctxMenuNode)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+        >
+            <Icon icon="solar:scissors-bold-duotone" width="0.85rem" class="shrink-0" />
+            {$t("explorer.cut")}
+        </button>
+        {#if clipboard}
+            <button
+                onclick={() => pasteIntoNode(ctxMenuNode)}
+                class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+            >
+                <Icon icon="solar:clipboard-add-bold-duotone" width="0.85rem" class="shrink-0" />
+                {$t("explorer.paste")}
+            </button>
+        {/if}
+        <div class="my-1 border-t border-brand-sand-200 dark:border-[#414559]"></div>
+        <button
+            onclick={() => ctxMenuNode && requestDeleteNode(ctxMenuNode)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-300"
+        >
+            <Icon icon="solar:trash-bin-trash-bold-duotone" width="0.85rem" class="shrink-0" />
+            {$t("explorer.delete")}
         </button>
     </div>
 {/if}
@@ -1363,6 +1486,31 @@
             >
                 <Icon
                     icon="solar:file-text-bold-duotone"
+                    width="0.8rem"
+                    class="shrink-0 text-brand-charcoal-300 dark:text-[#626880]"
+                />
+                {@render nodeName(node, fileStatusClass(node.path))}
+            </button>
+        {:else}
+            <button
+                data-node-path={node.path}
+                data-node-is-dir="false"
+                onpointerdown={(e) => onNodePointerDown(e, node)}
+                onclick={() => {
+                    if (_dragJustCompleted) return;
+                    warnUnsupported(node);
+                }}
+                oncontextmenu={(e) => openNodeContextMenu(e, node)}
+                class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[13px]
+					       text-brand-charcoal-400 dark:text-[#838ba7] opacity-70
+					       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
+					       rounded-full transition-colors font-mono text-left {draggingPath === node.path ? 'opacity-40' : ''} {dragOverDir === node.path ? 'ring-2 ring-inset ring-brand-gold-400 bg-brand-gold-50 dark:bg-[#363a4f]' : ''}"
+                style="padding-left: {0.5 +
+                    depth * 0.75}rem; padding-right: 0.5rem"
+                title={$t("explorer.unsupported_hint")}
+            >
+                <Icon
+                    icon="solar:file-bold-duotone"
                     width="0.8rem"
                     class="shrink-0 text-brand-charcoal-300 dark:text-[#626880]"
                 />

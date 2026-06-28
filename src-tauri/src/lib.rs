@@ -6,6 +6,7 @@ mod git;
 mod julia;
 #[cfg(any(unix, windows))]
 mod pty;
+mod references;
 mod terminal;
 mod typst_world;
 
@@ -204,6 +205,7 @@ pub fn run() {
             commands::get_surah_word_by_word,
             commands::get_tafsir_authors,
             commands::get_surah_tafsir,
+            references::fetch_reference,
             julia::check_julia,
             julia::get_julia_path,
             julia::set_julia_path,
@@ -239,6 +241,9 @@ pub fn run() {
             commands::clear_manuscript_cache,
             commands::get_manuscript_demo_image,
             commands::get_system_font_families,
+            commands::copy_path,
+            #[cfg(any(unix, windows))]
+            commands::move_to_trash,
             #[cfg(any(unix, windows))]
             git::git_head_content,
             #[cfg(any(unix, windows))]

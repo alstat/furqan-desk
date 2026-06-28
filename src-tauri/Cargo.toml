@@ -41,6 +41,7 @@ dirs      = "5"
 reqwest   = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
 flate2    = "1"
 tar       = "0.4"
+quick-xml = "0.36"
 tokio     = { version = "1", features = ["process", "io-util", "sync", "rt", "macros", "time", "fs"] }
 fontdb    = "0.23"
 # portable-pty supports Unix (forkpty) and Windows (ConPTY); keep it cross-platform
@@ -61,6 +62,9 @@ libc = "0.2"
 # Windows); vendored libgit2 keeps the build self-contained on every OS.
 [target.'cfg(any(unix, windows))'.dependencies]
 git2      = { version = "0.19", default-features = false, features = ["vendored-libgit2"] }
+# `trash` powers the File Explorer's soft-delete: it moves files/folders to the
+# OS Trash / Recycle Bin (recoverable) instead of permanently removing them.
+trash     = "5"
 
 [target.'cfg(target_os = "android")'.dependencies]
 ndk         = "0.9"

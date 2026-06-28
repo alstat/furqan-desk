@@ -1,5 +1,6 @@
 import { writable, derived, get } from 'svelte/store';
-import { rename } from '@tauri-apps/plugin-fs';
+import { rename, exists } from '@tauri-apps/plugin-fs';
+import { invoke } from '@tauri-apps/api/core';
 import { lexicalToTypst } from '$lib/functions/utils/typstConverters';
 
 export type TabType = 'typst' | 'lexical' | 'text' | 'julia';
@@ -330,6 +331,90 @@ export async function moveFileByPath(oldPath: string, destDir: string): Promise<
 	);
 	const folder = get(openFolderPath);
 	if (folder) folderRefreshTrigger.update(n => n + 1);
+}
+
+/**
+ * Compute a collision-free destination path inside `destDir` for an item named
+ * `name`, VS Code-style: the first clash becomes "name copy", then "name copy 2",
+ * etc. The " copy" suffix is inserted before the extension for files.
+ */
+async function uniqueDestPath(destDir: string, name: string): Promise<string> {
+	const dir = destDir.replace(/\\/g, '/').replace(/\/+$/, '');
+	const dot = name.lastIndexOf('.');
+	const hasExt = dot > 0;
+	const base = hasExt ? name.slice(0, dot) : name;
+	const ext = hasExt ? name.slice(dot) : '';
+
+	let candidate = name;
+	let attempt = 0;
+	// First try the original name; then "base copy", "base copy 2", …
+	while (await exists(`${dir}/${candidate}`)) {
+		attempt += 1;
+		const suffix = attempt === 1 ? ' copy' : ` copy ${attempt}`;
+		candidate = `${base}${suffix}${ext}`;
+	}
+	return `${dir}/${candidate}`;
+}
+
+/**
+ * Soft-delete a file or folder by moving it to the OS Trash / Recycle Bin
+ * (recoverable). Any open tabs backed by the deleted path — or living inside a
+ * deleted folder — are closed, then the explorer tree is refreshed.
+ */
+export async function deleteFileByPath(path: string): Promise<void> {
+	await invoke('move_to_trash', { path });
+
+	const normalized = path.replace(/\\/g, '/');
+	const affected = get(tabs).filter(t => {
+		if (!t.path) return false;
+		const p = t.path.replace(/\\/g, '/');
+		return p === normalized || p.startsWith(`${normalized}/`);
+	});
+	for (const t of affected) closeTab(t.id);
+
+	const folder = get(openFolderPath);
+	if (folder) folderRefreshTrigger.update(n => n + 1);
+}
+
+/**
+ * Copy a file or folder into `destDir`, resolving name collisions the VS Code
+ * way (" copy" suffix). Backed by the recursive `copy_path` Rust command so
+ * whole folders are duplicated. Returns the resolved destination path.
+ */
+export async function copyPathInto(srcPath: string, destDir: string): Promise<string> {
+	const name = srcPath.replace(/\\/g, '/').split('/').pop()!;
+	const dst = await uniqueDestPath(destDir, name);
+	await invoke('copy_path', { src: srcPath, dst });
+	const folder = get(openFolderPath);
+	if (folder) folderRefreshTrigger.update(n => n + 1);
+	return dst;
+}
+
+/**
+ * Move (cut/paste) a file or folder into `destDir`, resolving name collisions
+ * the VS Code way. Open tabs for the moved item — and files inside a moved
+ * folder — follow it to the new path. Returns the resolved destination path.
+ */
+export async function cutPathInto(srcPath: string, destDir: string): Promise<string> {
+	const normalizedOld = srcPath.replace(/\\/g, '/');
+	const name = normalizedOld.split('/').pop()!;
+	const newPath = await uniqueDestPath(destDir, name);
+	if (newPath === normalizedOld) return newPath;
+	await rename(srcPath, newPath);
+	tabs.update(ts =>
+		ts.map(t => {
+			if (!t.path) return t;
+			const p = t.path.replace(/\\/g, '/');
+			if (p === normalizedOld) return { ...t, path: newPath };
+			if (p.startsWith(`${normalizedOld}/`)) {
+				return { ...t, path: newPath + p.slice(normalizedOld.length) };
+			}
+			return t;
+		})
+	);
+	const folder = get(openFolderPath);
+	if (folder) folderRefreshTrigger.update(n => n + 1);
+	return newPath;
 }
 
 /** Rename a tab — renames the backing file when saved, otherwise just the label. */

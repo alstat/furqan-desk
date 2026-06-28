@@ -60,6 +60,7 @@
 
     import CaptionEditorHistoryPlugin from "$lexical/core/plugins/Image/CaptionEditorHistoryPlugin.svelte";
     import SlashCommandPlugin from "$lexical/core/plugins/SlashCommand/SlashCommandPlugin.svelte";
+    import CiteMenuPlugin from "$lexical/core/plugins/Cite/CiteMenuPlugin.svelte";
     import EditorStorePlugin from "./EditorStorePlugin.svelte";
     import { createEmptyHistoryState } from "@lexical/history";
     import {
@@ -321,6 +322,7 @@
             <MarkdownShortcutPlugin transformers={ALL_TRANSFORMERS} />
             <MarkdownPastePlugin transformers={ALL_TRANSFORMERS} />
             <SlashCommandPlugin />
+            <CiteMenuPlugin />
             <QuranBlockPlugin />
             <JuliaCellPlugin />
             <EditorStorePlugin />
