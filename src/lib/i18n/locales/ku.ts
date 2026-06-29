@@ -198,6 +198,8 @@ export const ku: Record<string, string> = {
   "toolbar.indent": "ئیندێنت",
   "toolbar.outdent": "دەرچوون",
   "toolbar.insert_link": "بەستەرەکە دابنێ",
+  "link.placeholder": "لینکێک بلکێنە یان بنووسە…",
+  "link.save": "پاشەکەوتکردنی لینک",
   "toolbar.font_color": "ڕەنگی فۆنت",
   "toolbar.left_align": "چەپ ڕێکخستن",
   "toolbar.center_align": "ڕێکخستنی ناوەند",

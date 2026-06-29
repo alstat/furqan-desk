@@ -198,6 +198,8 @@ export const sq: Record<string, string> = {
   "toolbar.indent": "Zhvillimi",
   "toolbar.outdent": "I jashtëm",
   "toolbar.insert_link": "Fut lidhjen",
+  "link.placeholder": "Ngjit ose shkruaj një lidhje…",
+  "link.save": "Ruaj lidhjen",
   "toolbar.font_color": "Ngjyra e shkronjave",
   "toolbar.left_align": "Rreshtimi majtas",
   "toolbar.center_align": "Rreshtimi në qendër",

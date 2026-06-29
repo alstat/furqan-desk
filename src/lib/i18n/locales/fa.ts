@@ -261,6 +261,8 @@ export const fa: Record<string, string> = {
     'toolbar.indent': 'تورفتگی',
     'toolbar.outdent': 'بیرون‌رفتگی',
     'toolbar.insert_link': 'درج پیوند',
+    'link.placeholder': 'پیوند را بچسبانید یا تایپ کنید…',
+    'link.save': 'ذخیره پیوند',
     'toolbar.font_color': 'رنگ قلم',
     'toolbar.left_align': 'چین به چپ',
     'toolbar.center_align': 'وسط‌چین',

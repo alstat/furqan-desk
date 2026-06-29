@@ -261,6 +261,8 @@ export const fr: Record<string, string> = {
     'toolbar.indent': 'Augmenter le retrait',
     'toolbar.outdent': 'Diminuer le retrait',
     'toolbar.insert_link': 'Insérer un lien',
+    'link.placeholder': 'Collez ou saisissez un lien…',
+    'link.save': 'Enregistrer le lien',
     'toolbar.font_color': 'Couleur de police',
     'toolbar.left_align': 'Aligner à gauche',
     'toolbar.center_align': 'Centrer',

@@ -263,6 +263,8 @@ export const th: Record<string, string> = {
   "toolbar.indent": "เยื้อง",
   "toolbar.outdent": "ลดการเยื้อง",
   "toolbar.insert_link": "แทรกลิงก์",
+  "link.placeholder": "วางหรือพิมพ์ลิงก์…",
+  "link.save": "บันทึกลิงก์",
   "toolbar.font_color": "สีแบบอักษร",
   "toolbar.left_align": "จัดชิดซ้าย",
   "toolbar.center_align": "จัดกึ่งกลาง",

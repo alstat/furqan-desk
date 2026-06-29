@@ -9,6 +9,7 @@
 	import StrikethroughButton from '../toolbar/StrikethroughButton.svelte';
 	import FormatCodeButton from '../toolbar/FormatCodeButton.svelte';
 	import DropDownScript from '../toolbar/DropDownScript.svelte';
+	import LinkButton from '../toolbar/LinkButton.svelte';
 	import DropDownAlign from '../toolbar/DropDownAlign.svelte';
 	import InsertDropDown from '../toolbar/InsertDropDown/InsertDropDown.svelte';
 	import FontFamilyDropDown from '../toolbar/FontFamilyDropDown.svelte';
@@ -74,6 +75,7 @@
 		<StrikethroughButton />
 		<FormatCodeButton />
 		<DropDownScript />
+		<LinkButton />
 		<FontColorButton />
 		<Divider />
 		<InsertDropDown>

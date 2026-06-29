@@ -263,6 +263,8 @@ export const ky: Record<string, string> = {
   "toolbar.indent": "Чегинүүнү көбөйтүү",
   "toolbar.outdent": "Чегинүүнү азайтуу",
   "toolbar.insert_link": "Шилтеме кошуу",
+  "link.placeholder": "Шилтемени коюңуз же териңиз…",
+  "link.save": "Шилтемени сактоо",
   "toolbar.font_color": "Шрифт түсү",
   "toolbar.left_align": "Солго туураоо",
   "toolbar.center_align": "Ортого туурап коюу",

@@ -263,6 +263,8 @@ export const vi: Record<string, string> = {
   "toolbar.indent": "Thụt lề",
   "toolbar.outdent": "Bỏ thụt lề",
   "toolbar.insert_link": "Chèn liên kết",
+  "link.placeholder": "Dán hoặc nhập liên kết…",
+  "link.save": "Lưu liên kết",
   "toolbar.font_color": "Màu chữ",
   "toolbar.left_align": "Căn trái",
   "toolbar.center_align": "Căn giữa",

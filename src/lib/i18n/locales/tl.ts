@@ -271,6 +271,8 @@ export const tl: Record<string, string> = {
   "toolbar.indent": "Mag-indent",
   "toolbar.outdent": "Mag-outdent",
   "toolbar.insert_link": "Maglagay ng link",
+  "link.placeholder": "I-paste o i-type ang link…",
+  "link.save": "I-save ang link",
   "toolbar.font_color": "Kulay ng font",
   "toolbar.left_align": "Ikabit sa Kaliwa",
   "toolbar.center_align": "Ikabit sa Gitna",

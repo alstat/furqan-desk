@@ -263,6 +263,8 @@ export const tg: Record<string, string> = {
   "toolbar.indent": "Зиёд кардани фосила",
   "toolbar.outdent": "Кам кардани фосила",
   "toolbar.insert_link": "Илова кардани пайванд",
+  "link.placeholder": "Пайвандро гузоред ё нависед…",
+  "link.save": "Захираи пайванд",
   "toolbar.font_color": "Ранги хат",
   "toolbar.left_align": "Ба чап рост кардан",
   "toolbar.center_align": "Дар марказ рост кардан",

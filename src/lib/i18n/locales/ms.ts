@@ -268,6 +268,8 @@ export const ms: Record<string, string> = {
   "toolbar.indent": "Inden",
   "toolbar.outdent": "Nyahinden",
   "toolbar.insert_link": "Masukkan pautan",
+  "link.placeholder": "Tampal atau taip pautan…",
+  "link.save": "Simpan pautan",
   "toolbar.font_color": "Warna fon",
   "toolbar.left_align": "Jajar Kiri",
   "toolbar.center_align": "Jajar Tengah",

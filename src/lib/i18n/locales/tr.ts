@@ -261,6 +261,8 @@ export const tr: Record<string, string> = {
     'toolbar.indent': 'Girintile',
     'toolbar.outdent': 'Girintiyi Kaldır',
     'toolbar.insert_link': 'Bağlantı ekle',
+    'link.placeholder': 'Bir bağlantı yapıştırın veya yazın…',
+    'link.save': 'Bağlantıyı kaydet',
     'toolbar.font_color': 'Yazı tipi rengi',
     'toolbar.left_align': 'Sola Hizala',
     'toolbar.center_align': 'Ortaya Hizala',

@@ -198,6 +198,8 @@ export const sr: Record<string, string> = {
   "toolbar.indent": "Индент",
   "toolbar.outdent": "Оутдент",
   "toolbar.insert_link": "Уметните везу",
+  "link.placeholder": "Налепите или унесите везу…",
+  "link.save": "Сачувај везу",
   "toolbar.font_color": "Боја фонта",
   "toolbar.left_align": "Лево поравнање",
   "toolbar.center_align": "Центер Алигн",

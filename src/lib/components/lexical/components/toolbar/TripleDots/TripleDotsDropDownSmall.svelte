@@ -30,6 +30,19 @@
     import { INSERT_HORIZONTAL_RULE_COMMAND } from "$lexical/core/plugins/HorizontalRuleNode.js";
     import { $patchBlockLineHeight as patchBlockLineHeight } from "$lexical/core/blockStyle";
     import { t } from "$lib/i18n";
+    import { $isDecoratorBlockNode as isDecoratorBlockNode } from "$lexical/core/plugins/DecoratorBlockNode.js";
+    import {
+        $isQuoteNode as isQuoteNode,
+        $isHeadingNode as isHeadingNode,
+    } from "@lexical/rich-text";
+    import { $isTableSelection as isTableSelection } from "@lexical/table";
+    import { $getNearestBlockElementAncestorOrThrow as getNearestBlockElementAncestorOrThrow } from "@lexical/utils";
+    import {
+        $isTextNode as isTextNode,
+        $getSelection as getSelection,
+        $isRangeSelection as isRangeSelection,
+        $createParagraphNode as createParagraphNode,
+    } from "lexical";
 
     let {
         windowWidth,
@@ -120,6 +133,54 @@
         });
     }
 
+    // Strip inline styles/formats from the selection and demote heading/quote
+    // blocks back to paragraphs. Ported from ClearFormattingDropDownItem.svelte.
+    function clearFormatting() {
+        $activeEditor.update(() => {
+            const selection = getSelection();
+            if (isRangeSelection(selection) || isTableSelection(selection)) {
+                const anchor = selection.anchor;
+                const focus = selection.focus;
+                const nodes = selection.getNodes();
+                const extractedNodes = selection.extract();
+
+                if (anchor.key === focus.key && anchor.offset === focus.offset) {
+                    return;
+                }
+
+                nodes.forEach((node, idx) => {
+                    if (isTextNode(node)) {
+                        let textNode = node;
+                        if (idx === 0 && anchor.offset !== 0) {
+                            textNode = textNode.splitText(anchor.offset)[1] || textNode;
+                        }
+                        if (idx === nodes.length - 1) {
+                            textNode = textNode.splitText(focus.offset)[0] || textNode;
+                        }
+                        const extractedTextNode = extractedNodes[0];
+                        if (nodes.length === 1 && isTextNode(extractedTextNode)) {
+                            textNode = extractedTextNode;
+                        }
+
+                        if (textNode.__style !== "") {
+                            textNode.setStyle("");
+                        }
+                        if (textNode.__format !== 0) {
+                            textNode.setFormat(0);
+                            getNearestBlockElementAncestorOrThrow(textNode).setFormat("");
+                        }
+                        node = textNode;
+                    } else if (isHeadingNode(node) || isQuoteNode(node)) {
+                        node.replace(createParagraphNode(), true);
+                    } else if (isDecoratorBlockNode(node)) {
+                        node.setFormat("");
+                    }
+                });
+            }
+        });
+        isOpen = false;
+    }
+
     onMount(() => {
         // Only add event listeners in the browser environment
         if (typeof window !== "undefined") {
@@ -165,6 +226,15 @@
                 <span class="text-[10px]">{spacing.value}×</span>
             </button>
         {/each}
+        <Divider />
+        <button
+            class={"p-1 flex items-center " + toolBarBtnStyle}
+            onclick={clearFormatting}
+            title={$t("toolbar.clear_formatting")}
+            aria-label={$t("toolbar.clear_formatting")}
+        >
+            <Icon icon={icons["clearFormat"]} height="1rem" />
+        </button>
     </div>
 {:else}
     <div class="relative" bind:this={dropdownRef}>
@@ -248,6 +318,23 @@
                                     {/each}
                                 </div>
                             </div>
+                            <div
+                                class="my-1 h-px bg-linear-to-r from-transparent via-brand-sand-200 to-transparent dark:via-[#414559]"
+                            ></div>
+                            <button
+                                class="cursor-pointer w-full px-2 py-1 text-left text-xs text-brand-charcoal-500 rounded-full hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 active:bg-brand-sand-100"
+                                onclick={clearFormatting}
+                            >
+                                <div class="flex w-32 flex-row items-center">
+                                    <div class="pr-2">
+                                        <Icon
+                                            icon={icons["clearFormat"]}
+                                            width="1rem"
+                                        />
+                                    </div>
+                                    <div>{$t("toolbar.clear_formatting")}</div>
+                                </div>
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -263,6 +263,8 @@ export const uz: Record<string, string> = {
   "toolbar.indent": "Chekinishni oshirish",
   "toolbar.outdent": "Chekinishni kamaytirish",
   "toolbar.insert_link": "Havola qo'shish",
+  "link.placeholder": "Havolani joylashtiring yoki yozing…",
+  "link.save": "Havolani saqlash",
   "toolbar.font_color": "Shrift rangi",
   "toolbar.left_align": "Chapga tekislash",
   "toolbar.center_align": "Markazga tekislash",

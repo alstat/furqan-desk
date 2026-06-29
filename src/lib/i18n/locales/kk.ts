@@ -263,6 +263,8 @@ export const kk: Record<string, string> = {
   "toolbar.indent": "Шегіністі ұлғайту",
   "toolbar.outdent": "Шегіністі азайту",
   "toolbar.insert_link": "Сілтеме кірістіру",
+  "link.placeholder": "Сілтемені қойыңыз немесе теріңіз…",
+  "link.save": "Сілтемені сақтау",
   "toolbar.font_color": "Қаріп түсі",
   "toolbar.left_align": "Солға туралау",
   "toolbar.center_align": "Ортаға туралау",

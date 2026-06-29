@@ -198,6 +198,8 @@ export const sw: Record<string, string> = {
   "toolbar.indent": "Pendekeza ndani",
   "toolbar.outdent": "Nje",
   "toolbar.insert_link": "Weka kiungo",
+  "link.placeholder": "Bandika au andika kiungo…",
+  "link.save": "Hifadhi kiungo",
   "toolbar.font_color": "Rangi ya herufi",
   "toolbar.left_align": "Pangilia Kushoto",
   "toolbar.center_align": "Pangilia Katikati",

@@ -198,6 +198,8 @@ export const pa: Record<string, string> = {
   "toolbar.indent": "ਇੰਡੈਂਟ",
   "toolbar.outdent": "ਆਊਟਡੈਂਟ",
   "toolbar.insert_link": "ਲਿੰਕ ਸ਼ਾਮਲ ਕਰੋ",
+  "link.placeholder": "ਲਿੰਕ ਪੇਸਟ ਕਰੋ ਜਾਂ ਟਾਈਪ ਕਰੋ…",
+  "link.save": "ਲਿੰਕ ਸੰਭਾਲੋ",
   "toolbar.font_color": "ਫੌਂਟ ਦਾ ਰੰਗ",
   "toolbar.left_align": "ਖੱਬੇ ਇਕਸਾਰ",
   "toolbar.center_align": "ਕੇਂਦਰ ਇਕਸਾਰ",

@@ -304,6 +304,8 @@ export const en: Record<string, string> = {
   "toolbar.indent": "Indent",
   "toolbar.outdent": "Outdent",
   "toolbar.insert_link": "Insert link",
+  "link.placeholder": "Paste or type a link…",
+  "link.save": "Save link",
   "toolbar.font_color": "Font color",
   "toolbar.left_align": "Left Align",
   "toolbar.center_align": "Center Align",

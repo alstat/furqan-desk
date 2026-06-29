@@ -261,6 +261,8 @@ export const zh: Record<string, string> = {
     'toolbar.indent': '增加缩进',
     'toolbar.outdent': '减少缩进',
     'toolbar.insert_link': '插入链接',
+    'link.placeholder': '粘贴或输入链接…',
+    'link.save': '保存链接',
     'toolbar.font_color': '字体颜色',
     'toolbar.left_align': '左对齐',
     'toolbar.center_align': '居中对齐',

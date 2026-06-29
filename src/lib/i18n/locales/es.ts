@@ -270,6 +270,8 @@ export const es: Record<string, string> = {
   "toolbar.indent": "Aumentar sangría",
   "toolbar.outdent": "Reducir sangría",
   "toolbar.insert_link": "Insertar enlace",
+  "link.placeholder": "Pega o escribe un enlace…",
+  "link.save": "Guardar enlace",
   "toolbar.font_color": "Color de fuente",
   "toolbar.left_align": "Alinear a la izquierda",
   "toolbar.center_align": "Centrar",
