@@ -18,6 +18,8 @@ export let icons = {
   strikethrough: "fluent:text-strikethrough-16-filled",
   superscript: "fluent:text-superscript-16-filled",
   subscript: "fluent:text-subscript-16-filled",
+  link: "fluent:link-16-filled",
+  clearFormat: "material-symbols:format-clear",
   // alignment
   left: "icon-park-outline:align-text-left",
   center: "icon-park-outline:align-text-center",

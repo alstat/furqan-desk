@@ -263,6 +263,8 @@ export const tk: Record<string, string> = {
   "toolbar.indent": "Çekilişi artdyrmak",
   "toolbar.outdent": "Çekilişi azaltmak",
   "toolbar.insert_link": "Baglanyşyk goşmak",
+  "link.placeholder": "Baglanyşygy goýuň ýa-da ýazyň…",
+  "link.save": "Baglanyşygy ýatda sakla",
   "toolbar.font_color": "Şrift reňki",
   "toolbar.left_align": "Çepe hatar düzmek",
   "toolbar.center_align": "Merkeze hatar düzmek",

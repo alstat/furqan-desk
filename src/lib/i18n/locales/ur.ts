@@ -261,6 +261,8 @@ export const ur: Record<string, string> = {
     'toolbar.indent': 'اندر کریں',
     'toolbar.outdent': 'باہر کریں',
     'toolbar.insert_link': 'لنک شامل کریں',
+    'link.placeholder': 'لنک پیسٹ کریں یا ٹائپ کریں…',
+    'link.save': 'لنک محفوظ کریں',
     'toolbar.font_color': 'فونٹ رنگ',
     'toolbar.left_align': 'بائیں سیدھ',
     'toolbar.center_align': 'درمیان سیدھ',

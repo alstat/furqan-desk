@@ -269,6 +269,8 @@ export const pt: Record<string, string> = {
   "toolbar.indent": "Recuar",
   "toolbar.outdent": "Diminuir Recuo",
   "toolbar.insert_link": "Inserir link",
+  "link.placeholder": "Cole ou digite um link…",
+  "link.save": "Salvar link",
   "toolbar.font_color": "Cor da fonte",
   "toolbar.left_align": "Alinhar à Esquerda",
   "toolbar.center_align": "Centralizar",

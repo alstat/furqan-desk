@@ -261,6 +261,8 @@ export const id: Record<string, string> = {
     'toolbar.indent': 'Indentasi',
     'toolbar.outdent': 'Hapus Indentasi',
     'toolbar.insert_link': 'Sisipkan tautan',
+    'link.placeholder': 'Tempel atau ketik tautan…',
+    'link.save': 'Simpan tautan',
     'toolbar.font_color': 'Warna font',
     'toolbar.left_align': 'Rata Kiri',
     'toolbar.center_align': 'Rata Tengah',

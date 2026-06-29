@@ -198,6 +198,8 @@ export const ta: Record<string, string> = {
   "toolbar.indent": "இன்டென்ட்",
   "toolbar.outdent": "வெளிப்புறம்",
   "toolbar.insert_link": "இணைப்பைச் செருகவும்",
+  "link.placeholder": "இணைப்பை ஒட்டவும் அல்லது தட்டச்சு செய்யவும்…",
+  "link.save": "இணைப்பைச் சேமி",
   "toolbar.font_color": "எழுத்துரு நிறம்",
   "toolbar.left_align": "இடது சீரமை",
   "toolbar.center_align": "மைய சீரமை",

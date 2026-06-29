@@ -269,6 +269,8 @@ export const de: Record<string, string> = {
   "toolbar.indent": "Einrücken",
   "toolbar.outdent": "Ausrücken",
   "toolbar.insert_link": "Link einfügen",
+  "link.placeholder": "Link einfügen oder eingeben…",
+  "link.save": "Link speichern",
   "toolbar.font_color": "Schriftfarbe",
   "toolbar.left_align": "Linksbündig",
   "toolbar.center_align": "Zentriert",

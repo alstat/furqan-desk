@@ -61,6 +61,8 @@
     import { ParagraphNode } from "lexical";
     import { ExtendedParagraphNode } from "$lexical/core/ExtendedParagraphNode";
     import CaptionEditorHistoryPlugin from "$lexical/core/plugins/Image/CaptionEditorHistoryPlugin.svelte";
+    import LinkPlugin from "$lexical/core/plugins/link/LinkPlugin.svelte";
+    import FloatingLinkEditorPlugin from "$lexical/core/plugins/link/FloatingLinkEditorPlugin.svelte";
     import SlashCommandPlugin from "$lexical/core/plugins/SlashCommand/SlashCommandPlugin.svelte";
     import CiteMenuPlugin from "$lexical/core/plugins/Cite/CiteMenuPlugin.svelte";
     import EditorStorePlugin from "./EditorStorePlugin.svelte";
@@ -326,11 +328,13 @@
             <CodePlugin />
             <TablePlugin />
             <TableCellResizerPlugin />
+            <LinkPlugin />
             {#if editorShell}
                 <TableActionMenuPlugin
                     anchorElem={editorShell}
                     cellMerge={true}
                 />
+                <FloatingLinkEditorPlugin anchorElem={editorShell} />
             {/if}
             <MarkdownShortcutPlugin transformers={ALL_TRANSFORMERS} />
             <MarkdownPastePlugin transformers={ALL_TRANSFORMERS} />

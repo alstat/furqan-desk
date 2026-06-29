@@ -261,6 +261,8 @@ export const ar: Record<string, string> = {
     'toolbar.indent': 'ازاحة للداخل',
     'toolbar.outdent': 'ازاحة للخارج',
     'toolbar.insert_link': 'إدراج رابط',
+    'link.placeholder': 'الصق أو اكتب رابطًا…',
+    'link.save': 'حفظ الرابط',
     'toolbar.font_color': 'لون الخط',
     'toolbar.left_align': 'محاذاة لليسار',
     'toolbar.center_align': 'توسيط',

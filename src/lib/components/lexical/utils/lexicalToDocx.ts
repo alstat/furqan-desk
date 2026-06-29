@@ -24,7 +24,7 @@ import { getSurahNameTashkeel } from "$lib/data/surah-names-tashkeel";
 import { juliaPlotIframes } from "$lib/stores/julia-notebook";
 
 type BlockChild = Paragraph | Table;
-type InlineStyle = { italic?: boolean; defaultColor?: string };
+type InlineStyle = { italic?: boolean; defaultColor?: string; hyperlink?: boolean };
 
 const QUOTE_TEXT_COLOR = "707070"; // brand-charcoal-500
 const QUOTE_BG_FILL = "FBF5E8";    // brand-gold-50
@@ -342,6 +342,10 @@ async function inlineForNode(
             );
             return [
                 new TextRun({
+                    // The built-in "Hyperlink" character style (blue + underline)
+                    // applies when this run is inside a link; explicit props below
+                    // still override it (e.g. a custom color/format).
+                    ...(style?.hyperlink ? { style: "Hyperlink" } : {}),
                     ...styleOpts,
                     text,
                     bold: (format & FORMAT_BOLD) !== 0 || undefined,
@@ -361,7 +365,10 @@ async function inlineForNode(
         case "link":
         case "autolink": {
             const url = (node.url as string) ?? "";
-            const children = await inlineRuns(node.children ?? [], style);
+            const children = await inlineRuns(node.children ?? [], {
+                ...style,
+                hyperlink: true,
+            });
             const textRunChildren = children.filter(
                 (c): c is TextRun => c instanceof TextRun,
             );

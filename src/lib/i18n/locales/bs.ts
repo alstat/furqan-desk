@@ -198,6 +198,8 @@ export const bs: Record<string, string> = {
   "toolbar.indent": "Uvlaka",
   "toolbar.outdent": "Otpad",
   "toolbar.insert_link": "Ubaci link",
+  "link.placeholder": "Zalijepite ili upišite link…",
+  "link.save": "Spremi link",
   "toolbar.font_color": "Boja fonta",
   "toolbar.left_align": "Poravnaj lijevo",
   "toolbar.center_align": "Poravnajte po sredini",

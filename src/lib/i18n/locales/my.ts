@@ -263,6 +263,8 @@ export const my: Record<string, string> = {
   "toolbar.indent": "ဆင့်ချဲ့",
   "toolbar.outdent": "ဆင့်ချုံ့",
   "toolbar.insert_link": "လင့်ထည့်ပါ",
+  "link.placeholder": "လင့်ခ်ကို ကူးထည့်ပါ သို့မဟုတ် ရိုက်ထည့်ပါ…",
+  "link.save": "လင့်ခ်ကို သိမ်းရန်",
   "toolbar.font_color": "ဖောင့်အရောင်",
   "toolbar.left_align": "ဘယ်ဘက် ညှိပါ",
   "toolbar.center_align": "အလယ် ညှိပါ",

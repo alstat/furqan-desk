@@ -268,6 +268,8 @@ export const ja: Record<string, string> = {
   "toolbar.indent": "インデント",
   "toolbar.outdent": "アウトデント",
   "toolbar.insert_link": "リンクを挿入",
+  "link.placeholder": "リンクを貼り付けるか入力…",
+  "link.save": "リンクを保存",
   "toolbar.font_color": "フォントの色",
   "toolbar.left_align": "左揃え",
   "toolbar.center_align": "中央揃え",

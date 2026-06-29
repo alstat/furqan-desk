@@ -268,6 +268,8 @@ export const bn: Record<string, string> = {
   "toolbar.indent": "ইন্ডেন্ট",
   "toolbar.outdent": "আউটডেন্ট",
   "toolbar.insert_link": "লিঙ্ক যোগ করুন",
+  "link.placeholder": "লিঙ্ক পেস্ট করুন বা টাইপ করুন…",
+  "link.save": "লিঙ্ক সংরক্ষণ করুন",
   "toolbar.font_color": "ফন্ট রঙ",
   "toolbar.left_align": "বাম সারিবদ্ধ",
   "toolbar.center_align": "কেন্দ্র সারিবদ্ধ",

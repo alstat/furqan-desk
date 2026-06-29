@@ -263,6 +263,8 @@ export const ceb: Record<string, string> = {
   "toolbar.indent": "Indent",
   "toolbar.outdent": "Outdent",
   "toolbar.insert_link": "Magsal-ot og link",
+  "link.placeholder": "I-paste o i-type ang link…",
+  "link.save": "I-save ang link",
   "toolbar.font_color": "Kolor sa font",
   "toolbar.left_align": "I-align sa wala",
   "toolbar.center_align": "I-align sa sentro",

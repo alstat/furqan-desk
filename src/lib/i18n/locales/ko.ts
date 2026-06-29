@@ -261,6 +261,8 @@ export const ko: Record<string, string> = {
     'toolbar.indent': '들여쓰기',
     'toolbar.outdent': '내어쓰기',
     'toolbar.insert_link': '링크 삽입',
+    'link.placeholder': '링크 붙여넣기 또는 입력…',
+    'link.save': '링크 저장',
     'toolbar.font_color': '글꼴 색상',
     'toolbar.left_align': '왼쪽 맞춤',
     'toolbar.center_align': '가운데 맞춤',

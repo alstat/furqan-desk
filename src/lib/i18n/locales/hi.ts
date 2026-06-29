@@ -268,6 +268,8 @@ export const hi: Record<string, string> = {
   "toolbar.indent": "इंडेंट",
   "toolbar.outdent": "आउटडेंट",
   "toolbar.insert_link": "लिंक जोड़ें",
+  "link.placeholder": "लिंक पेस्ट करें या टाइप करें…",
+  "link.save": "लिंक सहेजें",
   "toolbar.font_color": "फ़ॉन्ट रंग",
   "toolbar.left_align": "बाएँ संरेखित",
   "toolbar.center_align": "केंद्र संरेखित",

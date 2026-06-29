@@ -261,6 +261,8 @@ export const ru: Record<string, string> = {
     'toolbar.indent': 'Увеличить отступ',
     'toolbar.outdent': 'Уменьшить отступ',
     'toolbar.insert_link': 'Вставить ссылку',
+    'link.placeholder': 'Вставьте или введите ссылку…',
+    'link.save': 'Сохранить ссылку',
     'toolbar.font_color': 'Цвет шрифта',
     'toolbar.left_align': 'По левому краю',
     'toolbar.center_align': 'По центру',

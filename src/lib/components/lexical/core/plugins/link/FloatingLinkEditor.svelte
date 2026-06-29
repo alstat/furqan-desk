@@ -24,6 +24,8 @@
   } from 'lexical';
   import {onMount} from 'svelte';
   import type {Writable} from 'svelte/store';
+  import Icon from '@iconify/svelte';
+  import {t} from '$lib/i18n';
   import getSelectedNode from '../../../components/toolbar/getSelectionInfo.js';
   import {setFloatingElemPositionForLinkEditor} from './setFloatingElemPositionForLinkEditor.js';
   import {sanitizeUrl} from './url.js';
@@ -120,7 +122,9 @@
         linkUrl = '';
       }
     }
-    if ($isEditMode) {
+    // Keep the input in sync with the link's URL unless the user is actively
+    // typing in it (so editing isn't clobbered by editor updates).
+    if (!inputRef || document.activeElement !== inputRef) {
       editedLinkUrl = linkUrl;
     }
     const editorElem = editorRef;
@@ -147,7 +151,10 @@
         setFloatingElemPositionForLinkEditor(domRect, editorElem, anchorElem);
       }
       lastSelection = selection;
-    } else if (!activeElement || activeElement.className !== 'link-input') {
+    } else if (
+      !(activeElement instanceof HTMLElement) ||
+      !activeElement.classList.contains('floating-link-input')
+    ) {
       if (rootElement !== null) {
         setFloatingElemPositionForLinkEditor(null, editorElem, anchorElem);
       }
@@ -195,69 +202,33 @@
   }
 </script>
 
-<!-- svelte-ignore a11y_interactive_supports_focus -->
-
-<div bind:this={editorRef} class="link-editor">
+<div
+  bind:this={editorRef}
+  class="floating-link-editor {$isLink
+    ? 'flex w-80 items-center gap-1 rounded-3xl border border-brand-sand-200 bg-white/95 py-1 pl-3 pr-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40'
+    : ''}"
+>
   {#if $isLink}
-    {#if $isEditMode}
-      <input
-        bind:this={inputRef}
-        class="link-input"
-        bind:value={editedLinkUrl}
-        onkeydown={(event) => {
-          monitorInputInteraction(event);
-        }} />
-      <div>
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <div
-          class="link-cancel"
-          role="button"
-          tabIndex={0}
-          onmousedown={(event) => event.preventDefault()}
-          onclick={() => {
-            $isEditMode = false;
-          }}>
-        </div>
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <div
-          class="link-confirm"
-          role="button"
-          tabIndex={0}
-          onmousedown={(event) => event.preventDefault()}
-          onclick={handleLinkSubmission}>
-        </div>
-      </div>
-    {:else}
-      <div class="link-view">
-        <a
-          href={sanitizeUrl(linkUrl)}
-          target="_blank"
-          rel="noopener noreferrer">
-          {linkUrl}
-        </a>
-        <!-- svelte-ignore a11y_interactive_supports_focus -->
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <div
-          class="link-edit"
-          role="button"
-          tabIndex={0}
-          onmousedown={(event) => event.preventDefault()}
-          onclick={() => {
-            editedLinkUrl = linkUrl;
-            $isEditMode = true;
-          }}>
-        </div>
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <div
-          class="link-trash"
-          role="button"
-          tabIndex={0}
-          onmousedown={(event) => event.preventDefault()}
-          onclick={() => {
-            editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
-          }}>
-        </div>
-      </div>
-    {/if}
+    <input
+      bind:this={inputRef}
+      bind:value={editedLinkUrl}
+      placeholder={$t('link.placeholder')}
+      class="floating-link-input min-w-0 flex-1 bg-transparent text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] outline-none"
+      onfocus={() => {
+        $isEditMode = true;
+      }}
+      onkeydown={(event) => {
+        monitorInputInteraction(event);
+      }} />
+    <button
+      onclick={handleLinkSubmission}
+      onmousedown={(event) => event.preventDefault()}
+      disabled={!editedLinkUrl.trim()}
+      aria-label={$t('link.save')}
+      title={$t('link.save')}
+      class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 hover:dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+    >
+      <Icon icon="solar:check-circle-bold" width="0.9rem" />
+    </button>
   {/if}
 </div>
