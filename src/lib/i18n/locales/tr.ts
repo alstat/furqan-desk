@@ -700,6 +700,12 @@ export const tr: Record<string, string> = {
     'morphology.view_manuscripts': '{ayah}. ayet el yazmalarını görüntüle',
     'morphology.insert_ayah': '{ayah}. ayeti editöre ekle',
     // Slash commands
+    'slash.h1_label': 'Başlık 1',
+    'slash.h1_desc': 'Büyük başlık olarak biçimlendir',
+    'slash.h2_label': 'Başlık 2',
+    'slash.h2_desc': 'Orta başlık olarak biçimlendir',
+    'slash.h3_label': 'Başlık 3',
+    'slash.h3_desc': 'Küçük başlık olarak biçimlendir',
     'slash.math_label': 'Satır içi matematik',
     'slash.math_desc': 'Satır içi LaTeX denklemi ekle',
     'slash.math_block_label': 'Matematik bloğu',
@@ -712,6 +718,8 @@ export const tr: Record<string, string> = {
     'slash.checklist_desc': 'Kontrol listesi ekle',
     'slash.quran_label': 'Kur\'an Ayetleri',
     'slash.quran_desc': 'Ayet ekle — ör. /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]',
+    'slash.quran_translation_label': 'Kur\'an Çevirisi',
+    'slash.quran_translation_desc': 'Ayet çevirisi ekle — ör. /qt-2-255 (seçili çeviriyi kullanır)',
     'slash.julia_label': 'Julia Hücresi',
     'slash.julia_desc': 'Çalıştırılabilir bir Julia kod hücresi ekle',
     // Julia cell

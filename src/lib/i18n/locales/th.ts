@@ -706,6 +706,12 @@ export const th: Record<string, string> = {
   "morphology.view_manuscripts": "ดูต้นฉบับสำหรับอายะห์ {ayah}",
   "morphology.insert_ayah": "แทรกอายะห์ {ayah} ในตัวแก้ไข",
   // Slash commands
+  "slash.h1_label": "หัวข้อ 1",
+  "slash.h1_desc": "จัดรูปแบบเป็นหัวข้อขนาดใหญ่",
+  "slash.h2_label": "หัวข้อ 2",
+  "slash.h2_desc": "จัดรูปแบบเป็นหัวข้อขนาดกลาง",
+  "slash.h3_label": "หัวข้อ 3",
+  "slash.h3_desc": "จัดรูปแบบเป็นหัวข้อขนาดเล็ก",
   "slash.math_label": "คณิตศาสตร์แบบอินไลน์",
   "slash.math_desc": "แทรกสมการ LaTeX แบบอินไลน์",
   "slash.math_block_label": "บล็อกคณิตศาสตร์",
@@ -718,6 +724,8 @@ export const th: Record<string, string> = {
   "slash.checklist_desc": "แทรกรายการตรวจสอบ",
   "slash.quran_label": "อายะฮ์อัลกุรอาน",
   "slash.quran_desc": "แทรกอายะฮ์ — เช่น /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
+  "slash.quran_translation_label": "คำแปลอัลกุรอาน",
+  "slash.quran_translation_desc": "แทรกคำแปลอายะฮ์ — เช่น /qt-2-255 (ใช้คำแปลที่เลือก)",
   "slash.julia_label": "เซลล์ Julia",
   "slash.julia_desc": "แทรกเซลล์โค้ด Julia ที่เรียกใช้ได้",
     // Julia cell

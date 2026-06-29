@@ -710,6 +710,12 @@ export const hi: Record<string, string> = {
   "morphology.view_manuscripts": "आयत {ayah} की पांडुलिपि देखें",
   "morphology.insert_ayah": "आयत {ayah} को संपादक में डालें",
   // Slash commands
+  "slash.h1_label": "शीर्षक 1",
+  "slash.h1_desc": "बड़े शीर्षक के रूप में प्रारूपित करें",
+  "slash.h2_label": "शीर्षक 2",
+  "slash.h2_desc": "मध्यम शीर्षक के रूप में प्रारूपित करें",
+  "slash.h3_label": "शीर्षक 3",
+  "slash.h3_desc": "छोटे शीर्षक के रूप में प्रारूपित करें",
   "slash.math_label": "इनलाइन गणित",
   "slash.math_desc": "इनलाइन LaTeX समीकरण डालें",
   "slash.math_block_label": "गणित ब्लॉक",
@@ -722,6 +728,8 @@ export const hi: Record<string, string> = {
   "slash.checklist_desc": "चेकलिस्ट डालें",
   "slash.quran_label": "कुरान की आयतें",
   "slash.quran_desc": "आयतें डालें — जैसे /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
+  "slash.quran_translation_label": "क़ुरआन अनुवाद",
+  "slash.quran_translation_desc": "आयत का अनुवाद डालें — जैसे /qt-2-255 (चयनित अनुवाद का उपयोग करता है)",
   "slash.julia_label": "Julia सेल",
   "slash.julia_desc": "एक चलाने योग्य Julia कोड सेल डालें",
     // Julia cell

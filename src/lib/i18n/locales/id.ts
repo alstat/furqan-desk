@@ -700,6 +700,12 @@ export const id: Record<string, string> = {
     'morphology.view_manuscripts': 'Lihat manuskrip ayat {ayah}',
     'morphology.insert_ayah': 'Sisipkan ayat {ayah} ke editor',
     // Slash commands
+    'slash.h1_label': 'Judul 1',
+    'slash.h1_desc': 'Format sebagai judul besar',
+    'slash.h2_label': 'Judul 2',
+    'slash.h2_desc': 'Format sebagai judul sedang',
+    'slash.h3_label': 'Judul 3',
+    'slash.h3_desc': 'Format sebagai judul kecil',
     'slash.math_label': 'Matematika sebaris',
     'slash.math_desc': 'Sisipkan persamaan LaTeX sebaris',
     'slash.math_block_label': 'Blok matematika',
@@ -712,6 +718,8 @@ export const id: Record<string, string> = {
     'slash.checklist_desc': 'Sisipkan daftar periksa',
     'slash.quran_label': 'Ayat Al-Qur\'an',
     'slash.quran_desc': 'Sisipkan ayat — mis. /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]',
+    'slash.quran_translation_label': 'Terjemahan Al-Qur\'an',
+    'slash.quran_translation_desc': 'Sisipkan terjemahan ayat — mis. /qt-2-255 (menggunakan terjemahan terpilih)',
     'slash.julia_label': 'Sel Julia',
     'slash.julia_desc': 'Sisipkan sel kode Julia yang dapat dijalankan',
     // Julia cell

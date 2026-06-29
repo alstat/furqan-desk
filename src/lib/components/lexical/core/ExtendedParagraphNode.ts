@@ -1,9 +1,19 @@
 import { ParagraphNode } from 'lexical';
 import type { EditorConfig, SerializedParagraphNode } from 'lexical';
 
+// ParagraphNode's serialized shape doesn't include the element-level `style`
+// (only `textStyle`), so we persist it ourselves to round-trip block styles
+// such as line spacing.
+type SerializedExtendedParagraphNode = SerializedParagraphNode & { style?: string };
+
 export class ExtendedParagraphNode extends ParagraphNode {
+  // Must be a unique type, distinct from the core ParagraphNode it replaces:
+  // Lexical validates that a node's constructor matches the class registered
+  // for its type, so a replacement subclass cannot reuse 'paragraph'.
+  // Serializes/round-trips as 'extended-paragraph' (DOCX/Typst exporters and
+  // the block-format toolbar treat it as a normal paragraph).
   static getType(): string {
-    return 'paragraph';
+    return 'extended-paragraph';
   }
 
   static clone(node: ExtendedParagraphNode): ExtendedParagraphNode {
@@ -36,9 +46,22 @@ export class ExtendedParagraphNode extends ParagraphNode {
     return shouldRecreate;
   }
 
-  static importJSON(serializedNode: SerializedParagraphNode): ExtendedParagraphNode {
+  static importJSON(serializedNode: SerializedExtendedParagraphNode): ExtendedParagraphNode {
     const node = new ExtendedParagraphNode();
     node.updateFromJSON(serializedNode);
     return node;
+  }
+
+  updateFromJSON(serializedNode: SerializedExtendedParagraphNode): this {
+    super.updateFromJSON(serializedNode);
+    if (serializedNode.style) this.setStyle(serializedNode.style);
+    return this;
+  }
+
+  exportJSON(): SerializedExtendedParagraphNode {
+    const json: SerializedExtendedParagraphNode = super.exportJSON();
+    const style = this.__style;
+    if (style) json.style = style;
+    return json;
   }
 }

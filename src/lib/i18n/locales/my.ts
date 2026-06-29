@@ -706,6 +706,12 @@ export const my: Record<string, string> = {
   "morphology.view_manuscripts": "အာယာ {ayah} အတွက် မူရင်းစာမူများ ကြည့်ပါ",
   "morphology.insert_ayah": "တည်းဖြတ်ကိရိယာတွင် အာယာ {ayah} ထည့်ပါ",
   // Slash commands
+  "slash.h1_label": "ခေါင်းစဉ် 1",
+  "slash.h1_desc": "ခေါင်းစဉ်ကြီးအဖြစ် ပုံစံချပါ",
+  "slash.h2_label": "ခေါင်းစဉ် 2",
+  "slash.h2_desc": "အလယ်အလတ်ခေါင်းစဉ်အဖြစ် ပုံစံချပါ",
+  "slash.h3_label": "ခေါင်းစဉ် 3",
+  "slash.h3_desc": "ခေါင်းစဉ်သေးအဖြစ် ပုံစံချပါ",
   "slash.math_label": "အတွင်းကိန်းဂဏန်း",
   "slash.math_desc": "LaTeX ညီမျှခြင်း အတွင်း ထည့်ပါ",
   "slash.math_block_label": "ကိန်းဂဏန်း ဘလောက်",
@@ -718,6 +724,8 @@ export const my: Record<string, string> = {
   "slash.checklist_desc": "စစ်ဆေးစာရင်း ထည့်ပါ",
   "slash.quran_label": "ကုရ်အာန် အာယသ်များ",
   "slash.quran_desc": "အာယသ်များ ထည့်ပါ — ဥပမာ /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
+  "slash.quran_translation_label": "ကုရ်အာန် ဘာသာပြန်",
+  "slash.quran_translation_desc": "အာယသ်ဘာသာပြန် ထည့်ပါ — ဥပမာ /qt-2-255 (ရွေးချယ်ထားသော ဘာသာပြန်ကို သုံးသည်)",
   "slash.julia_label": "Julia ဆဲလ်",
   "slash.julia_desc": "ဖွင့်လုပ်နိုင်သော Julia ကုဒ်ဆဲလ်ကို ထည့်ပါ",
     // Julia cell

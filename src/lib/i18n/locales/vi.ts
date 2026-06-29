@@ -706,6 +706,12 @@ export const vi: Record<string, string> = {
   "morphology.view_manuscripts": "Xem bản thảo cho ayah {ayah}",
   "morphology.insert_ayah": "Chèn ayah {ayah} vào trình soạn thảo",
   // Slash commands
+  "slash.h1_label": "Tiêu đề 1",
+  "slash.h1_desc": "Định dạng làm tiêu đề lớn",
+  "slash.h2_label": "Tiêu đề 2",
+  "slash.h2_desc": "Định dạng làm tiêu đề vừa",
+  "slash.h3_label": "Tiêu đề 3",
+  "slash.h3_desc": "Định dạng làm tiêu đề nhỏ",
   "slash.math_label": "Toán học nội tuyến",
   "slash.math_desc": "Chèn phương trình LaTeX nội tuyến",
   "slash.math_block_label": "Khối toán học",
@@ -718,6 +724,8 @@ export const vi: Record<string, string> = {
   "slash.checklist_desc": "Chèn danh sách kiểm tra",
   "slash.quran_label": "Câu Kinh Qur'an",
   "slash.quran_desc": "Chèn ayah — vd. /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
+  "slash.quran_translation_label": "Bản dịch Kinh Qur'an",
+  "slash.quran_translation_desc": "Chèn bản dịch câu — vd. /qt-2-255 (dùng bản dịch đã chọn)",
   "slash.julia_label": "Ô Julia",
   "slash.julia_desc": "Chèn một ô mã Julia có thể chạy được",
     // Julia cell

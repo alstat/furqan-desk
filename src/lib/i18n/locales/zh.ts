@@ -700,6 +700,12 @@ export const zh: Record<string, string> = {
     'morphology.view_manuscripts': '查看第 {ayah} 节的手稿',
     'morphology.insert_ayah': '将第 {ayah} 节插入编辑器',
     // Slash commands
+    'slash.h1_label': '标题 1',
+    'slash.h1_desc': '格式化为大标题',
+    'slash.h2_label': '标题 2',
+    'slash.h2_desc': '格式化为中标题',
+    'slash.h3_label': '标题 3',
+    'slash.h3_desc': '格式化为小标题',
     'slash.math_label': '行内数学',
     'slash.math_desc': '插入行内 LaTeX 公式',
     'slash.math_block_label': '数学块',
@@ -712,6 +718,8 @@ export const zh: Record<string, string> = {
     'slash.checklist_desc': '插入清单',
     'slash.quran_label': '古兰经经文',
     'slash.quran_desc': '插入经文 — 例如 /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]',
+    'slash.quran_translation_label': '古兰经翻译',
+    'slash.quran_translation_desc': '插入经文翻译 — 例如 /qt-2-255（使用所选翻译）',
     'slash.julia_label': 'Julia 单元格',
     'slash.julia_desc': '插入可运行的 Julia 代码单元格',
     // Julia cell

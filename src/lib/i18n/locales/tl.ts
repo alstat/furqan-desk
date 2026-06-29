@@ -715,6 +715,12 @@ export const tl: Record<string, string> = {
   "morphology.view_manuscripts": "Tingnan ang mga manuskrito ng talata {ayah}",
   "morphology.insert_ayah": "Ipasok ang talata {ayah} sa editor",
   // Slash commands
+  "slash.h1_label": "Heading 1",
+  "slash.h1_desc": "I-format bilang malaking heading",
+  "slash.h2_label": "Heading 2",
+  "slash.h2_desc": "I-format bilang katamtamang heading",
+  "slash.h3_label": "Heading 3",
+  "slash.h3_desc": "I-format bilang maliit na heading",
   "slash.math_label": "Inline na matematika",
   "slash.math_desc": "Maglagay ng inline na LaTeX equation",
   "slash.math_block_label": "Bloke ng matematika",
@@ -727,6 +733,8 @@ export const tl: Record<string, string> = {
   "slash.checklist_desc": "Maglagay ng checklist",
   "slash.quran_label": "Mga Talata ng Quran",
   "slash.quran_desc": "Maglagay ng mga ayah — hal. /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
+  "slash.quran_translation_label": "Pagsasalin ng Quran",
+  "slash.quran_translation_desc": "Maglagay ng pagsasalin ng talata — hal. /qt-2-255 (ginagamit ang napiling pagsasalin)",
   "slash.julia_label": "Julia Cell",
   "slash.julia_desc": "Maglagay ng tumatakbong Julia code cell",
     // Julia cell

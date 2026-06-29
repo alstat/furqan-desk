@@ -30,11 +30,7 @@
         getEditor,
     } from "$lexical/core/composerContext.js";
     import { INSERT_HORIZONTAL_RULE_COMMAND } from "$lexical/core/plugins/HorizontalRuleNode.js";
-    import { $patchStyleText as patchStyleText } from "@lexical/selection";
-    import {
-        $getSelection as getSelection,
-        $isRangeSelection as isRangeSelection,
-    } from "lexical";
+    import { $patchBlockLineHeight as patchBlockLineHeight } from "$lexical/core/blockStyle";
     import { t } from '$lib/i18n';
 
     let { windowWidth, onInsertImageClick, onInsertEquationClick } = $props();
@@ -103,10 +99,7 @@
 
     function applyLineSpacing(lineHeight: string) {
         editor.update(() => {
-            const selection = getSelection();
-            if (isRangeSelection(selection)) {
-                patchStyleText(selection, { "line-height": lineHeight });
-            }
+            patchBlockLineHeight(lineHeight);
         });
     }
 

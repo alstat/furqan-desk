@@ -700,6 +700,12 @@ export const fr: Record<string, string> = {
     'morphology.view_manuscripts': 'Voir les manuscrits du verset {ayah}',
     'morphology.insert_ayah': "Insérer le verset {ayah} dans l'éditeur",
     // Slash commands
+    'slash.h1_label': 'Titre 1',
+    'slash.h1_desc': 'Mettre en forme comme grand titre',
+    'slash.h2_label': 'Titre 2',
+    'slash.h2_desc': 'Mettre en forme comme titre moyen',
+    'slash.h3_label': 'Titre 3',
+    'slash.h3_desc': 'Mettre en forme comme petit titre',
     'slash.math_label': 'Mathématiques en ligne',
     'slash.math_desc': 'Insérer une équation LaTeX en ligne',
     'slash.math_block_label': 'Bloc mathématique',
@@ -712,6 +718,8 @@ export const fr: Record<string, string> = {
     'slash.checklist_desc': 'Insérer une liste de contrôle',
     'slash.quran_label': 'Versets du Coran',
     'slash.quran_desc': 'Insérer des ayahs — par ex. /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]',
+    'slash.quran_translation_label': 'Traduction du Coran',
+    'slash.quran_translation_desc': 'Insérer la traduction du verset — par ex. /qt-2-255 (utilise la traduction sélectionnée)',
     'slash.julia_label': 'Cellule Julia',
     'slash.julia_desc': 'Insérer une cellule de code Julia exécutable',
     // Julia cell

@@ -711,6 +711,12 @@ export const ja: Record<string, string> = {
   "morphology.view_manuscripts": "アーヤ {ayah} の写本を表示",
   "morphology.insert_ayah": "アーヤ {ayah} をエディタに挿入",
   // Slash commands
+  "slash.h1_label": "見出し 1",
+  "slash.h1_desc": "大見出しとして書式設定",
+  "slash.h2_label": "見出し 2",
+  "slash.h2_desc": "中見出しとして書式設定",
+  "slash.h3_label": "見出し 3",
+  "slash.h3_desc": "小見出しとして書式設定",
   "slash.math_label": "インライン数式",
   "slash.math_desc": "インラインLaTeX数式を挿入",
   "slash.math_block_label": "数式ブロック",
@@ -723,6 +729,8 @@ export const ja: Record<string, string> = {
   "slash.checklist_desc": "チェックリストを挿入",
   "slash.quran_label": "クルアーンの章句",
   "slash.quran_desc": "アーヤを挿入 — 例: /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
+  "slash.quran_translation_label": "クルアーン訳",
+  "slash.quran_translation_desc": "節の訳を挿入 — 例 /qt-2-255（選択中の訳を使用）",
   "slash.julia_label": "Julia セル",
   "slash.julia_desc": "実行可能な Julia コードセルを挿入",
     // Julia cell

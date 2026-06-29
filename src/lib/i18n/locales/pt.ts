@@ -713,6 +713,12 @@ export const pt: Record<string, string> = {
   "morphology.view_manuscripts": "Ver manuscritos do versículo {ayah}",
   "morphology.insert_ayah": "Inserir versículo {ayah} no editor",
   // Slash commands
+  "slash.h1_label": "Título 1",
+  "slash.h1_desc": "Formatar como título grande",
+  "slash.h2_label": "Título 2",
+  "slash.h2_desc": "Formatar como título médio",
+  "slash.h3_label": "Título 3",
+  "slash.h3_desc": "Formatar como título pequeno",
   "slash.math_label": "Matemática em linha",
   "slash.math_desc": "Inserir equação LaTeX em linha",
   "slash.math_block_label": "Bloco matemático",
@@ -725,6 +731,8 @@ export const pt: Record<string, string> = {
   "slash.checklist_desc": "Inserir uma lista de verificação",
   "slash.quran_label": "Versículos do Alcorão",
   "slash.quran_desc": "Inserir ayahs — ex. /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
+  "slash.quran_translation_label": "Tradução do Alcorão",
+  "slash.quran_translation_desc": "Inserir tradução do versículo — p. ex. /qt-2-255 (usa a tradução selecionada)",
   "slash.julia_label": "Célula Julia",
   "slash.julia_desc": "Inserir uma célula de código Julia executável",
     // Julia cell

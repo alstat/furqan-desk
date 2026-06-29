@@ -8,6 +8,7 @@
 	import UnderlineButton from '../toolbar/UnderlineButton.svelte';
 	import StrikethroughButton from '../toolbar/StrikethroughButton.svelte';
 	import FormatCodeButton from '../toolbar/FormatCodeButton.svelte';
+	import DropDownScript from '../toolbar/DropDownScript.svelte';
 	import DropDownAlign from '../toolbar/DropDownAlign.svelte';
 	import InsertDropDown from '../toolbar/InsertDropDown/InsertDropDown.svelte';
 	import FontFamilyDropDown from '../toolbar/FontFamilyDropDown.svelte';
@@ -72,6 +73,7 @@
 		<UnderlineButton />
 		<StrikethroughButton />
 		<FormatCodeButton />
+		<DropDownScript />
 		<FontColorButton />
 		<Divider />
 		<InsertDropDown>

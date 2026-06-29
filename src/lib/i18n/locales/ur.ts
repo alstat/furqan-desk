@@ -700,6 +700,12 @@ export const ur: Record<string, string> = {
     'morphology.view_manuscripts': 'آیت {ayah} کے قلمی نسخے دیکھیں',
     'morphology.insert_ayah': 'آیت {ayah} کو ایڈیٹر میں داخل کریں',
     // Slash commands
+    'slash.h1_label': 'سرخی 1',
+    'slash.h1_desc': 'بڑی سرخی کے طور پر فارمیٹ کریں',
+    'slash.h2_label': 'سرخی 2',
+    'slash.h2_desc': 'درمیانی سرخی کے طور پر فارمیٹ کریں',
+    'slash.h3_label': 'سرخی 3',
+    'slash.h3_desc': 'چھوٹی سرخی کے طور پر فارمیٹ کریں',
     'slash.math_label': 'انٹرلائن ریاضی',
     'slash.math_desc': 'انٹرلائن LaTeX مساوات داخل کریں',
     'slash.math_block_label': 'ریاضی بلاک',
@@ -712,6 +718,8 @@ export const ur: Record<string, string> = {
     'slash.checklist_desc': 'چیک لسٹ داخل کریں',
     'slash.quran_label': 'قرآنی آیات',
     'slash.quran_desc': 'آیات داخل کریں — مثلاً /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]',
+    'slash.quran_translation_label': 'قرآن ترجمہ',
+    'slash.quran_translation_desc': 'آیت کا ترجمہ داخل کریں — مثلاً /qt-2-255 (منتخب ترجمہ استعمال کرتا ہے)',
     'slash.julia_label': 'Julia سیل',
     'slash.julia_desc': 'ایک قابلِ چلانے کے Julia کوڈ سیل داخل کریں',
     // Julia cell

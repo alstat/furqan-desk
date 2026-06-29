@@ -41,6 +41,7 @@
             ListItemNode,
             HorizontalRuleNode,
             ImageNode,
+            ExtendedParagraphNode,
             { replace: ParagraphNode, with: () => new ExtendedParagraphNode(), withKlass: ExtendedParagraphNode },
         ],
         onError: (error: Error) => {

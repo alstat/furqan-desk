@@ -58,6 +58,8 @@
         $createParagraphNode as createParagraphNode,
     } from "../lexical";
 
+    import { ParagraphNode } from "lexical";
+    import { ExtendedParagraphNode } from "$lexical/core/ExtendedParagraphNode";
     import CaptionEditorHistoryPlugin from "$lexical/core/plugins/Image/CaptionEditorHistoryPlugin.svelte";
     import SlashCommandPlugin from "$lexical/core/plugins/SlashCommand/SlashCommandPlugin.svelte";
     import CiteMenuPlugin from "$lexical/core/plugins/Cite/CiteMenuPlugin.svelte";
@@ -258,6 +260,17 @@
         namespace: "Editor",
         theme: PlaygroundEditorTheme,
         nodes: [
+            // Replace the core paragraph with our subclass so block-level styles
+            // (e.g. line spacing) render and persist. ExtendedParagraphNode must
+            // also be registered on its own (its type is 'extended-paragraph') so
+            // Lexical can construct it; withKlass keeps $isParagraphNode /
+            // instanceof checks working across plugins.
+            ExtendedParagraphNode,
+            {
+                replace: ParagraphNode,
+                with: () => new ExtendedParagraphNode(),
+                withKlass: ExtendedParagraphNode,
+            },
             HeadingNode,
             ListNode,
             ListItemNode,

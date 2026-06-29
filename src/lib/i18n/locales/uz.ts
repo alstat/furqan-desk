@@ -706,6 +706,12 @@ export const uz: Record<string, string> = {
   "morphology.view_manuscripts": "{ayah} oyat uchun qo'lyozmalarni ko'rish",
   "morphology.insert_ayah": "{ayah} oyatni muharrirga qo'shish",
   // Slash commands
+  "slash.h1_label": "Sarlavha 1",
+  "slash.h1_desc": "Katta sarlavha sifatida formatlash",
+  "slash.h2_label": "Sarlavha 2",
+  "slash.h2_desc": "Oʻrta sarlavha sifatida formatlash",
+  "slash.h3_label": "Sarlavha 3",
+  "slash.h3_desc": "Kichik sarlavha sifatida formatlash",
   "slash.math_label": "Satr ichida matematik",
   "slash.math_desc": "Satr ichida LaTeX tenglamasini qo'shish",
   "slash.math_block_label": "Matematik blok",
@@ -718,6 +724,8 @@ export const uz: Record<string, string> = {
   "slash.checklist_desc": "Belgilash ro'yxatini qo'shish",
   "slash.quran_label": "Qur'on oyatlari",
   "slash.quran_desc": "Oyatlarni kiritish — masalan /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
+  "slash.quran_translation_label": "Qurʼon tarjimasi",
+  "slash.quran_translation_desc": "Oyat tarjimasini kiritish — mas. /qt-2-255 (tanlangan tarjimadan foydalanadi)",
   "slash.julia_label": "Julia kataki",
   "slash.julia_desc": "Ishga tushiriladigan Julia kod katagini kiritish",
     // Julia cell
