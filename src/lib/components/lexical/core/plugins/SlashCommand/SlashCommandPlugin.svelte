@@ -12,6 +12,7 @@
         $isTextNode as isTextNode,
         $getNodeByKey as getNodeByKey,
         $createParagraphNode as createParagraphNode,
+        $createTextNode as createTextNode,
         COMMAND_PRIORITY_CRITICAL,
         KEY_ARROW_DOWN_COMMAND,
         KEY_ARROW_UP_COMMAND,
@@ -29,7 +30,11 @@
         $setBlocksType as setBlocksType,
         $patchStyleText as patchStyleText,
     } from "@lexical/selection";
-    import { $createQuoteNode as createQuoteNode } from "@lexical/rich-text";
+    import {
+        $createQuoteNode as createQuoteNode,
+        $createHeadingNode as createHeadingNode,
+        type HeadingTagType,
+    } from "@lexical/rich-text";
     import { INSERT_CHECK_LIST_COMMAND } from "@lexical/list";
     import { t } from "$lib/i18n";
     import { invoke } from "@tauri-apps/api/core";
@@ -38,7 +43,16 @@
         parseQuranSlashQuery,
         QURAN_SLASH_REGEX,
         QURAN_SLASH_COMPLETE_REGEX,
+        parseQuranTranslationSlashQuery,
+        QURAN_TRANSLATION_SLASH_REGEX,
+        QURAN_TRANSLATION_SLASH_COMPLETE_REGEX,
     } from "$lib/utils/quranSlashParser";
+    import { get } from "svelte/store";
+    import {
+        activeTranslatorId,
+        availableTranslators,
+        type AyahTranslation,
+    } from "$lib/stores/translation.store";
     import {
         $createQuranBlockNode as createQuranBlockNode,
         type QuranVerse,
@@ -265,6 +279,24 @@
 
     const COMMANDS: SlashCommand[] = $derived([
         {
+            id: "h1",
+            label: $t("slash.h1_label"),
+            description: $t("slash.h1_desc"),
+            icon: icons["heading"],
+        },
+        {
+            id: "h2",
+            label: $t("slash.h2_label"),
+            description: $t("slash.h2_desc"),
+            icon: icons["heading"],
+        },
+        {
+            id: "h3",
+            label: $t("slash.h3_label"),
+            description: $t("slash.h3_desc"),
+            icon: icons["heading"],
+        },
+        {
             id: "math",
             label: $t("slash.math_label"),
             description: $t("slash.math_desc"),
@@ -299,6 +331,12 @@
             label: $t("slash.quran_label"),
             description: $t("slash.quran_desc"),
             icon: "solar:book-bold-duotone",
+        },
+        {
+            id: "quran-translation",
+            label: $t("slash.quran_translation_label"),
+            description: $t("slash.quran_translation_desc"),
+            icon: "material-symbols:translate",
         },
         {
             id: "julia",
@@ -343,6 +381,8 @@
             if (!query) return !cmd.insertText;
             if (cmd.id === "table") return /^table(-\d+(-\d+)?)?$/.test(query);
             if (cmd.id === "quran") return QURAN_SLASH_REGEX.test(query);
+            if (cmd.id === "quran-translation")
+                return QURAN_TRANSLATION_SLASH_REGEX.test(query);
             return cmd.id.startsWith(query);
         }),
     );
@@ -416,6 +456,98 @@
         });
     }
 
+    // English Abdel Haleem — the default translation used when the user hasn't
+    // selected one in the Surah widget. Static, bundled translator id.
+    const ABDEL_HALEEM_TRANSLATOR_ID = 2;
+
+    function resolveTranslatorId(): number {
+        const active = get(activeTranslatorId);
+        if (active != null) return active;
+        // No translation selected → fall back to Abdel Haleem. Prefer resolving
+        // its id from the loaded translator list in case it ever differs.
+        const haleem = get(availableTranslators).find(
+            (t) =>
+                t.name === "Abdel Haleem" ||
+                (t.lang?.toUpperCase() === "EN" && /haleem/i.test(t.name)),
+        );
+        return haleem?.id ?? ABDEL_HALEEM_TRANSLATOR_ID;
+    }
+
+    async function insertQuranTranslation(
+        capturedKey: string,
+        capturedOffset: number,
+        capturedQuery: string,
+    ) {
+        if (!QURAN_TRANSLATION_SLASH_COMPLETE_REGEX.test(capturedQuery)) return;
+        const parsed = parseQuranTranslationSlashQuery(capturedQuery);
+        if (!parsed.ok) return;
+
+        const translatorId = resolveTranslatorId();
+
+        // Fetch each referenced surah's translations once, keyed by ayah.
+        const bySurah = new Map<number, Map<number, string>>();
+        const uniqueSurahs = [...new Set(parsed.pairs.map((p) => p.surah))];
+        try {
+            await Promise.all(
+                uniqueSurahs.map(async (s) => {
+                    const rows = await invoke<AyahTranslation[]>(
+                        "get_surah_translation",
+                        { surah: s, translatorId },
+                    );
+                    const m = new Map<number, string>();
+                    for (const r of rows) m.set(r.ayah, r.text);
+                    bySurah.set(s, m);
+                }),
+            );
+        } catch (e) {
+            console.error("[qt-slash] failed to fetch translation", e);
+            return;
+        }
+
+        const verses: { surah: number; ayah: number; text: string }[] = [];
+        for (const { surah, ayah } of parsed.pairs) {
+            const text = bySurah.get(surah)?.get(ayah);
+            if (text) verses.push({ surah, ayah, text });
+        }
+        if (verses.length === 0) return;
+
+        // When the selection spans more than one surah, the per-verse marker
+        // needs the surah too (e.g. "2:255"); within a single surah the ayah
+        // number alone is enough.
+        const crossSurah = new Set(verses.map((v) => v.surah)).size > 1;
+
+        editor.update(() => {
+            const textNode = getNodeByKey(capturedKey);
+            if (!isTextNode(textNode)) return;
+            // Replace the "/qt-…" token with the translation.
+            const sel = textNode.select(
+                capturedOffset,
+                capturedOffset + 1 + capturedQuery.length,
+            );
+            sel.insertText("");
+
+            const freshSel = getSelection();
+            if (!isRangeSelection(freshSel)) return;
+
+            if (verses.length === 1) {
+                // Single ayah → flow inline at the cursor, no marker needed.
+                freshSel.insertText(verses[0].text);
+            } else {
+                // Multiple ayahs → one paragraph each, prefixed with a bold
+                // verse marker so readers can tell the verses apart.
+                const paragraphs = verses.map(({ surah, ayah, text }) => {
+                    const label = crossSurah ? `${surah}:${ayah}` : `${ayah}`;
+                    const marker = createTextNode(`(${label}) `);
+                    marker.toggleFormat("bold");
+                    const para = createParagraphNode();
+                    para.append(marker, createTextNode(text));
+                    return para;
+                });
+                freshSel.insertNodes(paragraphs);
+            }
+        });
+    }
+
     function selectCommand(cmdId: string) {
         const capturedKey = anchorNodeKey;
         const capturedOffset = slashOffset;
@@ -424,6 +556,15 @@
 
         if (cmdId === "quran") {
             void insertQuranBlock(capturedKey, capturedOffset, capturedQuery);
+            return;
+        }
+
+        if (cmdId === "quran-translation") {
+            void insertQuranTranslation(
+                capturedKey,
+                capturedOffset,
+                capturedQuery,
+            );
             return;
         }
 
@@ -519,6 +660,15 @@
             } else if (cmdId === "quote") {
                 const sel = getSelection();
                 setBlocksType(sel, () => createQuoteNode());
+            } else if (
+                cmdId === "h1" ||
+                cmdId === "h2" ||
+                cmdId === "h3"
+            ) {
+                const sel = getSelection();
+                setBlocksType(sel, () =>
+                    createHeadingNode(cmdId as HeadingTagType),
+                );
             }
         });
 
@@ -593,6 +743,8 @@
                         if (cmd.id === "table")
                             return /^table(-\d+(-\d+)?)?$/.test(q);
                         if (cmd.id === "quran") return QURAN_SLASH_REGEX.test(q);
+                        if (cmd.id === "quran-translation")
+                            return QURAN_TRANSLATION_SLASH_REGEX.test(q);
                         return cmd.id.startsWith(q);
                     });
 

@@ -700,6 +700,12 @@ export const ar: Record<string, string> = {
     'morphology.view_manuscripts': 'عرض مخطوطات الآية {ayah}',
     'morphology.insert_ayah': 'إدراج الآية {ayah} في المحرر',
     // Slash commands
+    'slash.h1_label': 'عنوان 1',
+    'slash.h1_desc': 'تنسيق كعنوان كبير',
+    'slash.h2_label': 'عنوان 2',
+    'slash.h2_desc': 'تنسيق كعنوان متوسط',
+    'slash.h3_label': 'عنوان 3',
+    'slash.h3_desc': 'تنسيق كعنوان صغير',
     'slash.math_label': 'رياضيات مضمّنة',
     'slash.math_desc': 'إدراج معادلة LaTeX مضمّنة',
     'slash.math_block_label': 'كتلة رياضية',
@@ -712,6 +718,8 @@ export const ar: Record<string, string> = {
     'slash.checklist_desc': 'إدراج قائمة مهام',
     'slash.quran_label': 'آيات القرآن',
     'slash.quran_desc': 'إدراج آيات — مثال: /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]',
+    'slash.quran_translation_label': 'ترجمة القرآن',
+    'slash.quran_translation_desc': 'إدراج ترجمة الآية — مثال: /qt-2-255 (تستخدم الترجمة المختارة)',
     'slash.julia_label': 'خلية Julia',
     'slash.julia_desc': 'إدراج خلية كود Julia قابلة للتشغيل',
     // Julia cell

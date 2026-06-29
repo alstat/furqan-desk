@@ -700,6 +700,12 @@ export const fa: Record<string, string> = {
     'morphology.view_manuscripts': 'مشاهده نسخ خطی آیه {ayah}',
     'morphology.insert_ayah': 'درج آیه {ayah} در ویرایشگر',
     // Slash commands
+    'slash.h1_label': 'عنوان 1',
+    'slash.h1_desc': 'قالب‌بندی به‌صورت عنوان بزرگ',
+    'slash.h2_label': 'عنوان 2',
+    'slash.h2_desc': 'قالب‌بندی به‌صورت عنوان متوسط',
+    'slash.h3_label': 'عنوان 3',
+    'slash.h3_desc': 'قالب‌بندی به‌صورت عنوان کوچک',
     'slash.math_label': 'ریاضی درون‌خطی',
     'slash.math_desc': 'درج معادله LaTeX درون‌خطی',
     'slash.math_block_label': 'بلوک ریاضی',
@@ -712,6 +718,8 @@ export const fa: Record<string, string> = {
     'slash.checklist_desc': 'درج چک‌لیست',
     'slash.quran_label': 'آیات قرآن',
     'slash.quran_desc': 'درج آیات — مثلاً /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]',
+    'slash.quran_translation_label': 'ترجمه قرآن',
+    'slash.quran_translation_desc': 'درج ترجمه آیه — مثلاً /qt-2-255 (از ترجمه انتخاب‌شده استفاده می‌کند)',
     'slash.julia_label': 'سلول Julia',
     'slash.julia_desc': 'درج یک سلول کد Julia قابل اجرا',
     // Julia cell

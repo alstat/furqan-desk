@@ -712,6 +712,12 @@ export const bn: Record<string, string> = {
   "morphology.view_manuscripts": "আয়াত {ayah} এর পাণ্ডুলিপি দেখুন",
   "morphology.insert_ayah": "আয়াত {ayah} সম্পাদকে যোগ করুন",
   // Slash commands
+  "slash.h1_label": "শিরোনাম 1",
+  "slash.h1_desc": "বড় শিরোনাম হিসেবে ফরম্যাট করুন",
+  "slash.h2_label": "শিরোনাম 2",
+  "slash.h2_desc": "মাঝারি শিরোনাম হিসেবে ফরম্যাট করুন",
+  "slash.h3_label": "শিরোনাম 3",
+  "slash.h3_desc": "ছোট শিরোনাম হিসেবে ফরম্যাট করুন",
   "slash.math_label": "ইনলাইন গণিত",
   "slash.math_desc": "ইনলাইন LaTeX সমীকরণ যোগ করুন",
   "slash.math_block_label": "গণিত ব্লক",
@@ -724,6 +730,8 @@ export const bn: Record<string, string> = {
   "slash.checklist_desc": "একটি চেকলিস্ট যোগ করুন",
   "slash.quran_label": "কুরআনের আয়াত",
   "slash.quran_desc": "আয়াত যোগ করুন — যেমন /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
+  "slash.quran_translation_label": "কুরআন অনুবাদ",
+  "slash.quran_translation_desc": "আয়াতের অনুবাদ সন্নিবেশ করুন — যেমন /qt-2-255 (নির্বাচিত অনুবাদ ব্যবহার করে)",
   "slash.julia_label": "Julia সেল",
   "slash.julia_desc": "একটি চালানোর যোগ্য Julia কোড সেল যোগ করুন",
     // Julia cell

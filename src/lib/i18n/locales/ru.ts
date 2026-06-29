@@ -700,6 +700,12 @@ export const ru: Record<string, string> = {
     'morphology.view_manuscripts': 'Просмотреть рукописи аята {ayah}',
     'morphology.insert_ayah': 'Вставить аят {ayah} в редактор',
     // Slash commands
+    'slash.h1_label': 'Заголовок 1',
+    'slash.h1_desc': 'Форматировать как большой заголовок',
+    'slash.h2_label': 'Заголовок 2',
+    'slash.h2_desc': 'Форматировать как средний заголовок',
+    'slash.h3_label': 'Заголовок 3',
+    'slash.h3_desc': 'Форматировать как маленький заголовок',
     'slash.math_label': 'Встроенная математика',
     'slash.math_desc': 'Вставить встроенное уравнение LaTeX',
     'slash.math_block_label': 'Математический блок',
@@ -712,6 +718,8 @@ export const ru: Record<string, string> = {
     'slash.checklist_desc': 'Вставить список задач',
     'slash.quran_label': 'Аяты Корана',
     'slash.quran_desc': 'Вставить аяты — напр. /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]',
+    'slash.quran_translation_label': 'Перевод Корана',
+    'slash.quran_translation_desc': 'Вставить перевод аята — напр. /qt-2-255 (использует выбранный перевод)',
     'slash.julia_label': 'Ячейка Julia',
     'slash.julia_desc': 'Вставить исполняемую ячейку с кодом Julia',
     // Julia cell

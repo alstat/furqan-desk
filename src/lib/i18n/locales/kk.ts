@@ -706,6 +706,12 @@ export const kk: Record<string, string> = {
   "morphology.view_manuscripts": "{ayah} аят үшін қолжазбаларды қарау",
   "morphology.insert_ayah": "{ayah} аятты редакторға кірістіру",
   // Slash commands
+  "slash.h1_label": "Тақырып 1",
+  "slash.h1_desc": "Үлкен тақырып ретінде пішімдеу",
+  "slash.h2_label": "Тақырып 2",
+  "slash.h2_desc": "Орташа тақырып ретінде пішімдеу",
+  "slash.h3_label": "Тақырып 3",
+  "slash.h3_desc": "Кіші тақырып ретінде пішімдеу",
   "slash.math_label": "Жолішілік математика",
   "slash.math_desc": "Жолішілік LaTeX теңдеуін кірістіру",
   "slash.math_block_label": "Математика блогы",
@@ -718,6 +724,8 @@ export const kk: Record<string, string> = {
   "slash.checklist_desc": "Белгілеу тізімін кірістіру",
   "slash.quran_label": "Құран аяттары",
   "slash.quran_desc": "Аяттарды кірістіру — мысалы /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
+  "slash.quran_translation_label": "Құран аудармасы",
+  "slash.quran_translation_desc": "Аят аудармасын кірістіру — мыс. /qt-2-255 (таңдалған аударманы пайдаланады)",
   "slash.julia_label": "Julia ұяшығы",
   "slash.julia_desc": "Орындалатын Julia код ұяшығын кірістіру",
     // Julia cell

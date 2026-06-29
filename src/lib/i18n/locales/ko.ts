@@ -700,6 +700,12 @@ export const ko: Record<string, string> = {
     'morphology.view_manuscripts': '구절 {ayah}의 사본 보기',
     'morphology.insert_ayah': '구절 {ayah}을 편집기에 삽입',
     // Slash commands
+    'slash.h1_label': '제목 1',
+    'slash.h1_desc': '큰 제목으로 서식 지정',
+    'slash.h2_label': '제목 2',
+    'slash.h2_desc': '중간 제목으로 서식 지정',
+    'slash.h3_label': '제목 3',
+    'slash.h3_desc': '작은 제목으로 서식 지정',
     'slash.math_label': '인라인 수식',
     'slash.math_desc': '인라인 LaTeX 수식 삽입',
     'slash.math_block_label': '수식 블록',
@@ -712,6 +718,8 @@ export const ko: Record<string, string> = {
     'slash.checklist_desc': '체크리스트 삽입',
     'slash.quran_label': '꾸란 구절',
     'slash.quran_desc': '아야 삽입 — 예: /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]',
+    'slash.quran_translation_label': '꾸란 번역',
+    'slash.quran_translation_desc': '구절 번역 삽입 — 예: /qt-2-255 (선택한 번역 사용)',
     'slash.julia_label': 'Julia 셀',
     'slash.julia_desc': '실행 가능한 Julia 코드 셀 삽입',
     // Julia cell

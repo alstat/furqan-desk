@@ -25,6 +25,17 @@ export const QURAN_SLASH_COMPLETE_REGEX = new RegExp(
     `^q-(\\d+|\\[\\d+(?::\\d+|(?:,\\d+)+)\\])-(\\d+|\\[\\d+(?::\\d+|(?:,\\d+)+)\\])$`,
 );
 
+// Translation variant: same surah/ayah grammar as the Arabic "/q-" command but
+// with a "qt-" prefix (e.g. "/qt-2-255" pastes the translation of 2:255).
+const PARTIAL_PREFIX_RE_QT =
+    /^qt(?:-(?:\d+|\[\d*(?::\d*|(?:,\d*)*)?\]?)?(?:-(?:\d+|\[\d*(?::\d*|(?:,\d*)*)?\]?)?)?)?$/;
+
+export const QURAN_TRANSLATION_SLASH_REGEX = PARTIAL_PREFIX_RE_QT;
+
+export const QURAN_TRANSLATION_SLASH_COMPLETE_REGEX = new RegExp(
+    `^qt-(\\d+|\\[\\d+(?::\\d+|(?:,\\d+)+)\\])-(\\d+|\\[\\d+(?::\\d+|(?:,\\d+)+)\\])$`,
+);
+
 export type ParsedQuranQuery =
     | { ok: true; pairs: Array<{ surah: number; ayah: number }> }
     | { ok: false; error: string };
@@ -48,13 +59,11 @@ function expandSpec(spec: string): number[] | null {
     return list;
 }
 
-export function parseQuranSlashQuery(query: string): ParsedQuranQuery {
-    if (!QURAN_SLASH_COMPLETE_REGEX.test(query)) {
-        return { ok: false, error: "syntax" };
-    }
-    // Strip the leading "q-" then split into surahSpec and ayahSpec on the
-    // dash that sits at the top level (i.e. not inside brackets).
-    const body = query.slice(2);
+// Parses the "S-A" body (after the command prefix has been stripped) into
+// surah/ayah pairs. Shared by the Arabic and translation slash commands.
+function parsePairsFromBody(body: string): ParsedQuranQuery {
+    // Split into surahSpec and ayahSpec on the dash that sits at the top level
+    // (i.e. not inside brackets).
     let depth = 0;
     let splitAt = -1;
     for (let i = 0; i < body.length; i++) {
@@ -86,4 +95,20 @@ export function parseQuranSlashQuery(query: string): ParsedQuranQuery {
         }
     }
     return { ok: true, pairs };
+}
+
+export function parseQuranSlashQuery(query: string): ParsedQuranQuery {
+    if (!QURAN_SLASH_COMPLETE_REGEX.test(query)) {
+        return { ok: false, error: "syntax" };
+    }
+    // Strip the leading "q-".
+    return parsePairsFromBody(query.slice(2));
+}
+
+export function parseQuranTranslationSlashQuery(query: string): ParsedQuranQuery {
+    if (!QURAN_TRANSLATION_SLASH_COMPLETE_REGEX.test(query)) {
+        return { ok: false, error: "syntax" };
+    }
+    // Strip the leading "qt-".
+    return parsePairsFromBody(query.slice(3));
 }

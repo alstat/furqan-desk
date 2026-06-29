@@ -28,11 +28,7 @@
         getEditor,
     } from "$lexical/core/composerContext.js";
     import { INSERT_HORIZONTAL_RULE_COMMAND } from "$lexical/core/plugins/HorizontalRuleNode.js";
-    import { $patchStyleText as patchStyleText } from "@lexical/selection";
-    import {
-        $getSelection as getSelection,
-        $isRangeSelection as isRangeSelection,
-    } from "lexical";
+    import { $patchBlockLineHeight as patchBlockLineHeight } from "$lexical/core/blockStyle";
     import { t } from "$lib/i18n";
 
     let {
@@ -47,13 +43,15 @@
         expanded?: boolean;
     } = $props();
 
-    const lineSpacings = [
+    // $derived so the labels re-translate when the app language changes — a
+    // plain const would freeze them at the locale present when this mounted.
+    const lineSpacings = $derived([
         { label: $t("toolbar.spacing_single"), value: "1" },
         { label: $t("toolbar.spacing_1_5"), value: "1.5" },
         { label: $t("toolbar.spacing_double"), value: "2" },
         { label: $t("toolbar.spacing_2_5"), value: "2.5" },
         { label: $t("toolbar.spacing_3"), value: "3" },
-    ];
+    ]);
 
     let isOpen = $state(false);
     let dropdownRef: HTMLDivElement;
@@ -118,10 +116,7 @@
 
     function applyLineSpacing(lineHeight: string) {
         editor.update(() => {
-            const selection = getSelection();
-            if (isRangeSelection(selection)) {
-                patchStyleText(selection, { "line-height": lineHeight });
-            }
+            patchBlockLineHeight(lineHeight);
         });
     }
 

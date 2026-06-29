@@ -802,6 +802,12 @@ export const en: Record<string, string> = {
   "manuscript.ai_placeholder": "Ask AI about this manuscript…",
   "quran_block.view_in_quran": "View ayah {ayah} in Qur'an",
   // Slash commands
+  "slash.h1_label": "Heading 1",
+  "slash.h1_desc": "Format as large heading",
+  "slash.h2_label": "Heading 2",
+  "slash.h2_desc": "Format as medium heading",
+  "slash.h3_label": "Heading 3",
+  "slash.h3_desc": "Format as small heading",
   "slash.math_label": "Inline Math",
   "slash.math_desc": "Insert inline LaTeX equation",
   "slash.math_block_label": "Math Block",
@@ -815,6 +821,9 @@ export const en: Record<string, string> = {
   "slash.quran_label": "Quran Verses",
   "slash.quran_desc":
     "Insert ayahs — e.g. /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
+  "slash.quran_translation_label": "Quran Translation",
+  "slash.quran_translation_desc":
+    "Insert verse translation — e.g. /qt-2-255 (uses selected translation)",
   "slash.julia_label": "Julia Cell",
   "slash.julia_desc": "Insert a runnable Julia code cell",
   "slash.cite_label": "Cite Reference",

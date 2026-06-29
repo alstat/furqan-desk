@@ -713,6 +713,12 @@ export const de: Record<string, string> = {
   "morphology.view_manuscripts": "Manuskripte für Vers {ayah} anzeigen",
   "morphology.insert_ayah": "Vers {ayah} in Editor einfügen",
   // Slash commands
+  "slash.h1_label": "Überschrift 1",
+  "slash.h1_desc": "Als große Überschrift formatieren",
+  "slash.h2_label": "Überschrift 2",
+  "slash.h2_desc": "Als mittlere Überschrift formatieren",
+  "slash.h3_label": "Überschrift 3",
+  "slash.h3_desc": "Als kleine Überschrift formatieren",
   "slash.math_label": "Inline-Mathematik",
   "slash.math_desc": "Inline-LaTeX-Gleichung einfügen",
   "slash.math_block_label": "Mathematik-Block",
@@ -725,6 +731,8 @@ export const de: Record<string, string> = {
   "slash.checklist_desc": "Eine Checkliste einfügen",
   "slash.quran_label": "Quran-Verse",
   "slash.quran_desc": "Ayat einfügen — z. B. /q-2-255, /q-2-[1:5], /q-[112,113]-[1:3]",
+  "slash.quran_translation_label": "Quran-Übersetzung",
+  "slash.quran_translation_desc": "Versübersetzung einfügen — z. B. /qt-2-255 (verwendet die gewählte Übersetzung)",
   "slash.julia_label": "Julia-Zelle",
   "slash.julia_desc": "Eine ausführbare Julia-Codezelle einfügen",
     // Julia cell
