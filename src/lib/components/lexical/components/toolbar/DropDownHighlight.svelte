@@ -88,7 +88,9 @@
     aria-label={$t("toolbar.highlight")}
 >
     <div class="flex flex-col items-center leading-none" style="width:1rem;">
-        <Icon icon={icons["highlight"]} height="0.85rem" />
+        <span class="flex h-3.5 items-center justify-center">
+            <Icon icon={icons["highlight"]} height="0.85rem" />
+        </span>
         <span
             class="mt-px h-0.75 w-full rounded-full"
             style="background-color: {current || 'transparent'};"
