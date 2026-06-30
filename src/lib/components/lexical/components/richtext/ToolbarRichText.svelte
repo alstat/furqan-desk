@@ -9,6 +9,7 @@
 	import StrikethroughButton from '../toolbar/StrikethroughButton.svelte';
 	import FormatCodeButton from '../toolbar/FormatCodeButton.svelte';
 	import DropDownScript from '../toolbar/DropDownScript.svelte';
+	import DropDownHighlight from '../toolbar/DropDownHighlight.svelte';
 	import LinkButton from '../toolbar/LinkButton.svelte';
 	import DropDownAlign from '../toolbar/DropDownAlign.svelte';
 	import InsertDropDown from '../toolbar/InsertDropDown/InsertDropDown.svelte';
@@ -34,7 +35,7 @@
 	import EquationShortcutButton from '$lexical/core/plugins/Equation/EquationShortcutButton.svelte';
 	import TripleDotsDropDown from '../toolbar/TripleDots/TripleDotsDropDown.svelte';
     import TripleDotsDropDownSmall from '../toolbar/TripleDots/TripleDotsDropDownSmall.svelte';
-	import FontColorButton from '../toolbar/FontColorButton.svelte';
+	import DropDownFontColor from '../toolbar/DropDownFontColor.svelte';
     import { hideSurahPage } from '$lib/stores/quran.svelte';
 
 	// Width (px) of the EditorComposer at or above which the TripleDotsDropDownSmall
@@ -76,7 +77,8 @@
 		<FormatCodeButton />
 		<DropDownScript />
 		<LinkButton />
-		<FontColorButton />
+		<DropDownFontColor />
+		<DropDownHighlight />
 		<Divider />
 		<InsertDropDown>
 			<InsertHRDropDownItem />
