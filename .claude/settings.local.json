@@ -246,7 +246,8 @@
       "Bash(awk 'NR>=9935 && NR<=10062' node_modules/lexical/Lexical.dev.mjs)",
       "Bash(awk 'NR>=11114 && NR<=11140' node_modules/lexical/Lexical.dev.mjs)",
       "Bash(awk 'NR>=9300 && NR<=9420' node_modules/lexical/Lexical.dev.mjs)",
-      "Bash(unzip -p /tmp/qt_test.docx word/document.xml)"
+      "Bash(unzip -p /tmp/qt_test.docx word/document.xml)",
+      "Bash(awk 'NR>=440 && NR<=477' node_modules/@lexical/selection/LexicalSelection.dev.mjs)"
     ]
   }
 }
