@@ -68,7 +68,7 @@
 >
     <div class="flex flex-col items-center leading-none" style="width:1rem;">
         <span
-            class="text-[13px] font-bold text-brand-charcoal-700 dark:text-[#c6d0f5] leading-tight select-none"
+            class="flex h-3.5 items-center justify-center text-[13px] font-bold text-brand-charcoal-700 dark:text-[#c6d0f5] select-none"
             >A</span
         >
         <span
