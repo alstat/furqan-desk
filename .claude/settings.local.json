@@ -232,7 +232,23 @@
       "Bash(jobs)",
       "Bash(rustup show *)",
       "Bash(echo \"exit=$?\")",
-      "Bash(awk '/<style>/,/<\\\\/style>/' src/lib/components/manuscripts/ManuscriptViewer.svelte)"
+      "Bash(awk '/<style>/,/<\\\\/style>/' src/lib/components/manuscripts/ManuscriptViewer.svelte)",
+      "Bash(awk 'NR>=9935 && NR<=10050 && /getStyle|setStyle|__style|getTextStyle|__textStyle/' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(awk 'NR>=4560 && NR<=4615 && /^class /' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(awk 'NR>=9068 && NR<=9935 && \\(/getStyle\\\\\\(\\\\\\)|setStyle\\\\\\(|__style/\\)' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(awk 'NR>=9935 && NR<=10090' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(awk 'NR>=9068 && NR<=9935' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(cd *)",
+      "Bash(awk 'NR>=4256 && NR<=4275' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(awk 'NR>=3395 && NR<=3412' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(awk 'NR>=10195 && NR<=10228' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(awk '/function \\\\$applyNodeReplacement/,/^}/' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(awk 'NR>=9935 && NR<=10062' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(awk 'NR>=11114 && NR<=11140' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(awk 'NR>=9300 && NR<=9420' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(unzip -p /tmp/qt_test.docx word/document.xml)",
+      "Bash(awk 'NR>=440 && NR<=477' node_modules/@lexical/selection/LexicalSelection.dev.mjs)",
+      "Bash(echo \"EXIT: $?\")"
     ]
   }
 }

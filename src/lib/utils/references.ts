@@ -469,3 +469,191 @@ export function formatCitation(ref: Reference): string {
     else if (ref.url) parts.push(ref.url);
     return parts.join(" ").replace(/\s+/g, " ").trim();
 }
+
+// ── Bibliography (reference-list) styles ──────────────────────────────────
+// Full-entry formatting for the auto-maintained "References" section, offered
+// as switchable styles when the reader double-clicks the list.
+export type BibStyle = "apa" | "mla" | "chicago" | "ieee" | "harvard";
+
+export interface BibliographyStyle {
+    id: BibStyle;
+    label: string;
+}
+
+export const BIBLIOGRAPHY_STYLES: BibliographyStyle[] = [
+    { id: "apa", label: "APA (7th)" },
+    { id: "mla", label: "MLA (9th)" },
+    { id: "chicago", label: "Chicago" },
+    { id: "ieee", label: "IEEE" },
+    { id: "harvard", label: "Harvard" },
+];
+
+/** Reference-list styles that render a "[n]" marker rather than hanging indent. */
+export function isNumberedBibStyle(style: BibStyle): boolean {
+    return style === "ieee";
+}
+
+function parseName(author: string): { last: string; firsts: string[] } {
+    if (author.includes(",")) {
+        const [last, rest] = author.split(",");
+        return {
+            last: last.trim(),
+            firsts: (rest || "").trim().split(/\s+/).filter(Boolean),
+        };
+    }
+    const parts = author.trim().split(/\s+/).filter(Boolean);
+    const last = parts.pop() || author.trim();
+    return { last, firsts: parts };
+}
+
+function initialsOf(firsts: string[]): string {
+    return firsts
+        .map((f) => (f[0] ? `${f[0].toUpperCase()}.` : ""))
+        .filter(Boolean)
+        .join(" ");
+}
+
+// "Last, F. M." — surname first (APA / Harvard style names).
+function surnameInitials(a: string): string {
+    const { last, firsts } = parseName(a);
+    const ini = initialsOf(firsts);
+    return ini ? `${last}, ${ini}` : last;
+}
+
+// "F. M. Last" — initials first (IEEE style names).
+function initialsSurname(a: string): string {
+    const { last, firsts } = parseName(a);
+    const ini = initialsOf(firsts);
+    return ini ? `${ini} ${last}` : last;
+}
+
+// "Last, First Middle" — full given names, surname first (MLA / Chicago lead).
+function surnameFullFirst(a: string): string {
+    const { last, firsts } = parseName(a);
+    return firsts.length ? `${last}, ${firsts.join(" ")}` : last;
+}
+
+// "First Middle Last" — full given names, natural order.
+function fullNatural(a: string): string {
+    const { last, firsts } = parseName(a);
+    return firsts.length ? `${firsts.join(" ")} ${last}` : last;
+}
+
+function apaAuthors(authors: string[]): string {
+    if (!authors.length) return "";
+    const names = authors.map(surnameInitials);
+    if (names.length === 1) return names[0];
+    return `${names.slice(0, -1).join(", ")}, & ${names[names.length - 1]}`;
+}
+
+function harvardAuthors(authors: string[]): string {
+    if (!authors.length) return "";
+    const names = authors.map(surnameInitials);
+    if (names.length === 1) return names[0];
+    return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+function mlaAuthors(authors: string[]): string {
+    if (!authors.length) return "";
+    if (authors.length === 1) return surnameFullFirst(authors[0]);
+    if (authors.length === 2)
+        return `${surnameFullFirst(authors[0])}, and ${fullNatural(authors[1])}`;
+    return `${surnameFullFirst(authors[0])}, et al.`;
+}
+
+function chicagoAuthors(authors: string[]): string {
+    if (!authors.length) return "";
+    if (authors.length === 1) return surnameFullFirst(authors[0]);
+    if (authors.length <= 3) {
+        const rest = authors.slice(1).map(fullNatural);
+        return `${surnameFullFirst(authors[0])}, and ${rest.join(", and ")}`;
+    }
+    return `${surnameFullFirst(authors[0])} et al.`;
+}
+
+function ieeeAuthors(authors: string[]): string {
+    if (!authors.length) return "";
+    const names = authors.map(initialsSurname);
+    if (names.length === 1) return names[0];
+    if (names.length <= 3)
+        return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+    return `${initialsSurname(authors[0])} et al.`;
+}
+
+function linkOf(ref: Reference): string {
+    if (ref.doi) return `https://doi.org/${ref.doi}`;
+    return ref.url || "";
+}
+
+function joinParts(parts: string[]): string {
+    return parts
+        .filter(Boolean)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+/**
+ * Format one reference as a full bibliography entry in the given style. The
+ * numeric marker (e.g. "[1]") is added by the renderer, not here.
+ */
+export function formatBibliographyEntry(ref: Reference, style: BibStyle): string {
+    const title = ref.title;
+    const container = ref.container;
+    const link = linkOf(ref);
+    const year = ref.year;
+
+    switch (style) {
+        case "mla": {
+            const a = mlaAuthors(ref.authors);
+            return joinParts([
+                a ? `${a}.` : "",
+                title ? `“${title}.”` : "",
+                container ? `${container},` : "",
+                year ? `${year}.` : "",
+                link,
+            ]);
+        }
+        case "chicago": {
+            const a = chicagoAuthors(ref.authors);
+            return joinParts([
+                a ? `${a}.` : "",
+                title ? `“${title}.”` : "",
+                container ? `${container}` : "",
+                year ? `(${year}).` : "",
+                link,
+            ]);
+        }
+        case "ieee": {
+            const a = ieeeAuthors(ref.authors);
+            return joinParts([
+                a ? `${a},` : "",
+                title ? `“${title},”` : "",
+                container ? `${container},` : "",
+                year ? `${year}.` : "",
+                link,
+            ]);
+        }
+        case "harvard": {
+            const a = harvardAuthors(ref.authors);
+            return joinParts([
+                a ? `${a}` : "",
+                year ? `(${year})` : "",
+                title ? `‘${title}’,` : "",
+                container ? `${container}.` : "",
+                link,
+            ]);
+        }
+        case "apa":
+        default: {
+            const a = apaAuthors(ref.authors);
+            return joinParts([
+                a ? `${a}` : "",
+                `(${year || "n.d."}).`,
+                title ? `${title}.` : "",
+                container ? `${container}.` : "",
+                link,
+            ]);
+        }
+    }
+}

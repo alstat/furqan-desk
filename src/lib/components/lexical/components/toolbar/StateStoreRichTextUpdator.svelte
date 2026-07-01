@@ -22,6 +22,7 @@
 	import { $isCodeNode as isCodeNode, CODE_LANGUAGE_MAP } from '@lexical/code';
 
 	import { getActiveEditor, getEditor } from '$lexical/core/composerContext.js';
+	import { $getSelectionBlockLineHeight as getSelectionBlockLineHeight } from '$lexical/core/blockStyle.js';
 	import type { Writable } from 'svelte/store';
 	import getSelectedNode from './getSelectionInfo.js';
 	import { $isLinkNode as isLinkNode } from '@lexical/link';
@@ -102,7 +103,10 @@
 					const type = parentList ? parentList.getListType() : element.getListType();
 					$blockType = type;
 				} else {
-					const type = isHeadingNode(element) ? element.getTag() : element.getType();
+					const rawType = isHeadingNode(element) ? element.getTag() : element.getType();
+					// ExtendedParagraphNode is a paragraph as far as the toolbar is
+					// concerned; map its type back so it shows as "Normal".
+					const type = rawType === 'extended-paragraph' ? 'paragraph' : rawType;
 					if (type in blockTypeToBlockName) {
 						$blockType = type as keyof typeof blockTypeToBlockName;
 					}
@@ -122,7 +126,9 @@
 		//TODO: create a separate toolbar updator that doesn't suppprt tables (doesn't use isTableSelection) and save on package size
 		if (isRangeSelection(selection) || isTableSelection(selection)) {
 			$fontSize = getSelectionStyleValueForProperty(selection, 'font-size', '18px');
-			$lineHeight = getSelectionStyleValueForProperty(selection, 'line-height', '');
+			// Line spacing is a block-level (paragraph) style, so read it from the
+			// containing block rather than from inline text style.
+			$lineHeight = getSelectionBlockLineHeight();
 		}
 	};
 

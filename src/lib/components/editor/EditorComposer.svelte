@@ -3,6 +3,7 @@
     import CodePlugin from "$lexical/core/plugins/CodeHighlighter/CodePlugin.svelte";
     import { EquationNode } from "$lexical/core/plugins/Equation/EquationNode";
     import EquationPlugin from "$lexical/core/plugins/Equation/EquationPlugin.svelte";
+    import { ReferenceListNode } from "$lexical/core/plugins/ReferenceList/ReferenceListNode";
     import { QuranBlockNode } from "$lexical/core/plugins/Quran/QuranBlockNode";
     import QuranBlockPlugin from "$lexical/core/plugins/Quran/QuranBlockPlugin.svelte";
     import { JuliaCellNode } from "$lexical/core/plugins/JuliaCell/JuliaCellNode";
@@ -58,7 +59,11 @@
         $createParagraphNode as createParagraphNode,
     } from "../lexical";
 
+    import { ParagraphNode } from "lexical";
+    import { ExtendedParagraphNode } from "$lexical/core/ExtendedParagraphNode";
     import CaptionEditorHistoryPlugin from "$lexical/core/plugins/Image/CaptionEditorHistoryPlugin.svelte";
+    import LinkPlugin from "$lexical/core/plugins/link/LinkPlugin.svelte";
+    import FloatingLinkEditorPlugin from "$lexical/core/plugins/link/FloatingLinkEditorPlugin.svelte";
     import SlashCommandPlugin from "$lexical/core/plugins/SlashCommand/SlashCommandPlugin.svelte";
     import CiteMenuPlugin from "$lexical/core/plugins/Cite/CiteMenuPlugin.svelte";
     import EditorStorePlugin from "./EditorStorePlugin.svelte";
@@ -258,6 +263,17 @@
         namespace: "Editor",
         theme: PlaygroundEditorTheme,
         nodes: [
+            // Replace the core paragraph with our subclass so block-level styles
+            // (e.g. line spacing) render and persist. ExtendedParagraphNode must
+            // also be registered on its own (its type is 'extended-paragraph') so
+            // Lexical can construct it; withKlass keeps $isParagraphNode /
+            // instanceof checks working across plugins.
+            ExtendedParagraphNode,
+            {
+                replace: ParagraphNode,
+                with: () => new ExtendedParagraphNode(),
+                withKlass: ExtendedParagraphNode,
+            },
             HeadingNode,
             ListNode,
             ListItemNode,
@@ -265,6 +281,7 @@
             HorizontalRuleNode,
             ImageNode,
             EquationNode,
+            ReferenceListNode,
             QuranBlockNode,
             JuliaCellNode,
             CodeNode,
@@ -313,11 +330,13 @@
             <CodePlugin />
             <TablePlugin />
             <TableCellResizerPlugin />
+            <LinkPlugin />
             {#if editorShell}
                 <TableActionMenuPlugin
                     anchorElem={editorShell}
                     cellMerge={true}
                 />
+                <FloatingLinkEditorPlugin anchorElem={editorShell} />
             {/if}
             <MarkdownShortcutPlugin transformers={ALL_TRANSFORMERS} />
             <MarkdownPastePlugin transformers={ALL_TRANSFORMERS} />

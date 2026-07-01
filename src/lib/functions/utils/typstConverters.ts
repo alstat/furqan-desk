@@ -50,6 +50,7 @@ function nodeToTypst(node: any): string {
         case 'linebreak':
             return '\\\n';
         case 'paragraph':
+        case 'extended-paragraph':
             return inlineChildren(node.children ?? []);
         case 'heading': {
             const tag    = (node.tag as string) ?? 'h1';
@@ -93,6 +94,7 @@ function nodeToTypst(node: any): string {
 function blockToTypst(node: any): string {
     switch (node.type) {
         case 'paragraph':
+        case 'extended-paragraph':
             return inlineChildren(node.children ?? []);
         case 'heading': {
             const tag    = (node.tag as string) ?? 'h1';

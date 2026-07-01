@@ -22,7 +22,7 @@
 }
 .SL_Theme__paragraph {
   margin: 0;
-  line-height: 1.3rem;
+  line-height: 1.6;
   position: relative;
 }
 .SL_Theme__quote {
@@ -58,6 +58,14 @@
   line-height: 2rem;
   margin: 0;
   padding-top: 10px;
+}
+/* Headings need explicit dark-mode colors: h1 hardcodes a near-black color,
+   and h2/h3 otherwise inherit the body text color. Use the editor's prominent
+   text color so headings stay legible (and stand out) on the dark background. */
+.dark .SL_Theme__h1,
+.dark .SL_Theme__h2,
+.dark .SL_Theme__h3 {
+  color: #c6d0f5;
 }
 .SL_Theme__indent {
   --lexical-indent-base-value: 40px;
