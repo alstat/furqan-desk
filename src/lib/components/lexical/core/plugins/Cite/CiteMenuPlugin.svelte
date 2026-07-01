@@ -38,6 +38,7 @@
         citationStyles,
         shortAuthorLabel,
     } from "$lib/utils/references";
+    import { $addReferenceToList as addReferenceToList } from "$lexical/core/plugins/ReferenceList/ReferenceListNode";
 
     const editor = getEditor();
 
@@ -110,22 +111,32 @@
         search = "";
     }
 
-    function pickReference(ref: Reference) {
+    async function pickReference(ref: Reference) {
         selectedRef = ref;
         styleIndex = 0;
         step = "style";
+        // The search input (which held keyboard focus) is unmounted in the
+        // style step, so move focus to the menu container — otherwise arrow/
+        // Enter keys would land on <body> and the user would be forced to the
+        // mouse to pick a style.
+        await tick();
+        menuEl?.focus();
     }
 
-    function back() {
+    async function back() {
         step = "ref";
         selectedRef = null;
         styleIndex = 0;
+        // The search input is re-mounted when we return to the ref step; wait
+        // for it to exist before restoring focus.
+        await tick();
         searchInput?.focus();
     }
 
     function applyStyle(styleText: string) {
         const key = anchorNodeKey;
         const offset = triggerOffset;
+        const refId = selectedRef?.id ?? null;
         closeMenu();
         editor.update(() => {
             const node = getNodeByKey(key);
@@ -137,6 +148,9 @@
             if (isRangeSelection(fresh)) {
                 fresh.anchor.set(fresh.focus.key, fresh.focus.offset, fresh.focus.type);
             }
+            // Mirror the citation into the auto-maintained "References" section
+            // at the bottom of the document (deduplicated, in citation order).
+            if (refId) addReferenceToList(refId);
         });
         editor.focus();
     }
@@ -222,8 +236,9 @@
     <div
         use:portal
         bind:this={menuEl}
+        tabindex="-1"
         transition:fly={{ y: 4, duration: 120, opacity: 0 }}
-        class="fixed z-[60] flex w-72 flex-col overflow-hidden rounded-3xl border border-brand-sand-200 bg-white shadow-xl dark:border-[#414559] dark:bg-[#303446] dark:shadow-black/40"
+        class="fixed z-[60] flex w-72 flex-col overflow-hidden rounded-3xl border border-brand-sand-200 bg-white shadow-xl outline-none dark:border-[#414559] dark:bg-[#303446] dark:shadow-black/40"
         style="top: {menuTop}px; left: {menuLeft}px;"
         onkeydown={onKeydown}
     >

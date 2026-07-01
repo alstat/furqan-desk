@@ -18,10 +18,18 @@ import {
     type ParagraphChild,
 } from "docx";
 import { readFile } from "@tauri-apps/plugin-fs";
+import { get } from "svelte/store";
 import { codeBlockParagraphs } from "./docxCodeHighlight";
 import { cssColorToHex, textRunStyleFromNode } from "./docxInlineStyle";
 import { getSurahNameTashkeel } from "$lib/data/surah-names-tashkeel";
 import { juliaPlotIframes } from "$lib/stores/julia-notebook";
+import { references } from "$lib/stores/references.store";
+import {
+    type BibStyle,
+    type Reference,
+    formatBibliographyEntry,
+    isNumberedBibStyle,
+} from "$lib/utils/references";
 
 type BlockChild = Paragraph | Table;
 type InlineStyle = { italic?: boolean; defaultColor?: string; hyperlink?: boolean };
@@ -267,6 +275,9 @@ async function blockForNode(
             const blocks = quranBlockBlocks(node);
             console.log("[docx-export] quran-block produced", blocks.length, "blocks");
             return blocks;
+        }
+        case "reference-list": {
+            return referenceListBlocks(node);
         }
         case "tablerow":
         case "tablecell": {
@@ -994,6 +1005,48 @@ function cssLengthToDxa(value: string): number | undefined {
     const unit = (match[2] ?? "px").toLowerCase();
     const pt = unit === "pt" ? n : unit === "px" ? n * 0.75 : n * 12;
     return Math.round(pt * 20);
+}
+
+// ── Reference list ──────────────────────────────────────────────────────────
+
+// Render the auto-maintained "References" section. The Lexical node only
+// stores the cited reference ids and the chosen style, so the actual entries
+// are resolved from the reference library store at export time and formatted
+// in the selected bibliography style.
+function referenceListBlocks(node: SerializedNode): BlockChild[] {
+    const refIds = Array.isArray(node.refIds) ? (node.refIds as string[]) : [];
+    const style = (typeof node.style === "string" ? node.style : "apa") as BibStyle;
+
+    const byId = new Map(get(references).map((r) => [r.id, r]));
+    const entries = refIds
+        .map((id) => byId.get(id))
+        .filter((r): r is Reference => !!r);
+
+    const out: BlockChild[] = [];
+    out.push(
+        new Paragraph({
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 240, after: 120 },
+            children: [new TextRun({ text: "References" })],
+        }),
+    );
+
+    const numbered = isNumberedBibStyle(style);
+    entries.forEach((ref, i) => {
+        const text = formatBibliographyEntry(ref, style);
+        const runs: ParagraphChild[] = numbered
+            ? [new TextRun({ text: `[${i + 1}]\t${text}` })]
+            : [new TextRun({ text })];
+        out.push(
+            new Paragraph({
+                children: runs,
+                spacing: { after: 60 },
+                indent: { left: 360, hanging: 360 },
+            }),
+        );
+    });
+
+    return out;
 }
 
 // ── Quran block ─────────────────────────────────────────────────────────────

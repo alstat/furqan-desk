@@ -569,6 +569,11 @@ export const en: Record<string, string> = {
   "cite.empty": "No references yet — add some in the References panel.",
   "cite.no_match": "No matching references.",
   "cite.back": "Back to references",
+  // Auto-maintained References section (reference-list node)
+  "editor.reference_list.title": "References",
+  "editor.reference_list.empty": "Cited references will appear here.",
+  "editor.reference_list.choose_style": "Citation style",
+  "editor.reference_list.dblclick_hint": "Double-click to change citation style",
   // Manuscript viewer
   "manuscript.title": "Manuscripts",
   "manuscript.title_ayah": "Manuscripts — Surah {surah}, Ayah {ayah}",
