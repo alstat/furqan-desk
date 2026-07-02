@@ -1013,4 +1013,8 @@ export const ru: Record<string, string> = {
     "editor.citation.text_placeholder": "Текст цитаты",
     "editor.citation.dblclick_hint": "Дважды щёлкните, чтобы отредактировать эту цитату",
     "editor.citation.missing_ref": "Этого источника больше нет в вашей библиотеке.",
+    "settings.ai_tools.autocomplete": "ИИ-автодополнение",
+    "settings.ai_tools.autocomplete.desc": "Предлагает продолжение текста прямо в строке во время набора в редакторах. Нажмите Tab, чтобы принять, Esc — чтобы отклонить.",
+    "settings.ai_tools.autocomplete_model": "Модель автодополнения",
+    "settings.ai_tools.autocomplete_model.desc": "Модель, используемая для встроенных подсказок автодополнения.",
 };

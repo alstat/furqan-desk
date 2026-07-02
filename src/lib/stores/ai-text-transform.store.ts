@@ -162,7 +162,7 @@ export async function runAiTextTransform({
     return replacement;
 }
 
-async function safeReadJson(res: Response): Promise<Record<string, unknown> | null> {
+export async function safeReadJson(res: Response): Promise<Record<string, unknown> | null> {
     try {
         return (await res.json()) as Record<string, unknown>;
     } catch {
@@ -170,7 +170,10 @@ async function safeReadJson(res: Response): Promise<Record<string, unknown> | nu
     }
 }
 
-async function readSseText(body: ReadableStream<Uint8Array>): Promise<string> {
+export async function readSseText(
+    body: ReadableStream<Uint8Array>,
+    onAccum?: (textSoFar: string) => void,
+): Promise<string> {
     const reader = body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
@@ -192,7 +195,10 @@ async function readSseText(body: ReadableStream<Uint8Array>): Promise<string> {
             try {
                 const json = JSON.parse(payload);
                 const delta = json.choices?.[0]?.delta?.content;
-                if (typeof delta === "string") output += delta;
+                if (typeof delta === "string") {
+                    output += delta;
+                    onAccum?.(output);
+                }
             } catch {
                 /* ignore non-delta chunks */
             }
