@@ -13,6 +13,7 @@
     import ImagePlugin from "$lexical/core/plugins/Image/ImagePlugin.svelte";
     import EquationPlugin from "$lexical/core/plugins/Equation/EquationPlugin.svelte";
     import AiSelectionPlugin from "$lexical/core/plugins/AiSelectionPlugin.svelte";
+    import AiAutocompletePlugin from "$lexical/core/plugins/AiAutocompletePlugin.svelte";
     import ListPlugin from "$lexical/core/plugins/ListPlugin.svelte";
     import CheckListPlugin from "$lexical/core/plugins/CheckListPlugin.svelte";
     import HorizontalRulePlugin from "$lexical/core/plugins/HorizontalRulePlugin.svelte";
@@ -71,6 +72,7 @@
             <ImagePlugin />
             <EquationPlugin />
             <AiSelectionPlugin />
+            <AiAutocompletePlugin />
             <ActionBar />
         </div>
     </div>

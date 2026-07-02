@@ -40,6 +40,7 @@
         type Completion,
     } from "@codemirror/autocomplete";
     import { TYPST_COMPLETIONS } from "$lib/completions/typst";
+    import { aiAutocomplete } from "$lib/codemirror/aiAutocomplete";
     import { t } from "$lib/i18n";
     import { references } from "$lib/stores/references.store";
     import { shortAuthorLabel } from "$lib/utils/references";
@@ -505,6 +506,9 @@
         };
     };
 
+    // Inline AI ghost-text completions (Pro-gated; Settings → AI Tools).
+    const typstAiAutocomplete = aiAutocomplete("typst");
+
     const typstCompletionExtension = autocompletion({
         override: [
             typstCompletionSource,
@@ -692,7 +696,7 @@
         <CodeMirrorEditor
             value={effectiveTab?.content ?? ""}
             language="typst"
-            extensions={[typstCompletionExtension]}
+            extensions={[typstCompletionExtension, typstAiAutocomplete]}
             {lineWrap}
             aiSelectionTools={true}
             {aiContextPrompt}

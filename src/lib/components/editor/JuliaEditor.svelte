@@ -34,6 +34,7 @@
         type CompletionSource,
     } from "@codemirror/autocomplete";
     import { JULIA_COMPLETIONS } from "$lib/completions/julia";
+    import { aiAutocomplete } from "$lib/codemirror/aiAutocomplete";
     import { t } from "$lib/i18n";
 
     /**
@@ -363,6 +364,9 @@
         maxRenderedOptions: 50,
     });
 
+    // Inline AI ghost-text completions (Pro-gated; Settings → AI Tools).
+    const juliaAiAutocomplete = aiAutocomplete("julia");
+
     // ── Content change handler ────────────────────────────────────────────────
 
     function handleInput(newContent: string) {
@@ -646,7 +650,7 @@
                     value={effectiveTab.content}
                     language="julia"
                     extraKeymap={juliaKeymap}
-                    extensions={[juliaCompletionExtension]}
+                    extensions={[juliaCompletionExtension, juliaAiAutocomplete]}
                     {lineWrap}
                     aiSelectionTools={true}
                     {aiContextPrompt}

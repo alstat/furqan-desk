@@ -276,6 +276,7 @@
         { tag: tags.heading3, color: "#f29e74", fontWeight: "600" },
         { tag: tags.strong, fontWeight: "700" },
         { tag: tags.emphasis, fontStyle: "italic" },
+        { tag: tags.monospace, color: "#4cbf99" },
         { tag: tags.link, color: "#399ee6", textDecoration: "underline" },
         { tag: tags.url, color: "#399ee6" },
         { tag: tags.meta, color: "#61aeee" },
@@ -435,6 +436,7 @@
         { tag: tags.heading3, color: "#f29e74", fontWeight: "600" },
         { tag: tags.strong, fontWeight: "700" },
         { tag: tags.emphasis, fontStyle: "italic" },
+        { tag: tags.monospace, color: "#95e6cb" },
         { tag: tags.link, color: "#5ccfe6", textDecoration: "underline" },
         { tag: tags.url, color: "#5ccfe6" },
         { tag: tags.meta, color: "#5ccfe6" },
@@ -636,6 +638,7 @@
             { tag: tags.heading3, color: p.heading, fontWeight: "600" },
             { tag: tags.strong, fontWeight: "700" },
             { tag: tags.emphasis, fontStyle: "italic" },
+            { tag: tags.monospace, color: p.special },
             { tag: tags.link, color: p.link, textDecoration: "underline" },
             { tag: tags.url, color: p.link },
             { tag: tags.meta, color: p.meta },
@@ -782,11 +785,31 @@
         blockComment: number;
         inString: boolean;
         inMath: boolean;
+        // Inline markup state. `raw` holds the opening fence's backtick count
+        // (0 = none) so ` inline raw and ``` fenced raw close on their own fence.
+        strong: boolean;
+        emph: boolean;
+        raw: number;
     };
+
+    // Combined style for text inside *strong* / _emphasis_ runs.
+    function typstMarkTag(state: TypstState): string | null {
+        if (state.strong && state.emph) return "strong emphasis";
+        if (state.strong) return "strong";
+        if (state.emph) return "emphasis";
+        return null;
+    }
 
     const typstLanguage = StreamLanguage.define<TypstState>({
         name: "typst",
-        startState: () => ({ blockComment: 0, inString: false, inMath: false }),
+        startState: () => ({
+            blockComment: 0,
+            inString: false,
+            inMath: false,
+            strong: false,
+            emph: false,
+            raw: 0,
+        }),
         copyState: (s) => ({ ...s }),
         // Custom token style for function calls (`#align(`, `text(`).
         tokenTable: {
@@ -806,6 +829,19 @@
                 }
                 stream.next();
                 return "comment";
+            }
+
+            // Inside raw `…` / ```…``` — verbatim until the matching fence
+            if (state.raw > 0) {
+                const fence = "`".repeat(state.raw);
+                while (!stream.eol()) {
+                    if (stream.match(fence)) {
+                        state.raw = 0;
+                        return "monospace";
+                    }
+                    stream.next();
+                }
+                return "monospace";
             }
 
             // Inside a string
@@ -869,12 +905,75 @@
                 return "atom";
             }
 
+            // Raw text: `inline` or ```fenced``` (closes on the same fence).
+            if (stream.peek() === "`") {
+                let n = 0;
+                while (stream.eat("`")) n++;
+                if (n === 2) return "monospace"; // `` — empty inline raw
+                state.raw = n;
+                return "monospace";
+            }
+
+            // Escapes render the next char literally: \*, \_, \#, \u{1f600}…
+            if (stream.match(/^\\u\{[0-9a-fA-F]*\}/) || stream.match(/^\\./)) {
+                return "escape";
+            }
+
             // Headings: = Title, == Section, === Subsection (must be at line start)
             if (stream.sol() && stream.match(/^={1,6} /)) {
                 const level = Math.min(stream.current().trim().length, 6);
                 stream.skipToEnd();
                 return `heading${level}`;
             }
+
+            // Term list item: "/ Term: description" — marker + term in bold,
+            // like Typst renders it.
+            if (stream.sol() && stream.match(/^\s*\/\s+[^:\n]+:/)) {
+                return "strong";
+            }
+
+            // List markers at line start: "- " bullets, "+ " / "1. " enums.
+            if (stream.sol() && stream.match(/^\s*(?:[-+]|\d+\.)\s/)) {
+                return "meta";
+            }
+
+            // Strong *…* / emphasis _…_ delimiters. An opening delimiter must
+            // touch its content (Typst-style), which keeps code-mode
+            // multiplication (`2 * 3`) and stray underscores from toggling.
+            if (stream.match("*")) {
+                if (!state.strong && /^(\s|$)/.test(stream.peek() ?? "")) {
+                    return typstMarkTag(state); // just text, not a delimiter
+                }
+                state.strong = !state.strong;
+                return state.emph ? "strong emphasis" : "strong";
+            }
+            if (stream.match("_")) {
+                if (!state.emph && /^(\s|$)/.test(stream.peek() ?? "")) {
+                    return typstMarkTag(state);
+                }
+                state.emph = !state.emph;
+                return state.strong ? "strong emphasis" : "emphasis";
+            }
+
+            // Labels <intro> and references/citations @intro, @netwok2020.
+            if (stream.match(/^<[a-zA-Z_][\w.-]*>/)) return "className";
+            if (stream.match(/^@[a-zA-Z_][\w:.-]*/)) return "link";
+
+            // Inside *strong* / _emphasis_: sweep plain content in one token so
+            // the whole span renders bold/italic. Stops at chars that may open
+            // nested markup (raw, math, code, escapes…), handled by the rules
+            // above on the next call.
+            if (state.strong || state.emph) {
+                if (stream.match(/^[^*_`$#"\\<@/\n]+/)) {
+                    return typstMarkTag(state);
+                }
+            }
+
+            // Auto-linked URLs
+            if (stream.match(/^https?:\/\/[^\s\])"]+/)) return "url";
+
+            // Shorthands: ~ (non-breaking space), -- (en dash), --- (em dash)
+            if (stream.match(/^(?:~|---?)/)) return "escape";
 
             // Hash functions / keywords: #funcname, #let, #set, ...
             if (stream.match(/^#[a-zA-Z_][a-zA-Z0-9_-]*/)) {
@@ -895,6 +994,8 @@
                     "not",
                     "and",
                     "or",
+                    "in",
+                    "as",
                     "true",
                     "false",
                     "none",
@@ -928,11 +1029,14 @@
             }
 
             stream.next();
-            return null;
+            // Unmatched chars inside an emphasis span keep its styling.
+            return typstMarkTag(state);
         },
 
-        blankLine(_state) {
-            /* nothing */
+        blankLine(state) {
+            // A blank line ends the paragraph — and any unclosed emphasis.
+            state.strong = false;
+            state.emph = false;
         },
     });
 

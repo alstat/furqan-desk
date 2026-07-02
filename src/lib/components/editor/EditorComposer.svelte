@@ -10,6 +10,7 @@
     import { JuliaCellNode } from "$lexical/core/plugins/JuliaCell/JuliaCellNode";
     import JuliaCellPlugin from "$lexical/core/plugins/JuliaCell/JuliaCellPlugin.svelte";
     import AiSelectionPlugin from "$lexical/core/plugins/AiSelectionPlugin.svelte";
+    import AiAutocompletePlugin from "$lexical/core/plugins/AiAutocompletePlugin.svelte";
     // import {
     // 	Composer,
     // 	ContentEditable,
@@ -329,6 +330,7 @@
             </ImagePlugin>
             <EquationPlugin />
             <AiSelectionPlugin />
+            <AiAutocompletePlugin />
             <CodePlugin />
             <TablePlugin />
             <TableCellResizerPlugin />

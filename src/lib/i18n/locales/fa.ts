@@ -1013,4 +1013,8 @@ export const fa: Record<string, string> = {
     "editor.citation.text_placeholder": "متن ارجاع",
     "editor.citation.dblclick_hint": "برای ویرایش این ارجاع دوبار کلیک کنید",
     "editor.citation.missing_ref": "این منبع دیگر در کتابخانه شما موجود نیست.",
+    "settings.ai_tools.autocomplete": "تکمیل خودکار هوش مصنوعی",
+    "settings.ai_tools.autocomplete.desc": "هنگام تایپ در ویرایشگرها ادامه متن را به صورت درون‌خطی پیشنهاد می‌دهد. برای پذیرش Tab و برای رد کردن Esc را فشار دهید.",
+    "settings.ai_tools.autocomplete_model": "مدل تکمیل خودکار",
+    "settings.ai_tools.autocomplete_model.desc": "مدل مورد استفاده برای پیشنهادهای تکمیل خودکار درون‌خطی.",
 };
