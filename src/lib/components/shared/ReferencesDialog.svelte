@@ -9,6 +9,7 @@
     import { readDir, readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
     import { t } from "$lib/i18n";
     import { copyToClipboard } from "$lib/utils/clipboard";
+    import { openFolderPath, folderRefreshTrigger } from "$lib/stores/tabs.store";
     import {
         references,
         referencesOpen,
@@ -33,6 +34,10 @@
     type Mode = "paste" | "import" | "search";
     let mode = $state<Mode>("paste");
 
+    // The add-reference area (tabs + inputs) can be collapsed so the list gets
+    // the full panel height; the header toggle brings it back.
+    let showInput = $state(true);
+
     let pasteText = $state("");
     let idText = $state("");
     let busy = $state(false);
@@ -40,11 +45,33 @@
     let copiedId = $state<string | null>(null);
     let copiedKeyId = $state<string | null>(null);
 
-    // ── Floating panel position / drag ───────────────────────────────────
+    // ── Filter the visible list ───────────────────────────────────────────
+    let filterText = $state("");
+    let filteredReferences = $derived.by(() => {
+        const q = filterText.trim().toLowerCase();
+        if (!q) return $references;
+        return $references.filter(
+            (r) =>
+                r.title.toLowerCase().includes(q) ||
+                r.container.toLowerCase().includes(q) ||
+                r.year.toLowerCase().includes(q) ||
+                r.citeKey.toLowerCase().includes(q) ||
+                r.doi.toLowerCase().includes(q) ||
+                r.identifier.toLowerCase().includes(q) ||
+                r.authors.some((a) => a.toLowerCase().includes(q)),
+        );
+    });
+
+    // ── Floating panel position / drag / resize ──────────────────────────
     const PANEL_W = 380;
     const PANEL_H = 600;
+    const MIN_W = 300;
+    const MIN_H = 360;
     let x = $state(0);
     let y = $state(0);
+    // Current size — seeded from the defaults on open, then user-resizable.
+    let panelW = $state(PANEL_W);
+    let panelH = $state(PANEL_H);
     let zIndex = $state(500);
     let isDragging = $state(false);
     let dragStartX = 0,
@@ -59,9 +86,12 @@
             // way the Table of Contents panel does.
             const rect = $referencesAnchorRect;
             const h = Math.min(PANEL_H, window.innerHeight * 0.85);
+            // A fresh open resets to the default size, discarding any prior resize.
+            panelW = Math.min(PANEL_W, window.innerWidth - 16);
+            panelH = h;
             x = rect
-                ? Math.min(rect.right + 8, window.innerWidth - PANEL_W - 8)
-                : Math.max(8, window.innerWidth - PANEL_W - 24);
+                ? Math.min(rect.right + 8, window.innerWidth - panelW - 8)
+                : Math.max(8, window.innerWidth - panelW - 24);
             y = rect
                 ? Math.max(8, Math.min(rect.top, window.innerHeight - h - 8))
                 : Math.max(8, (window.innerHeight - h) / 2);
@@ -85,7 +115,7 @@
     function onDrag(e: PointerEvent) {
         x = Math.max(
             0,
-            Math.min(window.innerWidth - PANEL_W, startX + (e.clientX - dragStartX)),
+            Math.min(window.innerWidth - panelW, startX + (e.clientX - dragStartX)),
         );
         y = Math.max(
             0,
@@ -96,9 +126,74 @@
         isDragging = false;
         window.removeEventListener("pointermove", onDrag);
     }
+
+    // ── Resize (8 handles, mirrors the File Explorer panel) ───────────────
+    type ResizeDir = { e: boolean; w: boolean; n: boolean; s: boolean };
+    const resizeHandles: Array<{ cls: string; dir: ResizeDir }> = [
+        { cls: "resize-n", dir: { n: true, s: false, e: false, w: false } },
+        { cls: "resize-s", dir: { n: false, s: true, e: false, w: false } },
+        { cls: "resize-e", dir: { n: false, s: false, e: true, w: false } },
+        { cls: "resize-w", dir: { n: false, s: false, e: false, w: true } },
+        { cls: "resize-ne", dir: { n: true, s: false, e: true, w: false } },
+        { cls: "resize-se", dir: { n: false, s: true, e: true, w: false } },
+        { cls: "resize-sw", dir: { n: false, s: true, e: false, w: true } },
+        { cls: "resize-nw", dir: { n: true, s: false, e: false, w: true } },
+    ];
+    let _resizeDir: ResizeDir = { e: false, w: false, n: false, s: false };
+    let _resizeStartX = 0,
+        _resizeStartY = 0,
+        _resizeStartW = 0,
+        _resizeStartH = 0,
+        _resizeStartPanelX = 0,
+        _resizeStartPanelY = 0;
+
+    function startResize(e: PointerEvent, dir: ResizeDir) {
+        e.preventDefault();
+        e.stopPropagation();
+        zIndex = bringToFront();
+        _resizeDir = dir;
+        _resizeStartX = e.clientX;
+        _resizeStartY = e.clientY;
+        _resizeStartW = panelW;
+        _resizeStartH = panelH;
+        _resizeStartPanelX = x;
+        _resizeStartPanelY = y;
+        document.body.style.userSelect = "none";
+        window.addEventListener("pointermove", onResize);
+        window.addEventListener("pointerup", stopResize, { once: true });
+    }
+    function onResize(e: PointerEvent) {
+        const dx = e.clientX - _resizeStartX;
+        const dy = e.clientY - _resizeStartY;
+        let newW = _resizeStartW;
+        let newH = _resizeStartH;
+        let newX = _resizeStartPanelX;
+        let newY = _resizeStartPanelY;
+        if (_resizeDir.e) newW = Math.max(MIN_W, _resizeStartW + dx);
+        if (_resizeDir.s) newH = Math.max(MIN_H, _resizeStartH + dy);
+        if (_resizeDir.w) {
+            newW = Math.max(MIN_W, _resizeStartW - dx);
+            newX = _resizeStartPanelX + (_resizeStartW - newW);
+        }
+        if (_resizeDir.n) {
+            newH = Math.max(MIN_H, _resizeStartH - dy);
+            newY = _resizeStartPanelY + (_resizeStartH - newH);
+        }
+        panelW = newW;
+        panelH = newH;
+        x = newX;
+        y = newY;
+    }
+    function stopResize() {
+        document.body.style.userSelect = "";
+        window.removeEventListener("pointermove", onResize);
+    }
+
     onDestroy(() => {
-        if (typeof window !== "undefined")
+        if (typeof window !== "undefined") {
             window.removeEventListener("pointermove", onDrag);
+            window.removeEventListener("pointermove", onResize);
+        }
     });
 
     function flash(kind: "ok" | "err", text: string) {
@@ -253,6 +348,18 @@
         if (!path) return;
         try {
             await writeTextFile(path, toBibtex($references));
+            // The FileExplorer's fs watcher doesn't reliably pick up a freshly
+            // saved file, so nudge it via the same manual-refresh trigger that
+            // create/move/delete use, whenever the .bib lands inside the open
+            // folder (or a subfolder of it).
+            const folder = $openFolderPath;
+            if (folder) {
+                const normFolder = folder.replace(/\\/g, "/").replace(/\/+$/, "");
+                const normPath = path.replace(/\\/g, "/");
+                if (normPath.startsWith(`${normFolder}/`)) {
+                    folderRefreshTrigger.update((n) => n + 1);
+                }
+            }
             flash("ok", $t("references.saved"));
         } catch (e) {
             flash("err", String(e));
@@ -346,7 +453,7 @@
         aria-label={$t("references.title")}
         tabindex="-1"
         class="fixed flex flex-col overflow-hidden rounded-3xl border border-brand-sand-200 bg-brand-sand-50 shadow-xl dark:border-[#414559] dark:bg-[#232634] dark:shadow-black/40"
-        style="left:{x}px; top:{y}px; width:{PANEL_W}px; height:min({PANEL_H}px, 85vh); z-index:{zIndex};"
+        style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
         onpointerdown={() => {
             zIndex = bringToFront();
         }}
@@ -359,7 +466,27 @@
             onClose={close}
             onpointerdown={startDrag}
         >
+            {#snippet action()}
+                <button
+                    onclick={() => (showInput = !showInput)}
+                    aria-label={showInput
+                        ? $t("references.hide_input")
+                        : $t("references.show_input")}
+                    title={showInput
+                        ? $t("references.hide_input")
+                        : $t("references.show_input")}
+                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 text-brand-gold-600 transition-colors hover:bg-brand-gold-200/80 dark:bg-[#414559] dark:text-[#c6d0f5] dark:hover:bg-[#51576d]"
+                >
+                    <Icon
+                        icon={showInput
+                            ? "solar:minimize-square-bold-duotone"
+                            : "solar:add-square-bold-duotone"}
+                        width="0.85rem"
+                    />
+                </button>
+            {/snippet}
             {#snippet children()}
+                {#if showInput}
                 <!-- mode tabs -->
                 <div
                     class="mx-4 mb-2 flex gap-1 rounded-full bg-brand-gold-200/50 p-1 dark:bg-[#414559]/50"
@@ -386,10 +513,12 @@
                         {$t("references.mode_search")}
                     </button>
                 </div>
+                {/if}
             {/snippet}
         </DialogPanelHeader>
 
         <!-- Input area -->
+        {#if showInput}
         <div
             class="shrink-0 border-b border-brand-sand-100 px-5 py-3.5 dark:border-[#414559]"
         >
@@ -484,26 +613,58 @@
                         </div>
                     {/if}
                 </div>
+            </div>
+            {/if}
 
-                {#if notice}
+            <!-- Action feedback — kept outside the collapsible input so save /
+                 load results are visible even when the input is hidden. -->
+            {#if notice}
+                <div class="shrink-0 px-5 pt-2">
                     <p
-                        class="mt-2 text-[11px] font-medium {notice.kind === 'ok'
+                        class="text-[11px] font-medium {notice.kind === 'ok'
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : 'text-red-500 dark:text-red-400'}"
                     >
                         {notice.text}
                     </p>
-                {/if}
-            </div>
+                </div>
+            {/if}
 
-            <!-- List count label (moved out of the header) -->
+            <!-- List count label + filter box (moved out of the header) -->
             {#if $references.length}
-                <div class="flex shrink-0 items-center px-5 pt-3 pb-0.5">
+                <div class="flex shrink-0 items-center gap-2 px-5 pt-3 pb-0.5">
                     <span
-                        class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#838ba7]"
+                        class="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#838ba7]"
                     >
-                        {$t("references.count", { n: $references.length })}
+                        {$t("references.count", {
+                            n: filterText.trim()
+                                ? filteredReferences.length
+                                : $references.length,
+                        })}
                     </span>
+                    <div class="relative ml-auto min-w-0 flex-1">
+                        <Icon
+                            icon="solar:magnifer-linear"
+                            width="0.8rem"
+                            class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-brand-charcoal-300 dark:text-[#626880]"
+                        />
+                        <input
+                            bind:value={filterText}
+                            spellcheck="false"
+                            placeholder={$t("references.filter_placeholder")}
+                            class="w-full rounded-full border border-brand-sand-200 bg-brand-sand-100 py-1 pl-7 pr-7 text-[11px] text-brand-charcoal-900 placeholder-brand-charcoal-300 focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:border-[#414559] dark:bg-[#1e2030] dark:text-[#c6d0f5] dark:placeholder-[#626880] dark:focus:border-[#e5c890] dark:focus:ring-[#e5c890]/20"
+                        />
+                        {#if filterText}
+                            <button
+                                onclick={() => (filterText = "")}
+                                aria-label={$t("references.clear")}
+                                title={$t("references.clear")}
+                                class="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-brand-charcoal-300 transition-colors hover:text-brand-charcoal-500 dark:text-[#626880] dark:hover:text-[#c6d0f5]"
+                            >
+                                <Icon icon="solar:close-circle-bold" width="0.8rem" />
+                            </button>
+                        {/if}
+                    </div>
                 </div>
             {/if}
 
@@ -522,9 +683,22 @@
                             {$t("references.empty")}
                         </p>
                     </div>
+                {:else if filteredReferences.length === 0}
+                    <div
+                        class="flex flex-col items-center justify-center gap-2 py-12 text-center"
+                    >
+                        <Icon
+                            icon="solar:magnifer-line-duotone"
+                            width="2rem"
+                            class="text-brand-charcoal-200 dark:text-[#626880]"
+                        />
+                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7]">
+                            {$t("references.no_match")}
+                        </p>
+                    </div>
                 {:else}
                     <div class="flex flex-col gap-2.5">
-                        {#each $references as ref, i (ref.id)}
+                        {#each filteredReferences as ref, i (ref.id)}
                             <div
                                 class="group flex flex-col rounded-2xl border border-brand-sand-200 bg-brand-sand-100 p-3.5 transition-colors hover:border-brand-gold-300 dark:border-[#414559] dark:bg-[#1e2030] dark:hover:border-[#e5c890]/40"
                             >
@@ -626,5 +800,101 @@
                     {confirmClear ? $t("references.clear_confirm") : $t("references.clear")}
                 </button>
             </div>
+
+            <!-- Resize handles — let the panel be sized to taste -->
+            {#each resizeHandles as { cls, dir }}
+                <div
+                    aria-hidden="true"
+                    class="resize-handle {cls}"
+                    onpointerdown={(e) => startResize(e, dir)}
+                ></div>
+            {/each}
     </div>
 {/if}
+
+<style>
+    .resize-handle {
+        position: absolute;
+        z-index: 10;
+    }
+    .resize-n {
+        top: 0;
+        left: 10px;
+        right: 10px;
+        height: 6px;
+        cursor: n-resize;
+    }
+    .resize-s {
+        bottom: 0;
+        left: 10px;
+        right: 10px;
+        height: 6px;
+        cursor: s-resize;
+    }
+    .resize-e {
+        top: 10px;
+        right: 0;
+        bottom: 10px;
+        width: 6px;
+        cursor: e-resize;
+    }
+    .resize-w {
+        top: 10px;
+        left: 0;
+        bottom: 10px;
+        width: 6px;
+        cursor: w-resize;
+    }
+    .resize-ne {
+        top: 0;
+        right: 0;
+        width: 14px;
+        height: 14px;
+        cursor: ne-resize;
+    }
+    .resize-se {
+        bottom: 0;
+        right: 0;
+        width: 20px;
+        height: 20px;
+        cursor: se-resize;
+    }
+    .resize-sw {
+        bottom: 0;
+        left: 0;
+        width: 14px;
+        height: 14px;
+        cursor: sw-resize;
+    }
+    .resize-nw {
+        top: 0;
+        left: 0;
+        width: 14px;
+        height: 14px;
+        cursor: nw-resize;
+    }
+    .resize-se::before {
+        content: "";
+        position: absolute;
+        bottom: 11px;
+        right: 11px;
+        width: 5px;
+        height: 5px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-bottom-right-radius: 5px;
+        pointer-events: none;
+    }
+    .resize-se::after {
+        content: "";
+        position: absolute;
+        bottom: 7px;
+        right: 7px;
+        width: 9px;
+        height: 9px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-bottom-right-radius: 9px;
+        pointer-events: none;
+    }
+</style>

@@ -9,10 +9,12 @@
         isDragging: boolean;
         onClose: () => void;
         onpointerdown: (e: PointerEvent) => void;
+        /** Optional control(s) rendered in the title row, left of the close button. */
+        action?: Snippet;
         children?: Snippet;
     }
 
-    let { icon, title, isDragging, onClose, onpointerdown, children }: Props = $props();
+    let { icon, title, isDragging, onClose, onpointerdown, action, children }: Props = $props();
 </script>
 
 <div
@@ -31,16 +33,21 @@
                 {title}
             </span>
         </div>
-        <button
-            onclick={onClose}
-            aria-label={$t('common.close')}
-            class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
-                   bg-brand-gold-200 dark:bg-[#414559]
-                   text-brand-gold-600 dark:text-[#c6d0f5]
-                   hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-        >
-            <Icon icon="solar:close-circle-bold-duotone" width="0.85rem" />
-        </button>
+        <div class="flex items-center gap-1.5">
+            {#if action}
+                {@render action()}
+            {/if}
+            <button
+                onclick={onClose}
+                aria-label={$t('common.close')}
+                class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
+                       bg-brand-gold-200 dark:bg-[#414559]
+                       text-brand-gold-600 dark:text-[#c6d0f5]
+                       hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+            >
+                <Icon icon="solar:close-circle-bold-duotone" width="0.85rem" />
+            </button>
+        </div>
     </div>
     {#if children}
         {@render children()}

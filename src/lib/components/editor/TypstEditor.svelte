@@ -39,6 +39,8 @@
     } from "@codemirror/autocomplete";
     import { TYPST_COMPLETIONS } from "$lib/completions/typst";
     import { t } from "$lib/i18n";
+    import { references } from "$lib/stores/references.store";
+    import { shortAuthorLabel } from "$lib/utils/references";
 
     let {
         tabId = null,
@@ -324,8 +326,39 @@
         return { from, options: filtered, validFor: /^[\w-]*$/ };
     };
 
+    // ── Citation completions (type `@` for the References list) ───────────
+    // Typst cites with `@key`, so typing `@` pops the References library as a
+    // code-completion. Picking one inserts `@citeKey` (Typst handles styling,
+    // so no in-text style choice is needed). Auto-triggers just like `#…` does.
+    const citeCompletionSource: CompletionSource = (context) => {
+        const match = context.matchBefore(/@[\w:.-]*/);
+        if (!match) return null;
+        const refs = get(references);
+        if (refs.length === 0) return null;
+        const query = match.text.slice(1).toLowerCase();
+        const options = refs
+            .filter((r) => r.citeKey)
+            .filter((r) => {
+                if (!query) return true;
+                const hay = [r.citeKey, r.title, r.year, r.container, ...r.authors]
+                    .join(" ")
+                    .toLowerCase();
+                return hay.includes(query);
+            })
+            .map((r) => ({
+                label: `@${r.citeKey}`,
+                detail: r.year || undefined,
+                info: [shortAuthorLabel(r), r.title].filter(Boolean).join(" — "),
+            }));
+        if (options.length === 0) return null;
+        // `filter: false` — our own fuzzy match above (title/author/key) is the
+        // source of truth; no `validFor`, so the source re-runs as the user
+        // types to keep narrowing the list.
+        return { from: match.from, options, filter: false };
+    };
+
     const typstCompletionExtension = autocompletion({
-        override: [typstCompletionSource],
+        override: [typstCompletionSource, citeCompletionSource],
         // Wait a touch longer after typing before querying, and cap how many
         // options hit the DOM, so a fast typist never blocks on the popup.
         activateOnTypingDelay: 150,

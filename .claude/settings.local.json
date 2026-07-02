@@ -248,7 +248,8 @@
       "Bash(awk 'NR>=9300 && NR<=9420' node_modules/lexical/Lexical.dev.mjs)",
       "Bash(unzip -p /tmp/qt_test.docx word/document.xml)",
       "Bash(awk 'NR>=440 && NR<=477' node_modules/@lexical/selection/LexicalSelection.dev.mjs)",
-      "Bash(echo \"EXIT: $?\")"
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(awk '/class DecoratorNode/{f=NR} f&&NR>=f&&NR<=f+40' node_modules/lexical/Lexical.dev.mjs)"
     ]
   }
 }
