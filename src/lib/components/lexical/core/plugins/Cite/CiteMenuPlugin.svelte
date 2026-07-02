@@ -27,9 +27,10 @@
         $isRangeSelection as isRangeSelection,
         $isTextNode as isTextNode,
         $getNodeByKey as getNodeByKey,
+        $getRoot as getRoot,
         COMMAND_PRIORITY_EDITOR,
     } from "lexical";
-    import { mergeRegister } from "@lexical/utils";
+    import { mergeRegister, $dfs as dfs } from "@lexical/utils";
     import { t } from "$lib/i18n";
     import { references } from "$lib/stores/references.store";
     import {
@@ -38,7 +39,15 @@
         citationStyles,
         shortAuthorLabel,
     } from "$lib/utils/references";
-    import { $addReferenceToList as addReferenceToList } from "$lexical/core/plugins/ReferenceList/ReferenceListNode";
+    import {
+        $getReferenceListNode as getReferenceListNode,
+        $getOrCreateReferenceListNode as getOrCreateReferenceListNode,
+    } from "$lexical/core/plugins/ReferenceList/ReferenceListNode";
+    import {
+        CitationNode,
+        $createCitationNode as createCitationNode,
+        $isCitationNode as isCitationNode,
+    } from "./CitationNode";
 
     const editor = getEditor();
 
@@ -133,7 +142,7 @@
         searchInput?.focus();
     }
 
-    function applyStyle(styleText: string) {
+    function applyStyle(style: CitationStyle) {
         const key = anchorNodeKey;
         const offset = triggerOffset;
         const refId = selectedRef?.id ?? null;
@@ -141,16 +150,21 @@
         editor.update(() => {
             const node = getNodeByKey(key);
             if (!isTextNode(node)) return;
-            // Replace the "/cite" trigger with the chosen citation text.
+            // Replace the "/cite" trigger with an inline citation node. The
+            // References section is kept in sync from the body's citation nodes
+            // (see the mutation listener below), so no manual list edit here.
             const sel = node.select(offset, offset + triggerLen);
-            sel.insertText(styleText);
+            if (refId) {
+                sel.insertNodes([
+                    createCitationNode(refId, style.id, style.text),
+                ]);
+            } else {
+                sel.insertText(style.text);
+            }
             const fresh = getSelection();
             if (isRangeSelection(fresh)) {
                 fresh.anchor.set(fresh.focus.key, fresh.focus.offset, fresh.focus.type);
             }
-            // Mirror the citation into the auto-maintained "References" section
-            // at the bottom of the document (deduplicated, in citation order).
-            if (refId) addReferenceToList(refId);
         });
         editor.focus();
     }
@@ -174,7 +188,7 @@
             if (step === "ref") {
                 if (filteredRefs[refIndex]) pickReference(filteredRefs[refIndex]);
             } else if (currentStyles[styleIndex]) {
-                applyStyle(currentStyles[styleIndex].text);
+                applyStyle(currentStyles[styleIndex]);
             }
         } else if (e.key === "Escape") {
             e.preventDefault();
@@ -217,6 +231,43 @@
     );
     const menuTop = $derived(menuRect ? menuRect.bottom + 6 : 0);
 
+    // ── Keep the References section equal to the body's citations ─────────
+    // The reference list is derived from the citation nodes present in the
+    // document (in first-citation order, deduplicated). So adding a citation
+    // adds its entry and deleting the last citation of a reference removes it —
+    // the list only ever shows what is actually cited.
+    function collectCitedRefIds(): string[] {
+        const seen = new Set<string>();
+        const ordered: string[] = [];
+        for (const { node } of dfs(getRoot())) {
+            if (isCitationNode(node)) {
+                const id = node.getRefId();
+                if (id && !seen.has(id)) {
+                    seen.add(id);
+                    ordered.push(id);
+                }
+            }
+        }
+        return ordered;
+    }
+
+    function syncReferenceList(): void {
+        const cited = collectCitedRefIds();
+        const listNode = getReferenceListNode();
+        if (cited.length === 0) {
+            // No citations left → drop the (now empty) References section.
+            if (listNode) listNode.remove();
+            return;
+        }
+        const node = listNode ?? getOrCreateReferenceListNode();
+        const current = node.getRefIds();
+        // Only write when the derived list actually changed, so the update
+        // listener converges instead of looping.
+        if (current.join(" ") !== cited.join(" ")) {
+            node.setRefIds(cited);
+        }
+    }
+
     onMount(() => {
         return mergeRegister(
             editor.registerCommand(
@@ -226,6 +277,17 @@
                     return true;
                 },
                 COMMAND_PRIORITY_EDITOR,
+            ),
+            // Fires when citation nodes are created / destroyed / updated.
+            // `skipInitialization` avoids touching legacy documents (plain-text
+            // citations + a stored list) on load — the list only re-derives once
+            // a real citation node changes.
+            editor.registerMutationListener(
+                CitationNode,
+                () => {
+                    editor.update(() => syncReferenceList());
+                },
+                { skipInitialization: true },
             ),
         );
     });
@@ -340,7 +402,7 @@
                             : 'hover:bg-brand-sand-50 dark:hover:bg-[#292c3c]'}"
                         onmousedown={(e) => {
                             e.preventDefault();
-                            applyStyle(style.text);
+                            applyStyle(style);
                         }}
                         onmousemove={() => (styleIndex = i)}
                     >
