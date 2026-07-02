@@ -256,6 +256,8 @@ export const en: Record<string, string> = {
   "explorer.copy": "Copy",
   "explorer.cut": "Cut",
   "explorer.paste": "Paste",
+  "explorer.copy_path": "Copy Path",
+  "explorer.copy_relative_path": "Copy Relative Path",
   "explorer.delete": "Delete",
   "explorer.delete_confirm_title": "Move to Trash?",
   "explorer.delete_confirm_file":
