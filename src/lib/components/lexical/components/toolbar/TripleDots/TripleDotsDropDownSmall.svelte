@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, onDestroy, getContext } from "svelte";
+    import { onMount, onDestroy, getContext, type Snippet } from "svelte";
     import { fly } from "svelte/transition";
     import type { Readable } from "svelte/store";
     import BoldButton from "../BoldButton.svelte";
@@ -49,11 +49,15 @@
         onInsertImageClick,
         onInsertEquationClick,
         expanded = false,
+        overflow,
     }: {
         windowWidth: number;
         onInsertImageClick: () => void;
         onInsertEquationClick: () => void;
         expanded?: boolean;
+        // Toolbar menus that no longer fit inline and have collapsed into this
+        // dropdown; rendered as a horizontal row at the top of the panel.
+        overflow?: Snippet;
     } = $props();
 
     // $derived so the labels re-translate when the app language changes — a
@@ -279,7 +283,11 @@
                         {/if}
 
                         <div class="px-5 py-2">
-                            <div class="flex items-center py-1">
+                            <!-- Indent / Outdent, plus any far-right toolbar
+                                 menus (Insert, Align, …) that collapsed in as the
+                                 editor narrowed — kept on the same row. -->
+                            <div class="flex flex-wrap items-center gap-0.5 py-1">
+                                {#if overflow}{@render overflow()}{/if}
                                 <Indent />
                                 <Outdent />
                             </div>

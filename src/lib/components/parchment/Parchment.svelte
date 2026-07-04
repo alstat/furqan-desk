@@ -326,6 +326,18 @@
     <!-- Take-home message button — mirrors the File Explorer button on the
          opposite (right) edge, at the same vertical level -->
     {#if hasDisplayedAyahs}
+        <!-- Sukun-mode locator dot — marks where the (hidden) take-home button
+             sits, mirroring the File Explorer's dot on the opposite edge. -->
+        {#if $zenMode && !$zenPeek && !showTakeHome}
+            <div
+                aria-hidden="true"
+                class="pointer-events-none absolute -right-4 top-1/3 z-2 h-8 w-8 flex items-center justify-center"
+            >
+                <span
+                    class="h-1.5 w-1.5 rounded-full bg-brand-charcoal-400 dark:bg-[#838ba7] opacity-15"
+                ></span>
+            </div>
+        {/if}
         <button
             bind:this={takeHomeBtnEl}
             class="cursor-pointer absolute -right-4 top-1/3 z-3 {actionBtnStyle} {showTakeHome

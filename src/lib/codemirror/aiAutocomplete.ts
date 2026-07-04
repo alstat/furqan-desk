@@ -78,7 +78,9 @@ const suggestionField = StateField.define<Suggestion | null>({
         }),
 });
 
-const DEBOUNCE_MS = 300;
+// Wait for a longer typing pause before requesting a completion — keeps the
+// request rate down (fewer 429s) while still feeling responsive.
+const DEBOUNCE_MS = 600;
 const MIN_PREFIX = 20;
 const PREFIX_CHARS = 2000;
 const SUFFIX_CHARS = 0;

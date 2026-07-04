@@ -136,6 +136,14 @@ export class JuliaCellNode extends DecoratorNode<DecoratorJuliaCellType> {
         return this.__code;
     }
 
+    getOutput(): string {
+        return this.__output;
+    }
+
+    getPlots(): JuliaCellPlot[] {
+        return this.__plots;
+    }
+
     setResult(output: string, hasError: boolean, plots: JuliaCellPlot[]): void {
         const writable = this.getWritable();
         writable.__output = output;

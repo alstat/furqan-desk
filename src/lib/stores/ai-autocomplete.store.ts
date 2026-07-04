@@ -18,9 +18,15 @@ const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 function loadEnabled(): boolean {
     try {
-        return localStorage.getItem(ENABLED_KEY) === "true";
+        const stored = localStorage.getItem(ENABLED_KEY);
+        // Respect an explicit choice; otherwise default ON. Only Pro/Pro+
+        // accounts actually run it — `aiAutocompleteActive()` still gates on
+        // `isPro` — so this simply turns the feature on by default for them.
+        if (stored === "true") return true;
+        if (stored === "false") return false;
+        return true;
     } catch {
-        return false;
+        return true;
     }
 }
 
@@ -61,9 +67,22 @@ export const aiAutocompleteModel = {
     },
 };
 
+// ── Rate-limit backoff ───────────────────────────────────────────────────────
+// The edge function replies 429 when the account is asking for completions too
+// quickly. Autocompletion fires on every typing pause, so without a cooldown we
+// keep hammering the endpoint (and spamming the console with 429s). When we see
+// a 429 we pause all requests until `cooldownUntil`, honouring the server's
+// Retry-After when present.
+const DEFAULT_BACKOFF_MS = 30_000;
+// Cap how long we stay paused after a quota 429. Token quotas can report a
+// retry_after of many hours; we still want to re-check within the hour in case
+// the quota frees sooner (rolling window) or the account's tier changes.
+const MAX_BACKOFF_MS = 60 * 60 * 1000;
+let cooldownUntil = 0;
+
 /** True when the feature should run: enabled in Settings AND Pro/Pro+. */
 export function aiAutocompleteActive(): boolean {
-    return get(_enabled) && get(isPro);
+    return get(_enabled) && get(isPro) && Date.now() >= cooldownUntil;
 }
 
 // ── Completion fetch ─────────────────────────────────────────────────────────
@@ -111,6 +130,8 @@ export async function fetchAiCompletion({
     signal?: AbortSignal;
     onPartial?: (textSoFar: string) => void;
 }): Promise<string> {
+    // Still cooling down from a recent 429 — skip the request entirely.
+    if (Date.now() < cooldownUntil) return "";
     try {
         const { data } = await supabase.auth.getSession();
         const token = data.session?.access_token;
@@ -148,6 +169,32 @@ export async function fetchAiCompletion({
                 ],
             }),
         });
+
+        if (res.status === 429) {
+            // Quota reached. The function reports the wait in its JSON body
+            // (`retry_after_seconds`) — there is no Retry-After header — so read
+            // the body and pause until the quota frees instead of re-hitting the
+            // limit every few seconds. Capped so we still re-check periodically.
+            let secs = 0;
+            const header = Number(res.headers.get("retry-after"));
+            if (Number.isFinite(header) && header > 0) {
+                secs = header;
+            } else {
+                try {
+                    const body = await res.json();
+                    const n = Number(body?.retry_after_seconds);
+                    if (Number.isFinite(n) && n > 0) secs = n;
+                } catch {
+                    /* body wasn't JSON — fall back to the default backoff */
+                }
+            }
+            const ms =
+                secs > 0
+                    ? Math.min(secs * 1000, MAX_BACKOFF_MS)
+                    : DEFAULT_BACKOFF_MS;
+            cooldownUntil = Date.now() + ms;
+            return "";
+        }
 
         if (!res.ok || !res.body) return "";
 
