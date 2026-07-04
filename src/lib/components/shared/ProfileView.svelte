@@ -136,6 +136,12 @@
         return Math.min(100, Math.round((used / total) * 100));
     }
 
+    // Group digits so large token counts stay readable (e.g. 1,234,567).
+    const tokenFormatter = new Intl.NumberFormat();
+    function formatTokens(n: number): string {
+        return tokenFormatter.format(Math.max(0, Math.round(n)));
+    }
+
     function barColor(pct: number): string {
         if (pct >= 90) return "bg-red-500";
         if (pct >= 75) return "bg-amber-500";
@@ -268,11 +274,22 @@
                                         {row.label}
                                     </span>
                                     <span class="text-xs {descriptionText}">
-                                        {row.cap > 0
-                                            ? $t("account.usage.used_pct", {
-                                                  pct,
-                                              })
-                                            : $t("account.usage.unlimited")}
+                                        {#if row.cap > 0}
+                                            {$t("account.usage.tokens", {
+                                                used: formatTokens(row.used),
+                                                total: formatTokens(row.cap),
+                                            })}
+                                            <span class="opacity-60"
+                                                >· {$t(
+                                                    "account.usage.used_pct",
+                                                    { pct },
+                                                )}</span
+                                            >
+                                        {:else}
+                                            {formatTokens(row.used)} · {$t(
+                                                "account.usage.unlimited",
+                                            )}
+                                        {/if}
                                     </span>
                                 </div>
                                 {#if row.cap > 0}

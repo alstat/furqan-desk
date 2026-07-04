@@ -38,6 +38,7 @@
     import { t } from "$lib/i18n";
     import { zenMode, zenPeek } from "$lib/stores/editor.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import { copyToClipboard } from "$lib/utils/clipboard";
 
     interface FileTreeNode {
         name: string;
@@ -608,6 +609,25 @@
     function cutNode(node: FileTreeNode) {
         closeNodeContextMenu();
         clipboard = { path: node.path, mode: "cut" };
+    }
+
+    // Copy the node's absolute path to the OS clipboard.
+    function copyFullPath(node: FileTreeNode) {
+        closeNodeContextMenu();
+        copyToClipboard(node.path);
+    }
+
+    // Copy the path relative to the opened workspace root (VS Code-style). Falls
+    // back to the absolute path when the node somehow sits outside the root.
+    function copyRelativePath(node: FileTreeNode) {
+        closeNodeContextMenu();
+        const root = $openFolderPath ? norm($openFolderPath) : "";
+        const p = norm(node.path);
+        const rel =
+            root && (p === root || p.startsWith(`${root}/`))
+                ? p.slice(root.length + 1)
+                : p;
+        copyToClipboard(rel);
     }
 
     // Where a paste lands: into a folder itself, or into a file's parent dir.
@@ -1293,6 +1313,21 @@
                 {$t("explorer.paste")}
             </button>
         {/if}
+        <div class="my-1 border-t border-brand-sand-200 dark:border-[#414559]"></div>
+        <button
+            onclick={() => ctxMenuNode && copyFullPath(ctxMenuNode)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+        >
+            <Icon icon="solar:link-bold-duotone" width="0.85rem" class="shrink-0" />
+            {$t("explorer.copy_path")}
+        </button>
+        <button
+            onclick={() => ctxMenuNode && copyRelativePath(ctxMenuNode)}
+            class="cursor-pointer w-full flex items-center gap-2 p-1 px-3 text-xs rounded-full text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
+        >
+            <Icon icon="solar:link-minimalistic-2-bold-duotone" width="0.85rem" class="shrink-0" />
+            {$t("explorer.copy_relative_path")}
+        </button>
         <div class="my-1 border-t border-brand-sand-200 dark:border-[#414559]"></div>
         <button
             onclick={() => ctxMenuNode && requestDeleteNode(ctxMenuNode)}

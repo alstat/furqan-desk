@@ -4,11 +4,13 @@
     import { EquationNode } from "$lexical/core/plugins/Equation/EquationNode";
     import EquationPlugin from "$lexical/core/plugins/Equation/EquationPlugin.svelte";
     import { ReferenceListNode } from "$lexical/core/plugins/ReferenceList/ReferenceListNode";
+    import { CitationNode } from "$lexical/core/plugins/Cite/CitationNode";
     import { QuranBlockNode } from "$lexical/core/plugins/Quran/QuranBlockNode";
     import QuranBlockPlugin from "$lexical/core/plugins/Quran/QuranBlockPlugin.svelte";
     import { JuliaCellNode } from "$lexical/core/plugins/JuliaCell/JuliaCellNode";
     import JuliaCellPlugin from "$lexical/core/plugins/JuliaCell/JuliaCellPlugin.svelte";
     import AiSelectionPlugin from "$lexical/core/plugins/AiSelectionPlugin.svelte";
+    import AiAutocompletePlugin from "$lexical/core/plugins/AiAutocompletePlugin.svelte";
     // import {
     // 	Composer,
     // 	ContentEditable,
@@ -282,6 +284,7 @@
             ImageNode,
             EquationNode,
             ReferenceListNode,
+            CitationNode,
             QuranBlockNode,
             JuliaCellNode,
             CodeNode,
@@ -327,6 +330,7 @@
             </ImagePlugin>
             <EquationPlugin />
             <AiSelectionPlugin />
+            <AiAutocompletePlugin />
             <CodePlugin />
             <TablePlugin />
             <TableCellResizerPlugin />

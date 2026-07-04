@@ -1028,6 +1028,12 @@ select.font-family {
     display: inline-block;
     position: relative;
     vertical-align: top;
+    /* The editor root is white-space: pre-wrap (set inline by Lexical), which
+       preserves the whitespace text nodes Svelte renders between the image div
+       and its sibling blocks. Those spaces form a line box below the image,
+       stretching the span and pushing the bottom resize handles off the image
+       corners. Collapse whitespace inside the span so it hugs the image. */
+    white-space: normal;
 }
 
 .editor-shell .editor-image img {

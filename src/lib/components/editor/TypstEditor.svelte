@@ -1,7 +1,7 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
     import { save } from "@tauri-apps/plugin-dialog";
-    import { writeFile } from "@tauri-apps/plugin-fs";
+    import { writeFile, readDir } from "@tauri-apps/plugin-fs";
     import { get } from "svelte/store";
     import { onDestroy, tick } from "svelte";
     import Icon from "@iconify/svelte";
@@ -35,10 +35,15 @@
     import TypstPreviewSourceSelector from "./TypstPreviewSourceSelector.svelte";
     import {
         autocompletion,
+        startCompletion,
         type CompletionSource,
+        type Completion,
     } from "@codemirror/autocomplete";
     import { TYPST_COMPLETIONS } from "$lib/completions/typst";
+    import { aiAutocomplete } from "$lib/codemirror/aiAutocomplete";
     import { t } from "$lib/i18n";
+    import { references } from "$lib/stores/references.store";
+    import { shortAuthorLabel } from "$lib/utils/references";
 
     let {
         tabId = null,
@@ -324,8 +329,192 @@
         return { from, options: filtered, validFor: /^[\w-]*$/ };
     };
 
+    // ── Citation completions (type `@` for the References list) ───────────
+    // Typst cites with `@key`, so typing `@` pops the References library as a
+    // code-completion. Picking one inserts `@citeKey` (Typst handles styling,
+    // so no in-text style choice is needed). Auto-triggers just like `#…` does.
+    const citeCompletionSource: CompletionSource = (context) => {
+        const match = context.matchBefore(/@[\w:.-]*/);
+        if (!match) return null;
+        const refs = get(references);
+        if (refs.length === 0) return null;
+        const query = match.text.slice(1).toLowerCase();
+        const options = refs
+            .filter((r) => r.citeKey)
+            .filter((r) => {
+                if (!query) return true;
+                const hay = [r.citeKey, r.title, r.year, r.container, ...r.authors]
+                    .join(" ")
+                    .toLowerCase();
+                return hay.includes(query);
+            })
+            .map((r) => ({
+                label: `@${r.citeKey}`,
+                detail: r.year || undefined,
+                info: [shortAuthorLabel(r), r.title].filter(Boolean).join(" — "),
+            }));
+        if (options.length === 0) return null;
+        // `filter: false` — our own fuzzy match above (title/author/key) is the
+        // source of truth; no `validFor`, so the source re-runs as the user
+        // types to keep narrowing the list.
+        return { from: match.from, options, filter: false };
+    };
+
+    // ── File-path completions (inside image("…"), read(), bibliography(), …) ──
+    // Typst resolves paths relative to the file being compiled, so typing a
+    // path string inside a path-taking call pops the contents of that folder —
+    // no need to eyeball the File Explorer and hand-type the name. Sub-folders
+    // insert a trailing "/" and immediately re-query so you can drill in.
+    const PATH_FUNCS = new Set([
+        "image",
+        "read",
+        "bibliography",
+        "csv",
+        "json",
+        "yaml",
+        "xml",
+        "toml",
+        "cbor",
+        "raw",
+    ]);
+    // Extensions worth surfacing first when the call is `image(...)`.
+    const IMAGE_EXTS = new Set([
+        "png",
+        "jpg",
+        "jpeg",
+        "gif",
+        "svg",
+        "webp",
+        "bmp",
+        "avif",
+    ]);
+
+    // Directory portion of a "/"-normalised absolute file path.
+    function parentDir(path: string): string {
+        return path.replace(/\\/g, "/").split("/").slice(0, -1).join("/");
+    }
+
+    // Resolve the folder to list from the base dir and the typed sub-path,
+    // collapsing "." / ".." and honouring a leading "/" as an absolute path.
+    function resolveDir(baseDir: string, rel: string): string {
+        const parts = rel.startsWith("/") ? [""] : baseDir.split("/");
+        for (const seg of rel.split("/")) {
+            if (seg === "" || seg === ".") continue;
+            if (seg === "..") {
+                if (parts.length > 1) parts.pop();
+                continue;
+            }
+            parts.push(seg);
+        }
+        return parts.join("/") || "/";
+    }
+
+    // Which call, if any, does the string under the cursor belong to?
+    // Returns the function name for `image("…")`-style calls, "include" for the
+    // bare `include "…"` / `import "…"` forms, or null when not a path context.
+    function pathCallName(beforeQuote: string): string | null {
+        // Bare `include "…"` / `import "…"` take a string without parentheses.
+        if (/(?:^|[^\w.-])(?:include|import)\s+$/.test(beforeQuote)) {
+            return "include";
+        }
+        // Walk back to the "(" that opens the call the string sits in, skipping
+        // any balanced parens in earlier arguments, then read the callee name.
+        let depth = 0;
+        let i = beforeQuote.length - 1;
+        for (; i >= 0; i--) {
+            const ch = beforeQuote[i];
+            if (ch === ")") depth++;
+            else if (ch === "(") {
+                if (depth === 0) break;
+                depth--;
+            }
+        }
+        if (i < 0) return null;
+        const name = /([a-zA-Z_][\w.-]*)\s*$/.exec(beforeQuote.slice(0, i));
+        return name ? name[1] : null;
+    }
+
+    const pathCompletionSource: CompletionSource = async (context) => {
+        const filePath = effectiveTab?.path;
+        if (!filePath) return null;
+
+        // Only fire inside an unterminated double-quoted string on this line.
+        const line = context.state.doc.lineAt(context.pos);
+        const textBefore = context.state.sliceDoc(line.from, context.pos);
+        const strMatch = /"([^"\n]*)$/.exec(textBefore);
+        if (!strMatch) return null;
+
+        const beforeQuote = textBefore.slice(0, strMatch.index);
+        const callName = pathCallName(beforeQuote);
+        if (!callName || (callName !== "include" && !PATH_FUNCS.has(callName))) {
+            return null;
+        }
+
+        const typed = strMatch[1];
+        const slash = typed.lastIndexOf("/");
+        const subDir = slash >= 0 ? typed.slice(0, slash + 1) : "";
+        const partial = slash >= 0 ? typed.slice(slash + 1) : typed;
+
+        const targetDir = resolveDir(parentDir(filePath), subDir);
+        let entries: Awaited<ReturnType<typeof readDir>>;
+        try {
+            entries = await readDir(targetDir);
+        } catch {
+            return null;
+        }
+
+        const preferImages = callName === "image";
+        const options: Completion[] = [];
+        for (const entry of entries) {
+            if (entry.name.startsWith(".")) continue; // skip dotfiles
+            if (entry.isDirectory) {
+                const name = entry.name;
+                options.push({
+                    label: name + "/",
+                    type: "folder",
+                    // Insert the folder + "/" then re-open the popup so the next
+                    // level lists immediately (the "/" invalidates validFor).
+                    apply: (view, _c, from, to) => {
+                        view.dispatch({
+                            changes: { from, to, insert: name + "/" },
+                            selection: { anchor: from + name.length + 1 },
+                        });
+                        startCompletion(view);
+                    },
+                    boost: 1,
+                });
+            } else {
+                const ext = entry.name.includes(".")
+                    ? entry.name.slice(entry.name.lastIndexOf(".") + 1).toLowerCase()
+                    : "";
+                options.push({
+                    label: entry.name,
+                    type: "file",
+                    detail: ext || undefined,
+                    boost: preferImages && IMAGE_EXTS.has(ext) ? 2 : 0,
+                });
+            }
+        }
+
+        if (options.length === 0) return null;
+        return {
+            from: context.pos - partial.length,
+            options,
+            // Keep filtering as the user types; re-run only when a "/" is typed
+            // (drilling into a folder) or the string is closed.
+            validFor: /^[^"/]*$/,
+        };
+    };
+
+    // Inline AI ghost-text completions (Pro-gated; Settings → AI Tools).
+    const typstAiAutocomplete = aiAutocomplete("typst");
+
     const typstCompletionExtension = autocompletion({
-        override: [typstCompletionSource],
+        override: [
+            typstCompletionSource,
+            citeCompletionSource,
+            pathCompletionSource,
+        ],
         // Wait a touch longer after typing before querying, and cap how many
         // options hit the DOM, so a fast typist never blocks on the popup.
         activateOnTypingDelay: 150,
@@ -507,7 +696,7 @@
         <CodeMirrorEditor
             value={effectiveTab?.content ?? ""}
             language="typst"
-            extensions={[typstCompletionExtension]}
+            extensions={[typstCompletionExtension, typstAiAutocomplete]}
             {lineWrap}
             aiSelectionTools={true}
             {aiContextPrompt}
@@ -630,10 +819,23 @@
         height: auto;
         display: block;
     }
+    /* Transparent, selectable text layer sits on top of the rendered glyphs so
+       text can be highlighted and copied. */
+    .typst-page :global(.typst-text-layer) {
+        user-select: text;
+    }
+    .typst-page :global(.typst-text-layer text) {
+        cursor: text;
+    }
     .typst-page-dark {
         background-color: #1f2430;
     }
     .typst-page-dark :global(svg) {
         filter: invert(1) hue-rotate(180deg);
+    }
+    /* Keep the (transparent) text layer out of the dark-mode invert filter so
+       the selection highlight keeps its normal color. */
+    .typst-page-dark :global(.typst-text-layer) {
+        filter: none;
     }
 </style>

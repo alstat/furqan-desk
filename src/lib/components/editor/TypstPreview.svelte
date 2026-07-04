@@ -242,10 +242,23 @@
         height: auto;
         display: block;
     }
+    /* Transparent, selectable text layer sits on top of the rendered glyphs so
+       text can be highlighted and copied. */
+    .typst-page :global(.typst-text-layer) {
+        user-select: text;
+    }
+    .typst-page :global(.typst-text-layer text) {
+        cursor: text;
+    }
     .typst-page-dark {
         background-color: #1f2430;
     }
     .typst-page-dark :global(svg) {
         filter: invert(1) hue-rotate(180deg);
+    }
+    /* Keep the (transparent) text layer out of the dark-mode invert filter so
+       the selection highlight keeps its normal color. */
+    .typst-page-dark :global(.typst-text-layer) {
+        filter: none;
     }
 </style>

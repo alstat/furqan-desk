@@ -248,7 +248,14 @@
       "Bash(awk 'NR>=9300 && NR<=9420' node_modules/lexical/Lexical.dev.mjs)",
       "Bash(unzip -p /tmp/qt_test.docx word/document.xml)",
       "Bash(awk 'NR>=440 && NR<=477' node_modules/@lexical/selection/LexicalSelection.dev.mjs)",
-      "Bash(echo \"EXIT: $?\")"
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(awk '/class DecoratorNode/{f=NR} f&&NR>=f&&NR<=f+40' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(sed -n '/struct SvgTransform/,/^}/p' write.rs)",
+      "Bash(sed -n '/impl.*Display.*SvgTransform/,/^}/p' write.rs)",
+      "Bash(awk '/pub struct Page \\\\{|pub struct Page$/{f=1} f{print} f&&/^\\\\}/{exit}' layout/page.rs)",
+      "Bash(awk '/pub struct Page \\\\{/{f=1} f{print} f&&/^\\\\}/{exit}' document.rs)",
+      "Bash(awk '/pub struct PagedDocument \\\\{/{f=1} f{print} f&&/^\\\\}/{exit}' document.rs)",
+      "Bash(awk '/markdown-body/{found=1} /<style/{s=1} s&&/markdown-body/{print NR\": \"$0}' src/lib/components/shared/AiChatDialog.svelte)"
     ]
   }
 }
