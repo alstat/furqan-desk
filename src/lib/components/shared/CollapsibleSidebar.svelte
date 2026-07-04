@@ -265,6 +265,18 @@
         </button>
     {/if}
 
+    <!-- Zen-mode locator dot — marks where the (hidden) account button sits. -->
+    {#if $zenMode && !$zenPeek && !accountOpen}
+        <div
+            aria-hidden="true"
+            class={`pointer-events-none absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-26 z-2 h-8 w-8 flex items-center justify-center`}
+        >
+            <span
+                class="h-1.5 w-1.5 rounded-full bg-brand-charcoal-400 dark:bg-[#838ba7] opacity-15"
+            ></span>
+        </div>
+    {/if}
+
     <!-- User account button (above donation) -->
     <button
         id="tour-account-button"
