@@ -10,6 +10,7 @@
     import "@xterm/xterm/css/xterm.css";
     import { t } from "$lib/i18n";
     import { appDarkMode } from "$lib/stores/editor.store";
+    import { bumpGitRefresh } from "$lib/stores/git.store";
     import { isPro } from "$lib/stores/auth.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
@@ -567,6 +568,10 @@
                 const b = bundles.get(id);
                 if (!b) return;
                 b.term.write(b64ToBytes(data_b64));
+                // A command finished producing output — its side effects may
+                // include a git commit/push/checkout, so nudge the git views to
+                // re-read. Debounced: only fires once output settles.
+                bumpGitRefresh();
             },
         );
 
