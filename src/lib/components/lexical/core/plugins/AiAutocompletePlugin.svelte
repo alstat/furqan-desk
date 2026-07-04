@@ -12,11 +12,14 @@
         $isRangeSelection as isRangeSelection,
         $getRoot as getRoot,
         $isTextNode as isTextNode,
+        $isElementNode as isElementNode,
+        type LexicalNode,
         KEY_TAB_COMMAND,
         KEY_ESCAPE_COMMAND,
         COMMAND_PRIORITY_CRITICAL,
     } from "lexical";
     import { mergeRegister } from "@lexical/utils";
+    import { $isCodeNode as isCodeNode } from "$lexical/core/plugins/CodeHighlighter/CodeNode";
     import { getEditor } from "$lexical/core/composerContext.js";
     import { isPro } from "$lib/stores/auth.store";
     import {
@@ -38,10 +41,12 @@
     let controller: AbortController | null = null;
     let requestId = 0;
 
-    const DEBOUNCE_MS = 300;
+    // Wait for a longer typing pause before requesting a completion — keeps the
+    // request rate down (fewer 429s) while still feeling responsive.
+    const DEBOUNCE_MS = 600;
     const MIN_PREFIX = 20;
     const PREFIX_CHARS = 2000;
-    const SUFFIX_CHARS = 500;
+    const SUFFIX_CHARS = 0;
 
     function clearGhost() {
         ghost = null;
@@ -76,16 +81,36 @@
             const block = node.getTopLevelElement();
             if (!block) return null;
 
-            // Caret offset within the block's text content.
+            // Caret offset within the block's text content. Walk every leaf in
+            // document order — text nodes AND inline decorators — because some
+            // decorators (e.g. citations) have non-empty getTextContent() that
+            // is part of `blockText`. Summing only text nodes would undercount
+            // the offset and make the end-of-block check misfire.
             const blockText = block.getTextContent();
             let offset = blockText.length;
             if (isTextNode(node)) {
-                offset = 0;
-                for (const t of block.getAllTextNodes()) {
-                    if (t.getKey() === node.getKey()) break;
-                    offset += t.getTextContentSize();
+                let acc = 0;
+                let reached = false;
+                const measure = (n: LexicalNode) => {
+                    if (reached) return;
+                    if (n.getKey() === node.getKey()) {
+                        reached = true;
+                        return;
+                    }
+                    if (isElementNode(n)) {
+                        for (const child of n.getChildren()) {
+                            measure(child);
+                            if (reached) return;
+                        }
+                    } else {
+                        acc += n.getTextContentSize();
+                    }
+                };
+                for (const child of block.getChildren()) {
+                    measure(child);
+                    if (reached) break;
                 }
-                offset += anchor.offset;
+                offset = acc + anchor.offset;
             }
 
             const before = blockText.slice(0, offset);
@@ -94,16 +119,35 @@
             const children = getRoot().getChildren();
             const idx = children.findIndex((c) => c.getKey() === block.getKey());
             if (idx < 0) return null;
-            const prev = children
-                .slice(0, idx)
-                .map((c) => c.getTextContent())
-                .join("\n\n");
-            const next = children
-                .slice(idx + 1)
-                .map((c) => c.getTextContent())
-                .join("\n\n");
+            // Render a sibling block to text for the model. Paragraphs,
+            // headings, quotes, lists and tables expose their text via
+            // getTextContent(); code blocks are decorator nodes whose text lives
+            // in getCode(), so surface that (fenced, so the model treats it as
+            // code) instead of dropping it. Other decorator blocks (Quran
+            // verses, equations, images, …) return an empty string and are
+            // dropped below — that avoids the blank-line runs that made the
+            // model return no suggestion when a special block sat in the prefix.
+            const blockToText = (n: LexicalNode): string => {
+                if (isCodeNode(n)) {
+                    const code = n.getCode() || "";
+                    if (!code.trim()) return "";
+                    return "```" + (n.getLanguage() || "") + "\n" + code + "\n```";
+                }
+                return n.getTextContent();
+            };
+            const joinText = (nodes: typeof children) =>
+                nodes
+                    .map(blockToText)
+                    .filter((t) => t.trim() !== "")
+                    .join("\n\n");
+            const prev = joinText(children.slice(0, idx));
+            const next = joinText(children.slice(idx + 1));
 
-            const prefix = ((prev ? prev + "\n\n" : "") + before).slice(-PREFIX_CHARS);
+            // Collapse any remaining run of blank lines so a stray gap can't
+            // confuse the completion.
+            const prefix = ((prev ? prev + "\n\n" : "") + before)
+                .replace(/\n{3,}/g, "\n\n")
+                .slice(-PREFIX_CHARS);
             const suffix = (after + (next ? "\n\n" + next : "")).slice(0, SUFFIX_CHARS);
             return { prefix, suffix, lineTail: after };
         });

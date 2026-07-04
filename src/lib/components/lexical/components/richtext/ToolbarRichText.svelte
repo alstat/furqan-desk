@@ -39,16 +39,89 @@
     import { hideSurahPage } from '$lib/stores/quran.svelte';
 
 	// Width (px) of the EditorComposer at or above which the TripleDotsDropDownSmall
-	// items are shown inline in the toolbar; below it they collapse to a dropdown.
+	// items (Indent / Outdent / line-spacing / clear-formatting) are shown inline
+	// in the toolbar; below it they collapse to the triple-dot dropdown.
 	const INLINE_EXPAND_WIDTH = 900;
 
+	// Progressive overflow for the right-hand cluster: as the editor narrows, the
+	// far-right menus move — one at a time, right-to-left — into the triple-dot
+	// dropdown so nothing gets clipped. Each entry is the editorWidth (px) at or
+	// above which that menu stays inline; below it, it renders inside the dropdown.
+	// The thresholds are ordered so Align collapses first, then Insert, … Script
+	// last. Align + Insert sit above the ~585–615px editorWidth the editor pane
+	// gets at the app's minimum window width (a 50/50 sidebar split), so both
+	// reliably move into the dropdown there instead of squishing inline.
+	const COLLAPSE = {
+		align: 670,
+		insert: 640,
+		highlight: 550,
+		fontColor: 515,
+		link: 485,
+		script: 455,
+	};
+
 	let { editorWidth = 0 }: { editorWidth?: number } = $props();
+
+	// Whether each collapsible menu is shown inline (true) or has moved into the
+	// overflow dropdown (false).
+	const showAlign = $derived(editorWidth >= COLLAPSE.align);
+	const showInsert = $derived(editorWidth >= COLLAPSE.insert);
+	const showHighlight = $derived(editorWidth >= COLLAPSE.highlight);
+	const showFontColor = $derived(editorWidth >= COLLAPSE.fontColor);
+	const showLink = $derived(editorWidth >= COLLAPSE.link);
+	const showScript = $derived(editorWidth >= COLLAPSE.script);
+	// Any menu currently overflowed → the dropdown must render the overflow row.
+	const hasOverflow = $derived(
+		!showAlign ||
+			!showInsert ||
+			!showHighlight ||
+			!showFontColor ||
+			!showLink ||
+			!showScript,
+	);
 
 	let imageDialog = $state<InsertImageDialog | undefined>(undefined);
 	let equationDialog = $state<InsertEquationDialog | undefined>(undefined);
 	let tableDialog = $state<InsertTableDialog | undefined>(undefined);
 	let windowWidth = $state(0);
 </script>
+
+<!-- Each collapsible menu is declared once as a snippet so it renders identically
+     whether inline in the toolbar or inside the overflow dropdown. -->
+{#snippet scriptGroup()}
+	<DropDownScript />
+{/snippet}
+{#snippet linkGroup()}
+	<LinkButton />
+{/snippet}
+{#snippet fontColorGroup()}
+	<DropDownFontColor />
+{/snippet}
+{#snippet highlightGroup()}
+	<DropDownHighlight />
+{/snippet}
+{#snippet insertGroup()}
+	<InsertDropDown>
+		<InsertHRDropDownItem />
+		<InsertImageDropDownItem onclick={() => imageDialog?.open()} />
+		<InsertEquationDropDownItem onclick={() => equationDialog?.open()} />
+		<InsertTableDropDownItem onclick={() => tableDialog?.open()} />
+	</InsertDropDown>
+{/snippet}
+{#snippet alignGroup()}
+	<DropDownAlign />
+{/snippet}
+
+<!-- Overflow row handed to the triple-dot dropdown — the menus that no longer
+     fit inline, in their original left-to-right order. -->
+{#snippet overflow()}
+	{#if !showScript}{@render scriptGroup()}{/if}
+	{#if !showLink}{@render linkGroup()}{/if}
+	{#if !showFontColor}{@render fontColorGroup()}{/if}
+	{#if !showHighlight}{@render highlightGroup()}{/if}
+	{#if !showInsert}{@render insertGroup()}{/if}
+	{#if !showAlign}{@render alignGroup()}{/if}
+{/snippet}
 
 <svelte:window bind:innerWidth={windowWidth} />
 
@@ -75,22 +148,18 @@
 		<UnderlineButton />
 		<StrikethroughButton />
 		<FormatCodeButton />
-		<DropDownScript />
-		<LinkButton />
-		<DropDownFontColor />
-		<DropDownHighlight />
-		<Divider />
-		<InsertDropDown>
-			<InsertHRDropDownItem />
-			<InsertImageDropDownItem onclick={() => imageDialog?.open()} />
-			<InsertEquationDropDownItem onclick={() => equationDialog?.open()} />
-			<InsertTableDropDownItem onclick={() => tableDialog?.open()} />
-		</InsertDropDown>
-		<DropDownAlign />
+		{#if showScript}{@render scriptGroup()}{/if}
+		{#if showLink}{@render linkGroup()}{/if}
+		{#if showFontColor}{@render fontColorGroup()}{/if}
+		{#if showHighlight}{@render highlightGroup()}{/if}
+		{#if showInsert || showAlign}<Divider />{/if}
+		{#if showInsert}{@render insertGroup()}{/if}
+		{#if showAlign}{@render alignGroup()}{/if}
 		<Divider />
 		<TripleDotsDropDownSmall
 			{windowWidth}
 			expanded={editorWidth >= INLINE_EXPAND_WIDTH}
+			overflow={hasOverflow ? overflow : undefined}
 			onInsertImageClick={() => imageDialog?.open()}
 			onInsertEquationClick={() => equationDialog?.open()}
 		/>
