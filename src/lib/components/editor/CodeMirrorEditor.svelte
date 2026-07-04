@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, untrack } from "svelte";
     import {
         EditorView,
         keymap,
@@ -65,6 +65,7 @@
         gitDiffOverviewRuler,
         setGitBaseline,
     } from "$lib/codemirror/gitDiffGutter";
+    import { gitRefreshTrigger, bumpGitRefresh } from "$lib/stores/git.store";
     import { latexInput } from "$lib/codemirror/latexInput";
     import { wrapSelection } from "$lib/codemirror/wrapSelection";
     import { readTextFile } from "@tauri-apps/plugin-fs";
@@ -1609,12 +1610,26 @@
         if (view) requestAnimationFrame(() => view.requestMeasure());
     });
 
+    // Fetch the git HEAD baseline for `path` and feed it into the diff gutter.
+    // Guarded so a slow response for a since-changed file can't overwrite the
+    // baseline of the file now shown.
+    function loadGitBaseline(path: string) {
+        invoke<string | null>("git_head_content", { filePath: path })
+            .then((baseline) => {
+                if (!view || (filePath ?? null) !== path) return;
+                view.dispatch({ effects: setGitBaseline.of(baseline ?? null) });
+            })
+            .catch(() => {
+                if (!view || (filePath ?? null) !== path) return;
+                view.dispatch({ effects: setGitBaseline.of(null) });
+            });
+    }
+
     // Fetch git HEAD baseline for the current file and feed it into the diff gutter.
     // null baseline disables the gutter (untracked file or not inside a git repo).
     $effect(() => {
         const path = filePath ?? null;
         if (!view) return;
-        let cancelled = false;
         if (!path) {
             view.dispatch({ effects: setGitBaseline.of(null) });
             return;
@@ -1623,18 +1638,24 @@
         // diffs this file's content against the wrong (stale) HEAD while the new
         // baseline is being fetched.
         view.dispatch({ effects: setGitBaseline.of(null) });
-        invoke<string | null>("git_head_content", { filePath: path })
-            .then((baseline) => {
-                if (cancelled || !view) return;
-                view.dispatch({ effects: setGitBaseline.of(baseline ?? null) });
-            })
-            .catch(() => {
-                if (cancelled || !view) return;
-                view.dispatch({ effects: setGitBaseline.of(null) });
-            });
-        return () => {
-            cancelled = true;
-        };
+        loadGitBaseline(path);
+    });
+
+    // Re-fetch the baseline whenever the git state may have changed — after an
+    // integrated-terminal command (bumped there) or when the window regains
+    // focus following an external commit/push — so the gutter reflects the new
+    // HEAD instead of staying stale until the file is reopened.
+    $effect(() => {
+        const onFocus = () => bumpGitRefresh(0);
+        window.addEventListener("focus", onFocus);
+        return () => window.removeEventListener("focus", onFocus);
+    });
+    $effect(() => {
+        $gitRefreshTrigger; // re-run when a refresh is signalled
+        untrack(() => {
+            const path = filePath ?? null;
+            if (view && path) loadGitBaseline(path);
+        });
     });
 </script>
 
