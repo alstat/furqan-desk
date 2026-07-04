@@ -39,6 +39,7 @@
     import { zenMode, zenPeek } from "$lib/stores/editor.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { copyToClipboard } from "$lib/utils/clipboard";
+    import { gitRefreshTrigger, bumpGitRefresh } from "$lib/stores/git.store";
 
     interface FileTreeNode {
         name: string;
@@ -327,6 +328,19 @@
         if (tick === 0) return;
         const folder = $openFolderPath;
         if (folder) untrack(() => refreshTree(folder));
+    });
+
+    // Re-read git status/ignored when a git refresh is signalled (window focus
+    // after an external commit/push, or an integrated-terminal command). Only
+    // the colouring is refreshed — the tree itself is left to the file watcher.
+    $effect(() => {
+        $gitRefreshTrigger;
+        untrack(() => {
+            const folder = $openFolderPath;
+            if (!folder) return;
+            loadGitStatus(folder);
+            loadGitIgnored(folder);
+        });
     });
 
     onDestroy(() => {
@@ -965,6 +979,15 @@
         isOpen = false;
     }
 
+    // Signal a git refresh when the window regains focus — e.g. after the user
+    // commits/pushes from an external terminal. Git operations only touch `.git`
+    // (not the working-tree files, which may even sit outside the watched
+    // folder), so the file watcher may not fire; this keeps the change
+    // highlighting in sync with the real repo state.
+    function handleWindowFocus() {
+        bumpGitRefresh(0);
+    }
+
     // Cmd+Shift+E / Ctrl+Shift+E toggles the File Explorer; Escape closes it.
     function handleWindowKeydown(e: KeyboardEvent) {
         // Note: on macOS WebKit, Cmd suppresses Shift in e.key, so Cmd+Shift+E
@@ -1000,6 +1023,7 @@
     onpointerdown={handleWindowPointerDown}
     onpointermove={onWindowPointerMove}
     onpointerup={onWindowPointerUp}
+    onfocus={handleWindowFocus}
 />
 
 <!-- Zen-mode locator dot — marks where the (hidden) File Explorer button sits. -->
