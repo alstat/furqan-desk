@@ -133,6 +133,9 @@ export function renderMarkdown(md: string): string {
     const raw = marked.parse(md) as string;
     return DOMPurify.sanitize(raw, {
         USE_PROFILES: { html: true },
-        ADD_ATTR: ["style"],
+        // `tabindex`/`role` let injected interactive spans (e.g. the take-home
+        // message's clickable ayah references) survive sanitisation; `data-*`
+        // attributes are already allowed by default.
+        ADD_ATTR: ["style", "tabindex", "role"],
     });
 }

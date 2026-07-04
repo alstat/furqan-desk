@@ -29,6 +29,9 @@
     } from "$lib/stores/recitation.store";
     import RecitationDownloadDialog from "./RecitationDownloadDialog.svelte";
     import ReciterSelectDialog from "./ReciterSelectDialog.svelte";
+    import TakeHomeMessageDialog from "./TakeHomeMessageDialog.svelte";
+    import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
+    import { t } from "$lib/i18n";
     import { invoke } from "@tauri-apps/api/core";
     import { activeTranslatorId } from "$lib/stores/translation.store";
     import {
@@ -41,6 +44,13 @@
     let scrollContainer = $state<HTMLElement | null>(null);
     let showBookmarks = $state(false);
     let showHighlights = $state(false);
+    let showTakeHome = $state(false);
+    let takeHomeBtnEl = $state<HTMLButtonElement | null>(null);
+
+    // The take-home button needs displayed ayahs to reflect on.
+    let hasDisplayedAyahs = $derived(
+        $morphologyMultiSurahList !== null || $surahMorphology !== null,
+    );
 
     $effect(() => {
         totalAyahsInSurah.set($surahMorphology?.ayahs?.length ?? 0);
@@ -312,6 +322,26 @@
         </div>
     </div>
     <NextPrevButton position={"absolute -bottom-4 inset-x-0 z-20"} />
+
+    <!-- Take-home message button — mirrors the File Explorer button on the
+         opposite (right) edge, at the same vertical level -->
+    {#if hasDisplayedAyahs}
+        <button
+            bind:this={takeHomeBtnEl}
+            class="cursor-pointer absolute -right-5 top-1/3 z-3 {actionBtnStyle} {showTakeHome
+                ? 'bg-brand-gold-400 dark:bg-[#363a4f]'
+                : ''} {$zenMode
+                ? $zenPeek
+                    ? 'opacity-50 transition-opacity duration-200'
+                    : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
+                : ''}"
+            onclick={() => (showTakeHome = true)}
+            aria-label={$t("takehome.title")}
+            title={$t("takehome.title")}
+        >
+            <Icon icon="solar:lightbulb-bolt-bold-duotone" class="h-4 w-4" />
+        </button>
+    {/if}
 </div>
 
 <!-- Dialogs — rendered outside the z-1 stacking context so their fixed backdrop covers the full viewport -->
@@ -328,6 +358,11 @@
 <ReciterSelectDialog
     open={$reciterSelectDialogOpen}
     onClose={() => reciterSelectDialogOpen.set(false)}
+/>
+<TakeHomeMessageDialog
+    open={showTakeHome}
+    onClose={() => (showTakeHome = false)}
+    anchorEl={takeHomeBtnEl}
 />
 
 <!-- Floating Save Highlight button -->

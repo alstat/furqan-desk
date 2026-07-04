@@ -1609,7 +1609,117 @@ pub fn compile_typst_svg(
         .output
         .map_err(|e| format!("{e:?}"))?;
     let opts = typst_svg::SvgOptions::default();
-    Ok(doc.pages().iter().map(|p| typst_svg::svg(p, &opts)).collect())
+    Ok(doc
+        .pages()
+        .iter()
+        .map(|p| {
+            // typst renders every glyph as a vector <path>, so the exported SVG
+            // contains no selectable text. Pair the visible SVG with a
+            // transparent, selectable text layer (positioned over the glyphs)
+            // so the preview supports highlighting and copying — the same
+            // approach PDF.js and typst-preview use.
+            let visible = typst_svg::svg(p, &opts);
+            let overlay = typst_text_layer(p);
+            format!(
+                "<div class=\"typst-doc\" style=\"position:relative\">{visible}{overlay}</div>"
+            )
+        })
+        .collect())
+}
+
+/// Build a transparent SVG text layer for a page: one `<text>` element per text
+/// run, positioned with the same coordinate system as `typst_svg::svg` so it
+/// overlays the rendered glyphs pixel-for-pixel and can be selected/copied.
+fn typst_text_layer(page: &typst_layout::Page) -> String {
+    use typst::layout::Transform;
+
+    let mut runs = String::new();
+    collect_typst_text(&page.frame, Transform::identity(), &mut runs);
+
+    let size = page.frame.size();
+    // viewBox matches the visible SVG (typst uses points), so both scale
+    // identically under `width:100%`.
+    format!(
+        "<svg class=\"typst-text-layer\" xmlns=\"http://www.w3.org/2000/svg\" \
+         viewBox=\"0 0 {w} {h}\" \
+         style=\"position:absolute;top:0;left:0;width:100%;height:100%;cursor:text\">\
+         {runs}</svg>",
+        w = size.x.to_pt(),
+        h = size.y.to_pt(),
+    )
+}
+
+/// Walk a frame recursively, accumulating the absolute transform (matching
+/// `typst-svg`'s frame/group traversal) and emitting a transparent `<text>`
+/// element for every text run.
+fn collect_typst_text(
+    frame: &typst::layout::Frame,
+    ts: typst::layout::Transform,
+    out: &mut String,
+) {
+    use typst::layout::{FrameItem, Transform};
+
+    for (pos, item) in frame.items() {
+        let local = ts.pre_concat(Transform::translate(pos.x, pos.y));
+        match item {
+            FrameItem::Group(group) => {
+                collect_typst_text(
+                    &group.frame,
+                    local.pre_concat(group.transform),
+                    out,
+                );
+            }
+            FrameItem::Text(text) => push_typst_text_run(text, local, out),
+            _ => {}
+        }
+    }
+}
+
+/// Emit a single transparent `<text>` run at the run's baseline. `textLength`
+/// stretches the fallback-font layout to the run's real width so the selection
+/// rectangle lines up with the visible glyphs.
+fn push_typst_text_run(
+    text: &typst::text::TextItem,
+    t: typst::layout::Transform,
+    out: &mut String,
+) {
+    if text.text.is_empty() {
+        return;
+    }
+    let content = xml_escape(&text.text);
+    let matrix = format!(
+        "matrix({} {} {} {} {} {})",
+        t.sx.get(),
+        t.ky.get(),
+        t.kx.get(),
+        t.sy.get(),
+        t.tx.to_pt(),
+        t.ty.to_pt(),
+    );
+    let width = text.width().to_pt();
+    let length_attr = if width > 0.0 {
+        format!(" textLength=\"{width}\" lengthAdjust=\"spacingAndGlyphs\"")
+    } else {
+        String::new()
+    };
+    out.push_str(&format!(
+        "<text transform=\"{matrix}\" x=\"0\" y=\"0\" font-size=\"{size}\"{length_attr} \
+         xml:space=\"preserve\" fill=\"transparent\">{content}</text>",
+        size = text.size.to_pt(),
+    ));
+}
+
+fn xml_escape(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            _ => out.push(c),
+        }
+    }
+    out
 }
 
 #[tauri::command]
