@@ -81,7 +81,7 @@ const suggestionField = StateField.define<Suggestion | null>({
 const DEBOUNCE_MS = 300;
 const MIN_PREFIX = 20;
 const PREFIX_CHARS = 2000;
-const SUFFIX_CHARS = 500;
+const SUFFIX_CHARS = 0;
 
 function fetchPlugin(language: string) {
     return ViewPlugin.fromClass(

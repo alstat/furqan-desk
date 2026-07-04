@@ -21,7 +21,20 @@
 //                                 Defaults to 4000. Bounds worst-case output cost
 //                                 per request and prevents runaway essays. Set
 //                                 lower for tighter margins, higher for longer
-//                                 free-form generations.
+//                                 free-form generations. NOTE: for reasoning models
+//                                 this budget is shared with hidden reasoning tokens,
+//                                 so a heavy prompt can exhaust it on reasoning and
+//                                 return empty content — use the reasoning-effort
+//                                 secrets below to prevent that.
+//   OPENAI_REASONING_EFFORT_STANDARD / OPENAI_REASONING_EFFORT_ADVANCED
+//                                 — optional. When set to one of "minimal", "low",
+//                                 "medium" or "high", the value is passed as
+//                                 `reasoning_effort` for that model class. Set
+//                                 STANDARD to "low" (or "minimal") when your standard
+//                                 model is a reasoning model so it doesn't burn the
+//                                 whole completion-token budget thinking and return
+//                                 nothing. Leave UNSET for non-reasoning models
+//                                 (e.g. gpt-4o-mini) — they reject this parameter.
 //   SB_SECRET_KEY               — rotatable secret key (Dashboard → Project Settings →
 //                                 API → API Keys → "Secret keys", value starts with
 //                                 sb_secret_...). Used for writing token_usage past
@@ -271,19 +284,36 @@ Deno.serve(async (req) => {
         10,
     );
 
+    // Optional per-class reasoning effort. Only forwarded when explicitly
+    // configured (and valid), so non-reasoning models — which reject the
+    // parameter — are unaffected unless the operator opts in.
+    const validEfforts = new Set(["minimal", "low", "medium", "high"]);
+    const reasoningEffortRaw = (
+        modelClass === "advanced"
+            ? Deno.env.get("OPENAI_REASONING_EFFORT_ADVANCED")
+            : Deno.env.get("OPENAI_REASONING_EFFORT_STANDARD")
+    )?.trim().toLowerCase();
+    const reasoningEffort =
+        reasoningEffortRaw && validEfforts.has(reasoningEffortRaw)
+            ? reasoningEffortRaw
+            : undefined;
+
+    const openaiPayload: Record<string, unknown> = {
+        model,
+        messages: body.messages,
+        stream: true,
+        stream_options: { include_usage: true },
+        max_completion_tokens: maxCompletionTokens,
+    };
+    if (reasoningEffort) openaiPayload.reasoning_effort = reasoningEffort;
+
     const upstream = await fetch(OPENAI_URL, {
         method: "POST",
         headers: {
             Authorization: `Bearer ${openaiKey}`,
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-            model,
-            messages: body.messages,
-            stream: true,
-            stream_options: { include_usage: true },
-            max_completion_tokens: maxCompletionTokens,
-        }),
+        body: JSON.stringify(openaiPayload),
     });
 
     if (!upstream.ok || !upstream.body) {

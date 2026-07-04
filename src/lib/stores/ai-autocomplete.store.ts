@@ -69,9 +69,17 @@ export function aiAutocompleteActive(): boolean {
 // ── Completion fetch ─────────────────────────────────────────────────────────
 
 const LANGUAGE_HINTS: Record<string, string> = {
-    typst: "The document is Typst source (markup + code). Continue with valid Typst.",
-    julia: "The document is Julia source code. Continue with valid Julia.",
-    prose: "The document is prose. Continue the writing naturally.",
+    typst:
+        "You are completing Typst markup/code inside the Typst editor. " +
+        "Continue with syntactically valid Typst — respect the surrounding " +
+        "markup, functions, set/show rules, and math mode implied by the context.",
+    julia:
+        "You are completing Julia source code inside the Julia editor. " +
+        "Continue with syntactically valid Julia — respect the surrounding " +
+        "scope, indentation, and any open blocks, functions, or types.",
+    prose:
+        "You are completing plain-text prose inside the text editor. " +
+        "Continue the writing naturally, matching the surrounding tone and style.",
 };
 
 // Models occasionally echo the sentinel or wrap the answer in fences anyway.
