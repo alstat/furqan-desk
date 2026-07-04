@@ -20,6 +20,11 @@
     } from "lexical";
     import { mergeRegister } from "@lexical/utils";
     import { $isCodeNode as isCodeNode } from "$lexical/core/plugins/CodeHighlighter/CodeNode";
+    import { $isQuranBlockNode as isQuranBlockNode } from "$lexical/core/plugins/Quran/QuranBlockNode";
+    import { $isEquationNode as isEquationNode } from "$lexical/core/plugins/Equation/EquationNode";
+    import { $isJuliaCellNode as isJuliaCellNode } from "$lexical/core/plugins/JuliaCell/JuliaCellNode";
+    import { $isImageNode as isImageNode } from "$lexical/core/plugins/Image/ImageNode";
+    import { $isReferenceListNode as isReferenceListNode } from "$lexical/core/plugins/ReferenceList/ReferenceListNode";
     import { getEditor } from "$lexical/core/composerContext.js";
     import { isPro } from "$lib/stores/auth.store";
     import {
@@ -68,6 +73,31 @@
         const root = editor.getRootElement();
         const active = document.activeElement;
         return !!root && (root === active || root.contains(active));
+    }
+
+    // Compact reference for a Qur'an block, e.g. "<Qur'an 2:255>" or
+    // "<Qur'an 2:255-257, 3:1>", collapsing consecutive ayahs into ranges.
+    function quranRef(verses: { surah: number; ayah: number }[]): string {
+        if (!verses.length) return "<Qur'an>";
+        const parts: string[] = [];
+        let s = verses[0].surah;
+        let start = verses[0].ayah;
+        let prev = verses[0].ayah;
+        const flush = () =>
+            parts.push(start === prev ? `${s}:${start}` : `${s}:${start}-${prev}`);
+        for (let i = 1; i < verses.length; i++) {
+            const v = verses[i];
+            if (v.surah === s && v.ayah === prev + 1) {
+                prev = v.ayah;
+                continue;
+            }
+            flush();
+            s = v.surah;
+            start = v.ayah;
+            prev = v.ayah;
+        }
+        flush();
+        return `<Qur'an ${parts.join(", ")}>`;
     }
 
     // Prefix/suffix of the document around the caret, flattened to plain text
@@ -121,18 +151,42 @@
             if (idx < 0) return null;
             // Render a sibling block to text for the model. Paragraphs,
             // headings, quotes, lists and tables expose their text via
-            // getTextContent(); code blocks are decorator nodes whose text lives
-            // in getCode(), so surface that (fenced, so the model treats it as
-            // code) instead of dropping it. Other decorator blocks (Quran
-            // verses, equations, images, …) return an empty string and are
-            // dropped below — that avoids the blank-line runs that made the
-            // model return no suggestion when a special block sat in the prefix.
+            // getTextContent(); the decorator blocks below have empty text, so
+            // give each a compact placeholder that preserves context (rather
+            // than dropping them and leaving the model blind to what's there).
             const blockToText = (n: LexicalNode): string => {
                 if (isCodeNode(n)) {
                     const code = n.getCode() || "";
                     if (!code.trim()) return "";
                     return "```" + (n.getLanguage() || "") + "\n" + code + "\n```";
                 }
+                if (isQuranBlockNode(n)) return quranRef(n.getVerses());
+                if (isEquationNode(n)) {
+                    const eq = n.getEquation().trim();
+                    return eq ? `$${eq}$` : "";
+                }
+                if (isJuliaCellNode(n)) {
+                    // Represent whatever the cell actually shows: the source as
+                    // a fenced Julia block, its textual output as plain text,
+                    // and any plot as a "<Julia Plot>" marker (never the raw
+                    // image data). `displayMode` mirrors the reader's view.
+                    const mode = n.getDisplayMode();
+                    const parts: string[] = [];
+                    if (mode !== "output") {
+                        // Include the source verbatim (untrimmed) — only test
+                        // for emptiness so indentation/blank lines are preserved.
+                        const code = n.getCode();
+                        if (code.trim()) parts.push("```julia\n" + code + "\n```");
+                    }
+                    if (mode !== "code") {
+                        const out = n.getOutput().trim();
+                        if (out) parts.push(out);
+                        if (n.getPlots().length) parts.push("<Julia Plot>");
+                    }
+                    return parts.join("\n");
+                }
+                if (isImageNode(n)) return "<Image>";
+                if (isReferenceListNode(n)) return "<Reference>";
                 return n.getTextContent();
             };
             const joinText = (nodes: typeof children) =>
