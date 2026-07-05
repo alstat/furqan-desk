@@ -15,6 +15,7 @@
     "tauri:ios": "tauri ios",
     "tauri:android": "tauri android",
     "msix:assets": "node scripts/generate-msix-assets.mjs",
+    "icon:ico": "node scripts/generate-ico.mjs",
     "build:dmg": "mkdir -p src-tauri/target/release/bundle/dmg && hdiutil create -volname AyahLab -srcfolder src-tauri/target/release/bundle/macos/AyahLab.app -ov -format UDZO src-tauri/target/release/bundle/dmg/AyahLab_0.1.0_aarch64.dmg"
   },
   "license": "MIT",
@@ -90,6 +91,7 @@
     "@testing-library/svelte": "^5.3.1",
     "@types/dompurify": "^3.0.5",
     "lucide-svelte": "^0.577.0",
+    "png-to-ico": "^3.0.1",
     "sharp": "^0.35.3",
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.0",
