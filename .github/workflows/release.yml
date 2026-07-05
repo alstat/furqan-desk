@@ -57,6 +57,10 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Generate MSIX Visual Assets
+        if: matrix.platform == 'windows-latest'
+        run: npm run msix:assets
+
       - name: Download quran_static.db
         run: gh release download data --pattern "quran_static.db" --dir src-tauri/data --clobber
         env:
@@ -84,3 +88,13 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Upload MSIX Visual Assets + manifest
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: msix-visual-assets
+          path: |
+            src-tauri/msix/Assets/**
+            src-tauri/msix/AppxManifest.xml
+          if-no-files-found: error
