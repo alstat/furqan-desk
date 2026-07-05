@@ -255,7 +255,10 @@
       "Bash(awk '/pub struct Page \\\\{|pub struct Page$/{f=1} f{print} f&&/^\\\\}/{exit}' layout/page.rs)",
       "Bash(awk '/pub struct Page \\\\{/{f=1} f{print} f&&/^\\\\}/{exit}' document.rs)",
       "Bash(awk '/pub struct PagedDocument \\\\{/{f=1} f{print} f&&/^\\\\}/{exit}' document.rs)",
-      "Bash(awk '/markdown-body/{found=1} /<style/{s=1} s&&/markdown-body/{print NR\": \"$0}' src/lib/components/shared/AiChatDialog.svelte)"
+      "Bash(awk '/markdown-body/{found=1} /<style/{s=1} s&&/markdown-body/{print NR\": \"$0}' src/lib/components/shared/AiChatDialog.svelte)",
+      "Bash(ls -la .github/workflows/)",
+      "Bash(grep -rln \"windows\\\\|msi\\\\|msix\\\\|tauri\\\\|bundle\" .github/workflows/)",
+      "Bash(git check-ignore *)"
     ]
   }
 }
