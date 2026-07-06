@@ -1,4 +1,12 @@
 export const sq: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Po përditësohet Julia…",
+  "settings.julia.update_done": "Julia u përditësua me sukses",
+  "settings.julia.update_failed": "Përditësimi i Julia dështoi",
+  "settings.julia.background_hint": "Mund ta mbyllni këtë dritare — përditësimi vazhdon të ekzekutohet në sfond.",
+  "settings.privacy.text_pro": "AyahLab funksionon offline — pa telemetri, pa analitikë. Shënimet, faqeshënuesit dhe cilësimet tuaja qëndrojnë në pajisjen tuaj. Pro shton një llogari që historiku juaj i bisedave me IA të sinkronizohet mes pajisjeve. Ai historik është e vetmja gjë që ruajmë — dhe fillimisht enkriptohet në pajisjen tuaj, kështu që zhvilluesit e AyahLab nuk mund ta lexojnë.",
+  "link.edit": "Redakto lidhjen",
+  "link.open": "Hap lidhjen",
     // Keyboard shortcuts
     "settings.shortcuts": "Shkurtoret e tastierës",
     "settings.shortcuts.desc": "Shiko të gjitha shkurtoret e disponueshme të tastierës",

@@ -258,7 +258,8 @@
       "Bash(awk '/markdown-body/{found=1} /<style/{s=1} s&&/markdown-body/{print NR\": \"$0}' src/lib/components/shared/AiChatDialog.svelte)",
       "Bash(ls -la .github/workflows/)",
       "Bash(grep -rln \"windows\\\\|msi\\\\|msix\\\\|tauri\\\\|bundle\" .github/workflows/)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(xargs -I{} sh -c 'node -e \"require\\(\\\\\"sharp\\\\\"\\)\\(\\\\\"{}\\\\\"\\).metadata\\(\\).then\\(m=>{if\\(m.width>=1024\\)console.log\\(m.width+\\\\\"x\\\\\"+m.height, \\\\\"{}\\\\\"\\)}\\).catch\\(\\(\\)=>{}\\)\"')"
     ]
   }
 }

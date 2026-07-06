@@ -1,4 +1,12 @@
 export const ku: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "نوێکردنەوەی Julia…",
+  "settings.julia.update_done": "Julia بە سەرکەوتوویی نوێکرایەوە",
+  "settings.julia.update_failed": "نوێکردنەوەی Julia سەرکەوتوو نەبوو",
+  "settings.julia.background_hint": "دەتوانیت ئەم پەنجەرەیە دابخەیت — نوێکردنەوەکە لە پاشبنەمادا بەردەوام دەبێت.",
+  "settings.privacy.text_pro": "AyahLab بە شێوەی ئۆفلاین کار دەکات — بێ تەلەمەتری، بێ ئانالیتیکس. تێبینی، بۆکمارک و ڕێکخستنەکانت لەسەر ئامێرەکەت دەمێننەوە. Pro هەژمارێک زیاد دەکات بۆ ئەوەی مێژووی گفتوگۆی AI ـەکەت لەنێوان ئامێرەکاندا هاوکات بکرێت. ئەو مێژووە تەنها شتێکە کە ئێمە هەڵیدەگرین — و سەرەتا لەسەر ئامێرەکەت شیفرە دەکرێت، بۆیە گەشەپێدەرانی AyahLab ناتوانن بیخوێننەوە.",
+  "link.edit": "دەستکاری لینک",
+  "link.open": "کردنەوەی لینک",
     // Keyboard shortcuts
     "settings.shortcuts": "Kurterêyên klavyeyê",
     "settings.shortcuts.desc": "Hemû kurterêyên klavyeyê yên berdest bibîne",

@@ -1,4 +1,12 @@
 export const tl: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Ina-update ang Julia…",
+  "settings.julia.update_done": "Matagumpay na na-update ang Julia",
+  "settings.julia.update_failed": "Nabigo ang pag-update ng Julia",
+  "settings.julia.background_hint": "Puwede mong isara ang window na ito — patuloy na tatakbo ang update sa background.",
+  "settings.privacy.text_pro": "Tumatakbo ang AyahLab nang offline — walang telemetry, walang analytics. Ang iyong mga tala, bookmark, at setting ay nananatili sa iyong device. Nagdaragdag ang Pro ng account para ma-sync ang iyong AI chat history sa iba't ibang device. Ang history na iyon lang ang iniimbak namin — at naka-encrypt muna ito sa iyong device, kaya hindi ito mababasa ng mga developer ng AyahLab.",
+  "link.edit": "I-edit ang link",
+  "link.open": "Buksan ang link",
     // Keyboard shortcuts
     "settings.shortcuts": "Mga Keyboard Shortcut",
     "settings.shortcuts.desc": "Tingnan ang lahat ng available na keyboard shortcut",

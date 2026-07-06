@@ -2,6 +2,7 @@
     import Icon from '@iconify/svelte';
 import Dialog from '$lib/components/shared/Dialog.svelte';
     import ShortcutsDialog from './ShortcutsDialog.svelte';
+    import IndeterminateProgress from '$lib/components/shared/IndeterminateProgress.svelte';
     import {
         appDarkMode,
         zenMode,
@@ -28,6 +29,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         checkJuliaVersion,
         updateJulia,
         setJuliaVersion as setJuliaVersionStore,
+        juliaSettingsOpen,
     } from '$lib/stores/julia-install.store';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { getVersion } from '@tauri-apps/api/app';
@@ -47,6 +49,13 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     let { open, onClose }: Props = $props();
 
     let showShortcuts = $state(false);
+
+    // Mirror the dialog's open state into the store so the background
+    // install/update toast can hide itself while Settings is showing progress.
+    $effect(() => {
+        juliaSettingsOpen.set(open);
+        return () => juliaSettingsOpen.set(false);
+    });
 
     function handleRestartTour() {
         onClose();
@@ -506,9 +515,15 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             </div>
 
             {#if $juliaInstallState === 'updating'}
-                <div class="flex items-center gap-2 text-xs text-brand-charcoal-500 dark:text-[#838ba7] mb-1">
-                    <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin shrink-0" />
-                    <span>{$juliaInstallMessage || 'Updating…'}</span>
+                <div class="mt-2 mb-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/70 dark:bg-[#292c3c] px-3 py-2.5">
+                    <div class="flex items-center gap-2 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5]">
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin shrink-0 text-brand-gold-500 dark:text-[#e5c890]" />
+                        <span class="truncate">{$juliaInstallMessage || $t('settings.julia.updating')}</span>
+                    </div>
+                    <IndeterminateProgress class="mt-2" ariaLabel={$t('settings.julia.updating')} />
+                    <p class="mt-2 text-[10.5px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                        {$t('settings.julia.background_hint')}
+                    </p>
                 </div>
             {/if}
 
@@ -757,7 +772,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <div class="flex items-start gap-2 rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-100 dark:border-[#414559] px-3 py-2.5">
                     <Icon icon="solar:shield-check-bold-duotone" class="text-brand-gold-400 shrink-0 mt-0.5" width="0.9rem" />
                     <p class="text-[11px] text-brand-charcoal-500 dark:text-[#838ba7] leading-relaxed">
-                        {$t('settings.privacy.text')}
+                        {$isPro ? $t('settings.privacy.text_pro') : $t('settings.privacy.text')}
                     </p>
                 </div>
             </div>

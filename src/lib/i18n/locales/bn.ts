@@ -1,4 +1,12 @@
 export const bn: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia আপডেট করা হচ্ছে…",
+  "settings.julia.update_done": "Julia সফলভাবে আপডেট হয়েছে",
+  "settings.julia.update_failed": "Julia আপডেট ব্যর্থ হয়েছে",
+  "settings.julia.background_hint": "আপনি এই উইন্ডো বন্ধ করতে পারেন — আপডেট ব্যাকগ্রাউন্ডে চলতে থাকবে।",
+  "settings.privacy.text_pro": "AyahLab অফলাইনে চলে — কোনো টেলিমেট্রি নেই, কোনো বিশ্লেষণ নেই। আপনার নোট, বুকমার্ক এবং সেটিংস আপনার ডিভাইসেই থাকে। Pro একটি অ্যাকাউন্ট যোগ করে যাতে আপনার AI চ্যাট ইতিহাস ডিভাইসগুলোর মধ্যে সিঙ্ক হয়। সেই ইতিহাসই একমাত্র জিনিস যা আমরা সংরক্ষণ করি — এবং এটি প্রথমে আপনার ডিভাইসে এনক্রিপ্ট করা হয়, তাই AyahLab-এর ডেভেলপাররা এটি পড়তে পারে না।",
+  "link.edit": "লিঙ্ক সম্পাদনা করুন",
+  "link.open": "লিঙ্ক খুলুন",
     // Keyboard shortcuts
     "settings.shortcuts": "কীবোর্ড শর্টকাট",
     "settings.shortcuts.desc": "সমস্ত উপলব্ধ কীবোর্ড শর্টকাট দেখুন",

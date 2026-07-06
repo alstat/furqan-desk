@@ -1,4 +1,12 @@
 export const ky: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia жаңыртылууда…",
+  "settings.julia.update_done": "Julia ийгиликтүү жаңыртылды",
+  "settings.julia.update_failed": "Julia жаңыртуу ишке ашкан жок",
+  "settings.julia.background_hint": "Бул терезени жаба берсеңиз болот — жаңыртуу фондо уланат.",
+  "settings.privacy.text_pro": "AyahLab оффлайн иштейт — телеметрия жок, аналитика жок. Эскертмелериңиз, бетбелгилериңиз жана орнотууларыңыз түзмөгүңүздө калат. Pro версиясы AI маек тарыхын түзмөктөрдүн ортосунда шайкештирүү үчүн аккаунт кошот. Биз сактаган жалгыз нерсе — ошол тарых, жана ал адегенде түзмөгүңүздө шифрленет, ошондуктан AyahLab иштеп чыгуучулары аны окуй алышпайт.",
+  "link.edit": "Шилтемени түзөтүү",
+  "link.open": "Шилтемени ачуу",
     // Keyboard shortcuts
     "settings.shortcuts": "Баскычтоп кыска жолдору",
     "settings.shortcuts.desc": "Бардык жеткиликтүү баскычтоп кыска жолдорун көрүү",

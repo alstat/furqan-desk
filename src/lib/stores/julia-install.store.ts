@@ -14,6 +14,11 @@ export const juliaInstallMessage   = writable<string>('');
  *  without a Julia binary available. See JuliaInstallPrompt.svelte. */
 export const juliaPromptOpen = writable(false);
 
+/** True while the Settings dialog is open. The background install/update toast
+ *  (JuliaInstallToast.svelte) suppresses itself when either the settings dialog
+ *  or the install prompt is already visible, so progress isn't shown twice. */
+export const juliaSettingsOpen = writable(false);
+
 export function openJuliaInstallPrompt(): void {
     juliaPromptOpen.set(true);
 }
@@ -72,11 +77,22 @@ export function updateJulia(): Promise<void> {
         juliaInstallError.set('');
         juliaInstallMessage.set('');
         try {
-            await invoke('update_julia');
+            // "Update" means move to the latest stable release shown in the UI.
+            // Plain `juliaup update` only bumps the *current channel* (Julia is
+            // installed on the LTS channel), so it can't cross from LTS to the
+            // newest stable — it just prints "no unused installations to clean
+            // up" and the version never changes. Installing the latest version
+            // explicitly and making it the default actually performs the upgrade.
+            let latest = get(juliaLatestVersion);
+            if (!latest) {
+                latest = await invoke<string>('get_latest_julia_version');
+                juliaLatestVersion.set(latest);
+            }
+            await invoke('set_julia_version', { version: latest });
             juliaInstalledVersion.set(await invoke<string>('get_julia_version'));
             juliaInstallState.set('idle');
         } catch (e) {
-            juliaInstallError.set(String(e).slice(0, 180));
+            juliaInstallError.set(String(e).slice(0, 220));
             juliaInstallState.set('error');
         } finally {
             _runningInstall = null;

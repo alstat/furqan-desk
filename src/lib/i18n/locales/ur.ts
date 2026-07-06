@@ -1,4 +1,12 @@
 export const ur: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia اپڈیٹ ہو رہا ہے…",
+  "settings.julia.update_done": "Julia کامیابی سے اپڈیٹ ہو گیا",
+  "settings.julia.update_failed": "Julia اپڈیٹ ناکام رہا",
+  "settings.julia.background_hint": "آپ اس ونڈو کو بند کر سکتے ہیں — اپڈیٹ پس منظر میں چلتا رہے گا۔",
+  "settings.privacy.text_pro": "AyahLab آف لائن چلتا ہے — کوئی ٹیلی میٹری نہیں، کوئی تجزیہ نہیں۔ آپ کے نوٹس، بُک مارکس اور ترتیبات آپ کے آلے پر ہی رہتی ہیں۔ Pro ایک اکاؤنٹ شامل کرتا ہے تاکہ آپ کی AI چیٹ ہسٹری آلات کے درمیان سنک ہو سکے۔ وہ ہسٹری ہی واحد چیز ہے جسے ہم محفوظ کرتے ہیں — اور یہ پہلے آپ کے آلے پر خفیہ کی جاتی ہے، اس لیے AyahLab کے ڈویلپرز اسے نہیں پڑھ سکتے۔",
+  "link.edit": "لنک میں ترمیم کریں",
+  "link.open": "لنک کھولیں",
     // Keyboard shortcuts
     "settings.shortcuts": "کی بورڈ شارٹ کٹس",
     "settings.shortcuts.desc": "تمام دستیاب کی بورڈ شارٹ کٹس دیکھیں",

@@ -1,4 +1,12 @@
 export const id: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Memperbarui Julia…",
+  "settings.julia.update_done": "Julia berhasil diperbarui",
+  "settings.julia.update_failed": "Pembaruan Julia gagal",
+  "settings.julia.background_hint": "Anda dapat menutup jendela ini — pembaruan tetap berjalan di latar belakang.",
+  "settings.privacy.text_pro": "AyahLab berjalan offline — tanpa telemetri, tanpa analitik. Catatan, bookmark, dan pengaturan Anda tetap di perangkat Anda. Pro menambahkan akun agar riwayat obrolan AI Anda tersinkron antar perangkat. Riwayat itu adalah satu-satunya hal yang kami simpan — dan dienkripsi terlebih dahulu di perangkat Anda, sehingga pengembang AyahLab tidak dapat membacanya.",
+  "link.edit": "Edit tautan",
+  "link.open": "Buka tautan",
     // Keyboard shortcuts
     "settings.shortcuts": "Pintasan Keyboard",
     "settings.shortcuts.desc": "Lihat semua pintasan keyboard yang tersedia",

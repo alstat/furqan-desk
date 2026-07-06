@@ -1,4 +1,12 @@
 export const ja: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia を更新中…",
+  "settings.julia.update_done": "Julia を更新しました",
+  "settings.julia.update_failed": "Julia の更新に失敗しました",
+  "settings.julia.background_hint": "このウィンドウを閉じても構いません — 更新はバックグラウンドで続行されます。",
+  "settings.privacy.text_pro": "AyahLab はオフラインで動作します — テレメトリなし、分析なし。メモ、ブックマーク、設定はお使いのデバイスに保存されます。Pro ではアカウントを追加でき、AI チャット履歴を複数のデバイス間で同期できます。保存されるのはその履歴だけで、まずお使いのデバイス上で暗号化されるため、AyahLab の開発者が読むことはできません。",
+  "link.edit": "リンクを編集",
+  "link.open": "リンクを開く",
     // Keyboard shortcuts
     "settings.shortcuts": "キーボードショートカット",
     "settings.shortcuts.desc": "利用可能なすべてのキーボードショートカットを表示",
