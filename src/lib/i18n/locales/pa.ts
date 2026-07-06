@@ -1,4 +1,12 @@
 export const pa: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia ਅੱਪਡੇਟ ਹੋ ਰਿਹਾ ਹੈ…",
+  "settings.julia.update_done": "Julia ਸਫਲਤਾਪੂਰਵਕ ਅੱਪਡੇਟ ਹੋ ਗਿਆ",
+  "settings.julia.update_failed": "Julia ਅੱਪਡੇਟ ਅਸਫਲ ਰਿਹਾ",
+  "settings.julia.background_hint": "ਤੁਸੀਂ ਇਸ ਵਿੰਡੋ ਨੂੰ ਬੰਦ ਕਰ ਸਕਦੇ ਹੋ — ਅੱਪਡੇਟ ਬੈਕਗ੍ਰਾਊਂਡ ਵਿੱਚ ਚੱਲਦਾ ਰਹੇਗਾ।",
+  "settings.privacy.text_pro": "AyahLab ਔਫਲਾਈਨ ਚੱਲਦਾ ਹੈ — ਕੋਈ ਟੈਲੀਮੈਟ੍ਰੀ ਨਹੀਂ, ਕੋਈ ਵਿਸ਼ਲੇਸ਼ਣ ਨਹੀਂ। ਤੁਹਾਡੇ ਨੋਟ, ਬੁੱਕਮਾਰਕ ਅਤੇ ਸੈਟਿੰਗਾਂ ਤੁਹਾਡੇ ਡਿਵਾਈਸ 'ਤੇ ਹੀ ਰਹਿੰਦੀਆਂ ਹਨ। Pro ਇੱਕ ਖਾਤਾ ਜੋੜਦਾ ਹੈ ਤਾਂ ਜੋ ਤੁਹਾਡਾ AI ਚੈਟ ਇਤਿਹਾਸ ਡਿਵਾਈਸਾਂ ਵਿੱਚ ਸਿੰਕ ਹੋ ਸਕੇ। ਉਹ ਇਤਿਹਾਸ ਹੀ ਇੱਕੋ-ਇੱਕ ਚੀਜ਼ ਹੈ ਜੋ ਅਸੀਂ ਸਟੋਰ ਕਰਦੇ ਹਾਂ — ਅਤੇ ਇਹ ਪਹਿਲਾਂ ਤੁਹਾਡੇ ਡਿਵਾਈਸ 'ਤੇ ਐਨਕ੍ਰਿਪਟ ਕੀਤਾ ਜਾਂਦਾ ਹੈ, ਇਸ ਲਈ AyahLab ਦੇ ਡਿਵੈਲਪਰ ਇਸਨੂੰ ਪੜ੍ਹ ਨਹੀਂ ਸਕਦੇ।",
+  "link.edit": "ਲਿੰਕ ਸੰਪਾਦਿਤ ਕਰੋ",
+  "link.open": "ਲਿੰਕ ਖੋਲ੍ਹੋ",
     // Keyboard shortcuts
     "settings.shortcuts": "ਕੀਬੋਰਡ ਸ਼ਾਰਟਕੱਟ",
     "settings.shortcuts.desc": "ਸਾਰੇ ਉਪਲਬਧ ਕੀਬੋਰਡ ਸ਼ਾਰਟਕੱਟ ਵੇਖੋ",

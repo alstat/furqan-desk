@@ -1,4 +1,12 @@
 export const ru: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Обновление Julia…",
+  "settings.julia.update_done": "Julia успешно обновлена",
+  "settings.julia.update_failed": "Не удалось обновить Julia",
+  "settings.julia.background_hint": "Вы можете закрыть это окно — обновление продолжит выполняться в фоновом режиме.",
+  "settings.privacy.text_pro": "AyahLab работает офлайн — без телеметрии и аналитики. Ваши заметки, закладки и настройки остаются на вашем устройстве. Pro добавляет аккаунт, чтобы история чатов с ИИ синхронизировалась между устройствами. Эта история — единственное, что мы храним, и она сначала шифруется на вашем устройстве, поэтому разработчики AyahLab не могут её прочитать.",
+  "link.edit": "Изменить ссылку",
+  "link.open": "Открыть ссылку",
     // Keyboard shortcuts
     "settings.shortcuts": "Сочетания клавиш",
     "settings.shortcuts.desc": "Просмотр всех доступных сочетаний клавиш",

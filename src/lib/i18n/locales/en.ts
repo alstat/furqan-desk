@@ -111,6 +111,10 @@ export const en: Record<string, string> = {
   "settings.julia.latest": "Latest version",
   "settings.julia.update": "Update via juliaup",
   "settings.julia.up_to_date": "Julia is up to date",
+  "settings.julia.updating": "Updating Julia…",
+  "settings.julia.background_hint": "You can close this window — the update keeps running in the background.",
+  "settings.julia.update_done": "Julia updated successfully",
+  "settings.julia.update_failed": "Julia update failed",
   "julia.prompt.title": "Julia is not installed",
   "julia.prompt.desc": "Running Julia code needs the Julia programming language. Install it now, or set a custom path in Settings → Julia if it's already on your system.",
   "julia.prompt.install": "Install Julia",
@@ -152,6 +156,8 @@ export const en: Record<string, string> = {
   "settings.privacy": "Privacy",
   "settings.privacy.text":
     "AyahLab is fully offline. No accounts, no telemetry, no analytics. Your notes, bookmarks, and settings stay on your device only — the author has no way to access your data.",
+  "settings.privacy.text_pro":
+    "AyahLab runs offline — no telemetry, no analytics. Your notes, bookmarks, and settings stay on your device. Pro adds an account so your AI chat history syncs across devices. That history is the only thing we store — and it's encrypted on your device first, so AyahLab's developers cannot read it.",
   // Navigation and Julia plots
   "common.previous": "Previous",
   "common.next": "Next",
@@ -314,6 +320,8 @@ export const en: Record<string, string> = {
   "toolbar.insert_link": "Insert link",
   "link.placeholder": "Paste or type a link…",
   "link.save": "Save link",
+  "link.edit": "Edit link",
+  "link.open": "Open link",
   "toolbar.font_color": "Font color",
   "toolbar.highlight": "Highlight",
   "toolbar.highlight_none": "No highlight",

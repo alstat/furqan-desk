@@ -1,4 +1,12 @@
 export const kk: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia жаңартылып жатыр…",
+  "settings.julia.update_done": "Julia сәтті жаңартылды",
+  "settings.julia.update_failed": "Julia жаңарту сәтсіз аяқталды",
+  "settings.julia.background_hint": "Бұл терезені жабуыңызға болады — жаңарту фонда жалғаса береді.",
+  "settings.privacy.text_pro": "AyahLab офлайн жұмыс істейді — телеметрия жоқ, аналитика жоқ. Жазбаларыңыз, бетбелгілеріңіз бен параметрлеріңіз құрылғыңызда қалады. Pro нұсқасы AI сөйлесу тарихын құрылғылар арасында синхрондау үшін тіркелгі қосады. Біз сақтайтын жалғыз нәрсе — сол тарих, әрі ол алдымен құрылғыңызда шифрланады, сондықтан AyahLab әзірлеушілері оны оқи алмайды.",
+  "link.edit": "Сілтемені өңдеу",
+  "link.open": "Сілтемені ашу",
     // Keyboard shortcuts
     "settings.shortcuts": "Пернетақта төте жолдары",
     "settings.shortcuts.desc": "Барлық қолжетімді пернетақта төте жолдарын көру",

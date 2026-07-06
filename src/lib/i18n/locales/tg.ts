@@ -1,4 +1,12 @@
 export const tg: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia навсозӣ шуда истодааст…",
+  "settings.julia.update_done": "Julia бомуваффақият навсозӣ шуд",
+  "settings.julia.update_failed": "Навсозии Julia номуваффақ буд",
+  "settings.julia.background_hint": "Шумо метавонед ин тирезаро пӯшед — навсозӣ дар паснамо идома меёбад.",
+  "settings.privacy.text_pro": "AyahLab офлайн кор мекунад — бе телеметрия, бе таҳлил. Эзоҳот, хатчӯпҳо ва танзимоти шумо дар дастгоҳатон мемонанд. Pro ҳисоб илова мекунад, то таърихи сӯҳбати AI-и шумо байни дастгоҳҳо ҳамоҳанг шавад. Он таърих ягона чизест, ки мо нигоҳ медорем — ва он аввал дар дастгоҳи шумо рамзгузорӣ мешавад, бинобар ин таҳиягарони AyahLab наметавонанд онро хонанд.",
+  "link.edit": "Таҳрири пайванд",
+  "link.open": "Кушодани пайванд",
     // Keyboard shortcuts
     "settings.shortcuts": "Миёнбурҳои клавиатура",
     "settings.shortcuts.desc": "Дидани ҳамаи миёнбурҳои дастраси клавиатура",
