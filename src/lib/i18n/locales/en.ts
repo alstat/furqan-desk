@@ -355,6 +355,7 @@ export const en: Record<string, string> = {
   // Insert
   "insert.table": "Table",
   "insert.image": "Image",
+  "insert.drawing": "Drawing",
   "insert.hr": "Horizontal Rule",
   "insert.equation": "Equation",
   "insert.code_inline": "Inline",
