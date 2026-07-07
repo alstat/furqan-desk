@@ -20,6 +20,7 @@ import {
 import { readFile } from "@tauri-apps/plugin-fs";
 import { get } from "svelte/store";
 import { codeBlockParagraphs } from "./docxCodeHighlight";
+import { sceneToDataUrl, type Scene } from "$lexical/core/plugins/Drawing/drawingScene";
 import { cssColorToHex, textRunStyleFromNode } from "./docxInlineStyle";
 import { getSurahNameTashkeel } from "$lib/data/surah-names-tashkeel";
 import { surahLabels } from "$lib/stores/quran.svelte";
@@ -283,6 +284,9 @@ async function blockForNode(
         case "image": {
             return await imageParagraph(node);
         }
+        case "drawing": {
+            return await drawingParagraph(node);
+        }
         case "code": {
             return codeBlockParagraphs(node);
         }
@@ -502,6 +506,11 @@ async function inlineForNode(
             const altText = (node.altText as string) ?? "";
             return [new TextRun({ text: `[Image: ${altText || "missing"}]`, italics: true })];
         }
+        case "drawing": {
+            const run = await drawingRunFromNode(node);
+            if (run) return [run];
+            return [new TextRun({ text: `[Drawing]`, italics: true })];
+        }
         default: {
             if (node.children && node.children.length > 0) {
                 return await inlineRuns(node.children, style);
@@ -608,6 +617,49 @@ async function imageParagraph(node: SerializedNode): Promise<Paragraph> {
     const altText = (node.altText as string) ?? "";
     return new Paragraph({
         children: [new TextRun({ text: `[Image: ${altText || "missing"}]`, italics: true })],
+    });
+}
+
+// A drawing node carries an editable scene model; render it to SVG, rasterize
+// to PNG (docx's ImageRun has no SVG support), and size it like an image.
+async function drawingRunFromNode(node: SerializedNode): Promise<ParagraphChild | null> {
+    const scene = node.scene as Scene | undefined;
+    if (!scene || !Array.isArray(scene.shapes)) return null;
+    const raster = await rasterizeToPng(sceneToDataUrl(scene));
+    if (!raster) return null;
+
+    const ratio = raster.width > 0 ? raster.height / raster.width : 0.75;
+    let width =
+        typeof node.width === "number" && node.width > 0 ? node.width : raster.width;
+    let height =
+        typeof node.height === "number" && node.height > 0 ? node.height : raster.height;
+    if (width > DOCX_IMAGE_MAX_WIDTH) {
+        width = DOCX_IMAGE_MAX_WIDTH;
+        height = Math.round(width * ratio);
+    }
+    const altText = (node.altText as string) ?? "";
+    try {
+        return new ImageRun({
+            data: raster.bytes,
+            transformation: { width, height },
+            type: "png",
+            altText: altText
+                ? { title: altText, description: altText, name: altText }
+                : undefined,
+        } as ConstructorParameters<typeof ImageRun>[0]);
+    } catch (err) {
+        console.warn("[lexicalToDocx] drawing ImageRun failed:", err);
+        return null;
+    }
+}
+
+async function drawingParagraph(node: SerializedNode): Promise<Paragraph> {
+    const run = await drawingRunFromNode(node);
+    if (run) {
+        return new Paragraph({ children: [run], alignment: AlignmentType.CENTER });
+    }
+    return new Paragraph({
+        children: [new TextRun({ text: `[Drawing]`, italics: true })],
     });
 }
 

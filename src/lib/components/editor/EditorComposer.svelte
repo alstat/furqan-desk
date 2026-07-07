@@ -3,6 +3,8 @@
     import CodePlugin from "$lexical/core/plugins/CodeHighlighter/CodePlugin.svelte";
     import { EquationNode } from "$lexical/core/plugins/Equation/EquationNode";
     import EquationPlugin from "$lexical/core/plugins/Equation/EquationPlugin.svelte";
+    import { DrawingNode } from "$lexical/core/plugins/Drawing/DrawingNode";
+    import DrawingPlugin from "$lexical/core/plugins/Drawing/DrawingPlugin.svelte";
     import { ReferenceListNode } from "$lexical/core/plugins/ReferenceList/ReferenceListNode";
     import { CitationNode } from "$lexical/core/plugins/Cite/CitationNode";
     import { QuranBlockNode } from "$lexical/core/plugins/Quran/QuranBlockNode";
@@ -282,6 +284,7 @@
             QuoteNode,
             HorizontalRuleNode,
             ImageNode,
+            DrawingNode,
             EquationNode,
             ReferenceListNode,
             CitationNode,
@@ -328,6 +331,7 @@
             <ImagePlugin>
                 <CaptionEditorHistoryPlugin />
             </ImagePlugin>
+            <DrawingPlugin />
             <EquationPlugin />
             <AiSelectionPlugin />
             <AiAutocompletePlugin />
