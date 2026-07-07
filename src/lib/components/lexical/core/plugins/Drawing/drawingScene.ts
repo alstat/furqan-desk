@@ -13,6 +13,10 @@
 export type DashStyle = 'solid' | 'dash' | 'dot';
 export type PolygonKind = 'triangle' | 'diamond' | 'pentagon' | 'hexagon' | 'star';
 export type TextAlign = 'left' | 'center' | 'right';
+// How a line/arrow is routed between its two endpoints. 'straight' is a direct
+// segment; 'elbow' bends orthogonally through a mid point; 'curved' is a smooth
+// cubic through the same mid controls.
+export type Connector = 'straight' | 'elbow' | 'curved';
 
 // A line/arrow endpoint may be bound to an anchor on another shape so it
 // follows that shape when it is moved or resized. Box shapes expose the four
@@ -85,6 +89,15 @@ export interface LineShape extends CommonProps {
     y2: number;
     startRef?: Connection | null; // bound anchor for (x1,y1)
     endRef?: Connection | null; // bound anchor for (x2,y2)
+    connector?: Connector; // routing between endpoints (default 'straight')
+    startArrow?: boolean; // arrowhead on the (x1,y1) end (default false)
+    endArrow?: boolean; // arrowhead on the (x2,y2) end (default false)
+    // Manual offset of an elbow's middle segment from its auto-centred position,
+    // signed along `elbowMidAxis` ('x' → the vertical mid bar slides in x, 'y' →
+    // the horizontal mid bar slides in y). Stored as a delta so it follows the
+    // endpoints when the connector is moved. Ignored once the routing axis flips.
+    elbowMid?: number;
+    elbowMidAxis?: 'x' | 'y';
 }
 
 export interface ArrowShape extends CommonProps {
@@ -95,6 +108,7 @@ export interface ArrowShape extends CommonProps {
     y2: number;
     startRef?: Connection | null;
     endRef?: Connection | null;
+    connector?: Connector;
 }
 
 export interface PathShape extends CommonProps {
@@ -514,7 +528,9 @@ function escapeXml(s: string): string {
 function dashArray(dash: DashStyle, w: number): string {
     const sw = Math.max(1, w);
     if (dash === 'dash') return `${sw * 3},${sw * 2}`;
-    if (dash === 'dot') return `${sw},${sw * 2}`;
+    // Zero-length dashes + round caps render as true round dots (a non-zero
+    // dash would look like a small capsule/dash instead).
+    if (dash === 'dot') return `0,${sw * 2}`;
     return '';
 }
 
@@ -567,6 +583,379 @@ function polygonPoints(shape: PolygonShape): string {
 
 function round(n: number): number {
     return Math.round(n * 100) / 100;
+}
+
+// ── line/arrow connector routing ────────────────────────────────────────────
+
+type Pt = [number, number];
+
+// Fallback mid controls for an *unbound* connector: routed along the dominant
+// axis so the shaft leaves each endpoint perpendicular to it.
+function connectorBends(x1: number, y1: number, x2: number, y2: number): { c1: Pt; c2: Pt } {
+    const horizontal = Math.abs(x2 - x1) >= Math.abs(y2 - y1);
+    if (horizontal) {
+        const mx = (x1 + x2) / 2;
+        return { c1: [mx, y1], c2: [mx, y2] };
+    }
+    const my = (y1 + y2) / 2;
+    return { c1: [x1, my], c2: [x2, my] };
+}
+
+// Outward unit normal for a *named* box anchor (top/right/bottom/left). This is
+// the direction the connector must leave/enter so it meets the edge at a right
+// angle. Centre and polygon-edge anchors have no forced direction → [0, 0].
+function anchorDir(anchor: AnchorId | null | undefined): Pt {
+    switch (anchor) {
+        case 'top':
+            return [0, -1];
+        case 'bottom':
+            return [0, 1];
+        case 'left':
+            return [-1, 0];
+        case 'right':
+            return [1, 0];
+        default:
+            return [0, 0];
+    }
+}
+
+const hasDir = (d: Pt) => d[0] !== 0 || d[1] !== 0;
+
+// The exit directions at each endpoint, taken from the bound anchor (if any).
+function connectorDirs(s: LineShape | ArrowShape): { dA: Pt; dB: Pt } {
+    return {
+        dA: s.startRef ? anchorDir(s.startRef.anchor) : [0, 0],
+        dB: s.endRef ? anchorDir(s.endRef.anchor) : [0, 0],
+    };
+}
+
+// Drop points that are duplicates or lie *between* their neighbours on a
+// straight run (truly redundant). Reversal points (e.g. a perpendicular stub
+// that doubles back) are extrema, not between, so they are kept.
+function simplifyOrtho(pts: Pt[]): Pt[] {
+    const eps = 1e-6;
+    const dedup: Pt[] = [];
+    for (const p of pts) {
+        const last = dedup[dedup.length - 1];
+        if (!last || Math.abs(last[0] - p[0]) > eps || Math.abs(last[1] - p[1]) > eps) dedup.push(p);
+    }
+    const out: Pt[] = [];
+    for (let i = 0; i < dedup.length; i++) {
+        if (i === 0 || i === dedup.length - 1) {
+            out.push(dedup[i]);
+            continue;
+        }
+        const a = out[out.length - 1];
+        const b = dedup[i];
+        const c = dedup[i + 1];
+        const cross = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+        const between =
+            b[0] >= Math.min(a[0], c[0]) - eps &&
+            b[0] <= Math.max(a[0], c[0]) + eps &&
+            b[1] >= Math.min(a[1], c[1]) - eps &&
+            b[1] <= Math.max(a[1], c[1]) + eps;
+        if (Math.abs(cross) < eps && between) continue;
+        out.push(b);
+    }
+    return out;
+}
+
+const samePt = (a: Pt, b: Pt) => Math.abs(a[0] - b[0]) < 1e-6 && Math.abs(a[1] - b[1]) < 1e-6;
+
+// Orthogonal (elbow) route as corner points, plus a handle on its middle
+// segment (when it has one) so it can be nudged to dodge overlaps. When an
+// endpoint is bound to an anchor, a short perpendicular stub is pushed out first
+// so the shaft meets the edge at a right angle (the "twist"). Same-axis ends
+// produce a Z with an adjustable mid bar; crossed axes produce an L (no bar).
+function computeElbow(s: LineShape | ArrowShape): {
+    pts: Pt[];
+    mid: { i: number; axis: 'x' | 'y'; auto: number } | null;
+} {
+    const { x1, y1, x2, y2 } = s;
+    let overrideVal: number | undefined;
+    let overrideAxis: 'x' | 'y' | undefined;
+    if (s.type === 'line') {
+        overrideVal = s.elbowMid;
+        overrideAxis = s.elbowMidAxis;
+    }
+    const { dA, dB } = connectorDirs(s);
+    const boundA = hasDir(dA);
+    const boundB = hasDir(dB);
+
+    let sA: Pt, sB: Pt, axisA: 'h' | 'v', axisB: 'h' | 'v';
+    if (!boundA && !boundB) {
+        axisA = axisB = Math.abs(x2 - x1) >= Math.abs(y2 - y1) ? 'h' : 'v';
+        sA = [x1, y1];
+        sB = [x2, y2];
+    } else {
+        const dist = Math.hypot(x2 - x1, y2 - y1);
+        const stub = Math.min(24, Math.max(8, dist * 0.25));
+        sA = boundA ? [x1 + dA[0] * stub, y1 + dA[1] * stub] : [x1, y1];
+        sB = boundB ? [x2 + dB[0] * stub, y2 + dB[1] * stub] : [x2, y2];
+        // Normal axis of each bound anchor ('h' for left/right, 'v' for top/bottom).
+        const nAxisA = boundA ? (dA[0] !== 0 ? 'h' : 'v') : null;
+        const nAxisB = boundB ? (dB[0] !== 0 ? 'h' : 'v') : null;
+        const perp = (ax: 'h' | 'v') => (ax === 'h' ? 'v' : 'h');
+        if (boundA && boundB && nAxisA === nAxisB) {
+            // Anchors on the same normal axis (e.g. left→right): a Z straight
+            // across that axis reads best.
+            axisA = axisB = nAxisA!;
+        } else {
+            // Otherwise turn perpendicular at each bound stub, so the connector
+            // rounds the OUTSIDE of the shape instead of cutting through its body
+            // to reach the anchor. Free ends just complement the other end.
+            axisA = nAxisA ? perp(nAxisA) : perp(perp(nAxisB!));
+            axisB = nAxisB ? perp(nAxisB) : perp(perp(nAxisA!));
+        }
+    }
+
+    const raw: Pt[] = [[x1, y1]];
+    if (boundA) raw.push(sA);
+
+    // Link the two stub ends. Crossed axes → single corner (L); same axis → two
+    // bends around a middle bar, whose cross-axis position honours the override.
+    let midInfo: { axis: 'x' | 'y'; auto: number; a: Pt; b: Pt } | null = null;
+    if (axisA === 'h' && axisB === 'v') {
+        raw.push([sB[0], sA[1]]);
+    } else if (axisA === 'v' && axisB === 'h') {
+        raw.push([sA[0], sB[1]]);
+    } else if (axisA === 'h' && axisB === 'h') {
+        const auto = (sA[0] + sB[0]) / 2;
+        const mx = overrideAxis === 'x' && overrideVal !== undefined ? auto + overrideVal : auto;
+        const a: Pt = [mx, sA[1]];
+        const b: Pt = [mx, sB[1]];
+        raw.push(a, b);
+        midInfo = { axis: 'x', auto, a, b };
+    } else {
+        const auto = (sA[1] + sB[1]) / 2;
+        const my = overrideAxis === 'y' && overrideVal !== undefined ? auto + overrideVal : auto;
+        const a: Pt = [sA[0], my];
+        const b: Pt = [sB[0], my];
+        raw.push(a, b);
+        midInfo = { axis: 'y', auto, a, b };
+    }
+
+    if (boundB) raw.push(sB);
+    raw.push([x2, y2]);
+
+    const pts = simplifyOrtho(raw);
+    let mid: { i: number; axis: 'x' | 'y'; auto: number } | null = null;
+    if (midInfo) {
+        for (let i = 0; i < pts.length - 1; i++) {
+            if (samePt(pts[i], midInfo.a) && samePt(pts[i + 1], midInfo.b)) {
+                mid = { i, axis: midInfo.axis, auto: midInfo.auto };
+                break;
+            }
+        }
+    }
+    return { pts, mid };
+}
+
+function elbowRoute(s: LineShape | ArrowShape): Pt[] {
+    return computeElbow(s).pts;
+}
+
+/**
+ * The draggable middle segment of an elbow connector: its two endpoints, the
+ * axis it slides along ('x'/'y'), and its auto-centred coordinate (used to turn
+ * a pointer position into the stored `elbowMid` delta). Null when the route has
+ * no adjustable mid bar (straight/curved, or an L-shaped elbow).
+ */
+export function elbowMidSegment(
+    s: LineShape,
+): { a: Pt; b: Pt; axis: 'x' | 'y'; auto: number } | null {
+    if ((s.connector ?? 'straight') !== 'elbow') return null;
+    const { pts, mid } = computeElbow(s);
+    if (!mid) return null;
+    return { a: pts[mid.i], b: pts[mid.i + 1], axis: mid.axis, auto: mid.auto };
+}
+
+// Cubic control points for a curved connector. Bound endpoints pull the curve
+// out perpendicular to their edge; free ends fall back to the dominant-axis mid.
+function curvedControls(s: LineShape | ArrowShape): { c1: Pt; c2: Pt } {
+    const { x1, y1, x2, y2 } = s;
+    const { dA, dB } = connectorDirs(s);
+    const fallback = connectorBends(x1, y1, x2, y2);
+    const dist = Math.hypot(x2 - x1, y2 - y1);
+    const handle = Math.max(16, Math.min(dist * 0.45, 90));
+    return {
+        c1: hasDir(dA) ? [x1 + dA[0] * handle, y1 + dA[1] * handle] : fallback.c1,
+        c2: hasDir(dB) ? [x2 + dB[0] * handle, y2 + dB[1] * handle] : fallback.c2,
+    };
+}
+
+/**
+ * Polyline approximation of a connector in scene coordinates, as a flat list
+ * [x0, y0, x1, y1, …]. Straight → the two endpoints; elbow → its corner
+ * vertices; curved → the cubic sampled into short segments (for hit-testing).
+ */
+export function connectorPolyline(s: LineShape | ArrowShape): number[] {
+    const { x1, y1, x2, y2 } = s;
+    const connector = s.connector ?? 'straight';
+    if (connector === 'straight') return [x1, y1, x2, y2];
+    if (connector === 'elbow') return elbowRoute(s).flat();
+    // curved — sample the cubic Bézier
+    const { c1, c2 } = curvedControls(s);
+    const out: number[] = [];
+    const STEPS = 18;
+    for (let i = 0; i <= STEPS; i++) {
+        const t = i / STEPS;
+        const mt = 1 - t;
+        const a = mt * mt * mt;
+        const b = 3 * mt * mt * t;
+        const cc = 3 * mt * t * t;
+        const d = t * t * t;
+        out.push(
+            a * x1 + b * c1[0] + cc * c2[0] + d * x2,
+            a * y1 + b * c1[1] + cc * c2[1] + d * y2,
+        );
+    }
+    return out;
+}
+
+/** SVG path `d` for a line/arrow shaft, honouring its connector routing. */
+function connectorPathD(s: LineShape | ArrowShape): string {
+    const { x1, y1, x2, y2 } = s;
+    const connector = s.connector ?? 'straight';
+    if (connector === 'straight') {
+        return `M ${round(x1)} ${round(y1)} L ${round(x2)} ${round(y2)}`;
+    }
+    if (connector === 'elbow') {
+        const [head, ...rest] = elbowRoute(s);
+        return (
+            `M ${round(head[0])} ${round(head[1])} ` +
+            rest.map((p) => `L ${round(p[0])} ${round(p[1])}`).join(' ')
+        );
+    }
+    const { c1, c2 } = curvedControls(s);
+    return (
+        `M ${round(x1)} ${round(y1)} C ${round(c1[0])} ${round(c1[1])} ` +
+        `${round(c2[0])} ${round(c2[1])} ${round(x2)} ${round(y2)}`
+    );
+}
+
+function norm(dx: number, dy: number): Pt {
+    const len = Math.hypot(dx, dy);
+    return len < 1e-9 ? [0, 0] : [dx / len, dy / len];
+}
+
+// Outward tangent at each endpoint — the direction an arrowhead points — matching
+// however the shaft is actually drawn (straight/elbow segments or the cubic).
+function connectorEndDirs(s: LineShape): { startDir: Pt; endDir: Pt } {
+    const { x1, y1, x2, y2 } = s;
+    const connector = s.connector ?? 'straight';
+    const straight = { startDir: norm(x1 - x2, y1 - y2), endDir: norm(x2 - x1, y2 - y1) };
+    if (connector === 'curved') {
+        const { c1, c2 } = curvedControls(s);
+        const sd = norm(x1 - c1[0], y1 - c1[1]);
+        const ed = norm(x2 - c2[0], y2 - c2[1]);
+        return {
+            startDir: hasDir(sd) ? sd : straight.startDir,
+            endDir: hasDir(ed) ? ed : straight.endDir,
+        };
+    }
+    if (connector === 'elbow') {
+        const p = elbowRoute(s);
+        const n = p.length;
+        const sd = norm(p[0][0] - p[1][0], p[0][1] - p[1][1]);
+        const ed = norm(p[n - 1][0] - p[n - 2][0], p[n - 1][1] - p[n - 2][1]);
+        return {
+            startDir: hasDir(sd) ? sd : straight.startDir,
+            endDir: hasDir(ed) ? ed : straight.endDir,
+        };
+    }
+    return straight;
+}
+
+// A filled triangular arrowhead whose tip is at (tx,ty), opening back along -dir.
+function arrowHeadMarkup(tx: number, ty: number, dir: Pt, s: CommonProps): string {
+    const headLen = 8 + s.strokeWidth * 2.5;
+    const headW = 5 + s.strokeWidth * 2;
+    const bx = tx - dir[0] * headLen;
+    const by = ty - dir[1] * headLen;
+    const px = -dir[1];
+    const py = dir[0];
+    return (
+        `<polygon points="${round(tx)},${round(ty)} ` +
+        `${round(bx + px * headW)},${round(by + py * headW)} ` +
+        `${round(bx - px * headW)},${round(by - py * headW)}" ` +
+        `fill="${escapeXml(s.stroke)}" stroke="none" />`
+    );
+}
+
+/**
+ * A line/arrow-tail line segment (straight/elbow/curved) with optional
+ * arrowheads on either end. The shaft is pulled back at each capped end so it
+ * meets the arrowhead's base rather than poking through its tip.
+ */
+function lineMarkup(s: LineShape): string {
+    const startArrow = !!s.startArrow;
+    const endArrow = !!s.endArrow;
+    const connector = s.connector ?? 'straight';
+
+    // No heads → the plain shaft (unchanged rendering).
+    if (!startArrow && !endArrow) {
+        if (connector === 'straight') {
+            return `<line x1="${round(s.x1)}" y1="${round(s.y1)}" x2="${round(
+                s.x2,
+            )}" y2="${round(s.y2)}" ${strokeAttrs(s)} stroke-linecap="round" />`;
+        }
+        return `<path d="${connectorPathD(s)}" fill="none" ${strokeAttrs(
+            s,
+        )} stroke-linecap="round" stroke-linejoin="round" />`;
+    }
+
+    const { startDir, endDir } = connectorEndDirs(s);
+    const trim = (8 + s.strokeWidth * 2.5) * 0.9; // ≈ arrowhead length
+
+    let shaft: string;
+    if (connector === 'curved') {
+        const { c1, c2 } = curvedControls(s);
+        const sx = startArrow ? s.x1 - startDir[0] * trim : s.x1;
+        const sy = startArrow ? s.y1 - startDir[1] * trim : s.y1;
+        const ex = endArrow ? s.x2 - endDir[0] * trim : s.x2;
+        const ey = endArrow ? s.y2 - endDir[1] * trim : s.y2;
+        shaft =
+            `<path d="M ${round(sx)} ${round(sy)} C ${round(c1[0])} ${round(c1[1])} ` +
+            `${round(c2[0])} ${round(c2[1])} ${round(ex)} ${round(ey)}" fill="none" ${strokeAttrs(
+                s,
+            )} stroke-linecap="round" stroke-linejoin="round" />`;
+    } else if (connector === 'elbow') {
+        const pts = elbowRoute(s);
+        const n = pts.length;
+        if (startArrow) {
+            const seg = Math.hypot(pts[1][0] - pts[0][0], pts[1][1] - pts[0][1]);
+            const t = Math.min(trim, seg * 0.9);
+            pts[0] = [pts[0][0] - startDir[0] * t, pts[0][1] - startDir[1] * t];
+        }
+        if (endArrow) {
+            const seg = Math.hypot(pts[n - 1][0] - pts[n - 2][0], pts[n - 1][1] - pts[n - 2][1]);
+            const t = Math.min(trim, seg * 0.9);
+            pts[n - 1] = [pts[n - 1][0] - endDir[0] * t, pts[n - 1][1] - endDir[1] * t];
+        }
+        const d =
+            `M ${round(pts[0][0])} ${round(pts[0][1])} ` +
+            pts
+                .slice(1)
+                .map((p) => `L ${round(p[0])} ${round(p[1])}`)
+                .join(' ');
+        shaft = `<path d="${d}" fill="none" ${strokeAttrs(
+            s,
+        )} stroke-linecap="round" stroke-linejoin="round" />`;
+    } else {
+        const sx = startArrow ? s.x1 - startDir[0] * trim : s.x1;
+        const sy = startArrow ? s.y1 - startDir[1] * trim : s.y1;
+        const ex = endArrow ? s.x2 - endDir[0] * trim : s.x2;
+        const ey = endArrow ? s.y2 - endDir[1] * trim : s.y2;
+        shaft = `<line x1="${round(sx)}" y1="${round(sy)}" x2="${round(ex)}" y2="${round(
+            ey,
+        )}" ${strokeAttrs(s)} stroke-linecap="round" />`;
+    }
+
+    let heads = '';
+    if (startArrow) heads += arrowHeadMarkup(s.x1, s.y1, startDir, s);
+    if (endArrow) heads += arrowHeadMarkup(s.x2, s.y2, endDir, s);
+    return shaft + heads;
 }
 
 /** Line + a filled triangular head drawn manually (robust when rasterized). */
@@ -676,9 +1065,7 @@ export function shapeToSvg(shape: Shape): string {
             )} stroke-linejoin="round" />`;
             break;
         case 'line':
-            body = `<line x1="${round(shape.x1)}" y1="${round(shape.y1)}" x2="${round(
-                shape.x2,
-            )}" y2="${round(shape.y2)}" ${strokeAttrs(shape)} stroke-linecap="round" />`;
+            body = lineMarkup(shape);
             break;
         case 'arrow':
             body = arrowMarkup(shape);
@@ -745,6 +1132,8 @@ export interface StyleDefaults {
     align: TextAlign;
     bold: boolean;
     italic: boolean;
+    startArrow: boolean; // default tail cap for new line segments
+    endArrow: boolean;
 }
 
 export const DEFAULT_STYLE: StyleDefaults = {
@@ -758,6 +1147,8 @@ export const DEFAULT_STYLE: StyleDefaults = {
     align: 'left',
     bold: false,
     italic: false,
+    startArrow: false,
+    endArrow: false,
 };
 
 export type DrawTool =
@@ -768,6 +1159,8 @@ export type DrawTool =
     | 'ellipse'
     | 'line'
     | 'arrow'
+    | 'elbow'
+    | 'curved'
     | 'triangle'
     | 'diamond'
     | 'pentagon'
@@ -813,9 +1206,45 @@ export function createShapeFromBox(
         case 'ellipse':
             return { ...c, type: 'ellipse', x, y, w, h };
         case 'line':
-            return { ...c, type: 'line', fill: 'none', x1: x, y1: y, x2: x + w, y2: y + h };
+            return {
+                ...c,
+                type: 'line',
+                fill: 'none',
+                x1: x,
+                y1: y,
+                x2: x + w,
+                y2: y + h,
+                startArrow: style.startArrow,
+                endArrow: style.endArrow,
+            };
         case 'arrow':
             return { ...c, type: 'arrow', fill: 'none', x1: x, y1: y, x2: x + w, y2: y + h };
+        case 'elbow':
+            return {
+                ...c,
+                type: 'line',
+                fill: 'none',
+                x1: x,
+                y1: y,
+                x2: x + w,
+                y2: y + h,
+                connector: 'elbow',
+                startArrow: style.startArrow,
+                endArrow: style.endArrow,
+            };
+        case 'curved':
+            return {
+                ...c,
+                type: 'line',
+                fill: 'none',
+                x1: x,
+                y1: y,
+                x2: x + w,
+                y2: y + h,
+                connector: 'curved',
+                startArrow: style.startArrow,
+                endArrow: style.endArrow,
+            };
         case 'callout':
             return {
                 ...c,

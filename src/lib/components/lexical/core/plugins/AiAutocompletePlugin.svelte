@@ -78,7 +78,7 @@
     // Compact reference for a Qur'an block, e.g. "<Qur'an 2:255>" or
     // "<Qur'an 2:255-257, 3:1>", collapsing consecutive ayahs into ranges.
     function quranRef(verses: { surah: number; ayah: number }[]): string {
-        if (!verses.length) return "<Qur'an>";
+        if (!verses || verses.length === 0) return "<Qur'an>";
         const parts: string[] = [];
         let s = verses[0].surah;
         let start = verses[0].ayah;
@@ -189,9 +189,20 @@
                 if (isReferenceListNode(n)) return "<Reference>";
                 return n.getTextContent();
             };
+            // A malformed sibling block must never abort the whole context read
+            // — that would silently disable autocompletion for as long as such a
+            // block (e.g. a Qur'an block) sits before the caret. Serialize each
+            // block defensively and just skip any that throw.
+            const safeBlockToText = (n: LexicalNode): string => {
+                try {
+                    return blockToText(n);
+                } catch {
+                    return "";
+                }
+            };
             const joinText = (nodes: typeof children) =>
                 nodes
-                    .map(blockToText)
+                    .map(safeBlockToText)
                     .filter((t) => t.trim() !== "")
                     .join("\n\n");
             const prev = joinText(children.slice(0, idx));

@@ -39,7 +39,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         aiAutocompleteEnabled,
         aiAutocompleteModel,
     } from '$lib/stores/ai-autocomplete.store';
-    import { isPro } from '$lib/stores/auth.store';
+    import { isPro, isProPlus } from '$lib/stores/auth.store';
 
     interface Props {
         open: boolean;
@@ -49,6 +49,14 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     let { open, onClose }: Props = $props();
 
     let showShortcuts = $state(false);
+
+    // The Advanced AI model is Pro+ only. Pro accounts are Standard-only, so the
+    // effective model is forced to 'standard' (even if a stale 'advanced' value
+    // is persisted) and the Advanced buttons below are disabled for them.
+    let effTextModel = $derived($isProPlus ? $aiTextDefaultModel : 'standard');
+    let effAutocompleteModel = $derived(
+        $isProPlus ? $aiAutocompleteModel : 'standard',
+    );
 
     // Mirror the dialog's open state into the store so the background
     // install/update toast can hide itself while Settings is showing progress.
@@ -394,7 +402,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                         <button
                             onclick={() => aiTextDefaultModel.set('standard')}
                             class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
-                                ${$aiTextDefaultModel === 'standard'
+                                ${effTextModel === 'standard'
                                     ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                     : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                         >
@@ -402,10 +410,12 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                         </button>
                         <button
                             onclick={() => aiTextDefaultModel.set('advanced')}
-                            class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
-                                ${$aiTextDefaultModel === 'advanced'
+                            disabled={!$isProPlus}
+                            title={!$isProPlus ? 'Pro+' : ''}
+                            class={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+                                ${effTextModel === 'advanced'
                                     ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
-                                    : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                                    : 'cursor-pointer border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                         >
                             {$t('ai_chat.model_advanced')}
                         </button>
@@ -455,7 +465,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                         <button
                             onclick={() => aiAutocompleteModel.set('standard')}
                             class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
-                                ${$aiAutocompleteModel === 'standard'
+                                ${effAutocompleteModel === 'standard'
                                     ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                     : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                         >
@@ -463,10 +473,12 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                         </button>
                         <button
                             onclick={() => aiAutocompleteModel.set('advanced')}
-                            class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
-                                ${$aiAutocompleteModel === 'advanced'
+                            disabled={!$isProPlus}
+                            title={!$isProPlus ? 'Pro+' : ''}
+                            class={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+                                ${effAutocompleteModel === 'advanced'
                                     ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
-                                    : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                                    : 'cursor-pointer border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
                         >
                             {$t('ai_chat.model_advanced')}
                         </button>

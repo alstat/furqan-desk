@@ -1047,4 +1047,9 @@ export const tk: Record<string, string> = {
   "takehome.use_standard": "Standart modeli ulanyň",
   "takehome.generate": "Döret",
   "takehome.stale": "Görkezilen aýatlar üýtgedi. Täze esasy habar döredilsinmi?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Günüň aýaty",
+  "verse_of_day.loading": "Şu günki aýat ýüklenýär…",
+  "verse_of_day.go": "Kontekstde oka",
+  "insert.drawing": "Çyzgy",
 };

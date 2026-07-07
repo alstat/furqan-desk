@@ -115,7 +115,11 @@
 	});
 	onDestroy(() => {
 		openDrawingEditor.set(null);
-		if (typeof window !== 'undefined') window.removeEventListener('pointermove', onDrag);
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('pointermove', onDrag);
+			window.removeEventListener('pointermove', onResize);
+			document.body.style.userSelect = '';
+		}
 	});
 
 	// Fit the page into the viewport the first time the canvas is measured.
@@ -190,6 +194,11 @@
 			if (patch.align !== undefined) out.align = patch.align;
 			if (patch.bold !== undefined) out.bold = patch.bold;
 			if (patch.italic !== undefined) out.italic = patch.italic;
+		}
+		// Tail arrowheads apply to line segments (line / elbow / curved connectors).
+		if (out.type === 'line') {
+			if (patch.startArrow !== undefined) out.startArrow = patch.startArrow;
+			if (patch.endArrow !== undefined) out.endArrow = patch.endArrow;
 		}
 		return out;
 	}
@@ -456,6 +465,89 @@
 		isDragging = false;
 		window.removeEventListener('pointermove', onDrag);
 	}
+
+	// ── resize the panel ──────────────────────────────────────────────────────
+	const MIN_W = 480;
+	const MIN_H = 360;
+
+	type ResizeDir = { e: boolean; w: boolean; n: boolean; s: boolean };
+	const resizeHandles: Array<{ cls: string; dir: ResizeDir }> = [
+		{ cls: 'resize-n', dir: { n: true, s: false, e: false, w: false } },
+		{ cls: 'resize-s', dir: { n: false, s: true, e: false, w: false } },
+		{ cls: 'resize-e', dir: { n: false, s: false, e: true, w: false } },
+		{ cls: 'resize-w', dir: { n: false, s: false, e: false, w: true } },
+		{ cls: 'resize-ne', dir: { n: true, s: false, e: true, w: false } },
+		{ cls: 'resize-se', dir: { n: false, s: true, e: true, w: false } },
+		{ cls: 'resize-sw', dir: { n: false, s: true, e: false, w: true } },
+		{ cls: 'resize-nw', dir: { n: true, s: false, e: false, w: true } }
+	];
+	let _resizeDir: ResizeDir = { e: false, w: false, n: false, s: false };
+	let _resizeStartX = 0,
+		_resizeStartY = 0,
+		_resizeStartW = 0,
+		_resizeStartH = 0,
+		_resizeStartPanelX = 0,
+		_resizeStartPanelY = 0;
+
+	function startResize(e: PointerEvent, dir: ResizeDir) {
+		e.preventDefault();
+		e.stopPropagation();
+		_resizeDir = dir;
+		_resizeStartX = e.clientX;
+		_resizeStartY = e.clientY;
+		_resizeStartW = panelW;
+		_resizeStartH = panelH;
+		_resizeStartPanelX = x;
+		_resizeStartPanelY = y;
+		zIndex = bringToFront();
+		document.body.style.userSelect = 'none';
+		window.addEventListener('pointermove', onResize);
+		window.addEventListener('pointerup', stopResize, { once: true });
+	}
+
+	function onResize(e: PointerEvent) {
+		const dx = e.clientX - _resizeStartX;
+		const dy = e.clientY - _resizeStartY;
+		let newW = _resizeStartW;
+		let newH = _resizeStartH;
+		let newX = _resizeStartPanelX;
+		let newY = _resizeStartPanelY;
+		// East / south grow toward the viewport edge; clamp so the panel stays
+		// on-screen.
+		if (_resizeDir.e)
+			newW = Math.max(MIN_W, Math.min(_resizeStartW + dx, window.innerWidth - _resizeStartPanelX));
+		if (_resizeDir.s)
+			newH = Math.max(
+				MIN_H,
+				Math.min(_resizeStartH + dy, window.innerHeight - _resizeStartPanelY)
+			);
+		// West / north move the top-left corner; clamp it to the viewport origin.
+		if (_resizeDir.w) {
+			newW = Math.max(MIN_W, _resizeStartW - dx);
+			newX = _resizeStartPanelX + (_resizeStartW - newW);
+			if (newX < 0) {
+				newW += newX;
+				newX = 0;
+			}
+		}
+		if (_resizeDir.n) {
+			newH = Math.max(MIN_H, _resizeStartH - dy);
+			newY = _resizeStartPanelY + (_resizeStartH - newH);
+			if (newY < 0) {
+				newH += newY;
+				newY = 0;
+			}
+		}
+		panelW = newW;
+		panelH = newH;
+		x = newX;
+		y = newY;
+	}
+
+	function stopResize() {
+		document.body.style.userSelect = '';
+		window.removeEventListener('pointermove', onResize);
+	}
 </script>
 
 <svelte:window onkeydown={onKeydown} />
@@ -579,5 +671,101 @@
 				</button>
 			</div>
 		</div>
+
+		<!-- Resize handles -->
+		{#each resizeHandles as { cls, dir }}
+			<div
+				aria-hidden="true"
+				class="resize-handle {cls}"
+				onpointerdown={(e) => startResize(e, dir)}
+			></div>
+		{/each}
 	</div>
 {/if}
+
+<style>
+	.resize-handle {
+		position: absolute;
+		z-index: 20;
+	}
+	.resize-n {
+		top: 0;
+		left: 14px;
+		right: 14px;
+		height: 6px;
+		cursor: n-resize;
+	}
+	.resize-s {
+		bottom: 0;
+		left: 14px;
+		right: 14px;
+		height: 6px;
+		cursor: s-resize;
+	}
+	.resize-e {
+		top: 14px;
+		right: 0;
+		bottom: 14px;
+		width: 6px;
+		cursor: e-resize;
+	}
+	.resize-w {
+		top: 14px;
+		left: 0;
+		bottom: 14px;
+		width: 6px;
+		cursor: w-resize;
+	}
+	.resize-ne {
+		top: 0;
+		right: 0;
+		width: 14px;
+		height: 14px;
+		cursor: ne-resize;
+	}
+	.resize-se {
+		bottom: 0;
+		right: 0;
+		width: 20px;
+		height: 20px;
+		cursor: se-resize;
+	}
+	.resize-sw {
+		bottom: 0;
+		left: 0;
+		width: 14px;
+		height: 14px;
+		cursor: sw-resize;
+	}
+	.resize-nw {
+		top: 0;
+		left: 0;
+		width: 14px;
+		height: 14px;
+		cursor: nw-resize;
+	}
+	.resize-se::before {
+		content: '';
+		position: absolute;
+		bottom: 12px;
+		right: 12px;
+		width: 5px;
+		height: 5px;
+		border-bottom: 1.5px solid rgba(130, 130, 130, 0.4);
+		border-right: 1.5px solid rgba(130, 130, 130, 0.4);
+		border-bottom-right-radius: 5px;
+		pointer-events: none;
+	}
+	.resize-se::after {
+		content: '';
+		position: absolute;
+		bottom: 8px;
+		right: 8px;
+		width: 9px;
+		height: 9px;
+		border-bottom: 1.5px solid rgba(130, 130, 130, 0.55);
+		border-right: 1.5px solid rgba(130, 130, 130, 0.55);
+		border-bottom-right-radius: 9px;
+		pointer-events: none;
+	}
+</style>

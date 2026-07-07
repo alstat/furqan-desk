@@ -1047,4 +1047,9 @@ export const tg: Record<string, string> = {
   "takehome.use_standard": "Модели стандартиро истифода баред",
   "takehome.generate": "Эҷод",
   "takehome.stale": "Оятҳои намоишдодашуда тағйир ёфтанд. Паёми асосии нав эҷод карда шавад?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Ояти рӯз",
+  "verse_of_day.loading": "Ояти имрӯз бор мешавад…",
+  "verse_of_day.go": "Дар матн хондан",
+  "insert.drawing": "Расм",
 };

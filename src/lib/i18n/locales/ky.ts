@@ -1047,4 +1047,9 @@ export const ky: Record<string, string> = {
   "takehome.use_standard": "Стандарттык моделди колдонуу",
   "takehome.generate": "Түзүү",
   "takehome.stale": "Көрсөтүлгөн аяттар өзгөрдү. Жаңы негизги ой түзүлсүнбү?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Күндүн аяты",
+  "verse_of_day.loading": "Бүгүнкү аят жүктөлүүдө…",
+  "verse_of_day.go": "Контекстте окуу",
+  "insert.drawing": "Сүрөт",
 };

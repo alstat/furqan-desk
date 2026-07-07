@@ -1054,4 +1054,9 @@ export const de: Record<string, string> = {
   "takehome.use_standard": "Standardmodell verwenden",
   "takehome.generate": "Erstellen",
   "takehome.stale": "Die angezeigten Verse haben sich geändert. Neue Kernbotschaft erstellen?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Vers des Tages",
+  "verse_of_day.loading": "Der heutige Vers wird geladen…",
+  "verse_of_day.go": "Im Kontext lesen",
+  "insert.drawing": "Zeichnung",
 };

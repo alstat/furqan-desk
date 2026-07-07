@@ -1047,4 +1047,9 @@ export const th: Record<string, string> = {
   "takehome.use_standard": "ใช้โมเดลมาตรฐาน",
   "takehome.generate": "สร้าง",
   "takehome.stale": "อายะฮ์ที่แสดงมีการเปลี่ยนแปลง สร้างข้อคิดสำคัญใหม่หรือไม่?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "อายะฮ์ประจำวัน",
+  "verse_of_day.loading": "กำลังโหลดอายะฮ์ประจำวัน…",
+  "verse_of_day.go": "อ่านในบริบท",
+  "insert.drawing": "ภาพวาด",
 };

@@ -266,7 +266,8 @@
       "Bash(rm -f /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/_brk_tmp.mjs)",
       "Bash(textutil -convert txt -output /tmp/real.txt real.docx)",
       "Bash(rm -f /tmp/as.docx /tmp/as2.docx /tmp/as.txt /tmp/as2.txt /tmp/real.docx /tmp/real.txt /tmp/brk.docx /tmp/ep.docx)",
-      "Bash(rm -rf /tmp/brk_x /tmp/ep_x /tmp/real_x)"
+      "Bash(rm -rf /tmp/brk_x /tmp/ep_x /tmp/real_x)",
+      "Bash(npx vitest *)"
     ]
   }
 }

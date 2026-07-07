@@ -1041,4 +1041,9 @@ export const ru: Record<string, string> = {
   "takehome.use_standard": "Использовать стандартную модель",
   "takehome.generate": "Создать",
   "takehome.stale": "Отображаемые аяты изменились. Создать новую ключевую мысль?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Аят дня",
+  "verse_of_day.loading": "Загрузка аята дня…",
+  "verse_of_day.go": "Читать в контексте",
+  "insert.drawing": "Рисунок",
 };

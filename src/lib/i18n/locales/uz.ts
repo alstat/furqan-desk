@@ -1047,4 +1047,9 @@ export const uz: Record<string, string> = {
   "takehome.use_standard": "Standart modeldan foydalanish",
   "takehome.generate": "Yaratish",
   "takehome.stale": "Ko'rsatilgan oyatlar o'zgardi. Yangi asosiy xabar yaratilsinmi?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Kun oyati",
+  "verse_of_day.loading": "Bugungi oyat yuklanmoqda…",
+  "verse_of_day.go": "Kontekstda oʻqish",
+  "insert.drawing": "Chizma",
 };

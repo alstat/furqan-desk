@@ -994,4 +994,9 @@ export const ku: Record<string, string> = {
   "takehome.use_standard": "مۆدێلی ستاندارد بەکاربهێنە",
   "takehome.generate": "دروستکردن",
   "takehome.stale": "ئایەتە نیشاندراوەکان گۆڕان. پەیامێکی سەرەکی نوێ دروست بکرێت؟",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "ئایەتی ڕۆژ",
+  "verse_of_day.loading": "ئایەتی ئەمڕۆ باردەکرێت…",
+  "verse_of_day.go": "لە دەقەکەدا بیخوێنەوە",
+  "insert.drawing": "وێنەکێشان",
 };

@@ -1047,4 +1047,9 @@ export const ceb: Record<string, string> = {
   "takehome.use_standard": "Gamita ang standard nga modelo",
   "takehome.generate": "Paghimo",
   "takehome.stale": "Nabag-o ang gipakitang mga bersikulo. Maghimo bag-ong pangunang mensahe?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Bersikulo sa Adlaw",
+  "verse_of_day.loading": "Gikarga ang bersikulo karong adlawa…",
+  "verse_of_day.go": "Basaha sa konteksto",
+  "insert.drawing": "Drowing",
 };

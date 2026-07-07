@@ -1054,4 +1054,9 @@ export const pt: Record<string, string> = {
   "takehome.use_standard": "Usar modelo padrão",
   "takehome.generate": "Gerar",
   "takehome.stale": "Os versículos exibidos mudaram. Gerar uma nova mensagem principal?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Versículo do Dia",
+  "verse_of_day.loading": "Carregando o versículo de hoje…",
+  "verse_of_day.go": "Ler no contexto",
+  "insert.drawing": "Desenho",
 };

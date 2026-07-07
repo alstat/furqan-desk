@@ -1051,4 +1051,9 @@ export const hi: Record<string, string> = {
   "takehome.use_standard": "स्टैंडर्ड मॉडल उपयोग करें",
   "takehome.generate": "बनाएँ",
   "takehome.stale": "प्रदर्शित आयतें बदल गई हैं। नया मुख्य संदेश बनाएँ?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "आज की आयत",
+  "verse_of_day.loading": "आज की आयत लोड हो रही है…",
+  "verse_of_day.go": "संदर्भ में पढ़ें",
+  "insert.drawing": "रेखाचित्र",
 };

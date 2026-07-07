@@ -1047,4 +1047,9 @@ export const vi: Record<string, string> = {
   "takehome.use_standard": "Dùng mô hình tiêu chuẩn",
   "takehome.generate": "Tạo",
   "takehome.stale": "Các câu hiển thị đã thay đổi. Tạo thông điệp cốt lõi mới?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Câu kinh trong ngày",
+  "verse_of_day.loading": "Đang tải câu kinh hôm nay…",
+  "verse_of_day.go": "Đọc trong ngữ cảnh",
+  "insert.drawing": "Bản vẽ",
 };

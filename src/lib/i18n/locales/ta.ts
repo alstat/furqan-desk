@@ -994,4 +994,9 @@ export const ta: Record<string, string> = {
   "takehome.use_standard": "நிலையான மாதிரியைப் பயன்படுத்து",
   "takehome.generate": "உருவாக்கு",
   "takehome.stale": "காட்டப்படும் வசனங்கள் மாறிவிட்டன. புதிய முக்கிய செய்தியை உருவாக்கவா?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "இன்றைய வசனம்",
+  "verse_of_day.loading": "இன்றைய வசனம் ஏற்றப்படுகிறது…",
+  "verse_of_day.go": "சூழலில் படிக்கவும்",
+  "insert.drawing": "வரைபடம்",
 };

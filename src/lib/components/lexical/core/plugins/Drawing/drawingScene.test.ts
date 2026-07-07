@@ -19,10 +19,13 @@ import {
     expandSelection,
     groupSelection,
     ungroupSelection,
+    connectorPolyline,
+    elbowMidSegment,
     DEFAULT_STYLE,
     type Scene,
     type Shape,
-    type ArrowShape
+    type ArrowShape,
+    type LineShape
 } from './drawingScene';
 
 const box = { x: 10, y: 20, w: 100, h: 50 };
@@ -217,5 +220,174 @@ describe('sceneToSvg', () => {
         const parsed = parseScene(JSON.stringify(scene));
         expect(parsed.shapes.length).toBe(1);
         expect(parsed.width).toBe(300);
+    });
+});
+
+describe('connectors', () => {
+    // A wide-and-short box → horizontal-dominant routing.
+    const wide = { x: 0, y: 0, w: 100, h: 40 };
+
+    test('elbow / curved tools build lines with a connector', () => {
+        const elbow = createShapeFromBox('elbow', DEFAULT_STYLE, wide)! as LineShape;
+        expect(elbow.type).toBe('line');
+        expect(elbow.connector).toBe('elbow');
+        expect([elbow.x1, elbow.y1, elbow.x2, elbow.y2]).toEqual([0, 0, 100, 40]);
+
+        const curved = createShapeFromBox('curved', DEFAULT_STYLE, wide)! as LineShape;
+        expect(curved.type).toBe('line');
+        expect(curved.connector).toBe('curved');
+    });
+
+    test('connectorPolyline: straight is just the endpoints', () => {
+        const line = createShapeFromBox('line', DEFAULT_STYLE, wide)! as LineShape;
+        expect(connectorPolyline(line)).toEqual([0, 0, 100, 40]);
+    });
+
+    test('connectorPolyline: elbow bends through the mid on the dominant axis', () => {
+        const elbow = createShapeFromBox('elbow', DEFAULT_STYLE, wide)! as LineShape;
+        // Horizontal-dominant → bends at midX (50) on each endpoint's row.
+        expect(connectorPolyline(elbow)).toEqual([0, 0, 50, 0, 50, 40, 100, 40]);
+    });
+
+    test('connectorPolyline: curved samples the cubic between the endpoints', () => {
+        const curved = createShapeFromBox('curved', DEFAULT_STYLE, wide)! as LineShape;
+        const pts = connectorPolyline(curved);
+        // Starts and ends exactly on the endpoints, with sampled points between.
+        expect(pts.slice(0, 2)).toEqual([0, 0]);
+        expect(pts.slice(-2)).toEqual([100, 40]);
+        expect(pts.length).toBeGreaterThan(8);
+    });
+
+    test('elbow twists so a bound end meets its anchor perpendicular to the edge', () => {
+        // Circle left anchor → square top anchor (the reported scenario).
+        const line = createShapeFromBox('elbow', DEFAULT_STYLE, box)! as LineShape;
+        line.x1 = 100;
+        line.y1 = 100;
+        line.x2 = 200;
+        line.y2 = 200;
+        line.startRef = { shapeId: 'a', anchor: 'left' };
+        line.endRef = { shapeId: 'b', anchor: 'top' };
+
+        const pts = connectorPolyline(line);
+        const n = pts.length;
+        // Final segment is vertical → perpendicular to the square's top edge,
+        // not flat/parallel to it.
+        expect(pts[n - 4]).toBe(pts[n - 2]); // same x
+        expect(pts[n - 3]).not.toBe(pts[n - 1]); // y changes
+        // First segment leaves the 'left' anchor going left — an added stub, so
+        // the shaft exits perpendicular rather than heading straight across.
+        expect(pts[1]).toBe(pts[3]); // horizontal (same y)
+        expect(pts[2]).toBeLessThan(pts[0]); // x decreased → exits leftward
+        // The twist means more than the 2 bends of an unbound elbow.
+        expect(n).toBeGreaterThan(6);
+    });
+
+    test('line segments default to no tail arrowheads', () => {
+        const line = createShapeFromBox('line', DEFAULT_STYLE, box)! as LineShape;
+        expect(line.startArrow).toBe(false);
+        expect(line.endArrow).toBe(false);
+        const scene = emptyScene();
+        scene.shapes.push(line);
+        expect(sceneToSvg(scene)).not.toContain('<polygon');
+    });
+
+    test('tail arrowheads render as polygons on the chosen end(s)', () => {
+        const endOnly = { ...DEFAULT_STYLE, endArrow: true };
+        const line = createShapeFromBox('line', endOnly, box)! as LineShape;
+        expect(line.endArrow).toBe(true);
+        const scene = emptyScene();
+        scene.shapes.push(line);
+        const svg = sceneToSvg(scene);
+        expect(svg).toContain('<line'); // shaft
+        expect((svg.match(/<polygon/g) ?? []).length).toBe(1); // one head
+
+        // Both ends → two heads.
+        const both = createShapeFromBox('line', { ...DEFAULT_STYLE, startArrow: true, endArrow: true }, box)!;
+        const scene2 = emptyScene();
+        scene2.shapes.push(both);
+        expect((sceneToSvg(scene2).match(/<polygon/g) ?? []).length).toBe(2);
+    });
+
+    test('elbow/curved connectors also carry tail arrowheads', () => {
+        for (const tool of ['elbow', 'curved'] as const) {
+            const shape = createShapeFromBox(tool, { ...DEFAULT_STYLE, endArrow: true }, box)!;
+            const scene = emptyScene();
+            scene.shapes.push(shape);
+            const svg = sceneToSvg(scene);
+            expect(svg).toContain('<path'); // routed shaft
+            expect(svg).toContain('<polygon'); // arrowhead
+        }
+    });
+
+    test('elbow exposes an adjustable middle segment centred by default', () => {
+        const elbow = createShapeFromBox('elbow', DEFAULT_STYLE, wide)! as LineShape;
+        const seg = elbowMidSegment(elbow);
+        expect(seg).not.toBeNull();
+        expect(seg!.axis).toBe('x'); // horizontal-dominant → vertical mid bar slides in x
+        expect(seg!.auto).toBe(50); // auto-centred at midX
+        // Straight/curved have no adjustable mid bar.
+        expect(elbowMidSegment(createShapeFromBox('line', DEFAULT_STYLE, wide)! as LineShape)).toBeNull();
+        expect(elbowMidSegment(createShapeFromBox('curved', DEFAULT_STYLE, wide)! as LineShape)).toBeNull();
+    });
+
+    test('elbowMid offsets the middle segment from its auto centre', () => {
+        const elbow = createShapeFromBox('elbow', DEFAULT_STYLE, wide)! as LineShape;
+        elbow.elbowMid = 20;
+        elbow.elbowMidAxis = 'x';
+        // Mid bar shifts from x=50 to x=70; endpoints unchanged.
+        expect(connectorPolyline(elbow)).toEqual([0, 0, 70, 0, 70, 40, 100, 40]);
+        // A stored offset for the *other* axis is ignored (routing axis is 'x').
+        elbow.elbowMidAxis = 'y';
+        expect(connectorPolyline(elbow)).toEqual([0, 0, 50, 0, 50, 40, 100, 40]);
+    });
+
+    test('elbow rounds the OUTSIDE of a shape when anchors are on different axes', () => {
+        // circle left anchor → square top anchor: the connector must leave left,
+        // turn beside the source, run above the target, then drop into the top —
+        // never cutting up through the target's body to reach the anchor.
+        const line = createShapeFromBox('elbow', DEFAULT_STYLE, box)! as LineShape;
+        line.x1 = 100;
+        line.y1 = 100;
+        line.x2 = 200;
+        line.y2 = 200;
+        line.startRef = { shapeId: 'a', anchor: 'left' };
+        line.endRef = { shapeId: 'b', anchor: 'top' };
+        // stub = 24 → sA=(76,100), sB=(200,176); the mid turn sits at x=76 (beside
+        // the source) and the cross-run at y=176 (above the target).
+        expect(connectorPolyline(line)).toEqual([100, 100, 76, 100, 76, 176, 200, 176, 200, 200]);
+    });
+
+    test('same-axis anchors still route straight across (Z), not around', () => {
+        // left anchor → right anchor: a vertical mid bar between them, no detour.
+        const line = createShapeFromBox('elbow', DEFAULT_STYLE, box)! as LineShape;
+        line.x1 = 0;
+        line.y1 = 0;
+        line.x2 = 200;
+        line.y2 = 80;
+        line.startRef = { shapeId: 'a', anchor: 'left' };
+        line.endRef = { shapeId: 'b', anchor: 'right' };
+        const pts = connectorPolyline(line);
+        // First and last segments are horizontal (leave/enter along the shared
+        // normal axis), with a single vertical mid bar.
+        expect(pts[1]).toBe(pts[3]); // first segment horizontal
+        expect(pts[pts.length - 3]).toBe(pts[pts.length - 1]); // last segment horizontal
+    });
+
+    test('sceneToSvg renders straight as <line>, elbow/curved as <path>', () => {
+        const straight = emptyScene();
+        straight.shapes.push(createShapeFromBox('line', DEFAULT_STYLE, wide)!);
+        expect(sceneToSvg(straight)).toContain('<line');
+
+        const elbow = emptyScene();
+        elbow.shapes.push(createShapeFromBox('elbow', DEFAULT_STYLE, wide)!);
+        const elbowSvg = sceneToSvg(elbow);
+        expect(elbowSvg).toContain('<path');
+        expect(elbowSvg).toContain(' L '); // orthogonal bends
+
+        const curved = emptyScene();
+        curved.shapes.push(createShapeFromBox('curved', DEFAULT_STYLE, wide)!);
+        const curvedSvg = sceneToSvg(curved);
+        expect(curvedSvg).toContain('<path');
+        expect(curvedSvg).toContain(' C '); // cubic Bézier
     });
 });
