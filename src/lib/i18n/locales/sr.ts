@@ -994,4 +994,9 @@ export const sr: Record<string, string> = {
   "takehome.use_standard": "Користи стандардни модел",
   "takehome.generate": "Генериши",
   "takehome.stale": "Приказани ајети су се променили. Генерисати нову кључну поруку?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Ајет дана",
+  "verse_of_day.loading": "Учитавање данашњег ајета…",
+  "verse_of_day.go": "Прочитај у контексту",
+  "insert.drawing": "Цртеж",
 };

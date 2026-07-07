@@ -1053,4 +1053,9 @@ export const bn: Record<string, string> = {
   "takehome.use_standard": "স্ট্যান্ডার্ড মডেল ব্যবহার করুন",
   "takehome.generate": "তৈরি করুন",
   "takehome.stale": "প্রদর্শিত আয়াত পরিবর্তিত হয়েছে। নতুন মূল বার্তা তৈরি করবেন?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "আজকের আয়াত",
+  "verse_of_day.loading": "আজকের আয়াত লোড হচ্ছে…",
+  "verse_of_day.go": "প্রসঙ্গে পড়ুন",
+  "insert.drawing": "অঙ্কন",
 };

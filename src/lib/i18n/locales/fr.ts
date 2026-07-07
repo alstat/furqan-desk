@@ -1041,4 +1041,9 @@ export const fr: Record<string, string> = {
   "takehome.use_standard": "Utiliser le modèle standard",
   "takehome.generate": "Générer",
   "takehome.stale": "Les versets affichés ont changé. Générer un nouveau message essentiel ?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Verset du jour",
+  "verse_of_day.loading": "Chargement du verset du jour…",
+  "verse_of_day.go": "Lire dans le contexte",
+  "insert.drawing": "Dessin",
 };

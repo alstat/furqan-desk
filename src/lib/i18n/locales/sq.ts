@@ -994,4 +994,9 @@ export const sq: Record<string, string> = {
   "takehome.use_standard": "Përdor modelin standard",
   "takehome.generate": "Gjenero",
   "takehome.stale": "Ajetet e shfaqura kanë ndryshuar. Të gjenerohet një mesazh i ri kryesor?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Ajeti i ditës",
+  "verse_of_day.loading": "Po ngarkohet ajeti i sotëm…",
+  "verse_of_day.go": "Lexo në kontekst",
+  "insert.drawing": "Vizatim",
 };

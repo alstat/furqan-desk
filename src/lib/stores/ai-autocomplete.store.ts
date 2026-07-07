@@ -4,7 +4,7 @@ import {
     readSseText,
     type AiModelClass,
 } from "$lib/stores/ai-text-transform.store";
-import { isPro } from "$lib/stores/auth.store";
+import { isPro, isProPlus } from "$lib/stores/auth.store";
 
 // ── Settings (persisted like aiTextDefaultModel) ─────────────────────────────
 // AI inline autocompletion is a Pro/Pro+ feature: the editors additionally
@@ -147,7 +147,8 @@ export async function fetchAiCompletion({
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                advanced: get(_model) === "advanced",
+                // Advanced model is Pro+ only; Pro accounts always use Standard.
+                advanced: get(_model) === "advanced" && get(isProPlus),
                 messages: [
                     {
                         role: "system",

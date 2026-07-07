@@ -1041,4 +1041,9 @@ export const ar: Record<string, string> = {
   "takehome.use_standard": "استخدم النموذج القياسي",
   "takehome.generate": "إنشاء",
   "takehome.stale": "لقد تغيّرت الآيات المعروضة. هل تريد إنشاء رسالة مستفادة جديدة؟",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "آية اليوم",
+  "verse_of_day.loading": "جارٍ تحميل آية اليوم…",
+  "verse_of_day.go": "اقرأ في السياق",
+  "insert.drawing": "رسم",
 };

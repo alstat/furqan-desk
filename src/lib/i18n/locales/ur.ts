@@ -1041,4 +1041,9 @@ export const ur: Record<string, string> = {
   "takehome.use_standard": "اسٹینڈرڈ ماڈل استعمال کریں",
   "takehome.generate": "بنائیں",
   "takehome.stale": "دکھائی گئی آیات بدل گئی ہیں۔ نیا کلیدی پیغام بنائیں؟",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "آج کی آیت",
+  "verse_of_day.loading": "آج کی آیت لوڈ ہو رہی ہے…",
+  "verse_of_day.go": "سیاق میں پڑھیں",
+  "insert.drawing": "ڈرائنگ",
 };

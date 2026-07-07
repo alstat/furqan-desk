@@ -181,6 +181,10 @@ export const en: Record<string, string> = {
   "common.close": "Close",
   "common.cancel": "Cancel",
   "common.save": "Save",
+  // Verse of the Day
+  "verse_of_day.title": "Verse of the Day",
+  "verse_of_day.loading": "Loading today's verse…",
+  "verse_of_day.go": "Read in context",
   // Terminal
   "terminal.title": "Terminal",
   "terminal.tab_label": "Terminal {count}",

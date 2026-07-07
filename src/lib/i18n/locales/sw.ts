@@ -994,4 +994,9 @@ export const sw: Record<string, string> = {
   "takehome.use_standard": "Tumia modeli ya kawaida",
   "takehome.generate": "Tengeneza",
   "takehome.stale": "Aya zinazoonyeshwa zimebadilika. Tengeneza ujumbe mpya muhimu?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Aya ya Siku",
+  "verse_of_day.loading": "Inapakia aya ya leo…",
+  "verse_of_day.go": "Soma katika muktadha",
+  "insert.drawing": "Mchoro",
 };

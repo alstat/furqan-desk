@@ -1047,4 +1047,9 @@ export const my: Record<string, string> = {
   "takehome.use_standard": "စံမော်ဒယ်ကို သုံးပါ",
   "takehome.generate": "ဖန်တီးရန်",
   "takehome.stale": "ပြသထားသော အာယသ်များ ပြောင်းလဲသွားပါပြီ။ အဓိကသတင်းစကားအသစ် ဖန်တီးမလား။",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "ယနေ့ အာယသ်တော်",
+  "verse_of_day.loading": "ယနေ့ အာယသ်တော်ကို ဖွင့်နေသည်…",
+  "verse_of_day.go": "အကြောင်းအရာအတွင်း ဖတ်ရန်",
+  "insert.drawing": "ပုံဆွဲ",
 };

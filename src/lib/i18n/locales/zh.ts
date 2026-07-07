@@ -1041,4 +1041,9 @@ export const zh: Record<string, string> = {
   "takehome.use_standard": "使用标准模型",
   "takehome.generate": "生成",
   "takehome.stale": "所显示的经文已更改。生成新的核心启示？",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "每日经文",
+  "verse_of_day.loading": "正在加载今日经文…",
+  "verse_of_day.go": "在上下文中阅读",
+  "insert.drawing": "绘图",
 };

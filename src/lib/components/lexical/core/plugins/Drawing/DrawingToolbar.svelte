@@ -48,7 +48,8 @@
 		{ id: 'roundRect', icon: 'mdi:rounded-corner', label: 'Rounded rectangle' },
 		{ id: 'ellipse', icon: 'mdi:ellipse-outline', label: 'Ellipse' },
 		{ id: 'line', icon: 'mdi:vector-line', label: 'Line' },
-		{ id: 'arrow', icon: 'mdi:arrow-top-right', label: 'Arrow' },
+		{ id: 'elbow', icon: 'teenyicons:elbow-connector-outline', label: 'Elbow connector' },
+		{ id: 'curved', icon: 'teenyicons:curved-connector-outline', label: 'Curved connector' },
 		{ id: 'triangle', icon: 'mdi:triangle-outline', label: 'Triangle' },
 		{ id: 'diamond', icon: 'mdi:rhombus-outline', label: 'Diamond' },
 		{ id: 'pentagon', icon: 'mdi:pentagon-outline', label: 'Pentagon' },
@@ -71,6 +72,16 @@
 	let strokeWidthVal = $derived(selected ? selected.strokeWidth : style.strokeWidth);
 	let dashVal = $derived(selected ? selected.strokeDash : style.strokeDash);
 	let fillNone = $derived(fillVal === 'none');
+
+	// Tail arrowheads — shown for line segments (line / elbow / curved connector).
+	let isLineSel = $derived(selected?.type === 'line');
+	let showLineEnds = $derived(
+		isLineSel || tool === 'line' || tool === 'elbow' || tool === 'curved'
+	);
+	let startArrowVal = $derived(
+		selected?.type === 'line' ? !!selected.startArrow : style.startArrow
+	);
+	let endArrowVal = $derived(selected?.type === 'line' ? !!selected.endArrow : style.endArrow);
 
 	// Text properties — shown when the text tool is active or a text box selected.
 	let isTextSel = $derived(selected?.type === 'text');
@@ -188,7 +199,7 @@
 			max="24"
 			step="1"
 			value={strokeWidthVal}
-			class="w-20 accent-brand-gold-500"
+			class="outline-width-slider w-20"
 			oninput={(e) => setStyle({ strokeWidth: Number(e.currentTarget.value) })}
 		/>
 		<span class="w-4 text-[10px] text-brand-charcoal-400">{strokeWidthVal}</span>
@@ -205,6 +216,29 @@
 			<option value={d.id}>{d.label}</option>
 		{/each}
 	</select>
+
+	<!-- Line tail ends (arrowhead on / off, per end) -->
+	{#if showLineEnds}
+		<div class="mx-1 h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></div>
+		<button
+			class="{btn} {startArrowVal ? activeBtn : ''}"
+			title="Start end: arrowhead"
+			aria-label="Toggle start arrowhead"
+			aria-pressed={startArrowVal}
+			onclick={() => setStyle({ startArrow: !startArrowVal })}
+		>
+			<Icon icon="mdi:ray-end-arrow" width="1.05rem" />
+		</button>
+		<button
+			class="{btn} {endArrowVal ? activeBtn : ''}"
+			title="End end: arrowhead"
+			aria-label="Toggle end arrowhead"
+			aria-pressed={endArrowVal}
+			onclick={() => setStyle({ endArrow: !endArrowVal })}
+		>
+			<Icon icon="mdi:ray-start-arrow" width="1.05rem" />
+		</button>
+	{/if}
 
 	<!-- Text properties (font family / size / weight / alignment) -->
 	{#if showText}
@@ -319,3 +353,47 @@
 		<Icon icon="mdi:ungroup" width="1.05rem" />
 	</button>
 </div>
+
+<style>
+	/* Fully custom so the track + thumb follow the brand palette, which flips in
+	   dark mode (html.dark redefines the --color-brand-* variables). The native
+	   accent-color left the unfilled track a browser-default grey that didn't
+	   adapt to the app theme. */
+	.outline-width-slider {
+		-webkit-appearance: none;
+		appearance: none;
+		height: 4px;
+		border-radius: 9999px;
+		background: var(--color-brand-sand-200);
+		outline: none;
+		cursor: pointer;
+	}
+	.outline-width-slider::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		appearance: none;
+		width: 12px;
+		height: 12px;
+		border-radius: 9999px;
+		background: var(--color-brand-gold-500);
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+		cursor: pointer;
+	}
+	.outline-width-slider::-moz-range-track {
+		height: 4px;
+		border-radius: 9999px;
+		background: var(--color-brand-sand-200);
+	}
+	.outline-width-slider::-moz-range-thumb {
+		width: 12px;
+		height: 12px;
+		border: none;
+		border-radius: 9999px;
+		background: var(--color-brand-gold-500);
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+		cursor: pointer;
+	}
+	.outline-width-slider:focus-visible {
+		outline: 2px solid var(--color-brand-gold-400);
+		outline-offset: 2px;
+	}
+</style>

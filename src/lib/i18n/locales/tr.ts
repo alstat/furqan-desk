@@ -1041,4 +1041,9 @@ export const tr: Record<string, string> = {
   "takehome.use_standard": "Standart modeli kullan",
   "takehome.generate": "Oluştur",
   "takehome.stale": "Gösterilen ayetler değişti. Yeni bir ana mesaj oluşturulsun mu?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Günün Ayeti",
+  "verse_of_day.loading": "Günün ayeti yükleniyor…",
+  "verse_of_day.go": "Bağlamında oku",
+  "insert.drawing": "Çizim",
 };

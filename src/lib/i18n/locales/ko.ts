@@ -1041,4 +1041,9 @@ export const ko: Record<string, string> = {
   "takehome.use_standard": "표준 모델 사용",
   "takehome.generate": "생성",
   "takehome.stale": "표시된 구절이 변경되었습니다. 새 메시지를 생성할까요?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "오늘의 구절",
+  "verse_of_day.loading": "오늘의 구절 불러오는 중…",
+  "verse_of_day.go": "문맥에서 읽기",
+  "insert.drawing": "그림",
 };

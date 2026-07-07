@@ -1050,4 +1050,9 @@ export const ms: Record<string, string> = {
   "takehome.use_standard": "Guna model standard",
   "takehome.generate": "Jana",
   "takehome.stale": "Ayat yang dipaparkan telah berubah. Jana mesej utama baharu?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Ayat Hari Ini",
+  "verse_of_day.loading": "Memuatkan ayat hari ini…",
+  "verse_of_day.go": "Baca dalam konteks",
+  "insert.drawing": "Lukisan",
 };

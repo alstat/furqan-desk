@@ -994,4 +994,9 @@ export const pa: Record<string, string> = {
   "takehome.use_standard": "ਸਟੈਂਡਰਡ ਮਾਡਲ ਵਰਤੋ",
   "takehome.generate": "ਬਣਾਓ",
   "takehome.stale": "ਦਿਖਾਈਆਂ ਆਇਤਾਂ ਬਦਲ ਗਈਆਂ ਹਨ। ਨਵਾਂ ਮੁੱਖ ਸੁਨੇਹਾ ਬਣਾਈਏ?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "ਅੱਜ ਦੀ ਆਇਤ",
+  "verse_of_day.loading": "ਅੱਜ ਦੀ ਆਇਤ ਲੋਡ ਹੋ ਰਹੀ ਹੈ…",
+  "verse_of_day.go": "ਸੰਦਰਭ ਵਿੱਚ ਪੜ੍ਹੋ",
+  "insert.drawing": "ਡਰਾਇੰਗ",
 };

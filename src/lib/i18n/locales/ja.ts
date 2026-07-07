@@ -1052,4 +1052,9 @@ export const ja: Record<string, string> = {
   "takehome.use_standard": "標準モデルを使う",
   "takehome.generate": "生成",
   "takehome.stale": "表示中の章句が変わりました。新しいメッセージを生成しますか？",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "今日の一節",
+  "verse_of_day.loading": "今日の一節を読み込み中…",
+  "verse_of_day.go": "文脈で読む",
+  "insert.drawing": "図形",
 };

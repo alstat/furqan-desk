@@ -1041,4 +1041,9 @@ export const fa: Record<string, string> = {
   "takehome.use_standard": "استفاده از مدل استاندارد",
   "takehome.generate": "ایجاد",
   "takehome.stale": "آیات نمایش‌داده‌شده تغییر کرده‌اند. پیام کاربردی جدیدی ایجاد شود؟",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "آیهٔ روز",
+  "verse_of_day.loading": "در حال بارگذاری آیهٔ امروز…",
+  "verse_of_day.go": "خواندن در بافت",
+  "insert.drawing": "نقاشی",
 };

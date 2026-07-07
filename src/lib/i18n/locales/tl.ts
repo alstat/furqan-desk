@@ -1056,4 +1056,9 @@ export const tl: Record<string, string> = {
   "takehome.use_standard": "Gamitin ang standard na modelo",
   "takehome.generate": "Bumuo",
   "takehome.stale": "Nagbago ang mga ipinapakitang talata. Bumuo ng bagong pangunahing mensahe?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Talata ng Araw",
+  "verse_of_day.loading": "Nilo-load ang talata ngayong araw…",
+  "verse_of_day.go": "Basahin sa konteksto",
+  "insert.drawing": "Drowing",
 };

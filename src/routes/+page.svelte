@@ -53,12 +53,18 @@
     } from "$lib/stores/editor.store";
     import StackSplitDivider from "$lib/components/shared/StackSplitDivider.svelte";
     import { get } from "svelte/store";
-    import { checkFirstRun } from "$lib/stores/tour.store";
+    import { checkFirstRun, tourActive } from "$lib/stores/tour.store";
     import { zenMode, appDarkMode } from "$lib/stores/editor.store";
     import SukunPeekToggle from "$lib/components/shared/SukunPeekToggle.svelte";
     import UpDownMargin from "$lib/components/shared/UpDownMargin.svelte";
     import SplitDivider from "$lib/components/shared/SplitDivider.svelte";
     import QuickOpen from "$lib/components/shared/QuickOpen.svelte";
+    import VerseOfDayDialog from "$lib/components/shared/VerseOfDayDialog.svelte";
+    import {
+        VERSE_OF_DAY_SEEN_KEY,
+        localDateKey,
+    } from "$lib/data/verse-of-day";
+    import { verseOfDayDialogOpen } from "$lib/stores/verse-of-day.store";
 
     let height: number = $state(
         typeof window !== "undefined" ? window.innerHeight : 600,
@@ -91,7 +97,23 @@
             isLoading = false;
         }
         checkFirstRun();
+        maybeShowVerseOfDay();
     });
+
+    // Surface the "Verse of the Day" once per calendar day, on the first launch
+    // of that day. The tour takes precedence for brand-new users, so hold off
+    // while it is running.
+    function maybeShowVerseOfDay() {
+        try {
+            const today = localDateKey();
+            if (localStorage.getItem(VERSE_OF_DAY_SEEN_KEY) === today) return;
+            if (get(tourActive)) return;
+            localStorage.setItem(VERSE_OF_DAY_SEEN_KEY, today);
+            verseOfDayDialogOpen.set(true);
+        } catch {
+            /* ignore storage errors */
+        }
+    }
 
     // Cross-type group involving the active tab (any editor type can be host or partner)
     let activeCrossGroup = $derived(
@@ -333,6 +355,10 @@
 <SettingsDialog
     open={showSettings}
     onClose={() => (showSettings = false)}
+/>
+<VerseOfDayDialog
+    open={$verseOfDayDialogOpen}
+    onClose={() => verseOfDayDialogOpen.set(false)}
 />
 <CustomFontDialog
     open={$customFontDialogOpen}

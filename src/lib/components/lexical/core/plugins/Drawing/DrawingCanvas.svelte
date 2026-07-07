@@ -10,6 +10,8 @@
 		shapeAnchors,
 		isConnectable,
 		syncConnections,
+		connectorPolyline,
+		elbowMidSegment,
 		type Scene,
 		type Shape,
 		type Bounds,
@@ -129,7 +131,13 @@
 	function pointInShape(p: { x: number; y: number }, shape: Shape): boolean {
 		const thresh = Math.max(6, shape.strokeWidth + 4) / zoom;
 		if (shape.type === 'line' || shape.type === 'arrow') {
-			return distToSeg(p.x, p.y, shape.x1, shape.y1, shape.x2, shape.y2) <= thresh;
+			// Test each segment of the routed connector so elbow/curved bends are
+			// clickable, not just the straight chord between endpoints.
+			const pts = connectorPolyline(shape);
+			for (let i = 0; i < pts.length - 2; i += 2) {
+				if (distToSeg(p.x, p.y, pts[i], pts[i + 1], pts[i + 2], pts[i + 3]) <= thresh) return true;
+			}
+			return false;
 		}
 		if (shape.type === 'path') {
 			const pts = shape.points;
@@ -155,6 +163,16 @@
 			p2: { x: pan.x + s.x2 * zoom, y: pan.y + s.y2 * zoom }
 		};
 	}
+	// Screen position of an elbow connector's adjustable mid-segment handle.
+	function elbowMidScreen(shape: Shape): { x: number; y: number } | null {
+		if (shape.type !== 'line') return null;
+		const seg = elbowMidSegment(shape);
+		if (!seg) return null;
+		return {
+			x: pan.x + ((seg.a[0] + seg.b[0]) / 2) * zoom,
+			y: pan.y + ((seg.a[1] + seg.b[1]) / 2) * zoom
+		};
+	}
 	// Returns a box handle direction, 'p1'/'p2' for a linear endpoint, or null.
 	function handleAt(clientX: number, clientY: number): string | null {
 		if (!singleShape) return null;
@@ -165,6 +183,8 @@
 			const e = endpointScreens(singleShape);
 			if (Math.hypot(x - e.p1.x, y - e.p1.y) <= 9) return 'p1';
 			if (Math.hypot(x - e.p2.x, y - e.p2.y) <= 9) return 'p2';
+			const m = elbowMidScreen(singleShape);
+			if (m && Math.hypot(x - m.x, y - m.y) <= 9) return 'emid';
 			return null;
 		}
 		const centers = handleCenters(shapeBounds(singleShape));
@@ -450,6 +470,22 @@
 			return;
 		}
 		if (mode === 'resize' && origShape) {
+			// Drag an elbow connector's middle segment across to dodge overlaps.
+			// Stored as a signed delta from the segment's auto-centred position.
+			if (resizeDir === 'emid') {
+				if (origShape.type === 'line') {
+					const seg = elbowMidSegment(origShape);
+					if (seg) {
+						const cross = seg.axis === 'x' ? p.x : p.y;
+						replaceShape(origShape.id, {
+							...origShape,
+							elbowMid: cross - seg.auto,
+							elbowMidAxis: seg.axis
+						});
+					}
+				}
+				return;
+			}
 			// Line/arrow endpoints move freely and can snap to shape anchors;
 			// box shapes resize by bounds.
 			if (resizeDir === 'p1' || resizeDir === 'p2') {
@@ -663,6 +699,17 @@
 				{@const e = endpointScreens(singleShape)}
 				<div class="sel-endpoint" style="left:{e.p1.x}px; top:{e.p1.y}px;"></div>
 				<div class="sel-endpoint" style="left:{e.p2.x}px; top:{e.p2.y}px;"></div>
+				<!-- Elbow: handle to slide the middle segment across -->
+				{@const m = elbowMidScreen(singleShape)}
+				{#if m}
+					{@const mseg = singleShape.type === 'line' ? elbowMidSegment(singleShape) : null}
+					<div
+						class="sel-midhandle"
+						style="left:{m.x}px; top:{m.y}px; cursor:{mseg?.axis === 'y'
+							? 'ns-resize'
+							: 'ew-resize'};"
+					></div>
+				{/if}
 			{:else}
 				{@const sb = boundsToScreen(shapeBounds(singleShape))}
 				<div
@@ -824,6 +871,18 @@
 		border-radius: 50%;
 		pointer-events: none;
 	}
+	.sel-midhandle {
+		position: absolute;
+		width: 12px;
+		height: 12px;
+		margin-left: -6px;
+		margin-top: -6px;
+		background: #4c8bf5;
+		border: 1.5px solid #fff;
+		border-radius: 3px;
+		pointer-events: none;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+	}
 	.anchor-dot {
 		position: absolute;
 		width: 11px;
@@ -831,13 +890,13 @@
 		margin-left: -5.5px;
 		margin-top: -5.5px;
 		background: #fff;
-		border: 2px solid #23a55a;
+		border: 2px solid var(--color-brand-gold-500);
 		border-radius: 50%;
 		pointer-events: none;
-		box-shadow: 0 0 0 2px rgba(35, 165, 90, 0.2);
+		box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-brand-gold-500) 22%, transparent);
 	}
 	.anchor-dot.snapped {
-		background: #23a55a;
+		background: var(--color-brand-gold-500);
 		transform: scale(1.25);
 	}
 	.text-edit {

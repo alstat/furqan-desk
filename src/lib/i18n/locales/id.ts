@@ -1041,4 +1041,9 @@ export const id: Record<string, string> = {
   "takehome.use_standard": "Gunakan model standar",
   "takehome.generate": "Buat",
   "takehome.stale": "Ayat yang ditampilkan telah berubah. Buat pesan utama baru?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Ayat Hari Ini",
+  "verse_of_day.loading": "Memuat ayat hari ini…",
+  "verse_of_day.go": "Baca dalam konteks",
+  "insert.drawing": "Gambar",
 };

@@ -13,7 +13,7 @@
     import { untrack } from "svelte";
     import { fly } from "svelte/transition";
     import { get } from "svelte/store";
-    import { isPro } from "$lib/stores/auth.store";
+    import { isPro, isProPlus } from "$lib/stores/auth.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { renderMarkdown } from "$lib/utils/markdown";
     import {
@@ -324,7 +324,8 @@
             const text = await fetchTakeHomeMessage({
                 context: ctx.body,
                 locale: get(locale),
-                advanced: get(takeHomeModel) === "advanced",
+                // Advanced model is Pro+ only; Pro accounts always use Standard.
+                advanced: get(takeHomeModel) === "advanced" && get(isProPlus),
                 signal: ac.signal,
                 onPartial: (partial) => {
                     if (!ac.signal.aborted) result = partial;
@@ -734,27 +735,32 @@
                 class="flex shrink-0 flex-col gap-2 border-t border-brand-sand-200 px-5 py-3 dark:border-[#414559]"
             >
                 <div class="flex items-center justify-between gap-2">
-                    <!-- Standard / Advanced model toggle -->
-                    <button
-                        onclick={toggleModel}
-                        class="cursor-pointer flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors
-                            {$takeHomeModel === 'advanced'
-                            ? 'border-brand-gold-400 bg-brand-gold-100 dark:bg-brand-gold-900/30 text-brand-gold-600 dark:text-[#e5c890]'
-                            : 'border-brand-sand-200 dark:border-[#414559] bg-transparent text-brand-charcoal-400 dark:text-[#8087a2] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c]'}"
-                        title={$takeHomeModel === "advanced"
-                            ? $t("ai_chat.advanced_on")
-                            : $t("ai_chat.advanced_off")}
-                    >
-                        <Icon
-                            icon={$takeHomeModel === "advanced"
-                                ? "solar:bolt-bold-duotone"
-                                : "solar:bolt-linear"}
-                            width="0.7rem"
-                        />
-                        {$takeHomeModel === "advanced"
-                            ? $t("ai_chat.model_advanced")
-                            : $t("ai_chat.model_standard")}
-                    </button>
+                    <!-- Standard / Advanced model toggle — the Advanced model is
+                         Pro+ only, so Pro accounts see no toggle (Standard). -->
+                    {#if $isProPlus}
+                        <button
+                            onclick={toggleModel}
+                            class="cursor-pointer flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors
+                                {$takeHomeModel === 'advanced'
+                                ? 'border-brand-gold-400 bg-brand-gold-100 dark:bg-brand-gold-900/30 text-brand-gold-600 dark:text-[#e5c890]'
+                                : 'border-brand-sand-200 dark:border-[#414559] bg-transparent text-brand-charcoal-400 dark:text-[#8087a2] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c]'}"
+                            title={$takeHomeModel === "advanced"
+                                ? $t("ai_chat.advanced_on")
+                                : $t("ai_chat.advanced_off")}
+                        >
+                            <Icon
+                                icon={$takeHomeModel === "advanced"
+                                    ? "solar:bolt-bold-duotone"
+                                    : "solar:bolt-linear"}
+                                width="0.7rem"
+                            />
+                            {$takeHomeModel === "advanced"
+                                ? $t("ai_chat.model_advanced")
+                                : $t("ai_chat.model_standard")}
+                        </button>
+                    {:else}
+                        <span></span>
+                    {/if}
                     {#if result && !isStale}
                         <button
                             onclick={generate}
