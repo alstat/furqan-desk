@@ -1,4 +1,12 @@
 export const fa: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "در حال به‌روزرسانی Julia…",
+  "settings.julia.update_done": "Julia با موفقیت به‌روزرسانی شد",
+  "settings.julia.update_failed": "به‌روزرسانی Julia ناموفق بود",
+  "settings.julia.background_hint": "می‌توانید این پنجره را ببندید — به‌روزرسانی در پس‌زمینه ادامه می‌یابد.",
+  "settings.privacy.text_pro": "AyahLab آفلاین کار می‌کند — بدون تله‌متری، بدون تحلیل. یادداشت‌ها، نشانک‌ها و تنظیمات شما روی دستگاهتان می‌مانند. نسخه Pro یک حساب اضافه می‌کند تا تاریخچه گفتگوی هوش مصنوعی شما بین دستگاه‌ها همگام‌سازی شود. این تاریخچه تنها چیزی است که ذخیره می‌کنیم — و ابتدا روی دستگاه شما رمزگذاری می‌شود، بنابراین توسعه‌دهندگان AyahLab نمی‌توانند آن را بخوانند.",
+  "link.edit": "ویرایش پیوند",
+  "link.open": "باز کردن پیوند",
     // Keyboard shortcuts
     "settings.shortcuts": "میانبرهای صفحه‌کلید",
     "settings.shortcuts.desc": "مشاهده همه میانبرهای صفحه‌کلید موجود",
@@ -1033,4 +1041,9 @@ export const fa: Record<string, string> = {
   "takehome.use_standard": "استفاده از مدل استاندارد",
   "takehome.generate": "ایجاد",
   "takehome.stale": "آیات نمایش‌داده‌شده تغییر کرده‌اند. پیام کاربردی جدیدی ایجاد شود؟",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "آیهٔ روز",
+  "verse_of_day.loading": "در حال بارگذاری آیهٔ امروز…",
+  "verse_of_day.go": "خواندن در بافت",
+  "insert.drawing": "نقاشی",
 };

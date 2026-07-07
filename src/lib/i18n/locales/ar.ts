@@ -1,4 +1,12 @@
 export const ar: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "جارٍ تحديث Julia…",
+  "settings.julia.update_done": "تم تحديث Julia بنجاح",
+  "settings.julia.update_failed": "فشل تحديث Julia",
+  "settings.julia.background_hint": "يمكنك إغلاق هذه النافذة — سيستمر التحديث في العمل في الخلفية.",
+  "settings.privacy.text_pro": "يعمل AyahLab دون اتصال — لا تتبّع ولا تحليلات. تبقى ملاحظاتك وإشاراتك المرجعية وإعداداتك على جهازك فقط. تضيف نسخة Pro حسابًا لمزامنة سجل محادثات الذكاء الاصطناعي عبر أجهزتك. هذا السجل هو الشيء الوحيد الذي نخزّنه — وهو مُشفَّر على جهازك أولاً، لذا لا يستطيع مطوّرو AyahLab قراءته.",
+  "link.edit": "تعديل الرابط",
+  "link.open": "فتح الرابط",
     // Keyboard shortcuts
     "settings.shortcuts": "اختصارات لوحة المفاتيح",
     "settings.shortcuts.desc": "عرض جميع اختصارات لوحة المفاتيح المتاحة",
@@ -1033,4 +1041,9 @@ export const ar: Record<string, string> = {
   "takehome.use_standard": "استخدم النموذج القياسي",
   "takehome.generate": "إنشاء",
   "takehome.stale": "لقد تغيّرت الآيات المعروضة. هل تريد إنشاء رسالة مستفادة جديدة؟",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "آية اليوم",
+  "verse_of_day.loading": "جارٍ تحميل آية اليوم…",
+  "verse_of_day.go": "اقرأ في السياق",
+  "insert.drawing": "رسم",
 };

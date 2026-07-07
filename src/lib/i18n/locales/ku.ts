@@ -1,4 +1,12 @@
 export const ku: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "نوێکردنەوەی Julia…",
+  "settings.julia.update_done": "Julia بە سەرکەوتوویی نوێکرایەوە",
+  "settings.julia.update_failed": "نوێکردنەوەی Julia سەرکەوتوو نەبوو",
+  "settings.julia.background_hint": "دەتوانیت ئەم پەنجەرەیە دابخەیت — نوێکردنەوەکە لە پاشبنەمادا بەردەوام دەبێت.",
+  "settings.privacy.text_pro": "AyahLab بە شێوەی ئۆفلاین کار دەکات — بێ تەلەمەتری، بێ ئانالیتیکس. تێبینی، بۆکمارک و ڕێکخستنەکانت لەسەر ئامێرەکەت دەمێننەوە. Pro هەژمارێک زیاد دەکات بۆ ئەوەی مێژووی گفتوگۆی AI ـەکەت لەنێوان ئامێرەکاندا هاوکات بکرێت. ئەو مێژووە تەنها شتێکە کە ئێمە هەڵیدەگرین — و سەرەتا لەسەر ئامێرەکەت شیفرە دەکرێت، بۆیە گەشەپێدەرانی AyahLab ناتوانن بیخوێننەوە.",
+  "link.edit": "دەستکاری لینک",
+  "link.open": "کردنەوەی لینک",
     // Keyboard shortcuts
     "settings.shortcuts": "Kurterêyên klavyeyê",
     "settings.shortcuts.desc": "Hemû kurterêyên klavyeyê yên berdest bibîne",
@@ -986,4 +994,9 @@ export const ku: Record<string, string> = {
   "takehome.use_standard": "مۆدێلی ستاندارد بەکاربهێنە",
   "takehome.generate": "دروستکردن",
   "takehome.stale": "ئایەتە نیشاندراوەکان گۆڕان. پەیامێکی سەرەکی نوێ دروست بکرێت؟",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "ئایەتی ڕۆژ",
+  "verse_of_day.loading": "ئایەتی ئەمڕۆ باردەکرێت…",
+  "verse_of_day.go": "لە دەقەکەدا بیخوێنەوە",
+  "insert.drawing": "وێنەکێشان",
 };

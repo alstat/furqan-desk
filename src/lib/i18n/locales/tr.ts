@@ -1,4 +1,12 @@
 export const tr: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia güncelleniyor…",
+  "settings.julia.update_done": "Julia başarıyla güncellendi",
+  "settings.julia.update_failed": "Julia güncellemesi başarısız oldu",
+  "settings.julia.background_hint": "Bu pencereyi kapatabilirsiniz — güncelleme arka planda çalışmaya devam eder.",
+  "settings.privacy.text_pro": "AyahLab çevrimdışı çalışır — telemetri yok, analitik yok. Notlarınız, yer imleriniz ve ayarlarınız cihazınızda kalır. Pro, yapay zekâ sohbet geçmişinizin cihazlar arasında eşitlenmesi için bir hesap ekler. Sakladığımız tek şey bu geçmiştir — ve önce cihazınızda şifrelenir, bu yüzden AyahLab'ın geliştiricileri onu okuyamaz.",
+  "link.edit": "Bağlantıyı düzenle",
+  "link.open": "Bağlantıyı aç",
     // Keyboard shortcuts
     "settings.shortcuts": "Klavye Kısayolları",
     "settings.shortcuts.desc": "Mevcut tüm klavye kısayollarını görüntüleyin",
@@ -1033,4 +1041,9 @@ export const tr: Record<string, string> = {
   "takehome.use_standard": "Standart modeli kullan",
   "takehome.generate": "Oluştur",
   "takehome.stale": "Gösterilen ayetler değişti. Yeni bir ana mesaj oluşturulsun mu?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Günün Ayeti",
+  "verse_of_day.loading": "Günün ayeti yükleniyor…",
+  "verse_of_day.go": "Bağlamında oku",
+  "insert.drawing": "Çizim",
 };

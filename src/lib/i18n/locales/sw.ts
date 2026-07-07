@@ -1,4 +1,12 @@
 export const sw: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Inasasisha Julia…",
+  "settings.julia.update_done": "Julia imesasishwa kwa mafanikio",
+  "settings.julia.update_failed": "Usasishaji wa Julia umeshindwa",
+  "settings.julia.background_hint": "Unaweza kufunga dirisha hili — usasishaji utaendelea kuendeshwa chinichini.",
+  "settings.privacy.text_pro": "AyahLab hufanya kazi nje ya mtandao — hakuna telemetry, hakuna uchanganuzi. Maelezo yako, alamisho na mipangilio hubaki kwenye kifaa chako. Pro huongeza akaunti ili historia yako ya mazungumzo ya AI isawazishwe kati ya vifaa. Historia hiyo ndiyo kitu pekee tunachohifadhi — na husimbwa kwa njia fiche kwanza kwenye kifaa chako, hivyo wasanidi wa AyahLab hawawezi kuisoma.",
+  "link.edit": "Hariri kiungo",
+  "link.open": "Fungua kiungo",
     // Keyboard shortcuts
     "settings.shortcuts": "Njia za mkato za kibodi",
     "settings.shortcuts.desc": "Tazama njia zote za mkato za kibodi zinazopatikana",
@@ -986,4 +994,9 @@ export const sw: Record<string, string> = {
   "takehome.use_standard": "Tumia modeli ya kawaida",
   "takehome.generate": "Tengeneza",
   "takehome.stale": "Aya zinazoonyeshwa zimebadilika. Tengeneza ujumbe mpya muhimu?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Aya ya Siku",
+  "verse_of_day.loading": "Inapakia aya ya leo…",
+  "verse_of_day.go": "Soma katika muktadha",
+  "insert.drawing": "Mchoro",
 };

@@ -1,4 +1,12 @@
 export const ja: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia を更新中…",
+  "settings.julia.update_done": "Julia を更新しました",
+  "settings.julia.update_failed": "Julia の更新に失敗しました",
+  "settings.julia.background_hint": "このウィンドウを閉じても構いません — 更新はバックグラウンドで続行されます。",
+  "settings.privacy.text_pro": "AyahLab はオフラインで動作します — テレメトリなし、分析なし。メモ、ブックマーク、設定はお使いのデバイスに保存されます。Pro ではアカウントを追加でき、AI チャット履歴を複数のデバイス間で同期できます。保存されるのはその履歴だけで、まずお使いのデバイス上で暗号化されるため、AyahLab の開発者が読むことはできません。",
+  "link.edit": "リンクを編集",
+  "link.open": "リンクを開く",
     // Keyboard shortcuts
     "settings.shortcuts": "キーボードショートカット",
     "settings.shortcuts.desc": "利用可能なすべてのキーボードショートカットを表示",
@@ -1044,4 +1052,9 @@ export const ja: Record<string, string> = {
   "takehome.use_standard": "標準モデルを使う",
   "takehome.generate": "生成",
   "takehome.stale": "表示中の章句が変わりました。新しいメッセージを生成しますか？",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "今日の一節",
+  "verse_of_day.loading": "今日の一節を読み込み中…",
+  "verse_of_day.go": "文脈で読む",
+  "insert.drawing": "図形",
 };

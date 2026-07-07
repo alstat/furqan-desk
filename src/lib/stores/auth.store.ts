@@ -8,6 +8,16 @@ export const authLoading = writable(true);
 
 export const isPro = derived(authUser, ($u) => $u?.app_metadata?.is_pro === true);
 
+// The top paid tier. The tier string lives in the JWT's app_metadata
+// ("pro" | "pro_plus"); isPro covers both paid tiers, isProPlus narrows to the
+// top one. Only Pro+ may use the Advanced AI model — Pro is Standard-only.
+export const isProPlus = derived(
+    authUser,
+    ($u) =>
+        $u?.app_metadata?.is_pro === true &&
+        $u?.app_metadata?.tier === "pro_plus",
+);
+
 // Restore persisted session on startup then keep stores in sync with auth state changes.
 if (isSupabaseConfigured) {
     supabase.auth.getSession().then(({ data }) => {

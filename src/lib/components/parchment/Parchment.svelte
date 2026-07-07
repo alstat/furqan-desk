@@ -34,6 +34,7 @@
     import { t } from "$lib/i18n";
     import { invoke } from "@tauri-apps/api/core";
     import { activeTranslatorId } from "$lib/stores/translation.store";
+    import { verseOfDayDialogOpen } from "$lib/stores/verse-of-day.store";
     import {
         zenMode,
         appDarkMode,
@@ -354,6 +355,34 @@
             <Icon icon="solar:lightbulb-bolt-bold-duotone" class="h-4 w-4" />
         </button>
     {/if}
+
+    <!-- Verse of the Day button — sits below the take-home button on the right
+         edge, at the same vertical level (top-1/2) as the Global Search button
+         on the opposite edge. -->
+    {#if $zenMode && !$zenPeek && !$verseOfDayDialogOpen}
+        <div
+            aria-hidden="true"
+            class="pointer-events-none absolute -right-4 top-1/2 z-2 h-8 w-8 flex items-center justify-center"
+        >
+            <span
+                class="h-1.5 w-1.5 rounded-full bg-brand-charcoal-400 dark:bg-[#838ba7] opacity-15"
+            ></span>
+        </div>
+    {/if}
+    <button
+        class="cursor-pointer absolute -right-4 top-1/2 z-3 {actionBtnStyle} {$verseOfDayDialogOpen
+            ? 'bg-brand-gold-400 dark:bg-[#363a4f]'
+            : ''} {$zenMode
+            ? $zenPeek
+                ? 'opacity-50 transition-opacity duration-200'
+                : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
+            : ''}"
+        onclick={() => verseOfDayDialogOpen.set(true)}
+        aria-label={$t("verse_of_day.title")}
+        title={$t("verse_of_day.title")}
+    >
+        <Icon icon="solar:calendar-mark-bold-duotone" class="h-4 w-4" />
+    </button>
 </div>
 
 <!-- Dialogs — rendered outside the z-1 stacking context so their fixed backdrop covers the full viewport -->

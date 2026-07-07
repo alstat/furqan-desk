@@ -25,6 +25,8 @@
 	import InsertImageDialog from '../toolbar/dialogs/InsertImageDialog.svelte';
 	import InsertHRDropDownItem from '../toolbar/InsertDropDown/InsertHRDropDownItem.svelte';
 	import InsertImageDropDownItem from '../toolbar/InsertDropDown/InsertImageDropDownItem.svelte';
+	import InsertDrawingDropDownItem from '../toolbar/InsertDropDown/InsertDrawingDropDownItem.svelte';
+	import DrawingEditorDialog from '$lexical/core/plugins/Drawing/DrawingEditorDialog.svelte';
 	import Indent from '../toolbar/Indent.svelte';
 	import Outdent from '../toolbar/Outdent.svelte';
 	import CodeDropDownItem from '../toolbar/BlockFormatDropDown/CodeDropDownItem.svelte';
@@ -83,6 +85,7 @@
 	let imageDialog = $state<InsertImageDialog | undefined>(undefined);
 	let equationDialog = $state<InsertEquationDialog | undefined>(undefined);
 	let tableDialog = $state<InsertTableDialog | undefined>(undefined);
+	let drawingDialog = $state<DrawingEditorDialog | undefined>(undefined);
 	let windowWidth = $state(0);
 </script>
 
@@ -104,6 +107,7 @@
 	<InsertDropDown>
 		<InsertHRDropDownItem />
 		<InsertImageDropDownItem onclick={() => imageDialog?.open()} />
+		<InsertDrawingDropDownItem onclick={() => drawingDialog?.open(null, null)} />
 		<InsertEquationDropDownItem onclick={() => equationDialog?.open()} />
 		<InsertTableDropDownItem onclick={() => tableDialog?.open()} />
 	</InsertDropDown>
@@ -167,6 +171,7 @@
 		<InsertImageDialog bind:this={imageDialog} />
 		<InsertEquationDialog bind:this={equationDialog} />
 		<InsertTableDialog bind:this={tableDialog} />
+		<DrawingEditorDialog bind:this={drawingDialog} />
 		<EquationShortcutButton onTrigger={() => equationDialog?.open()} />
 	{/snippet}
 </Toolbar>

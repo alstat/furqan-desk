@@ -1,4 +1,12 @@
 export const uz: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia yangilanmoqda…",
+  "settings.julia.update_done": "Julia muvaffaqiyatli yangilandi",
+  "settings.julia.update_failed": "Julia yangilanishi muvaffaqiyatsiz tugadi",
+  "settings.julia.background_hint": "Bu oynani yopishingiz mumkin — yangilanish fonda ishlashda davom etadi.",
+  "settings.privacy.text_pro": "AyahLab oflayn ishlaydi — telemetriya yo'q, tahlil yo'q. Eslatmalaringiz, xatchoʻplaringiz va sozlamalaringiz qurilmangizda qoladi. Pro AI suhbat tarixingizni qurilmalar oʻrtasida sinxronlash uchun hisob qoʻshadi. Biz saqlaydigan yagona narsa — oʻsha tarix, va u avval qurilmangizda shifrlanadi, shuning uchun AyahLab ishlab chiquvchilari uni oʻqiy olmaydi.",
+  "link.edit": "Havolani tahrirlash",
+  "link.open": "Havolani ochish",
     // Keyboard shortcuts
     "settings.shortcuts": "Klaviatura yorliqlari",
     "settings.shortcuts.desc": "Mavjud barcha klaviatura yorliqlarini ko'rish",
@@ -1039,4 +1047,9 @@ export const uz: Record<string, string> = {
   "takehome.use_standard": "Standart modeldan foydalanish",
   "takehome.generate": "Yaratish",
   "takehome.stale": "Ko'rsatilgan oyatlar o'zgardi. Yangi asosiy xabar yaratilsinmi?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Kun oyati",
+  "verse_of_day.loading": "Bugungi oyat yuklanmoqda…",
+  "verse_of_day.go": "Kontekstda oʻqish",
+  "insert.drawing": "Chizma",
 };

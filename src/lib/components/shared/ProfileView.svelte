@@ -37,6 +37,35 @@
     let usage = $state<TokenUsageStats | null>(null);
     let limits = $state<TierLimits | null>(null);
     let loadingUsage = $state(false);
+
+    // Token-usage sections. Pro accounts are Standard-only (Advanced is Pro+),
+    // so the Advanced section is only included for Pro+ accounts.
+    let usageSections = $derived.by(() => {
+        if (!usage || !limits) return [];
+        const sections = [
+            {
+                heading: $t("account.usage.section_standard"),
+                sub: $t("account.usage.section_standard_sub"),
+                rows: [
+                    { label: $t("account.usage.daily"), used: usage.standard.daily.used, cap: limits.daily_tokens, reset: usage.standard.daily.resetInSeconds },
+                    { label: $t("account.usage.weekly"), used: usage.standard.weekly.used, cap: limits.weekly_tokens, reset: usage.standard.weekly.resetInSeconds },
+                    { label: $t("account.usage.monthly"), used: usage.standard.monthly.used, cap: limits.monthly_tokens, reset: usage.standard.monthly.resetInSeconds },
+                ],
+            },
+        ];
+        if (isProPlus) {
+            sections.push({
+                heading: $t("account.usage.section_advanced"),
+                sub: $t("account.usage.section_advanced_sub"),
+                rows: [
+                    { label: $t("account.usage.daily"), used: usage.advanced.daily.used, cap: limits.advanced_daily_tokens, reset: usage.advanced.daily.resetInSeconds },
+                    { label: $t("account.usage.weekly"), used: usage.advanced.weekly.used, cap: limits.advanced_weekly_tokens, reset: usage.advanced.weekly.resetInSeconds },
+                    { label: $t("account.usage.monthly"), used: usage.advanced.monthly.used, cap: limits.advanced_monthly_tokens, reset: usage.advanced.monthly.resetInSeconds },
+                ],
+            });
+        }
+        return sections;
+    });
     // Tick increments every 30s so the relative countdowns recompute without
     // re-querying Supabase.
     let tick = $state(0);
@@ -252,7 +281,7 @@
                     </p>
                 {/if}
             {:else}
-                {#each [{ heading: $t("account.usage.section_standard"), sub: $t("account.usage.section_standard_sub"), rows: [{ label: $t("account.usage.daily"), used: usage.standard.daily.used, cap: limits.daily_tokens, reset: usage.standard.daily.resetInSeconds }, { label: $t("account.usage.weekly"), used: usage.standard.weekly.used, cap: limits.weekly_tokens, reset: usage.standard.weekly.resetInSeconds }, { label: $t("account.usage.monthly"), used: usage.standard.monthly.used, cap: limits.monthly_tokens, reset: usage.standard.monthly.resetInSeconds }] }, { heading: $t("account.usage.section_advanced"), sub: $t("account.usage.section_advanced_sub"), rows: [{ label: $t("account.usage.daily"), used: usage.advanced.daily.used, cap: limits.advanced_daily_tokens, reset: usage.advanced.daily.resetInSeconds }, { label: $t("account.usage.weekly"), used: usage.advanced.weekly.used, cap: limits.advanced_weekly_tokens, reset: usage.advanced.weekly.resetInSeconds }, { label: $t("account.usage.monthly"), used: usage.advanced.monthly.used, cap: limits.advanced_monthly_tokens, reset: usage.advanced.monthly.resetInSeconds }] }] as section (section.heading)}
+                {#each usageSections as section (section.heading)}
                     <div
                         class="flex flex-col gap-3 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] p-3"
                     >

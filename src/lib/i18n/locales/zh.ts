@@ -1,4 +1,12 @@
 export const zh: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "正在更新 Julia…",
+  "settings.julia.update_done": "Julia 更新成功",
+  "settings.julia.update_failed": "Julia 更新失败",
+  "settings.julia.background_hint": "您可以关闭此窗口——更新将在后台继续运行。",
+  "settings.privacy.text_pro": "AyahLab 离线运行——无遥测，无分析。您的笔记、书签和设置仅保存在您的设备上。Pro 会添加一个账户，让您的 AI 聊天记录在多台设备间同步。该记录是我们唯一存储的内容——并且会先在您的设备上加密，因此 AyahLab 的开发者无法读取。",
+  "link.edit": "编辑链接",
+  "link.open": "打开链接",
     // Keyboard shortcuts
     "settings.shortcuts": "键盘快捷键",
     "settings.shortcuts.desc": "查看所有可用的键盘快捷键",
@@ -1033,4 +1041,9 @@ export const zh: Record<string, string> = {
   "takehome.use_standard": "使用标准模型",
   "takehome.generate": "生成",
   "takehome.stale": "所显示的经文已更改。生成新的核心启示？",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "每日经文",
+  "verse_of_day.loading": "正在加载今日经文…",
+  "verse_of_day.go": "在上下文中阅读",
+  "insert.drawing": "绘图",
 };

@@ -1,4 +1,12 @@
 export const de: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia wird aktualisiert…",
+  "settings.julia.update_done": "Julia erfolgreich aktualisiert",
+  "settings.julia.update_failed": "Julia-Aktualisierung fehlgeschlagen",
+  "settings.julia.background_hint": "Sie können dieses Fenster schließen – die Aktualisierung läuft im Hintergrund weiter.",
+  "settings.privacy.text_pro": "AyahLab läuft offline – keine Telemetrie, keine Analysen. Ihre Notizen, Lesezeichen und Einstellungen bleiben auf Ihrem Gerät. Pro fügt ein Konto hinzu, damit Ihr KI-Chatverlauf geräteübergreifend synchronisiert wird. Dieser Verlauf ist das Einzige, was wir speichern – und er wird zuerst auf Ihrem Gerät verschlüsselt, sodass die Entwickler von AyahLab ihn nicht lesen können.",
+  "link.edit": "Link bearbeiten",
+  "link.open": "Link öffnen",
     // Keyboard shortcuts
     "settings.shortcuts": "Tastenkürzel",
     "settings.shortcuts.desc": "Alle verfügbaren Tastenkürzel anzeigen",
@@ -1046,4 +1054,9 @@ export const de: Record<string, string> = {
   "takehome.use_standard": "Standardmodell verwenden",
   "takehome.generate": "Erstellen",
   "takehome.stale": "Die angezeigten Verse haben sich geändert. Neue Kernbotschaft erstellen?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Vers des Tages",
+  "verse_of_day.loading": "Der heutige Vers wird geladen…",
+  "verse_of_day.go": "Im Kontext lesen",
+  "insert.drawing": "Zeichnung",
 };

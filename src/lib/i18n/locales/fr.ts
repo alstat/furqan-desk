@@ -1,4 +1,12 @@
 export const fr: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Mise à jour de Julia…",
+  "settings.julia.update_done": "Julia mise à jour avec succès",
+  "settings.julia.update_failed": "Échec de la mise à jour de Julia",
+  "settings.julia.background_hint": "Vous pouvez fermer cette fenêtre — la mise à jour continue en arrière-plan.",
+  "settings.privacy.text_pro": "AyahLab fonctionne hors ligne — pas de télémétrie, pas d'analyses. Vos notes, favoris et paramètres restent sur votre appareil. Pro ajoute un compte afin que votre historique de conversations IA se synchronise entre vos appareils. Cet historique est la seule chose que nous stockons — et il est d'abord chiffré sur votre appareil, de sorte que les développeurs d'AyahLab ne peuvent pas le lire.",
+  "link.edit": "Modifier le lien",
+  "link.open": "Ouvrir le lien",
     // Keyboard shortcuts
     "settings.shortcuts": "Raccourcis clavier",
     "settings.shortcuts.desc": "Voir tous les raccourcis clavier disponibles",
@@ -1033,4 +1041,9 @@ export const fr: Record<string, string> = {
   "takehome.use_standard": "Utiliser le modèle standard",
   "takehome.generate": "Générer",
   "takehome.stale": "Les versets affichés ont changé. Générer un nouveau message essentiel ?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Verset du jour",
+  "verse_of_day.loading": "Chargement du verset du jour…",
+  "verse_of_day.go": "Lire dans le contexte",
+  "insert.drawing": "Dessin",
 };

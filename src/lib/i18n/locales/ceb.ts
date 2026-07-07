@@ -1,4 +1,12 @@
 export const ceb: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Gina-update ang Julia…",
+  "settings.julia.update_done": "Malampuson nga na-update ang Julia",
+  "settings.julia.update_failed": "Napakyas ang pag-update sa Julia",
+  "settings.julia.background_hint": "Mahimo nimong isira kini nga bintana — magpadayon ang pag-update sa background.",
+  "settings.privacy.text_pro": "Ang AyahLab modagan offline — walay telemetry, walay analytics. Ang imong mga nota, bookmark, ug mga setting magpabilin sa imong device. Ang Pro magdugang ug account aron ang imong AI chat history mag-sync tabok sa mga device. Kana nga history mao ra ang among gitipigan — ug kini gi-encrypt una sa imong device, mao nga dili kini mabasa sa mga developer sa AyahLab.",
+  "link.edit": "I-edit ang link",
+  "link.open": "Ablihi ang link",
     // Keyboard shortcuts
     "settings.shortcuts": "Mga Keyboard Shortcut",
     "settings.shortcuts.desc": "Tan-awa ang tanang anaa nga keyboard shortcut",
@@ -1039,4 +1047,9 @@ export const ceb: Record<string, string> = {
   "takehome.use_standard": "Gamita ang standard nga modelo",
   "takehome.generate": "Paghimo",
   "takehome.stale": "Nabag-o ang gipakitang mga bersikulo. Maghimo bag-ong pangunang mensahe?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Bersikulo sa Adlaw",
+  "verse_of_day.loading": "Gikarga ang bersikulo karong adlawa…",
+  "verse_of_day.go": "Basaha sa konteksto",
+  "insert.drawing": "Drowing",
 };

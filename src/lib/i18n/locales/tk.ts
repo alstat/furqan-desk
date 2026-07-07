@@ -1,4 +1,12 @@
 export const tk: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia täzelenýär…",
+  "settings.julia.update_done": "Julia üstünlikli täzelendi",
+  "settings.julia.update_failed": "Julia täzelemek şowsuz boldy",
+  "settings.julia.background_hint": "Bu penjiräni ýapyp bilersiňiz — täzeleniş arka planda dowam eder.",
+  "settings.privacy.text_pro": "AyahLab awtonom işleýär — telemetriýa ýok, analitika ýok. Bellikleriňiz, sahypa bellikleriňiz we sazlamalaryňyz enjamyňyzda galýar. Pro AI söhbetdeşlik taryhyňyzy enjamlaryň arasynda sazlaşdyrmak üçin hasap goşýar. Şol taryh biziň saklaýan ýeke-täk zadymyz — we ol ilki enjamyňyzda şifrlenýär, şonuň üçin AyahLab-yň işläp düzüjileri ony okap bilmeýär.",
+  "link.edit": "Baglanyşygy düzet",
+  "link.open": "Baglanyşygy aç",
     // Keyboard shortcuts
     "settings.shortcuts": "Klawiatura gysga ýollary",
     "settings.shortcuts.desc": "Ähli elýeterli klawiatura gysga ýollaryny görüň",
@@ -1039,4 +1047,9 @@ export const tk: Record<string, string> = {
   "takehome.use_standard": "Standart modeli ulanyň",
   "takehome.generate": "Döret",
   "takehome.stale": "Görkezilen aýatlar üýtgedi. Täze esasy habar döredilsinmi?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Günüň aýaty",
+  "verse_of_day.loading": "Şu günki aýat ýüklenýär…",
+  "verse_of_day.go": "Kontekstde oka",
+  "insert.drawing": "Çyzgy",
 };

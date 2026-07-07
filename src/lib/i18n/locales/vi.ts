@@ -1,4 +1,12 @@
 export const vi: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Đang cập nhật Julia…",
+  "settings.julia.update_done": "Đã cập nhật Julia thành công",
+  "settings.julia.update_failed": "Cập nhật Julia thất bại",
+  "settings.julia.background_hint": "Bạn có thể đóng cửa sổ này — bản cập nhật vẫn tiếp tục chạy trong nền.",
+  "settings.privacy.text_pro": "AyahLab hoạt động ngoại tuyến — không đo từ xa, không phân tích. Ghi chú, dấu trang và cài đặt của bạn được lưu trên thiết bị của bạn. Pro thêm một tài khoản để lịch sử trò chuyện AI của bạn được đồng bộ giữa các thiết bị. Lịch sử đó là thứ duy nhất chúng tôi lưu trữ — và nó được mã hóa trên thiết bị của bạn trước tiên, nên các nhà phát triển AyahLab không thể đọc được.",
+  "link.edit": "Chỉnh sửa liên kết",
+  "link.open": "Mở liên kết",
     // Keyboard shortcuts
     "settings.shortcuts": "Phím tắt bàn phím",
     "settings.shortcuts.desc": "Xem tất cả các phím tắt bàn phím có sẵn",
@@ -1039,4 +1047,9 @@ export const vi: Record<string, string> = {
   "takehome.use_standard": "Dùng mô hình tiêu chuẩn",
   "takehome.generate": "Tạo",
   "takehome.stale": "Các câu hiển thị đã thay đổi. Tạo thông điệp cốt lõi mới?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Câu kinh trong ngày",
+  "verse_of_day.loading": "Đang tải câu kinh hôm nay…",
+  "verse_of_day.go": "Đọc trong ngữ cảnh",
+  "insert.drawing": "Bản vẽ",
 };

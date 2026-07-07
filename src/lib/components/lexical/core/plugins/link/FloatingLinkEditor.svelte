@@ -25,6 +25,7 @@
   import {onMount} from 'svelte';
   import type {Writable} from 'svelte/store';
   import Icon from '@iconify/svelte';
+  import {openUrl} from '@tauri-apps/plugin-opener';
   import {t} from '$lib/i18n';
   import getSelectedNode from '../../../components/toolbar/getSelectionInfo.js';
   import {setFloatingElemPositionForLinkEditor} from './setFloatingElemPositionForLinkEditor.js';
@@ -178,6 +179,12 @@
     }
   }
 
+  function openCurrentLink() {
+    if (linkUrl) {
+      openUrl(sanitizeUrl(linkUrl));
+    }
+  }
+
   function handleLinkSubmission() {
     if (lastSelection !== null) {
       if (linkUrl !== '') {
@@ -209,26 +216,52 @@
     : ''}"
 >
   {#if $isLink}
-    <input
-      bind:this={inputRef}
-      bind:value={editedLinkUrl}
-      placeholder={$t('link.placeholder')}
-      class="floating-link-input min-w-0 flex-1 bg-transparent text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] outline-none"
-      onfocus={() => {
-        $isEditMode = true;
-      }}
-      onkeydown={(event) => {
-        monitorInputInteraction(event);
-      }} />
-    <button
-      onclick={handleLinkSubmission}
-      onmousedown={(event) => event.preventDefault()}
-      disabled={!editedLinkUrl.trim()}
-      aria-label={$t('link.save')}
-      title={$t('link.save')}
-      class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 hover:dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-    >
-      <Icon icon="solar:check-circle-bold" width="0.9rem" />
-    </button>
+    {#if $isEditMode}
+      <input
+        bind:this={inputRef}
+        bind:value={editedLinkUrl}
+        placeholder={$t('link.placeholder')}
+        class="floating-link-input min-w-0 flex-1 bg-transparent text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] outline-none"
+        onfocus={() => {
+          $isEditMode = true;
+        }}
+        onkeydown={(event) => {
+          monitorInputInteraction(event);
+        }} />
+      <button
+        onclick={handleLinkSubmission}
+        onmousedown={(event) => event.preventDefault()}
+        disabled={!editedLinkUrl.trim()}
+        aria-label={$t('link.save')}
+        title={$t('link.save')}
+        class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 hover:dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        <Icon icon="solar:check-circle-bold" width="0.9rem" />
+      </button>
+    {:else}
+      <!-- Read-only preview: guards against accidentally editing the URL just by
+           moving the cursor into a link. Editing starts only on an explicit
+           click of the pencil below. -->
+      <button
+        type="button"
+        onclick={openCurrentLink}
+        onmousedown={(event) => event.preventDefault()}
+        title={$t('link.open')}
+        class="floating-link-preview min-w-0 flex-1 cursor-pointer truncate text-left text-[11px] text-brand-gold-600 hover:underline dark:text-[#e5c890]"
+      >
+        {linkUrl}
+      </button>
+      <button
+        onclick={() => {
+          $isEditMode = true;
+        }}
+        onmousedown={(event) => event.preventDefault()}
+        aria-label={$t('link.edit')}
+        title={$t('link.edit')}
+        class="cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-brand-charcoal-500 hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559] transition-colors"
+      >
+        <Icon icon="solar:pen-2-bold" width="0.85rem" />
+      </button>
+    {/if}
   {/if}
 </div>

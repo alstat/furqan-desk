@@ -1,4 +1,12 @@
 export const th: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "กำลังอัปเดต Julia…",
+  "settings.julia.update_done": "อัปเดต Julia สำเร็จแล้ว",
+  "settings.julia.update_failed": "อัปเดต Julia ไม่สำเร็จ",
+  "settings.julia.background_hint": "คุณสามารถปิดหน้าต่างนี้ได้ — การอัปเดตจะทำงานต่อในเบื้องหลัง",
+  "settings.privacy.text_pro": "AyahLab ทำงานแบบออฟไลน์ — ไม่มีการติดตาม ไม่มีการวิเคราะห์ บันทึก บุ๊กมาร์ก และการตั้งค่าของคุณอยู่บนอุปกรณ์ของคุณ Pro เพิ่มบัญชีเพื่อให้ประวัติแชท AI ของคุณซิงค์ข้ามอุปกรณ์ ประวัตินั้นเป็นสิ่งเดียวที่เราจัดเก็บ — และจะถูกเข้ารหัสบนอุปกรณ์ของคุณก่อน ดังนั้นนักพัฒนาของ AyahLab จึงไม่สามารถอ่านได้",
+  "link.edit": "แก้ไขลิงก์",
+  "link.open": "เปิดลิงก์",
     // Keyboard shortcuts
     "settings.shortcuts": "แป้นพิมพ์ลัด",
     "settings.shortcuts.desc": "ดูแป้นพิมพ์ลัดทั้งหมดที่มี",
@@ -1039,4 +1047,9 @@ export const th: Record<string, string> = {
   "takehome.use_standard": "ใช้โมเดลมาตรฐาน",
   "takehome.generate": "สร้าง",
   "takehome.stale": "อายะฮ์ที่แสดงมีการเปลี่ยนแปลง สร้างข้อคิดสำคัญใหม่หรือไม่?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "อายะฮ์ประจำวัน",
+  "verse_of_day.loading": "กำลังโหลดอายะฮ์ประจำวัน…",
+  "verse_of_day.go": "อ่านในบริบท",
+  "insert.drawing": "ภาพวาด",
 };

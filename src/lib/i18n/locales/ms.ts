@@ -1,4 +1,12 @@
 export const ms: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Mengemas kini Julia…",
+  "settings.julia.update_done": "Julia berjaya dikemas kini",
+  "settings.julia.update_failed": "Kemas kini Julia gagal",
+  "settings.julia.background_hint": "Anda boleh menutup tetingkap ini — kemas kini akan terus berjalan di latar belakang.",
+  "settings.privacy.text_pro": "AyahLab beroperasi luar talian — tiada telemetri, tiada analitik. Nota, penanda buku dan tetapan anda kekal pada peranti anda. Pro menambah akaun supaya sejarah sembang AI anda diselaraskan merentas peranti. Sejarah itu sahaja yang kami simpan — dan ia disulitkan dahulu pada peranti anda, jadi pembangun AyahLab tidak dapat membacanya.",
+  "link.edit": "Edit pautan",
+  "link.open": "Buka pautan",
     // Keyboard shortcuts
     "settings.shortcuts": "Pintasan Papan Kekunci",
     "settings.shortcuts.desc": "Lihat semua pintasan papan kekunci yang tersedia",
@@ -1042,4 +1050,9 @@ export const ms: Record<string, string> = {
   "takehome.use_standard": "Guna model standard",
   "takehome.generate": "Jana",
   "takehome.stale": "Ayat yang dipaparkan telah berubah. Jana mesej utama baharu?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Ayat Hari Ini",
+  "verse_of_day.loading": "Memuatkan ayat hari ini…",
+  "verse_of_day.go": "Baca dalam konteks",
+  "insert.drawing": "Lukisan",
 };

@@ -38,6 +38,7 @@ export let icons = {
   fontFamily: "radix-icons:font-family",
   hr: "fluent:line-horizontal-1-16-filled",
   image: "fluent:image-add-20-regular",
+  drawing: "mdi:draw",
   insert: "gg:insert-after-r",
   math: "tabler:math",
   table: "fluent:table-add-20-regular",

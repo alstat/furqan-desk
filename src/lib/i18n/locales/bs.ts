@@ -1,4 +1,12 @@
 export const bs: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Ažuriranje Julia…",
+  "settings.julia.update_done": "Julia je uspješno ažurirana",
+  "settings.julia.update_failed": "Ažuriranje Julije nije uspjelo",
+  "settings.julia.background_hint": "Možete zatvoriti ovaj prozor — ažuriranje se nastavlja u pozadini.",
+  "settings.privacy.text_pro": "AyahLab radi offline — bez telemetrije, bez analitike. Vaše bilješke, oznake i postavke ostaju na vašem uređaju. Pro dodaje nalog kako bi se vaša AI historija razgovora sinhronizovala između uređaja. Ta historija je jedino što pohranjujemo — i prvo se šifrira na vašem uređaju, tako da je AyahLab programeri ne mogu čitati.",
+  "link.edit": "Uredi link",
+  "link.open": "Otvori link",
     // Keyboard shortcuts
     "settings.shortcuts": "Prečice na tastaturi",
     "settings.shortcuts.desc": "Pogledaj sve dostupne prečice na tastaturi",
@@ -986,4 +994,9 @@ export const bs: Record<string, string> = {
   "takehome.use_standard": "Koristi standardni model",
   "takehome.generate": "Generiši",
   "takehome.stale": "Prikazani ajeti su se promijenili. Generisati novu ključnu poruku?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "Ajet dana",
+  "verse_of_day.loading": "Učitavanje današnjeg ajeta…",
+  "verse_of_day.go": "Pročitaj u kontekstu",
+  "insert.drawing": "Crtež",
 };

@@ -1,4 +1,12 @@
 export const ko: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia 업데이트 중…",
+  "settings.julia.update_done": "Julia를 업데이트했습니다",
+  "settings.julia.update_failed": "Julia 업데이트 실패",
+  "settings.julia.background_hint": "이 창을 닫아도 됩니다 — 업데이트는 백그라운드에서 계속 실행됩니다.",
+  "settings.privacy.text_pro": "AyahLab은 오프라인으로 작동합니다 — 원격 측정 없음, 분석 없음. 메모, 북마크, 설정은 기기에만 저장됩니다. Pro는 계정을 추가하여 AI 채팅 기록을 여러 기기에서 동기화합니다. 저장되는 것은 그 기록뿐이며, 먼저 기기에서 암호화되므로 AyahLab 개발자는 읽을 수 없습니다.",
+  "link.edit": "링크 편집",
+  "link.open": "링크 열기",
     // Keyboard shortcuts
     "settings.shortcuts": "키보드 단축키",
     "settings.shortcuts.desc": "사용 가능한 모든 키보드 단축키 보기",
@@ -1033,4 +1041,9 @@ export const ko: Record<string, string> = {
   "takehome.use_standard": "표준 모델 사용",
   "takehome.generate": "생성",
   "takehome.stale": "표시된 구절이 변경되었습니다. 새 메시지를 생성할까요?",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "오늘의 구절",
+  "verse_of_day.loading": "오늘의 구절 불러오는 중…",
+  "verse_of_day.go": "문맥에서 읽기",
+  "insert.drawing": "그림",
 };

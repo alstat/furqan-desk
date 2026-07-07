@@ -20,8 +20,10 @@ import {
 import { readFile } from "@tauri-apps/plugin-fs";
 import { get } from "svelte/store";
 import { codeBlockParagraphs } from "./docxCodeHighlight";
+import { sceneToDataUrl, type Scene } from "$lexical/core/plugins/Drawing/drawingScene";
 import { cssColorToHex, textRunStyleFromNode } from "./docxInlineStyle";
 import { getSurahNameTashkeel } from "$lib/data/surah-names-tashkeel";
+import { surahLabels } from "$lib/stores/quran.svelte";
 import { juliaPlotIframes } from "$lib/stores/julia-notebook";
 import { references } from "$lib/stores/references.store";
 import {
@@ -37,6 +39,8 @@ type InlineStyle = { italic?: boolean; defaultColor?: string; hyperlink?: boolea
 const QUOTE_TEXT_COLOR = "707070"; // brand-charcoal-500
 const QUOTE_BG_FILL = "FBF5E8";    // brand-gold-50
 const QUOTE_BORDER_COLOR = "C8A96A"; // brand-gold-400
+const GOLD_LIGHT = "E5CC90";       // brand-gold-200
+const GOLD_DARK = "9A7A40";        // brand-gold-600
 
 const FORMAT_BOLD = 1;
 const FORMAT_ITALIC = 2;
@@ -69,6 +73,26 @@ const NUMBER_REF = "lexical-numbers";
 const CHECK_REF = "lexical-checks";
 const LEXICAL_BLOCK_INDENT_DXA = 600; // 40px editor indent base at 96dpi.
 const HR_BORDER_COLOR = "D1D5DB";
+
+// Node types that must each become their own DOCX block. Used to detect when a
+// paragraph unexpectedly *nests* block content (see paragraphContainerBlocks).
+// Inline-capable nodes (text, link, equation, image, tab, linebreak) are
+// deliberately excluded so ordinary paragraphs still render as a single block.
+const BLOCK_LEVEL_TYPES = new Set<string>([
+    "paragraph",
+    "extended-paragraph",
+    "heading",
+    "list",
+    "quote",
+    "blockquote",
+    "table",
+    "code",
+    "julia-cell",
+    "quran-block",
+    "horizontalrule",
+    "horizontal-rule",
+    "reference-list",
+]);
 
 interface SerializedNode {
     type: string;
@@ -108,10 +132,6 @@ export async function lexicalStateToDocxBlob(
                 {
                     reference: NUMBER_REF,
                     levels: buildNumberLevels(),
-                },
-                {
-                    reference: CHECK_REF,
-                    levels: buildBulletLevels(),
                 },
             ],
         },
@@ -177,7 +197,6 @@ async function blockForNode(
     node: SerializedNode,
     list: ListContext | null,
 ): Promise<BlockChild | BlockChild[] | null> {
-    console.log("[docx-export] blockForNode type=", node.type);
     switch (node.type) {
         case "heading": {
             const tag = (node.tag as string) ?? "h1";
@@ -190,6 +209,14 @@ async function blockForNode(
         }
         case "paragraph":
         case "extended-paragraph": {
+            // Normally a paragraph holds only inline content, but some documents
+            // nest block nodes inside it (e.g. text authored around an inline
+            // Quran decorator ends up wrapped in a container paragraph). Flatten-
+            // ing those to inline runs merges them onto one line and drops the
+            // empty paragraphs between them, so split the container instead.
+            if ((node.children ?? []).some((c) => BLOCK_LEVEL_TYPES.has(c.type))) {
+                return await paragraphContainerBlocks(node, list);
+            }
             const children = await inlineRuns(node.children ?? []);
             return new Paragraph({
                 children,
@@ -202,10 +229,15 @@ async function blockForNode(
                 italic: true,
                 defaultColor: QUOTE_TEXT_COLOR,
             });
+            const baseOpts = paragraphOptionsFromNode(node, list);
+            // Combine the quote's fixed inset with any block indent /
+            // text-indent the node carries, instead of discarding them.
+            const baseLeft =
+                typeof baseOpts.indent?.left === "number" ? baseOpts.indent.left : 0;
             return new Paragraph({
                 children,
-                ...paragraphOptionsFromNode(node, list),
-                indent: { left: 360 },
+                ...baseOpts,
+                indent: { ...(baseOpts.indent ?? {}), left: 360 + baseLeft },
                 border: {
                     left: {
                         style: BorderStyle.SINGLE,
@@ -252,6 +284,9 @@ async function blockForNode(
         case "image": {
             return await imageParagraph(node);
         }
+        case "drawing": {
+            return await drawingParagraph(node);
+        }
         case "code": {
             return codeBlockParagraphs(node);
         }
@@ -271,10 +306,7 @@ async function blockForNode(
             return await tableElement(node);
         }
         case "quran-block": {
-            console.log("[docx-export] quran-block node:", JSON.stringify(node));
-            const blocks = quranBlockBlocks(node);
-            console.log("[docx-export] quran-block produced", blocks.length, "blocks");
-            return blocks;
+            return quranBlockBlocks(node);
         }
         case "reference-list": {
             return referenceListBlocks(node);
@@ -290,6 +322,39 @@ async function blockForNode(
             return null;
         }
     }
+}
+
+// Render a paragraph whose children include block-level nodes. Consecutive
+// inline children are grouped into their own paragraph (preserving the wrapper's
+// alignment/indent), while each nested block node is emitted as a standalone
+// block. This keeps the document's line breaks and blank lines — an empty nested
+// paragraph becomes an empty DOCX paragraph rather than disappearing.
+async function paragraphContainerBlocks(
+    node: SerializedNode,
+    list: ListContext | null,
+): Promise<BlockChild[]> {
+    const baseOptions = paragraphOptionsFromNode(node, list);
+    const out: BlockChild[] = [];
+    let inlineBuffer: SerializedNode[] = [];
+    const flushInline = async () => {
+        if (inlineBuffer.length === 0) return;
+        out.push(
+            new Paragraph({ children: await inlineRuns(inlineBuffer), ...baseOptions }),
+        );
+        inlineBuffer = [];
+    };
+    for (const child of node.children ?? []) {
+        if (BLOCK_LEVEL_TYPES.has(child.type)) {
+            await flushInline();
+            const block = await blockForNode(child, list);
+            if (Array.isArray(block)) out.push(...block);
+            else if (block) out.push(block);
+        } else {
+            inlineBuffer.push(child);
+        }
+    }
+    await flushInline();
+    return out;
 }
 
 async function listItemBlocks(
@@ -310,11 +375,17 @@ async function listItemBlocks(
             ? [new TextRun({ text: ctx.checked ? "☑ " : "☐ " })]
             : [];
 
+    const level = Math.min(ctx.level, 5);
+    // Check items render their own ☑/☐ glyph, so numbering would add a
+    // stray bullet in front of it — indent them like a list level instead.
+    const isCheck = ctx.reference === CHECK_REF;
     out.push(
         new Paragraph({
             children: [...prefix, ...runs],
             ...paragraphOptionsFromNode(item, ctx, { includeBlockIndent: false }),
-            numbering: { reference: ctx.reference, level: Math.min(ctx.level, 5) },
+            ...(isCheck
+                ? { indent: { left: 720 * (level + 1), hanging: 360 } }
+                : { numbering: { reference: ctx.reference, level } }),
         }),
     );
 
@@ -351,23 +422,33 @@ async function inlineForNode(
                 typeof node.style === "string" ? (node.style as string) : undefined,
                 style?.defaultColor,
             );
-            return [
-                new TextRun({
-                    // The built-in "Hyperlink" character style (blue + underline)
-                    // applies when this run is inside a link; explicit props below
-                    // still override it (e.g. a custom color/format).
-                    ...(style?.hyperlink ? { style: "Hyperlink" } : {}),
-                    ...styleOpts,
-                    text,
-                    bold: (format & FORMAT_BOLD) !== 0 || undefined,
-                    italics: italic || undefined,
-                    strike: (format & FORMAT_STRIKETHROUGH) !== 0 || undefined,
-                    underline: (format & FORMAT_UNDERLINE) !== 0 ? {} : undefined,
-                    subScript: (format & FORMAT_SUBSCRIPT) !== 0 || undefined,
-                    superScript: (format & FORMAT_SUPERSCRIPT) !== 0 || undefined,
-                    ...((format & FORMAT_CODE) !== 0 ? { font: "Courier New" } : {}),
-                }),
-            ];
+            const runOpts = {
+                // The built-in "Hyperlink" character style (blue + underline)
+                // applies when this run is inside a link; explicit props below
+                // still override it (e.g. a custom color/format).
+                ...(style?.hyperlink ? { style: "Hyperlink" } : {}),
+                ...styleOpts,
+                bold: (format & FORMAT_BOLD) !== 0 || undefined,
+                italics: italic || undefined,
+                strike: (format & FORMAT_STRIKETHROUGH) !== 0 || undefined,
+                underline: (format & FORMAT_UNDERLINE) !== 0 ? {} : undefined,
+                subScript: (format & FORMAT_SUBSCRIPT) !== 0 || undefined,
+                superScript: (format & FORMAT_SUPERSCRIPT) !== 0 || undefined,
+                ...((format & FORMAT_CODE) !== 0 ? { font: "Courier New" } : {}),
+            };
+            // A raw "\n" inside a run's text is ignored by Word — a line break
+            // needs an explicit break. Text nodes can carry embedded newlines
+            // (e.g. from pasted/imported content), so split on them and emit a
+            // break before each segment after the first.
+            const segments = text.split("\n");
+            return segments.map(
+                (segment, i) =>
+                    new TextRun({
+                        ...runOpts,
+                        text: segment,
+                        ...(i > 0 ? { break: 1 } : {}),
+                    }),
+            );
         }
         case "linebreak":
             return [new TextRun({ break: 1 })];
@@ -392,6 +473,23 @@ async function inlineForNode(
                 }),
             ];
         }
+        case "citation": {
+            // In-text citation marker (e.g. "[1]" or "(Author, 2020)"). It's an
+            // inline decorator node with no children — the rendered text lives on
+            // the node itself — so without this case it falls through to the
+            // default and the citation silently vanishes from the export while the
+            // end-of-document References list still lists the source.
+            const citationText = (node.text as string) ?? "";
+            if (!citationText) return [];
+            return [
+                new TextRun({
+                    text: citationText,
+                    italics: style?.italic || undefined,
+                    color: style?.defaultColor,
+                    ...(style?.hyperlink ? { style: "Hyperlink" } : {}),
+                }),
+            ];
+        }
         case "equation": {
             const eq = (node.equation as string) ?? "";
             const inline = (node.inline as boolean) ?? true;
@@ -407,6 +505,11 @@ async function inlineForNode(
             if (run) return [run];
             const altText = (node.altText as string) ?? "";
             return [new TextRun({ text: `[Image: ${altText || "missing"}]`, italics: true })];
+        }
+        case "drawing": {
+            const run = await drawingRunFromNode(node);
+            if (run) return [run];
+            return [new TextRun({ text: `[Drawing]`, italics: true })];
         }
         default: {
             if (node.children && node.children.length > 0) {
@@ -517,6 +620,49 @@ async function imageParagraph(node: SerializedNode): Promise<Paragraph> {
     });
 }
 
+// A drawing node carries an editable scene model; render it to SVG, rasterize
+// to PNG (docx's ImageRun has no SVG support), and size it like an image.
+async function drawingRunFromNode(node: SerializedNode): Promise<ParagraphChild | null> {
+    const scene = node.scene as Scene | undefined;
+    if (!scene || !Array.isArray(scene.shapes)) return null;
+    const raster = await rasterizeToPng(sceneToDataUrl(scene));
+    if (!raster) return null;
+
+    const ratio = raster.width > 0 ? raster.height / raster.width : 0.75;
+    let width =
+        typeof node.width === "number" && node.width > 0 ? node.width : raster.width;
+    let height =
+        typeof node.height === "number" && node.height > 0 ? node.height : raster.height;
+    if (width > DOCX_IMAGE_MAX_WIDTH) {
+        width = DOCX_IMAGE_MAX_WIDTH;
+        height = Math.round(width * ratio);
+    }
+    const altText = (node.altText as string) ?? "";
+    try {
+        return new ImageRun({
+            data: raster.bytes,
+            transformation: { width, height },
+            type: "png",
+            altText: altText
+                ? { title: altText, description: altText, name: altText }
+                : undefined,
+        } as ConstructorParameters<typeof ImageRun>[0]);
+    } catch (err) {
+        console.warn("[lexicalToDocx] drawing ImageRun failed:", err);
+        return null;
+    }
+}
+
+async function drawingParagraph(node: SerializedNode): Promise<Paragraph> {
+    const run = await drawingRunFromNode(node);
+    if (run) {
+        return new Paragraph({ children: [run], alignment: AlignmentType.CENTER });
+    }
+    return new Paragraph({
+        children: [new TextRun({ text: `[Drawing]`, italics: true })],
+    });
+}
+
 // Rasterize an image data URL (PNG or SVG) to PNG bytes and its pixel size,
 // so Julia plots export as a uniformly DOCX-supported image regardless of
 // the format the Julia display hook produced.
@@ -556,7 +702,9 @@ async function captureInteractivePlot(
 ): Promise<{ bytes: Uint8Array; width: number; height: number } | null> {
     const iframe = juliaPlotIframes.get(key);
     if (!iframe) return null;
-    let doc: Document | null;
+    // `Document` from the `docx` import shadows the DOM's Document type here, so
+    // qualify these with `globalThis` to get the real browser document/window.
+    let doc: globalThis.Document | null;
     let win: Window | null;
     try {
         doc = iframe.contentDocument;
@@ -1122,6 +1270,18 @@ function toArabicNumerals(n: number): string {
         .join("");
 }
 
+// Same fallback chain as QuranBlock.svelte's `nameFor`: tashkeel name, then
+// the surah label store (Arabic, then English), then a plain "Surah N".
+function surahDisplayName(surah: number): string {
+    const labels = get(surahLabels);
+    return (
+        getSurahNameTashkeel(surah) ||
+        labels[surah - 1]?.ar ||
+        labels[surah - 1]?.en ||
+        `Surah ${surah}`
+    );
+}
+
 function quranBlockBlocks(node: SerializedNode): BlockChild[] {
     const verses = Array.isArray(node.verses) ? (node.verses as QuranVerseLike[]) : [];
     if (verses.length === 0) return [];
@@ -1141,7 +1301,7 @@ function quranBlockBlocks(node: SerializedNode): BlockChild[] {
 
     const out: BlockChild[] = [];
     for (const group of groups) {
-        out.push(surahBannerTable(getSurahNameTashkeel(group.surah)));
+        out.push(surahBannerTable(surahDisplayName(group.surah)));
         out.push(versesParagraph(group.verses, fontScale));
     }
     out.push(bottomRuleTable());
@@ -1149,36 +1309,97 @@ function quranBlockBlocks(node: SerializedNode): BlockChild[] {
 }
 
 const QURAN_BANNER_TOTAL_DXA = 9000;
-const QURAN_BANNER_PANEL_DXA = 2400;
+const QURAN_ORNAMENT_DXA = 600; // diamond cluster between arm and panel
+
+const NO_BORDER = { style: BorderStyle.NONE, size: 0, color: "auto" } as const;
+const NO_BORDERS = {
+    top: NO_BORDER,
+    bottom: NO_BORDER,
+    left: NO_BORDER,
+    right: NO_BORDER,
+} as const;
+const NO_TABLE_BORDERS = {
+    ...NO_BORDERS,
+    insideHorizontal: NO_BORDER,
+    insideVertical: NO_BORDER,
+} as const;
+
+// Estimate the banner panel width from the name so long surah names don't
+// wrap: ~130 dxa per base (non-diacritic) character at 14pt Scheherazade,
+// plus panel padding, never narrower than the editor-like default.
+function bannerPanelDxa(name: string): number {
+    const baseChars = name.replace(/[ً-ٰٟۖ-ۭ]/g, "").length;
+    return Math.min(4800, Math.max(2400, baseChars * 130 + 900));
+}
+
+// A horizontal gold rule, drawn as a paragraph bottom border so that —
+// unlike a cell border — it sits near the vertical middle of the row,
+// matching the editor's decorative arms. The trailing spacing shifts the
+// centred paragraph (and thus the border under it) up toward the middle.
+function armRuleCell(widthDxa: number): TableCell {
+    return new TableCell({
+        width: { size: widthDxa, type: WidthType.DXA },
+        verticalAlign: "center",
+        borders: NO_BORDERS,
+        children: [
+            new Paragraph({
+                spacing: { before: 0, after: 120 },
+                border: {
+                    bottom: {
+                        style: BorderStyle.SINGLE,
+                        size: 4,
+                        color: GOLD_LIGHT,
+                        space: 0,
+                    },
+                },
+                children: [],
+            }),
+        ],
+    });
+}
+
+// The editor's small-large-small diamond cluster between the arms and the
+// surah panel (and at the middle of the closing rule).
+function ornamentCell(): TableCell {
+    return new TableCell({
+        width: { size: QURAN_ORNAMENT_DXA, type: WidthType.DXA },
+        verticalAlign: "center",
+        borders: NO_BORDERS,
+        // Drop the default cell insets so the full cell width is usable, or the
+        // margins squeeze the cluster into wrapping.
+        margins: { top: 0, bottom: 0, left: 0, right: 0 },
+        children: [
+            new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 0, after: 0 },
+                children: [
+                    // Non-breaking spaces (U+00A0) keep the three diamonds on one
+                    // line — with ordinary spaces Word treats them as break
+                    // opportunities and stacks the cluster vertically in the
+                    // narrow cell.
+                    new TextRun({ text: "◆", size: 10, color: GOLD_LIGHT }),
+                    new TextRun({ text: "\u00A0◆\u00A0", size: 14, color: QUOTE_BORDER_COLOR }),
+                    new TextRun({ text: "◆", size: 10, color: GOLD_LIGHT }),
+                ],
+            }),
+        ],
+    });
+}
 
 function surahBannerTable(name: string): Table {
-    const armDxa = Math.floor((QURAN_BANNER_TOTAL_DXA - QURAN_BANNER_PANEL_DXA) / 2);
-    const armRule = {
-        style: BorderStyle.SINGLE,
-        size: 4,
-        color: QUOTE_BORDER_COLOR,
-        space: 0,
-    };
+    const panelDxa = bannerPanelDxa(name);
+    const armDxa = Math.floor(
+        (QURAN_BANNER_TOTAL_DXA - panelDxa - 2 * QURAN_ORNAMENT_DXA) / 2,
+    );
+    // DOUBLE approximates the editor's outer border + inset inner border.
     const panelBorder = {
-        style: BorderStyle.SINGLE,
+        style: BorderStyle.DOUBLE,
         size: 6,
         color: QUOTE_BORDER_COLOR,
-        space: 0,
+        space: 2,
     };
-    const armCell = (): TableCell =>
-        new TableCell({
-            width: { size: armDxa, type: WidthType.DXA },
-            verticalAlign: "center",
-            borders: {
-                top: { style: BorderStyle.NONE, size: 0, color: "auto" },
-                bottom: armRule,
-                left: { style: BorderStyle.NONE, size: 0, color: "auto" },
-                right: { style: BorderStyle.NONE, size: 0, color: "auto" },
-            },
-            children: [new Paragraph({ children: [] })],
-        });
     const panelCell = new TableCell({
-        width: { size: QURAN_BANNER_PANEL_DXA, type: WidthType.DXA },
+        width: { size: panelDxa, type: WidthType.DXA },
         verticalAlign: "center",
         borders: {
             top: panelBorder,
@@ -1197,6 +1418,7 @@ function surahBannerTable(name: string): Table {
                         text: name,
                         font: "Scheherazade New",
                         size: 28,
+                        color: QUOTE_TEXT_COLOR,
                         rightToLeft: true,
                     }),
                 ],
@@ -1204,44 +1426,61 @@ function surahBannerTable(name: string): Table {
         ],
     });
     return new Table({
-        rows: [new TableRow({ children: [armCell(), panelCell, armCell()] })],
-        columnWidths: [armDxa, QURAN_BANNER_PANEL_DXA, armDxa],
+        rows: [
+            new TableRow({
+                children: [
+                    armRuleCell(armDxa),
+                    ornamentCell(),
+                    panelCell,
+                    ornamentCell(),
+                    armRuleCell(armDxa),
+                ],
+            }),
+        ],
+        columnWidths: [armDxa, QURAN_ORNAMENT_DXA, panelDxa, QURAN_ORNAMENT_DXA, armDxa],
         width: { size: QURAN_BANNER_TOTAL_DXA, type: WidthType.DXA },
         alignment: AlignmentType.CENTER,
-        borders: {
-            top: { style: BorderStyle.NONE, size: 0, color: "auto" },
-            bottom: { style: BorderStyle.NONE, size: 0, color: "auto" },
-            left: { style: BorderStyle.NONE, size: 0, color: "auto" },
-            right: { style: BorderStyle.NONE, size: 0, color: "auto" },
-            insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "auto" },
-            insideVertical: { style: BorderStyle.NONE, size: 0, color: "auto" },
-        },
+        borders: NO_TABLE_BORDERS,
     });
+}
+
+// Rough character budget of one exported line at the given scale; used to
+// decide whether the verses paragraph will wrap (14pt Scheherazade on a
+// ~6.5" line fits roughly 90 characters of Arabic incl. diacritics).
+function estimatedCharsPerLine(fontScale: number): number {
+    return Math.round(90 / fontScale);
 }
 
 function versesParagraph(verses: QuranVerseLike[], fontScale: number): Paragraph {
     const verseSize = Math.round(28 * fontScale);
     const markerSize = Math.round(26 * fontScale);
     const children: ParagraphChild[] = [];
+    let totalChars = 0;
     for (const v of verses) {
+        totalChars += v.arabic.length + 6;
         children.push(
             new TextRun({
                 text: v.arabic,
                 font: "Scheherazade New",
                 size: verseSize,
+                color: QUOTE_TEXT_COLOR,
                 rightToLeft: true,
             }),
             new TextRun({
                 text: ` ⁠﴿⁠${toArabicNumerals(v.ayah)}⁠﴾⁠ `,
                 font: "Scheherazade New",
                 size: markerSize,
-                color: QUOTE_BORDER_COLOR,
+                color: GOLD_DARK,
                 rightToLeft: true,
             }),
         );
     }
+    // The editor justifies the block with a centred last line. DOCX has no
+    // "center last line", so justify passages long enough to wrap and keep
+    // short (single-line) blocks centred, which matches the editor exactly.
+    const wraps = totalChars > estimatedCharsPerLine(fontScale);
     return new Paragraph({
-        alignment: AlignmentType.CENTER,
+        alignment: wraps ? AlignmentType.JUSTIFIED : AlignmentType.CENTER,
         bidirectional: true,
         spacing: { before: 120, after: 120 },
         children,
@@ -1249,36 +1488,18 @@ function versesParagraph(verses: QuranVerseLike[], fontScale: number): Paragraph
 }
 
 function bottomRuleTable(): Table {
-    // Mirrors the surah banner's arm width so the closing rule visually aligns
-    // with the banner above it.
-    const rule = {
-        style: BorderStyle.SINGLE,
-        size: 4,
-        color: QUOTE_BORDER_COLOR,
-        space: 0,
-    };
-    const cell = new TableCell({
-        width: { size: QURAN_BANNER_TOTAL_DXA, type: WidthType.DXA },
-        borders: {
-            top: { style: BorderStyle.NONE, size: 0, color: "auto" },
-            bottom: rule,
-            left: { style: BorderStyle.NONE, size: 0, color: "auto" },
-            right: { style: BorderStyle.NONE, size: 0, color: "auto" },
-        },
-        children: [new Paragraph({ children: [], spacing: { before: 0, after: 60 } })],
-    });
+    // Mirrors the banner: two arms meeting a small diamond cluster in the
+    // middle, aligned to the same overall width.
+    const armDxa = Math.floor((QURAN_BANNER_TOTAL_DXA - QURAN_ORNAMENT_DXA) / 2);
     return new Table({
-        rows: [new TableRow({ children: [cell] })],
-        columnWidths: [QURAN_BANNER_TOTAL_DXA],
+        rows: [
+            new TableRow({
+                children: [armRuleCell(armDxa), ornamentCell(), armRuleCell(armDxa)],
+            }),
+        ],
+        columnWidths: [armDxa, QURAN_ORNAMENT_DXA, armDxa],
         width: { size: QURAN_BANNER_TOTAL_DXA, type: WidthType.DXA },
         alignment: AlignmentType.CENTER,
-        borders: {
-            top: { style: BorderStyle.NONE, size: 0, color: "auto" },
-            bottom: { style: BorderStyle.NONE, size: 0, color: "auto" },
-            left: { style: BorderStyle.NONE, size: 0, color: "auto" },
-            right: { style: BorderStyle.NONE, size: 0, color: "auto" },
-            insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "auto" },
-            insideVertical: { style: BorderStyle.NONE, size: 0, color: "auto" },
-        },
+        borders: NO_TABLE_BORDERS,
     });
 }

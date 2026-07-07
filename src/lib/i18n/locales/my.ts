@@ -1,4 +1,12 @@
 export const my: Record<string, string> = {
+  // v1.4.0 — Julia update progress, link view mode, Pro privacy
+  "settings.julia.updating": "Julia ကို အပ်ဒိတ်လုပ်နေသည်…",
+  "settings.julia.update_done": "Julia ကို အောင်မြင်စွာ အပ်ဒိတ်လုပ်ပြီးပါပြီ",
+  "settings.julia.update_failed": "Julia အပ်ဒိတ်လုပ်ခြင်း မအောင်မြင်ပါ",
+  "settings.julia.background_hint": "ဤဝင်းဒိုးကို ပိတ်နိုင်ပါသည် — အပ်ဒိတ်သည် နောက်ခံတွင် ဆက်လက်လုပ်ဆောင်နေမည်။",
+  "settings.privacy.text_pro": "AyahLab သည် အော့ဖ်လိုင်းဖြင့် အလုပ်လုပ်သည် — telemetry မရှိ၊ analytics မရှိ။ သင့်မှတ်စုများ၊ မှတ်ညှပ်များနှင့် ဆက်တင်များသည် သင့်ကိရိယာပေါ်တွင်သာ ရှိနေသည်။ Pro သည် သင့် AI ချက်တ်မှတ်တမ်းကို ကိရိယာများအကြား ချိန်ကိုက်နိုင်ရန် အကောင့်တစ်ခု ထည့်ပေးသည်။ ကျွန်ုပ်တို့ သိမ်းဆည်းသည့် တစ်ခုတည်းသောအရာမှာ ထိုမှတ်တမ်းဖြစ်ပြီး — ၎င်းကို သင့်ကိရိယာပေါ်တွင် ဦးစွာ ကုဒ်ဝှက်ထားသောကြောင့် AyahLab ၏ ဆော့ဖ်ဝဲအင်ဂျင်နီယာများ ဖတ်၍မရပါ။",
+  "link.edit": "လင့်ခ်ကို တည်းဖြတ်ရန်",
+  "link.open": "လင့်ခ်ကို ဖွင့်ရန်",
     // Keyboard shortcuts
     "settings.shortcuts": "ကီးဘုတ်ဖြတ်လမ်းများ",
     "settings.shortcuts.desc": "ရရှိနိုင်သော ကီးဘုတ်ဖြတ်လမ်းအားလုံးကို ကြည့်ရန်",
@@ -1039,4 +1047,9 @@ export const my: Record<string, string> = {
   "takehome.use_standard": "စံမော်ဒယ်ကို သုံးပါ",
   "takehome.generate": "ဖန်တီးရန်",
   "takehome.stale": "ပြသထားသော အာယသ်များ ပြောင်းလဲသွားပါပြီ။ အဓိကသတင်းစကားအသစ် ဖန်တီးမလား။",
+  // Verse of the Day + drawing insert
+  "verse_of_day.title": "ယနေ့ အာယသ်တော်",
+  "verse_of_day.loading": "ယနေ့ အာယသ်တော်ကို ဖွင့်နေသည်…",
+  "verse_of_day.go": "အကြောင်းအရာအတွင်း ဖတ်ရန်",
+  "insert.drawing": "ပုံဆွဲ",
 };
