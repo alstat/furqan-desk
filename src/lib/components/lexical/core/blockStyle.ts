@@ -1,5 +1,6 @@
 import {
 	$getSelection,
+	$isElementNode,
 	$isRangeSelection,
 	$isRootOrShadowRoot,
 	type ElementNode,
@@ -32,19 +33,36 @@ export function setStyleProperty(style: string, property: string, value: string)
 	return decls.length ? decls.join('; ') + ';' : '';
 }
 
-/** Top-level block element containing `node` (paragraph, heading, list item, …). */
-function $getTopLevelBlock(node: LexicalNode): ElementNode | null {
-	if (node.getKey() === 'root') return null;
-	const element = $findMatchingParent(node, (e) => {
-		const parent = e.getParent();
-		return parent !== null && $isRootOrShadowRoot(parent);
-	});
-	return (element ?? node.getTopLevelElementOrThrow()) as ElementNode;
+/**
+ * The block element that directly holds `node`'s inline content — the paragraph,
+ * heading or list item the text actually lives in.
+ *
+ * Deliberately the *nearest* block rather than the top-level one: an inline
+ * Quran block (a DecoratorNode) causes the following text to be wrapped in a
+ * paragraph nested inside an outer container paragraph. Targeting the top-level
+ * block there would style the wrapper (moving the Quran block's spacing) instead
+ * of the paragraph the caret is in, so line-height changes appeared to do
+ * nothing. A container that only holds other blocks is skipped (its inner blocks
+ * are reached through the selection's other nodes).
+ */
+function $getLeafBlock(node: LexicalNode): ElementNode | null {
+	if ($isRootOrShadowRoot(node)) return null;
+	if ($isElementNode(node) && !node.isInline()) {
+		const hasBlockChild = node
+			.getChildren()
+			.some((c) => $isElementNode(c) && !c.isInline());
+		return hasBlockChild ? null : node;
+	}
+	const block = $findMatchingParent(
+		node,
+		(e): e is ElementNode => $isElementNode(e) && !e.isInline()
+	);
+	return block ?? null;
 }
 
 /**
- * Apply `line-height` as a block-level style to every top-level block in the
- * current selection. Block-level (rather than inline on text nodes) so the
+ * Apply `line-height` as a block-level style to every block in the current
+ * selection. Block-level (rather than inline on text nodes) so the
  * value replaces the paragraph's own line-height instead of being floored by
  * it — letting values below the editor's default (e.g. single, 1.5) take
  * effect. Must run inside an `editor.update()`.
@@ -54,10 +72,10 @@ export function $patchBlockLineHeight(lineHeight: string): void {
 	if (!$isRangeSelection(selection)) return;
 	const blocks = new Set<ElementNode>();
 	for (const node of selection.getNodes()) {
-		const block = $getTopLevelBlock(node);
+		const block = $getLeafBlock(node);
 		if (block) blocks.add(block);
 	}
-	const anchorBlock = $getTopLevelBlock(selection.anchor.getNode());
+	const anchorBlock = $getLeafBlock(selection.anchor.getNode());
 	if (anchorBlock) blocks.add(anchorBlock);
 	for (const block of blocks) {
 		if (typeof block.getStyle !== 'function') continue;
@@ -65,11 +83,11 @@ export function $patchBlockLineHeight(lineHeight: string): void {
 	}
 }
 
-/** Block-level `line-height` for the top-level block of the selection anchor. */
+/** Block-level `line-height` for the block holding the selection anchor. */
 export function $getSelectionBlockLineHeight(): string {
 	const selection = $getSelection();
 	if (!$isRangeSelection(selection)) return '';
-	const block = $getTopLevelBlock(selection.anchor.getNode());
+	const block = $getLeafBlock(selection.anchor.getNode());
 	if (!block || typeof block.getStyle !== 'function') return '';
 	return getStyleProperty(block.getStyle(), 'line-height');
 }
