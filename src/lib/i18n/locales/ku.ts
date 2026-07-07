@@ -406,6 +406,7 @@ export const ku: Record<string, string> = {
   "toolbar.save": "پاراستن",
   "toolbar.save_as": "وەک پاشەکەوت بکە",
   "toolbar.export_docx": "وەک Word (.docx) هەناردە بکە",
+  "toolbar.export_typst": "وەک Typst (.typ) هەناردە بکە",
   "search.global": "گەڕانی جیهانی",
   "toc.button": "خشتەی ناوەڕۆک",
   "manuscript.title": "دەستنووسەکان",

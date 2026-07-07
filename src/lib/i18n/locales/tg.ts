@@ -490,6 +490,7 @@ export const tg: Record<string, string> = {
   "toolbar.save": "Нигоҳ доштан",
   "toolbar.save_as": "Бо номи дигар нигоҳ доштан",
   "toolbar.export_docx": "Содирот ҳамчун Word (.docx)",
+  "toolbar.export_typst": "Содирот ҳамчун Typst (.typ)",
   // Global Search button
   "search.global": "Ҷустуҷӯи глобалӣ",
   // Table of Contents toggle button

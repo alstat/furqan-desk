@@ -480,6 +480,7 @@ export const ur: Record<string, string> = {
     'toolbar.save': 'محفوظ کریں',
     'toolbar.save_as': 'بطور محفوظ کریں',
     'toolbar.export_docx': 'ورڈ (.docx) کے طور پر برآمد کریں',
+    'toolbar.export_typst': 'Typst (.typ) کے طور پر برآمد کریں',
     // Global Search button
     'search.global': 'عمومی تلاش',
     // Table of Contents toggle button

@@ -490,6 +490,7 @@ export const ceb: Record<string, string> = {
   "toolbar.save": "I-save",
   "toolbar.save_as": "I-save Isip",
   "toolbar.export_docx": "I-export isip Word (.docx)",
+  "toolbar.export_typst": "I-export isip Typst (.typ)",
   // Global Search button
   "search.global": "Global nga Pagpangita",
   // Table of Contents toggle button

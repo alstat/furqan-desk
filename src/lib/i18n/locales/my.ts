@@ -490,6 +490,7 @@ export const my: Record<string, string> = {
   "toolbar.save": "သိမ်းပါ",
   "toolbar.save_as": "အမည်ဖြင့် သိမ်းပါ",
   "toolbar.export_docx": "Word (.docx) အဖြစ် တင်ပို့ရန်",
+  "toolbar.export_typst": "Typst (.typ) အဖြစ် တင်ပို့ရန်",
   // Global Search button
   "search.global": "ကမ္ဘာလုံးဆိုင်ရာ ရှာဖွေမှု",
   // Table of Contents toggle button

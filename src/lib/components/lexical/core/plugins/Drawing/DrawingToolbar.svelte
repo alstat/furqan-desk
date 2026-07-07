@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
+	import '$lib/icons/drawing-icons';
 	import { customFontFamilies } from '$lib/stores/editor.store';
 	import type { DrawTool, StyleDefaults, Shape } from './drawingScene.js';
 

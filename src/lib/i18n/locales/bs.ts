@@ -406,6 +406,7 @@ export const bs: Record<string, string> = {
   "toolbar.save": "Sačuvaj",
   "toolbar.save_as": "Sačuvaj kao",
   "toolbar.export_docx": "Izvezi kao Word (.docx)",
+  "toolbar.export_typst": "Izvezi kao Typst (.typ)",
   "search.global": "Globalna pretraga",
   "toc.button": "Sadržaj",
   "manuscript.title": "Rukopisi",

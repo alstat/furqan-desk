@@ -490,6 +490,7 @@ export const tk: Record<string, string> = {
   "toolbar.save": "Saklamak",
   "toolbar.save_as": "Başga at bilen saklamak",
   "toolbar.export_docx": "Word hökmünde eksport et (.docx)",
+  "toolbar.export_typst": "Typst hökmünde eksport et (.typ)",
   // Global Search button
   "search.global": "Ählumumy gözleg",
   // Table of Contents toggle button

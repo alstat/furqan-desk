@@ -406,6 +406,7 @@ export const pa: Record<string, string> = {
   "toolbar.save": "ਰੱਖਿਅਤ ਕਰੋ",
   "toolbar.save_as": "ਇਸ ਤਰ੍ਹਾਂ ਸੁਰੱਖਿਅਤ ਕਰੋ",
   "toolbar.export_docx": "Word ਵਜੋਂ ਨਿਰਯਾਤ ਕਰੋ (.docx)",
+  "toolbar.export_typst": "Typst ਵਜੋਂ ਨਿਰਯਾਤ ਕਰੋ (.typ)",
   "search.global": "ਗਲੋਬਲ ਖੋਜ",
   "toc.button": "ਸਮੱਗਰੀ ਦੀ ਸਾਰਣੀ",
   "manuscript.title": "ਖਰੜੇ",

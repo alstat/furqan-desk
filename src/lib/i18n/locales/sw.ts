@@ -406,6 +406,7 @@ export const sw: Record<string, string> = {
   "toolbar.save": "Hifadhi",
   "toolbar.save_as": "Hifadhi Kama",
   "toolbar.export_docx": "Hamisha kama Word (.docx)",
+  "toolbar.export_typst": "Hamisha kama Typst (.typ)",
   "search.global": "Utafutaji wa Ulimwenguni",
   "toc.button": "Jedwali la Yaliyomo",
   "manuscript.title": "Maandishi",

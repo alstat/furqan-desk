@@ -493,6 +493,7 @@ export const ms: Record<string, string> = {
   "toolbar.save": "Simpan",
   "toolbar.save_as": "Simpan Sebagai",
   "toolbar.export_docx": "Eksport sebagai Word (.docx)",
+  "toolbar.export_typst": "Eksport sebagai Typst (.typ)",
   // Global Search button
   "search.global": "Carian Global",
   // Table of Contents toggle button

@@ -547,6 +547,7 @@ export const en: Record<string, string> = {
   "toolbar.save": "Save",
   "toolbar.save_as": "Save As",
   "toolbar.export_docx": "Export as Word (.docx)",
+  "toolbar.export_typst": "Export as Typst (.typ)",
   // Global Search button
   "search.global": "Global Search",
   // Table of Contents toggle button

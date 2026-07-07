@@ -490,6 +490,7 @@ export const ky: Record<string, string> = {
   "toolbar.save": "Сактоо",
   "toolbar.save_as": "Башка ат менен сактоо",
   "toolbar.export_docx": "Word катары экспорттоо (.docx)",
+  "toolbar.export_typst": "Typst катары экспорттоо (.typ)",
   // Global Search button
   "search.global": "Глобалдык издөө",
   // Table of Contents toggle button

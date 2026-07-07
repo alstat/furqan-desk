@@ -480,6 +480,7 @@ export const ar: Record<string, string> = {
     'toolbar.save': 'حفظ',
     'toolbar.save_as': 'حفظ باسم',
     'toolbar.export_docx': 'تصدير كملف Word (.docx)',
+    'toolbar.export_typst': 'تصدير كملف Typst (.typ)',
     // Global Search button
     'search.global': 'بحث عام',
     // Table of Contents toggle button

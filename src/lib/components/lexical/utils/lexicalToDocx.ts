@@ -6,6 +6,7 @@ import {
     HeadingLevel,
     ImageRun,
     LevelFormat,
+    LineRuleType,
     Packer,
     Paragraph,
     ShadingType,
@@ -1029,7 +1030,7 @@ export async function resolveImageSrc(src: string): Promise<Uint8Array | null> {
     }
 }
 
-function extractTauriAssetPath(src: string): string | null {
+export function extractTauriAssetPath(src: string): string | null {
     // Tauri 2.x asset protocol on different platforms:
     //   macOS/Linux:  asset://localhost/<encoded-path>
     //   Windows:      https://asset.localhost/<encoded-path>
@@ -1082,7 +1083,7 @@ function base64ToBytes(b64: string): Uint8Array {
     return out;
 }
 
-function detectImageType(
+export function detectImageType(
     src: string,
     data: Uint8Array,
 ): "png" | "jpg" | "gif" | "bmp" {
@@ -1205,7 +1206,7 @@ function referenceListBlocks(node: SerializedNode): BlockChild[] {
 // other inline content; the parent is split at each quran-block boundary so
 // the document order — text, block, more text, another block — is preserved.
 // Table containers are left intact (we don't fragment table cells).
-function liftQuranBlocksFromList(nodes: SerializedNode[]): SerializedNode[] {
+export function liftQuranBlocksFromList(nodes: SerializedNode[]): SerializedNode[] {
     const out: SerializedNode[] = [];
     for (const node of nodes) out.push(...liftFromNode(node));
     return out;
@@ -1325,18 +1326,36 @@ const NO_TABLE_BORDERS = {
 } as const;
 
 // Estimate the banner panel width from the name so long surah names don't
-// wrap: ~130 dxa per base (non-diacritic) character at 14pt Scheherazade,
-// plus panel padding, never narrower than the editor-like default.
+// wrap: ~112 dxa per base (non-diacritic) character at 12pt Scheherazade,
+// plus the panel's side margins, never narrower than the editor-like default.
 function bannerPanelDxa(name: string): number {
     const baseChars = name.replace(/[ً-ٰٟۖ-ۭ]/g, "").length;
-    return Math.min(4800, Math.max(2400, baseChars * 130 + 900));
+    return Math.min(4800, Math.max(2400, baseChars * 112 + 1500));
+}
+
+// Fading shades for the decorative arms, ordered page-edge → banner. The
+// typst export draws the arms with a transparency gradient; DOCX borders
+// can't take gradients, so each arm is stepped segments toward full gold.
+const ARM_FADE_SHADES = ["F9F2E3", "F2E5C7", GOLD_LIGHT];
+
+function armSegments(
+    totalDxa: number,
+    side: "left" | "right",
+): { width: number; color: string }[] {
+    const shades =
+        side === "left" ? ARM_FADE_SHADES : [...ARM_FADE_SHADES].reverse();
+    const seg = Math.floor(totalDxa / shades.length);
+    return shades.map((color, i) => ({
+        width: i === shades.length - 1 ? totalDxa - seg * (shades.length - 1) : seg,
+        color,
+    }));
 }
 
 // A horizontal gold rule, drawn as a paragraph bottom border so that —
 // unlike a cell border — it sits near the vertical middle of the row,
 // matching the editor's decorative arms. The trailing spacing shifts the
 // centred paragraph (and thus the border under it) up toward the middle.
-function armRuleCell(widthDxa: number): TableCell {
+function armRuleCell(widthDxa: number, color: string = GOLD_LIGHT): TableCell {
     return new TableCell({
         width: { size: widthDxa, type: WidthType.DXA },
         verticalAlign: "center",
@@ -1348,7 +1367,7 @@ function armRuleCell(widthDxa: number): TableCell {
                     bottom: {
                         style: BorderStyle.SINGLE,
                         size: 4,
-                        color: GOLD_LIGHT,
+                        color,
                         space: 0,
                     },
                 },
@@ -1391,13 +1410,16 @@ function surahBannerTable(name: string): Table {
     const armDxa = Math.floor(
         (QURAN_BANNER_TOTAL_DXA - panelDxa - 2 * QURAN_ORNAMENT_DXA) / 2,
     );
-    // DOUBLE approximates the editor's outer border + inset inner border.
+    // Thin DOUBLE ring, matching the typst export's hairline outer + inner
+    // border (size is in eighths of a point; space pads border from text).
     const panelBorder = {
         style: BorderStyle.DOUBLE,
-        size: 6,
+        size: 4,
         color: QUOTE_BORDER_COLOR,
-        space: 2,
+        space: 3,
     };
+    const leftArm = armSegments(armDxa, "left");
+    const rightArm = armSegments(armDxa, "right");
     const panelCell = new TableCell({
         width: { size: panelDxa, type: WidthType.DXA },
         verticalAlign: "center",
@@ -1407,6 +1429,9 @@ function surahBannerTable(name: string): Table {
             left: panelBorder,
             right: panelBorder,
         },
+        // Breathing room so the tall Arabic glyphs don't touch the ring
+        // (mirrors the typst panel's x: 16pt / y: 6pt inset).
+        margins: { top: 120, bottom: 120, left: 320, right: 320 },
         shading: { type: ShadingType.CLEAR, color: "auto", fill: QUOTE_BG_FILL },
         children: [
             new Paragraph({
@@ -1417,7 +1442,7 @@ function surahBannerTable(name: string): Table {
                     new TextRun({
                         text: name,
                         font: "Scheherazade New",
-                        size: 28,
+                        size: 24,
                         color: QUOTE_TEXT_COLOR,
                         rightToLeft: true,
                     }),
@@ -1429,15 +1454,21 @@ function surahBannerTable(name: string): Table {
         rows: [
             new TableRow({
                 children: [
-                    armRuleCell(armDxa),
+                    ...leftArm.map((s) => armRuleCell(s.width, s.color)),
                     ornamentCell(),
                     panelCell,
                     ornamentCell(),
-                    armRuleCell(armDxa),
+                    ...rightArm.map((s) => armRuleCell(s.width, s.color)),
                 ],
             }),
         ],
-        columnWidths: [armDxa, QURAN_ORNAMENT_DXA, panelDxa, QURAN_ORNAMENT_DXA, armDxa],
+        columnWidths: [
+            ...leftArm.map((s) => s.width),
+            QURAN_ORNAMENT_DXA,
+            panelDxa,
+            QURAN_ORNAMENT_DXA,
+            ...rightArm.map((s) => s.width),
+        ],
         width: { size: QURAN_BANNER_TOTAL_DXA, type: WidthType.DXA },
         alignment: AlignmentType.CENTER,
         borders: NO_TABLE_BORDERS,
@@ -1482,22 +1513,40 @@ function versesParagraph(verses: QuranVerseLike[], fontScale: number): Paragraph
     return new Paragraph({
         alignment: wraps ? AlignmentType.JUSTIFIED : AlignmentType.CENTER,
         bidirectional: true,
-        spacing: { before: 120, after: 120 },
+        // Roomy leading (1.4× single, mirroring the typst export) so
+        // Scheherazade's diacritic stacks don't collide across wrapped
+        // lines, plus breathing room against the banner and closing rule.
+        spacing: {
+            before: 200,
+            after: 200,
+            line: 336,
+            lineRule: LineRuleType.AUTO,
+        },
         children,
     });
 }
 
 function bottomRuleTable(): Table {
-    // Mirrors the banner: two arms meeting a small diamond cluster in the
-    // middle, aligned to the same overall width.
+    // Mirrors the banner: two fading arms meeting a small diamond cluster in
+    // the middle, aligned to the same overall width.
     const armDxa = Math.floor((QURAN_BANNER_TOTAL_DXA - QURAN_ORNAMENT_DXA) / 2);
+    const leftArm = armSegments(armDxa, "left");
+    const rightArm = armSegments(armDxa, "right");
     return new Table({
         rows: [
             new TableRow({
-                children: [armRuleCell(armDxa), ornamentCell(), armRuleCell(armDxa)],
+                children: [
+                    ...leftArm.map((s) => armRuleCell(s.width, s.color)),
+                    ornamentCell(),
+                    ...rightArm.map((s) => armRuleCell(s.width, s.color)),
+                ],
             }),
         ],
-        columnWidths: [armDxa, QURAN_ORNAMENT_DXA, armDxa],
+        columnWidths: [
+            ...leftArm.map((s) => s.width),
+            QURAN_ORNAMENT_DXA,
+            ...rightArm.map((s) => s.width),
+        ],
         width: { size: QURAN_BANNER_TOTAL_DXA, type: WidthType.DXA },
         alignment: AlignmentType.CENTER,
         borders: NO_TABLE_BORDERS,
