@@ -480,6 +480,7 @@ export const tr: Record<string, string> = {
     'toolbar.save': 'Kaydet',
     'toolbar.save_as': 'Farklı Kaydet',
     'toolbar.export_docx': 'Word olarak dışa aktar (.docx)',
+    'toolbar.export_typst': 'Typst olarak dışa aktar (.typ)',
     // Global Search button
     'search.global': 'Genel Arama',
     // Table of Contents toggle button

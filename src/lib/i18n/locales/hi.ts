@@ -494,6 +494,7 @@ export const hi: Record<string, string> = {
   "toolbar.save": "सहेजें",
   "toolbar.save_as": "इस रूप में सहेजें",
   "toolbar.export_docx": "Word के रूप में निर्यात करें (.docx)",
+  "toolbar.export_typst": "Typst के रूप में निर्यात करें (.typ)",
   // Global Search button
   "search.global": "वैश्विक खोज",
   // Table of Contents toggle button

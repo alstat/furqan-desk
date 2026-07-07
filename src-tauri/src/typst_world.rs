@@ -30,8 +30,18 @@ impl MinimalWorld {
 
         // Load only typst's bundled fonts (New Computer Modern, Linux Libertine, etc.)
         // Skipping system fonts avoids loading hundreds of MB of font data at startup.
-        for font_data in typst_assets::fonts() {
-            let bytes = Bytes::new(font_data);
+        //
+        // None of typst's bundled fonts cover Arabic, so Quran blocks in exported
+        // .typ files rendered as tofu boxes. Ship Scheherazade New (SIL OFL, see
+        // fonts/OFL.txt) — the same face the editor uses for Quran text.
+        let bundled: Vec<Bytes> = typst_assets::fonts()
+            .map(Bytes::new)
+            .chain([
+                Bytes::new(include_bytes!("../fonts/ScheherazadeNew-Regular.ttf").as_slice()),
+                Bytes::new(include_bytes!("../fonts/ScheherazadeNew-Bold.ttf").as_slice()),
+            ])
+            .collect();
+        for bytes in bundled {
             let mut i = 0;
             loop {
                 match Font::new(bytes.clone(), i) {

@@ -498,6 +498,7 @@ export const tl: Record<string, string> = {
   "toolbar.save": "I-save",
   "toolbar.save_as": "I-save Bilang",
   "toolbar.export_docx": "I-export bilang Word (.docx)",
+  "toolbar.export_typst": "I-export bilang Typst (.typ)",
   // Global Search button
   "search.global": "Pandaigdigang Paghahanap",
   // Table of Contents toggle button

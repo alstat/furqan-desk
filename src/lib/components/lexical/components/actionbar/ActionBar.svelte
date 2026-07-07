@@ -3,6 +3,7 @@
     import OpenFolderButton from "./OpenFolderButton.svelte";
     import ExportButton from "./ExportButton.svelte";
     import ExportDocxButton from "./ExportDocxButton.svelte";
+    import ExportTypstButton from "./ExportTypstButton.svelte";
     import SaveAsButton from "./SaveAsButton.svelte";
     import RedoButton from "./RedoButton.svelte";
     import UndoButton from "./UndoButton.svelte";
@@ -27,6 +28,7 @@
         <SaveAsButton />
         {#if $activeTab?.type === "lexical"}
             <ExportDocxButton />
+            <ExportTypstButton />
         {/if}
     </div>
 </div>

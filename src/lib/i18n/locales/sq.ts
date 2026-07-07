@@ -406,6 +406,7 @@ export const sq: Record<string, string> = {
   "toolbar.save": "Ruaj",
   "toolbar.save_as": "Ruaj si",
   "toolbar.export_docx": "Eksporto si Word (.docx)",
+  "toolbar.export_typst": "Eksporto si Typst (.typ)",
   "search.global": "Kërkimi global",
   "toc.button": "Tabela e Përmbajtjes",
   "manuscript.title": "Dorëshkrime",

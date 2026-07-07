@@ -494,6 +494,7 @@ export const ja: Record<string, string> = {
   "toolbar.save": "保存",
   "toolbar.save_as": "名前を付けて保存",
   "toolbar.export_docx": "Word(.docx)としてエクスポート",
+  "toolbar.export_typst": "Typst(.typ)としてエクスポート",
   // Global Search button
   "search.global": "グローバル検索",
   // Table of Contents toggle button

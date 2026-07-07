@@ -495,6 +495,7 @@ export const bn: Record<string, string> = {
   "toolbar.save": "সংরক্ষণ করুন",
   "toolbar.save_as": "এইভাবে সংরক্ষণ করুন",
   "toolbar.export_docx": "Word হিসেবে এক্সপোর্ট করুন (.docx)",
+  "toolbar.export_typst": "Typst হিসেবে এক্সপোর্ট করুন (.typ)",
   // Global Search button
   "search.global": "বৈশ্বিক অনুসন্ধান",
   // Table of Contents toggle button

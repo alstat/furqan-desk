@@ -480,6 +480,7 @@ export const ko: Record<string, string> = {
     'toolbar.save': '저장',
     'toolbar.save_as': '다른 이름으로 저장',
     'toolbar.export_docx': 'Word(.docx)로 내보내기',
+    'toolbar.export_typst': 'Typst(.typ)로 내보내기',
     // Global Search button
     'search.global': '전체 검색',
     // Table of Contents toggle button

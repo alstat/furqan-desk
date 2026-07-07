@@ -480,6 +480,7 @@ export const id: Record<string, string> = {
     'toolbar.save': 'Simpan',
     'toolbar.save_as': 'Simpan Sebagai',
     'toolbar.export_docx': 'Ekspor sebagai Word (.docx)',
+    'toolbar.export_typst': 'Ekspor sebagai Typst (.typ)',
     // Global Search button
     'search.global': 'Pencarian Global',
     // Table of Contents toggle button

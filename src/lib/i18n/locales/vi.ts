@@ -490,6 +490,7 @@ export const vi: Record<string, string> = {
   "toolbar.save": "Lưu",
   "toolbar.save_as": "Lưu thành",
   "toolbar.export_docx": "Xuất sang Word (.docx)",
+  "toolbar.export_typst": "Xuất sang Typst (.typ)",
   // Global Search button
   "search.global": "Tìm kiếm toàn cục",
   // Table of Contents toggle button

@@ -497,6 +497,7 @@ export const pt: Record<string, string> = {
   "toolbar.save": "Salvar",
   "toolbar.save_as": "Salvar Como",
   "toolbar.export_docx": "Exportar como Word (.docx)",
+  "toolbar.export_typst": "Exportar como Typst (.typ)",
   // Global Search button
   "search.global": "Pesquisa Global",
   // Table of Contents toggle button

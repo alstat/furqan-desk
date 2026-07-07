@@ -480,6 +480,7 @@ export const zh: Record<string, string> = {
     'toolbar.save': '保存',
     'toolbar.save_as': '另存为',
     'toolbar.export_docx': '导出为 Word (.docx)',
+    'toolbar.export_typst': '导出为 Typst (.typ)',
     // Global Search button
     'search.global': '全局搜索',
     // Table of Contents toggle button

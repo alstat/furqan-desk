@@ -490,6 +490,7 @@ export const uz: Record<string, string> = {
   "toolbar.save": "Saqlash",
   "toolbar.save_as": "Boshqa nom bilan saqlash",
   "toolbar.export_docx": "Word (.docx) sifatida eksport qilish",
+  "toolbar.export_typst": "Typst (.typ) sifatida eksport qilish",
   // Global Search button
   "search.global": "Global qidirish",
   // Table of Contents toggle button

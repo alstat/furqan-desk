@@ -480,6 +480,7 @@ export const ru: Record<string, string> = {
     'toolbar.save': 'Сохранить',
     'toolbar.save_as': 'Сохранить как',
     'toolbar.export_docx': 'Экспорт в Word (.docx)',
+    'toolbar.export_typst': 'Экспорт в Typst (.typ)',
     // Global Search button
     'search.global': 'Глобальный поиск',
     // Table of Contents toggle button

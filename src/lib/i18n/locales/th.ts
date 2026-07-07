@@ -490,6 +490,7 @@ export const th: Record<string, string> = {
   "toolbar.save": "บันทึก",
   "toolbar.save_as": "บันทึกเป็น",
   "toolbar.export_docx": "ส่งออกเป็น Word (.docx)",
+  "toolbar.export_typst": "ส่งออกเป็น Typst (.typ)",
   // Global Search button
   "search.global": "ค้นหาทั่วโลก",
   // Table of Contents toggle button

@@ -406,6 +406,7 @@ export const ta: Record<string, string> = {
   "toolbar.save": "சேமி",
   "toolbar.save_as": "இவ்வாறு சேமி",
   "toolbar.export_docx": "Word ஆக ஏற்றுமதி செய்க (.docx)",
+  "toolbar.export_typst": "Typst ஆக ஏற்றுமதி செய்க (.typ)",
   "search.global": "உலகளாவிய தேடல்",
   "toc.button": "உள்ளடக்க அட்டவணை",
   "manuscript.title": "கையெழுத்துப் பிரதிகள்",

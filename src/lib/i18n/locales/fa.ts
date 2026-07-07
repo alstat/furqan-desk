@@ -480,6 +480,7 @@ export const fa: Record<string, string> = {
     'toolbar.save': 'ذخیره',
     'toolbar.save_as': 'ذخیره با نام',
     'toolbar.export_docx': 'صدور به‌عنوان Word (.docx)',
+    'toolbar.export_typst': 'صدور به‌عنوان Typst (.typ)',
     // Global Search button
     'search.global': 'جستجوی سراسری',
     // Table of Contents toggle button
