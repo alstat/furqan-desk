@@ -8,9 +8,10 @@ default-run = "AyahLab"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-# Build-time database generator: `cargo run --bin gen-db` (from src-tauri/)
+# Build-time database generator: `cargo run --example gen-db` (from src-tauri/)
 # rebuilds data/quran_static.db from the JSON/SQL sources under data/.
-[[bin]]
+# An example (not a [[bin]]) so the Tauri bundler doesn't try to ship it.
+[[example]]
 name = "gen-db"
 path = "src/gen_db_tool.rs"
 
