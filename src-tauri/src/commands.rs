@@ -1,6 +1,6 @@
 use crate::db::Database;
 use crate::typst_world::get_world;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -1303,6 +1303,379 @@ pub fn delete_highlight(db: State<Database>, id: i64) -> Result<(), String> {
     conn.execute("DELETE FROM highlights WHERE id = ?1", [id])
         .map_err(|e| e.to_string())?;
     Ok(())
+}
+
+// ── Verse-of-the-Day commands ─────────────────────────────────────────────────
+//
+// The daily verse is picked from a per-machine random seed (generated once,
+// stored in app_meta) mixed with the calendar day, so two machines almost
+// always see different verses on the same date while each machine's pick
+// stays stable for the whole day — and is reproducible even if the history
+// row for that day is deleted. Every pick is recorded in the verse_of_day
+// table (day + surah/ayah numbers only, to keep the table tiny) so users can
+// browse, export, or delete their history.
+
+/// Canonical ayah counts per surah (Hafs), indexed by surah number (1-based;
+/// index 0 is a placeholder). Total = 6236. Mirrors SURAH_AYAH_COUNTS in
+/// src/lib/data/verse-of-day.ts.
+const VOTD_SURAH_AYAH_COUNTS: [i64; 115] = [
+    0, 7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99,
+    128, 111, 110, 98, 135, 112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30,
+    73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18, 45,
+    60, 49, 62, 55, 78, 96, 29, 22, 24, 13, 14, 11, 11, 18, 12, 12, 30, 52, 52,
+    44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36, 25, 22, 17, 19, 26,
+    30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11, 11, 8, 3, 9, 5, 4, 7, 3, 6, 3,
+    5, 4, 5, 6,
+];
+
+/// Verses consisting solely of disjoined letters (muqattaʿāt) — excluded from
+/// selection since they carry no translatable message on their own.
+const VOTD_MUQATTAAT: [(i64, i64); 30] = [
+    (2, 1), (3, 1), (7, 1), (10, 1), (11, 1), (12, 1), (13, 1), (14, 1),
+    (15, 1), (19, 1), (20, 1), (26, 1), (27, 1), (28, 1), (29, 1), (30, 1),
+    (31, 1), (32, 1), (36, 1), (38, 1), (40, 1), (41, 1), (42, 1), (42, 2),
+    (43, 1), (44, 1), (45, 1), (46, 1), (50, 1), (68, 1),
+];
+
+fn votd_eligible_verses() -> &'static Vec<(i64, i64)> {
+    static VERSES: std::sync::OnceLock<Vec<(i64, i64)>> = std::sync::OnceLock::new();
+    VERSES.get_or_init(|| {
+        let excluded: BTreeSet<(i64, i64)> = VOTD_MUQATTAAT.iter().copied().collect();
+        let mut list = Vec::with_capacity(6206);
+        for surah in 1..VOTD_SURAH_AYAH_COUNTS.len() as i64 {
+            for ayah in 1..=VOTD_SURAH_AYAH_COUNTS[surah as usize] {
+                if !excluded.contains(&(surah, ayah)) {
+                    list.push((surah, ayah));
+                }
+            }
+        }
+        list
+    })
+}
+
+/// splitmix64 finaliser — decorrelates the (seed, day) input bits.
+fn votd_mix(mut x: u64) -> u64 {
+    x = x.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    x = (x ^ (x >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    x = (x ^ (x >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    x ^ (x >> 31)
+}
+
+/// FNV-1a hash of the YYYY-MM-DD day key.
+fn votd_day_hash(day: &str) -> u64 {
+    let mut h: u64 = 0xCBF2_9CE4_8422_2325;
+    for b in day.as_bytes() {
+        h ^= *b as u64;
+        h = h.wrapping_mul(0x0000_0100_0000_01B3);
+    }
+    h
+}
+
+/// Fetch this machine's verse-of-day seed, generating and persisting a random
+/// one on first use. SQLite's RANDOM() supplies the entropy, so no extra
+/// dependency is needed.
+fn votd_seed(conn: &rusqlite::Connection) -> Result<u64, String> {
+    let existing: Option<String> = conn
+        .query_row(
+            "SELECT value FROM app_meta WHERE key = 'votd_seed'",
+            [],
+            |r| r.get(0),
+        )
+        .ok();
+    if let Some(v) = existing {
+        if let Ok(seed) = v.parse::<u64>() {
+            return Ok(seed);
+        }
+    }
+    let random: i64 = conn
+        .query_row("SELECT RANDOM()", [], |r| r.get(0))
+        .map_err(|e| e.to_string())?;
+    let seed = random as u64;
+    conn.execute(
+        "INSERT OR REPLACE INTO app_meta (key, value) VALUES ('votd_seed', ?1)",
+        [seed.to_string()],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(seed)
+}
+
+#[derive(Serialize)]
+pub struct VerseOfDay {
+    pub day: String,
+    pub surah: i64,
+    pub ayah: i64,
+    pub shown_at: String,
+}
+
+fn votd_row(r: &rusqlite::Row) -> rusqlite::Result<VerseOfDay> {
+    Ok(VerseOfDay {
+        day: r.get(0)?,
+        surah: r.get(1)?,
+        ayah: r.get(2)?,
+        shown_at: r.get(3)?,
+    })
+}
+
+/// Return the verse for `day` (local calendar date, YYYY-MM-DD), picking and
+/// recording it on first request of that day.
+#[tauri::command]
+pub fn get_verse_of_day(db: State<Database>, day: String) -> Result<VerseOfDay, String> {
+    // The day key comes from the frontend's local clock; keep the table clean.
+    let valid = day.len() == 10
+        && day.bytes().enumerate().all(|(i, b)| match i {
+            4 | 7 => b == b'-',
+            _ => b.is_ascii_digit(),
+        });
+    if !valid {
+        return Err(format!("invalid day key: {day}"));
+    }
+
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    if let Ok(existing) = conn.query_row(
+        "SELECT day, surah, ayah, shown_at FROM verse_of_day WHERE day = ?1",
+        [&day],
+        |r| votd_row(r),
+    ) {
+        return Ok(existing);
+    }
+
+    let seed = votd_seed(&conn)?;
+    let verses = votd_eligible_verses();
+    let idx = (votd_mix(seed ^ votd_day_hash(&day)) % verses.len() as u64) as usize;
+    let (surah, ayah) = verses[idx];
+
+    conn.execute(
+        "INSERT OR IGNORE INTO verse_of_day (day, surah, ayah) VALUES (?1, ?2, ?3)",
+        rusqlite::params![day, surah, ayah],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.query_row(
+        "SELECT day, surah, ayah, shown_at FROM verse_of_day WHERE day = ?1",
+        [&day],
+        |r| votd_row(r),
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_verse_of_day_history(db: State<Database>) -> Result<Vec<VerseOfDay>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare("SELECT day, surah, ayah, shown_at FROM verse_of_day ORDER BY day DESC")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |r| votd_row(r))
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string());
+    rows
+}
+
+#[tauri::command]
+pub fn delete_verse_of_day(db: State<Database>, day: String) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM verse_of_day WHERE day = ?1", [&day])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn clear_verse_of_day_history(db: State<Database>) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM verse_of_day", [])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[derive(Serialize)]
+pub struct VerseOfDayStorage {
+    pub entries: i64,
+    pub bytes: i64,
+}
+
+/// Approximate on-disk footprint of the history table: stored payload plus
+/// SQLite's per-row/b-tree overhead (~16 bytes a row). Exact figures would
+/// need the dbstat virtual table, which the bundled SQLite doesn't enable.
+#[tauri::command]
+pub fn get_verse_of_day_storage(db: State<Database>) -> Result<VerseOfDayStorage, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.query_row(
+        "SELECT COUNT(*),
+                COALESCE(SUM(LENGTH(day) + LENGTH(shown_at) + 4 + 16), 0)
+         FROM verse_of_day",
+        [],
+        |r| {
+            Ok(VerseOfDayStorage {
+                entries: r.get(0)?,
+                bytes: r.get(1)?,
+            })
+        },
+    )
+    .map_err(|e| e.to_string())
+}
+
+/// Export the history as CSV into the user's Downloads folder and return the
+/// saved path.
+#[tauri::command]
+pub fn export_verse_of_day_history(db: State<Database>) -> Result<String, String> {
+    let rows = {
+        let conn = db.0.lock().map_err(|e| e.to_string())?;
+        let mut stmt = conn
+            .prepare("SELECT day, surah, ayah, shown_at FROM verse_of_day ORDER BY day")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map([], |r| votd_row(r))
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        rows
+    };
+
+    let labels = get_surah_labels();
+    let mut csv = String::from("day,surah,ayah,surah_name,reference,shown_at\n");
+    for row in &rows {
+        let name = labels
+            .get(row.surah as usize - 1)
+            .map(|l| l.en.as_str())
+            .unwrap_or("");
+        csv.push_str(&format!(
+            "{},{},{},\"{}\",{}:{},{}\n",
+            row.day, row.surah, row.ayah, name, row.surah, row.ayah, row.shown_at
+        ));
+    }
+
+    let downloads_dir = dirs::download_dir()
+        .ok_or_else(|| "Cannot locate Downloads folder".to_string())?;
+    let save_path = downloads_dir.join("ayahlab-verse-of-day-history.csv");
+    std::fs::write(&save_path, csv).map_err(|e| e.to_string())?;
+    Ok(save_path.to_string_lossy().into_owned())
+}
+
+#[derive(Deserialize)]
+pub struct VerseRefArg {
+    pub surah: i64,
+    pub ayah: i64,
+}
+
+#[derive(Serialize)]
+pub struct VerseText {
+    pub surah: i64,
+    pub ayah: i64,
+    pub arabic: String,
+    pub translation: Option<String>,
+}
+
+/// Batch-fetch the Arabic text (and optionally a translation) for a list of
+/// individual verses. Used by the history card list, where loading a whole
+/// surah's morphology per entry would be wasteful.
+#[tauri::command]
+pub fn get_verse_texts(
+    db: State<Database>,
+    refs: Vec<VerseRefArg>,
+    translator_id: Option<i64>,
+) -> Result<Vec<VerseText>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+
+    let mut arabic_stmt = conn
+        .prepare(
+            "SELECT word, form_arabic FROM morphology
+             WHERE surah = ?1 AND ayah = ?2
+             ORDER BY word, token",
+        )
+        .map_err(|e| e.to_string())?;
+    let mut trans_stmt = conn
+        .prepare(
+            "SELECT text FROM translations
+             WHERE translator_id = ?1 AND surah = ?2 AND ayah = ?3",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let mut out = Vec::with_capacity(refs.len());
+    for r in &refs {
+        // Tokens of one word concatenate directly; words join with a space.
+        let tokens: Vec<(i64, String)> = arabic_stmt
+            .query_map(rusqlite::params![r.surah, r.ayah], |row| {
+                Ok((row.get(0)?, row.get(1)?))
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        let mut arabic = String::new();
+        let mut last_word = None;
+        for (word, form) in &tokens {
+            if last_word.is_some() && last_word != Some(*word) {
+                arabic.push(' ');
+            }
+            arabic.push_str(form);
+            last_word = Some(*word);
+        }
+
+        let translation = translator_id.and_then(|tid| {
+            trans_stmt
+                .query_row(rusqlite::params![tid, r.surah, r.ayah], |row| {
+                    row.get::<_, String>(0)
+                })
+                .ok()
+        });
+
+        out.push(VerseText {
+            surah: r.surah,
+            ayah: r.ayah,
+            arabic,
+            translation,
+        });
+    }
+    Ok(out)
+}
+
+#[cfg(test)]
+mod votd_tests {
+    use super::*;
+
+    #[test]
+    fn eligible_verse_count_excludes_muqattaat() {
+        // 6236 total ayat minus 30 muqattaʿāt-only verses.
+        assert_eq!(votd_eligible_verses().len(), 6206);
+        assert!(!votd_eligible_verses().contains(&(2, 1)));
+        assert!(!votd_eligible_verses().contains(&(42, 2)));
+        assert!(votd_eligible_verses().contains(&(2, 2)));
+    }
+
+    fn pick(seed: u64, day: &str) -> (i64, i64) {
+        let verses = votd_eligible_verses();
+        let idx = (votd_mix(seed ^ votd_day_hash(day)) % verses.len() as u64) as usize;
+        verses[idx]
+    }
+
+    #[test]
+    fn pick_is_stable_for_seed_and_day() {
+        assert_eq!(pick(42, "2026-07-08"), pick(42, "2026-07-08"));
+    }
+
+    #[test]
+    fn different_seeds_mostly_yield_different_verses() {
+        // Two machines (seeds) over a year of days should almost never agree.
+        let mut same = 0;
+        for i in 0..365u64 {
+            let day = format!("2026-{:02}-{:02}", 1 + i % 12, 1 + i % 28);
+            if pick(0xDEAD_BEEF, &day) == pick(0x1234_5678, &day) {
+                same += 1;
+            }
+        }
+        assert!(same <= 2, "seeds collided on {same} of 365 days");
+    }
+
+    #[test]
+    fn seed_is_generated_once_and_persisted() {
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);",
+        )
+        .unwrap();
+        let a = votd_seed(&conn).unwrap();
+        let b = votd_seed(&conn).unwrap();
+        assert_eq!(a, b);
+    }
 }
 
 // ── Translation commands ──────────────────────────────────────────────────────

@@ -193,6 +193,16 @@ impl Database {
                 author   TEXT NOT NULL,
                 post_url TEXT NOT NULL,
                 seen_at  TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE TABLE IF NOT EXISTS app_meta (
+                key   TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS verse_of_day (
+                day      TEXT PRIMARY KEY,
+                surah    INTEGER NOT NULL,
+                ayah     INTEGER NOT NULL,
+                shown_at TEXT NOT NULL DEFAULT (datetime('now'))
             );",
         )?;
         // Idempotent column migration — ignored if column already exists
@@ -268,10 +278,55 @@ impl Database {
             rows
         };
 
+        // Tables introduced after the first release may be absent in the old
+        // DB; check existence so migration doesn't fail (and lose everything).
+        let has_table = |name: &str| -> bool {
+            conn.query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?1",
+                [name],
+                |r| r.get::<_, i64>(0),
+            )
+            .unwrap_or(0)
+                > 0
+        };
+
+        let verse_of_day = if has_table("verse_of_day") {
+            let mut stmt = conn.prepare(
+                "SELECT day, surah, ayah, shown_at FROM verse_of_day ORDER BY day",
+            )?;
+            let rows: Vec<_> = stmt.query_map([], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, i64>(1)?,
+                    row.get::<_, i64>(2)?,
+                    row.get::<_, String>(3)?,
+                ))
+            })?
+            .filter_map(|r| r.ok())
+            .collect();
+            rows
+        } else {
+            Vec::new()
+        };
+
+        let app_meta = if has_table("app_meta") {
+            let mut stmt = conn.prepare("SELECT key, value FROM app_meta")?;
+            let rows: Vec<_> = stmt.query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            })?
+            .filter_map(|r| r.ok())
+            .collect();
+            rows
+        } else {
+            Vec::new()
+        };
+
         Ok(UserData {
             bookmarks,
             last_read,
             highlights,
+            verse_of_day,
+            app_meta,
         })
     }
 
@@ -299,6 +354,22 @@ impl Database {
                 stmt.execute(rusqlite::params![surah, ayah, text, note, created_at])?;
             }
         }
+        {
+            let mut stmt = conn.prepare(
+                "INSERT OR REPLACE INTO verse_of_day (day, surah, ayah, shown_at) VALUES (?1, ?2, ?3, ?4)",
+            )?;
+            for (day, surah, ayah, shown_at) in &data.verse_of_day {
+                stmt.execute(rusqlite::params![day, surah, ayah, shown_at])?;
+            }
+        }
+        {
+            let mut stmt = conn.prepare(
+                "INSERT OR REPLACE INTO app_meta (key, value) VALUES (?1, ?2)",
+            )?;
+            for (key, value) in &data.app_meta {
+                stmt.execute(rusqlite::params![key, value])?;
+            }
+        }
         tx.commit()
     }
 }
@@ -308,4 +379,6 @@ struct UserData {
     bookmarks: Vec<(i64, i64, Option<String>, String)>,
     last_read: Option<(i64, i64, String)>,
     highlights: Vec<(i64, i64, String, Option<String>, String)>,
+    verse_of_day: Vec<(String, i64, i64, String)>,
+    app_meta: Vec<(String, String)>,
 }
