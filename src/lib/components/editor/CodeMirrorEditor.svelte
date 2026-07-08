@@ -1611,8 +1611,10 @@
     });
 
     // Fetch the git HEAD baseline for `path` and feed it into the diff gutter.
-    // Guarded so a slow response for a since-changed file can't overwrite the
-    // baseline of the file now shown.
+    // An empty-string baseline means "in the repo but not in HEAD" (untracked)
+    // — the gutter then marks every line as added. Guarded so a slow response
+    // for a since-changed file can't overwrite the baseline of the file now
+    // shown.
     function loadGitBaseline(path: string) {
         invoke<string | null>("git_head_content", { filePath: path })
             .then((baseline) => {
