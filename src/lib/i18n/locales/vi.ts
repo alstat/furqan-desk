@@ -872,6 +872,7 @@ export const vi: Record<string, string> = {
     "account.usage.section_standard_sub": "Chat mặc định",
     "account.usage.section_advanced": "Mô hình nâng cao",
     "account.usage.section_advanced_sub": "Lập luận frontier",
+    "account.usage.advanced_takehome_note": "Mô hình nâng cao chỉ được dùng cho Thông điệp cốt lõi.",
     "ai_chat.title": "Trò chuyện AI",
     "ai_chat.subtitle": "Hỏi bất cứ điều gì — tính năng Pro",
     "ai_chat.placeholder": "Đặt câu hỏi…",
@@ -1045,7 +1046,6 @@ export const vi: Record<string, string> = {
   "takehome.disclaimer": "Do AI tạo · hãy suy ngẫm sáng suốt",
   "takehome.no_ayahs": "Hiện không có câu nào được hiển thị để suy ngẫm.",
   "takehome.quota_advanced": "Hạn mức mô hình nâng cao của bạn đã hết. Chuyển sang mô hình tiêu chuẩn để tiếp tục.",
-  "takehome.use_standard": "Dùng mô hình tiêu chuẩn",
   "takehome.generate": "Tạo",
   "takehome.stale": "Các câu hiển thị đã thay đổi. Tạo thông điệp cốt lõi mới?",
   // Verse of the Day + drawing insert

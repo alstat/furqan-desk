@@ -877,6 +877,7 @@ export const ja: Record<string, string> = {
     "account.usage.section_standard_sub": "デフォルトチャット",
     "account.usage.section_advanced": "高度なモデル",
     "account.usage.section_advanced_sub": "フロンティア推論",
+    "account.usage.advanced_takehome_note": "高度なモデルは「心に留めるメッセージ」にのみ使用されます。",
     "ai_chat.title": "AIチャット",
     "ai_chat.subtitle": "何でも質問 — Pro機能",
     "ai_chat.placeholder": "質問を入力…",
@@ -1050,7 +1051,6 @@ export const ja: Record<string, string> = {
   "takehome.disclaimer": "AI 生成 · 慎重に省察してください",
   "takehome.no_ayahs": "現在、省察できる章句が表示されていません。",
   "takehome.quota_advanced": "高度なモデルの利用枠を使い切りました。続けるには標準モデルに切り替えてください。",
-  "takehome.use_standard": "標準モデルを使う",
   "takehome.generate": "生成",
   "takehome.stale": "表示中の章句が変わりました。新しいメッセージを生成しますか？",
   // Verse of the Day + drawing insert

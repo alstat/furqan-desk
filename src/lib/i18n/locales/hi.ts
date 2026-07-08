@@ -876,6 +876,7 @@ export const hi: Record<string, string> = {
     "account.usage.section_standard_sub": "डिफ़ॉल्ट चैट",
     "account.usage.section_advanced": "उन्नत मॉडल",
     "account.usage.section_advanced_sub": "फ्रंटियर रीजनिंग",
+    "account.usage.advanced_takehome_note": "उन्नत मॉडल केवल मुख्य संदेश के लिए उपयोग होता है।",
     "ai_chat.title": "AI चैट",
     "ai_chat.subtitle": "कुछ भी पूछें — Pro सुविधा",
     "ai_chat.placeholder": "एक प्रश्न पूछें…",
@@ -1049,7 +1050,6 @@ export const hi: Record<string, string> = {
   "takehome.disclaimer": "AI-निर्मित · विवेक के साथ चिंतन करें",
   "takehome.no_ayahs": "चिंतन के लिए इस समय कोई आयत प्रदर्शित नहीं है।",
   "takehome.quota_advanced": "आपके एडवांस्ड मॉडल का कोटा समाप्त हो गया है। जारी रखने के लिए स्टैंडर्ड मॉडल पर स्विच करें।",
-  "takehome.use_standard": "स्टैंडर्ड मॉडल उपयोग करें",
   "takehome.generate": "बनाएँ",
   "takehome.stale": "प्रदर्शित आयतें बदल गई हैं। नया मुख्य संदेश बनाएँ?",
   // Verse of the Day + drawing insert

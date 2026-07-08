@@ -258,13 +258,46 @@
         return { x: rect.right, y: rect.top, maxWidth, font };
     }
 
+    // Temporary debug logging (see console) to inspect exactly what is sent
+    // to the model and why a request is sometimes skipped.
+    const AI_AC_DEBUG = true;
+    function acLog(...args: unknown[]) {
+        if (AI_AC_DEBUG) console.log("[ai-autocomplete]", ...args);
+    }
+
     async function run() {
-        if (!aiAutocompleteActive() || !editorHasFocus() || editor.isComposing()) return;
+        if (!aiAutocompleteActive() || !editorHasFocus() || editor.isComposing()) {
+            acLog("skip:", {
+                active: aiAutocompleteActive(),
+                focused: editorHasFocus(),
+                composing: editor.isComposing(),
+            });
+            return;
+        }
         const ctx = readContext();
-        if (!ctx) return;
+        if (!ctx) {
+            acLog("skip: readContext() returned null (no collapsed range selection, or caret block not found)");
+            return;
+        }
         // Only suggest at the end of a block (ignoring trailing whitespace).
-        if (ctx.lineTail.trim() !== "") return;
-        if (ctx.prefix.trim().length < MIN_PREFIX) return;
+        if (ctx.lineTail.trim() !== "") {
+            acLog("skip: caret not at end of block, lineTail =", JSON.stringify(ctx.lineTail));
+            return;
+        }
+        if (ctx.prefix.trim().length < MIN_PREFIX) {
+            acLog(
+                `skip: prefix too short (${ctx.prefix.trim().length} < ${MIN_PREFIX}), prefix =`,
+                JSON.stringify(ctx.prefix),
+            );
+            return;
+        }
+        acLog(
+            "request payload:\n--- PREFIX (" + ctx.prefix.length + " chars) ---\n" +
+                ctx.prefix +
+                "\n--- SUFFIX (" + ctx.suffix.length + " chars) ---\n" +
+                ctx.suffix +
+                "\n--- END ---",
+        );
 
         controller = new AbortController();
         const id = ++requestId;
@@ -274,12 +307,22 @@
         let box: { x: number; y: number; maxWidth: number; font: string } | null =
             null;
         const emit = (raw: string) => {
-            if (id !== requestId || !editorHasFocus() || editor.isComposing()) return;
+            if (id !== requestId || !editorHasFocus() || editor.isComposing()) {
+                acLog("emit dropped:", {
+                    stale: id !== requestId,
+                    focused: editorHasFocus(),
+                    composing: editor.isComposing(),
+                });
+                return;
+            }
             // Lexical text nodes hold plain text — flatten newlines to spaces.
             const text = raw.replace(/\s*\n+\s*/g, " ").trimEnd();
             if (!text) return;
             box ??= caretPosition();
-            if (!box) return;
+            if (!box) {
+                acLog("emit dropped: caretPosition() returned null (zero rect or caret too close to editor edge)");
+                return;
+            }
             ghost = { text, ...box };
         };
         const raw = await fetchAiCompletion({
@@ -289,6 +332,7 @@
             signal: controller.signal,
             onPartial: emit,
         });
+        acLog("response:", JSON.stringify(raw));
         emit(raw);
     }
 

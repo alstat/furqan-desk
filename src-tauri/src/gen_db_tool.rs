@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 
 /// Increment this whenever the schema or data changes.
 /// Must match DB_VERSION in db.rs.
-const DB_VERSION: i64 = 12;
+const DB_VERSION: i64 = 13;
 
 fn main() {
     let data_dir = PathBuf::from("data");

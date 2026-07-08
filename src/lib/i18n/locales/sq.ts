@@ -766,6 +766,7 @@ export const sq: Record<string, string> = {
     "account.usage.section_standard_sub": "Biseda të parazgjedhura",
     "account.usage.section_advanced": "Model i avancuar",
     "account.usage.section_advanced_sub": "Arsyetim frontier",
+    "account.usage.advanced_takehome_note": "Modeli i avancuar përdoret vetëm për Mesazhin kryesor.",
     "ai_chat.title": "Bisedë AI",
     "ai_chat.subtitle": "Pyesni për çdo gjë — veçori Pro",
     "ai_chat.placeholder": "Bëni një pyetje…",
@@ -992,7 +993,6 @@ export const sq: Record<string, string> = {
   "takehome.disclaimer": "Gjeneruar nga IA · reflektoni me maturi",
   "takehome.no_ayahs": "Aktualisht nuk ka ajete të shfaqura për të reflektuar.",
   "takehome.quota_advanced": "Kuota juaj për modelin e avancuar ka mbaruar. Kaloni te modeli standard për të vazhduar.",
-  "takehome.use_standard": "Përdor modelin standard",
   "takehome.generate": "Gjenero",
   "takehome.stale": "Ajetet e shfaqura kanë ndryshuar. Të gjenerohet një mesazh i ri kryesor?",
   // Verse of the Day + drawing insert

@@ -872,6 +872,7 @@ export const tg: Record<string, string> = {
     "account.usage.section_standard_sub": "Чатҳои пешфарз",
     "account.usage.section_advanced": "Модели пешрафта",
     "account.usage.section_advanced_sub": "Далеловарии frontier",
+    "account.usage.advanced_takehome_note": "Модели пешрафта танҳо барои Паёми асосӣ истифода мешавад.",
     "ai_chat.title": "Чати AI",
     "ai_chat.subtitle": "Ҳар чизро пурсед — хусусияти Pro",
     "ai_chat.placeholder": "Савол диҳед…",
@@ -1045,7 +1046,6 @@ export const tg: Record<string, string> = {
   "takehome.disclaimer": "Бо AI эҷодшуда · бо басират тааммул кунед",
   "takehome.no_ayahs": "Ҳоло ягон ояти намоишдодашуда барои тааммул нест.",
   "takehome.quota_advanced": "Квотаи модели пешрафтаи шумо ба охир расид. Барои идома ба модели стандартӣ гузаред.",
-  "takehome.use_standard": "Модели стандартиро истифода баред",
   "takehome.generate": "Эҷод",
   "takehome.stale": "Оятҳои намоишдодашуда тағйир ёфтанд. Паёми асосии нав эҷод карда шавад?",
   // Verse of the Day + drawing insert

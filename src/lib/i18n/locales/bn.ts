@@ -878,6 +878,7 @@ export const bn: Record<string, string> = {
     "account.usage.section_standard_sub": "ডিফল্ট চ্যাট",
     "account.usage.section_advanced": "উন্নত মডেল",
     "account.usage.section_advanced_sub": "ফ্রন্টিয়ার রিজনিং",
+    "account.usage.advanced_takehome_note": "উন্নত মডেল শুধুমাত্র মূল বার্তার জন্য ব্যবহৃত হয়।",
     "ai_chat.title": "AI চ্যাট",
     "ai_chat.subtitle": "যেকোনো কিছু জিজ্ঞাসা করুন — Pro ফিচার",
     "ai_chat.placeholder": "একটি প্রশ্ন করুন…",
@@ -1051,7 +1052,6 @@ export const bn: Record<string, string> = {
   "takehome.disclaimer": "AI-নির্মিত · বিবেচনার সাথে ভাবুন",
   "takehome.no_ayahs": "ভাবনার জন্য এই মুহূর্তে কোনো আয়াত প্রদর্শিত নেই।",
   "takehome.quota_advanced": "আপনার অ্যাডভান্সড মডেলের কোটা শেষ হয়ে গেছে। চালিয়ে যেতে স্ট্যান্ডার্ড মডেলে স্যুইচ করুন।",
-  "takehome.use_standard": "স্ট্যান্ডার্ড মডেল ব্যবহার করুন",
   "takehome.generate": "তৈরি করুন",
   "takehome.stale": "প্রদর্শিত আয়াত পরিবর্তিত হয়েছে। নতুন মূল বার্তা তৈরি করবেন?",
   // Verse of the Day + drawing insert

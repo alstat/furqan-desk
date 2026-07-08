@@ -862,6 +862,7 @@ export const ko: Record<string, string> = {
     "account.usage.section_standard_sub": "기본 채팅",
     "account.usage.section_advanced": "고급 모델",
     "account.usage.section_advanced_sub": "프런티어 추론",
+    "account.usage.advanced_takehome_note": "고급 모델은 핵심 메시지에만 사용됩니다.",
     "ai_chat.title": "AI 채팅",
     "ai_chat.subtitle": "무엇이든 물어보세요 — Pro 기능",
     "ai_chat.placeholder": "질문을 입력하세요…",
@@ -1039,7 +1040,6 @@ export const ko: Record<string, string> = {
   "takehome.disclaimer": "AI 생성 · 분별하며 묵상하세요",
   "takehome.no_ayahs": "현재 묵상할 구절이 표시되어 있지 않습니다.",
   "takehome.quota_advanced": "고급 모델 할당량을 모두 사용했습니다. 계속하려면 표준 모델로 전환하세요.",
-  "takehome.use_standard": "표준 모델 사용",
   "takehome.generate": "생성",
   "takehome.stale": "표시된 구절이 변경되었습니다. 새 메시지를 생성할까요?",
   // Verse of the Day + drawing insert

@@ -766,6 +766,7 @@ export const sw: Record<string, string> = {
     "account.usage.section_standard_sub": "Gumzo chaguomsingi",
     "account.usage.section_advanced": "Muundo wa juu",
     "account.usage.section_advanced_sub": "Hoja za frontier",
+    "account.usage.advanced_takehome_note": "Modeli ya kina hutumika kwa Ujumbe muhimu pekee.",
     "ai_chat.title": "Gumzo la AI",
     "ai_chat.subtitle": "Uliza chochote — kipengele cha Pro",
     "ai_chat.placeholder": "Uliza swali…",
@@ -992,7 +993,6 @@ export const sw: Record<string, string> = {
   "takehome.disclaimer": "Imetengenezwa na AI · tafakari kwa busara",
   "takehome.no_ayahs": "Hakuna aya zinazoonyeshwa kwa sasa za kutafakari.",
   "takehome.quota_advanced": "Kiasi chako cha modeli ya kina kimeisha. Badilisha hadi modeli ya kawaida ili kuendelea.",
-  "takehome.use_standard": "Tumia modeli ya kawaida",
   "takehome.generate": "Tengeneza",
   "takehome.stale": "Aya zinazoonyeshwa zimebadilika. Tengeneza ujumbe mpya muhimu?",
   // Verse of the Day + drawing insert

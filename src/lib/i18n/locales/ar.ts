@@ -862,6 +862,7 @@ export const ar: Record<string, string> = {
     "account.usage.section_standard_sub": "الدردشات الافتراضية",
     "account.usage.section_advanced": "النموذج المتقدم",
     "account.usage.section_advanced_sub": "استدلال متقدم",
+    "account.usage.advanced_takehome_note": "يُستخدم النموذج المتقدم للرسالة المستفادة فقط.",
     "ai_chat.title": "دردشة الذكاء الاصطناعي",
     "ai_chat.subtitle": "اسأل عن أي شيء — ميزة Pro",
     "ai_chat.placeholder": "اطرح سؤالاً…",
@@ -1039,7 +1040,6 @@ export const ar: Record<string, string> = {
   "takehome.disclaimer": "مُولّد بالذكاء الاصطناعي · تأمّل بتمعّن",
   "takehome.no_ayahs": "لا توجد آيات معروضة حاليًا للتأمّل فيها.",
   "takehome.quota_advanced": "لقد استُنفدت حصتك من النموذج المتقدم. بدّل إلى النموذج القياسي للمتابعة.",
-  "takehome.use_standard": "استخدم النموذج القياسي",
   "takehome.generate": "إنشاء",
   "takehome.stale": "لقد تغيّرت الآيات المعروضة. هل تريد إنشاء رسالة مستفادة جديدة؟",
   // Verse of the Day + drawing insert

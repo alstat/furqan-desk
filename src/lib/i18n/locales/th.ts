@@ -872,6 +872,7 @@ export const th: Record<string, string> = {
     "account.usage.section_standard_sub": "แชทเริ่มต้น",
     "account.usage.section_advanced": "โมเดลขั้นสูง",
     "account.usage.section_advanced_sub": "การให้เหตุผล frontier",
+    "account.usage.advanced_takehome_note": "โมเดลขั้นสูงใช้สำหรับข้อคิดสำคัญเท่านั้น",
     "ai_chat.title": "แชต AI",
     "ai_chat.subtitle": "ถามอะไรก็ได้ — ฟีเจอร์ Pro",
     "ai_chat.placeholder": "ถามคำถาม…",
@@ -1045,7 +1046,6 @@ export const th: Record<string, string> = {
   "takehome.disclaimer": "สร้างโดย AI · ใคร่ครวญอย่างมีวิจารณญาณ",
   "takehome.no_ayahs": "ขณะนี้ไม่มีอายะฮ์ที่แสดงให้ใคร่ครวญ",
   "takehome.quota_advanced": "โควตาโมเดลขั้นสูงของคุณหมดแล้ว สลับไปใช้โมเดลมาตรฐานเพื่อดำเนินการต่อ",
-  "takehome.use_standard": "ใช้โมเดลมาตรฐาน",
   "takehome.generate": "สร้าง",
   "takehome.stale": "อายะฮ์ที่แสดงมีการเปลี่ยนแปลง สร้างข้อคิดสำคัญใหม่หรือไม่?",
   // Verse of the Day + drawing insert
