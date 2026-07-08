@@ -27,6 +27,15 @@ const spacerMarker = new StatusMarker('cm-gitDiff-bar');
 
 function diffLines(base: string, current: string): Map<number, LineStatus> {
     const result = new Map<number, LineStatus>();
+    // Empty baseline = untracked (or empty-at-HEAD) file: every line is new.
+    // Without this special case the LCS pairing below would render line 1 as
+    // "modified" (paired against the baseline's single empty line).
+    if (base === '') {
+        if (current === '') return result;
+        const lines = current.split('\n').length;
+        for (let j = 1; j <= lines; j++) result.set(j, 'added');
+        return result;
+    }
     const a = base.split('\n');
     const b = current.split('\n');
     const n = a.length, m = b.length;
