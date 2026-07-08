@@ -175,7 +175,18 @@ pub fn git_head_content(file_path: String) -> Result<Option<String>, String> {
 
     let entry = match tree.get_path(&rel) {
         Ok(e) => e,
-        Err(_) => return Ok(None),
+        // File is inside the repo but not in HEAD — untracked or newly
+        // staged. Return an empty baseline so the diff gutter marks every
+        // line as added (like JetBrains), instead of disabling itself.
+        // Gitignored files still get no baseline (no gutter noise for build
+        // outputs and the like).
+        Err(_) => {
+            return if repo.status_should_ignore(&rel).unwrap_or(true) {
+                Ok(None)
+            } else {
+                Ok(Some(String::new()))
+            };
+        }
     };
 
     if entry.kind() != Some(ObjectType::Blob) {
@@ -201,3 +212,4 @@ fn pathdiff(file: &Path, base: &Path) -> Option<PathBuf> {
     let base = base.canonicalize().ok()?;
     file.strip_prefix(&base).ok().map(|p| p.to_path_buf())
 }
+
