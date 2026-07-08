@@ -1,7 +1,7 @@
 /// Build-time database generator.
 ///
 /// Run from the `src-tauri/` directory:
-///   cargo run --bin gen-db
+///   cargo run --example gen-db
 ///
 /// Reads all JSON/SQL/txt source files under `data/` and produces
 /// `data/quran_static.db` — a pre-built SQLite database that is
@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 
 /// Increment this whenever the schema or data changes.
 /// Must match DB_VERSION in db.rs.
-const DB_VERSION: i64 = 12;
+const DB_VERSION: i64 = 13;
 
 fn main() {
     let data_dir = PathBuf::from("data");

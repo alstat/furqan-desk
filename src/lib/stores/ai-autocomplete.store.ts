@@ -131,11 +131,21 @@ export async function fetchAiCompletion({
     onPartial?: (textSoFar: string) => void;
 }): Promise<string> {
     // Still cooling down from a recent 429 — skip the request entirely.
-    if (Date.now() < cooldownUntil) return "";
+    if (Date.now() < cooldownUntil) {
+        console.log(
+            "[ai-autocomplete] store skip: 429 cooldown for another",
+            Math.round((cooldownUntil - Date.now()) / 1000),
+            "s",
+        );
+        return "";
+    }
     try {
         const { data } = await supabase.auth.getSession();
         const token = data.session?.access_token;
-        if (!token) return "";
+        if (!token) {
+            console.log("[ai-autocomplete] store skip: no auth token");
+            return "";
+        }
 
         const hint = LANGUAGE_HINTS[language ?? "prose"] ?? LANGUAGE_HINTS.prose;
         const res = await fetch(FUNCTION_URL, {
@@ -194,10 +204,14 @@ export async function fetchAiCompletion({
                     ? Math.min(secs * 1000, MAX_BACKOFF_MS)
                     : DEFAULT_BACKOFF_MS;
             cooldownUntil = Date.now() + ms;
+            console.log("[ai-autocomplete] store: 429, backing off", ms, "ms");
             return "";
         }
 
-        if (!res.ok || !res.body) return "";
+        if (!res.ok || !res.body) {
+            console.log("[ai-autocomplete] store: HTTP", res.status, res.statusText);
+            return "";
+        }
 
         const output = await readSseText(
             res.body,
@@ -209,9 +223,16 @@ export async function fetchAiCompletion({
                 : undefined,
         );
         const cleaned = cleanCompletion(output);
-        if (!cleaned.trim()) return "";
+        if (!cleaned.trim()) {
+            console.log(
+                "[ai-autocomplete] store: model returned nothing usable, raw output =",
+                JSON.stringify(output),
+            );
+            return "";
+        }
         return cleaned;
-    } catch {
+    } catch (e) {
+        console.log("[ai-autocomplete] store: request failed:", e);
         return "";
     }
 }

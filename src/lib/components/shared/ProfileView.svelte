@@ -38,14 +38,21 @@
     let limits = $state<TierLimits | null>(null);
     let loadingUsage = $state(false);
 
-    // Token-usage sections. Pro accounts are Standard-only (Advanced is Pro+),
-    // so the Advanced section is only included for Pro+ accounts.
+    // Token-usage sections. Every Pro account gets an Advanced section: Pro+
+    // uses the Advanced model across the app, while plain Pro reaches it only
+    // through the Take-Home Message — the highlighted note says so.
     let usageSections = $derived.by(() => {
         if (!usage || !limits) return [];
-        const sections = [
+        const sections: {
+            heading: string;
+            sub: string;
+            note: string | null;
+            rows: { label: string; used: number; cap: number; reset: number | null }[];
+        }[] = [
             {
                 heading: $t("account.usage.section_standard"),
                 sub: $t("account.usage.section_standard_sub"),
+                note: null,
                 rows: [
                     { label: $t("account.usage.daily"), used: usage.standard.daily.used, cap: limits.daily_tokens, reset: usage.standard.daily.resetInSeconds },
                     { label: $t("account.usage.weekly"), used: usage.standard.weekly.used, cap: limits.weekly_tokens, reset: usage.standard.weekly.resetInSeconds },
@@ -53,17 +60,16 @@
                 ],
             },
         ];
-        if (isProPlus) {
-            sections.push({
-                heading: $t("account.usage.section_advanced"),
-                sub: $t("account.usage.section_advanced_sub"),
-                rows: [
-                    { label: $t("account.usage.daily"), used: usage.advanced.daily.used, cap: limits.advanced_daily_tokens, reset: usage.advanced.daily.resetInSeconds },
-                    { label: $t("account.usage.weekly"), used: usage.advanced.weekly.used, cap: limits.advanced_weekly_tokens, reset: usage.advanced.weekly.resetInSeconds },
-                    { label: $t("account.usage.monthly"), used: usage.advanced.monthly.used, cap: limits.advanced_monthly_tokens, reset: usage.advanced.monthly.resetInSeconds },
-                ],
-            });
-        }
+        sections.push({
+            heading: $t("account.usage.section_advanced"),
+            sub: $t("account.usage.section_advanced_sub"),
+            note: isProPlus ? null : $t("account.usage.advanced_takehome_note"),
+            rows: [
+                { label: $t("account.usage.daily"), used: usage.advanced.daily.used, cap: limits.advanced_daily_tokens, reset: usage.advanced.daily.resetInSeconds },
+                { label: $t("account.usage.weekly"), used: usage.advanced.weekly.used, cap: limits.advanced_weekly_tokens, reset: usage.advanced.weekly.resetInSeconds },
+                { label: $t("account.usage.monthly"), used: usage.advanced.monthly.used, cap: limits.advanced_monthly_tokens, reset: usage.advanced.monthly.resetInSeconds },
+            ],
+        });
         return sections;
     });
     // Tick increments every 30s so the relative countdowns recompute without
@@ -293,6 +299,18 @@
                                 {section.sub}
                             </span>
                         </div>
+                        {#if section.note}
+                            <p
+                                class="flex items-center gap-1.5 rounded-lg bg-brand-gold-100 dark:bg-brand-gold-400/15 px-2.5 py-1.5 text-xs font-medium text-brand-gold-600 dark:text-brand-gold-400"
+                            >
+                                <Icon
+                                    icon="solar:info-circle-bold-duotone"
+                                    width="0.85rem"
+                                    class="shrink-0"
+                                />
+                                {section.note}
+                            </p>
+                        {/if}
                         {#each section.rows as row (row.label)}
                             {@const pct = pctOf(row.used, row.cap)}
                             <div class="flex flex-col gap-1 pl-1">

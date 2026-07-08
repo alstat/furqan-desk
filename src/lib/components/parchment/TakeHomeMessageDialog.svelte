@@ -13,13 +13,10 @@
     import { untrack } from "svelte";
     import { fly } from "svelte/transition";
     import { get } from "svelte/store";
-    import { isPro, isProPlus } from "$lib/stores/auth.store";
+    import { isPro } from "$lib/stores/auth.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { renderMarkdown } from "$lib/utils/markdown";
-    import {
-        fetchTakeHomeMessage,
-        takeHomeModel,
-    } from "$lib/stores/ai-takehome.store";
+    import { fetchTakeHomeMessage } from "$lib/stores/ai-takehome.store";
     import { t, locale } from "$lib/i18n";
     import {
         surahMorphology,
@@ -132,18 +129,35 @@
 
     // Replace {{surah:ayah}} or a range {{surah:start-end}} (optionally
     // {{surah:start-surah:end}}) with a clickable chip; drop any trailing
-    // partial token still being streamed (e.g. "{{2:2").
+    // partial token still being streamed (e.g. "{{2:2"). The model sometimes
+    // packs several references into one token ({{51:8-9,51:54-55}}), so a
+    // token's content is split on commas (Latin or Arabic) and each part
+    // becomes its own chip. A token with any unparseable part is left as-is.
+    const REF_ITEM_RE =
+        /^(\d{1,3})\s*:\s*(\d{1,3})(?:\s*-\s*(?:\d{1,3}\s*:\s*)?(\d{1,3}))?$/;
+
     function convertRefs(md: string): string {
         return md
             .replace(/\{\{[^}]*$/g, "")
-            .replace(
-                /\{\{\s*(\d{1,3})\s*:\s*(\d{1,3})(?:\s*-\s*(?:\d{1,3}\s*:\s*)?(\d{1,3}))?\s*\}\}/g,
-                (_m, s: string, a1: string, a2: string | undefined) => {
+            .replace(/\{\{\s*([^}]+?)\s*\}\}/g, (full, inner: string) => {
+                const items = inner
+                    .split(/[,،]/)
+                    .map((t) => t.trim())
+                    .filter(Boolean);
+                if (items.length === 0) return full;
+                const chips: string[] = [];
+                for (const item of items) {
+                    const m = item.match(REF_ITEM_RE);
+                    if (!m) return full;
+                    const [, s, a1, a2] = m;
                     const label = a2 ? `${s}:${a1}-${a2}` : `${s}:${a1}`;
                     const endAttr = a2 ? ` data-ayah-end="${a2}"` : "";
-                    return ` <a class="ayah-ref" role="button" tabindex="0" data-surah="${s}" data-ayah="${a1}"${endAttr}>${label}</a>`;
-                },
-            );
+                    chips.push(
+                        `<a class="ayah-ref" role="button" tabindex="0" data-surah="${s}" data-ayah="${a1}"${endAttr}>${label}</a>`,
+                    );
+                }
+                return " " + chips.join(" ");
+            });
     }
 
     const renderSection = (body: string) => renderMarkdown(convertRefs(body));
@@ -324,8 +338,9 @@
             const text = await fetchTakeHomeMessage({
                 context: ctx.body,
                 locale: get(locale),
-                // Advanced model is Pro+ only; Pro accounts always use Standard.
-                advanced: get(takeHomeModel) === "advanced" && get(isProPlus),
+                // The Take-Home Message always runs on the Advanced model —
+                // for Pro and Pro+ alike (elsewhere Advanced stays Pro+ only).
+                advanced: true,
                 signal: ac.signal,
                 onPartial: (partial) => {
                     if (!ac.signal.aborted) result = partial;
@@ -351,20 +366,6 @@
                 controller = null;
             }
         }
-    }
-
-    // Switch the model and regenerate immediately with the new choice (aborts
-    // any in-flight request). Lets the user fall back to the standard model
-    // when their advanced-model quota is exhausted.
-    function toggleModel() {
-        takeHomeModel.set($takeHomeModel === "advanced" ? "standard" : "advanced");
-        if (get(isPro)) generate();
-    }
-
-    // Error-state shortcut: drop to the standard model and try again.
-    function useStandardAndRetry() {
-        takeHomeModel.set("standard");
-        if (get(isPro)) generate();
     }
 
     // Opening the dialog no longer auto-generates — it shows the last cached
@@ -609,20 +610,11 @@
                             ? 'text-brand-charcoal-500 dark:text-[#c6d0f5]'
                             : 'text-red-500 dark:text-red-400'}"
                     >
-                        {quotaExceeded && $takeHomeModel === "advanced"
+                        {quotaExceeded
                             ? $t("takehome.quota_advanced")
                             : error || $t("takehome.quota_advanced")}
                     </p>
                     <div class="flex items-center gap-2">
-                        {#if quotaExceeded && $takeHomeModel === "advanced"}
-                            <button
-                                onclick={useStandardAndRetry}
-                                class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 px-3 py-1 text-[11px] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
-                            >
-                                <Icon icon="solar:bolt-linear" width="0.7rem" />
-                                {$t("takehome.use_standard")}
-                            </button>
-                        {/if}
                         <button
                             onclick={generate}
                             class="cursor-pointer rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 py-1 text-[11px] font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
@@ -735,32 +727,15 @@
                 class="flex shrink-0 flex-col gap-2 border-t border-brand-sand-200 px-5 py-3 dark:border-[#414559]"
             >
                 <div class="flex items-center justify-between gap-2">
-                    <!-- Standard / Advanced model toggle — the Advanced model is
-                         Pro+ only, so Pro accounts see no toggle (Standard). -->
-                    {#if $isProPlus}
-                        <button
-                            onclick={toggleModel}
-                            class="cursor-pointer flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors
-                                {$takeHomeModel === 'advanced'
-                                ? 'border-brand-gold-400 bg-brand-gold-100 dark:bg-brand-gold-900/30 text-brand-gold-600 dark:text-[#e5c890]'
-                                : 'border-brand-sand-200 dark:border-[#414559] bg-transparent text-brand-charcoal-400 dark:text-[#8087a2] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c]'}"
-                            title={$takeHomeModel === "advanced"
-                                ? $t("ai_chat.advanced_on")
-                                : $t("ai_chat.advanced_off")}
-                        >
-                            <Icon
-                                icon={$takeHomeModel === "advanced"
-                                    ? "solar:bolt-bold-duotone"
-                                    : "solar:bolt-linear"}
-                                width="0.7rem"
-                            />
-                            {$takeHomeModel === "advanced"
-                                ? $t("ai_chat.model_advanced")
-                                : $t("ai_chat.model_standard")}
-                        </button>
-                    {:else}
-                        <span></span>
-                    {/if}
+                    <!-- The Take-Home Message always runs on the Advanced
+                         model (Pro and Pro+ alike) — static badge, no toggle. -->
+                    <span
+                        class="flex items-center gap-1.5 rounded-full border border-brand-gold-400 bg-brand-gold-100 dark:bg-brand-gold-900/30 px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890]"
+                        title={$t("account.usage.advanced_takehome_note")}
+                    >
+                        <Icon icon="solar:bolt-bold-duotone" width="0.7rem" />
+                        {$t("ai_chat.model_advanced")}
+                    </span>
                     {#if result && !isStale}
                         <button
                             onclick={generate}

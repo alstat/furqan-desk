@@ -547,6 +547,7 @@ export const en: Record<string, string> = {
   "toolbar.save": "Save",
   "toolbar.save_as": "Save As",
   "toolbar.export_docx": "Export as Word (.docx)",
+  "toolbar.export_typst": "Export as Typst (.typ)",
   // Global Search button
   "search.global": "Global Search",
   // Table of Contents toggle button
@@ -1054,6 +1055,7 @@ export const en: Record<string, string> = {
   "account.usage.section_standard_sub": "Default chats",
   "account.usage.section_advanced": "Advanced model",
   "account.usage.section_advanced_sub": "Frontier reasoning",
+  "account.usage.advanced_takehome_note": "Advanced model is used only for the Take-home message.",
   // Take-home message
   "takehome.title": "Take-home message",
   "takehome.subtitle_default": "Personal growth from the displayed ayahs",
@@ -1067,7 +1069,6 @@ export const en: Record<string, string> = {
   "takehome.disclaimer": "AI-generated · reflect with discernment",
   "takehome.no_ayahs": "No ayahs are currently displayed to reflect on.",
   "takehome.quota_advanced": "Your advanced-model quota is used up. Switch to the standard model to continue.",
-  "takehome.use_standard": "Use standard model",
   "takehome.generate": "Generate",
   "takehome.stale": "The displayed ayahs have changed. Generate a new take-home message?",
 };

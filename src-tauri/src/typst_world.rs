@@ -30,8 +30,18 @@ impl MinimalWorld {
 
         // Load only typst's bundled fonts (New Computer Modern, Linux Libertine, etc.)
         // Skipping system fonts avoids loading hundreds of MB of font data at startup.
-        for font_data in typst_assets::fonts() {
-            let bytes = Bytes::new(font_data);
+        //
+        // None of typst's bundled fonts cover Arabic, so Quran blocks in exported
+        // .typ files rendered as tofu boxes. Ship Scheherazade New (SIL OFL, see
+        // fonts/OFL.txt) — the same face the editor uses for Quran text.
+        let bundled: Vec<Bytes> = typst_assets::fonts()
+            .map(Bytes::new)
+            .chain([
+                Bytes::new(include_bytes!("../fonts/ScheherazadeNew-Regular.ttf").as_slice()),
+                Bytes::new(include_bytes!("../fonts/ScheherazadeNew-Bold.ttf").as_slice()),
+            ])
+            .collect();
+        for bytes in bundled {
             let mut i = 0;
             loop {
                 match Font::new(bytes.clone(), i) {
@@ -197,4 +207,30 @@ static WORLD: OnceCell<MinimalWorld> = OnceCell::new();
 
 pub fn get_world() -> &'static MinimalWorld {
     WORLD.get_or_init(MinimalWorld::new)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // The lexical→typst exporter emits native citations tied to an inline
+    // (bytes) BibTeX bibliography; make sure this app's compiler build
+    // actually renders them (format sniffing for bytes sources, CSL styles).
+    #[test]
+    fn bibliography_from_bytes_compiles() {
+        let world = get_world();
+        world.set_project_root(None);
+        world.set_source(String::from(
+            "As Khan argues #cite(label(\"khan2020\")) and #cite(label(\"khan2020\"), form: \"prose\") elaborates.\n\n#bibliography(bytes(\"@book{khan2020,\\n  title = {Understanding the Quran},\\n  author = {Khan, A.},\\n  year = {2020}\\n}\"), style: \"apa\", title: \"References\", full: true)\n",
+        ));
+        let result = typst::compile::<typst_layout::PagedDocument>(world);
+        let doc = match result.output {
+            Ok(doc) => doc,
+            Err(errors) => panic!("compile failed: {errors:?}"),
+        };
+        let svg = typst_svg::svg(&doc.pages()[0], &typst_svg::SvgOptions::default());
+        assert!(!svg.is_empty());
+        // The bibliography heading and entry should have been laid out.
+        assert!(doc.pages().len() >= 1);
+    }
 }

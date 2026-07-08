@@ -89,9 +89,9 @@ fn copy_static_db(src: &Path, dest: &Path, _asset_relative_path: &str) -> Result
         .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
 }
 
-/// Must match DB_VERSION in src/bin/gen_db.rs.
+/// Must match DB_VERSION in src/gen_db_tool.rs (`cargo run --example gen-db`).
 /// Increment both when the static dataset changes.
-const DB_VERSION: i64 = 12;
+const DB_VERSION: i64 = 13;
 
 pub struct Database(pub Mutex<Connection>);
 

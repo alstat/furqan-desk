@@ -103,7 +103,7 @@
         <div
             bind:this={panelRef}
             transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-            class="absolute z-50 rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm p-4"
+            class="absolute z-10000 rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] bg-opacity-95 shadow-xl backdrop-blur-sm p-4"
         >
             <div class="grid grid-cols-6 gap-3">
                 {#each HIGHLIGHTS as h}
