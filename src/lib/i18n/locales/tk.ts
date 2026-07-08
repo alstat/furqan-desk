@@ -872,6 +872,7 @@ export const tk: Record<string, string> = {
     "account.usage.section_standard_sub": "Adaty chatlar",
     "account.usage.section_advanced": "Öňdebaryjy model",
     "account.usage.section_advanced_sub": "Frontier pikirlenme",
+    "account.usage.advanced_takehome_note": "Kämil model diňe Esasy habar üçin ulanylýar.",
     "ai_chat.title": "AI çat",
     "ai_chat.subtitle": "Islendik zady soraň — Pro aýratynlygy",
     "ai_chat.placeholder": "Sorag beriň…",
@@ -1045,7 +1046,6 @@ export const tk: Record<string, string> = {
   "takehome.disclaimer": "Emeli aň tarapyndan döredildi · paýhas bilen oýlanyň",
   "takehome.no_ayahs": "Häzir oýlanmak üçin görkezilen aýat ýok.",
   "takehome.quota_advanced": "Ösen modeliň kvotasy gutardy. Dowam etmek üçin standart modele geçiň.",
-  "takehome.use_standard": "Standart modeli ulanyň",
   "takehome.generate": "Döret",
   "takehome.stale": "Görkezilen aýatlar üýtgedi. Täze esasy habar döredilsinmi?",
   // Verse of the Day + drawing insert

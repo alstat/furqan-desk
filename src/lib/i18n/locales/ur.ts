@@ -862,6 +862,7 @@ export const ur: Record<string, string> = {
     "account.usage.section_standard_sub": "طے شدہ چیٹس",
     "account.usage.section_advanced": "اعلیٰ ماڈل",
     "account.usage.section_advanced_sub": "Frontier استدلال",
+    "account.usage.advanced_takehome_note": "اعلیٰ ماڈل صرف کلیدی پیغام کے لیے استعمال ہوتا ہے۔",
     "ai_chat.title": "AI چیٹ",
     "ai_chat.subtitle": "کچھ بھی پوچھیں — Pro خصوصیت",
     "ai_chat.placeholder": "سوال پوچھیں…",
@@ -1039,7 +1040,6 @@ export const ur: Record<string, string> = {
   "takehome.disclaimer": "AI سے تیار کردہ · سوچ سمجھ کر غور کریں",
   "takehome.no_ayahs": "اس وقت غور کے لیے کوئی آیت نہیں دکھائی جا رہی۔",
   "takehome.quota_advanced": "آپ کے ایڈوانسڈ ماڈل کا کوٹا ختم ہو گیا ہے۔ جاری رکھنے کے لیے اسٹینڈرڈ ماڈل پر سوئچ کریں۔",
-  "takehome.use_standard": "اسٹینڈرڈ ماڈل استعمال کریں",
   "takehome.generate": "بنائیں",
   "takehome.stale": "دکھائی گئی آیات بدل گئی ہیں۔ نیا کلیدی پیغام بنائیں؟",
   // Verse of the Day + drawing insert

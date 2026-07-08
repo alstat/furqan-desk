@@ -872,6 +872,7 @@ export const ceb: Record<string, string> = {
     "account.usage.section_standard_sub": "Default nga mga chat",
     "account.usage.section_advanced": "Advanced nga modelo",
     "account.usage.section_advanced_sub": "Frontier nga pangatarungan",
+    "account.usage.advanced_takehome_note": "Ang advanced nga modelo gigamit lang alang sa Pangunang mensahe.",
     "ai_chat.title": "AI Chat",
     "ai_chat.subtitle": "Pangutana bisan unsa — Pro nga bahin",
     "ai_chat.placeholder": "Pangutana…",
@@ -1045,7 +1046,6 @@ export const ceb: Record<string, string> = {
   "takehome.disclaimer": "Hinimo sa AI · pamalandong uban ang pag-amping",
   "takehome.no_ayahs": "Walay mga bersikulo nga gipakita karon aron pamalandungan.",
   "takehome.quota_advanced": "Nahurot na ang imong quota sa advanced nga modelo. Balhin sa standard nga modelo aron makapadayon.",
-  "takehome.use_standard": "Gamita ang standard nga modelo",
   "takehome.generate": "Paghimo",
   "takehome.stale": "Nabag-o ang gipakitang mga bersikulo. Maghimo bag-ong pangunang mensahe?",
   // Verse of the Day + drawing insert

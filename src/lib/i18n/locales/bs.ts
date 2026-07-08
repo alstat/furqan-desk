@@ -766,6 +766,7 @@ export const bs: Record<string, string> = {
     "account.usage.section_standard_sub": "Zadani chatovi",
     "account.usage.section_advanced": "Napredni model",
     "account.usage.section_advanced_sub": "Frontier rasuđivanje",
+    "account.usage.advanced_takehome_note": "Napredni model koristi se samo za Ključnu poruku.",
     "ai_chat.title": "AI razgovor",
     "ai_chat.subtitle": "Pitajte bilo šta — Pro funkcija",
     "ai_chat.placeholder": "Postavite pitanje…",
@@ -992,7 +993,6 @@ export const bs: Record<string, string> = {
   "takehome.disclaimer": "Generisano AI-jem · razmišljajte razborito",
   "takehome.no_ayahs": "Trenutno nema prikazanih ajeta za razmišljanje.",
   "takehome.quota_advanced": "Vaša kvota za napredni model je potrošena. Prebacite se na standardni model da nastavite.",
-  "takehome.use_standard": "Koristi standardni model",
   "takehome.generate": "Generiši",
   "takehome.stale": "Prikazani ajeti su se promijenili. Generisati novu ključnu poruku?",
   // Verse of the Day + drawing insert

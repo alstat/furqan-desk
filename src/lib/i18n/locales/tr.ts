@@ -862,6 +862,7 @@ export const tr: Record<string, string> = {
     "account.usage.section_standard_sub": "Varsayılan sohbetler",
     "account.usage.section_advanced": "Gelişmiş model",
     "account.usage.section_advanced_sub": "Frontier akıl yürütme",
+    "account.usage.advanced_takehome_note": "Gelişmiş model yalnızca Ana mesaj için kullanılır.",
     "ai_chat.title": "AI Sohbet",
     "ai_chat.subtitle": "Her şeyi sorun — Pro özelliği",
     "ai_chat.placeholder": "Bir soru sorun…",
@@ -1039,7 +1040,6 @@ export const tr: Record<string, string> = {
   "takehome.disclaimer": "Yapay zekâ üretimi · basiretle düşünün",
   "takehome.no_ayahs": "Şu anda üzerine düşünülecek gösterilen ayet yok.",
   "takehome.quota_advanced": "Gelişmiş model kotanız doldu. Devam etmek için standart modele geçin.",
-  "takehome.use_standard": "Standart modeli kullan",
   "takehome.generate": "Oluştur",
   "takehome.stale": "Gösterilen ayetler değişti. Yeni bir ana mesaj oluşturulsun mu?",
   // Verse of the Day + drawing insert

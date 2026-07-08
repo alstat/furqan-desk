@@ -872,6 +872,7 @@ export const uz: Record<string, string> = {
     "account.usage.section_standard_sub": "Standart chatlar",
     "account.usage.section_advanced": "Kengaytirilgan model",
     "account.usage.section_advanced_sub": "Frontier mulohaza",
+    "account.usage.advanced_takehome_note": "Kengaytirilgan model faqat Asosiy xabar uchun ishlatiladi.",
     "ai_chat.title": "AI chat",
     "ai_chat.subtitle": "Istalgan narsani so‘rang — Pro funksiyasi",
     "ai_chat.placeholder": "Savol bering…",
@@ -1045,7 +1046,6 @@ export const uz: Record<string, string> = {
   "takehome.disclaimer": "Sun'iy intellekt yaratgan · idrok bilan mushohada qiling",
   "takehome.no_ayahs": "Hozircha mushohada qilish uchun ko'rsatilgan oyat yo'q.",
   "takehome.quota_advanced": "Ilg'or model kvotangiz tugadi. Davom etish uchun standart modelga o'ting.",
-  "takehome.use_standard": "Standart modeldan foydalanish",
   "takehome.generate": "Yaratish",
   "takehome.stale": "Ko'rsatilgan oyatlar o'zgardi. Yangi asosiy xabar yaratilsinmi?",
   // Verse of the Day + drawing insert

@@ -862,6 +862,7 @@ export const zh: Record<string, string> = {
     "account.usage.section_standard_sub": "默认聊天",
     "account.usage.section_advanced": "高级模型",
     "account.usage.section_advanced_sub": "前沿推理",
+    "account.usage.advanced_takehome_note": "高级模型仅用于核心启示。",
     "ai_chat.title": "AI 聊天",
     "ai_chat.subtitle": "可询问任何问题 — Pro 功能",
     "ai_chat.placeholder": "提问…",
@@ -1039,7 +1040,6 @@ export const zh: Record<string, string> = {
   "takehome.disclaimer": "AI 生成 · 请审慎省思",
   "takehome.no_ayahs": "当前没有可供省思的经文。",
   "takehome.quota_advanced": "您的高级模型额度已用完。切换到标准模型以继续。",
-  "takehome.use_standard": "使用标准模型",
   "takehome.generate": "生成",
   "takehome.stale": "所显示的经文已更改。生成新的核心启示？",
   // Verse of the Day + drawing insert

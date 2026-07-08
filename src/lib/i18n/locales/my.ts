@@ -872,6 +872,7 @@ export const my: Record<string, string> = {
     "account.usage.section_standard_sub": "မူလ chat များ",
     "account.usage.section_advanced": "အဆင့်မြင့် မော်ဒယ်",
     "account.usage.section_advanced_sub": "ရှေ့တန်း reasoning",
+    "account.usage.advanced_takehome_note": "အဆင့်မြင့်မော်ဒယ်ကို အဓိကသတင်းစကားအတွက်သာ အသုံးပြုသည်။",
     "ai_chat.title": "AI ချတ်",
     "ai_chat.subtitle": "မည်သည့်အရာမဆို မေးပါ — Pro လုပ်ဆောင်ချက်",
     "ai_chat.placeholder": "မေးခွန်းတစ်ခု မေးပါ…",
@@ -1045,7 +1046,6 @@ export const my: Record<string, string> = {
   "takehome.disclaimer": "AI ဖန်တီး · သတိပညာဖြင့် ဆင်ခြင်ပါ",
   "takehome.no_ayahs": "ဆင်ခြင်ရန် လက်ရှိတွင် ပြသထားသော အာယသ်မရှိပါ။",
   "takehome.quota_advanced": "သင့်အဆင့်မြင့်မော်ဒယ်ခွဲတမ်း ကုန်သွားပါပြီ။ ဆက်လက်ရန် စံမော်ဒယ်သို့ ပြောင်းပါ။",
-  "takehome.use_standard": "စံမော်ဒယ်ကို သုံးပါ",
   "takehome.generate": "ဖန်တီးရန်",
   "takehome.stale": "ပြသထားသော အာယသ်များ ပြောင်းလဲသွားပါပြီ။ အဓိကသတင်းစကားအသစ် ဖန်တီးမလား။",
   // Verse of the Day + drawing insert

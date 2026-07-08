@@ -862,6 +862,7 @@ export const ru: Record<string, string> = {
     "account.usage.section_standard_sub": "Чаты по умолчанию",
     "account.usage.section_advanced": "Расширенная модель",
     "account.usage.section_advanced_sub": "Передовое рассуждение",
+    "account.usage.advanced_takehome_note": "Продвинутая модель используется только для Ключевой мысли.",
     "ai_chat.title": "AI-чат",
     "ai_chat.subtitle": "Спросите что угодно — функция Pro",
     "ai_chat.placeholder": "Задайте вопрос…",
@@ -1039,7 +1040,6 @@ export const ru: Record<string, string> = {
   "takehome.disclaimer": "Создано ИИ · размышляйте рассудительно",
   "takehome.no_ayahs": "Сейчас нет отображаемых аятов для размышления.",
   "takehome.quota_advanced": "Ваша квота на продвинутую модель исчерпана. Переключитесь на стандартную модель, чтобы продолжить.",
-  "takehome.use_standard": "Использовать стандартную модель",
   "takehome.generate": "Создать",
   "takehome.stale": "Отображаемые аяты изменились. Создать новую ключевую мысль?",
   // Verse of the Day + drawing insert

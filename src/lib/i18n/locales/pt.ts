@@ -879,6 +879,7 @@ export const pt: Record<string, string> = {
     "account.usage.section_standard_sub": "Chats padrão",
     "account.usage.section_advanced": "Modelo avançado",
     "account.usage.section_advanced_sub": "Raciocínio de fronteira",
+    "account.usage.advanced_takehome_note": "O modelo avançado é usado apenas para a Mensagem principal.",
     "ai_chat.title": "Chat de IA",
     "ai_chat.subtitle": "Pergunte qualquer coisa — recurso Pro",
     "ai_chat.placeholder": "Faça uma pergunta…",
@@ -1052,7 +1053,6 @@ export const pt: Record<string, string> = {
   "takehome.disclaimer": "Gerado por IA · reflita com discernimento",
   "takehome.no_ayahs": "Nenhum versículo está sendo exibido no momento para refletir.",
   "takehome.quota_advanced": "Sua cota do modelo avançado acabou. Mude para o modelo padrão para continuar.",
-  "takehome.use_standard": "Usar modelo padrão",
   "takehome.generate": "Gerar",
   "takehome.stale": "Os versículos exibidos mudaram. Gerar uma nova mensagem principal?",
   // Verse of the Day + drawing insert

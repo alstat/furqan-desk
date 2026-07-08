@@ -766,6 +766,7 @@ export const ku: Record<string, string> = {
     "account.usage.section_standard_sub": "Chatên standard",
     "account.usage.section_advanced": "Modela pêşketî",
     "account.usage.section_advanced_sub": "Ramana frontier",
+    "account.usage.advanced_takehome_note": "مۆدێلی پێشکەوتوو تەنها بۆ پەیامی سەرەکی بەکاردێت.",
     "ai_chat.title": "چاتی AI",
     "ai_chat.subtitle": "هەر شتێک بپرسە — تایبەتمەندی Pro",
     "ai_chat.placeholder": "پرسیارێک بکە…",
@@ -992,7 +993,6 @@ export const ku: Record<string, string> = {
   "takehome.disclaimer": "دروستکراوی AI · بە وردبینییەوە بیربکەرەوە",
   "takehome.no_ayahs": "لە ئێستادا هیچ ئایەتێک نیشان نەدراوە بۆ بیرکردنەوە.",
   "takehome.quota_advanced": "بەشە پێشکەوتووەکەت تەواو بووە. بۆ بەردەوامبوون بگۆڕە بۆ مۆدێلی ستاندارد.",
-  "takehome.use_standard": "مۆدێلی ستاندارد بەکاربهێنە",
   "takehome.generate": "دروستکردن",
   "takehome.stale": "ئایەتە نیشاندراوەکان گۆڕان. پەیامێکی سەرەکی نوێ دروست بکرێت؟",
   // Verse of the Day + drawing insert

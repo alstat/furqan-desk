@@ -862,6 +862,7 @@ export const id: Record<string, string> = {
     "account.usage.section_standard_sub": "Chat default",
     "account.usage.section_advanced": "Model lanjutan",
     "account.usage.section_advanced_sub": "Penalaran frontier",
+    "account.usage.advanced_takehome_note": "Model lanjutan hanya digunakan untuk Pesan utama.",
     "ai_chat.title": "Chat AI",
     "ai_chat.subtitle": "Tanyakan apa saja — fitur Pro",
     "ai_chat.placeholder": "Ajukan pertanyaan…",
@@ -1039,7 +1040,6 @@ export const id: Record<string, string> = {
   "takehome.disclaimer": "Dihasilkan AI · renungkan dengan bijak",
   "takehome.no_ayahs": "Tidak ada ayat yang sedang ditampilkan untuk direnungkan.",
   "takehome.quota_advanced": "Kuota model lanjutan Anda sudah habis. Beralih ke model standar untuk melanjutkan.",
-  "takehome.use_standard": "Gunakan model standar",
   "takehome.generate": "Buat",
   "takehome.stale": "Ayat yang ditampilkan telah berubah. Buat pesan utama baru?",
   // Verse of the Day + drawing insert

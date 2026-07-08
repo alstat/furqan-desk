@@ -872,6 +872,7 @@ export const kk: Record<string, string> = {
     "account.usage.section_standard_sub": "Әдепкі чаттар",
     "account.usage.section_advanced": "Кеңейтілген модель",
     "account.usage.section_advanced_sub": "Алдыңғы қатарлы пайымдау",
+    "account.usage.advanced_takehome_note": "Кеңейтілген модель тек Негізгі ой үшін қолданылады.",
     "ai_chat.title": "AI чаты",
     "ai_chat.subtitle": "Кез келген нәрсені сұраңыз — Pro мүмкіндігі",
     "ai_chat.placeholder": "Сұрақ қойыңыз…",
@@ -1045,7 +1046,6 @@ export const kk: Record<string, string> = {
   "takehome.disclaimer": "ЖИ жасаған · парасатпен ой толғаңыз",
   "takehome.no_ayahs": "Қазір ой толғауға көрсетілген аят жоқ.",
   "takehome.quota_advanced": "Кеңейтілген модель квотаңыз таусылды. Жалғастыру үшін стандартты модельге ауысыңыз.",
-  "takehome.use_standard": "Стандартты модельді қолдану",
   "takehome.generate": "Жасау",
   "takehome.stale": "Көрсетілген аяттар өзгерді. Жаңа негізгі ой жасау керек пе?",
   // Verse of the Day + drawing insert

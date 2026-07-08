@@ -1,39 +1,5 @@
-import { writable } from "svelte/store";
 import { supabase } from "$lib/supabase";
-import {
-    readSseText,
-    safeReadJson,
-    type AiModelClass,
-} from "$lib/stores/ai-text-transform.store";
-
-// Persisted model choice for the take-home message. Defaults to the advanced
-// model, but the user can switch to standard from the dialog (e.g. when their
-// advanced-model quota is used up).
-const MODEL_KEY = "ai-takehome-model";
-
-function loadModel(): AiModelClass {
-    try {
-        const stored = localStorage.getItem(MODEL_KEY);
-        if (stored === "advanced" || stored === "standard") return stored;
-    } catch {
-        /* ignore */
-    }
-    return "advanced";
-}
-
-const _model = writable<AiModelClass>(loadModel());
-
-export const takeHomeModel = {
-    subscribe: _model.subscribe,
-    set(value: AiModelClass) {
-        try {
-            localStorage.setItem(MODEL_KEY, value);
-        } catch {
-            /* ignore */
-        }
-        _model.set(value);
-    },
-};
+import { readSseText, safeReadJson } from "$lib/stores/ai-text-transform.store";
 
 // "Take-home message" — a personal-growth reflection generated from the ayahs
 // currently displayed in the Morphology view. Pro/Pro+ only (gated by the

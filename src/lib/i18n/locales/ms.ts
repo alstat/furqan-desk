@@ -875,6 +875,7 @@ export const ms: Record<string, string> = {
     "account.usage.section_standard_sub": "Sembang lalai",
     "account.usage.section_advanced": "Model lanjutan",
     "account.usage.section_advanced_sub": "Penaakulan frontier",
+    "account.usage.advanced_takehome_note": "Model lanjutan hanya digunakan untuk Mesej utama.",
     "ai_chat.title": "Sembang AI",
     "ai_chat.subtitle": "Tanya apa-apa sahaja — ciri Pro",
     "ai_chat.placeholder": "Ajukan soalan…",
@@ -1048,7 +1049,6 @@ export const ms: Record<string, string> = {
   "takehome.disclaimer": "Dijana AI · renungi dengan bijak",
   "takehome.no_ayahs": "Tiada ayat yang dipaparkan buat masa ini untuk direnungi.",
   "takehome.quota_advanced": "Kuota model lanjutan anda telah habis. Tukar ke model standard untuk meneruskan.",
-  "takehome.use_standard": "Guna model standard",
   "takehome.generate": "Jana",
   "takehome.stale": "Ayat yang dipaparkan telah berubah. Jana mesej utama baharu?",
   // Verse of the Day + drawing insert

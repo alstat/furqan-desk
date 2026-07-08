@@ -766,6 +766,7 @@ export const ta: Record<string, string> = {
     "account.usage.section_standard_sub": "இயல்புநிலை அரட்டைகள்",
     "account.usage.section_advanced": "மேம்பட்ட மாதிரி",
     "account.usage.section_advanced_sub": "Frontier காரணமிடல்",
+    "account.usage.advanced_takehome_note": "மேம்பட்ட மாடல் முக்கிய செய்திக்கு மட்டுமே பயன்படுத்தப்படுகிறது.",
     "ai_chat.title": "AI அரட்டை",
     "ai_chat.subtitle": "எதையும் கேளுங்கள் — Pro அம்சம்",
     "ai_chat.placeholder": "ஒரு கேள்வி கேளுங்கள்…",
@@ -992,7 +993,6 @@ export const ta: Record<string, string> = {
   "takehome.disclaimer": "AI உருவாக்கியது · விவேகத்துடன் சிந்தியுங்கள்",
   "takehome.no_ayahs": "சிந்திக்க தற்போது எந்த வசனமும் காட்டப்படவில்லை.",
   "takehome.quota_advanced": "உங்கள் மேம்பட்ட மாதிரியின் ஒதுக்கீடு தீர்ந்துவிட்டது. தொடர நிலையான மாதிரிக்கு மாறவும்.",
-  "takehome.use_standard": "நிலையான மாதிரியைப் பயன்படுத்து",
   "takehome.generate": "உருவாக்கு",
   "takehome.stale": "காட்டப்படும் வசனங்கள் மாறிவிட்டன. புதிய முக்கிய செய்தியை உருவாக்கவா?",
   // Verse of the Day + drawing insert

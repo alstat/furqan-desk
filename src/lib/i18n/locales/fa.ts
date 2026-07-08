@@ -862,6 +862,7 @@ export const fa: Record<string, string> = {
     "account.usage.section_standard_sub": "گفتگوهای پیش‌فرض",
     "account.usage.section_advanced": "مدل پیشرفته",
     "account.usage.section_advanced_sub": "استدلال پیشرو",
+    "account.usage.advanced_takehome_note": "مدل پیشرفته فقط برای پیام کاربردی استفاده می‌شود.",
     "ai_chat.title": "گفتگوی هوش مصنوعی",
     "ai_chat.subtitle": "هر چیزی بپرسید — قابلیت Pro",
     "ai_chat.placeholder": "یک سؤال بپرسید…",
@@ -1039,7 +1040,6 @@ export const fa: Record<string, string> = {
   "takehome.disclaimer": "تولیدشده با هوش مصنوعی · با تدبر تأمل کنید",
   "takehome.no_ayahs": "در حال حاضر آیه‌ای برای تأمل نمایش داده نشده است.",
   "takehome.quota_advanced": "سهمیه‌ی مدل پیشرفته‌ی شما به پایان رسیده است. برای ادامه به مدل استاندارد تغییر دهید.",
-  "takehome.use_standard": "استفاده از مدل استاندارد",
   "takehome.generate": "ایجاد",
   "takehome.stale": "آیات نمایش‌داده‌شده تغییر کرده‌اند. پیام کاربردی جدیدی ایجاد شود؟",
   // Verse of the Day + drawing insert

@@ -879,6 +879,7 @@ export const de: Record<string, string> = {
     "account.usage.section_standard_sub": "Standard-Chats",
     "account.usage.section_advanced": "Erweitertes Modell",
     "account.usage.section_advanced_sub": "Frontier-Reasoning",
+    "account.usage.advanced_takehome_note": "Das erweiterte Modell wird nur für die Kernbotschaft verwendet.",
     "ai_chat.title": "KI-Chat",
     "ai_chat.subtitle": "Alles fragen — Pro-Funktion",
     "ai_chat.placeholder": "Eine Frage stellen…",
@@ -1052,7 +1053,6 @@ export const de: Record<string, string> = {
   "takehome.disclaimer": "KI-generiert · mit Bedacht nachdenken",
   "takehome.no_ayahs": "Derzeit werden keine Verse zum Nachdenken angezeigt.",
   "takehome.quota_advanced": "Dein Kontingent für das erweiterte Modell ist aufgebraucht. Wechsle zum Standardmodell, um fortzufahren.",
-  "takehome.use_standard": "Standardmodell verwenden",
   "takehome.generate": "Erstellen",
   "takehome.stale": "Die angezeigten Verse haben sich geändert. Neue Kernbotschaft erstellen?",
   // Verse of the Day + drawing insert

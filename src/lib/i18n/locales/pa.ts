@@ -766,6 +766,7 @@ export const pa: Record<string, string> = {
     "account.usage.section_standard_sub": "ਡਿਫਾਲਟ ਚੈਟ",
     "account.usage.section_advanced": "ਉੱਨਤ ਮਾਡਲ",
     "account.usage.section_advanced_sub": "ਫਰੰਟੀਅਰ ਰੀਜ਼ਨਿੰਗ",
+    "account.usage.advanced_takehome_note": "ਉੱਨਤ ਮਾਡਲ ਸਿਰਫ਼ ਮੁੱਖ ਸੁਨੇਹੇ ਲਈ ਵਰਤਿਆ ਜਾਂਦਾ ਹੈ।",
     "ai_chat.title": "AI ਚੈਟ",
     "ai_chat.subtitle": "ਕੁਝ ਵੀ ਪੁੱਛੋ — Pro ਵਿਸ਼ੇਸ਼ਤਾ",
     "ai_chat.placeholder": "ਇੱਕ ਸਵਾਲ ਪੁੱਛੋ…",
@@ -992,7 +993,6 @@ export const pa: Record<string, string> = {
   "takehome.disclaimer": "AI ਦੁਆਰਾ ਤਿਆਰ · ਸੂਝ ਨਾਲ ਸੋਚੋ",
   "takehome.no_ayahs": "ਸੋਚਣ ਲਈ ਇਸ ਵੇਲੇ ਕੋਈ ਆਇਤ ਨਹੀਂ ਦਿਖਾਈ ਜਾ ਰਹੀ।",
   "takehome.quota_advanced": "ਤੁਹਾਡੇ ਐਡਵਾਂਸਡ ਮਾਡਲ ਦਾ ਕੋਟਾ ਖਤਮ ਹੋ ਗਿਆ ਹੈ। ਜਾਰੀ ਰੱਖਣ ਲਈ ਸਟੈਂਡਰਡ ਮਾਡਲ 'ਤੇ ਸਵਿਚ ਕਰੋ।",
-  "takehome.use_standard": "ਸਟੈਂਡਰਡ ਮਾਡਲ ਵਰਤੋ",
   "takehome.generate": "ਬਣਾਓ",
   "takehome.stale": "ਦਿਖਾਈਆਂ ਆਇਤਾਂ ਬਦਲ ਗਈਆਂ ਹਨ। ਨਵਾਂ ਮੁੱਖ ਸੁਨੇਹਾ ਬਣਾਈਏ?",
   // Verse of the Day + drawing insert

@@ -36,8 +36,8 @@
     let error = $state("");
     let verse = $state<VerseRef | null>(null);
     let target = $state<VerseLine | null>(null);
-    let before = $state<VerseLine | null>(null);
-    let after = $state<VerseLine | null>(null);
+    let before = $state<VerseLine[]>([]);
+    let after = $state<VerseLine[]>([]);
     let translationDir = $state<"rtl" | "ltr">("ltr");
 
     let loadedFor = $state(""); // guards against re-loading the same verse
@@ -71,7 +71,9 @@
     async function load() {
         loading = true;
         error = "";
-        target = before = after = null;
+        target = null;
+        before = [];
+        after = [];
         try {
             const v = verseOfDayFor();
             verse = v;
@@ -120,8 +122,25 @@
                     : null;
 
             target = lineFor(v.ayah);
-            before = lineFor(v.ayah - 1);
-            after = lineFor(v.ayah + 1);
+            // Always show a three-verse window: when the target sits at a
+            // surah boundary (no verse before ayah 1 / none after the last),
+            // extend the other side so e.g. ayah 1 shows verses 1, 2 and 3.
+            const beforeLine = lineFor(v.ayah - 1);
+            const afterLine = lineFor(v.ayah + 1);
+            before = beforeLine
+                ? afterLine
+                    ? [beforeLine]
+                    : [lineFor(v.ayah - 2), beforeLine].filter(
+                          (l): l is VerseLine => l !== null,
+                      )
+                : [];
+            after = afterLine
+                ? beforeLine
+                    ? [afterLine]
+                    : [afterLine, lineFor(v.ayah + 2)].filter(
+                          (l): l is VerseLine => l !== null,
+                      )
+                : [];
             loadedFor = `${v.surah}:${v.ayah}`;
         } catch (e) {
             error = String(e);
@@ -178,25 +197,25 @@
                 {/if}
             </div>
 
-            <!-- Context: preceding ayah (hint) -->
-            {#if before}
+            <!-- Context: preceding ayahs (hint) -->
+            {#each before as line (line.ayah)}
                 <div class="mb-2 opacity-75">
                     <p
                         dir="rtl"
                         class="font-scheherazade text-base leading-loose text-center text-brand-charcoal-500 dark:text-[#a5adce]"
                     >
-                        {before.arabic}
+                        {line.arabic}
                     </p>
-                    {#if before.translation}
+                    {#if line.translation}
                         <p
                             dir={translationDir}
                             class="mt-0.5 text-[11px] leading-relaxed text-center text-brand-charcoal-300 dark:text-[#838ba7]"
                         >
-                            {before.translation}
+                            {line.translation}
                         </p>
                     {/if}
                 </div>
-            {/if}
+            {/each}
 
             <!-- Highlighted verse of the day -->
             <div
@@ -218,25 +237,25 @@
                 {/if}
             </div>
 
-            <!-- Context: following ayah (hint) -->
-            {#if after}
+            <!-- Context: following ayahs (hint) -->
+            {#each after as line (line.ayah)}
                 <div class="mt-2 opacity-75">
                     <p
                         dir="rtl"
                         class="font-scheherazade text-base leading-loose text-center text-brand-charcoal-500 dark:text-[#a5adce]"
                     >
-                        {after.arabic}
+                        {line.arabic}
                     </p>
-                    {#if after.translation}
+                    {#if line.translation}
                         <p
                             dir={translationDir}
                             class="mt-0.5 text-[11px] leading-relaxed text-center text-brand-charcoal-300 dark:text-[#838ba7]"
                         >
-                            {after.translation}
+                            {line.translation}
                         </p>
                     {/if}
                 </div>
-            {/if}
+            {/each}
         {/if}
     {/snippet}
 

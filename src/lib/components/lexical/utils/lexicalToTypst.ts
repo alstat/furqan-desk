@@ -25,6 +25,7 @@ import {
     type Reference,
     formatBibliographyEntry,
     isNumberedBibStyle,
+    toBibtex,
 } from "$lib/utils/references";
 
 const QUOTE_TEXT_COLOR = "#707070"; // brand-charcoal-500
@@ -82,6 +83,11 @@ interface TypstContext {
     /// relative to it (Typst resolves paths relative to the compiled file).
     baseDir: string | null;
     placeholderCount: number;
+    /// Native-citation plan (see planBibliography); null falls back to
+    /// baking citations and the reference list as plain text.
+    bib: BibPlan | null;
+    /// Typst allows a single #bibliography per document.
+    bibEmitted: boolean;
 }
 
 export interface TypstExportOptions {
@@ -95,14 +101,16 @@ export async function lexicalStateToTypst(
     title: string,
     options: TypstExportOptions = {},
 ): Promise<string> {
+    const flatChildren = liftQuranBlocksFromList(rootJson.children ?? []);
     const ctx: TypstContext = {
         usesBased: false,
         assets: [],
         nextAssetId: 1,
         baseDir: options.baseDir ?? null,
         placeholderCount: 0,
+        bib: planBibliography(flatChildren),
+        bibEmitted: false,
     };
-    const flatChildren = liftQuranBlocksFromList(rootJson.children ?? []);
     const blocks = await walkBlocks(flatChildren, null, ctx);
 
     const head: string[] = [];
@@ -307,6 +315,13 @@ async function blockForNode(
             return quranBlockBlocks(node);
         }
         case "reference-list": {
+            if (ctx.bib) {
+                // Typst allows one #bibliography per document; ignore any
+                // stray duplicate reference-list nodes.
+                if (ctx.bibEmitted) return null;
+                ctx.bibEmitted = true;
+                return bibliographyBlock(ctx.bib);
+            }
             return referenceListBlocks(node);
         }
         case "tablerow":
@@ -447,6 +462,15 @@ async function inlineForNode(
             return `#link(${typstStr(url)})[${children || escapeMarkup(url)}]`;
         }
         case "citation": {
+            // Native Typst citation when the reference resolves: numbering /
+            // formatting then comes from the #bibliography style, and the
+            // citation links to its entry. "narrative" keeps its in-prose form.
+            const refId = typeof node.refId === "string" ? (node.refId as string) : "";
+            const key = ctx.bib?.citeKeyByRefId.get(refId);
+            if (key) {
+                const prose = node.styleId === "narrative";
+                return `#cite(label(${typstStr(key)})${prose ? `, form: "prose"` : ""})`;
+            }
             const citationText = (node.text as string) ?? "";
             return citationText ? escapeMarkup(citationText) : "";
         }
@@ -771,6 +795,83 @@ async function tableCellToTypst(
 
 // ── Reference list ──────────────────────────────────────────────────────────
 
+// Typst's built-in citation styles, keyed by the app's bibliography styles.
+const TYPST_BIB_STYLE: Record<BibStyle, string> = {
+    apa: "apa",
+    mla: "mla",
+    chicago: "chicago-author-date",
+    ieee: "ieee",
+    harvard: "harvard-cite-them-right",
+};
+
+interface BibPlan {
+    citeKeyByRefId: Map<string, string>;
+    bibtex: string;
+    style: BibStyle;
+}
+
+// Decide whether the document can use Typst's native citation system:
+// citations become #cite(label(…)) tied to a #bibliography() whose BibTeX is
+// embedded in the file. Requires a reference-list node and that every cited
+// or listed refId resolves to a library reference with a unique cite key —
+// otherwise return null and everything is baked as plain text instead.
+function planBibliography(nodes: SerializedNode[]): BibPlan | null {
+    let refList: SerializedNode | null = null;
+    const citedIds: string[] = [];
+    const walk = (n: SerializedNode) => {
+        if (n.type === "reference-list" && !refList) refList = n;
+        if (n.type === "citation" && typeof n.refId === "string") {
+            citedIds.push(n.refId as string);
+        }
+        for (const child of n.children ?? []) walk(child);
+    };
+    for (const n of nodes) walk(n);
+    if (!refList) return null;
+
+    const listNode = refList as SerializedNode;
+    const listIds = Array.isArray(listNode.refIds)
+        ? (listNode.refIds as string[])
+        : [];
+    const allIds = [...new Set([...listIds, ...citedIds])];
+    if (allIds.length === 0) return null;
+
+    const byId = new Map(get(references).map((r) => [r.id, r]));
+    const refs: Reference[] = [];
+    const citeKeyByRefId = new Map<string, string>();
+    const usedKeys = new Set<string>();
+    for (const id of allIds) {
+        const ref = byId.get(id);
+        // Unresolvable or key-less/duplicate-key references would break the
+        // compile — fall back to the static rendering for the whole document.
+        if (!ref || !ref.citeKey || usedKeys.has(ref.citeKey)) return null;
+        usedKeys.add(ref.citeKey);
+        refs.push(ref);
+        citeKeyByRefId.set(id, ref.citeKey);
+    }
+
+    const style = (
+        typeof listNode.style === "string" ? listNode.style : "apa"
+    ) as BibStyle;
+    try {
+        return { citeKeyByRefId, bibtex: toBibtex(refs), style };
+    } catch {
+        // A malformed library entry (e.g. persisted by an older app version)
+        // must not kill the export — fall back to static rendering.
+        return null;
+    }
+}
+
+function bibliographyBlock(bib: BibPlan): string {
+    // typstStr escapes backslashes/quotes; newlines are then folded into \n
+    // escapes so the BibTeX rides inside a single-line Typst string.
+    const src = typstStr(bib.bibtex).replace(/\n/g, "\\n");
+    const style = TYPST_BIB_STYLE[bib.style] ?? "apa";
+    return `#bibliography(bytes(${src}), style: ${typstStr(style)}, title: "References", full: true)`;
+}
+
+// Static fallback: bake the formatted entries as plain paragraphs (used when
+// native citations aren't possible, e.g. a cited reference is missing from
+// the library).
 function referenceListBlocks(node: SerializedNode): string[] {
     const refIds = Array.isArray(node.refIds) ? (node.refIds as string[]) : [];
     const style = (typeof node.style === "string" ? node.style : "apa") as BibStyle;
