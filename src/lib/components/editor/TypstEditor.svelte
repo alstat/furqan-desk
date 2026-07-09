@@ -19,6 +19,7 @@
         zenPeek,
         appDarkMode,
         typstPreviewDarkMode,
+        typstEmbeddedPreviewZoom,
         editorIndentSize,
         codeMirrorViewInstance,
     } from "$lib/stores/editor.store";
@@ -44,6 +45,11 @@
     import { t } from "$lib/i18n";
     import { references } from "$lib/stores/references.store";
     import { shortAuthorLabel } from "$lib/utils/references";
+    import {
+        PREVIEW_ZOOM_STEP,
+        attachPinchZoom,
+        zoomPreviewTo,
+    } from "$lib/utils/preview-zoom";
 
     let {
         tabId = null,
@@ -566,6 +572,23 @@
     const aiContextPrompt =
         "This text is part of a typst file, so your output should be formatted as part of a typst file";
 
+    // ── Zoom (embedded preview) ───────────────────────────────────────────────
+    function zoomEmbeddedBy(factor: number) {
+        zoomPreviewTo(
+            typstEmbeddedPreviewZoom,
+            embeddedPreviewScrollEl,
+            get(typstEmbeddedPreviewZoom) * factor,
+        );
+    }
+
+    $effect(() => {
+        if (!embeddedPreviewScrollEl) return;
+        return attachPinchZoom(
+            embeddedPreviewScrollEl,
+            typstEmbeddedPreviewZoom,
+        );
+    });
+
     // ── Resize (preview pane) ─────────────────────────────────────────────────
     const PREVIEW_DEFAULT_HEIGHT = 200;
     let containerEl: HTMLDivElement;
@@ -767,13 +790,53 @@
                     <TypstPreviewSourceSelector />
                 </div>
             </div>
-            <div class="relative flex-1 min-h-0">
+            <div class="group relative flex-1 min-h-0">
                 {#if $typstSvgPages.length > 0}
                     <div
-                        class="pointer-events-none absolute right-2 top-2 z-20 rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none text-brand-charcoal-300 backdrop-blur-md"
-                        aria-label={$t("typst.page_of").replace("{current}", String(currentEmbeddedPreviewPage)).replace("{total}", String($typstSvgPages.length))}
+                        class="pointer-events-none absolute right-2 top-2 z-20 flex items-center gap-1.5"
                     >
-                        {currentEmbeddedPreviewPage} / {$typstSvgPages.length}
+                        <!-- Zoom controls — revealed while hovering the preview body -->
+                        <div
+                            class="pointer-events-auto flex items-center gap-0.5 rounded-full border border-stone-200/60 dark:border-[#414559]/60 bg-white/70 dark:bg-[#303446]/70 px-1 py-0.5 shadow-sm backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                        >
+                            <button
+                                onclick={() => zoomEmbeddedBy(1 / PREVIEW_ZOOM_STEP)}
+                                title={$t("typst.zoom_out")}
+                                class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+                            >
+                                <Icon icon="solar:magnifer-zoom-out-linear" width="12" />
+                            </button>
+                            <span
+                                class="min-w-8 text-center text-[10px] font-medium tabular-nums text-brand-charcoal-300"
+                            >
+                                {Math.round($typstEmbeddedPreviewZoom * 100)}%
+                            </span>
+                            <button
+                                onclick={() => zoomEmbeddedBy(PREVIEW_ZOOM_STEP)}
+                                title={$t("typst.zoom_in")}
+                                class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+                            >
+                                <Icon icon="solar:magnifer-zoom-in-linear" width="12" />
+                            </button>
+                            <button
+                                onclick={() =>
+                                    zoomPreviewTo(
+                                        typstEmbeddedPreviewZoom,
+                                        embeddedPreviewScrollEl,
+                                        1,
+                                    )}
+                                title={$t("typst.full_width")}
+                                class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+                            >
+                                <Icon icon="material-symbols:fit-width" width="13" />
+                            </button>
+                        </div>
+                        <div
+                            class="rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none text-brand-charcoal-300 backdrop-blur-md"
+                            aria-label={$t("typst.page_of").replace("{current}", String(currentEmbeddedPreviewPage)).replace("{total}", String($typstSvgPages.length))}
+                        >
+                            {currentEmbeddedPreviewPage} / {$typstSvgPages.length}
+                        </div>
                     </div>
                 {/if}
                 <div
@@ -789,7 +852,10 @@
                         <pre
                             class="text-xs text-red-500 whitespace-pre-wrap">{$typstCompileError}</pre>
                     {:else if $typstSvgPages.length > 0}
-                        <div class="flex flex-col gap-3 pb-2">
+                        <div
+                            class="flex flex-col gap-3 pb-2 mx-auto"
+                            style:width="{$typstEmbeddedPreviewZoom * 100}%"
+                        >
                             {#each $typstSvgPages as pageSvg}
                                 <div
                                     class="typst-page overflow-hidden border border-stone-200 dark:border-[#414559] rounded-md shadow-sm bg-white {$appDarkMode &&
