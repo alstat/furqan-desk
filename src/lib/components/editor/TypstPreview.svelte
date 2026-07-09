@@ -14,11 +14,17 @@
         appDarkMode,
         typstPreviewDarkMode,
         typstPreviewPath,
+        typstPreviewZoom,
     } from "$lib/stores/editor.store";
     import { activeTab } from "$lib/stores/tabs.store";
     import Icon from "@iconify/svelte";
     import { t } from "$lib/i18n";
     import TypstPreviewSourceSelector from "./TypstPreviewSourceSelector.svelte";
+    import {
+        PREVIEW_ZOOM_STEP,
+        attachPinchZoom,
+        zoomPreviewTo,
+    } from "$lib/utils/preview-zoom";
 
     // noTopBorder: drop the preview's top border when it sits below another pane
     // (e.g. the third editor in a three-file Typst split), so the seam isn't doubled.
@@ -122,6 +128,20 @@
             typstCompileError.set(String(e));
         }
     }
+
+    // ── Zoom ──────────────────────────────────────────────────────────────────
+    function zoomBy(factor: number) {
+        zoomPreviewTo(
+            typstPreviewZoom,
+            previewScrollEl,
+            get(typstPreviewZoom) * factor,
+        );
+    }
+
+    $effect(() => {
+        if (!previewScrollEl) return;
+        return attachPinchZoom(previewScrollEl, typstPreviewZoom);
+    });
 </script>
 
 <!-- Outer: matches Parchment's outer wrapper exactly; stripped when embedded in a split panel -->
@@ -192,29 +212,72 @@
         </div>
 
         <!-- Pages -->
-        <div class="relative flex-1 min-h-0 mb-7">
+        <div class="group relative flex-1 min-h-0 mb-7">
             {#if $typstSvgPages.length > 0}
                 <div
-                    class="pointer-events-none absolute right-8 top-2 z-20 rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none text-brand-charcoal-300 backdrop-blur-md"
-                    aria-label={$t("typst.page_of")
-                        .replace("{current}", String(currentPreviewPage))
-                        .replace("{total}", String($typstSvgPages.length))}
+                    class="pointer-events-none absolute right-8 top-2 z-20 flex items-center gap-1.5"
                 >
-                    {currentPreviewPage} / {$typstSvgPages.length}
+                    <!-- Zoom controls — revealed while hovering the preview body -->
+                    <div
+                        class="pointer-events-auto flex items-center gap-0.5 rounded-full border border-stone-200/60 dark:border-[#414559]/60 bg-white/70 dark:bg-[#303446]/70 px-1 py-0.5 shadow-sm backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                    >
+                        <button
+                            onclick={() => zoomBy(1 / PREVIEW_ZOOM_STEP)}
+                            title={$t("typst.zoom_out")}
+                            class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+                        >
+                            <Icon icon="solar:magnifer-zoom-out-linear" width="12" />
+                        </button>
+                        <span
+                            class="min-w-8 text-center text-[10px] font-medium tabular-nums text-brand-charcoal-300"
+                        >
+                            {Math.round($typstPreviewZoom * 100)}%
+                        </span>
+                        <button
+                            onclick={() => zoomBy(PREVIEW_ZOOM_STEP)}
+                            title={$t("typst.zoom_in")}
+                            class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+                        >
+                            <Icon icon="solar:magnifer-zoom-in-linear" width="12" />
+                        </button>
+                        <button
+                            onclick={() =>
+                                zoomPreviewTo(
+                                    typstPreviewZoom,
+                                    previewScrollEl,
+                                    1,
+                                )}
+                            title={$t("typst.full_width")}
+                            class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+                        >
+                            <Icon icon="material-symbols:fit-width" width="13" />
+                        </button>
+                    </div>
+                    <div
+                        class="rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none text-brand-charcoal-300 backdrop-blur-md"
+                        aria-label={$t("typst.page_of")
+                            .replace("{current}", String(currentPreviewPage))
+                            .replace("{total}", String($typstSvgPages.length))}
+                    >
+                        {currentPreviewPage} / {$typstSvgPages.length}
+                    </div>
                 </div>
             {/if}
             <div
                 bind:this={previewScrollEl}
                 onscroll={handlePreviewScroll}
                 class={$zenMode
-                    ? "default-scroll h-full overflow-y-auto px-6"
-                    : "default-scroll h-full overflow-y-auto px-6 pt-4"}
+                    ? "default-scroll h-full overflow-auto px-6"
+                    : "default-scroll h-full overflow-auto px-6 pt-4"}
             >
                 {#if $typstCompileError}
                     <pre
                         class="text-xs text-red-500 whitespace-pre-wrap">{$typstCompileError}</pre>
                 {:else if $typstSvgPages.length > 0}
-                    <div class="flex flex-col gap-6">
+                    <div
+                        class="flex flex-col gap-6 mx-auto"
+                        style:width="{$typstPreviewZoom * 100}%"
+                    >
                         {#each $typstSvgPages as pageSvg}
                             <div
                                 class="typst-page overflow-hidden border border-stone-200 dark:border-[#414559] rounded-md shadow-sm bg-white {$appDarkMode &&
