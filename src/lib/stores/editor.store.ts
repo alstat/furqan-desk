@@ -379,6 +379,13 @@ export const typstPreviewDarkMode = {
   },
 };
 
+// Preview zoom (1 = page fits the pane width). Stores rather than component
+// state so the level survives the remounts caused by cross-type tab switches.
+// The side-by-side preview and the embedded pane keep separate levels since
+// their widths differ so much.
+export const typstPreviewZoom = writable<number>(1);
+export const typstEmbeddedPreviewZoom = writable<number>(1);
+
 function loadTheme(): EditorTheme {
   try {
     const v = localStorage.getItem("editor-theme");
