@@ -35,6 +35,7 @@ const GOLD_LIGHT = "#E5CC90";       // brand-gold-200
 const GOLD_DARK = "#9A7A40";        // brand-gold-600
 const HR_BORDER_COLOR = "#D1D5DB";
 const HEADER_CELL_FILL = "#F0F0F0";
+const TABLE_BORDER_COLOR = "#B9BEC6"; // subtle gray; Typst's default 1pt black is too heavy
 
 const FORMAT_BOLD = 1;
 const FORMAT_ITALIC = 2;
@@ -746,6 +747,7 @@ async function tableBlock(node: SerializedNode, ctx: TypstContext): Promise<stri
     const table = [
         `#table(`,
         `  columns: (${columns.join(", ")}),`,
+        `  stroke: 0.5pt + ${rgb(TABLE_BORDER_COLOR)},`,
         ...cellLines,
         `)`,
     ].join("\n");
