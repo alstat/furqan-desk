@@ -83,7 +83,7 @@
         <div
             bind:this={panelRef}
             transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-            class="absolute z-10000 overflow-hidden rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] shadow-xl dark:shadow-black/40 px-2 py-2"
+            class="absolute z-10000 overflow-hidden rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 bg-opacity-95 backdrop-blur-sm shadow-xl dark:shadow-black/40 px-2 py-2"
         >
             <ColorPicker color={$fontColor} onChange={onFontColorSelect} />
         </div>

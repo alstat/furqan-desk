@@ -1042,11 +1042,10 @@ select.font-family {
 }
 
 .editor-shell .editor-image img.focused {
-    outline: 2px solid #4d7c0f;
+    outline: 2px solid var(--color-brand-gold-400);
+    outline-offset: 2px;
+    border-radius: 4px;
     user-select: none;
-}
-html.dark .editor-shell .editor-image img.focused {
-    outline: 2px solid #65a30d;
 }
 
 .editor-shell .editor-image .image-caption-container .tree-view-output {
@@ -1124,7 +1123,7 @@ html.dark .editor-shell .editor-image .image-caption-button:hover {
     position: absolute;
     bottom: -4px;
     left: -4px;
-    background-color: #4d7c0f;
+    background-color: var(--color-brand-gold-400);
     border: 1.5px solid #fff;
     border-radius: 2px;
     cursor: sw-resize;
@@ -1137,7 +1136,7 @@ html.dark .editor-shell .editor-image .image-caption-button:hover {
     position: absolute;
     top: -4px;
     right: -4px;
-    background-color: #4d7c0f;
+    background-color: var(--color-brand-gold-400);
     border: 1.5px solid #fff;
     border-radius: 2px;
     cursor: ne-resize;
@@ -1150,7 +1149,7 @@ html.dark .editor-shell .editor-image .image-caption-button:hover {
     position: absolute;
     top: -4px;
     left: -4px;
-    background-color: #4d7c0f;
+    background-color: var(--color-brand-gold-400);
     border: 1.5px solid #fff;
     border-radius: 2px;
     cursor: nw-resize;
@@ -1163,18 +1162,12 @@ html.dark .editor-shell .editor-image .image-caption-button:hover {
     position: absolute;
     bottom: -4px;
     right: -4px;
-    background-color: #4d7c0f;
+    background-color: var(--color-brand-gold-400);
     border: 1.5px solid #fff;
     border-radius: 2px;
     cursor: se-resize;
 }
 
-html.dark .editor-shell .editor-image .image-resizer-sw,
-html.dark .editor-shell .editor-image .image-resizer-ne,
-html.dark .editor-shell .editor-image .image-resizer-nw,
-html.dark .editor-shell .editor-image .image-resizer-se {
-    background-color: #65a30d;
-}
 
 .emoji {
     color: transparent;
