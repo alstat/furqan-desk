@@ -78,6 +78,27 @@
 				console.error('menu listener setup failed', e);
 			}
 
+			// On Windows/Linux the menu bar is hidden (lib.rs), and a hidden
+			// menu no longer delivers its accelerators there — only macOS keeps
+			// them via the system menu bar. Recreate the File shortcuts with a
+			// window-level keydown handler routed to the same actions. macOS is
+			// excluded so Cmd shortcuts aren't double-handled by menu + DOM.
+			const isMac = navigator.userAgent.includes('Mac');
+			if (!isMac) {
+				window.addEventListener(
+					'keydown',
+					(e) => {
+						if (!e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+						const key = e.key.toLowerCase();
+						if (key !== 's' && key !== 'o') return;
+						e.preventDefault();
+						if (key === 's') void (e.shiftKey ? saveAs() : saveFile());
+						else void (e.shiftKey ? openFolder() : openFile());
+					},
+					true
+				);
+			}
+
 			// OAuth deep-link handling: catch both a URL that cold-started the
 			// app and any delivered while it's already running.
 			try {
