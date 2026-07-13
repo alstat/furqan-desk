@@ -277,7 +277,19 @@
       "Bash(./node_modules/.bin/esbuild src/lib/components/lexical/utils/lexicalToTypst.ts --bundle --format=cjs --platform=node --external:svelte/store '--alias:$lib/stores/references.store=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/56626c03-fdd9-429a-8c22-38e71580c488/scratchpad/stubs/references.store.ts' '--alias:$lib/stores/quran.svelte=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/56626c03-fdd9-429a-8c22-38e71580c488/scratchpad/stubs/quran.svelte.ts' '--alias:$lib/stores/julia-notebook=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/56626c03-fdd9-429a-8c22-38e71580c488/scratchpad/stubs/julia-notebook.ts' --alias:@tauri-apps/plugin-fs=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/56626c03-fdd9-429a-8c22-38e71580c488/scratchpad/stubs/plugin-fs.ts '--alias:$lexical=./src/lib/components/lexical' '--alias:$lib=./src/lib' --outfile=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/56626c03-fdd9-429a-8c22-38e71580c488/scratchpad/typstConv.cjs)",
       "Bash(./node_modules/.bin/esbuild src/lib/codemirror/gitDiffGutter.ts --bundle --format=cjs --platform=node --external:@codemirror/state --external:@codemirror/view --outfile=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/56626c03-fdd9-429a-8c22-38e71580c488/scratchpad/gutter.cjs)",
       "Bash(cargo test *)",
-      "Bash(perl -i -pe 's/background-color: #4d7c0f;/background-color: var\\(--color-brand-gold-400\\);/g' src/app.css)"
+      "Bash(perl -i -pe 's/background-color: #4d7c0f;/background-color: var\\(--color-brand-gold-400\\);/g' src/app.css)",
+      "Bash(git -C /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk log --oneline -10)",
+      "Bash(git -C /Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk status --short)",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Bash(brew install *)",
+      "Bash(7zz l *)",
+      "Bash(HOME=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/9a5d1207-2e4a-4ab1-81dd-1386f40e1cda/scratchpad/fakehome npm run tauri dev)",
+      "Bash(tee /private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/9a5d1207-2e4a-4ab1-81dd-1386f40e1cda/scratchpad/devrun.log)",
+      "Bash(HOME=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/9a5d1207-2e4a-4ab1-81dd-1386f40e1cda/scratchpad/fakehome RUSTUP_HOME=/Users/al-ahmadgaidasaad/.rustup CARGO_HOME=/Users/al-ahmadgaidasaad/.cargo npm run tauri dev)",
+      "Bash(gh workflow *)",
+      "Bash(gh run *)",
+      "Bash(git fetch *)"
     ]
   }
 }

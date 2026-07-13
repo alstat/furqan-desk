@@ -305,7 +305,7 @@
     }
 </script>
 
-<Dialog {open} title={$t("verse_of_day.title")} {onClose} maxWidth="max-w-lg">
+<Dialog {open} title={$t("verse_of_day.title")} {onClose} maxWidth="max-w-lg" minHeight="min-h-[70vh]">
     {#snippet children()}
         {#if view === "history"}
             {#if historyLoading}
@@ -320,7 +320,7 @@
                     <span class="text-xs">{$t("verse_of_day.history_empty")}</span>
                 </div>
             {:else}
-                <ul class="max-h-80 overflow-y-auto -mx-1 px-1 flex flex-col gap-2">
+                <ul class="max-h-[62vh] overflow-y-auto -mx-1 px-1 flex flex-col gap-2">
                     {#each history as entry (entry.day)}
                         {@const name = surahName(entry.surah)}
                         {@const text = historyTexts.get(`${entry.surah}:${entry.ayah}`)}
