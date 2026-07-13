@@ -11,9 +11,11 @@
         children: Snippet;
         footer?: Snippet;
         maxWidth?: string;
+        /** Optional min-height class for the panel (e.g. 'min-h-[70vh]'); the body grows to fill it. */
+        minHeight?: string;
     }
 
-    const { open, title, onClose, children, footer, maxWidth = 'max-w-md' }: Props = $props();
+    const { open, title, onClose, children, footer, maxWidth = 'max-w-md', minHeight = '' }: Props = $props();
 </script>
 
 <svelte:window onkeydown={(e) => { if (open && e.key === 'Escape') onClose(); }} />
@@ -25,7 +27,7 @@
         onclick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         onkeydown={(e) => { if (e.key === 'Escape') onClose(); }}
     >
-        <div transition:fly={{ y: 8, duration: 180, opacity: 0 }} class="relative mx-4 w-full {maxWidth} rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 flex flex-col max-h-[80vh] overflow-hidden">
+        <div transition:fly={{ y: 8, duration: 180, opacity: 0 }} class="relative mx-4 w-full {maxWidth} {minHeight} rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 flex flex-col max-h-[80vh] overflow-hidden">
             <!-- Header -->
             <div class="flex items-center justify-between border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 bg-brand-gold-100 dark:bg-[#292c3c] rounded-t-3xl">
                 <h2 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">{title}</h2>
@@ -39,7 +41,7 @@
             </div>
 
             <!-- Body -->
-            <div class="default-scroll overflow-y-auto px-5 py-3">
+            <div class="default-scroll grow overflow-y-auto px-5 py-3">
                 {@render children()}
             </div>
 
