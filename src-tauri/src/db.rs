@@ -71,26 +71,11 @@ fn android_err<E: std::fmt::Display>(e: E) -> rusqlite::Error {
     ))
 }
 
-/// On desktop / iOS, the resource directory is a normal filesystem path.
-#[cfg(not(target_os = "android"))]
-fn copy_static_db(src: &Path, dest: &Path, _asset_relative_path: &str) -> Result<()> {
-    // Remove any stale WAL / SHM files before overwriting the main DB file.
-    // If the old DB was in WAL mode, leaving these files in place would make
-    // SQLite try to apply an incompatible WAL to the freshly-copied main file,
-    // producing "database disk image is malformed" errors.
-    for suffix in &["-wal", "-shm"] {
-        let side_file = PathBuf::from(format!("{}{}", dest.display(), suffix));
-        if side_file.exists() {
-            let _ = std::fs::remove_file(&side_file); // best-effort
-        }
-    }
-    std::fs::copy(src, dest)
-        .map(|_| ())
-        .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
-}
-
 /// Must match DB_VERSION in src/gen_db_tool.rs (`cargo run --example gen-db`).
-/// Increment both when the static dataset changes.
+/// Increment both when the static dataset changes.  Only Android keeps a
+/// local copy of the static DB (APK assets aren't attachable), so only
+/// Android needs the version to know when to refresh that copy.
+#[cfg(target_os = "android")]
 const DB_VERSION: i64 = 13;
 
 pub struct Database(pub Mutex<Connection>);
@@ -98,51 +83,107 @@ pub struct Database(pub Mutex<Connection>);
 impl Database {
     /// Open (or initialise) the runtime database.
     ///
-    /// On first launch `quran_static.db` is copied from the app bundle into
-    /// `app_data_dir/quran.db`.  On subsequent launches the file already
-    /// exists and we skip straight to opening it.  When the bundled DB has a
-    /// newer version (i.e. a data update shipped with an app update) we
-    /// preserve the user's bookmarks / highlights / last-read position, swap
-    /// in the new static data, and restore those rows.
+    /// User data (bookmarks, highlights, …) lives in a small
+    /// `app_data_dir/user.db`, which is the connection's `main` schema.  The
+    /// bundled `quran_static.db` is ATTACHed read-only straight from the app
+    /// bundle — it is never copied, so the ~400 MB dataset exists on disk only
+    /// once.  Unqualified table names in queries resolve to `main` first and
+    /// then fall through to the attached schema, so command SQL is agnostic to
+    /// the split.  Data updates need no migration: the attached file always
+    /// matches the app build it shipped with.
     pub fn new(static_db_path: PathBuf, app_data_dir: PathBuf) -> Result<Self> {
-        let db_path = app_data_dir.join("quran.db");
+        let static_db_path = Self::resolve_static_db(&static_db_path, &app_data_dir)?;
+        let user_db_path = app_data_dir.join("user.db");
 
-        if db_path.exists() {
-            let current_version = Self::read_db_version(&db_path).unwrap_or(0);
-            if current_version != DB_VERSION {
-                println!(
-                    "DB version mismatch (have {}, need {}), migrating …",
-                    current_version, DB_VERSION
-                );
-                // Keep a backup of the old DB so user data is never permanently
-                // lost if extraction fails or a future migration has a bug.
-                let backup_path = app_data_dir.join("quran.db.bak");
-                let _ = std::fs::copy(&db_path, &backup_path);
-
-                let user_data = match Self::extract_user_data(&db_path) {
-                    Ok(data) => data,
-                    Err(e) => {
-                        eprintln!("Warning: failed to extract user data before migration: {e}. \
-                                   Your old database is backed up at quran.db.bak");
-                        UserData::default()
-                    }
-                };
-                copy_static_db(&static_db_path, &db_path, "data/quran_static.db")?;
-                let conn = Connection::open(&db_path)?;
-                Self::apply_pragmas(&conn)?;
-                Self::init_user_data_tables(&conn)?;
-                Self::restore_user_data(&conn, &user_data)?;
-                return Ok(Database(Mutex::new(conn)));
-            }
-        } else {
-            println!("First launch — copying static database …");
-            copy_static_db(&static_db_path, &db_path, "data/quran_static.db")?;
-        }
-
-        let conn = Connection::open(&db_path)?;
+        let conn = Connection::open(&user_db_path)?;
         Self::apply_pragmas(&conn)?;
         Self::init_user_data_tables(&conn)?;
+        Self::migrate_legacy_db(&conn, &app_data_dir)?;
+        Self::attach_static(&conn, &static_db_path)?;
         Ok(Database(Mutex::new(conn)))
+    }
+
+    /// On desktop / iOS the bundled static DB is attachable in place.
+    #[cfg(not(target_os = "android"))]
+    fn resolve_static_db(bundle_path: &Path, _app_data_dir: &Path) -> Result<PathBuf> {
+        Ok(bundle_path.to_path_buf())
+    }
+
+    /// On Android, APK assets aren't filesystem paths, so SQLite can't attach
+    /// the bundled file directly; keep a copy in app data, refreshed whenever
+    /// the shipped dataset version changes.
+    #[cfg(target_os = "android")]
+    fn resolve_static_db(bundle_path: &Path, app_data_dir: &Path) -> Result<PathBuf> {
+        let dest = app_data_dir.join("quran_static.db");
+        if !dest.exists() || Self::read_db_version(&dest).unwrap_or(0) != DB_VERSION {
+            println!("Copying static database from APK assets …");
+            copy_static_db(bundle_path, &dest, "data/quran_static.db")?;
+        }
+        Ok(dest)
+    }
+
+    fn attach_static(conn: &Connection, path: &Path) -> Result<()> {
+        conn.execute(
+            "ATTACH DATABASE ?1 AS static_db",
+            [Self::read_only_uri(path)],
+        )?;
+        conn.execute_batch("PRAGMA static_db.cache_size = -1024;")?;
+        Ok(())
+    }
+
+    /// Build a `file:` URI that forces read-only access, so attaching never
+    /// writes journal/WAL files next to the bundled resource.
+    fn read_only_uri(path: &Path) -> String {
+        let mut p = path.to_string_lossy().replace('\\', "/");
+        // '%', '#' and '?' carry meaning inside SQLite URIs.
+        p = p.replace('%', "%25").replace('#', "%23").replace('?', "%3F");
+        if !p.starts_with('/') {
+            p.insert(0, '/'); // e.g. Windows "C:/…" → "/C:/…"
+        }
+        format!("file:{p}?mode=ro")
+    }
+
+    /// One-time migration away from the pre-1.4.4 layout, where the full
+    /// static DB was copied to `app_data_dir/quran.db` with the user tables
+    /// inside it (and version migrations left a `quran.db.bak` behind) —
+    /// roughly 400 MB each.  Pull the user rows into `user.db`, then delete
+    /// the legacy files.  Deletion is best-effort and retried every launch;
+    /// the `app_meta` marker keeps the row copy itself from running twice.
+    fn migrate_legacy_db(conn: &Connection, app_data_dir: &Path) -> Result<()> {
+        let legacy = app_data_dir.join("quran.db");
+        let mut migrated = conn
+            .query_row(
+                "SELECT 1 FROM app_meta WHERE key = 'legacy_db_migrated'",
+                [],
+                |_| Ok(()),
+            )
+            .is_ok();
+
+        if legacy.exists() && !migrated {
+            println!("Migrating user data out of legacy quran.db …");
+            let data = match Self::extract_user_data(&legacy) {
+                Ok(data) => data,
+                Err(e) => {
+                    // Leave the legacy DB untouched so nothing is lost; the
+                    // migration is retried on next launch.
+                    eprintln!("Warning: failed to read user data from legacy quran.db: {e}");
+                    return Ok(());
+                }
+            };
+            Self::restore_user_data(conn, &data)?;
+            conn.execute(
+                "INSERT OR REPLACE INTO app_meta (key, value) VALUES ('legacy_db_migrated', '1')",
+                [],
+            )?;
+            migrated = true;
+        }
+
+        if migrated || !legacy.exists() {
+            for name in ["quran.db", "quran.db-wal", "quran.db-shm", "quran.db.bak"] {
+                let _ = std::fs::remove_file(app_data_dir.join(name));
+            }
+        }
+        Ok(())
     }
 
     fn apply_pragmas(conn: &Connection) -> Result<()> {
@@ -152,6 +193,7 @@ impl Database {
         )
     }
 
+    #[cfg(target_os = "android")]
     fn read_db_version(db_path: &PathBuf) -> Result<i64> {
         let conn = Connection::open_with_flags(
             db_path,
@@ -381,4 +423,97 @@ struct UserData {
     highlights: Vec<(i64, i64, String, Option<String>, String)>,
     verse_of_day: Vec<(String, i64, i64, String)>,
     app_meta: Vec<(String, String)>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp_dir(tag: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "ayahlab-db-test-{tag}-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    /// Minimal stand-in for the bundled quran_static.db.
+    fn make_static_db(path: &Path) {
+        let conn = Connection::open(path).unwrap();
+        conn.execute_batch(
+            "CREATE TABLE db_version (version INTEGER PRIMARY KEY);
+             INSERT INTO db_version (version) VALUES (13);
+             CREATE TABLE quran_text (surah INTEGER, ayah INTEGER, text TEXT);
+             INSERT INTO quran_text VALUES (1, 1, 'bismillah');",
+        )
+        .unwrap();
+    }
+
+    /// Legacy layout: static data and user tables mixed in one quran.db.
+    fn make_legacy_db(path: &Path) {
+        let conn = Connection::open(path).unwrap();
+        Database::init_user_data_tables(&conn).unwrap();
+        conn.execute_batch(
+            "INSERT INTO bookmarks (surah, ayah, note) VALUES (2, 255, 'ayat al-kursi');
+             CREATE TABLE quran_text (surah INTEGER, ayah INTEGER, text TEXT);",
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn fresh_install_attaches_static_and_writes_user_data() {
+        let dir = temp_dir("fresh");
+        let static_db = dir.join("quran_static.db");
+        make_static_db(&static_db);
+
+        let db = Database::new(static_db, dir.clone()).unwrap();
+        let conn = db.0.lock().unwrap();
+        // Static tables resolve through the attached schema …
+        let text: String = conn
+            .query_row("SELECT text FROM quran_text WHERE surah = 1", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(text, "bismillah");
+        // … but stay read-only.
+        assert!(conn.execute("INSERT INTO quran_text VALUES (1, 2, 'x')", []).is_err());
+        // User tables live in main (user.db) and are writable.
+        conn.execute("INSERT INTO bookmarks (surah, ayah, note) VALUES (1, 1, 'a')", [])
+            .unwrap();
+        assert!(dir.join("user.db").exists());
+    }
+
+    #[test]
+    fn migrates_legacy_db_once_and_deletes_it() {
+        let dir = temp_dir("migrate");
+        let static_db = dir.join("resources").join("quran_static.db");
+        std::fs::create_dir_all(static_db.parent().unwrap()).unwrap();
+        make_static_db(&static_db);
+        make_legacy_db(&dir.join("quran.db"));
+        std::fs::write(dir.join("quran.db.bak"), b"old backup").unwrap();
+
+        {
+            let db = Database::new(static_db.clone(), dir.clone()).unwrap();
+            let conn = db.0.lock().unwrap();
+            let note: String = conn
+                .query_row("SELECT note FROM bookmarks", [], |r| r.get(0))
+                .unwrap();
+            assert_eq!(note, "ayat al-kursi");
+        }
+        assert!(dir.join("user.db").exists());
+        assert!(!dir.join("quran.db").exists());
+        assert!(!dir.join("quran.db.bak").exists());
+
+        // If a legacy file reappears (e.g. its deletion had failed), the
+        // marker prevents a second row copy — no duplicated bookmarks — and
+        // the file is cleaned up again.
+        make_legacy_db(&dir.join("quran.db"));
+        let db = Database::new(static_db, dir.clone()).unwrap();
+        let conn = db.0.lock().unwrap();
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM bookmarks", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(count, 1);
+        assert!(!dir.join("quran.db").exists());
+    }
 }
