@@ -134,10 +134,23 @@ impl Database {
     /// Build a `file:` URI that forces read-only access, so attaching never
     /// writes journal/WAL files next to the bundled resource.
     fn read_only_uri(path: &Path) -> String {
-        let mut p = path.to_string_lossy().replace('\\', "/");
+        let s = path.to_string_lossy();
+        // Strip Windows verbatim prefixes (\\?\C:\… and \\?\UNC\server\…):
+        // their '?' would otherwise be read by SQLite as a URI authority.
+        let s: String = if let Some(rest) = s.strip_prefix(r"\\?\UNC\") {
+            format!(r"\\{rest}")
+        } else if let Some(rest) = s.strip_prefix(r"\\?\") {
+            rest.to_string()
+        } else {
+            s.into_owned()
+        };
+        let mut p = s.replace('\\', "/");
         // '%', '#' and '?' carry meaning inside SQLite URIs.
         p = p.replace('%', "%25").replace('#', "%23").replace('?', "%3F");
-        if !p.starts_with('/') {
+        if p.starts_with("//") {
+            // UNC path: keep the URI authority empty → file:////server/share/…
+            p.insert_str(0, "//");
+        } else if !p.starts_with('/') {
             p.insert(0, '/'); // e.g. Windows "C:/…" → "/C:/…"
         }
         format!("file:{p}?mode=ro")
@@ -460,6 +473,28 @@ mod tests {
              CREATE TABLE quran_text (surah INTEGER, ayah INTEGER, text TEXT);",
         )
         .unwrap();
+    }
+
+    #[test]
+    fn read_only_uri_handles_platform_path_forms() {
+        let uri = |s: &str| Database::read_only_uri(Path::new(s));
+        // Unix absolute path (spaces stay literal — SQLite accepts them).
+        assert_eq!(uri("/a b/c.db"), "file:/a b/c.db?mode=ro");
+        // Plain Windows drive path.
+        assert_eq!(uri(r"C:\x\y.db"), "file:/C:/x/y.db?mode=ro");
+        // Windows verbatim path, as returned by Tauri's resource_dir() in
+        // dev — the \\?\ prefix must not leak into the URI as %3F.
+        assert_eq!(
+            uri(r"\\?\C:\Users\Al Asaad\data\quran_static.db"),
+            "file:/C:/Users/Al Asaad/data/quran_static.db?mode=ro"
+        );
+        // Verbatim UNC path → empty URI authority, path carries the share.
+        assert_eq!(
+            uri(r"\\?\UNC\server\share\q.db"),
+            "file:////server/share/q.db?mode=ro"
+        );
+        // URI metacharacters in the file name are escaped.
+        assert_eq!(uri("/a/100%#?.db"), "file:/a/100%25%23%3F.db?mode=ro");
     }
 
     #[test]
