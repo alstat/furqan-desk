@@ -1676,6 +1676,28 @@ mod votd_tests {
         let b = votd_seed(&conn).unwrap();
         assert_eq!(a, b);
     }
+
+    // A Typst error must report the exact `file:line:column` of the offending
+    // token, not the raw opaque `Span(..)` debug dump.
+    #[test]
+    fn typst_diagnostic_reports_line_and_column() {
+        let world = crate::typst_world::get_world();
+        world.set_project_root(None);
+        // A bogus symbol modifier on line 3.
+        world.set_source("#set page(width: 10cm)\n\n$angle.foobar$\n".into());
+        let errors = typst::compile::<typst_layout::PagedDocument>(world)
+            .output
+            .expect_err("expected a compile error");
+        let msg = format_typst_diagnostics(world, &errors);
+        assert!(
+            msg.contains("main.typ:3:"),
+            "expected a main.typ line-3 location, got:\n{msg}"
+        );
+        assert!(
+            !msg.contains("Span("),
+            "message still leaks the raw span debug dump:\n{msg}"
+        );
+    }
 }
 
 // ── Translation commands ──────────────────────────────────────────────────────
@@ -1970,6 +1992,75 @@ fn project_root_from_path(path: Option<String>) -> Option<std::path::PathBuf> {
     p.parent().map(|d| d.to_path_buf())
 }
 
+/// Resolve a diagnostic span to a human `file:line:column` location (1-based),
+/// or `None` for detached spans that carry no source position.
+///
+/// Typst diagnostics reference source positions only by an interned span id;
+/// turning that back into a line number requires the originating `Source`,
+/// which we look up through the world.
+fn typst_span_location(
+    world: &crate::typst_world::MinimalWorld,
+    span: typst::syntax::DiagSpan,
+) -> Option<String> {
+    use typst::syntax::DiagSpanKind;
+    use typst::World;
+
+    let (id, byte) = match span.get() {
+        DiagSpanKind::Detached => return None,
+        DiagSpanKind::Number { id, num, sub_range } => {
+            let source = world.source(id).ok()?;
+            let start = source.range(num, sub_range)?.start;
+            (id, start)
+        }
+        DiagSpanKind::Range { id, range } => (id, range.start),
+    };
+    let source = world.source(id).ok()?;
+    let (line, col) = source.lines().byte_to_line_column(byte)?;
+    let name = id.vpath().get_with_slash().trim_start_matches('/');
+    Some(format!("{name}:{}:{}", line + 1, col + 1))
+}
+
+/// Render Typst compile diagnostics into a readable, multi-line message with
+/// resolved `file:line:column` locations — replacing the raw `Span(..)` debug
+/// dump so the editor can show (and jump to) the exact line of each error.
+fn format_typst_diagnostics(
+    world: &crate::typst_world::MinimalWorld,
+    diags: &[typst::diag::SourceDiagnostic],
+) -> String {
+    use typst::diag::Severity;
+
+    let mut out = String::new();
+    for diag in diags {
+        if !out.is_empty() {
+            out.push('\n');
+        }
+        out.push_str(match diag.severity {
+            Severity::Error => "error: ",
+            Severity::Warning => "warning: ",
+        });
+        out.push_str(&diag.message);
+        if let Some(loc) = typst_span_location(world, diag.span) {
+            out.push_str("\n  → ");
+            out.push_str(&loc);
+        }
+        // Trace of calls / show rules / imports leading to the problem.
+        for point in &diag.trace {
+            out.push_str(&format!("\n  in {}", point.v));
+            if let Some(loc) = typst_span_location(world, point.span.into()) {
+                out.push_str(&format!(" ({loc})"));
+            }
+        }
+        for hint in &diag.hints {
+            out.push_str("\n  hint: ");
+            out.push_str(&hint.v);
+        }
+    }
+    if out.is_empty() {
+        out.push_str("Unknown Typst compile error");
+    }
+    out
+}
+
 #[tauri::command]
 pub fn compile_typst_svg(
     source: String,
@@ -1980,7 +2071,7 @@ pub fn compile_typst_svg(
     world.set_source(source);
     let doc = typst::compile::<typst_layout::PagedDocument>(world)
         .output
-        .map_err(|e| format!("{e:?}"))?;
+        .map_err(|e| format_typst_diagnostics(world, &e))?;
     let opts = typst_svg::SvgOptions::default();
     Ok(doc
         .pages()
@@ -2105,9 +2196,9 @@ pub fn compile_typst_pdf(
     world.set_source(source);
     let doc = typst::compile::<typst_layout::PagedDocument>(world)
         .output
-        .map_err(|e| format!("{e:?}"))?;
+        .map_err(|e| format_typst_diagnostics(world, &e))?;
     typst_pdf::pdf(&doc, &typst_pdf::PdfOptions::default())
-        .map_err(|e| format!("{e:?}"))
+        .map_err(|e| format_typst_diagnostics(world, &e))
 }
 
 /// Format Typst source with the `typstyle` pretty printer.

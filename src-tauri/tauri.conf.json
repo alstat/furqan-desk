@@ -36,7 +36,11 @@
   "bundle": {
     "active": true,
     "targets": ["app"],
-    "resources": ["data/quran_static.db", "data/manuscripts/demo/*"],
+    "resources": [
+      "data/quran_static.db",
+      "data/manuscripts/demo/*",
+      "dictionaries/*"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

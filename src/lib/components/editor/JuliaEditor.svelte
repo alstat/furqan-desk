@@ -25,6 +25,7 @@
         flashingTabId,
     } from "$lib/stores/julia-terminal.store";
     import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
+    import SpellLanguageSelector from "./SpellLanguageSelector.svelte";
     import JuliaReplPane from "./JuliaReplPane.svelte";
     import type { KeyBinding } from "@codemirror/view";
     import type { Text } from "@codemirror/state";
@@ -535,6 +536,8 @@
                         : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
                     : ''}"
             >
+                <!-- Spelling language -->
+                <SpellLanguageSelector />
                 <!-- Julia Formatter -->
                 <button
                     onclick={formatJulia}

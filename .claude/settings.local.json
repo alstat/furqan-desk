@@ -289,7 +289,8 @@
       "Bash(HOME=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/9a5d1207-2e4a-4ab1-81dd-1386f40e1cda/scratchpad/fakehome RUSTUP_HOME=/Users/al-ahmadgaidasaad/.rustup CARGO_HOME=/Users/al-ahmadgaidasaad/.cargo npm run tauri dev)",
       "Bash(gh workflow *)",
       "Bash(gh run *)",
-      "Bash(git fetch *)"
+      "Bash(git fetch *)",
+      "WebFetch(domain:docs.rs)"
     ]
   }
 }

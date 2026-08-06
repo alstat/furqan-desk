@@ -7,6 +7,7 @@ mod julia;
 #[cfg(any(unix, windows))]
 mod pty;
 mod references;
+mod spellcheck;
 mod terminal;
 mod typst_world;
 
@@ -248,6 +249,11 @@ pub fn run() {
             commands::get_manuscript_image,
             commands::clear_manuscript_cache,
             commands::get_manuscript_demo_image,
+            spellcheck::spell_check,
+            spellcheck::spell_suggest,
+            spellcheck::spell_languages,
+            spellcheck::spell_detect_language,
+            spellcheck::install_spell_language,
             commands::get_system_font_families,
             commands::copy_path,
             #[cfg(any(unix, windows))]

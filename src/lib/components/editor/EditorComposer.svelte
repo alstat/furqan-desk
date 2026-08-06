@@ -70,6 +70,8 @@
     import FloatingLinkEditorPlugin from "$lexical/core/plugins/link/FloatingLinkEditorPlugin.svelte";
     import SlashCommandPlugin from "$lexical/core/plugins/SlashCommand/SlashCommandPlugin.svelte";
     import CiteMenuPlugin from "$lexical/core/plugins/Cite/CiteMenuPlugin.svelte";
+    import SpellcheckLexicalPlugin from "$lexical/core/plugins/Spellcheck/SpellcheckLexicalPlugin.svelte";
+    import SpellLanguageSelector from "./SpellLanguageSelector.svelte";
     import EditorStorePlugin from "./EditorStorePlugin.svelte";
     import { createEmptyHistoryState } from "@lexical/history";
     import {
@@ -352,7 +354,12 @@
             <CiteMenuPlugin />
             <QuranBlockPlugin />
             <JuliaCellPlugin />
+            <SpellcheckLexicalPlugin />
             <EditorStorePlugin />
+        </div>
+        <!-- Spelling language picker, pinned to the bottom-right of the page. -->
+        <div class="absolute -bottom-4 right-4 z-20">
+            <SpellLanguageSelector up={true} />
         </div>
     </div>
 </Composer>

@@ -20,6 +20,7 @@
     import Icon from "@iconify/svelte";
     import { t } from "$lib/i18n";
     import TypstPreviewSourceSelector from "./TypstPreviewSourceSelector.svelte";
+    import TypstCompileError from "./TypstCompileError.svelte";
     import {
         PREVIEW_ZOOM_STEP,
         attachPinchZoom,
@@ -271,8 +272,7 @@
                     : "default-scroll h-full overflow-auto px-6 pt-4"}
             >
                 {#if $typstCompileError}
-                    <pre
-                        class="text-xs text-red-500 whitespace-pre-wrap">{$typstCompileError}</pre>
+                    <TypstCompileError error={$typstCompileError} />
                 {:else if $typstSvgPages.length > 0}
                     <div
                         class="flex flex-col gap-6 mx-auto"
