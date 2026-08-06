@@ -1,4 +1,18 @@
 export const tl: Record<string, string> = {
+  "spellcheck.title": "Pagbaybay",
+  "spellcheck.enable": "Suriin ang baybay",
+  "spellcheck.disable": "I-off ang pagsusuri ng baybay",
+  "spellcheck.language": "Wika ng pagsusuri ng baybay",
+  "spellcheck.off": "Naka-off",
+  "spellcheck.on": "Naka-on",
+  "spellcheck.no_suggestions": "Walang mungkahi",
+  "spellcheck.checking": "Sinusuri…",
+  "spellcheck.ignore": "Balewalain",
+  "spellcheck.ignore_all": "Balewalain lahat",
+  "spellcheck.installed": "Naka-install",
+  "spellcheck.download": "I-download",
+  "spellcheck.downloading": "Dina-download…",
+  "spellcheck.more_languages": "Higit pang wika",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Ina-update ang Julia…",
   "settings.julia.update_done": "Matagumpay na na-update ang Julia",

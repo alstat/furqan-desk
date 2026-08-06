@@ -1,4 +1,18 @@
 export const de: Record<string, string> = {
+  "spellcheck.title": "Rechtschreibung",
+  "spellcheck.enable": "Rechtschreibung prüfen",
+  "spellcheck.disable": "Rechtschreibprüfung ausschalten",
+  "spellcheck.language": "Sprache der Rechtschreibprüfung",
+  "spellcheck.off": "Aus",
+  "spellcheck.on": "Ein",
+  "spellcheck.no_suggestions": "Keine Vorschläge",
+  "spellcheck.checking": "Wird geprüft…",
+  "spellcheck.ignore": "Ignorieren",
+  "spellcheck.ignore_all": "Alle ignorieren",
+  "spellcheck.installed": "Installiert",
+  "spellcheck.download": "Herunterladen",
+  "spellcheck.downloading": "Wird heruntergeladen…",
+  "spellcheck.more_languages": "Weitere Sprachen",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia wird aktualisiert…",
   "settings.julia.update_done": "Julia erfolgreich aktualisiert",

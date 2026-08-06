@@ -1,4 +1,18 @@
 export const tk: Record<string, string> = {
+  "spellcheck.title": "Orfografiýa",
+  "spellcheck.enable": "Orfografiýany barla",
+  "spellcheck.disable": "Orfografiýa barlagyny öçür",
+  "spellcheck.language": "Orfografiýa barlagynyň dili",
+  "spellcheck.off": "Öçük",
+  "spellcheck.on": "Açyk",
+  "spellcheck.no_suggestions": "Teklip ýok",
+  "spellcheck.checking": "Barlanýar…",
+  "spellcheck.ignore": "Äsgerme",
+  "spellcheck.ignore_all": "Ählisini äsgerme",
+  "spellcheck.installed": "Gurnaldy",
+  "spellcheck.download": "Ýükle",
+  "spellcheck.downloading": "Ýüklenýär…",
+  "spellcheck.more_languages": "Başga diller",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia täzelenýär…",
   "settings.julia.update_done": "Julia üstünlikli täzelendi",

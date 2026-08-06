@@ -1,4 +1,18 @@
 export const vi: Record<string, string> = {
+  "spellcheck.title": "Chính tả",
+  "spellcheck.enable": "Kiểm tra chính tả",
+  "spellcheck.disable": "Tắt kiểm tra chính tả",
+  "spellcheck.language": "Ngôn ngữ kiểm tra chính tả",
+  "spellcheck.off": "Tắt",
+  "spellcheck.on": "Bật",
+  "spellcheck.no_suggestions": "Không có gợi ý",
+  "spellcheck.checking": "Đang kiểm tra…",
+  "spellcheck.ignore": "Bỏ qua",
+  "spellcheck.ignore_all": "Bỏ qua tất cả",
+  "spellcheck.installed": "Đã cài đặt",
+  "spellcheck.download": "Tải xuống",
+  "spellcheck.downloading": "Đang tải xuống…",
+  "spellcheck.more_languages": "Thêm ngôn ngữ",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Đang cập nhật Julia…",
   "settings.julia.update_done": "Đã cập nhật Julia thành công",

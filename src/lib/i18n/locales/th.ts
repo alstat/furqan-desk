@@ -1,4 +1,18 @@
 export const th: Record<string, string> = {
+  "spellcheck.title": "การสะกดคำ",
+  "spellcheck.enable": "ตรวจการสะกดคำ",
+  "spellcheck.disable": "ปิดการตรวจการสะกดคำ",
+  "spellcheck.language": "ภาษาการตรวจการสะกดคำ",
+  "spellcheck.off": "ปิด",
+  "spellcheck.on": "เปิด",
+  "spellcheck.no_suggestions": "ไม่มีคำแนะนำ",
+  "spellcheck.checking": "กำลังตรวจสอบ…",
+  "spellcheck.ignore": "ละเว้น",
+  "spellcheck.ignore_all": "ละเว้นทั้งหมด",
+  "spellcheck.installed": "ติดตั้งแล้ว",
+  "spellcheck.download": "ดาวน์โหลด",
+  "spellcheck.downloading": "กำลังดาวน์โหลด…",
+  "spellcheck.more_languages": "ภาษาเพิ่มเติม",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "กำลังอัปเดต Julia…",
   "settings.julia.update_done": "อัปเดต Julia สำเร็จแล้ว",

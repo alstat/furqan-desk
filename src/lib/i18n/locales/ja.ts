@@ -1,4 +1,18 @@
 export const ja: Record<string, string> = {
+  "spellcheck.title": "スペルチェック",
+  "spellcheck.enable": "スペルチェック",
+  "spellcheck.disable": "スペルチェックをオフにする",
+  "spellcheck.language": "スペルチェックの言語",
+  "spellcheck.off": "オフ",
+  "spellcheck.on": "オン",
+  "spellcheck.no_suggestions": "候補なし",
+  "spellcheck.checking": "確認中…",
+  "spellcheck.ignore": "無視",
+  "spellcheck.ignore_all": "すべて無視",
+  "spellcheck.installed": "インストール済み",
+  "spellcheck.download": "ダウンロード",
+  "spellcheck.downloading": "ダウンロード中…",
+  "spellcheck.more_languages": "その他の言語",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia を更新中…",
   "settings.julia.update_done": "Julia を更新しました",

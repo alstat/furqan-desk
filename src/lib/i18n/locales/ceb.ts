@@ -1,4 +1,18 @@
 export const ceb: Record<string, string> = {
+  "spellcheck.title": "Pagsusi sa spelling",
+  "spellcheck.enable": "Susiha ang spelling",
+  "spellcheck.disable": "Isira ang pagsusi sa spelling",
+  "spellcheck.language": "Pinulongan sa pagsusi sa spelling",
+  "spellcheck.off": "Gi-off",
+  "spellcheck.on": "Gi-on",
+  "spellcheck.no_suggestions": "Walay sugyot",
+  "spellcheck.checking": "Nagsusi…",
+  "spellcheck.ignore": "Baliwalaa",
+  "spellcheck.ignore_all": "Baliwalaa tanan",
+  "spellcheck.installed": "Na-install",
+  "spellcheck.download": "I-download",
+  "spellcheck.downloading": "Nag-download…",
+  "spellcheck.more_languages": "Dugang nga pinulongan",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Gina-update ang Julia…",
   "settings.julia.update_done": "Malampuson nga na-update ang Julia",

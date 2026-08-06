@@ -1,4 +1,18 @@
 export const hi: Record<string, string> = {
+  "spellcheck.title": "वर्तनी जाँच",
+  "spellcheck.enable": "वर्तनी जाँचें",
+  "spellcheck.disable": "वर्तनी जाँच बंद करें",
+  "spellcheck.language": "वर्तनी जाँच की भाषा",
+  "spellcheck.off": "बंद",
+  "spellcheck.on": "चालू",
+  "spellcheck.no_suggestions": "कोई सुझाव नहीं",
+  "spellcheck.checking": "जाँच हो रही है…",
+  "spellcheck.ignore": "अनदेखा करें",
+  "spellcheck.ignore_all": "सभी अनदेखा करें",
+  "spellcheck.installed": "इंस्टॉल किया गया",
+  "spellcheck.download": "डाउनलोड",
+  "spellcheck.downloading": "डाउनलोड हो रहा है…",
+  "spellcheck.more_languages": "अधिक भाषाएँ",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia अपडेट हो रहा है…",
   "settings.julia.update_done": "Julia सफलतापूर्वक अपडेट हो गया",

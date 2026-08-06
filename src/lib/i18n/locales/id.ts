@@ -1,4 +1,18 @@
 export const id: Record<string, string> = {
+  "spellcheck.title": "Ejaan",
+  "spellcheck.enable": "Periksa ejaan",
+  "spellcheck.disable": "Matikan pemeriksaan ejaan",
+  "spellcheck.language": "Bahasa pemeriksaan ejaan",
+  "spellcheck.off": "Nonaktif",
+  "spellcheck.on": "Aktif",
+  "spellcheck.no_suggestions": "Tidak ada saran",
+  "spellcheck.checking": "Memeriksa…",
+  "spellcheck.ignore": "Abaikan",
+  "spellcheck.ignore_all": "Abaikan semua",
+  "spellcheck.installed": "Terpasang",
+  "spellcheck.download": "Unduh",
+  "spellcheck.downloading": "Mengunduh…",
+  "spellcheck.more_languages": "Bahasa lainnya",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Memperbarui Julia…",
   "settings.julia.update_done": "Julia berhasil diperbarui",

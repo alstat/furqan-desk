@@ -1,4 +1,18 @@
 export const pa: Record<string, string> = {
+  "spellcheck.title": "ਸ਼ਬਦ-ਜੋੜ ਜਾਂਚ",
+  "spellcheck.enable": "ਸ਼ਬਦ-ਜੋੜ ਜਾਂਚੋ",
+  "spellcheck.disable": "ਸ਼ਬਦ-ਜੋੜ ਜਾਂਚ ਬੰਦ ਕਰੋ",
+  "spellcheck.language": "ਸ਼ਬਦ-ਜੋੜ ਜਾਂਚ ਦੀ ਭਾਸ਼ਾ",
+  "spellcheck.off": "ਬੰਦ",
+  "spellcheck.on": "ਚਾਲੂ",
+  "spellcheck.no_suggestions": "ਕੋਈ ਸੁਝਾਅ ਨਹੀਂ",
+  "spellcheck.checking": "ਜਾਂਚ ਹੋ ਰਹੀ ਹੈ…",
+  "spellcheck.ignore": "ਅਣਡਿੱਠ ਕਰੋ",
+  "spellcheck.ignore_all": "ਸਭ ਅਣਡਿੱਠ ਕਰੋ",
+  "spellcheck.installed": "ਸਥਾਪਤ",
+  "spellcheck.download": "ਡਾਊਨਲੋਡ",
+  "spellcheck.downloading": "ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ ਹੈ…",
+  "spellcheck.more_languages": "ਹੋਰ ਭਾਸ਼ਾਵਾਂ",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia ਅੱਪਡੇਟ ਹੋ ਰਿਹਾ ਹੈ…",
   "settings.julia.update_done": "Julia ਸਫਲਤਾਪੂਰਵਕ ਅੱਪਡੇਟ ਹੋ ਗਿਆ",

@@ -1,4 +1,18 @@
 export const uz: Record<string, string> = {
+  "spellcheck.title": "Imlo tekshiruvi",
+  "spellcheck.enable": "Imloni tekshirish",
+  "spellcheck.disable": "Imlo tekshiruvini o'chirish",
+  "spellcheck.language": "Imlo tekshiruvi tili",
+  "spellcheck.off": "O'chiq",
+  "spellcheck.on": "Yoniq",
+  "spellcheck.no_suggestions": "Takliflar yo'q",
+  "spellcheck.checking": "Tekshirilmoqda…",
+  "spellcheck.ignore": "E'tiborsiz qoldirish",
+  "spellcheck.ignore_all": "Barchasini e'tiborsiz qoldirish",
+  "spellcheck.installed": "O'rnatilgan",
+  "spellcheck.download": "Yuklab olish",
+  "spellcheck.downloading": "Yuklab olinmoqda…",
+  "spellcheck.more_languages": "Boshqa tillar",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia yangilanmoqda…",
   "settings.julia.update_done": "Julia muvaffaqiyatli yangilandi",

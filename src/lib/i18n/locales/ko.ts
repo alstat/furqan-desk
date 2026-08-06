@@ -1,4 +1,18 @@
 export const ko: Record<string, string> = {
+  "spellcheck.title": "맞춤법 검사",
+  "spellcheck.enable": "맞춤법 검사",
+  "spellcheck.disable": "맞춤법 검사 끄기",
+  "spellcheck.language": "맞춤법 검사 언어",
+  "spellcheck.off": "끄기",
+  "spellcheck.on": "켜기",
+  "spellcheck.no_suggestions": "제안 없음",
+  "spellcheck.checking": "검사 중…",
+  "spellcheck.ignore": "무시",
+  "spellcheck.ignore_all": "모두 무시",
+  "spellcheck.installed": "설치됨",
+  "spellcheck.download": "다운로드",
+  "spellcheck.downloading": "다운로드 중…",
+  "spellcheck.more_languages": "다른 언어",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia 업데이트 중…",
   "settings.julia.update_done": "Julia를 업데이트했습니다",

@@ -1,4 +1,18 @@
 export const bn: Record<string, string> = {
+  "spellcheck.title": "বানান পরীক্ষা",
+  "spellcheck.enable": "বানান পরীক্ষা করুন",
+  "spellcheck.disable": "বানান পরীক্ষা বন্ধ করুন",
+  "spellcheck.language": "বানান পরীক্ষার ভাষা",
+  "spellcheck.off": "বন্ধ",
+  "spellcheck.on": "চালু",
+  "spellcheck.no_suggestions": "কোনো পরামর্শ নেই",
+  "spellcheck.checking": "পরীক্ষা করা হচ্ছে…",
+  "spellcheck.ignore": "উপেক্ষা করুন",
+  "spellcheck.ignore_all": "সব উপেক্ষা করুন",
+  "spellcheck.installed": "ইনস্টল করা আছে",
+  "spellcheck.download": "ডাউনলোড",
+  "spellcheck.downloading": "ডাউনলোড হচ্ছে…",
+  "spellcheck.more_languages": "আরও ভাষা",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia আপডেট করা হচ্ছে…",
   "settings.julia.update_done": "Julia সফলভাবে আপডেট হয়েছে",

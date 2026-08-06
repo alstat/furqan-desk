@@ -1,4 +1,18 @@
 export const zh: Record<string, string> = {
+  "spellcheck.title": "拼写检查",
+  "spellcheck.enable": "检查拼写",
+  "spellcheck.disable": "关闭拼写检查",
+  "spellcheck.language": "拼写检查语言",
+  "spellcheck.off": "关闭",
+  "spellcheck.on": "开启",
+  "spellcheck.no_suggestions": "无建议",
+  "spellcheck.checking": "正在检查…",
+  "spellcheck.ignore": "忽略",
+  "spellcheck.ignore_all": "全部忽略",
+  "spellcheck.installed": "已安装",
+  "spellcheck.download": "下载",
+  "spellcheck.downloading": "正在下载…",
+  "spellcheck.more_languages": "更多语言",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "正在更新 Julia…",
   "settings.julia.update_done": "Julia 更新成功",
