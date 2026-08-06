@@ -1848,3 +1848,11 @@ html.dark .tafsir-content [lang="ar"],
 html.dark .tafsir-content .ar {
     color: #b5bfe2; /* brand-charcoal-100 */
 }
+
+/* Spell-check underline for Lexical, drawn via the CSS Custom Highlight API.
+   Ranges are registered from SpellcheckLexicalPlugin; this only styles them. */
+::highlight(spell-error) {
+    text-decoration: underline wavy #ef4444;
+    text-decoration-skip-ink: none;
+    text-underline-offset: 2px;
+}

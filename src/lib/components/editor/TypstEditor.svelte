@@ -33,6 +33,8 @@
         setTabContent,
     } from "$lib/stores/tabs.store";
     import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
+    import TypstCompileError from "./TypstCompileError.svelte";
+    import SpellLanguageSelector from "./SpellLanguageSelector.svelte";
     import TypstPreviewSourceSelector from "./TypstPreviewSourceSelector.svelte";
     import {
         autocompletion,
@@ -667,6 +669,8 @@
                         : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
                     : ''}"
             >
+                <!-- Spelling language -->
+                <SpellLanguageSelector />
                 <!-- Typst Formatter -->
                 <button
                     onclick={formatTypst}
@@ -849,8 +853,7 @@
                             {$t("typst.compiling")}
                         </p>
                     {:else if $typstCompileError}
-                        <pre
-                            class="text-xs text-red-500 whitespace-pre-wrap">{$typstCompileError}</pre>
+                        <TypstCompileError error={$typstCompileError} />
                     {:else if $typstSvgPages.length > 0}
                         <div
                             class="flex flex-col gap-3 pb-2 mx-auto"

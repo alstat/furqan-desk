@@ -59,6 +59,17 @@
     } from "$lib/stores/editor.store";
     import { isPro } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
+    import SpellSuggestionMenu from "./SpellSuggestionMenu.svelte";
+    import {
+        spellcheckExtension,
+        applySpellReplacement,
+        type SpellContextInfo,
+    } from "$lib/codemirror/spellcheck";
+    import {
+        ignoreWord,
+        ignoreWordAll,
+        forceSpellRecheck,
+    } from "$lib/stores/spellcheck.store";
     import { invoke } from "@tauri-apps/api/core";
     import {
         gitDiffGutter,
@@ -124,6 +135,22 @@
         x: number;
         y: number;
     } | null>(null);
+
+    // Misspelled word that was right-clicked; drives the suggestions menu.
+    let spellContext = $state<SpellContextInfo | null>(null);
+
+    function replaceSpelling(suggestion: string) {
+        if (view && spellContext) {
+            applySpellReplacement(
+                view,
+                spellContext.from,
+                spellContext.to,
+                suggestion,
+            );
+            forceSpellRecheck();
+        }
+        spellContext = null;
+    }
 
     // ── Ayu Light theme ───────────────────────────────────────────────────────
 
@@ -1497,6 +1524,12 @@
                 // bars render at the very left edge, before the line numbers.
                 Prec.high(gitDiffGutter()),
                 gitDiffOverviewRuler(),
+                // Spell checking: prose languages check everything; code
+                // languages (Julia) restrict to comments and strings.
+                spellcheckExtension(
+                    language === "julia" ? "code" : "prose",
+                    (info) => (spellContext = info),
+                ),
                 ...extraExtensions,
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged && !suppressOnChange) {
@@ -1677,6 +1710,24 @@
         {language}
         onReplace={replaceAiSelection}
         onClose={() => (aiSelection = null)}
+    />
+{/if}
+
+{#if spellContext}
+    <SpellSuggestionMenu
+        x={spellContext.x}
+        y={spellContext.y}
+        word={spellContext.word}
+        onReplace={replaceSpelling}
+        onIgnore={() => {
+            if (spellContext) ignoreWord(spellContext.word);
+            spellContext = null;
+        }}
+        onIgnoreAll={() => {
+            if (spellContext) ignoreWordAll(spellContext.word);
+            spellContext = null;
+        }}
+        onClose={() => (spellContext = null)}
     />
 {/if}
 

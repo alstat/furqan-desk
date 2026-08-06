@@ -54,6 +54,8 @@ fontdb    = "0.23"
 # portable-pty supports Unix (forkpty) and Windows (ConPTY); keep it cross-platform
 # so the integrated terminal works on Windows too.
 portable-pty = "0.8"
+spellbook = "0.4.2"
+sys-locale = "0.3.2"
 
 # On Linux/Windows a deep link launches a fresh process; single-instance (with
 # the deep-link feature) forwards the URL to the already-running app instead.
