@@ -1,4 +1,18 @@
 export const ku: Record<string, string> = {
+  "spellcheck.title": "پشکنینی ڕێنووس",
+  "spellcheck.enable": "پشکنینی ڕێنووس",
+  "spellcheck.disable": "کوژاندنەوەی پشکنینی ڕێنووس",
+  "spellcheck.language": "زمانی پشکنینی ڕێنووس",
+  "spellcheck.off": "کوژاوە",
+  "spellcheck.on": "داگیرساو",
+  "spellcheck.no_suggestions": "هیچ پێشنیارێک نییە",
+  "spellcheck.checking": "پشکنین…",
+  "spellcheck.ignore": "پشتگوێخستن",
+  "spellcheck.ignore_all": "هەموو پشتگوێبخە",
+  "spellcheck.installed": "دامەزراوە",
+  "spellcheck.download": "داگرتن",
+  "spellcheck.downloading": "داگرتن…",
+  "spellcheck.more_languages": "زمانی زیاتر",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "نوێکردنەوەی Julia…",
   "settings.julia.update_done": "Julia بە سەرکەوتوویی نوێکرایەوە",

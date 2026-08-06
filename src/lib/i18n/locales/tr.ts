@@ -1,4 +1,18 @@
 export const tr: Record<string, string> = {
+  "spellcheck.title": "Yazım Denetimi",
+  "spellcheck.enable": "Yazımı denetle",
+  "spellcheck.disable": "Yazım denetimini kapat",
+  "spellcheck.language": "Yazım denetimi dili",
+  "spellcheck.off": "Kapalı",
+  "spellcheck.on": "Açık",
+  "spellcheck.no_suggestions": "Öneri yok",
+  "spellcheck.checking": "Denetleniyor…",
+  "spellcheck.ignore": "Yoksay",
+  "spellcheck.ignore_all": "Tümünü yoksay",
+  "spellcheck.installed": "Yüklü",
+  "spellcheck.download": "İndir",
+  "spellcheck.downloading": "İndiriliyor…",
+  "spellcheck.more_languages": "Daha fazla dil",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia güncelleniyor…",
   "settings.julia.update_done": "Julia başarıyla güncellendi",

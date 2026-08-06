@@ -1,4 +1,18 @@
 export const my: Record<string, string> = {
+  "spellcheck.title": "စာလုံးပေါင်းစစ်ဆေးခြင်း",
+  "spellcheck.enable": "စာလုံးပေါင်းစစ်ဆေးရန်",
+  "spellcheck.disable": "စာလုံးပေါင်းစစ်ဆေးခြင်းပိတ်ရန်",
+  "spellcheck.language": "စာလုံးပေါင်းစစ်ဆေးမည့်ဘာသာစကား",
+  "spellcheck.off": "ပိတ်",
+  "spellcheck.on": "ဖွင့်",
+  "spellcheck.no_suggestions": "အကြံပြုချက်မရှိပါ",
+  "spellcheck.checking": "စစ်ဆေးနေသည်…",
+  "spellcheck.ignore": "လျစ်လျူရှုရန်",
+  "spellcheck.ignore_all": "အားလုံးလျစ်လျူရှုရန်",
+  "spellcheck.installed": "ထည့်သွင်းပြီး",
+  "spellcheck.download": "ဒေါင်းလုဒ်",
+  "spellcheck.downloading": "ဒေါင်းလုဒ်လုပ်နေသည်…",
+  "spellcheck.more_languages": "နောက်ထပ်ဘာသာစကားများ",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia ကို အပ်ဒိတ်လုပ်နေသည်…",
   "settings.julia.update_done": "Julia ကို အောင်မြင်စွာ အပ်ဒိတ်လုပ်ပြီးပါပြီ",

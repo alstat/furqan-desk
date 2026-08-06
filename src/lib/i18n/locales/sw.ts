@@ -1,4 +1,18 @@
 export const sw: Record<string, string> = {
+  "spellcheck.title": "Tahajia",
+  "spellcheck.enable": "Kagua tahajia",
+  "spellcheck.disable": "Zima ukaguzi wa tahajia",
+  "spellcheck.language": "Lugha ya ukaguzi wa tahajia",
+  "spellcheck.off": "Imezimwa",
+  "spellcheck.on": "Imewashwa",
+  "spellcheck.no_suggestions": "Hakuna mapendekezo",
+  "spellcheck.checking": "Inakagua…",
+  "spellcheck.ignore": "Puuza",
+  "spellcheck.ignore_all": "Puuza zote",
+  "spellcheck.installed": "Imesakinishwa",
+  "spellcheck.download": "Pakua",
+  "spellcheck.downloading": "Inapakua…",
+  "spellcheck.more_languages": "Lugha zaidi",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Inasasisha Julia…",
   "settings.julia.update_done": "Julia imesasishwa kwa mafanikio",

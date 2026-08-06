@@ -1,4 +1,18 @@
 export const ar: Record<string, string> = {
+  "spellcheck.title": "التدقيق الإملائي",
+  "spellcheck.enable": "تدقيق الإملاء",
+  "spellcheck.disable": "إيقاف التدقيق الإملائي",
+  "spellcheck.language": "لغة التدقيق الإملائي",
+  "spellcheck.off": "إيقاف",
+  "spellcheck.on": "تشغيل",
+  "spellcheck.no_suggestions": "لا توجد اقتراحات",
+  "spellcheck.checking": "جارٍ التدقيق…",
+  "spellcheck.ignore": "تجاهل",
+  "spellcheck.ignore_all": "تجاهل الكل",
+  "spellcheck.installed": "مثبَّت",
+  "spellcheck.download": "تنزيل",
+  "spellcheck.downloading": "جارٍ التنزيل…",
+  "spellcheck.more_languages": "مزيد من اللغات",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "جارٍ تحديث Julia…",
   "settings.julia.update_done": "تم تحديث Julia بنجاح",

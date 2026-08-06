@@ -1,4 +1,18 @@
 export const sq: Record<string, string> = {
+  "spellcheck.title": "Drejtshkrimi",
+  "spellcheck.enable": "Kontrollo drejtshkrimin",
+  "spellcheck.disable": "Çaktivizo kontrollin e drejtshkrimit",
+  "spellcheck.language": "Gjuha e kontrollit të drejtshkrimit",
+  "spellcheck.off": "Joaktiv",
+  "spellcheck.on": "Aktiv",
+  "spellcheck.no_suggestions": "Asnjë sugjerim",
+  "spellcheck.checking": "Duke kontrolluar…",
+  "spellcheck.ignore": "Shpërfill",
+  "spellcheck.ignore_all": "Shpërfill të gjitha",
+  "spellcheck.installed": "I instaluar",
+  "spellcheck.download": "Shkarko",
+  "spellcheck.downloading": "Duke shkarkuar…",
+  "spellcheck.more_languages": "Më shumë gjuhë",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Po përditësohet Julia…",
   "settings.julia.update_done": "Julia u përditësua me sukses",

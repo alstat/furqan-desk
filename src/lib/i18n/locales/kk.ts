@@ -1,4 +1,18 @@
 export const kk: Record<string, string> = {
+  "spellcheck.title": "Емле тексеру",
+  "spellcheck.enable": "Емлені тексеру",
+  "spellcheck.disable": "Емле тексеруді өшіру",
+  "spellcheck.language": "Емле тексеру тілі",
+  "spellcheck.off": "Өшірулі",
+  "spellcheck.on": "Қосулы",
+  "spellcheck.no_suggestions": "Ұсыныстар жоқ",
+  "spellcheck.checking": "Тексерілуде…",
+  "spellcheck.ignore": "Елемеу",
+  "spellcheck.ignore_all": "Барлығын елемеу",
+  "spellcheck.installed": "Орнатылған",
+  "spellcheck.download": "Жүктеп алу",
+  "spellcheck.downloading": "Жүктелуде…",
+  "spellcheck.more_languages": "Басқа тілдер",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia жаңартылып жатыр…",
   "settings.julia.update_done": "Julia сәтті жаңартылды",

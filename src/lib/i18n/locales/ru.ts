@@ -1,4 +1,18 @@
 export const ru: Record<string, string> = {
+  "spellcheck.title": "Проверка орфографии",
+  "spellcheck.enable": "Проверить орфографию",
+  "spellcheck.disable": "Отключить проверку орфографии",
+  "spellcheck.language": "Язык проверки орфографии",
+  "spellcheck.off": "Выкл.",
+  "spellcheck.on": "Вкл.",
+  "spellcheck.no_suggestions": "Нет предложений",
+  "spellcheck.checking": "Проверка…",
+  "spellcheck.ignore": "Пропустить",
+  "spellcheck.ignore_all": "Пропустить все",
+  "spellcheck.installed": "Установлено",
+  "spellcheck.download": "Загрузить",
+  "spellcheck.downloading": "Загрузка…",
+  "spellcheck.more_languages": "Другие языки",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Обновление Julia…",
   "settings.julia.update_done": "Julia успешно обновлена",

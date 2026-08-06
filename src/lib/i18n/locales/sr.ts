@@ -1,4 +1,18 @@
 export const sr: Record<string, string> = {
+  "spellcheck.title": "Правопис",
+  "spellcheck.enable": "Провери правопис",
+  "spellcheck.disable": "Искључи проверу правописа",
+  "spellcheck.language": "Језик провере правописа",
+  "spellcheck.off": "Искључено",
+  "spellcheck.on": "Укључено",
+  "spellcheck.no_suggestions": "Нема предлога",
+  "spellcheck.checking": "Провера…",
+  "spellcheck.ignore": "Занемари",
+  "spellcheck.ignore_all": "Занемари све",
+  "spellcheck.installed": "Инсталирано",
+  "spellcheck.download": "Преузми",
+  "spellcheck.downloading": "Преузимање…",
+  "spellcheck.more_languages": "Још језика",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Ажурирање Julia…",
   "settings.julia.update_done": "Julia је успешно ажурирана",

@@ -1,4 +1,18 @@
 export const ur: Record<string, string> = {
+  "spellcheck.title": "املا کی جانچ",
+  "spellcheck.enable": "املا جانچیں",
+  "spellcheck.disable": "املا کی جانچ بند کریں",
+  "spellcheck.language": "املا جانچ کی زبان",
+  "spellcheck.off": "بند",
+  "spellcheck.on": "چالو",
+  "spellcheck.no_suggestions": "کوئی تجویز نہیں",
+  "spellcheck.checking": "جانچ ہو رہی ہے…",
+  "spellcheck.ignore": "نظر انداز کریں",
+  "spellcheck.ignore_all": "سب نظر انداز کریں",
+  "spellcheck.installed": "انسٹال شدہ",
+  "spellcheck.download": "ڈاؤن لوڈ",
+  "spellcheck.downloading": "ڈاؤن لوڈ ہو رہا ہے…",
+  "spellcheck.more_languages": "مزید زبانیں",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia اپڈیٹ ہو رہا ہے…",
   "settings.julia.update_done": "Julia کامیابی سے اپڈیٹ ہو گیا",

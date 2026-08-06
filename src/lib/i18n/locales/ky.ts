@@ -1,4 +1,18 @@
 export const ky: Record<string, string> = {
+  "spellcheck.title": "Орфография текшерүү",
+  "spellcheck.enable": "Орфографияны текшерүү",
+  "spellcheck.disable": "Орфография текшерүүнү өчүрүү",
+  "spellcheck.language": "Орфография текшерүү тили",
+  "spellcheck.off": "Өчүк",
+  "spellcheck.on": "Күйүк",
+  "spellcheck.no_suggestions": "Сунуштар жок",
+  "spellcheck.checking": "Текшерилүүдө…",
+  "spellcheck.ignore": "Этибарга албоо",
+  "spellcheck.ignore_all": "Баарын этибарга албоо",
+  "spellcheck.installed": "Орнотулган",
+  "spellcheck.download": "Жүктөп алуу",
+  "spellcheck.downloading": "Жүктөлүүдө…",
+  "spellcheck.more_languages": "Башка тилдер",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia жаңыртылууда…",
   "settings.julia.update_done": "Julia ийгиликтүү жаңыртылды",

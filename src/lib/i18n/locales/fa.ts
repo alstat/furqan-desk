@@ -1,4 +1,18 @@
 export const fa: Record<string, string> = {
+  "spellcheck.title": "غلط‌یاب املایی",
+  "spellcheck.enable": "بررسی املا",
+  "spellcheck.disable": "خاموش کردن غلط‌یاب املایی",
+  "spellcheck.language": "زبان غلط‌یابی املایی",
+  "spellcheck.off": "خاموش",
+  "spellcheck.on": "روشن",
+  "spellcheck.no_suggestions": "پیشنهادی نیست",
+  "spellcheck.checking": "در حال بررسی…",
+  "spellcheck.ignore": "نادیده گرفتن",
+  "spellcheck.ignore_all": "نادیده گرفتن همه",
+  "spellcheck.installed": "نصب‌شده",
+  "spellcheck.download": "دانلود",
+  "spellcheck.downloading": "در حال دانلود…",
+  "spellcheck.more_languages": "زبان‌های بیشتر",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "در حال به‌روزرسانی Julia…",
   "settings.julia.update_done": "Julia با موفقیت به‌روزرسانی شد",

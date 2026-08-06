@@ -1,4 +1,18 @@
 export const tg: Record<string, string> = {
+  "spellcheck.title": "Санҷиши имло",
+  "spellcheck.enable": "Санҷиши имло",
+  "spellcheck.disable": "Хомӯш кардани санҷиши имло",
+  "spellcheck.language": "Забони санҷиши имло",
+  "spellcheck.off": "Хомӯш",
+  "spellcheck.on": "Фаъол",
+  "spellcheck.no_suggestions": "Пешниҳод нест",
+  "spellcheck.checking": "Дар ҳоли санҷиш…",
+  "spellcheck.ignore": "Нодида гирифтан",
+  "spellcheck.ignore_all": "Ҳамаро нодида гирифтан",
+  "spellcheck.installed": "Насбшуда",
+  "spellcheck.download": "Боргирӣ",
+  "spellcheck.downloading": "Дар ҳоли боргирӣ…",
+  "spellcheck.more_languages": "Забонҳои бештар",
   // v1.4.0 — Julia update progress, link view mode, Pro privacy
   "settings.julia.updating": "Julia навсозӣ шуда истодааст…",
   "settings.julia.update_done": "Julia бомуваффақият навсозӣ шуд",
