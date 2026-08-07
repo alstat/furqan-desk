@@ -33,6 +33,7 @@
         redoDepth,
     } from "@codemirror/commands";
     import { search, searchKeymap } from "@codemirror/search";
+    import { acceptCompletion } from "@codemirror/autocomplete";
     import {
         syntaxHighlighting,
         HighlightStyle,
@@ -1626,6 +1627,10 @@
                         run: toggleBlockComment,
                         preventDefault: true,
                     },
+                    // Tab accepts the highlighted autocomplete suggestion when
+                    // the popup is open; acceptCompletion returns false
+                    // otherwise, so Tab still indents normally.
+                    { key: "Tab", run: acceptCompletion },
                     indentWithTab,
                     ...historyKeymap,
                     ...searchKeymap,
