@@ -322,7 +322,11 @@
         <div class="editor-container flex flex-col justify-stretch">
             <div class="editor-scroller">
                 <div class="editor">
-                    <ContentEditable dir={editorDir} />
+                    <!-- Disable the webview's native spellchecker: we provide
+                         our own (SpellcheckLexicalPlugin), so leaving the native
+                         one on would double the squiggles and ignore the app's
+                         spell-check toggle/language. -->
+                    <ContentEditable dir={editorDir} spellCheck={false} />
                 </div>
             </div>
             <RichTextPlugin />
