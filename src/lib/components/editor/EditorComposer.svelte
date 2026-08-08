@@ -77,6 +77,7 @@
     import {
         lexicalHistoryState,
         lexicalEditorInstance,
+        zenMode,
     } from "$lib/stores/editor.store";
     import { activeTab } from "$lib/stores/tabs.store";
     import type { EditorTab } from "$lib/stores/tabs.store";
@@ -361,8 +362,14 @@
             <SpellcheckLexicalPlugin />
             <EditorStorePlugin />
         </div>
-        <!-- Spelling language picker, pinned to the bottom-right of the page. -->
-        <div class="absolute -bottom-4 right-4 z-20">
+        <!-- Spelling language picker, pinned to the bottom-right of the page.
+             In zen / Sukun mode it stays hidden until hovered; otherwise it
+             sits subtly and brightens on hover. -->
+        <div
+            class="absolute bottom-0 right-4 z-20 transition-opacity duration-200 hover:opacity-100 {$zenMode
+                ? 'opacity-0'
+                : 'opacity-35'}"
+        >
             <SpellLanguageSelector up={true} />
         </div>
     </div>
