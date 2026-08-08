@@ -290,7 +290,8 @@
       "Bash(gh workflow *)",
       "Bash(gh run *)",
       "Bash(git fetch *)",
-      "WebFetch(domain:docs.rs)"
+      "WebFetch(domain:docs.rs)",
+      "Bash(awk '{print $5/1024/1024 \" MB\", $9}')"
     ]
   }
 }
