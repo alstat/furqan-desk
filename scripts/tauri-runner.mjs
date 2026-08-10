@@ -15,6 +15,18 @@ if (tabletIdx !== -1) {
     console.error(`Unknown tablet platform: "${platform}". Use "ipad" or "android".`);
     process.exit(1);
   }
+} else if (args[0] === 'desktop') {
+  // One command that produces the right desktop bundle on whichever OS you're on,
+  // so `pnpm build:desktop` is the same on macOS and Windows.
+  const restArgs = args.slice(1);
+  if (process.platform === 'darwin') {
+    cmd = ['tauri', 'build', '--target', 'universal-apple-darwin', '--bundles', 'app', ...restArgs];
+  } else if (process.platform === 'win32') {
+    cmd = ['tauri-windows-bundle', 'build', '--runner', 'pnpm', ...restArgs];
+  } else {
+    console.error(`No desktop build configured for platform "${process.platform}".`);
+    process.exit(1);
+  }
 } else {
   cmd = ['tauri', ...args];
 }
