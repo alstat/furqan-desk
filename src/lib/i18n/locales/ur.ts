@@ -1037,10 +1037,6 @@ export const ur: Record<string, string> = {
     "editor.citation.text_placeholder": "حوالہ متن",
     "editor.citation.dblclick_hint": "اس حوالے میں ترمیم کے لیے ڈبل کلک کریں",
     "editor.citation.missing_ref": "یہ حوالہ اب آپ کی لائبریری میں موجود نہیں۔",
-    "settings.ai_tools.autocomplete": "AI خودکار تکمیل",
-    "settings.ai_tools.autocomplete.desc": "ایڈیٹرز میں ٹائپ کرتے وقت ان لائن تسلسل تجویز کرتا ہے۔ قبول کرنے کے لیے Tab اور مسترد کرنے کے لیے Esc دبائیں۔",
-    "settings.ai_tools.autocomplete_model": "خودکار تکمیل ماڈل",
-    "settings.ai_tools.autocomplete_model.desc": "ان لائن خودکار تکمیل کی تجاویز کے لیے استعمال ہونے والا ماڈل۔",
   // Take-home message
   "takehome.title": "کلیدی پیغام",
   "takehome.subtitle_default": "دکھائی گئی آیات سے ذاتی نشوونما",

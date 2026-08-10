@@ -1037,10 +1037,6 @@ export const id: Record<string, string> = {
     "editor.citation.text_placeholder": "Teks kutipan",
     "editor.citation.dblclick_hint": "Klik dua kali untuk mengedit kutipan ini",
     "editor.citation.missing_ref": "Referensi ini tidak lagi ada di pustaka Anda.",
-    "settings.ai_tools.autocomplete": "Pelengkapan otomatis AI",
-    "settings.ai_tools.autocomplete.desc": "Menyarankan lanjutan teks secara inline saat Anda mengetik di editor. Tekan Tab untuk menerima, Esc untuk menolak.",
-    "settings.ai_tools.autocomplete_model": "Model pelengkapan otomatis",
-    "settings.ai_tools.autocomplete_model.desc": "Model yang digunakan untuk saran pelengkapan otomatis inline.",
   // Take-home message
   "takehome.title": "Pesan utama",
   "takehome.subtitle_default": "Pertumbuhan pribadi dari ayat yang ditampilkan",

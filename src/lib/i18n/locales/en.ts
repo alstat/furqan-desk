@@ -46,12 +46,6 @@ export const en: Record<string, string> = {
   "settings.ai_tools.default_selection_model": "Default selection model",
   "settings.ai_tools.default_selection_model.desc":
     "Used by Paraphrase, Elaborate, Shorten, and Prompt.",
-  "settings.ai_tools.autocomplete": "AI autocompletion",
-  "settings.ai_tools.autocomplete.desc":
-    "Suggest inline continuations while you type in the editors. Press Tab to accept, Esc to dismiss.",
-  "settings.ai_tools.autocomplete_model": "Autocompletion model",
-  "settings.ai_tools.autocomplete_model.desc":
-    "Model used for inline autocompletion suggestions.",
   "ai_selection.paraphrase": "Paraphrase",
   "ai_selection.elaborate": "Elaborate",
   "ai_selection.shorten": "Shorten",

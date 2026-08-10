@@ -1037,10 +1037,6 @@ export const fr: Record<string, string> = {
     "editor.citation.text_placeholder": "Texte de la citation",
     "editor.citation.dblclick_hint": "Double-cliquez pour modifier cette citation",
     "editor.citation.missing_ref": "Cette référence ne figure plus dans votre bibliothèque.",
-    "settings.ai_tools.autocomplete": "Autocomplétion IA",
-    "settings.ai_tools.autocomplete.desc": "Suggère des continuations en ligne pendant que vous tapez dans les éditeurs. Appuyez sur Tab pour accepter, Échap pour ignorer.",
-    "settings.ai_tools.autocomplete_model": "Modèle d’autocomplétion",
-    "settings.ai_tools.autocomplete_model.desc": "Modèle utilisé pour les suggestions d’autocomplétion en ligne.",
   // Take-home message
   "takehome.title": "Message essentiel",
   "takehome.subtitle_default": "Croissance personnelle à partir des versets affichés",

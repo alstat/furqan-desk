@@ -1,3 +1,13 @@
+<script module lang="ts">
+    // What the pages currently sitting in `typstSvgPages` were compiled from.
+    // Switching to a non-Typst tab unmounts this editor, so without a record
+    // that outlives the instance, switching back would re-run a full compile of
+    // an unchanged document — seconds of work for a large file, followed by
+    // re-rendering an identical preview. Module scope (not the instance) is the
+    // point: the store it describes is global too.
+    let lastCompiled: { src: string; path: string | null } | null = null;
+</script>
+
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
     import { save } from "@tauri-apps/plugin-dialog";
@@ -18,7 +28,6 @@
         zenMode,
         zenPeek,
         appDarkMode,
-        typstPreviewDarkMode,
         typstEmbeddedPreviewZoom,
         editorIndentSize,
         codeMirrorViewInstance,
@@ -36,6 +45,7 @@
     import TypstCompileError from "./TypstCompileError.svelte";
     import SpellLanguageSelector from "./SpellLanguageSelector.svelte";
     import TypstPreviewSourceSelector from "./TypstPreviewSourceSelector.svelte";
+    import TypstPages from "./TypstPages.svelte";
     import {
         autocompletion,
         startCompletion,
@@ -43,7 +53,6 @@
         type Completion,
     } from "@codemirror/autocomplete";
     import { TYPST_COMPLETIONS } from "$lib/completions/typst";
-    import { aiAutocomplete } from "$lib/codemirror/aiAutocomplete";
     import { t } from "$lib/i18n";
     import { references } from "$lib/stores/references.store";
     import { shortAuthorLabel } from "$lib/utils/references";
@@ -169,18 +178,27 @@
         }
     });
 
+    // Only the very first compile of a freshly mounted editor may be skipped as
+    // redundant (see compileToSvg). Every later run has a real trigger behind it
+    // — an edit, a new preview source, an explicit recompile, or a change to a
+    // file this document #includes — and must reach the compiler.
+    let isFirstCompileRun = true;
+
     $effect(() => {
         if (!isDriver) return;
         void $typstRecompile;
+        const mayReuse = isFirstCompileRun;
+        isFirstCompileRun = false;
         if (previewTab?.type !== "typst") {
             typstSvgPages.set([]);
             typstCompileError.set("");
+            lastCompiled = null;
             return;
         }
         const src = $typstSource;
         const path = $typstPreviewPath;
         clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => compileToSvg(src, path), 300);
+        debounceTimer = setTimeout(() => compileToSvg(src, path, mayReuse), 300);
         return () => clearTimeout(debounceTimer);
     });
 
@@ -236,10 +254,27 @@
         );
     }
 
-    async function compileToSvg(src: string, path: string | null) {
+    async function compileToSvg(
+        src: string,
+        path: string | null,
+        mayReuse = false,
+    ) {
         if (!src.trim()) {
             typstSvgPages.set([]);
             typstCompileError.set("");
+            lastCompiled = null;
+            return;
+        }
+        // Mounting onto a preview that already shows exactly this document:
+        // switching to a .lexical/.jl tab unmounts this editor but leaves the
+        // compiled pages in the store, so switching back would otherwise pay
+        // for a full recompile just to reproduce what is already on screen.
+        if (
+            mayReuse &&
+            lastCompiled?.src === src &&
+            lastCompiled.path === path &&
+            get(typstSvgPages).length > 0
+        ) {
             return;
         }
         typstIsCompiling.set(true);
@@ -252,9 +287,11 @@
                     path,
                 }),
             );
+            lastCompiled = { src, path };
         } catch (e) {
             typstCompileError.set(String(e));
             typstSvgPages.set([]);
+            lastCompiled = null;
         } finally {
             typstIsCompiling.set(false);
         }
@@ -514,9 +551,6 @@
         };
     };
 
-    // Inline AI ghost-text completions (Pro-gated; Settings → AI Tools).
-    const typstAiAutocomplete = aiAutocomplete("typst");
-
     const typstCompletionExtension = autocompletion({
         override: [
             typstCompletionSource,
@@ -723,7 +757,7 @@
         <CodeMirrorEditor
             value={effectiveTab?.content ?? ""}
             language="typst"
-            extensions={[typstCompletionExtension, typstAiAutocomplete]}
+            extensions={[typstCompletionExtension]}
             {lineWrap}
             aiSelectionTools={true}
             {aiContextPrompt}
@@ -855,21 +889,13 @@
                     {:else if $typstCompileError}
                         <TypstCompileError error={$typstCompileError} />
                     {:else if $typstSvgPages.length > 0}
-                        <div
-                            class="flex flex-col gap-3 pb-2 mx-auto"
-                            style:width="{$typstEmbeddedPreviewZoom * 100}%"
-                        >
-                            {#each $typstSvgPages as pageSvg}
-                                <div
-                                    class="typst-page overflow-hidden border border-stone-200 dark:border-[#414559] rounded-md shadow-sm bg-white {$appDarkMode &&
-                                    $typstPreviewDarkMode
-                                        ? 'typst-page-dark'
-                                        : ''}"
-                                >
-                                    {@html pageSvg}
-                                </div>
-                            {/each}
-                        </div>
+                        <TypstPages
+                            pages={$typstSvgPages}
+                            zoom={$typstEmbeddedPreviewZoom}
+                            scroller={embeddedPreviewScrollEl}
+                            gapClass="gap-3"
+                            listClass="pb-2"
+                        />
                     {:else}
                         <p class="text-xs text-brand-charcoal-300 italic">
                             {$t("typst.preview_placeholder")}
@@ -882,29 +908,3 @@
 
 </div>
 
-<style>
-    .typst-page :global(svg) {
-        width: 100%;
-        height: auto;
-        display: block;
-    }
-    /* Transparent, selectable text layer sits on top of the rendered glyphs so
-       text can be highlighted and copied. */
-    .typst-page :global(.typst-text-layer) {
-        user-select: text;
-    }
-    .typst-page :global(.typst-text-layer text) {
-        cursor: text;
-    }
-    .typst-page-dark {
-        background-color: #1f2430;
-    }
-    .typst-page-dark :global(svg) {
-        filter: invert(1) hue-rotate(180deg);
-    }
-    /* Keep the (transparent) text layer out of the dark-mode invert filter so
-       the selection highlight keeps its normal color. */
-    .typst-page-dark :global(.typst-text-layer) {
-        filter: none;
-    }
-</style>

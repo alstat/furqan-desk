@@ -11,8 +11,6 @@
         typstIsCompiling,
         zenMode,
         zenPeek,
-        appDarkMode,
-        typstPreviewDarkMode,
         typstPreviewPath,
         typstPreviewZoom,
     } from "$lib/stores/editor.store";
@@ -21,6 +19,7 @@
     import { t } from "$lib/i18n";
     import TypstPreviewSourceSelector from "./TypstPreviewSourceSelector.svelte";
     import TypstCompileError from "./TypstCompileError.svelte";
+    import TypstPages from "./TypstPages.svelte";
     import {
         PREVIEW_ZOOM_STEP,
         attachPinchZoom,
@@ -274,21 +273,11 @@
                 {#if $typstCompileError}
                     <TypstCompileError error={$typstCompileError} />
                 {:else if $typstSvgPages.length > 0}
-                    <div
-                        class="flex flex-col gap-6 mx-auto"
-                        style:width="{$typstPreviewZoom * 100}%"
-                    >
-                        {#each $typstSvgPages as pageSvg}
-                            <div
-                                class="typst-page overflow-hidden border border-stone-200 dark:border-[#414559] rounded-md shadow-sm bg-white {$appDarkMode &&
-                                $typstPreviewDarkMode
-                                    ? 'typst-page-dark'
-                                    : ''}"
-                            >
-                                {@html pageSvg}
-                            </div>
-                        {/each}
-                    </div>
+                    <TypstPages
+                        pages={$typstSvgPages}
+                        zoom={$typstPreviewZoom}
+                        scroller={previewScrollEl}
+                    />
                 {:else if !$typstIsCompiling}
                     <p class="text-xs text-brand-charcoal-300 italic">
                         {$t("typst.preview_start_typing")}
@@ -299,29 +288,3 @@
     </div>
 </div>
 
-<style>
-    .typst-page :global(svg) {
-        width: 100%;
-        height: auto;
-        display: block;
-    }
-    /* Transparent, selectable text layer sits on top of the rendered glyphs so
-       text can be highlighted and copied. */
-    .typst-page :global(.typst-text-layer) {
-        user-select: text;
-    }
-    .typst-page :global(.typst-text-layer text) {
-        cursor: text;
-    }
-    .typst-page-dark {
-        background-color: #1f2430;
-    }
-    .typst-page-dark :global(svg) {
-        filter: invert(1) hue-rotate(180deg);
-    }
-    /* Keep the (transparent) text layer out of the dark-mode invert filter so
-       the selection highlight keeps its normal color. */
-    .typst-page-dark :global(.typst-text-layer) {
-        filter: none;
-    }
-</style>

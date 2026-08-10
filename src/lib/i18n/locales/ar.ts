@@ -1037,10 +1037,6 @@ export const ar: Record<string, string> = {
     "editor.citation.text_placeholder": "نص الاستشهاد",
     "editor.citation.dblclick_hint": "انقر نقرًا مزدوجًا لتحرير هذا الاستشهاد",
     "editor.citation.missing_ref": "لم يعد هذا المرجع موجودًا في مكتبتك.",
-    "settings.ai_tools.autocomplete": "الإكمال التلقائي بالذكاء الاصطناعي",
-    "settings.ai_tools.autocomplete.desc": "اقتراح تكملات مضمّنة أثناء الكتابة في المحررات. اضغط Tab للقبول وEsc للتجاهل.",
-    "settings.ai_tools.autocomplete_model": "نموذج الإكمال التلقائي",
-    "settings.ai_tools.autocomplete_model.desc": "النموذج المستخدم لاقتراحات الإكمال التلقائي المضمّنة.",
   // Take-home message
   "takehome.title": "الرسالة المستفادة",
   "takehome.subtitle_default": "نموّ شخصي من الآيات المعروضة",
