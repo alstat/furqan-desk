@@ -291,7 +291,20 @@
       "Bash(gh run *)",
       "Bash(git fetch *)",
       "WebFetch(domain:docs.rs)",
-      "Bash(awk '{print $5/1024/1024 \" MB\", $9}')"
+      "Bash(awk '{print $5/1024/1024 \" MB\", $9}')",
+      "Bash(pnpm --version)",
+      "Bash(npm view *)",
+      "Bash(npx --yes pnpm@11.21.0 install)",
+      "Bash(npx --yes pnpm@11.21.0 tauri --version)",
+      "Bash(pkill -f \"tauri build\")",
+      "Bash(pkill -f \"cargo\")",
+      "Bash(pkill -f \"vite\")",
+      "Bash(PATH=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/cad45958-7bef-4ed9-8cd4-59df97cdde54/scratchpad/fakebin:/usr/bin:/bin node scripts/tauri-runner.mjs desktop)",
+      "Bash(PATH=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/cad45958-7bef-4ed9-8cd4-59df97cdde54/scratchpad/fakebin:/usr/bin:/bin node scripts/tauri-runner.mjs desktop --verbose)",
+      "Bash(PATH=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/cad45958-7bef-4ed9-8cd4-59df97cdde54/scratchpad/fakebin:/usr/bin:/bin node scripts/tauri-runner.mjs dev)",
+      "Bash(corepack enable *)",
+      "Bash(COREPACK_ENABLE_DOWNLOAD_PROMPT=0 pnpm --version)",
+      "Bash(pnpm run *)"
     ]
   }
 }

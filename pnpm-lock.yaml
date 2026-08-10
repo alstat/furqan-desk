@@ -29,7 +29,16 @@ importers:
       '@codemirror/view':
         specifier: ^6.39.16
         version: 6.43.8
+      '@lexical/clipboard':
+        specifier: ^0.41.0
+        version: 0.41.0
+      '@lexical/code':
+        specifier: ^0.41.0
+        version: 0.41.0
       '@lexical/dragon':
+        specifier: ^0.41.0
+        version: 0.41.0
+      '@lexical/extension':
         specifier: ^0.41.0
         version: 0.41.0
       '@lexical/file':
@@ -39,6 +48,9 @@ importers:
         specifier: ^0.41.0
         version: 0.41.0
       '@lexical/history':
+        specifier: ^0.41.0
+        version: 0.41.0
+      '@lexical/html':
         specifier: ^0.41.0
         version: 0.41.0
       '@lexical/link':
@@ -53,10 +65,16 @@ importers:
       '@lexical/markdown':
         specifier: ^0.41.0
         version: 0.41.0
+      '@lexical/offset':
+        specifier: ^0.41.0
+        version: 0.41.0
       '@lexical/plain-text':
         specifier: ^0.41.0
         version: 0.41.0
       '@lexical/rich-text':
+        specifier: ^0.41.0
+        version: 0.41.0
+      '@lexical/selection':
         specifier: ^0.41.0
         version: 0.41.0
       '@lexical/table':
@@ -116,6 +134,9 @@ importers:
       katex:
         specifier: ^0.16.21
         version: 0.16.47
+      lexical:
+        specifier: ^0.41.0
+        version: 0.41.0
       marked:
         specifier: ^18.0.3
         version: 18.0.9
@@ -125,6 +146,9 @@ importers:
       tailwindcss:
         specifier: ^4.1.18
         version: 4.3.3
+      yjs:
+        specifier: ^13.6.29
+        version: 13.6.32
     devDependencies:
       '@choochmeque/tauri-windows-bundle':
         specifier: ^0.1.28
