@@ -1037,10 +1037,6 @@ export const zh: Record<string, string> = {
     "editor.citation.text_placeholder": "引用文本",
     "editor.citation.dblclick_hint": "双击以编辑此引用",
     "editor.citation.missing_ref": "此参考文献已不在你的库中。",
-    "settings.ai_tools.autocomplete": "AI 自动补全",
-    "settings.ai_tools.autocomplete.desc": "在编辑器中输入时提供行内续写建议。按 Tab 接受，按 Esc 关闭。",
-    "settings.ai_tools.autocomplete_model": "自动补全模型",
-    "settings.ai_tools.autocomplete_model.desc": "用于行内自动补全建议的模型。",
   // Take-home message
   "takehome.title": "核心启示",
   "takehome.subtitle_default": "从所显示的经文中获得个人成长",

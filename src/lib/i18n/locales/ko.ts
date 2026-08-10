@@ -1037,10 +1037,6 @@ export const ko: Record<string, string> = {
     "editor.citation.text_placeholder": "인용 텍스트",
     "editor.citation.dblclick_hint": "두 번 클릭하여 이 인용 편집",
     "editor.citation.missing_ref": "이 참고문헌은 더 이상 라이브러리에 없습니다.",
-    "settings.ai_tools.autocomplete": "AI 자동 완성",
-    "settings.ai_tools.autocomplete.desc": "에디터에서 입력하는 동안 이어질 내용을 인라인으로 제안합니다. Tab으로 수락, Esc로 무시합니다.",
-    "settings.ai_tools.autocomplete_model": "자동 완성 모델",
-    "settings.ai_tools.autocomplete_model.desc": "인라인 자동 완성 제안에 사용되는 모델.",
   // Take-home message
   "takehome.title": "핵심 메시지",
   "takehome.subtitle_default": "표시된 구절에서 얻는 개인적 성장",

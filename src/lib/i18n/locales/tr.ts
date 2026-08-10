@@ -1037,10 +1037,6 @@ export const tr: Record<string, string> = {
     "editor.citation.text_placeholder": "Atıf metni",
     "editor.citation.dblclick_hint": "Bu atfı düzenlemek için çift tıklayın",
     "editor.citation.missing_ref": "Bu kaynak artık kitaplığınızda değil.",
-    "settings.ai_tools.autocomplete": "Yapay zekâ otomatik tamamlama",
-    "settings.ai_tools.autocomplete.desc": "Editörlerde yazarken satır içi devam önerileri sunar. Kabul etmek için Tab, kapatmak için Esc tuşuna basın.",
-    "settings.ai_tools.autocomplete_model": "Otomatik tamamlama modeli",
-    "settings.ai_tools.autocomplete_model.desc": "Satır içi otomatik tamamlama önerileri için kullanılan model.",
   // Take-home message
   "takehome.title": "Ana mesaj",
   "takehome.subtitle_default": "Gösterilen ayetlerden kişisel gelişim",
