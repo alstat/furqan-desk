@@ -17,7 +17,7 @@
 //   $env:MSIX_APP_DIR="path\to\app-folder"        # folder holding AyahLab.exe + its resources
 //   $env:MSIX_PUBLISHER="CN=Your Name"            # MUST equal your signing cert Subject
 //   $env:MSIX_PUBLISHER_DISPLAY_NAME="Your Name"  # optional, shown to users
-//   $env:MSIX_IDENTITY_NAME="com.al-ahmadgaidasaad.ayahlab"  # optional
+//   $env:MSIX_IDENTITY_NAME="AyahLabDev.AyahLab_jjc5z07ay2t4t"  # optional
 //   $env:MSIX_VERSION="1.4.5.0"                    # optional (defaults from tauri.conf.json)
 //   $env:MSIX_CERT="path\to\cert.pfx"; $env:MSIX_CERT_PASSWORD="…"  # optional: sign
 //   npm run msix

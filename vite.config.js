@@ -25,8 +25,10 @@ export default defineConfig(async () => ({
         }
       : undefined,
     watch: {
-      // 3. tell Vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
+      // 3. tell Vite to ignore watching `src-tauri` and Rust build output.
+      //    The `target/` dir (build artifacts) holds a locked .exe while cargo
+      //    runs, which makes Vite's watcher throw EBUSY.
+      ignored: ["**/src-tauri/**", "**/target/**"],
     },
   },
 }));
