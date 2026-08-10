@@ -58,9 +58,11 @@
     "dompurify": "^3.4.2",
     "highlight.js": "^11.11.1",
     "katex": "^0.16.21",
+    "lexical": "^0.41.0",
     "marked": "^18.0.3",
     "pdfjs-dist": "^5.7.284",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
     "@choochmeque/tauri-windows-bundle": "^0.1.28",
