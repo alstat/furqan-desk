@@ -71,7 +71,7 @@ fn android_err<E: std::fmt::Display>(e: E) -> rusqlite::Error {
     ))
 }
 
-/// Must match DB_VERSION in src/gen_db_tool.rs (`cargo run --example gen-db`).
+/// Must match DB_VERSION in gen-db/src/main.rs (`cargo run -p gen-db --release`).
 /// Increment both when the static dataset changes.
 ///
 /// Every platform checks this against the dataset it actually opened (see
@@ -157,8 +157,8 @@ impl Database {
             .map_err(|e| {
                 db_err(format!(
                     "bundled dataset at {} has no readable db_version ({e}); it predates \
-                     version {DB_VERSION}. Regenerate it with `cargo run --release \
-                     --example gen-db` from src-tauri/.",
+                     version {DB_VERSION}. Regenerate it with `cargo run -p gen-db \
+                     --release` from the workspace root.",
                     path.display()
                 ))
             })?;
@@ -166,8 +166,8 @@ impl Database {
         if found != DB_VERSION {
             return Err(db_err(format!(
                 "bundled dataset at {} is version {found}, but this build requires \
-                 {DB_VERSION}. Regenerate it with `cargo run --release --example gen-db` \
-                 from src-tauri/, then rebuild the package so it ships the new file.",
+                 {DB_VERSION}. Regenerate it with `cargo run -p gen-db --release` from \
+                 the workspace root, then rebuild the package so it ships the new file.",
                 path.display()
             )));
         }
@@ -576,6 +576,29 @@ mod tests {
         conn.execute("INSERT INTO bookmarks (surah, ayah, note) VALUES (1, 1, 'a')", [])
             .unwrap();
         assert!(dir.join("user.db").exists());
+    }
+
+    /// The generator lives in a sibling crate, so nothing in the type system
+    /// ties its DB_VERSION to this one.  They silently drifted to 12 vs 13
+    /// once already, which shipped a dataset the app never validated.  Read the
+    /// constant straight out of the source and fail the build here instead.
+    #[test]
+    fn db_version_matches_generator() {
+        let generator = concat!(env!("CARGO_MANIFEST_DIR"), "/../gen-db/src/main.rs");
+        let src = std::fs::read_to_string(generator)
+            .unwrap_or_else(|e| panic!("cannot read {generator}: {e}"));
+
+        let literal = src
+            .lines()
+            .find_map(|l| l.trim().strip_prefix("const DB_VERSION: i64 = "))
+            .and_then(|rest| rest.trim_end_matches(';').trim().parse::<i64>().ok())
+            .expect("gen-db/src/main.rs must declare `const DB_VERSION: i64 = N;`");
+
+        assert_eq!(
+            literal, DB_VERSION,
+            "gen-db/src/main.rs has DB_VERSION {literal} but db.rs expects {DB_VERSION}; \
+             bump both together or the app rejects the dataset the generator writes"
+        );
     }
 
     #[test]
