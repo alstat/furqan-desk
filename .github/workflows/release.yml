@@ -87,7 +87,7 @@ jobs:
 
             | Platform | File |
             |----------|------|
-            | Windows  | `.exe` (NSIS installer) or `.msi` |
+            | Windows  | `.msix` |
             | Linux | `.AppImage`, `.deb`, or `.rpm` |
 
             See the assets below to download and install.
