@@ -1,15 +1,19 @@
 /// Build-time database generator — the single source of truth for
-/// `quran_static.db`.  (A second, diverging copy previously lived in the
-/// `gen-db/` workspace crate; it was folded back in here and removed, because
-/// running the wrong one silently produced a dataset with a different version
-/// and a smaller set of translations and tafsirs.)
+/// `quran_static.db`.
 ///
-/// Run from the `src-tauri/` directory:
-///   cargo run --release --example gen-db
+/// Run from the workspace root (or from `src-tauri/`):
+///   cargo run -p gen-db --release
 ///
-/// Reads all JSON/SQL/txt source files under `data/` and produces
-/// `data/quran_static.db` — a pre-built SQLite database that is
+/// Reads all JSON/SQL/txt source files under `src-tauri/data/` and produces
+/// `src-tauri/data/quran_static.db` — a pre-built SQLite database that is
 /// shipped in the app bundle instead of the raw source files.
+///
+/// This lives in its own crate on purpose.  As an example inside `src-tauri` it
+/// would implicitly build the app's lib and therefore all of Tauri, which needs
+/// GTK/WebKit dev packages on Linux — turning a SQLite-and-JSON job into the
+/// full desktop toolchain.  A duplicate copy once lived in both places and the
+/// two silently drifted to different DB_VERSIONs and datasets; keep this the
+/// only one.
 
 use rusqlite::{Connection, Result};
 use serde_json;
@@ -22,7 +26,15 @@ use std::path::{Path, PathBuf};
 const DB_VERSION: i64 = 14;
 
 fn main() {
-    let data_dir = PathBuf::from("data");
+    // Works whether invoked from the workspace root (`cargo run -p gen-db`) or
+    // from inside src-tauri/.
+    let tauri_root = if PathBuf::from("src-tauri").is_dir() {
+        PathBuf::from("src-tauri")
+    } else {
+        PathBuf::from(".")
+    };
+
+    let data_dir = tauri_root.join("data");
     let output = data_dir.join("quran_static.db");
 
     if output.exists() {
@@ -44,13 +56,13 @@ fn main() {
     // restart.  These paths mirror where `tauri_build` stages resources during
     // compilation.
     let target_candidates = [
-        PathBuf::from("target/debug/data/quran_static.db"),
-        PathBuf::from("target/release/data/quran_static.db"),
-        PathBuf::from("target/x86_64-apple-darwin/release/data/quran_static.db"),
-        PathBuf::from("target/aarch64-apple-darwin/release/data/quran_static.db"),
+        tauri_root.join("target/debug/data/quran_static.db"),
+        tauri_root.join("target/release/data/quran_static.db"),
+        tauri_root.join("target/x86_64-apple-darwin/release/data/quran_static.db"),
+        tauri_root.join("target/aarch64-apple-darwin/release/data/quran_static.db"),
         // The Windows MSIX build compiles with an explicit --target triple.
-        PathBuf::from("target/x86_64-pc-windows-msvc/release/data/quran_static.db"),
-        PathBuf::from("target/aarch64-pc-windows-msvc/release/data/quran_static.db"),
+        tauri_root.join("target/x86_64-pc-windows-msvc/release/data/quran_static.db"),
+        tauri_root.join("target/aarch64-pc-windows-msvc/release/data/quran_static.db"),
     ];
     let mut synced = 0usize;
     for dest in &target_candidates {
