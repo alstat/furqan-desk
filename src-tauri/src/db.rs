@@ -72,11 +72,21 @@ fn android_err<E: std::fmt::Display>(e: E) -> rusqlite::Error {
 }
 
 /// Must match DB_VERSION in src/gen_db_tool.rs (`cargo run --example gen-db`).
-/// Increment both when the static dataset changes.  Only Android keeps a
-/// local copy of the static DB (APK assets aren't attachable), so only
-/// Android needs the version to know when to refresh that copy.
-#[cfg(target_os = "android")]
-const DB_VERSION: i64 = 13;
+/// Increment both when the static dataset changes.
+///
+/// Every platform checks this against the dataset it actually opened (see
+/// `verify_static_version`); Android additionally uses it to decide when to
+/// refresh its local copy, since APK assets aren't attachable in place.
+const DB_VERSION: i64 = 14;
+
+/// Wrap a diagnostic message as a `rusqlite::Error` so it travels out through
+/// `Database::new` and into the startup crash report.
+fn db_err(message: String) -> rusqlite::Error {
+    rusqlite::Error::ToSqlConversionFailure(Box::new(std::io::Error::new(
+        std::io::ErrorKind::Other,
+        message,
+    )))
+}
 
 pub struct Database(pub Mutex<Connection>);
 
@@ -100,6 +110,7 @@ impl Database {
         Self::init_user_data_tables(&conn)?;
         Self::migrate_legacy_db(&conn, &app_data_dir)?;
         Self::attach_static(&conn, &static_db_path)?;
+        Self::verify_static_version(&conn, &static_db_path)?;
         Ok(Database(Mutex::new(conn)))
     }
 
@@ -128,6 +139,38 @@ impl Database {
             [Self::read_only_uri(path)],
         )?;
         conn.execute_batch("PRAGMA static_db.cache_size = -1024;")?;
+        Ok(())
+    }
+
+    /// Reject a bundled dataset that doesn't match this build.
+    ///
+    /// Attaching a stale `quran_static.db` succeeds silently — the failure only
+    /// shows up much later, deep inside a query, as something like "no such
+    /// table: reciters", which points nowhere near the real cause.  Checking
+    /// here turns that into one clear error at startup, which the panic hook
+    /// then surfaces in a dialog and the crash log.
+    fn verify_static_version(conn: &Connection, path: &Path) -> Result<()> {
+        let found: i64 = conn
+            .query_row("SELECT version FROM static_db.db_version LIMIT 1", [], |row| {
+                row.get(0)
+            })
+            .map_err(|e| {
+                db_err(format!(
+                    "bundled dataset at {} has no readable db_version ({e}); it predates \
+                     version {DB_VERSION}. Regenerate it with `cargo run --release \
+                     --example gen-db` from src-tauri/.",
+                    path.display()
+                ))
+            })?;
+
+        if found != DB_VERSION {
+            return Err(db_err(format!(
+                "bundled dataset at {} is version {found}, but this build requires \
+                 {DB_VERSION}. Regenerate it with `cargo run --release --example gen-db` \
+                 from src-tauri/, then rebuild the package so it ships the new file.",
+                path.display()
+            )));
+        }
         Ok(())
     }
 
@@ -452,13 +495,30 @@ mod tests {
         dir
     }
 
-    /// Minimal stand-in for the bundled quran_static.db.
+    /// Minimal stand-in for the bundled quran_static.db, at the version this
+    /// build expects.  Derived from DB_VERSION rather than hard-coded so a
+    /// version bump can't leave the fixtures behind.
     fn make_static_db(path: &Path) {
+        make_static_db_at_version(path, DB_VERSION);
+    }
+
+    fn make_static_db_at_version(path: &Path, version: i64) {
+        let conn = Connection::open(path).unwrap();
+        conn.execute_batch(&format!(
+            "CREATE TABLE db_version (version INTEGER PRIMARY KEY);
+             INSERT INTO db_version (version) VALUES ({version});
+             CREATE TABLE quran_text (surah INTEGER, ayah INTEGER, text TEXT);
+             INSERT INTO quran_text VALUES (1, 1, 'bismillah');"
+        ))
+        .unwrap();
+    }
+
+    /// A dataset with no db_version table at all — what a pre-versioning build
+    /// shipped.
+    fn make_unversioned_static_db(path: &Path) {
         let conn = Connection::open(path).unwrap();
         conn.execute_batch(
-            "CREATE TABLE db_version (version INTEGER PRIMARY KEY);
-             INSERT INTO db_version (version) VALUES (13);
-             CREATE TABLE quran_text (surah INTEGER, ayah INTEGER, text TEXT);
+            "CREATE TABLE quran_text (surah INTEGER, ayah INTEGER, text TEXT);
              INSERT INTO quran_text VALUES (1, 1, 'bismillah');",
         )
         .unwrap();
@@ -516,6 +576,37 @@ mod tests {
         conn.execute("INSERT INTO bookmarks (surah, ayah, note) VALUES (1, 1, 'a')", [])
             .unwrap();
         assert!(dir.join("user.db").exists());
+    }
+
+    #[test]
+    fn rejects_a_stale_static_dataset() {
+        let dir = temp_dir("stale");
+        let static_db = dir.join("quran_static.db");
+        make_static_db_at_version(&static_db, DB_VERSION - 1);
+
+        let err = Database::new(static_db, dir)
+            .err()
+            .expect("a stale dataset must be rejected")
+            .to_string();
+        // Names both versions and how to fix it — this is what reaches the
+        // crash log, so the numbers matter more than the phrasing.
+        assert!(err.contains(&(DB_VERSION - 1).to_string()), "got: {err}");
+        assert!(err.contains(&DB_VERSION.to_string()), "got: {err}");
+        assert!(err.contains("gen-db"), "got: {err}");
+    }
+
+    #[test]
+    fn rejects_a_static_dataset_with_no_version_table() {
+        let dir = temp_dir("unversioned");
+        let static_db = dir.join("quran_static.db");
+        make_unversioned_static_db(&static_db);
+
+        let err = Database::new(static_db, dir)
+            .err()
+            .expect("an unversioned dataset must be rejected")
+            .to_string();
+        assert!(err.contains("db_version"), "got: {err}");
+        assert!(err.contains("gen-db"), "got: {err}");
     }
 
     #[test]
