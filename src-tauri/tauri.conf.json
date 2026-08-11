@@ -1,18 +1,18 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "AyahLab",
-  "version": "1.4.4",
-  "identifier": "com.al-ahmadgaidasaad.ayahlab",
+  "version": "1.4.7",
+  "identifier": "AyahLabDev.AyahLab",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "pnpm build",
     "frontendDist": "../build"
   },
   "app": {
     "windows": [
       {
-        "title": "AyahLab (v1.4.4 beta)",
+        "title": "AyahLab (v1.4.7)",
         "width": 1380,
         "height": 800,
         "minWidth": 1250,
@@ -36,7 +36,11 @@
   "bundle": {
     "active": true,
     "targets": ["app"],
-    "resources": ["data/quran_static.db", "data/manuscripts/demo/*"],
+    "resources": [
+      "data/quran_static.db",
+      "data/manuscripts/demo/*",
+      "dictionaries/*"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

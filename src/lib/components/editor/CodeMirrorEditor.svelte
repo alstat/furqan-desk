@@ -33,6 +33,7 @@
         redoDepth,
     } from "@codemirror/commands";
     import { search, searchKeymap } from "@codemirror/search";
+    import { acceptCompletion } from "@codemirror/autocomplete";
     import {
         syntaxHighlighting,
         HighlightStyle,
@@ -56,9 +57,21 @@
         codeMirrorViewInstance,
         codeMirrorCanUndo,
         codeMirrorCanRedo,
+        pendingEditorJump,
     } from "$lib/stores/editor.store";
     import { isPro } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
+    import SpellSuggestionMenu from "./SpellSuggestionMenu.svelte";
+    import {
+        spellcheckExtension,
+        applySpellReplacement,
+        type SpellContextInfo,
+    } from "$lib/codemirror/spellcheck";
+    import {
+        ignoreWord,
+        ignoreWordAll,
+        forceSpellRecheck,
+    } from "$lib/stores/spellcheck.store";
     import { invoke } from "@tauri-apps/api/core";
     import {
         gitDiffGutter,
@@ -69,7 +82,7 @@
     import { latexInput } from "$lib/codemirror/latexInput";
     import { wrapSelection } from "$lib/codemirror/wrapSelection";
     import { readTextFile } from "@tauri-apps/plugin-fs";
-    import { openOrFocusTab } from "$lib/stores/tabs.store";
+    import { openOrFocusTab, tabs } from "$lib/stores/tabs.store";
     import { get } from "svelte/store";
 
     // ── Props ─────────────────────────────────────────────────────────────────
@@ -124,6 +137,22 @@
         x: number;
         y: number;
     } | null>(null);
+
+    // Misspelled word that was right-clicked; drives the suggestions menu.
+    let spellContext = $state<SpellContextInfo | null>(null);
+
+    function replaceSpelling(suggestion: string) {
+        if (view && spellContext) {
+            applySpellReplacement(
+                view,
+                spellContext.from,
+                spellContext.to,
+                suggestion,
+            );
+            forceSpellRecheck();
+        }
+        spellContext = null;
+    }
 
     // ── Ayu Light theme ───────────────────────────────────────────────────────
 
@@ -1153,6 +1182,9 @@
 
     let container: HTMLDivElement;
     let view: EditorView;
+    // Reactive "the view is mounted" flag so effects that need `view` (which is
+    // not reactive) re-run once it exists.
+    let ready = $state(false);
 
     function saveScroll(key: string | null = lastScrollKey): void {
         if (!key || !view || restoringScroll) return;
@@ -1350,7 +1382,7 @@
 
     // Ctrl/Cmd-hover underline: a state field holding a single mark decoration
     // over the identifier currently under the cursor while the modifier is held.
-    const setDefLink = StateEffect.define<WordRange | null>();
+    const setDefLink = StateEffect.define<{ from: number; to: number } | null>();
     const defLinkMark = Decoration.mark({ class: "cm-defLink" });
 
     const defLinkField = StateField.define<DecorationSet>({
@@ -1374,12 +1406,20 @@
     let lastMouse = { x: 0, y: 0 };
 
     // Show / hide the hover underline based on cursor position + modifier state.
-    function updateDefLink(editorView: EditorView, modActive: boolean) {
+    // `rangeAt` decides what is linkable (a Julia identifier, a Typst import…).
+    function updateDefLink(
+        editorView: EditorView,
+        modActive: boolean,
+        rangeAt: (
+            doc: EditorState["doc"],
+            pos: number,
+        ) => { from: number; to: number } | null = wordRangeAt,
+    ) {
         const current = editorView.state.field(defLinkField, false);
         const hasMark = !!current && current.size > 0;
         const pos = modActive ? editorView.posAtCoords(lastMouse) : null;
         const range =
-            pos == null ? null : wordRangeAt(editorView.state.doc, pos);
+            pos == null ? null : rangeAt(editorView.state.doc, pos);
         if (!range) {
             if (hasMark) editorView.dispatch({ effects: setDefLink.of(null) });
             return;
@@ -1447,6 +1487,111 @@
         },
     });
 
+    // ── Typst "go to import" (Ctrl/Cmd + click on an #import/#include path) ────
+
+    type ImportRange = { from: number; to: number; path: string };
+
+    // If `pos` sits inside the quoted path of a Typst #import / #include, return
+    // that path text and its range (the span inside the quotes).
+    function typstImportPathAt(
+        doc: EditorState["doc"],
+        pos: number,
+    ): ImportRange | null {
+        const line = doc.lineAt(pos);
+        const m = /#(?:import|include)\s+"([^"]*)"/.exec(line.text);
+        if (!m) return null;
+        const path = m[1];
+        // Skip empty paths and package specs (@preview/…) — not local files.
+        if (!path || path.startsWith("@")) return null;
+        const contentStart = m.index + m[0].indexOf('"') + 1;
+        const contentEnd = contentStart + path.length;
+        const col = pos - line.from;
+        if (col < contentStart || col > contentEnd) return null;
+        return {
+            from: line.from + contentStart,
+            to: line.from + contentEnd,
+            path,
+        };
+    }
+
+    // Resolve an import path (relative to the current file) to an absolute path,
+    // collapsing "." / ".." segments in the same separator style as `base`.
+    function resolveTypstImport(base: string, rel: string): string | null {
+        if (rel.startsWith("@")) return null;
+        const iSlash = base.lastIndexOf("/");
+        const iBack = base.lastIndexOf("\\");
+        const sep = iBack > iSlash ? "\\" : "/";
+        const dir = base.slice(0, Math.max(iSlash, iBack));
+        if (!dir) return null;
+        const parts = dir.split(/[\\/]+/);
+        for (const p of rel.replace(/^\/+/, "").split(/[\\/]+/)) {
+            if (p === "" || p === ".") continue;
+            if (p === "..") parts.pop();
+            else parts.push(p);
+        }
+        return parts.join(sep);
+    }
+
+    async function openTypstImport(rel: string): Promise<void> {
+        const base = filePath ?? null;
+        if (!base) return;
+        const target = resolveTypstImport(base, rel);
+        if (!target) return;
+        if (get(tabs).some((t) => t.path === target)) {
+            openOrFocusTab(target, "");
+            return;
+        }
+        try {
+            openOrFocusTab(target, await readTextFile(target));
+        } catch {
+            /* not a readable local file — ignore */
+        }
+    }
+
+    const typstGoToImport = EditorView.domEventHandlers({
+        mousedown(event, editorView) {
+            if (!(event.metaKey || event.ctrlKey) || event.button !== 0) {
+                return false;
+            }
+            const pos = editorView.posAtCoords({
+                x: event.clientX,
+                y: event.clientY,
+            });
+            if (pos == null) return false;
+            const hit = typstImportPathAt(editorView.state.doc, pos);
+            if (!hit) return false;
+            event.preventDefault();
+            editorView.dispatch({ effects: setDefLink.of(null) });
+            void openTypstImport(hit.path);
+            return true;
+        },
+        mousemove(event, editorView) {
+            lastMouse = { x: event.clientX, y: event.clientY };
+            updateDefLink(
+                editorView,
+                event.metaKey || event.ctrlKey,
+                typstImportPathAt,
+            );
+            return false;
+        },
+        mouseleave(_event, editorView) {
+            updateDefLink(editorView, false, typstImportPathAt);
+            return false;
+        },
+        keydown(event, editorView) {
+            if (event.key === "Meta" || event.key === "Control") {
+                updateDefLink(editorView, true, typstImportPathAt);
+            }
+            return false;
+        },
+        keyup(event, editorView) {
+            if (event.key === "Meta" || event.key === "Control") {
+                updateDefLink(editorView, false, typstImportPathAt);
+            }
+            return false;
+        },
+    });
+
     onMount(() => {
         const state = EditorState.create({
             doc: value,
@@ -1482,6 +1627,10 @@
                         run: toggleBlockComment,
                         preventDefault: true,
                     },
+                    // Tab accepts the highlighted autocomplete suggestion when
+                    // the popup is open; acceptCompletion returns false
+                    // otherwise, so Tab still indents normally.
+                    { key: "Tab", run: acceptCompletion },
                     indentWithTab,
                     ...historyKeymap,
                     ...searchKeymap,
@@ -1493,10 +1642,19 @@
                 ...(language === "julia"
                     ? [juliaGoToDefinition, defLinkField]
                     : []),
+                ...(language === "typst"
+                    ? [typstGoToImport, defLinkField]
+                    : []),
                 // Higher precedence than the line-number gutter so the diff
                 // bars render at the very left edge, before the line numbers.
                 Prec.high(gitDiffGutter()),
                 gitDiffOverviewRuler(),
+                // Spell checking: prose languages check everything; code
+                // languages (Julia) restrict to comments and strings.
+                spellcheckExtension(
+                    language === "julia" ? "code" : "prose",
+                    (info) => (spellContext = info),
+                ),
                 ...extraExtensions,
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged && !suppressOnChange) {
@@ -1517,6 +1675,7 @@
 
         view = new EditorView({ state, parent: container });
         codeMirrorViewInstance.set(view);
+        ready = true;
         codeMirrorCanUndo.set(false);
         codeMirrorCanRedo.set(false);
         lastScrollKey = scrollKey;
@@ -1531,6 +1690,7 @@
         return () => {
             saveScroll();
             view.scrollDOM.removeEventListener("scroll", onScroll);
+            ready = false;
             codeMirrorViewInstance.set(null);
             codeMirrorCanUndo.set(false);
             codeMirrorCanRedo.set(false);
@@ -1574,6 +1734,30 @@
         if (nextKey) {
             restoreScroll(nextKey);
         }
+    });
+
+    // Claim a pending cursor jump (e.g. from a Typst error link) when it targets
+    // this editor's file. Only the matching, mounted editor acts, so the jump
+    // lands in the right file regardless of which editor was active before.
+    $effect(() => {
+        const pending = $pendingEditorJump;
+        if (!ready || !pending || !filePath || filePath !== pending.path) return;
+        const { line, col } = pending;
+        pendingEditorJump.set(null);
+        // Wait a frame so a just-mounted / just-swapped document is in place.
+        requestAnimationFrame(() => {
+            if (!view || line < 1 || line > view.state.doc.lines) return;
+            const docLine = view.state.doc.line(line);
+            const pos = Math.min(
+                docLine.from + Math.max(col - 1, 0),
+                docLine.to,
+            );
+            view.dispatch({
+                selection: { anchor: pos },
+                effects: EditorView.scrollIntoView(pos, { y: "center" }),
+            });
+            view.focus();
+        });
     });
 
     // Sync theme changes
@@ -1677,6 +1861,24 @@
         {language}
         onReplace={replaceAiSelection}
         onClose={() => (aiSelection = null)}
+    />
+{/if}
+
+{#if spellContext}
+    <SpellSuggestionMenu
+        x={spellContext.x}
+        y={spellContext.y}
+        word={spellContext.word}
+        onReplace={replaceSpelling}
+        onIgnore={() => {
+            if (spellContext) ignoreWord(spellContext.word);
+            spellContext = null;
+        }}
+        onIgnoreAll={() => {
+            if (spellContext) ignoreWordAll(spellContext.word);
+            spellContext = null;
+        }}
+        onClose={() => (spellContext = null)}
     />
 {/if}
 

@@ -561,6 +561,17 @@ export const codeMirrorViewInstance: Writable<EditorView | null> =
   writable(null);
 export const codeMirrorCanUndo: Writable<boolean> = writable(false);
 export const codeMirrorCanRedo: Writable<boolean> = writable(false);
+/**
+ * A requested cursor jump into a specific file. The CodeMirror editor whose
+ * `filePath` matches `path` performs the jump once it is mounted, then clears
+ * this — so a jump can target a file that isn't focused (or open) yet, without
+ * racing whichever editor happens to be active. Used by Typst error links.
+ */
+export const pendingEditorJump: Writable<{
+  path: string;
+  line: number;
+  col: number;
+} | null> = writable(null);
 /** Increment to force TypstEditor to recompile without changing the source. */
 export const typstRecompile: Writable<number> = writable(0);
 

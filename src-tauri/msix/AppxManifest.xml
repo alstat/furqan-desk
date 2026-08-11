@@ -10,7 +10,7 @@
   Before packaging, replace the __PLACEHOLDERS__ so Identity/Publisher match the
   code-signing certificate you sign the package with (Name + Publisher must be
   an exact match or installation is refused):
-    - Name             : e.g. "com.al-ahmadgaidasaad.ayahlab"
+    - Name             : e.g. "AyahLabDev.AyahLab_jjc5z07ay2t4t"
     - Publisher        : the certificate Subject, e.g. "CN=Al Ahmad Gaida Saad, O=..., C=..."
     - Version          : four-part, e.g. 1.4.0.0
     - PublisherDisplayName : shown to users

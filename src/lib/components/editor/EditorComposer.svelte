@@ -12,7 +12,6 @@
     import { JuliaCellNode } from "$lexical/core/plugins/JuliaCell/JuliaCellNode";
     import JuliaCellPlugin from "$lexical/core/plugins/JuliaCell/JuliaCellPlugin.svelte";
     import AiSelectionPlugin from "$lexical/core/plugins/AiSelectionPlugin.svelte";
-    import AiAutocompletePlugin from "$lexical/core/plugins/AiAutocompletePlugin.svelte";
     // import {
     // 	Composer,
     // 	ContentEditable,
@@ -70,11 +69,14 @@
     import FloatingLinkEditorPlugin from "$lexical/core/plugins/link/FloatingLinkEditorPlugin.svelte";
     import SlashCommandPlugin from "$lexical/core/plugins/SlashCommand/SlashCommandPlugin.svelte";
     import CiteMenuPlugin from "$lexical/core/plugins/Cite/CiteMenuPlugin.svelte";
+    import SpellcheckLexicalPlugin from "$lexical/core/plugins/Spellcheck/SpellcheckLexicalPlugin.svelte";
+    import SpellLanguageSelector from "./SpellLanguageSelector.svelte";
     import EditorStorePlugin from "./EditorStorePlugin.svelte";
     import { createEmptyHistoryState } from "@lexical/history";
     import {
         lexicalHistoryState,
         lexicalEditorInstance,
+        zenMode,
     } from "$lib/stores/editor.store";
     import { activeTab } from "$lib/stores/tabs.store";
     import type { EditorTab } from "$lib/stores/tabs.store";
@@ -320,7 +322,11 @@
         <div class="editor-container flex flex-col justify-stretch">
             <div class="editor-scroller">
                 <div class="editor">
-                    <ContentEditable dir={editorDir} />
+                    <!-- Disable the webview's native spellchecker: we provide
+                         our own (SpellcheckLexicalPlugin), so leaving the native
+                         one on would double the squiggles and ignore the app's
+                         spell-check toggle/language. -->
+                    <ContentEditable dir={editorDir} spellCheck={false} />
                 </div>
             </div>
             <RichTextPlugin />
@@ -334,7 +340,6 @@
             <DrawingPlugin />
             <EquationPlugin />
             <AiSelectionPlugin />
-            <AiAutocompletePlugin />
             <CodePlugin />
             <TablePlugin />
             <TableCellResizerPlugin />
@@ -352,7 +357,18 @@
             <CiteMenuPlugin />
             <QuranBlockPlugin />
             <JuliaCellPlugin />
+            <SpellcheckLexicalPlugin />
             <EditorStorePlugin />
+        </div>
+        <!-- Spelling language picker, pinned to the bottom-right of the page.
+             In zen / Sukun mode it stays hidden until hovered; otherwise it
+             sits subtly and brightens on hover. -->
+        <div
+            class="absolute bottom-0 right-4 z-20 transition-opacity duration-200 hover:opacity-100 {$zenMode
+                ? 'opacity-0'
+                : 'opacity-35'}"
+        >
+            <SpellLanguageSelector up={true} />
         </div>
     </div>
 </Composer>

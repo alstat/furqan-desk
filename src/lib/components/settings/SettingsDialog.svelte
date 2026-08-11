@@ -35,10 +35,6 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     import { getVersion } from '@tauri-apps/api/app';
     import { locale, LOCALE_NAMES, t, type Locale } from '$lib/i18n';
     import { aiTextDefaultModel } from '$lib/stores/ai-text-transform.store';
-    import {
-        aiAutocompleteEnabled,
-        aiAutocompleteModel,
-    } from '$lib/stores/ai-autocomplete.store';
     import { isPro, isProPlus } from '$lib/stores/auth.store';
 
     interface Props {
@@ -54,9 +50,6 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     // effective model is forced to 'standard' (even if a stale 'advanced' value
     // is persisted) and the Advanced buttons below are disabled for them.
     let effTextModel = $derived($isProPlus ? $aiTextDefaultModel : 'standard');
-    let effAutocompleteModel = $derived(
-        $isProPlus ? $aiAutocompleteModel : 'standard',
-    );
 
     // Mirror the dialog's open state into the store so the background
     // install/update toast can hide itself while Settings is showing progress.
@@ -421,70 +414,6 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                         </button>
                     </div>
                 </div>
-
-                <!-- AI autocompletion toggle -->
-                <div class="flex items-center justify-between gap-4 mt-3">
-                    <div>
-                        <span class={rowLabel}>{$t('settings.ai_tools.autocomplete')}</span>
-                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
-                            {$t('settings.ai_tools.autocomplete.desc')}
-                        </p>
-                    </div>
-                    <div class="flex gap-2 shrink-0">
-                        <button
-                            onclick={() => aiAutocompleteEnabled.set(false)}
-                            class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
-                                ${!$aiAutocompleteEnabled
-                                    ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
-                                    : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
-                        >
-                            {$t('common.disabled')}
-                        </button>
-                        <button
-                            onclick={() => aiAutocompleteEnabled.set(true)}
-                            class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
-                                ${$aiAutocompleteEnabled
-                                    ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
-                                    : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
-                        >
-                            {$t('common.enabled')}
-                        </button>
-                    </div>
-                </div>
-
-                <!-- AI autocompletion model -->
-                {#if $aiAutocompleteEnabled}
-                <div class="flex items-center justify-between gap-4 mt-3">
-                    <div>
-                        <span class={rowLabel}>{$t('settings.ai_tools.autocomplete_model')}</span>
-                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
-                            {$t('settings.ai_tools.autocomplete_model.desc')}
-                        </p>
-                    </div>
-                    <div class="flex gap-2 shrink-0">
-                        <button
-                            onclick={() => aiAutocompleteModel.set('standard')}
-                            class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
-                                ${effAutocompleteModel === 'standard'
-                                    ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
-                                    : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
-                        >
-                            {$t('ai_chat.model_standard')}
-                        </button>
-                        <button
-                            onclick={() => aiAutocompleteModel.set('advanced')}
-                            disabled={!$isProPlus}
-                            title={!$isProPlus ? 'Pro+' : ''}
-                            class={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors disabled:opacity-40 disabled:cursor-not-allowed
-                                ${effAutocompleteModel === 'advanced'
-                                    ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
-                                    : 'cursor-pointer border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
-                        >
-                            {$t('ai_chat.model_advanced')}
-                        </button>
-                    </div>
-                </div>
-                {/if}
             </div>
             {/if}
 

@@ -25,6 +25,7 @@
         flashingTabId,
     } from "$lib/stores/julia-terminal.store";
     import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
+    import SpellLanguageSelector from "./SpellLanguageSelector.svelte";
     import JuliaReplPane from "./JuliaReplPane.svelte";
     import type { KeyBinding } from "@codemirror/view";
     import type { Text } from "@codemirror/state";
@@ -34,7 +35,6 @@
         type CompletionSource,
     } from "@codemirror/autocomplete";
     import { JULIA_COMPLETIONS } from "$lib/completions/julia";
-    import { aiAutocomplete } from "$lib/codemirror/aiAutocomplete";
     import { t } from "$lib/i18n";
 
     /**
@@ -364,9 +364,6 @@
         maxRenderedOptions: 50,
     });
 
-    // Inline AI ghost-text completions (Pro-gated; Settings → AI Tools).
-    const juliaAiAutocomplete = aiAutocomplete("julia");
-
     // ── Content change handler ────────────────────────────────────────────────
 
     function handleInput(newContent: string) {
@@ -535,6 +532,8 @@
                         : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
                     : ''}"
             >
+                <!-- Spelling language -->
+                <SpellLanguageSelector />
                 <!-- Julia Formatter -->
                 <button
                     onclick={formatJulia}
@@ -650,7 +649,7 @@
                     value={effectiveTab.content}
                     language="julia"
                     extraKeymap={juliaKeymap}
-                    extensions={[juliaCompletionExtension, juliaAiAutocomplete]}
+                    extensions={[juliaCompletionExtension]}
                     {lineWrap}
                     aiSelectionTools={true}
                     {aiContextPrompt}

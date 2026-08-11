@@ -410,12 +410,18 @@
         selectedManuscript?.pages?.[folioIdx] ?? null,
     );
     const selectedImage = $derived(selectedPage?.images?.[0] ?? null);
-    // True when the selected page exists but has no usable image_url from Corpus Coranicum.
+    // True when the selected page exists but has no usable image_url from Corpus
+    // Coranicum. Demo entries are exempt: their folios ship with the app and are
+    // fetched by index via `get_manuscript_demo_image`, so they carry no
+    // image_url at all — judging them by it would hide the tour's sample images
+    // behind the "no image available" state.
     const selectedImageMissing = $derived(
-        !!selectedManuscript &&
+        !demoMode &&
+            !!selectedManuscript &&
             (!selectedImage || !selectedImage.image_url?.trim()),
     );
     function manuscriptHasAnyImage(ms: ManuscriptEntry): boolean {
+        if (demoMode) return true;
         return ms.pages.some((p) => !!p.images?.[0]?.image_url?.trim());
     }
     const selectedDetail = $derived(

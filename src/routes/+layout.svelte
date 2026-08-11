@@ -116,10 +116,24 @@
 				event.preventDefault();
 				const translate = get(i18n);
 				const names = dirtyTabs.map(tab => `• ${tab.name}`).join('\n');
-				const confirmed = await ask(
-					translate('layout.unsaved_message', { names }),
-					{ title: translate('layout.unsaved_title'), kind: 'warning', okLabel: translate('layout.discard_close'), cancelLabel: translate('common.cancel') }
-				);
+				const message = translate('layout.unsaved_message', { names });
+				// This runs long after onMount's try/catch has returned, so it
+				// needs its own: a rejection here leaves the window refusing to
+				// close with nothing but an unhandled rejection to show for it.
+				// The webview's own confirm() is the fallback so unsaved work
+				// still can't be discarded silently.
+				let confirmed: boolean;
+				try {
+					confirmed = await ask(message, {
+						title: translate('layout.unsaved_title'),
+						kind: 'warning',
+						okLabel: translate('layout.discard_close'),
+						cancelLabel: translate('common.cancel')
+					});
+				} catch (e) {
+					console.error('unsaved-changes dialog failed', e);
+					confirmed = window.confirm(message);
+				}
 				if (confirmed) await appWindow.destroy();
 			});
 		} catch {

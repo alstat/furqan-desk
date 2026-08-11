@@ -7,6 +7,8 @@ mod julia;
 #[cfg(any(unix, windows))]
 mod pty;
 mod references;
+mod spellcheck;
+mod startup;
 mod terminal;
 mod typst_world;
 
@@ -16,6 +18,10 @@ use tauri::{Emitter, Manager};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Before anything that can fail: a release build has no console, so without
+    // this a startup panic exits silently with no window and no message.
+    startup::install_panic_hook();
+
     // WebKitGTK's DMA-BUF renderer fails to initialise EGL on some Linux
     // configurations (notably Fedora + Mesa ≥ 25 with AMD/Radeon GPUs), which
     // produces "Could not create default EGL display: EGL_BAD_PARAMETER.
@@ -69,14 +75,40 @@ pub fn run() {
             let app_data_dir = app.path().app_data_dir()
                 .expect("Failed to resolve app data directory");
 
-            std::fs::create_dir_all(&app_data_dir)
-                .expect("Failed to create app data directory");
-            std::fs::create_dir_all(app_data_dir.join("manuscript-images"))
-                .expect("Failed to create manuscript-images directory");
+            std::fs::create_dir_all(&app_data_dir).unwrap_or_else(|e| {
+                panic!(
+                    "Failed to create app data directory {}: {e}",
+                    app_data_dir.display()
+                )
+            });
+            std::fs::create_dir_all(app_data_dir.join("manuscript-images")).unwrap_or_else(|e| {
+                panic!(
+                    "Failed to create manuscript-images directory under {}: {e}",
+                    app_data_dir.display()
+                )
+            });
 
             let static_db = resource_dir.join("data/quran_static.db");
-            let database = db::Database::new(static_db, app_data_dir.clone())
-                .expect("Failed to initialize database");
+            // A package built without `bundle.resources` is the most common
+            // cause of an installed build dying instantly, and the resulting
+            // SQLite error names neither the file nor the reason. Check the
+            // path first so the crash log says what is actually wrong.
+            if !static_db.exists() {
+                panic!(
+                    "Bundled database is missing from this build: {} \
+                     (resource_dir = {}). The installer or package did not \
+                     include bundle.resources from tauri.conf.json.",
+                    static_db.display(),
+                    resource_dir.display()
+                );
+            }
+            let database =
+                db::Database::new(static_db.clone(), app_data_dir.clone()).unwrap_or_else(|e| {
+                    panic!(
+                        "Failed to initialize database from {}: {e}",
+                        static_db.display()
+                    )
+                });
             app.manage(database);
             // Load any previously saved custom Julia binary path before managing state
             let julia_custom_path = julia::load_persisted_path(&app.handle());
@@ -248,6 +280,11 @@ pub fn run() {
             commands::get_manuscript_image,
             commands::clear_manuscript_cache,
             commands::get_manuscript_demo_image,
+            spellcheck::spell_check,
+            spellcheck::spell_suggest,
+            spellcheck::spell_languages,
+            spellcheck::spell_detect_language,
+            spellcheck::install_spell_language,
             commands::get_system_font_families,
             commands::copy_path,
             #[cfg(any(unix, windows))]

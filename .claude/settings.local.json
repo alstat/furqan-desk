@@ -289,7 +289,27 @@
       "Bash(HOME=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/9a5d1207-2e4a-4ab1-81dd-1386f40e1cda/scratchpad/fakehome RUSTUP_HOME=/Users/al-ahmadgaidasaad/.rustup CARGO_HOME=/Users/al-ahmadgaidasaad/.cargo npm run tauri dev)",
       "Bash(gh workflow *)",
       "Bash(gh run *)",
-      "Bash(git fetch *)"
+      "Bash(git fetch *)",
+      "WebFetch(domain:docs.rs)",
+      "Bash(awk '{print $5/1024/1024 \" MB\", $9}')",
+      "Bash(pnpm --version)",
+      "Bash(npm view *)",
+      "Bash(npx --yes pnpm@11.21.0 install)",
+      "Bash(npx --yes pnpm@11.21.0 tauri --version)",
+      "Bash(pkill -f \"tauri build\")",
+      "Bash(pkill -f \"cargo\")",
+      "Bash(pkill -f \"vite\")",
+      "Bash(PATH=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/cad45958-7bef-4ed9-8cd4-59df97cdde54/scratchpad/fakebin:/usr/bin:/bin node scripts/tauri-runner.mjs desktop)",
+      "Bash(PATH=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/cad45958-7bef-4ed9-8cd4-59df97cdde54/scratchpad/fakebin:/usr/bin:/bin node scripts/tauri-runner.mjs desktop --verbose)",
+      "Bash(PATH=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/cad45958-7bef-4ed9-8cd4-59df97cdde54/scratchpad/fakebin:/usr/bin:/bin node scripts/tauri-runner.mjs dev)",
+      "Bash(corepack enable *)",
+      "Bash(COREPACK_ENABLE_DOWNLOAD_PROMPT=0 pnpm --version)",
+      "Bash(pnpm run *)",
+      "Bash(cargo tree *)",
+      "Bash(export SP=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/cad45958-7bef-4ed9-8cd4-59df97cdde54/scratchpad/winprobe)",
+      "Bash(git stash *)",
+      "Bash(awk '/^name = \"AyahLab\"$/{found=1} found{print; if\\(/^$/ && NR>1 && found>1\\) exit; found++}' src-tauri/Cargo.lock)",
+      "Bash(echo \"  tafsir_authors: $\\(sqlite3 src-tauri/data/quran_static.db 'SELECT count\\(*\\) FROM tafsir_authors;'\\)\")"
     ]
   }
 }

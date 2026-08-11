@@ -8,8 +8,10 @@ default-run = "AyahLab"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-# Build-time database generator: `cargo run --example gen-db` (from src-tauri/)
-# rebuilds data/quran_static.db from the JSON/SQL sources under data/.
+# Build-time database generator: `cargo run --release --example gen-db` (from
+# src-tauri/) rebuilds data/quran_static.db from the JSON/SQL sources under
+# data/. It is the only generator — keep DB_VERSION in src/gen_db_tool.rs and
+# src/db.rs in step, or the app refuses to start against a stale dataset.
 # An example (not a [[bin]]) so the Tauri bundler doesn't try to ship it.
 [[example]]
 name = "gen-db"
@@ -54,6 +56,8 @@ fontdb    = "0.23"
 # portable-pty supports Unix (forkpty) and Windows (ConPTY); keep it cross-platform
 # so the integrated terminal works on Windows too.
 portable-pty = "0.8"
+spellbook = "0.4.2"
+sys-locale = "0.3.2"
 
 # On Linux/Windows a deep link launches a fresh process; single-instance (with
 # the deep-link feature) forwards the URL to the already-running app instead.
@@ -63,6 +67,12 @@ tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
+
+# MessageBoxW only, so a startup panic in a windows_subsystem="windows" build
+# reports itself instead of vanishing (see src/startup.rs). Already in the
+# dependency graph via Tauri, so this adds no extra compilation.
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { version = "0.60", features = ["Win32_UI_WindowsAndMessaging"] }
 
 # git2 powers the File Explorer's VCS integration (status highlighting +
 # .gitignore graying). Available on desktop (macOS/Linux via unix, plus
