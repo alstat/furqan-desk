@@ -23,8 +23,13 @@ jobs:
       - name: Install SQLite
         run: sudo apt-get install -y libsqlite3-dev
 
+      # The generator resolves its inputs relative to the working directory,
+      # so it must run from src-tauri/. This was the `gen-db/` crate until that
+      # duplicate was folded into this example — the two had drifted to
+      # different DB_VERSIONs and datasets.
       - name: Build quran_static.db
-        run: cargo run --manifest-path gen-db/Cargo.toml --release
+        working-directory: src-tauri
+        run: cargo run --release --example gen-db
 
       - name: Upload quran_static.db to data release
         run: gh release upload data src-tauri/data/quran_static.db --clobber

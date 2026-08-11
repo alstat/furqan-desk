@@ -1100,7 +1100,7 @@ end
 {#if showKernelInfo}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-        class="julia-kernel-info-backdrop fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-brand-charcoal-900/40 backdrop-blur-sm"
+        class="julia-kernel-info-backdrop fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
         onclick={onKernelInfoBackdropClick}
         onkeydown={onKernelInfoKeydown}
         role="dialog"
