@@ -13,11 +13,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Linux only. Windows installers are built locally with
+          # `pnpm build:desktop` and attached to the draft release by hand, so
+          # CI doesn't spend runner minutes on them. To put Windows back, restore
+          # the matrix entry below plus the two MSIX steps (generate visual
+          # assets before the build, upload them after) — see git history.
+          #   - platform: windows-latest
+          #     args: --bundles nsis,msi
+          #     rust-targets: ''
           - platform: ubuntu-22.04
             args: --bundles appimage,deb,rpm
-            rust-targets: ''
-          - platform: windows-latest
-            args: --bundles nsis,msi
             rust-targets: ''
 
     runs-on: ${{ matrix.platform }}
@@ -38,11 +43,16 @@ jobs:
             patchelf \
             rpm
 
+      # Must come before setup-node: the pnpm cache resolver shells out to
+      # pnpm to locate the store directory.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: npm
+          cache: pnpm
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -55,11 +65,7 @@ jobs:
           workspaces: ./src-tauri -> target
 
       - name: Install frontend dependencies
-        run: npm ci
-
-      - name: Generate MSIX Visual Assets
-        if: matrix.platform == 'windows-latest'
-        run: npm run msix:assets
+        run: pnpm install --frozen-lockfile
 
       - name: Download quran_static.db
         run: gh release download data --pattern "quran_static.db" --dir src-tauri/data --clobber
@@ -81,20 +87,10 @@ jobs:
 
             | Platform | File |
             |----------|------|
-            | Windows  | `.exe` (NSIS installer) or `.msi` |
+            | Windows  | `.msix` |
             | Linux | `.AppImage`, `.deb`, or `.rpm` |
 
             See the assets below to download and install.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
-
-      - name: Upload MSIX Visual Assets + manifest
-        if: matrix.platform == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: msix-visual-assets
-          path: |
-            src-tauri/msix/Assets/**
-            src-tauri/msix/AppxManifest.xml
-          if-no-files-found: error

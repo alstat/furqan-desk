@@ -23,8 +23,12 @@ jobs:
       - name: Install SQLite
         run: sudo apt-get install -y libsqlite3-dev
 
+      # gen-db is a standalone crate (rusqlite + serde_json only), so this job
+      # needs no GTK/WebKit dev packages. Don't turn it into an example inside
+      # src-tauri: that would build the app lib and all of Tauri, and this job
+      # installs only libsqlite3-dev.
       - name: Build quran_static.db
-        run: cargo run --manifest-path gen-db/Cargo.toml --release
+        run: cargo run -p gen-db --release
 
       - name: Upload quran_static.db to data release
         run: gh release upload data src-tauri/data/quran_static.db --clobber

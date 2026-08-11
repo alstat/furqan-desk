@@ -8,14 +8,11 @@ default-run = "AyahLab"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-# Build-time database generator: `cargo run --release --example gen-db` (from
-# src-tauri/) rebuilds data/quran_static.db from the JSON/SQL sources under
-# data/. It is the only generator — keep DB_VERSION in src/gen_db_tool.rs and
-# src/db.rs in step, or the app refuses to start against a stale dataset.
-# An example (not a [[bin]]) so the Tauri bundler doesn't try to ship it.
-[[example]]
-name = "gen-db"
-path = "src/gen_db_tool.rs"
+# The dataset generator lives in the ../gen-db crate, not here: an example in
+# this package would build this lib and therefore all of Tauri (GTK/WebKit on
+# Linux) just to write a SQLite file. Rebuild with `cargo run -p gen-db
+# --release` from the workspace root, and keep DB_VERSION in gen-db/src/main.rs
+# and src/db.rs in step — src/db.rs::db_version_matches_generator enforces it.
 
 [lib]
 # The `_lib` suffix may seem redundant but it is necessary

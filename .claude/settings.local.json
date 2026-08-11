@@ -309,7 +309,14 @@
       "Bash(export SP=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/cad45958-7bef-4ed9-8cd4-59df97cdde54/scratchpad/winprobe)",
       "Bash(git stash *)",
       "Bash(awk '/^name = \"AyahLab\"$/{found=1} found{print; if\\(/^$/ && NR>1 && found>1\\) exit; found++}' src-tauri/Cargo.lock)",
-      "Bash(echo \"  tafsir_authors: $\\(sqlite3 src-tauri/data/quran_static.db 'SELECT count\\(*\\) FROM tafsir_authors;'\\)\")"
+      "Bash(echo \"  tafsir_authors: $\\(sqlite3 src-tauri/data/quran_static.db 'SELECT count\\(*\\) FROM tafsir_authors;'\\)\")",
+      "Bash(pnpm install *)",
+      "Bash(pnpm dlx *)",
+      "Bash(npx --yes js-yaml .github/workflows/release.yml)",
+      "Bash(gh repo *)",
+      "Bash(git ls-tree *)",
+      "Bash(pnpm build *)",
+      "Bash(npx --yes js-yaml .github/workflows/update-data-release.yml)"
     ]
   }
 }
