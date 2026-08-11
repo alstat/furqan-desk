@@ -304,7 +304,11 @@
       "Bash(PATH=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/cad45958-7bef-4ed9-8cd4-59df97cdde54/scratchpad/fakebin:/usr/bin:/bin node scripts/tauri-runner.mjs dev)",
       "Bash(corepack enable *)",
       "Bash(COREPACK_ENABLE_DOWNLOAD_PROMPT=0 pnpm --version)",
-      "Bash(pnpm run *)"
+      "Bash(pnpm run *)",
+      "Bash(cargo tree *)",
+      "Bash(export SP=/private/tmp/claude-501/-Users-al-ahmadgaidasaad-Documents-Dev-furqan-desk/cad45958-7bef-4ed9-8cd4-59df97cdde54/scratchpad/winprobe)",
+      "Bash(git stash *)",
+      "Bash(awk '/^name = \"AyahLab\"$/{found=1} found{print; if\\(/^$/ && NR>1 && found>1\\) exit; found++}' src-tauri/Cargo.lock)"
     ]
   }
 }
