@@ -43,6 +43,7 @@ dependencies = [
  "typst-pdf",
  "typst-svg",
  "typstyle-core",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]

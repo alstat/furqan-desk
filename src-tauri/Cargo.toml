@@ -66,6 +66,12 @@ tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
+# MessageBoxW only, so a startup panic in a windows_subsystem="windows" build
+# reports itself instead of vanishing (see src/startup.rs). Already in the
+# dependency graph via Tauri, so this adds no extra compilation.
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { version = "0.60", features = ["Win32_UI_WindowsAndMessaging"] }
+
 # git2 powers the File Explorer's VCS integration (status highlighting +
 # .gitignore graying). Available on desktop (macOS/Linux via unix, plus
 # Windows); vendored libgit2 keeps the build self-contained on every OS.
