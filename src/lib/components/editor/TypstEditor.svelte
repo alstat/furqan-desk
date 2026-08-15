@@ -229,27 +229,64 @@
 
     const IMPORT_RE = /#import\s+"@([\w-]+)\/([\w-]+):([\d.]+)"/g;
 
+    // Package specs already confirmed present on disk. A document's `#import`
+    // lines almost never change between compiles, so without this every debounce
+    // tick paid a `check_typst_package` IPC round trip per import just to be
+    // told again that nothing is missing.
+    const satisfiedPackages = new Set<string>();
+
     async function ensurePackagesInstalled(source: string): Promise<void> {
-        const imports: { namespace: string; name: string; version: string }[] =
-            [];
+        const imports: {
+            namespace: string;
+            name: string;
+            version: string;
+            key: string;
+        }[] = [];
+        const seen = new Set<string>();
         for (const m of source.matchAll(IMPORT_RE)) {
-            imports.push({ namespace: m[1], name: m[2], version: m[3] });
+            const key = `@${m[1]}/${m[2]}:${m[3]}`;
+            // Dedupe repeated imports of the same package within one document.
+            if (seen.has(key) || satisfiedPackages.has(key)) continue;
+            seen.add(key);
+            imports.push({
+                namespace: m[1],
+                name: m[2],
+                version: m[3],
+                key,
+            });
         }
         if (imports.length === 0) return;
 
         const installed = await Promise.all(
-            imports.map((p) => invoke<boolean>("check_typst_package", p)),
+            imports.map(({ namespace, name, version }) =>
+                invoke<boolean>("check_typst_package", {
+                    namespace,
+                    name,
+                    version,
+                }),
+            ),
         );
-        const missing = imports.filter((_, i) => !installed[i]);
+        const missing = imports.filter((p, i) => {
+            if (installed[i]) satisfiedPackages.add(p.key);
+            return !installed[i];
+        });
         if (missing.length === 0) return;
 
         await Promise.all(
             missing.map((p) =>
-                invoke("install_typst_package", p).catch((e) => {
-                    throw new Error(
-                        `Package install failed: @${p.namespace}/${p.name}:${p.version} — ${e}`,
-                    );
-                }),
+                invoke("install_typst_package", {
+                    namespace: p.namespace,
+                    name: p.name,
+                    version: p.version,
+                })
+                    .then(() => {
+                        satisfiedPackages.add(p.key);
+                    })
+                    .catch((e) => {
+                        throw new Error(
+                            `Package install failed: @${p.namespace}/${p.name}:${p.version} — ${e}`,
+                        );
+                    }),
             ),
         );
     }

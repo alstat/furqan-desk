@@ -42,6 +42,8 @@
 
     let timer: ReturnType<typeof setTimeout> | undefined;
     let seq = 0;
+    /** Text of the last check that actually produced highlights. */
+    let lastChecked: string | null = null;
 
     const HIGHLIGHT_SUPPORTED =
         typeof CSS !== "undefined" && "highlights" in CSS;
@@ -51,7 +53,12 @@
         // Edits get the typing debounce; language/ignore/fix changes re-check
         // right away so underlines clear or appear immediately.
         const unregister = editor.registerUpdateListener(() => schedule(400));
-        const unsubRev = spellRevision.subscribe(() => schedule(0));
+        // The dictionary, language or ignore list changed, so the same text can
+        // now yield a different answer — drop the memo before re-checking.
+        const unsubRev = spellRevision.subscribe(() => {
+            lastChecked = null;
+            schedule(0);
+        });
         root?.addEventListener("contextmenu", onContextMenu);
         return () => {
             clearTimeout(timer);
@@ -71,6 +78,7 @@
     function clearHighlight() {
         if (HIGHLIGHT_SUPPORTED) CSS.highlights.delete("spell-error");
         flagged = [];
+        lastChecked = null;
     }
 
     // Collect the editable text nodes under the root, skipping decorator
@@ -122,15 +130,35 @@
             combined += text + "\n";
         }
 
+        // Nothing to redo when the visible text is byte-for-byte what was last
+        // checked — a Lexical update fires for selection and formatting changes
+        // too, and re-checking then costs a full document round trip.
+        if (combined === lastChecked) return;
+
         const misspellings: Misspelling[] = await checkText(combined);
         if (mySeq !== seq) return; // superseded while awaiting
+        lastChecked = combined;
+
+        // `segments` is sorted by offset, so binary-search it rather than
+        // scanning: a long document with many flagged words otherwise costs
+        // segments × misspellings comparisons.
+        const findSegment = (start: number) => {
+            let lo = 0;
+            let hi = segments.length - 1;
+            while (lo <= hi) {
+                const mid = (lo + hi) >> 1;
+                const s = segments[mid];
+                if (start < s.offset) hi = mid - 1;
+                else if (start >= s.offset + s.length) lo = mid + 1;
+                else return s;
+            }
+            return undefined;
+        };
 
         const next: Flagged[] = [];
         for (const m of misspellings) {
-            const seg = segments.find(
-                (s) => m.start >= s.offset && m.end <= s.offset + s.length,
-            );
-            if (!seg) continue;
+            const seg = findSegment(m.start);
+            if (!seg || m.end > seg.offset + seg.length) continue;
             const start = m.start - seg.offset;
             const end = m.end - seg.offset;
             try {

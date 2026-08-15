@@ -1,4 +1,13 @@
-<script lang="ts">
+<!--
+  Everything that does not depend on a prop lives in `<script module>`: the ten
+  editor themes, the Typst stream parser, the fold service and the go-to-
+  definition handlers. Built per-instance, they were reconstructed on every
+  mount — ten `EditorView.theme` + ten `HighlightStyle.define` for the one theme
+  actually in use — which is paid on each tab switch that remounts an editor and
+  once per pane when a split opens. Module scope builds them for the whole app
+  instead, and `getThemeExt` now builds each theme only on first use.
+-->
+<script module lang="ts">
     import { onMount, untrack } from "svelte";
     import {
         EditorView,
@@ -87,40 +96,6 @@
     import { openOrFocusTab, tabs } from "$lib/stores/tabs.store";
     import { get } from "svelte/store";
 
-    // ── Props ─────────────────────────────────────────────────────────────────
-
-    let {
-        value = "",
-        language,
-        extraKeymap = [],
-        extensions: extraExtensions = [],
-        class: className = "",
-        lineWrap = true,
-        aiSelectionTools = false,
-        aiContextPrompt,
-        askAiContextPrompt,
-        filePath,
-        scrollKey = null,
-        ownerTabId = null,
-        onchange,
-    }: {
-        value?: string;
-        language: "julia" | "typst" | "text";
-        extraKeymap?: KeyBinding[];
-        extensions?: Extension[];
-        class?: string;
-        lineWrap?: boolean;
-        aiSelectionTools?: boolean;
-        aiContextPrompt?: string;
-        askAiContextPrompt?: string;
-        filePath?: string | null;
-        scrollKey?: string | null;
-        /** Tab this view edits — registers it in `codeMirrorViewsByTab` so a
-         *  split panel's action bar can address this editor specifically. */
-        ownerTabId?: string | null;
-        onchange?: (newValue: string) => void;
-    } = $props();
-
     type ScrollMap = Map<string, number>;
     const SCROLL_BY_KEY: ScrollMap = (() => {
         const g = globalThis as unknown as {
@@ -132,33 +107,6 @@
         g.__codeMirrorScrollByKey = m;
         return m;
     })();
-    let lastScrollKey: string | null = null;
-    let restoringScroll = false;
-    let suppressOnChange = false;
-
-    let aiSelection = $state<{
-        from: number;
-        to: number;
-        text: string;
-        x: number;
-        y: number;
-    } | null>(null);
-
-    // Misspelled word that was right-clicked; drives the suggestions menu.
-    let spellContext = $state<SpellContextInfo | null>(null);
-
-    function replaceSpelling(suggestion: string) {
-        if (view && spellContext) {
-            applySpellReplacement(
-                view,
-                spellContext.from,
-                spellContext.to,
-                suggestion,
-            );
-            forceSpellRecheck();
-        }
-        spellContext = null;
-    }
 
     // ── Ayu Light theme ───────────────────────────────────────────────────────
 
@@ -1078,21 +1026,35 @@
 
     // ── Theme / language helpers ───────────────────────────────────────────────
 
-    const themeExtensions: Record<string, Extension[]> = {
-        "ayu-light": [ayuLightBase, syntaxHighlighting(ayuLightHighlight)],
-        "ayu-mirage": [ayuMirageBase, syntaxHighlighting(ayuMirageHighlight)],
-        "gruvbox-light": makeTheme(gruvboxLight),
-        "gruvbox-dark": makeTheme(gruvboxDark),
-        "monokai-light": makeTheme(monokaiLight),
-        "monokai-dark": makeTheme(monokaiDark),
-        "solarized-light": makeTheme(solarizedLight),
-        "solarized-dark": makeTheme(solarizedDark),
-        "tokyo-night-light": makeTheme(tokyoNightLight),
-        "tokyo-night-dark": makeTheme(tokyoNightDark),
+    // Built on first use and cached for the lifetime of the app: a session
+    // touches one or two themes, so constructing all ten up front is wasted
+    // work — each is a StyleModule plus a compiled highlight style.
+    const themeFactories: Record<string, () => Extension[]> = {
+        "ayu-light": () => [ayuLightBase, syntaxHighlighting(ayuLightHighlight)],
+        "ayu-mirage": () => [
+            ayuMirageBase,
+            syntaxHighlighting(ayuMirageHighlight),
+        ],
+        "gruvbox-light": () => makeTheme(gruvboxLight),
+        "gruvbox-dark": () => makeTheme(gruvboxDark),
+        "monokai-light": () => makeTheme(monokaiLight),
+        "monokai-dark": () => makeTheme(monokaiDark),
+        "solarized-light": () => makeTheme(solarizedLight),
+        "solarized-dark": () => makeTheme(solarizedDark),
+        "tokyo-night-light": () => makeTheme(tokyoNightLight),
+        "tokyo-night-dark": () => makeTheme(tokyoNightDark),
     };
 
+    const themeCache = new Map<string, Extension[]>();
+
     function getThemeExt(theme: string): Extension[] {
-        return themeExtensions[theme] ?? themeExtensions["ayu-light"];
+        const name = theme in themeFactories ? theme : "ayu-light";
+        let ext = themeCache.get(name);
+        if (!ext) {
+            ext = themeFactories[name]();
+            themeCache.set(name, ext);
+        }
+        return ext;
     }
 
     const typstCommentData = typstLanguage.data.of({
@@ -1178,111 +1140,6 @@
         foldGutter({ markerDOM: foldMarkerDOM }),
         foldStyleTheme,
     ];
-
-    // ── Editor setup ──────────────────────────────────────────────────────────
-
-    const themeComp = new Compartment();
-    const langComp = new Compartment();
-    const wrapComp = new Compartment();
-    const indentComp = new Compartment();
-
-    let container: HTMLDivElement;
-    let view: EditorView;
-    // Reactive "the view is mounted" flag so effects that need `view` (which is
-    // not reactive) re-run once it exists.
-    let ready = $state(false);
-
-    function saveScroll(key: string | null = lastScrollKey): void {
-        if (!key || !view || restoringScroll) return;
-        // Svelte 5 detaches the DOM before effect teardown runs, and a
-        // detached scrollDOM reads scrollTop 0 — saving then would clobber
-        // the offset captured by the scroll listener while the view was live.
-        if (!view.scrollDOM.isConnected) return;
-        SCROLL_BY_KEY.set(key, view.scrollDOM.scrollTop);
-    }
-
-    function restoreScroll(key: string): void {
-        if (!view) return;
-        const target = SCROLL_BY_KEY.get(key);
-        if (target === undefined) return;
-
-        restoringScroll = true;
-        let attempts = 0;
-        let stableFrames = 0;
-        const MAX_ATTEMPTS = 30;
-        const apply = () => {
-            if (!view || lastScrollKey !== key) {
-                restoringScroll = false;
-                return;
-            }
-            view.scrollDOM.scrollTop = target;
-            const drift = Math.abs(view.scrollDOM.scrollTop - target);
-            stableFrames = drift <= 1 ? stableFrames + 1 : 0;
-            attempts += 1;
-            if (stableFrames < 2 && attempts < MAX_ATTEMPTS) {
-                requestAnimationFrame(apply);
-            } else {
-                requestAnimationFrame(() => {
-                    restoringScroll = false;
-                });
-            }
-        };
-
-        requestAnimationFrame(apply);
-    }
-
-    function updateAiSelection() {
-        if (!aiSelectionTools || !view || !$isPro) {
-            aiSelection = null;
-            return;
-        }
-
-        const selection = view.state.selection.main;
-        if (selection.empty) {
-            aiSelection = null;
-            return;
-        }
-
-        const from = Math.min(selection.from, selection.to);
-        const to = Math.max(selection.from, selection.to);
-        const text = view.state.sliceDoc(from, to);
-        if (!text.trim()) {
-            aiSelection = null;
-            return;
-        }
-
-        const start = view.coordsAtPos(from);
-        const end = view.coordsAtPos(to);
-        if (!start && !end) {
-            aiSelection = null;
-            return;
-        }
-
-        const left = start?.left ?? end!.left;
-        const right = end?.right ?? start!.right;
-        const top = Math.min(start?.top ?? end!.top, end?.top ?? start!.top);
-        const viewportWidth = window.innerWidth || 0;
-        aiSelection = {
-            from,
-            to,
-            text,
-            x: Math.max(180, Math.min(viewportWidth - 180, (left + right) / 2)),
-            y: Math.max(12, top - 8),
-        };
-    }
-
-    function replaceAiSelection(replacement: string) {
-        if (!view || !aiSelection) return;
-        const from = Math.min(aiSelection.from, view.state.doc.length);
-        const to = Math.min(aiSelection.to, view.state.doc.length);
-        view.dispatch({
-            changes: { from, to, insert: replacement },
-            selection: { anchor: from + replacement.length },
-            scrollIntoView: true,
-        });
-        view.focus();
-        aiSelection = null;
-    }
 
     // ── Julia "go to definition" (Ctrl/Cmd + hover & click) ───────────────────
 
@@ -1492,6 +1349,181 @@
             return false;
         },
     });
+</script>
+
+<script lang="ts">
+    // ── Props ─────────────────────────────────────────────────────────────────
+
+    let {
+        value = "",
+        language,
+        extraKeymap = [],
+        extensions: extraExtensions = [],
+        class: className = "",
+        lineWrap = true,
+        aiSelectionTools = false,
+        aiContextPrompt,
+        askAiContextPrompt,
+        filePath,
+        scrollKey = null,
+        ownerTabId = null,
+        onchange,
+    }: {
+        value?: string;
+        language: "julia" | "typst" | "text";
+        extraKeymap?: KeyBinding[];
+        extensions?: Extension[];
+        class?: string;
+        lineWrap?: boolean;
+        aiSelectionTools?: boolean;
+        aiContextPrompt?: string;
+        askAiContextPrompt?: string;
+        filePath?: string | null;
+        scrollKey?: string | null;
+        /** Tab this view edits — registers it in `codeMirrorViewsByTab` so a
+         *  split panel's action bar can address this editor specifically. */
+        ownerTabId?: string | null;
+        onchange?: (newValue: string) => void;
+    } = $props();
+
+    let lastScrollKey: string | null = null;
+    let restoringScroll = false;
+    let suppressOnChange = false;
+    // The last document text this editor handed to `onchange`. When that value
+    // comes back around through the store as a new `value` prop — which is the
+    // normal path for every keystroke — the sync effect can skip stringifying
+    // the whole document just to discover it already matches.
+    let lastEmitted: string | null = null;
+
+    let aiSelection = $state<{
+        from: number;
+        to: number;
+        text: string;
+        x: number;
+        y: number;
+    } | null>(null);
+
+    // Misspelled word that was right-clicked; drives the suggestions menu.
+    let spellContext = $state<SpellContextInfo | null>(null);
+
+    function replaceSpelling(suggestion: string) {
+        if (view && spellContext) {
+            applySpellReplacement(
+                view,
+                spellContext.from,
+                spellContext.to,
+                suggestion,
+            );
+            forceSpellRecheck();
+        }
+        spellContext = null;
+    }
+
+    // ── Editor setup ──────────────────────────────────────────────────────────
+
+    const themeComp = new Compartment();
+    const langComp = new Compartment();
+    const wrapComp = new Compartment();
+    const indentComp = new Compartment();
+
+    let container: HTMLDivElement;
+    let view: EditorView;
+    // Reactive "the view is mounted" flag so effects that need `view` (which is
+    // not reactive) re-run once it exists.
+    let ready = $state(false);
+
+    function saveScroll(key: string | null = lastScrollKey): void {
+        if (!key || !view || restoringScroll) return;
+        // Svelte 5 detaches the DOM before effect teardown runs, and a
+        // detached scrollDOM reads scrollTop 0 — saving then would clobber
+        // the offset captured by the scroll listener while the view was live.
+        if (!view.scrollDOM.isConnected) return;
+        SCROLL_BY_KEY.set(key, view.scrollDOM.scrollTop);
+    }
+
+    function restoreScroll(key: string): void {
+        if (!view) return;
+        const target = SCROLL_BY_KEY.get(key);
+        if (target === undefined) return;
+
+        restoringScroll = true;
+        let attempts = 0;
+        let stableFrames = 0;
+        const MAX_ATTEMPTS = 30;
+        const apply = () => {
+            if (!view || lastScrollKey !== key) {
+                restoringScroll = false;
+                return;
+            }
+            view.scrollDOM.scrollTop = target;
+            const drift = Math.abs(view.scrollDOM.scrollTop - target);
+            stableFrames = drift <= 1 ? stableFrames + 1 : 0;
+            attempts += 1;
+            if (stableFrames < 2 && attempts < MAX_ATTEMPTS) {
+                requestAnimationFrame(apply);
+            } else {
+                requestAnimationFrame(() => {
+                    restoringScroll = false;
+                });
+            }
+        };
+
+        requestAnimationFrame(apply);
+    }
+
+    function updateAiSelection() {
+        if (!aiSelectionTools || !view || !$isPro) {
+            aiSelection = null;
+            return;
+        }
+
+        const selection = view.state.selection.main;
+        if (selection.empty) {
+            aiSelection = null;
+            return;
+        }
+
+        const from = Math.min(selection.from, selection.to);
+        const to = Math.max(selection.from, selection.to);
+        const text = view.state.sliceDoc(from, to);
+        if (!text.trim()) {
+            aiSelection = null;
+            return;
+        }
+
+        const start = view.coordsAtPos(from);
+        const end = view.coordsAtPos(to);
+        if (!start && !end) {
+            aiSelection = null;
+            return;
+        }
+
+        const left = start?.left ?? end!.left;
+        const right = end?.right ?? start!.right;
+        const top = Math.min(start?.top ?? end!.top, end?.top ?? start!.top);
+        const viewportWidth = window.innerWidth || 0;
+        aiSelection = {
+            from,
+            to,
+            text,
+            x: Math.max(180, Math.min(viewportWidth - 180, (left + right) / 2)),
+            y: Math.max(12, top - 8),
+        };
+    }
+
+    function replaceAiSelection(replacement: string) {
+        if (!view || !aiSelection) return;
+        const from = Math.min(aiSelection.from, view.state.doc.length);
+        const to = Math.min(aiSelection.to, view.state.doc.length);
+        view.dispatch({
+            changes: { from, to, insert: replacement },
+            selection: { anchor: from + replacement.length },
+            scrollIntoView: true,
+        });
+        view.focus();
+        aiSelection = null;
+    }
+
 
     // ── Typst "go to import" (Ctrl/Cmd + click on an #import/#include path) ────
 
@@ -1598,10 +1630,27 @@
         },
     });
 
+    // Last depths published for `ownerTabId`. The update listener runs on every
+    // transaction — including plain cursor moves — and this store is a map that
+    // is replaced wholesale on write, so republishing unchanged depths woke
+    // every subscriber for nothing.
+    let lastCanUndo: boolean | null = null;
+    let lastCanRedo: boolean | null = null;
+
     function setTabHistory(
         id: string,
         depths: { canUndo: boolean; canRedo: boolean },
+        force = false,
     ) {
+        if (
+            !force &&
+            depths.canUndo === lastCanUndo &&
+            depths.canRedo === lastCanRedo
+        ) {
+            return;
+        }
+        lastCanUndo = depths.canUndo;
+        lastCanRedo = depths.canRedo;
         codeMirrorHistoryByTab.update((m) => ({ ...m, [id]: depths }));
     }
 
@@ -1614,11 +1663,19 @@
         const v = ready ? view : null;
         if (!id || !v) return;
         codeMirrorViewsByTab.update((m) => ({ ...m, [id]: v }));
-        setTabHistory(id, {
-            canUndo: undoDepth(v.state) > 0,
-            canRedo: redoDepth(v.state) > 0,
-        });
+        setTabHistory(
+            id,
+            {
+                canUndo: undoDepth(v.state) > 0,
+                canRedo: redoDepth(v.state) > 0,
+            },
+            // This entry is being (re)created, so publish regardless of what
+            // was last seen — the store may not carry it at all.
+            true,
+        );
         return () => {
+            lastCanUndo = null;
+            lastCanRedo = null;
             // Another editor may already have claimed the key (remount races),
             // so only retract the entry while it still points at our view.
             let owned = false;
@@ -1702,7 +1759,9 @@
                 ...extraExtensions,
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged && !suppressOnChange) {
-                        onchange?.(update.state.doc.toString());
+                        const text = update.state.doc.toString();
+                        lastEmitted = text;
+                        onchange?.(text);
                     }
                     if (
                         update.selectionSet ||
@@ -1753,23 +1812,34 @@
     $effect(() => {
         if (!view) return;
         const newValue = value;
-        const currentDoc = view.state.doc.toString();
-        if (newValue !== currentDoc) {
-            const { main } = view.state.selection;
-            const len = newValue.length;
-            suppressOnChange = true;
-            try {
-                view.dispatch({
-                    changes: { from: 0, to: currentDoc.length, insert: newValue },
-                    selection: {
-                        anchor: Math.min(main.anchor, len),
-                        head: Math.min(main.head, len),
-                    },
-                    annotations: Transaction.addToHistory.of(false),
-                });
-            } finally {
-                suppressOnChange = false;
-            }
+        // Fast path for the common case: this is our own edit coming back
+        // around through the tabs store. Comparing against the string we just
+        // emitted avoids materialising the whole document a second time on
+        // every keystroke — on a large file that copy was as expensive as the
+        // edit itself.
+        if (newValue === lastEmitted) return;
+        // Cheap structural reject before the full comparison.
+        if (newValue.length === view.state.doc.length) {
+            const currentDoc = view.state.doc.toString();
+            lastEmitted = currentDoc;
+            if (newValue === currentDoc) return;
+        }
+        const docLength = view.state.doc.length;
+        const { main } = view.state.selection;
+        const len = newValue.length;
+        suppressOnChange = true;
+        try {
+            view.dispatch({
+                changes: { from: 0, to: docLength, insert: newValue },
+                selection: {
+                    anchor: Math.min(main.anchor, len),
+                    head: Math.min(main.head, len),
+                },
+                annotations: Transaction.addToHistory.of(false),
+            });
+            lastEmitted = newValue;
+        } finally {
+            suppressOnChange = false;
         }
     });
 
