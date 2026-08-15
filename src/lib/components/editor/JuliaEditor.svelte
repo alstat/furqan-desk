@@ -656,6 +656,7 @@
                     {askAiContextPrompt}
                     filePath={effectiveTab.path ?? null}
                     scrollKey={editorScrollKey}
+                    ownerTabId={effectiveTab.id}
                     onchange={handleInput}
                     class="h-full font-mono"
                 />

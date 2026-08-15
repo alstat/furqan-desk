@@ -13,9 +13,20 @@ import {
     openFolderPath,
     folderRefreshTrigger,
     activeTab,
-    activeTabId,
+    tabs,
     markTabSaved,
 } from "$lib/stores/tabs.store";
+import type { EditorTab } from "$lib/stores/tabs.store";
+
+/**
+ * Resolve the tab an action targets. Split layouts render one action bar per
+ * panel and pass that panel's tab id explicitly; everything else (native menu,
+ * single-panel action bar) omits it and follows the active tab.
+ */
+function resolveTab(tabId?: string | null): EditorTab | null {
+    if (!tabId) return get(activeTab);
+    return get(tabs).find((t) => t.id === tabId) ?? null;
+}
 
 /** Open a single file via the OS dialog and load it into a tab. */
 export async function openFile(): Promise<void> {
@@ -46,11 +57,11 @@ export async function openFolder(): Promise<void> {
 }
 
 /**
- * Save the active tab to its existing path, prompting for a location only when
- * the tab has never been saved.
+ * Save a tab to its existing path, prompting for a location only when the tab
+ * has never been saved. Defaults to the active tab.
  */
-export async function saveFile(): Promise<void> {
-    const tab = get(activeTab);
+export async function saveFile(tabId?: string | null): Promise<void> {
+    const tab = resolveTab(tabId);
     if (!tab) return;
 
     if (tab.type === "lexical") {
@@ -72,7 +83,7 @@ export async function saveFile(): Promise<void> {
             if (!path) return;
         }
         await writeTextFile(path, json);
-        markTabSaved(get(activeTabId)!, path);
+        markTabSaved(tab.id, path);
     } else if (tab.type === "julia") {
         let path = tab.path;
         if (!path) {
@@ -83,7 +94,7 @@ export async function saveFile(): Promise<void> {
             if (!path) return;
         }
         await writeTextFile(path, tab.content);
-        markTabSaved(get(activeTabId)!, path);
+        markTabSaved(tab.id, path);
     } else {
         // typst / text / bib — save raw content
         let path = tab.path;
@@ -98,7 +109,7 @@ export async function saveFile(): Promise<void> {
             if (!path) return;
         }
         await writeTextFile(path, tab.content);
-        markTabSaved(get(activeTabId)!, path);
+        markTabSaved(tab.id, path);
         // A pinned preview (e.g. main.typ) imports other files from disk, so a
         // recompile after saving picks up edits to the just-saved chapter file.
         if (tab.type === "typst" || tab.type === "text") {
@@ -107,9 +118,9 @@ export async function saveFile(): Promise<void> {
     }
 }
 
-/** Always prompt for a new location and save the active tab there. */
-export async function saveAs(): Promise<void> {
-    const tab = get(activeTab);
+/** Always prompt for a new location and save the tab there (default: active tab). */
+export async function saveAs(tabId?: string | null): Promise<void> {
+    const tab = resolveTab(tabId);
     if (!tab) return;
 
     if (tab.type === "lexical") {
@@ -125,7 +136,7 @@ export async function saveAs(): Promise<void> {
         });
         if (!path) return;
         await writeTextFile(path, JSON.stringify(doc, null, 2));
-        markTabSaved(get(activeTabId)!, path);
+        markTabSaved(tab.id, path);
     } else if (tab.type === "julia") {
         const path = await saveDialog({
             title: "Save As",
@@ -134,7 +145,7 @@ export async function saveAs(): Promise<void> {
         });
         if (!path) return;
         await writeTextFile(path, tab.content);
-        markTabSaved(get(activeTabId)!, path);
+        markTabSaved(tab.id, path);
     } else {
         const ext = tab.type === "typst" ? "typ" : "txt";
         const path = await saveDialog({
@@ -144,6 +155,6 @@ export async function saveAs(): Promise<void> {
         });
         if (!path) return;
         await writeTextFile(path, tab.content);
-        markTabSaved(get(activeTabId)!, path);
+        markTabSaved(tab.id, path);
     }
 }

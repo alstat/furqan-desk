@@ -10,6 +10,7 @@
     import SurahWidget from "$lib/components/widgets/surah_ayah/SurahWidget.svelte";
     import EditorToolbar from "$lib/components/widgets/editor/EditorToolbar.svelte";
     import Sidebar from "$lib/components/sidebar/Sidebar.svelte";
+    import ActionBar from "$lib/components/lexical/components/actionbar/ActionBar.svelte";
     import TourOverlay from "$lib/components/tour/TourOverlay.svelte";
     import SplashScreen from "$lib/components/shared/SplashScreen.svelte";
     import UpdateToast from "$lib/components/shared/UpdateToast.svelte";
@@ -231,6 +232,10 @@
                     ? ''
                     : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]'}"
             >
+                <!-- The sidebar's action bar drives the host tab, so the partner
+                     panel carries its own bar pinned to the partner tab: each
+                     side of the split gets undo/redo/save for its own editor. -->
+                <ActionBar tabId={activeCrossGroup.partnerTabId} />
                 {#if partnerTab?.type === "julia"}
                     <!-- Partner=Julia: left = JuliaEditor with embedded REPL -->
                     <JuliaEditor

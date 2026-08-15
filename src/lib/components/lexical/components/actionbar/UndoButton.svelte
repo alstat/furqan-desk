@@ -12,10 +12,22 @@
         lexicalEditorInstance,
         codeMirrorViewInstance,
         codeMirrorCanUndo,
+        codeMirrorViewsByTab,
+        codeMirrorHistoryByTab,
     } from "$lib/stores/editor.store";
-    import { activeTab } from "$lib/stores/tabs.store";
+    import { activeTab, tabs } from "$lib/stores/tabs.store";
     import { get } from "svelte/store";
     import { t } from "$lib/i18n";
+
+    // In split layouts each panel renders its own action bar and names the tab
+    // it drives; omitting tabId keeps the single-bar behaviour of following the
+    // active tab.
+    let { tabId = null }: { tabId?: string | null } = $props();
+
+    const targetTab = $derived(
+        tabId ? ($tabs.find((tb) => tb.id === tabId) ?? null) : $activeTab,
+    );
+    const isLexical = $derived(targetTab?.type === "lexical");
 
     let lexicalCanUndo = $state(false);
     let unregister: (() => void) | null = null;
@@ -38,18 +50,27 @@
         }
     });
 
+    // A bar pinned to a panel addresses that panel's CodeMirror view; the
+    // unpinned bar keeps using the most recently mounted one.
+    const codeTabId = $derived(!isLexical && targetTab ? targetTab.id : null);
     const canUndo = $derived(
-        $activeTab?.type === "lexical" ? lexicalCanUndo : $codeMirrorCanUndo,
+        isLexical
+            ? lexicalCanUndo
+            : codeTabId && codeTabId in $codeMirrorHistoryByTab
+              ? $codeMirrorHistoryByTab[codeTabId].canUndo
+              : $codeMirrorCanUndo,
     );
 
     function handleUndo() {
-        if ($activeTab?.type === "lexical") {
+        if (isLexical) {
             get(lexicalEditorInstance)?.dispatchCommand(
                 UNDO_COMMAND,
                 undefined,
             );
         } else {
-            const view = get(codeMirrorViewInstance);
+            const view =
+                (codeTabId ? get(codeMirrorViewsByTab)[codeTabId] : null) ??
+                get(codeMirrorViewInstance);
             if (view) undo(view);
         }
     }

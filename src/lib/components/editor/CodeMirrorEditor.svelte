@@ -57,6 +57,8 @@
         codeMirrorViewInstance,
         codeMirrorCanUndo,
         codeMirrorCanRedo,
+        codeMirrorViewsByTab,
+        codeMirrorHistoryByTab,
         pendingEditorJump,
     } from "$lib/stores/editor.store";
     import { isPro } from "$lib/stores/auth.store";
@@ -99,6 +101,7 @@
         askAiContextPrompt,
         filePath,
         scrollKey = null,
+        ownerTabId = null,
         onchange,
     }: {
         value?: string;
@@ -112,6 +115,9 @@
         askAiContextPrompt?: string;
         filePath?: string | null;
         scrollKey?: string | null;
+        /** Tab this view edits — registers it in `codeMirrorViewsByTab` so a
+         *  split panel's action bar can address this editor specifically. */
+        ownerTabId?: string | null;
         onchange?: (newValue: string) => void;
     } = $props();
 
@@ -1592,6 +1598,44 @@
         },
     });
 
+    function setTabHistory(
+        id: string,
+        depths: { canUndo: boolean; canRedo: boolean },
+    ) {
+        codeMirrorHistoryByTab.update((m) => ({ ...m, [id]: depths }));
+    }
+
+    // Publish this view under the tab it edits so an action bar bound to one
+    // panel of a split can drive it directly. Kept out of onMount because
+    // ownerTabId follows $activeTab for the primary editor, which changes
+    // without a remount.
+    $effect(() => {
+        const id = ownerTabId;
+        const v = ready ? view : null;
+        if (!id || !v) return;
+        codeMirrorViewsByTab.update((m) => ({ ...m, [id]: v }));
+        setTabHistory(id, {
+            canUndo: undoDepth(v.state) > 0,
+            canRedo: redoDepth(v.state) > 0,
+        });
+        return () => {
+            // Another editor may already have claimed the key (remount races),
+            // so only retract the entry while it still points at our view.
+            let owned = false;
+            codeMirrorViewsByTab.update((m) => {
+                owned = m[id] === v;
+                if (!owned) return m;
+                const { [id]: _dropped, ...rest } = m;
+                return rest;
+            });
+            if (!owned) return;
+            codeMirrorHistoryByTab.update((m) => {
+                const { [id]: _dropped, ...rest } = m;
+                return rest;
+            });
+        };
+    });
+
     onMount(() => {
         const state = EditorState.create({
             doc: value,
@@ -1667,8 +1711,13 @@
                     ) {
                         updateAiSelection();
                     }
-                    codeMirrorCanUndo.set(undoDepth(update.state) > 0);
-                    codeMirrorCanRedo.set(redoDepth(update.state) > 0);
+                    const canUndo = undoDepth(update.state) > 0;
+                    const canRedo = redoDepth(update.state) > 0;
+                    codeMirrorCanUndo.set(canUndo);
+                    codeMirrorCanRedo.set(canRedo);
+                    if (ownerTabId) {
+                        setTabHistory(ownerTabId, { canUndo, canRedo });
+                    }
                 }),
             ],
         });

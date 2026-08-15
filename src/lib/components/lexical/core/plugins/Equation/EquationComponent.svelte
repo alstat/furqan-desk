@@ -6,6 +6,13 @@
     import { onMount, tick } from "svelte";
     import { getEditor } from "$lexical/core/composerContext.js";
     import { $isEquationNode as isEquationNode } from "./EquationNode";
+    import {
+        equationFontScale,
+        EQUATION_FONT_SCALE_DEFAULT,
+        EQUATION_FONT_SCALE_MIN,
+        EQUATION_FONT_SCALE_MAX,
+        EQUATION_FONT_SCALE_STEP,
+    } from "$lib/stores/equation.store";
     import { $getNodeByKey as getNodeByKey } from "lexical";
     import { createNodeSelectionStore } from "../../nodeSelectionStore.js";
     import Icon from "@iconify/svelte";
@@ -22,6 +29,10 @@
     }
 
     let { equation, isInline, nodeKey, autoEdit = false }: Props = $props();
+
+    // App-wide, persisted — see equation.store.ts. Every equation in every open
+    // document reads the same value, so the size control below resizes them all.
+    const fontScale = $derived($equationFontScale);
 
     let element: HTMLElement | null = $state(null);
     let previewEl: HTMLElement | null = $state(null);
@@ -115,7 +126,91 @@
         });
     }
 
+    // ── Equation size control ────────────────────────────────────────────────
+    // Clicking an equation (inline or display) opens a size control, mirroring
+    // the Quran block. The size is an app-wide preference, so the control
+    // resizes every equation in every tab at once and the choice is remembered
+    // for documents opened later. The popup is positioned fixed rather than
+    // nested inside the equation: KaTeX owns that element's innerHTML, and a
+    // wrapper would change how inline math sits in the surrounding text.
+    let showControls = $state(false);
+    let controlsEl = $state<HTMLElement | null>(null);
+    let controlsX = $state(0);
+    let controlsY = $state(0);
+    let controlsBelow = $state(false);
+
+    function positionControls() {
+        if (!element) return;
+        const rect = element.getBoundingClientRect();
+        const vw = window.innerWidth || 0;
+        controlsX = Math.max(70, Math.min(vw - 70, rect.left + rect.width / 2));
+        // Flip below when the equation sits too close to the top to fit above.
+        controlsBelow = rect.top < 48;
+        controlsY = controlsBelow ? rect.bottom + 8 : rect.top - 8;
+    }
+
+    function handleClick() {
+        // Deliberately no stopPropagation: Lexical keeps handling the click, so
+        // selecting/deleting an equation behaves exactly as it did before.
+        // onWindowClick below ignores clicks that land inside this equation.
+        positionControls();
+        showControls = true;
+    }
+
+    function onWindowClick(e: MouseEvent) {
+        if (!showControls) return;
+        const target = e.target as Node | null;
+        if (!target) return;
+        if (element?.contains(target) || controlsEl?.contains(target)) return;
+        showControls = false;
+    }
+
+    // Keep the popup pinned to its equation while the document scrolls. Capture
+    // phase, because the editor scrolls in a container, not the window.
+    $effect(() => {
+        if (!showControls) return;
+        const reposition = () => positionControls();
+        window.addEventListener("scroll", reposition, true);
+        window.addEventListener("resize", reposition);
+        return () => {
+            window.removeEventListener("scroll", reposition, true);
+            window.removeEventListener("resize", reposition);
+        };
+    });
+
+    // Resizing moves the equation the popup is anchored to, so re-anchor once
+    // the new size has been laid out.
+    $effect(() => {
+        void fontScale;
+        if (!showControls) return;
+        tick().then(positionControls);
+    });
+
+    // Writing to the store is enough: it clamps, persists, and every mounted
+    // equation re-renders from it. Deliberately not an `editor.update` — the
+    // size is a preference, not an edit, so it must not dirty the document.
+    function setScale(next: number) {
+        equationFontScale.set(next);
+    }
+
+    function increase(e: MouseEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        setScale(+(fontScale + EQUATION_FONT_SCALE_STEP).toFixed(2));
+    }
+    function decrease(e: MouseEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        setScale(+(fontScale - EQUATION_FONT_SCALE_STEP).toFixed(2));
+    }
+    function resetScale(e: MouseEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        setScale(EQUATION_FONT_SCALE_DEFAULT);
+    }
+
     function handleDoubleClick() {
+        showControls = false;
         isEditing = true;
         editableValue = equation;
     }
@@ -179,6 +274,8 @@
         }
     });
 </script>
+
+<svelte:window on:click={onWindowClick} />
 
 {#if isEditing}
     <!-- Inline equation editor card -->
@@ -282,22 +379,78 @@
     {/if}
 {:else if isInline}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
     <span
         class="SL_Theme__equation_inline cursor-pointer rounded px-0.5 hover:bg-brand-gold-100 hover:outline hover:outline-1 hover:outline-brand-gold-300 transition-colors"
         class:equation-selected={$isSelected}
         bind:this={element}
+        onclick={handleClick}
         ondblclick={handleDoubleClick}
+        style:font-size="{fontScale}em"
         title={$t("editor.dblclick_hint")}
     ></span>
 {:else}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
-        class="SL_Theme__equation_display cursor-pointer rounded-lg px-2 py-1 hover:bg-brand-gold-50 hover:outline hover:outline-1 hover:outline-brand-gold-300 transition-colors"
+        class="cursor-pointer rounded-lg px-2 pt-1 hover:bg-brand-gold-50 hover:outline hover:outline-1 hover:outline-brand-gold-300 transition-colors"
         class:equation-selected={$isSelected}
         bind:this={element}
+        onclick={handleClick}
         ondblclick={handleDoubleClick}
+        style:font-size="{fontScale}em"
         title={$t("editor.dblclick_hint")}
     ></div>
+{/if}
+
+{#if showControls && !isEditing}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_interactive_supports_focus -->
+    <div
+        bind:this={controlsEl}
+        contenteditable="false"
+        role="toolbar"
+        aria-label="Equation font size"
+        class="fixed z-[9999] flex items-center gap-0.5 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-md px-1 py-0.5"
+        style="left:{controlsX}px; top:{controlsY}px; transform: translate(-50%, {controlsBelow
+            ? '0'
+            : '-100%'});"
+        onclick={(e) => e.stopPropagation()}
+    >
+        <button
+            type="button"
+            onmousedown={(e) => e.preventDefault()}
+            onclick={decrease}
+            disabled={fontScale <= EQUATION_FONT_SCALE_MIN + 1e-6}
+            title="Decrease equation font size (all equations)"
+            aria-label="Decrease equation font size"
+            class="cursor-pointer flex h-5 w-5 items-center justify-center rounded-full text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-100 dark:hover:bg-[#414559] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+            <Icon icon="solar:minus-circle-linear" width="0.9rem" />
+        </button>
+        <button
+            type="button"
+            onmousedown={(e) => e.preventDefault()}
+            onclick={resetScale}
+            title="Reset equation font size (all equations)"
+            aria-label="Reset equation font size"
+            class="cursor-pointer min-w-[2.25rem] px-1 text-[10px] font-sans font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] hover:text-brand-gold-600 dark:hover:text-[#e5c890] transition-colors"
+        >
+            {Math.round(fontScale * 100)}%
+        </button>
+        <button
+            type="button"
+            onmousedown={(e) => e.preventDefault()}
+            onclick={increase}
+            disabled={fontScale >= EQUATION_FONT_SCALE_MAX - 1e-6}
+            title="Increase equation font size (all equations)"
+            aria-label="Increase equation font size"
+            class="cursor-pointer flex h-5 w-5 items-center justify-center rounded-full text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-100 dark:hover:bg-[#414559] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+            <Icon icon="solar:add-circle-linear" width="0.9rem" />
+        </button>
+    </div>
 {/if}
 
 <style>
