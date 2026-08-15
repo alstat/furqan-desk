@@ -9,8 +9,13 @@
     import { t } from "$lib/i18n";
     import { lexicalStateToTypst } from "$lib/components/lexical/utils/lexicalToTypst";
 
+    // tabId scopes the export to a specific panel in split layouts.
+    let { tabId = null }: { tabId?: string | null } = $props();
+
     async function exportTypst() {
-        const tab = get(activeTab);
+        const tab = tabId
+            ? (get(tabs).find((tb) => tb.id === tabId) ?? null)
+            : get(activeTab);
         if (!tab || tab.type !== "lexical") return;
         const editor = get(lexicalEditorInstance);
         if (!editor) return;

@@ -8,9 +8,19 @@
     import RedoButton from "./RedoButton.svelte";
     import UndoButton from "./UndoButton.svelte";
     import { zenMode, zenPeek } from "$lib/stores/editor.store";
-    import { activeTab } from "$lib/stores/tabs.store";
+    import { activeTab, tabs } from "$lib/stores/tabs.store";
 
-    let { topOffset = "-top-5" }: { topOffset?: string } = $props();
+    // tabId pins this bar to one panel's tab. Split layouts render one bar per
+    // panel and pass it explicitly; leaving it null keeps the single-bar
+    // behaviour of following whichever tab is active.
+    let {
+        topOffset = "-top-5",
+        tabId = null,
+    }: { topOffset?: string; tabId?: string | null } = $props();
+
+    const targetTab = $derived(
+        tabId ? ($tabs.find((t) => t.id === tabId) ?? null) : $activeTab,
+    );
 </script>
 
 <div
@@ -19,16 +29,16 @@
         : ''}"
 >
     <div class="mr-4 space-x-0.5">
-        <UndoButton />
-        <RedoButton />
+        <UndoButton {tabId} />
+        <RedoButton {tabId} />
     </div>
     <div class="ml-4 space-x-0.5">
         <ImportButton />
-        <ExportButton />
-        <SaveAsButton />
-        {#if $activeTab?.type === "lexical"}
-            <ExportDocxButton />
-            <ExportTypstButton />
+        <ExportButton {tabId} />
+        <SaveAsButton {tabId} />
+        {#if targetTab?.type === "lexical"}
+            <ExportDocxButton {tabId} />
+            <ExportTypstButton {tabId} />
         {/if}
     </div>
 </div>

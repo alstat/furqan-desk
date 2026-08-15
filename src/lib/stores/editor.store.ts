@@ -562,6 +562,18 @@ export const codeMirrorViewInstance: Writable<EditorView | null> =
 export const codeMirrorCanUndo: Writable<boolean> = writable(false);
 export const codeMirrorCanRedo: Writable<boolean> = writable(false);
 /**
+ * Live CodeMirror views and their history depths, keyed by the tab each one
+ * edits. Split layouts mount several editors at once, so `codeMirrorViewInstance`
+ * (last mount wins) can't tell them apart. An action bar pinned to one panel
+ * looks its view up here instead. Entries appear on mount and are removed on
+ * unmount, so a missing key just means "that tab isn't on screen".
+ */
+export const codeMirrorViewsByTab: Writable<Record<string, EditorView>> =
+  writable({});
+export const codeMirrorHistoryByTab: Writable<
+  Record<string, { canUndo: boolean; canRedo: boolean }>
+> = writable({});
+/**
  * A requested cursor jump into a specific file. The CodeMirror editor whose
  * `filePath` matches `path` performs the jump once it is mounted, then clears
  * this — so a jump can target a file that isn't focused (or open) yet, without
