@@ -316,7 +316,8 @@
       "Bash(gh repo *)",
       "Bash(git ls-tree *)",
       "Bash(pnpm build *)",
-      "Bash(npx --yes js-yaml .github/workflows/update-data-release.yml)"
+      "Bash(npx --yes js-yaml .github/workflows/update-data-release.yml)",
+      "Bash(awk -F: '{print $1}')"
     ]
   }
 }
