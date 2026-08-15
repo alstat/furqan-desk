@@ -201,14 +201,24 @@
         let done = false;
         let fallback1 = 0;
         let fallback2 = 0;
+        let unregister: (() => void) | null = null;
+
+        const stopListening = () => {
+            unregister?.();
+            unregister = null;
+        };
 
         const trigger = () => {
             if (done) return;
             done = true;
+            // The listener has served its purpose; leaving it registered would
+            // schedule an animation frame on every keystroke for the rest of
+            // the tab's life just to fall through the `done` check above.
+            stopListening();
             restoreScroll(tabId, key);
         };
 
-        const unregister = editor.registerUpdateListener(() => {
+        unregister = editor.registerUpdateListener(() => {
             requestAnimationFrame(trigger);
         });
 
@@ -220,7 +230,7 @@
 
         return () => {
             done = true;
-            unregister();
+            stopListening();
             cancelAnimationFrame(fallback1);
             cancelAnimationFrame(fallback2);
         };

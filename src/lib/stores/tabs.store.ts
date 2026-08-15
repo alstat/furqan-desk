@@ -18,13 +18,18 @@ export interface EditorTab {
 // ── Hot Exit (VS Code-style session persistence) ───────────────────────────────
 
 const HOT_EXIT_KEY = 'hot-exit-session';
+// The active tab id lives in its own key so that merely switching tabs — by far
+// the most frequent change — costs a short string write instead of
+// re-serialising every open file's full contents.
+const HOT_EXIT_ACTIVE_KEY = 'hot-exit-active-tab';
 
 interface HotExitData {
 	tabs: EditorTab[];
-	activeTabId: string | null;
+	/** Legacy: older sessions stored the active id alongside the tabs. */
+	activeTabId?: string | null;
 }
 
-function loadHotExit(): HotExitData | null {
+function loadHotExit(): { tabs: EditorTab[]; activeTabId: string | null } | null {
 	try {
 		if (typeof localStorage === 'undefined') return null;
 		const raw = localStorage.getItem(HOT_EXIT_KEY);
@@ -39,9 +44,11 @@ function loadHotExit(): HotExitData | null {
 			typeof t.name === 'string'
 		);
 		if (!valid.length) return null;
+		// Prefer the standalone key; fall back to the id embedded in older payloads.
+		const storedActive = localStorage.getItem(HOT_EXIT_ACTIVE_KEY) ?? data.activeTabId;
 		const validActiveId =
-			typeof data.activeTabId === 'string' && valid.some(t => t.id === data.activeTabId)
-				? data.activeTabId
+			typeof storedActive === 'string' && valid.some(t => t.id === storedActive)
+				? storedActive
 				: valid[0].id;
 		return { tabs: valid, activeTabId: validActiveId };
 	} catch {
@@ -52,6 +59,7 @@ function loadHotExit(): HotExitData | null {
 export function clearHotExit(): void {
 	try {
 		localStorage.removeItem(HOT_EXIT_KEY);
+		localStorage.removeItem(HOT_EXIT_ACTIVE_KEY);
 	} catch { /* ignore */ }
 }
 
@@ -60,25 +68,68 @@ const _hotExit = loadHotExit();
 export const tabs        = writable<EditorTab[]>(_hotExit?.tabs ?? []);
 export const activeTabId = writable<string | null>(_hotExit?.activeTabId ?? null);
 
-// Debounced save — fires 600 ms after the last tabs or activeTabId change.
+// Debounced save — fires 600 ms after the last tabs change. Serialising every
+// open file is the expensive part, so it runs on an idle callback: a pause in
+// typing is exactly when the main thread is free, but it is also when the user
+// is most likely to start typing again, and a 1 MB JSON.stringify + synchronous
+// localStorage write would show up as a stall.
 let _hotExitTimer: ReturnType<typeof setTimeout> | null = null;
+let _hotExitIdle: number | null = null;
+
+type IdleWindow = Window & {
+	requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+	cancelIdleCallback?: (handle: number) => void;
+};
+
+function whenIdle(cb: () => void): void {
+	const w = globalThis as unknown as IdleWindow;
+	if (typeof w.requestIdleCallback === 'function') {
+		_hotExitIdle = w.requestIdleCallback(cb, { timeout: 2000 });
+	} else {
+		_hotExitIdle = null;
+		cb();
+	}
+}
+
+function writeHotExitTabs(): void {
+	try {
+		const data: HotExitData = { tabs: get(tabs) };
+		localStorage.setItem(HOT_EXIT_KEY, JSON.stringify(data));
+	} catch { /* ignore */ }
+}
 
 function scheduleHotExitSave(): void {
 	if (_hotExitTimer !== null) clearTimeout(_hotExitTimer);
+	if (_hotExitIdle !== null) {
+		(globalThis as unknown as IdleWindow).cancelIdleCallback?.(_hotExitIdle);
+		_hotExitIdle = null;
+	}
 	_hotExitTimer = setTimeout(() => {
 		_hotExitTimer = null;
-		try {
-			const data: HotExitData = {
-				tabs: get(tabs),
-				activeTabId: get(activeTabId),
-			};
-			localStorage.setItem(HOT_EXIT_KEY, JSON.stringify(data));
-		} catch { /* ignore */ }
+		whenIdle(() => {
+			_hotExitIdle = null;
+			writeHotExitTabs();
+		});
 	}, 600);
 }
 
 tabs.subscribe(scheduleHotExitSave);
-activeTabId.subscribe(scheduleHotExitSave);
+
+// Cheap on its own — no debounce or idle deferral needed.
+activeTabId.subscribe((id) => {
+	try {
+		if (id === null) localStorage.removeItem(HOT_EXIT_ACTIVE_KEY);
+		else localStorage.setItem(HOT_EXIT_ACTIVE_KEY, id);
+	} catch { /* ignore */ }
+});
+
+// A pending idle save would be lost if the window goes away first; flush it.
+if (typeof window !== 'undefined') {
+	window.addEventListener('beforeunload', () => {
+		if (_hotExitTimer === null && _hotExitIdle === null) return;
+		writeHotExitTabs();
+	});
+}
 
 export const activeTab   = derived(
 	[tabs, activeTabId],
@@ -92,9 +143,10 @@ export const openFolderPath = writable<string | null>(null);
  *  openFolderPath is unchanged (e.g. user re-picks the same folder). */
 export const folderRefreshTrigger = writable<number>(0);
 
-// Non-reactive undo/redo (keyed by tab id — avoids store churn)
-export const undoHistory = new Map<string, string[]>();
-export const redoHistory = new Map<string, string[]>();
+// Undo/redo is owned by the editors themselves — CodeMirror's history()
+// extension for the code editors, Lexical's HistoryPlugin for the rich-text
+// one. This store deliberately keeps no snapshots of its own: doing so cost a
+// full copy of the document on every keystroke and nothing ever read them.
 
 // Allowlist of extensions that are safe to open in a text editor
 const FLAT_FILE_EXTENSIONS = new Set([
@@ -217,68 +269,24 @@ export function promoteTabToPermanent(id: string): void {
 	);
 }
 
-// Update a specific tab's content by id, mark dirty, push to undo history
+// Update a specific tab's content by id and mark it dirty. A write that would
+// change nothing is skipped entirely rather than pushed through the store —
+// tabs.update always publishes a fresh array, waking every subscriber.
 export function setTabContent(id: string, content: string): void {
 	const current = get(tabs).find(t => t.id === id);
 	if (!current) return;
-	const stack = undoHistory.get(id) ?? [];
-	stack.push(current.content);
-	if (stack.length > 50) stack.shift();
-	undoHistory.set(id, stack);
-	redoHistory.set(id, []);
+	if (current.content === content && current.isDirty && !current.isPreview) return;
 	tabs.update(ts =>
 		ts.map(t => (t.id === id ? { ...t, content, isDirty: true, isPreview: false } : t))
 	);
 }
 
-// Update active tab content, mark dirty, push to undo history
+// Update active tab content and mark it dirty.
 export function setActiveTabContent(content: string): void {
 	const id = get(activeTabId);
 	if (!id) return;
-	const current = get(tabs).find(t => t.id === id);
-	if (!current) return;
-	// Push old content to undo stack (cap at 100)
-	const stack = undoHistory.get(id) ?? [];
-	stack.push(current.content);
-	if (stack.length > 50) stack.shift();
-	undoHistory.set(id, stack);
-	redoHistory.set(id, []); // clear redo on new edit
 	// Editing a preview tab promotes it to permanent
-	tabs.update(ts =>
-		ts.map(t => (t.id === id ? { ...t, content, isDirty: true, isPreview: false } : t))
-	);
-}
-
-export function undoActiveTab(): void {
-	const id = get(activeTabId);
-	if (!id) return;
-	const stack = undoHistory.get(id) ?? [];
-	if (!stack.length) return;
-	const prev = stack.pop()!;
-	const cur = get(tabs).find(t => t.id === id)!;
-	const redo = redoHistory.get(id) ?? [];
-	redo.push(cur.content);
-	redoHistory.set(id, redo);
-	undoHistory.set(id, stack);
-	tabs.update(ts =>
-		ts.map(t => (t.id === id ? { ...t, content: prev, isDirty: true } : t))
-	);
-}
-
-export function redoActiveTab(): void {
-	const id = get(activeTabId);
-	if (!id) return;
-	const stack = redoHistory.get(id) ?? [];
-	if (!stack.length) return;
-	const next = stack.pop()!;
-	const cur = get(tabs).find(t => t.id === id)!;
-	const undo = undoHistory.get(id) ?? [];
-	undo.push(cur.content);
-	undoHistory.set(id, undo);
-	redoHistory.set(id, stack);
-	tabs.update(ts =>
-		ts.map(t => (t.id === id ? { ...t, content: next, isDirty: true } : t))
-	);
+	setTabContent(id, content);
 }
 
 export function markTabSaved(id: string, path: string): void {
@@ -460,8 +468,6 @@ export function closeTab(id: string): void {
 	if (get(activeTabId) === id) {
 		activeTabId.set(remaining[Math.min(idx, remaining.length - 1)].id);
 	}
-	undoHistory.delete(id);
-	redoHistory.delete(id);
 }
 
 export function toggleActiveTabType(): void {
