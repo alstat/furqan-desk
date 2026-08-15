@@ -15,6 +15,11 @@ export interface SerializedEquationNode extends SerializedLexicalNode {
     inline: boolean;
 }
 
+// Equation sizing is not stored here: it is an app-wide display preference kept
+// in `equationFontScale` (src/lib/stores/equation.store.ts), so every equation
+// in every document renders at the size the user last chose. The component
+// reads that store directly; the node only owns the LaTeX itself.
+
 export function $createEquationNode(equation: string, inline: boolean, autoEdit = false): EquationNode {
     return $applyNodeReplacement(new EquationNode(equation, inline, undefined, autoEdit));
 }
@@ -45,7 +50,7 @@ export class EquationNode extends DecoratorNode<DecoratorEquationType> {
     }
 
     static importJSON(serializedNode: SerializedEquationNode): EquationNode {
-        // used to reconstruct an EquationNode from its serialized form. 
+        // used to reconstruct an EquationNode from its serialized form.
         return $createEquationNode(serializedNode.equation, serializedNode.inline);
     }
 

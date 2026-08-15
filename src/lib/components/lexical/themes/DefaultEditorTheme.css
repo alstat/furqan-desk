@@ -6,8 +6,17 @@
  *
  *
  */
+/* No bottom padding: a block equation is followed by a real paragraph, and any
+   space the decorator adds under the math reads as an editable blank line that
+   isn't one — backspacing into it deletes the equation instead. */
 .SL_Theme__equation_display {
-  padding: 0.3rem;
+  padding: 0.3rem 0.3rem 0;
+}
+
+/* KaTeX gives display math `margin: 1em 0`, which suits standalone HTML but
+   inside the editor stacks another blank line above and below the block. */
+.SL_Theme__equation_display .katex-display {
+  margin: 0;
 }
 
 .SL_Theme__equation_inline {

@@ -5,12 +5,17 @@
     import { writeFile } from "@tauri-apps/plugin-fs";
     import { get } from "svelte/store";
     import { lexicalEditorInstance } from "$lib/stores/editor.store";
-    import { activeTab } from "$lib/stores/tabs.store";
+    import { activeTab, tabs } from "$lib/stores/tabs.store";
     import { t } from "$lib/i18n";
     import { lexicalStateToDocxBlob } from "$lib/components/lexical/utils/lexicalToDocx";
 
+    // tabId scopes the export to a specific panel in split layouts.
+    let { tabId = null }: { tabId?: string | null } = $props();
+
     async function exportDocx() {
-        const tab = get(activeTab);
+        const tab = tabId
+            ? (get(tabs).find((tb) => tb.id === tabId) ?? null)
+            : get(activeTab);
         if (!tab || tab.type !== "lexical") return;
         const editor = get(lexicalEditorInstance);
         if (!editor) return;

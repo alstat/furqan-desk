@@ -266,6 +266,17 @@
         $hideSurahPage() && $activeTab?.type === "julia" && !activeCrossGroup,
     );
 
+    // In a cross pair the sidebar always renders the HOST tab's editor while the
+    // partner sits in the left panel, so the sidebar's action bar and file-type
+    // badge must describe the host — not whichever of the two is active. The
+    // partner gets its own bar next to its own editor (+page.svelte).
+    let sidebarTabId = $derived(activeCrossGroup?.hostTabId ?? null);
+    let sidebarTab = $derived(
+        sidebarTabId
+            ? ($tabs.find((t) => t.id === sidebarTabId) ?? null)
+            : $activeTab,
+    );
+
     // Entering/leaving a cross group swaps the editor markup branch, which
     // destroys and remounts the RichTextEditor WITHOUT a tab switch — so
     // Effect A never fires and any unsaved Lexical state would be lost with
@@ -436,9 +447,9 @@
         <GlobalSearch />
         <!-- Table of Contents panel -->
         <TableOfContents />
-        <ActionBar />
-        {#if $activeTab}
-            {@const ft = fileTypeInfo($activeTab)}
+        <ActionBar tabId={sidebarTabId} />
+        {#if sidebarTab}
+            {@const ft = fileTypeInfo(sidebarTab)}
             <div
                 class="{$zenMode
                     ? 'opacity-0 hover:opacity-100 transition-opacity duration-200'
