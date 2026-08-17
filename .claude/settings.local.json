@@ -317,7 +317,8 @@
       "Bash(git ls-tree *)",
       "Bash(pnpm build *)",
       "Bash(npx --yes js-yaml .github/workflows/update-data-release.yml)",
-      "Bash(awk -F: '{print $1}')"
+      "Bash(awk -F: '{print $1}')",
+      "Bash(pkill -f \"http.server 5311\")"
     ]
   }
 }
