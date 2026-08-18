@@ -557,6 +557,14 @@ export const lexicalEditorInstance: Writable<LexicalEditor | null> =
   writable(null);
 export const lexicalHistoryState: Writable<HistoryState | null> =
   writable(null);
+/**
+ * Opens the Lexical find & replace panel. Registered by FindReplacePlugin,
+ * which lives inside the Composer; the action bar sits outside it and calls
+ * through here. Null while no rich-text editor is mounted.
+ */
+export const lexicalFindOpener: Writable<
+  ((withReplace?: boolean) => void) | null
+> = writable(null);
 export const codeMirrorViewInstance: Writable<EditorView | null> =
   writable(null);
 export const codeMirrorCanUndo: Writable<boolean> = writable(false);

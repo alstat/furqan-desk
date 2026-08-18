@@ -1882,3 +1882,23 @@ html.dark .tafsir-content .ar {
     text-decoration-skip-ink: none;
     text-underline-offset: 2px;
 }
+
+/* Find & replace hits in Lexical, also drawn with the Custom Highlight API and
+   registered from FindReplacePlugin. The active match is published under its
+   own name so it reads clearly against the rest. */
+::highlight(find-match) {
+    background-color: rgba(200, 169, 106, 0.38); /* brand-gold-400 */
+    color: inherit;
+}
+::highlight(find-match-current) {
+    background-color: #c8a96a;
+    color: #2f2b23;
+}
+html.dark ::highlight(find-match) {
+    background-color: rgba(229, 200, 144, 0.28);
+    color: inherit;
+}
+html.dark ::highlight(find-match-current) {
+    background-color: #e5c890;
+    color: #232634;
+}
