@@ -13,6 +13,7 @@
         $getNodeByKey as getNodeByKey,
         $createParagraphNode as createParagraphNode,
         $createTextNode as createTextNode,
+        $isParagraphNode as isParagraphNode,
         COMMAND_PRIORITY_CRITICAL,
         KEY_ARROW_DOWN_COMMAND,
         KEY_ARROW_UP_COMMAND,
@@ -26,6 +27,7 @@
     } from "@lexical/utils";
     import { $createTableNodeWithDimensions as createTableNodeWithDimensions } from "@lexical/table";
     import { $createEquationNode as createEquationNode } from "../Equation/EquationNode.js";
+    import { $createCodeNode as createCodeNode } from "../CodeHighlighter/CodeNode.js";
     import {
         $setBlocksType as setBlocksType,
         $patchStyleText as patchStyleText,
@@ -307,6 +309,12 @@
             label: $t("slash.math_block_label"),
             description: $t("slash.math_block_desc"),
             icon: icons["math"],
+        },
+        {
+            id: "code",
+            label: $t("slash.code_label"),
+            description: $t("slash.code_desc"),
+            icon: icons["code"],
         },
         {
             id: "table",
@@ -643,6 +651,31 @@
                     const para = createParagraphNode();
                     eqNode.insertAfter(para);
                     para.select();
+                }
+            } else if (cmdId === "code") {
+                // Same shape as the ``` markdown shortcut: an empty block that
+                // opens straight into its editor, defaulting to JavaScript
+                // (the language is switched from the block's own dropdown).
+                const codeNode = createCodeNode("", "javascript", true);
+                const block = freshSel.anchor.getNode().getTopLevelElement();
+                // Typed on a line of its own, the code block takes that line's
+                // place; typed after other text it lands below the paragraph.
+                // Only paragraphs are replaced — a list item's top-level node
+                // is the whole list, which must not be swapped out.
+                if (
+                    block &&
+                    isParagraphNode(block) &&
+                    block.getTextContent() === ""
+                ) {
+                    block.replace(codeNode);
+                } else {
+                    insertNodeToNearestRoot(codeNode);
+                }
+                // Block decorators don't get a trailing paragraph of their own,
+                // so the cursor would have nowhere to go after the block.
+                if (codeNode.getNextSibling() === null) {
+                    const para = createParagraphNode();
+                    codeNode.insertAfter(para);
                 }
             } else if (cmdId === "table") {
                 const match = capturedQuery.match(/^table-(\d+)-(\d+)$/);

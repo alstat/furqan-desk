@@ -893,6 +893,8 @@ export const en: Record<string, string> = {
   "slash.math_desc": "Insert inline LaTeX equation",
   "slash.math_block_label": "Math Block",
   "slash.math_block_desc": "Insert block LaTeX equation",
+  "slash.code_label": "Code Block",
+  "slash.code_desc": "Insert a block of code",
   "slash.table_label": "Table",
   "slash.table_desc": "Insert table — e.g. /table-5-3",
   "slash.quote_label": "Quote",
