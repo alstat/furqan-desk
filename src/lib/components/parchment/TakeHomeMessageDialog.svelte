@@ -926,15 +926,31 @@
             background 0.12s ease,
             color 0.12s ease;
     }
-    :global(.ayah-ref::before) {
-        content: "﴾";
-        font-size: 0.95em;
+    /* The ornate brackets are Quranic punctuation (U+FD3E/U+FD3F), and only an
+       Arabic font draws them as the mushaf-style flourish — so they have to name
+       one. Inheriting the chip's Latin UI font left the choice to the platform's
+       fallback: macOS happened to land on Geeza Pro and looked right, while
+       Windows fell through to Segoe UI Symbol and drew plain parentheses.
+       "Scheherazade New" ships with the app (see app.css), so this now resolves
+       to the same glyphs everywhere; the rest of the stack only matters if that
+       file ever fails to load. Weight is pinned to 400 because the chip itself
+       is 600 — the brackets want to stay delicate rather than pick up the bold
+       face. The chip stays LTR so the pair does not visually swap. */
+    :global(.ayah-ref::before),
+    :global(.ayah-ref::after) {
+        font-family:
+            "Scheherazade New", "Amiri", "Traditional Arabic",
+            "Arabic Typesetting", "Geeza Pro", "Noto Naskh Arabic", serif;
+        font-weight: 400;
+        font-size: 1.05em;
+        line-height: 1;
         opacity: 0.7;
     }
+    :global(.ayah-ref::before) {
+        content: "\FD3E";
+    }
     :global(.ayah-ref::after) {
-        content: "﴿";
-        font-size: 0.95em;
-        opacity: 0.7;
+        content: "\FD3F";
     }
     :global(.ayah-ref:hover) {
         background: #f0dfac;

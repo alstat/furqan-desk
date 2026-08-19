@@ -70,6 +70,7 @@
     import SlashCommandPlugin from "$lexical/core/plugins/SlashCommand/SlashCommandPlugin.svelte";
     import CiteMenuPlugin from "$lexical/core/plugins/Cite/CiteMenuPlugin.svelte";
     import SpellcheckLexicalPlugin from "$lexical/core/plugins/Spellcheck/SpellcheckLexicalPlugin.svelte";
+    import FindReplacePlugin from "$lexical/core/plugins/FindReplace/FindReplacePlugin.svelte";
     import SpellLanguageSelector from "./SpellLanguageSelector.svelte";
     import EditorStorePlugin from "./EditorStorePlugin.svelte";
     import { createEmptyHistoryState } from "@lexical/history";
@@ -329,7 +330,9 @@
         bind:clientWidth={editorWidth}
     >
         <ToolbarRichText {editorWidth} />
-        <div class="editor-container flex flex-col justify-stretch">
+        <!-- `relative` anchors the find & replace panel, which floats over the
+             top-right of the writing area, below the toolbar. -->
+        <div class="editor-container relative flex flex-col justify-stretch">
             <div class="editor-scroller">
                 <div class="editor">
                     <!-- Disable the webview's native spellchecker: we provide
@@ -368,6 +371,7 @@
             <QuranBlockPlugin />
             <JuliaCellPlugin />
             <SpellcheckLexicalPlugin />
+            <FindReplacePlugin />
             <EditorStorePlugin />
         </div>
         <!-- Spelling language picker, pinned to the bottom-right of the page.

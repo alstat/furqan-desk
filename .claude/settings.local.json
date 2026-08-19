@@ -317,7 +317,20 @@
       "Bash(git ls-tree *)",
       "Bash(pnpm build *)",
       "Bash(npx --yes js-yaml .github/workflows/update-data-release.yml)",
-      "Bash(awk -F: '{print $1}')"
+      "Bash(awk -F: '{print $1}')",
+      "Bash(pkill -f \"http.server 5311\")",
+      "Bash(git merge-base *)",
+      "Bash(git -c pull.rebase=true pull --rebase)",
+      "Bash(pnpm check *)",
+      "Bash(perl -pi -e \"s|'../../../../Users/al-ahmadgaidasaad/Documents/Dev/furqan-desk/src/lib|'./src/lib|\" find-engine-test.mts)",
+      "Bash(perl -pi -e \"s|\\\\\\)\\\\.length\\\\\\),\\\\n  1,\\\\n\\\\\\);||\" find-engine-test.mts)",
+      "Bash(perl -pi -e \"s|^  1, // 'the cat'||\" find-engine-test.mts)",
+      "Bash(perl -0pi -e 's/'\\\\''match spanning two text nodes'\\\\'',\\\\n  read\\\\\\(\\\\\\(\\\\\\) => findMatches\\\\\\(\\\\$readSnapshot\\\\\\(\\\\\\), '\\\\''the cat'\\\\'', \\\\{caseSensitive: false, wholeWord: false\\\\}\\\\\\).length\\\\\\),\\\\n  1,/'\\\\''match spanning two text nodes'\\\\'',\\\\n  read\\(\\(\\) => findMatches\\(\\\\$readSnapshot\\(\\), '\\\\''the cat'\\\\'', {caseSensitive: false, wholeWord: false}\\).length\\),\\\\n  3,/' find-engine-test.mts)",
+      "Bash(perl -0pi -e \"s/'the dog sat on the matdog Chapterconcatenate the catalog'/'the dog sat on the mat\\\\\\\\\\\\\\\\n\\\\\\\\\\\\\\\\nThe dog Chapter\\\\\\\\\\\\\\\\n\\\\\\\\\\\\\\\\nconcatenate the catalog'/\" find-engine-test.mts)",
+      "Bash(awk '/^  insertText\\\\\\(text\\\\\\) \\\\{/,/^  insertNodes\\\\\\(nodes\\\\\\)/' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(awk 'NR>=6400 && NR<=6560' node_modules/lexical/Lexical.dev.mjs)",
+      "Bash(perl -0pi -e \"s/nodes: \\\\[HeadingNode\\\\]/nodes: [HeadingNode, QuoteNode]/\" ai-insert-test.mts)",
+      "Bash(awk '/^<style>/,0' src/lib/components/manuscripts/ManuscriptViewer.svelte)"
     ]
   }
 }

@@ -1,5 +1,31 @@
 @import "tailwindcss";
 
+/* ── Scheherazade New, shipped with the app ─────────────────────────────────
+   This family was previously only pulled from Google Fonts (see app.html),
+   which made the ornate Quranic punctuation — U+FD3E/U+FD3F, the ﴾ ﴿ used
+   around ayah numbers — dependent on both a network round trip and on whatever
+   Arabic font the host OS happens to fall back to. macOS quietly rescues that
+   with Geeza Pro, which draws the pair ornately; Windows falls back to Segoe UI
+   Symbol / Times, which draws plain parentheses, and Linux usually has no
+   matching glyph at all. Declaring the font locally makes every platform render
+   these from the same file. The declarations come after the Google Fonts link
+   in the cascade, so the bundled copy wins where the weights overlap.
+   SIL Open Font License — see static/fonts/OFL.txt. */
+@font-face {
+    font-family: "Scheherazade New";
+    src: url("/fonts/ScheherazadeNew-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: "Scheherazade New";
+    src: url("/fonts/ScheherazadeNew-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* Class-based dark mode: applies dark: variants when html has .dark class */
 @variant dark (&:where(.dark, .dark *));
 
@@ -1855,4 +1881,24 @@ html.dark .tafsir-content .ar {
     text-decoration: underline wavy #ef4444;
     text-decoration-skip-ink: none;
     text-underline-offset: 2px;
+}
+
+/* Find & replace hits in Lexical, also drawn with the Custom Highlight API and
+   registered from FindReplacePlugin. The active match is published under its
+   own name so it reads clearly against the rest. */
+::highlight(find-match) {
+    background-color: rgba(200, 169, 106, 0.38); /* brand-gold-400 */
+    color: inherit;
+}
+::highlight(find-match-current) {
+    background-color: #c8a96a;
+    color: #2f2b23;
+}
+html.dark ::highlight(find-match) {
+    background-color: rgba(229, 200, 144, 0.28);
+    color: inherit;
+}
+html.dark ::highlight(find-match-current) {
+    background-color: #e5c890;
+    color: #232634;
 }
