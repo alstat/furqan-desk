@@ -66,3 +66,93 @@ try {
 } catch {
   /* ignore */
 }
+
+// ── Equation editor card size ────────────────────────────────────────────────
+// The card that opens on double-click is resizable; the size the user drags it
+// to is remembered like the font scale above, so a long multi-line equation
+// only has to be given room once rather than at every edit.
+
+const EQUATION_EDITOR_SIZE_KEY = "equation-editor-size";
+
+export type EquationEditorSize = { width: number; height: number };
+
+export const EQUATION_EDITOR_SIZE_DEFAULT: EquationEditorSize = {
+  width: 380,
+  height: 260,
+};
+export const EQUATION_EDITOR_SIZE_MIN: EquationEditorSize = {
+  width: 256,
+  height: 168,
+};
+export const EQUATION_EDITOR_SIZE_MAX: EquationEditorSize = {
+  width: 736,
+  height: 512,
+};
+
+export function clampEquationEditorSize(
+  size: Partial<EquationEditorSize>,
+): EquationEditorSize {
+  const clamp = (value: unknown, min: number, max: number, fallback: number) =>
+    typeof value === "number" && Number.isFinite(value)
+      ? Math.round(Math.min(max, Math.max(min, value)))
+      : fallback;
+  return {
+    width: clamp(
+      size.width,
+      EQUATION_EDITOR_SIZE_MIN.width,
+      EQUATION_EDITOR_SIZE_MAX.width,
+      EQUATION_EDITOR_SIZE_DEFAULT.width,
+    ),
+    height: clamp(
+      size.height,
+      EQUATION_EDITOR_SIZE_MIN.height,
+      EQUATION_EDITOR_SIZE_MAX.height,
+      EQUATION_EDITOR_SIZE_DEFAULT.height,
+    ),
+  };
+}
+
+function loadEquationEditorSize(): EquationEditorSize {
+  try {
+    const raw = localStorage.getItem(EQUATION_EDITOR_SIZE_KEY);
+    if (raw) return clampEquationEditorSize(JSON.parse(raw));
+  } catch {
+    /* ignore */
+  }
+  return EQUATION_EDITOR_SIZE_DEFAULT;
+}
+
+const _equationEditorSize = writable<EquationEditorSize>(
+  loadEquationEditorSize(),
+);
+
+export const equationEditorSize = {
+  subscribe: _equationEditorSize.subscribe,
+  set(size: Partial<EquationEditorSize>) {
+    const next = clampEquationEditorSize(size);
+    const current = get(_equationEditorSize);
+    if (next.width === current.width && next.height === current.height) return;
+    try {
+      localStorage.setItem(EQUATION_EDITOR_SIZE_KEY, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+    _equationEditorSize.set(next);
+  },
+  reset() {
+    this.set(EQUATION_EDITOR_SIZE_DEFAULT);
+  },
+};
+
+try {
+  window.addEventListener("storage", (e) => {
+    if (e.key !== EQUATION_EDITOR_SIZE_KEY || e.newValue === null) return;
+    try {
+      _equationEditorSize.set(clampEquationEditorSize(JSON.parse(e.newValue)));
+    } catch {
+      /* ignore */
+    }
+  });
+} catch {
+  /* ignore */
+}

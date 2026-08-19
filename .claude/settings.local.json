@@ -329,7 +329,8 @@
       "Bash(perl -0pi -e \"s/'the dog sat on the matdog Chapterconcatenate the catalog'/'the dog sat on the mat\\\\\\\\\\\\\\\\n\\\\\\\\\\\\\\\\nThe dog Chapter\\\\\\\\\\\\\\\\n\\\\\\\\\\\\\\\\nconcatenate the catalog'/\" find-engine-test.mts)",
       "Bash(awk '/^  insertText\\\\\\(text\\\\\\) \\\\{/,/^  insertNodes\\\\\\(nodes\\\\\\)/' node_modules/lexical/Lexical.dev.mjs)",
       "Bash(awk 'NR>=6400 && NR<=6560' node_modules/lexical/Lexical.dev.mjs)",
-      "Bash(perl -0pi -e \"s/nodes: \\\\[HeadingNode\\\\]/nodes: [HeadingNode, QuoteNode]/\" ai-insert-test.mts)"
+      "Bash(perl -0pi -e \"s/nodes: \\\\[HeadingNode\\\\]/nodes: [HeadingNode, QuoteNode]/\" ai-insert-test.mts)",
+      "Bash(awk '/^<style>/,0' src/lib/components/manuscripts/ManuscriptViewer.svelte)"
     ]
   }
 }

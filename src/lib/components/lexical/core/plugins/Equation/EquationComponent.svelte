@@ -8,6 +8,9 @@
     import { $isEquationNode as isEquationNode } from "./EquationNode";
     import {
         equationFontScale,
+        equationEditorSize,
+        EQUATION_EDITOR_SIZE_MIN,
+        EQUATION_EDITOR_SIZE_MAX,
         EQUATION_FONT_SCALE_DEFAULT,
         EQUATION_FONT_SCALE_MIN,
         EQUATION_FONT_SCALE_MAX,
@@ -37,6 +40,7 @@
     let element: HTMLElement | null = $state(null);
     let previewEl: HTMLElement | null = $state(null);
     let textareaEl: HTMLTextAreaElement | null = $state(null);
+    let cardEl: HTMLElement | null = $state(null);
     let isEditing = $state(autoEdit);
     let editableValue = $state(equation);
 
@@ -209,6 +213,128 @@
         setScale(EQUATION_FONT_SCALE_DEFAULT);
     }
 
+    // ── Editor card size ─────────────────────────────────────────────────────
+    // Widest the card may grow. Measured rather than expressed as a `100%`
+    // max-width: the card sits inside Lexical's inline-block decorator span,
+    // whose own width is shrink-to-fit, and a percentage against a containing
+    // block sized by its content resolves to no constraint at all — the card
+    // would happily grow past the edge of the editor column.
+    let maxCardWidth = $state(0);
+
+    function measureMaxCardWidth() {
+        const root = cardEl?.closest<HTMLElement>(".ContentEditable__root");
+        const available = root
+            ? root.clientWidth - 24
+            : (window.innerWidth || 0) * 0.88;
+        maxCardWidth = Math.max(240, Math.round(available));
+    }
+
+    $effect(() => {
+        if (!cardEl) return;
+        measureMaxCardWidth();
+        const root = cardEl.closest<HTMLElement>(".ContentEditable__root");
+        const observer =
+            root && typeof ResizeObserver !== "undefined"
+                ? new ResizeObserver(measureMaxCardWidth)
+                : null;
+        observer?.observe(root!);
+        window.addEventListener("resize", measureMaxCardWidth);
+        return () => {
+            observer?.disconnect();
+            window.removeEventListener("resize", measureMaxCardWidth);
+        };
+    });
+
+    // Resizing is driven by the corner grip rather than CSS `resize`. The
+    // native resizer can't carry its own cursor here — the card lives inside
+    // the contenteditable, whose text cursor wins over the corner — and a real
+    // handle also matches how the manuscript viewer's panel resizes.
+    let resizeStart = { x: 0, y: 0, width: 0, height: 0 };
+    let resizing = false;
+
+    /** Largest the card may be dragged right now: the stored ceiling, the
+     *  editor column, and the window all get a say. */
+    function resizeBounds() {
+        return {
+            width: Math.min(
+                EQUATION_EDITOR_SIZE_MAX.width,
+                maxCardWidth || EQUATION_EDITOR_SIZE_MAX.width,
+                (window.innerWidth || 0) * 0.88,
+            ),
+            height: Math.min(
+                EQUATION_EDITOR_SIZE_MAX.height,
+                (window.innerHeight || 0) * 0.7,
+            ),
+        };
+    }
+
+    function startResize(event: PointerEvent) {
+        if (!cardEl || event.button !== 0) return;
+        // Keep Lexical from treating the drag as a selection on the decorator.
+        event.preventDefault();
+        event.stopPropagation();
+        resizeStart = {
+            x: event.clientX,
+            y: event.clientY,
+            width: cardEl.offsetWidth,
+            height: cardEl.offsetHeight,
+        };
+        resizing = true;
+        // Window listeners rather than pointer capture, matching the manuscript
+        // viewer: the pointer leaves the 20px grip almost immediately, and
+        // capture is not always granted for a drag that starts inside the
+        // contenteditable.
+        document.body.style.userSelect = "none";
+        window.addEventListener("pointermove", onResizeMove);
+        window.addEventListener("pointerup", endResize, { once: true });
+    }
+
+    function onResizeMove(event: PointerEvent) {
+        if (!resizing || !cardEl) return;
+        const bounds = resizeBounds();
+        const clamp = (value: number, min: number, max: number) =>
+            Math.round(Math.min(max, Math.max(min, value)));
+        // Written straight to the element while dragging; the store only hears
+        // about it once, on release.
+        cardEl.style.width = `${clamp(
+            resizeStart.width + (event.clientX - resizeStart.x),
+            EQUATION_EDITOR_SIZE_MIN.width,
+            bounds.width,
+        )}px`;
+        cardEl.style.height = `${clamp(
+            resizeStart.height + (event.clientY - resizeStart.y),
+            EQUATION_EDITOR_SIZE_MIN.height,
+            bounds.height,
+        )}px`;
+    }
+
+    function endResize() {
+        if (!resizing || !cardEl) return;
+        resizing = false;
+        document.body.style.userSelect = "";
+        window.removeEventListener("pointermove", onResizeMove);
+        equationEditorSize.set({
+            width: cardEl.offsetWidth,
+            height: cardEl.offsetHeight,
+        });
+        // Hand sizing back to the custom properties now that the store agrees,
+        // so the next card opens from the preference rather than a stale inline
+        // size.
+        cardEl.style.width = "";
+        cardEl.style.height = "";
+    }
+
+    // Closing the card mid-drag (Esc, Save) would otherwise leave the window
+    // listening and the document unselectable.
+    $effect(() => () => {
+        window.removeEventListener("pointermove", onResizeMove);
+        window.removeEventListener("pointerup", endResize);
+        if (resizing) {
+            resizing = false;
+            document.body.style.userSelect = "";
+        }
+    });
+
     function handleDoubleClick() {
         showControls = false;
         isEditing = true;
@@ -279,9 +405,13 @@
 
 {#if isEditing}
     <!-- Inline equation editor card -->
-    <span class="inline-block my-1 w-72 align-middle">
+    <span class="inline-block my-1 max-w-full align-middle">
         <span
-            class="flex flex-col rounded-3xl border border-brand-gold-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-lg overflow-hidden"
+            bind:this={cardEl}
+            class="equation-editor-card relative flex flex-col rounded-3xl border border-brand-gold-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-lg overflow-hidden"
+            style:--eq-editor-w="{$equationEditorSize.width}px"
+            style:--eq-editor-h="{$equationEditorSize.height}px"
+            style:--eq-editor-max-w={maxCardWidth ? `${maxCardWidth}px` : null}
         >
             <!-- Editor header -->
             <span
@@ -329,8 +459,11 @@
                 </span>
             </span>
 
-            <!-- Textarea -->
-            <span class="px-3 pt-2.5 pb-1.5 bg-brand-sand-50 dark:bg-[#232634]">
+            <!-- Textarea: takes whatever height the card is given, so dragging
+                 the card taller is what makes room for long equations. -->
+            <span
+                class="flex min-h-0 flex-1 px-3 pt-2.5 pb-1.5 bg-brand-sand-50 dark:bg-[#232634]"
+            >
                 <!-- svelte-ignore a11y_autofocus -->
                 <textarea
                     bind:this={textareaEl}
@@ -345,13 +478,14 @@
                     dir="ltr"
                     rows="2"
                     placeholder={$t("editor.equation.placeholder")}
-                    class="w-full resize-none rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-2 font-mono text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                    class="h-full w-full resize-none rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-2 font-mono text-[11px] leading-relaxed text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                 ></textarea>
             </span>
 
-            <!-- Preview -->
+            <!-- Preview: capped so a tall rendering can never squeeze the
+                 textarea out of the card; it scrolls instead. -->
             <span
-                class="border-t border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 flex items-center justify-center min-h-8"
+                class="shrink-0 max-h-[45%] overflow-auto border-t border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 flex items-center justify-center min-h-8"
             >
                 {#if editableValue}
                     <span
@@ -365,6 +499,15 @@
                     >
                 {/if}
             </span>
+
+            <!-- Resize grip: same corner arcs and drag behaviour as the
+                 manuscript viewer's panel. aria-hidden because it duplicates no
+                 information — the card is still usable at its default size. -->
+            <span
+                aria-hidden="true"
+                class="equation-editor-grip"
+                onpointerdown={startResize}
+            ></span>
         </span>
     </span>
     {#if $isPro && aiSelection}
@@ -454,6 +597,67 @@
 {/if}
 
 <style>
+    /* The edit card is drag-resizable (grip in its bottom-right corner). The
+       stored size arrives as custom properties rather than as inline width /
+       height: a native resize writes those inline, and keeping the two apart is
+       what lets the ResizeObserver tell a real drag from the card being
+       squeezed by a narrow editor pane.
+
+       The upper bound keeps the card inside the window and inside the editor
+       column — the latter measured in script, since a percentage would resolve
+       against a shrink-to-fit containing block and so impose no limit at all. */
+    .equation-editor-card {
+        width: var(--eq-editor-w, 380px);
+        height: var(--eq-editor-h, 260px);
+        min-width: 16rem;
+        min-height: 10.5rem;
+        max-width: min(46rem, 88vw, var(--eq-editor-max-w, 46rem));
+        max-height: min(32rem, 70vh);
+    }
+
+    /* Corner grip, copied from the manuscript viewer's `.resize-se`: the same
+       20×20 target, the same pair of nested arcs, and the same diagonal resize
+       cursor. It has to be a real element rather than CSS `resize` — the card
+       sits inside the contenteditable, whose text cursor wins over the native
+       resizer's corner, so the pointer never showed what it was over. */
+    .equation-editor-grip {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 20px;
+        height: 20px;
+        z-index: 10;
+        cursor: se-resize;
+        touch-action: none;
+    }
+
+    .equation-editor-grip::before,
+    .equation-editor-grip::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+    }
+
+    .equation-editor-grip::before {
+        bottom: 12px;
+        right: 12px;
+        width: 5px;
+        height: 5px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-bottom-right-radius: 5px;
+    }
+
+    .equation-editor-grip::after {
+        bottom: 8px;
+        right: 8px;
+        width: 9px;
+        height: 9px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-bottom-right-radius: 9px;
+    }
+
     /* Mirrors the browser's native text-selection highlight so users get
        clear feedback that an equation is part of the current selection. */
     .equation-selected {
