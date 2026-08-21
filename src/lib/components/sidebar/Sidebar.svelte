@@ -425,10 +425,10 @@
             js: { icon: "solar:code-bold-duotone", label: ".js" },
             ts: { icon: "solar:code-bold-duotone", label: ".ts" },
             json: { icon: "solar:file-text-bold-duotone", label: ".json" },
-            sh: { icon: "solar:terminal-bold-duotone", label: ".sh" },
+            sh: { icon: "solar:command-bold-duotone", label: ".sh" },
             sql: { icon: "solar:database-bold-duotone", label: ".sql" },
             html: { icon: "solar:code-bold-duotone", label: ".html" },
-            css: { icon: "solar:pallete-bold-duotone", label: ".css" },
+            css: { icon: "solar:palette-bold-duotone", label: ".css" },
             typ: { icon: "solar:document-text-bold-duotone", label: ".typ" },
         };
         const e = extMap[ext] ?? {

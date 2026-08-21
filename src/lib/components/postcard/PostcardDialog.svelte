@@ -13,12 +13,15 @@
     import { invoke } from "@tauri-apps/api/core";
     import { save as saveDialog } from "@tauri-apps/plugin-dialog";
     import { writeFile } from "@tauri-apps/plugin-fs";
+    import { writeImage } from "@tauri-apps/plugin-clipboard-manager";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import {
         selectedSurahIdx,
         surahLabels,
         morphologyAyahFilter,
+        basmallahMorphology,
     } from "$lib/stores/quran.svelte";
+    import { loadBasmallahMorphology } from "$lib/functions/widgets/surahWidget";
     import {
         activeTranslatorId,
         availableTranslators,
@@ -27,6 +30,11 @@
     import { cachedMorphology, cachedSurahText } from "$lib/stores/surah-cache";
     import type { SurahMorphology } from "$lib/types/morphology";
     import { convertToArabicNumbers } from "$lib/functions/utils/utils";
+    import {
+        savedPostcardDesign,
+        postcardOpenMode,
+        type PostcardDesign,
+    } from "$lib/stores/postcard.store";
     import { t } from "$lib/i18n";
     // The app mark, inlined at build time — the packaged app serves the frontend
     // over a custom protocol, so a data URL is the one form that always resolves.
@@ -42,7 +50,8 @@
         GRADIENT_DIRECTIONS,
         BLEND_MODES,
         CARD_SIZES,
-        patternDataUrl,
+        patternTile,
+        patternPreviewUrl,
         type GradientDirection,
         type BlendMode,
     } from "./patterns";
@@ -101,6 +110,7 @@
     let arabicLine = $state(1.9);
     let arabicColor = $state("#ffffff");
     let showAyahNumbers = $state(true);
+    let showBasmallah = $state(true);
     let textAlign = $state<"center" | "right" | "left">("center");
     let vAlign = $state(50); // 0 = top, 100 = bottom
     let autoFit = $state(true);
@@ -286,6 +296,19 @@
         return out.join(" ");
     }
 
+    /**
+     * Al-Fatihah carries the Basmallah as its own first ayah and At-Tawbah has
+     * none, so neither gets a header — the same rule the parchment view applies.
+     */
+    const basmallahApplies = $derived(surah !== 1 && surah !== 9);
+
+    const basmallahText = $derived.by(() => {
+        if (!showBasmallah || !basmallahApplies) return "";
+        const words = $basmallahMorphology?.words;
+        if (!words?.length) return "";
+        return words.map((w) => w.combined_arabic).join(" ");
+    });
+
     const arabicText = $derived.by(() => {
         if (!morph) return "";
         const byAyah = new Map(morph.ayahs.map((a) => [a.ayah, a]));
@@ -332,13 +355,143 @@
     );
 
     // ── Open / reset ─────────────────────────────────────────────────────────
+    /**
+     * Set while a saved design is being reopened, so the manuscript list can put
+     * the saved folio back rather than auto-selecting the oldest one.
+     */
+    let pendingManuscript: { id: number; folio: number } | null = null;
+
+    function captureDesign(): PostcardDesign {
+        return {
+            surah,
+            selected: [...selected],
+            translatorId,
+            translationOn,
+            showBasmallah,
+            showAyahNumbers,
+            refOn,
+            refLang,
+            sizeId,
+            arabicFont,
+            arabicSize,
+            arabicLine,
+            arabicColor,
+            textAlign,
+            vAlign,
+            autoFit,
+            shadowOn,
+            shadowBlur,
+            shadowDx,
+            shadowDy,
+            shadowColor,
+            shadowOpacity,
+            transFont,
+            transSize,
+            transLine,
+            transColor,
+            refSize,
+            refColor,
+            padPct,
+            borderOn,
+            bgMode,
+            baseColor,
+            patternId,
+            patternColor,
+            patternOpacity,
+            patternScale,
+            patternStroke,
+            bgOpacity,
+            bgZoom,
+            bgOffsetX,
+            bgOffsetY,
+            bgBlur,
+            bgGray,
+            gradientId,
+            gradientDir,
+            gradientOpacity,
+            gradientBlend,
+            manuscriptId: msSelectedId,
+            manuscriptFolio: msFolioIdx,
+            savedAt: Date.now(),
+        };
+    }
+
+    /**
+     * Apply a saved design. Every field falls back to the value already in
+     * place, so a design written before a setting existed still loads.
+     */
+    function applyDesign(d: PostcardDesign) {
+        surah = d.surah ?? surah;
+        selected = Array.isArray(d.selected) ? [...d.selected] : selected;
+        translatorId = d.translatorId ?? translatorId;
+        translationOn = d.translationOn ?? translationOn;
+        showBasmallah = d.showBasmallah ?? showBasmallah;
+        showAyahNumbers = d.showAyahNumbers ?? showAyahNumbers;
+        refOn = d.refOn ?? refOn;
+        refLang = d.refLang ?? refLang;
+        sizeId = d.sizeId ?? sizeId;
+        arabicFont = d.arabicFont ?? arabicFont;
+        arabicSize = d.arabicSize ?? arabicSize;
+        arabicLine = d.arabicLine ?? arabicLine;
+        arabicColor = d.arabicColor ?? arabicColor;
+        textAlign = d.textAlign ?? textAlign;
+        vAlign = d.vAlign ?? vAlign;
+        autoFit = d.autoFit ?? autoFit;
+        shadowOn = d.shadowOn ?? shadowOn;
+        shadowBlur = d.shadowBlur ?? shadowBlur;
+        shadowDx = d.shadowDx ?? shadowDx;
+        shadowDy = d.shadowDy ?? shadowDy;
+        shadowColor = d.shadowColor ?? shadowColor;
+        shadowOpacity = d.shadowOpacity ?? shadowOpacity;
+        transFont = d.transFont ?? transFont;
+        transSize = d.transSize ?? transSize;
+        transLine = d.transLine ?? transLine;
+        transColor = d.transColor ?? transColor;
+        refSize = d.refSize ?? refSize;
+        refColor = d.refColor ?? refColor;
+        padPct = d.padPct ?? padPct;
+        borderOn = d.borderOn ?? borderOn;
+        bgMode = d.bgMode ?? bgMode;
+        baseColor = d.baseColor ?? baseColor;
+        patternId = d.patternId ?? patternId;
+        patternColor = d.patternColor ?? patternColor;
+        patternOpacity = d.patternOpacity ?? patternOpacity;
+        patternScale = d.patternScale ?? patternScale;
+        patternStroke = d.patternStroke ?? patternStroke;
+        bgOpacity = d.bgOpacity ?? bgOpacity;
+        bgZoom = d.bgZoom ?? bgZoom;
+        bgOffsetX = d.bgOffsetX ?? bgOffsetX;
+        bgOffsetY = d.bgOffsetY ?? bgOffsetY;
+        bgBlur = d.bgBlur ?? bgBlur;
+        bgGray = d.bgGray ?? bgGray;
+        gradientId = d.gradientId ?? gradientId;
+        gradientDir = (d.gradientDir as GradientDirection) ?? gradientDir;
+        gradientOpacity = d.gradientOpacity ?? gradientOpacity;
+        gradientBlend = (d.gradientBlend as BlendMode) ?? gradientBlend;
+        pendingManuscript =
+            d.manuscriptId != null
+                ? { id: d.manuscriptId, folio: d.manuscriptFolio ?? 0 }
+                : null;
+    }
+
     let initialized = false;
     $effect(() => {
         if (open && !initialized) {
             initialized = true;
-            surah = $selectedSurahIdx;
-            defaultsFor = null;
-            translatorId = $activeTranslatorId ? String($activeTranslatorId) : "";
+            const resume =
+                $postcardOpenMode === "resume" && $savedPostcardDesign;
+            if (resume) {
+                applyDesign($savedPostcardDesign!);
+                // The selection came from the design, not from the surah load.
+                defaultsFor = surah;
+            } else {
+                surah = $selectedSurahIdx;
+                defaultsFor = null;
+                translatorId = $activeTranslatorId
+                    ? String($activeTranslatorId)
+                    : "";
+                pendingManuscript = null;
+            }
             // The editor wants room, but never more than the window has.
             panelW = Math.max(MIN_W, Math.min(1160, window.innerWidth - 48));
             panelH = Math.max(MIN_H, Math.min(820, window.innerHeight - 48));
@@ -347,6 +500,10 @@
             zIndex = bringToFront();
         }
         if (!open) initialized = false;
+    });
+
+    $effect(() => {
+        if (open && !$basmallahMorphology) loadBasmallahMorphology();
     });
 
     // Load the chosen surah's morphology (shared cache with the Parchment view).
@@ -483,6 +640,23 @@
         }
     });
 
+    // A reopened design names the folio it was built with; put that one back
+    // instead of letting auto-select pick the oldest. Keyed off the list rather
+    // than the fetch, so it also fires when the list is already in hand from an
+    // earlier session — the dialog is hidden, not destroyed, when it closes.
+    $effect(() => {
+        if (!pendingManuscript || msList.length === 0) return;
+        const want = msList.find(
+            (m) => m.manuscript_id === pendingManuscript!.id,
+        );
+        if (want) {
+            msSelectedId = want.manuscript_id;
+            msFolioIdx = pendingManuscript.folio;
+            msUserPicked = true;
+        }
+        pendingManuscript = null;
+    });
+
     // Pre-select the oldest folio that actually has a scan, so switching to
     // Manuscript shows something at once. This waits for the dates to settle:
     // picking earlier would sort by nothing and highlight a row that is not the
@@ -555,29 +729,14 @@
     });
 
     // ── Pattern tiles ────────────────────────────────────────────────────────
-    const patternCache = new Map<string, HTMLImageElement>();
-    let patternImg = $state<HTMLImageElement | null>(null);
-
-    $effect(() => {
-        if (!wantsPattern) return;
+    // Painted straight onto a canvas rather than loaded from an SVG data URL:
+    // WebKit taints any canvas an SVG image is drawn to, which made the card
+    // impossible to export. See the note at the top of `patterns.ts`.
+    const patternTileEl = $derived.by(() => {
+        if (!wantsPattern) return null;
         const def = PATTERNS.find((p) => p.id === patternId);
-        if (!def) {
-            patternImg = null;
-            return;
-        }
-        const key = `${patternId}|${patternColor}|${patternStroke}|${patternScale}`;
-        const cached = patternCache.get(key);
-        if (cached) {
-            patternImg = cached;
-            return;
-        }
-        const el = new Image();
-        el.onload = () => {
-            patternCache.set(key, el);
-            patternImg = el;
-            scheduleRender();
-        };
-        el.src = patternDataUrl(def, patternColor, patternStroke, patternScale);
+        if (!def) return null;
+        return patternTile(def, patternColor, patternStroke, patternScale);
     });
 
     // ── Rendering ────────────────────────────────────────────────────────────
@@ -630,6 +789,7 @@
         renderPostcard(ctx, {
             width: cardSize.w,
             height: cardSize.h,
+            basmallahText,
             arabicText,
             translationText,
             referenceText,
@@ -673,7 +833,7 @@
             bgOffsetY,
             bgBlur,
             bgGray,
-            patternImage: patternImg,
+            patternImage: patternTileEl,
             patternOpacity,
             gradientStops:
                 GRADIENTS.find((g) => g.id === gradientId)?.stops ?? [],
@@ -688,6 +848,7 @@
         if (!open) return;
         void [
             canvasEl,
+            basmallahText,
             arabicText,
             translationText,
             referenceText,
@@ -717,7 +878,7 @@
             markImage,
             bgMode,
             baseColor,
-            patternImg,
+            patternTileEl,
             patternOpacity,
             bgImage,
             bgOpacity,
@@ -742,7 +903,30 @@
         scheduleRender();
     });
 
+    // ── Persistence ──────────────────────────────────────────────────────────
+    // The design is written back while the editor is open so the action bar can
+    // reopen exactly what was last on screen. Debounced because sliders fire on
+    // every pixel and this ends up in localStorage.
+    let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+    $effect(() => {
+        if (!open) return;
+        const design = captureDesign();
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+            savedPostcardDesign.set(design);
+            saveTimer = null;
+        }, 400);
+    });
+
     // ── Export ───────────────────────────────────────────────────────────────
+    /** Trim an exception down to something that fits the header strip. */
+    function describeError(e: unknown): string {
+        const msg =
+            e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+        return msg.length > 110 ? `${msg.slice(0, 109)}\u2026` : msg;
+    }
+
     function toBlob(): Promise<Blob | null> {
         return new Promise((resolve) => {
             if (!canvasEl) return resolve(null);
@@ -750,14 +934,19 @@
         });
     }
 
+    async function renderToBytes(): Promise<{ blob: Blob; bytes: Uint8Array }> {
+        await draw();
+        const blob = await toBlob();
+        if (!blob) throw new Error("Canvas produced no image data");
+        return { blob, bytes: new Uint8Array(await blob.arrayBuffer()) };
+    }
+
     async function exportPng() {
         if (exporting || !canvasEl) return;
         exporting = true;
         statusMsg = "";
         try {
-            await draw();
-            const blob = await toBlob();
-            if (!blob) throw new Error("render failed");
+            const { bytes } = await renderToBytes();
             const name = `ayahlab-${surah}-${rangeLabel.replace(/[^0-9-]/g, "_")}.png`;
             const path = await saveDialog({
                 title: $t("postcard.export"),
@@ -765,31 +954,44 @@
                 filters: [{ name: "PNG Image", extensions: ["png"] }],
             });
             if (!path) return;
-            await writeFile(path, new Uint8Array(await blob.arrayBuffer()));
+            await writeFile(path, bytes);
             statusMsg = $t("postcard.export_saved");
         } catch (e) {
-            statusMsg = $t("postcard.export_failed", {
-                error: String(e).slice(0, 60),
-            });
+            console.error("Postcard export failed", e);
+            statusMsg = $t("postcard.export_failed", { error: describeError(e) });
         } finally {
             exporting = false;
-            setTimeout(() => (statusMsg = ""), 4000);
+            setTimeout(() => (statusMsg = ""), 5000);
         }
     }
 
     async function copyPng() {
+        if (exporting || !canvasEl) return;
+        statusMsg = "";
         try {
-            await draw();
-            const blob = await toBlob();
-            if (!blob) throw new Error("render failed");
-            await navigator.clipboard.write([
-                new ClipboardItem({ "image/png": blob }),
-            ]);
+            const { blob, bytes } = await renderToBytes();
+            try {
+                // The desktop path. WKWebView does not expose the async
+                // Clipboard API on Tauri's custom scheme, so the plugin — which
+                // already holds `clipboard-manager:allow-write-image` — is what
+                // actually works in the packaged app.
+                await writeImage(bytes);
+            } catch (pluginError) {
+                if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") {
+                    throw pluginError;
+                }
+                await navigator.clipboard.write([
+                    new ClipboardItem({ "image/png": blob }),
+                ]);
+            }
             statusMsg = $t("postcard.copied");
-        } catch {
-            statusMsg = $t("postcard.copy_failed");
+        } catch (e) {
+            console.error("Postcard copy failed", e);
+            statusMsg = $t("postcard.copy_failed_reason", {
+                error: describeError(e),
+            });
         }
-        setTimeout(() => (statusMsg = ""), 4000);
+        setTimeout(() => (statusMsg = ""), 5000);
     }
 
     // ── Window chrome ────────────────────────────────────────────────────────
@@ -891,6 +1093,11 @@
     }
 
     onDestroy(() => {
+        if (saveTimer) {
+            clearTimeout(saveTimer);
+            savedPostcardDesign.set(captureDesign());
+            saveTimer = null;
+        }
         if (typeof window !== "undefined") {
             window.removeEventListener("pointermove", onDrag);
             window.removeEventListener("pointermove", onResize);
@@ -1245,6 +1452,13 @@
                             <div
                                 class="border-t border-brand-sand-100 dark:border-[#414559] pt-3 flex flex-col gap-3"
                             >
+                                {#if basmallahApplies}
+                                    {@render toggleRow(
+                                        $t("postcard.basmallah"),
+                                        showBasmallah,
+                                        () => (showBasmallah = !showBasmallah),
+                                    )}
+                                {/if}
                                 {@render toggleRow(
                                     $t("postcard.ayah_numbers"),
                                     showAyahNumbers,
@@ -1495,7 +1709,7 @@
                                             >
                                                 <span
                                                     class="block h-12 w-full"
-                                                    style="background-color:{baseColor}; background-image:url('{patternDataUrl(
+                                                    style="background-color:{baseColor}; background-image:url('{patternPreviewUrl(
                                                         p,
                                                         patternColor,
                                                         p.filled ? 1 : 3,

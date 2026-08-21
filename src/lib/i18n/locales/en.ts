@@ -1170,6 +1170,8 @@ export const en: Record<string, string> = {
   "takehome.stale": "The displayed ayahs have changed. Generate a new take-home message?",
   // Postcard editor
   "postcard.open": "Create Post Card",
+  "parchment.open_postcard": "Create a post card",
+  "parchment.reopen_postcard": "Reopen last post card ({surah}:{ayah})",
   "postcard.title": "Post Card",
   "postcard.tab_ayahs": "Ayah",
   "postcard.tab_text": "Text",
@@ -1183,6 +1185,7 @@ export const en: Record<string, string> = {
   "postcard.loading": "Loading\u2026",
   "postcard.pick_ayahs": "Select at least one ayah to start.",
   "postcard.show_translation": "Translation",
+  "postcard.basmallah": "Basmallah header",
   "postcard.ayah_numbers": "Ayah numbers",
   "postcard.show_reference": "Reference line",
   "postcard.ref_en": "English surah name",
@@ -1283,5 +1286,5 @@ export const en: Record<string, string> = {
   "postcard.export_failed": "Export failed: {error}",
   "postcard.copy": "Copy image to clipboard",
   "postcard.copied": "Copied to clipboard.",
-  "postcard.copy_failed": "Could not copy the image.",
+  "postcard.copy_failed_reason": "Copy failed: {error}",
 };

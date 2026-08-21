@@ -594,6 +594,7 @@
         <div
             class="flex items-center gap-2 px-3 py-2
                    rounded-2xl
+                   glass-panel
                    bg-white/90 dark:bg-[#292c3c]/95
                    backdrop-blur-md
                    border border-red-200/80 dark:border-red-900/50
@@ -602,7 +603,7 @@
                    select-none"
         >
             <Icon
-                icon="solar:wifi-router-minimalistic-bold-duotone"
+                icon="solar:wi-fi-router-minimalistic-bold-duotone"
                 width="1rem"
                 class="shrink-0"
             />
@@ -614,6 +615,7 @@
     <div
         class="flex items-center gap-1 px-2 py-1.5
                rounded-3xl
+               glass-panel
                bg-white/50 dark:bg-[#292c3c]/50
                backdrop-blur-md
                border border-stone-200/70 dark:border-[#414559]/60
@@ -806,6 +808,7 @@
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         class="fixed flex items-center gap-1 px-2 py-1.5 font-sans
                rounded-3xl
+               glass-panel
                bg-white/80 dark:bg-[#292c3c]/90
                backdrop-blur-md
                border border-stone-200/70 dark:border-[#414559]/60
