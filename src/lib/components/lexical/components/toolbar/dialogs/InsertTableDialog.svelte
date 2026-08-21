@@ -188,7 +188,7 @@
                 data-test-id="table-model-confirm-insert"
                 class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 bg-brand-gold-400 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
             >
-                <Icon icon="solar:table-bold" width="0.8rem" />
+                <Icon icon="tabler:table" width="0.8rem" />
                 {$t('dialog.insert_table')}
             </button>
         </div>

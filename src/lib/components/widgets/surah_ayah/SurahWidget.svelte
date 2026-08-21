@@ -41,7 +41,7 @@
         translationDialogOpen,
     } from "$lib/stores/translation.store";
     import PostcardDialog from "$lib/components/postcard/PostcardDialog.svelte";
-    import { postcardDialogOpen } from "$lib/stores/postcard.store";
+    import { postcardDialogOpen, openPostcard } from "$lib/stores/postcard.store";
     import { invoke } from "@tauri-apps/api/core";
     import type {
         TranslatorInfo,
@@ -351,7 +351,7 @@
         </div>
         <button
             type="button"
-            onclick={() => postcardDialogOpen.set(true)}
+            onclick={() => openPostcard("new")}
             class="cursor-pointer mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100 dark:bg-[#292c3c] px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
         >
             <Icon icon="solar:gallery-send-bold-duotone" width="0.85rem" />

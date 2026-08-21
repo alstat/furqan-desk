@@ -8,6 +8,10 @@
         manuscriptsEnabled,
         manuscriptViewerOpen,
     } from "$lib/stores/manuscripts.store";
+    import {
+        openPostcard,
+        savedPostcardDesign,
+    } from "$lib/stores/postcard.store";
 
     interface Props {
         onOpenBookmarks: () => void;
@@ -55,6 +59,21 @@
     function reopenManuscripts() {
         manuscriptViewerOpen.set(true);
     }
+
+    // Reopens the last design rather than seeding a fresh card, which is what
+    // the widget's "Create Post Card" does.
+    function reopenPostcard() {
+        openPostcard($savedPostcardDesign ? "resume" : "new");
+    }
+
+    const postcardLabel = $derived.by(() => {
+        const d = $savedPostcardDesign;
+        if (!d) return $t("parchment.open_postcard");
+        return $t("parchment.reopen_postcard", {
+            surah: String(d.surah),
+            ayah: d.selected?.length ? String(d.selected[0]) : "1",
+        });
+    });
 </script>
 
 <div
@@ -104,6 +123,15 @@
             <Icon icon="solar:document-text-bold-duotone" width="1rem" />
         </button>
     {/if}
+
+    <button
+        onclick={reopenPostcard}
+        class={actionBtnStyle + " p-2 z-50"}
+        title={postcardLabel}
+        aria-label={postcardLabel}
+    >
+        <Icon icon="solar:gallery-send-bold-duotone" width="1rem" />
+    </button>
 
     <button
         onclick={toggleSearch}

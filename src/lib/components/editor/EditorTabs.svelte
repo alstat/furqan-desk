@@ -820,7 +820,7 @@
                             width="0.6rem"
                         />
                         <Icon
-                            icon="solar:unlink-bold"
+                            icon="solar:link-broken-bold"
                             class="hidden group-hover/link:block text-rose-400"
                             width="0.6rem"
                         />

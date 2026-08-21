@@ -27,6 +27,8 @@ export interface PostcardOptions {
     width: number;
     height: number;
 
+    /** Rendered above the verses as a header; empty when it does not apply. */
+    basmallahText: string;
     arabicText: string;
     translationText: string;
     referenceText: string;
@@ -142,6 +144,24 @@ function buildBlocks(
     scale: number,
 ): { blocks: Block[]; total: number } {
     const blocks: Block[] = [];
+
+    // The Basmallah opens the card as a header: same script, set smaller and a
+    // shade lighter so it reads as an opening rather than as part of the verse.
+    if (o.basmallahText) {
+        const size = o.arabicSize * 0.6 * scale;
+        const font = fontSpec(size, o.arabicFont);
+        ctx.font = font;
+        ctx.direction = "rtl";
+        blocks.push({
+            lines: wrapText(ctx, o.basmallahText, maxWidth),
+            size,
+            line: o.arabicLine,
+            color: hexToRgba(o.arabicColor, 0.85),
+            font,
+            rtl: true,
+            gapAfter: size * 1.1,
+        });
+    }
 
     if (o.arabicText) {
         const size = o.arabicSize * scale;
