@@ -36,12 +36,23 @@
     import { get } from 'svelte/store';
     import { $createParagraphNode as createParagraphNode, $createTextNode as createTextNode, $insertNodes as insertNodes } from 'lexical';
     import { getSurahNameTashkeel } from '$lib/data/surah-names-tashkeel';
+    import { cachedSurahText } from '$lib/stores/surah-cache';
+
+    // Each multi-surah loader fans out over several surahs, so a slow batch can
+    // still be in flight when the displayed list changes. Without a generation
+    // check the older batch resolves last and overwrites the newer one — the
+    // single-surah effects below already guard this by re-checking the surah.
+    let multiTranslationGen = 0;
+    let multiTransliterationGen = 0;
+    let multiWordByWordGen = 0;
+    let multiTafsirGen = 0;
 
     $effect(() => {
         const tid = $activeTranslatorId;
         const surah = $surahMorphology?.surah;
         if (!tid || !surah) { surahTranslation.set(null); return; }
-        invoke<AyahTranslation[]>('get_surah_translation', { surah, translatorId: tid })
+        cachedSurahText('translation', surah, tid, () =>
+            invoke<AyahTranslation[]>('get_surah_translation', { surah, translatorId: tid }))
             .then(rows => { if ($surahMorphology?.surah === surah) surahTranslation.set(rows); })
             .catch(() => surahTranslation.set(null));
     });
@@ -49,7 +60,8 @@
     $effect(() => {
         const tid = $activeTranslatorId;
         if (!tid) { basmallahTranslation.set(null); return; }
-        invoke<AyahTranslation[]>('get_surah_translation', { surah: 1, translatorId: tid })
+        cachedSurahText('translation', 1, tid, () =>
+            invoke<AyahTranslation[]>('get_surah_translation', { surah: 1, translatorId: tid }))
             .then(rows => basmallahTranslation.set(rows.find(r => r.ayah === 1) ?? null))
             .catch(() => basmallahTranslation.set(null));
     });
@@ -58,7 +70,8 @@
         const enabled = $transliterationEnabled;
         const surah = $surahMorphology?.surah;
         if (!enabled || !surah) { surahTransliteration.set(null); return; }
-        invoke<Array<{ayah: number; text: string}>>('get_surah_transliteration', { surah })
+        cachedSurahText('translit', surah, '-', () =>
+            invoke<Array<{ayah: number; text: string}>>('get_surah_transliteration', { surah }))
             .then(rows => { if ($surahMorphology?.surah === surah) surahTransliteration.set(new Map(rows.map(r => [r.ayah, r.text]))); })
             .catch(() => surahTransliteration.set(null));
     });
@@ -68,23 +81,21 @@
         const surah = $surahMorphology?.surah;
         const lang = $wordByWordLang;
         if (!enabled || !surah) { surahWordByWord.set(null); return; }
-        invoke<Array<{ayah: number; word: number; text: string}>>('get_surah_word_by_word', { surah, lang })
+        cachedSurahText('wbw', surah, lang, () =>
+            invoke<Array<{ayah: number; word: number; text: string}>>('get_surah_word_by_word', { surah, lang }))
             .then(rows => {
                 if ($surahMorphology?.surah !== surah) return;
-                console.log(`[WBW] loaded ${rows.length} entries for surah ${surah} (${lang})`);
                 surahWordByWord.set(new Map(rows.map(r => [`${r.ayah}:${r.word}`, r.text])));
             })
-            .catch(err => {
-                console.error('[WBW] invoke failed:', err);
-                surahWordByWord.set(null);
-            });
+            .catch(() => surahWordByWord.set(null));
     });
 
     $effect(() => {
         const tid = $activeTafsirId;
         const surah = $surahMorphology?.surah;
         if (!tid || !surah || !$tafsirEnabled) { surahTafsir.set(null); return; }
-        invoke<AyahTafsir[]>('get_surah_tafsir', { surah, authorId: tid })
+        cachedSurahText('tafsir', surah, tid, () =>
+            invoke<AyahTafsir[]>('get_surah_tafsir', { surah, authorId: tid }))
             .then(rows => { if ($surahMorphology?.surah === surah) surahTafsir.set(rows); })
             .catch(() => surahTafsir.set(null));
     });
@@ -94,22 +105,32 @@
         const list = $morphologyMultiSurahList;
         const tid = $activeTranslatorId;
         if (!list || !tid) { multiSurahTranslationMap.set(null); return; }
+        const gen = ++multiTranslationGen;
         Promise.all(list.map(s =>
-            invoke<AyahTranslation[]>('get_surah_translation', { surah: s.surah, translatorId: tid })
+            cachedSurahText('translation', s.surah, tid, () =>
+                invoke<AyahTranslation[]>('get_surah_translation', { surah: s.surah, translatorId: tid }))
                 .then(rows => [s.surah, new Map(rows.map(r => [r.ayah, r]))] as const)
                 .catch(() => [s.surah, new Map<number, AyahTranslation>()] as const)
-        )).then(entries => multiSurahTranslationMap.set(new Map(entries)));
+        )).then(entries => {
+            if (gen !== multiTranslationGen) return;
+            multiSurahTranslationMap.set(new Map(entries));
+        });
     });
 
     $effect(() => {
         const list = $morphologyMultiSurahList;
         const enabled = $transliterationEnabled;
         if (!list || !enabled) { multiSurahTransliterationMap.set(null); return; }
+        const gen = ++multiTransliterationGen;
         Promise.all(list.map(s =>
-            invoke<Array<{ayah: number; text: string}>>('get_surah_transliteration', { surah: s.surah })
+            cachedSurahText('translit', s.surah, '-', () =>
+                invoke<Array<{ayah: number; text: string}>>('get_surah_transliteration', { surah: s.surah }))
                 .then(rows => [s.surah, new Map(rows.map(r => [r.ayah, r.text]))] as const)
                 .catch(() => [s.surah, new Map<number, string>()] as const)
-        )).then(entries => multiSurahTransliterationMap.set(new Map(entries)));
+        )).then(entries => {
+            if (gen !== multiTransliterationGen) return;
+            multiSurahTransliterationMap.set(new Map(entries));
+        });
     });
 
     $effect(() => {
@@ -117,11 +138,16 @@
         const enabled = $wordByWordEnabled;
         const lang = $wordByWordLang;
         if (!list || !enabled) { multiSurahWordByWordMap.set(null); return; }
+        const gen = ++multiWordByWordGen;
         Promise.all(list.map(s =>
-            invoke<Array<{ayah: number; word: number; text: string}>>('get_surah_word_by_word', { surah: s.surah, lang })
+            cachedSurahText('wbw', s.surah, lang, () =>
+                invoke<Array<{ayah: number; word: number; text: string}>>('get_surah_word_by_word', { surah: s.surah, lang }))
                 .then(rows => [s.surah, new Map(rows.map(r => [`${r.ayah}:${r.word}`, r.text]))] as const)
                 .catch(() => [s.surah, new Map<string, string>()] as const)
-        )).then(entries => multiSurahWordByWordMap.set(new Map(entries)));
+        )).then(entries => {
+            if (gen !== multiWordByWordGen) return;
+            multiSurahWordByWordMap.set(new Map(entries));
+        });
     });
 
     $effect(() => {
@@ -129,11 +155,16 @@
         const tid = $activeTafsirId;
         const enabled = $tafsirEnabled;
         if (!list || !tid || !enabled) { multiSurahTafsirMap.set(null); return; }
+        const gen = ++multiTafsirGen;
         Promise.all(list.map(s =>
-            invoke<AyahTafsir[]>('get_surah_tafsir', { surah: s.surah, authorId: tid })
+            cachedSurahText('tafsir', s.surah, tid, () =>
+                invoke<AyahTafsir[]>('get_surah_tafsir', { surah: s.surah, authorId: tid }))
                 .then(rows => [s.surah, new Map(rows.map(r => [r.ayah, r.text]))] as const)
                 .catch(() => [s.surah, new Map<number, string>()] as const)
-        )).then(entries => multiSurahTafsirMap.set(new Map(entries)));
+        )).then(entries => {
+            if (gen !== multiTafsirGen) return;
+            multiSurahTafsirMap.set(new Map(entries));
+        });
     });
 
     const translationMap = $derived(

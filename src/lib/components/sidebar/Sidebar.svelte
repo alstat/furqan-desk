@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
     import { get } from "svelte/store";
+    import { syncLexicalEditorToTab } from "$lib/utils/lexicalTabSync";
     import CollapsibleSidebar from "$lib/components/shared/CollapsibleSidebar.svelte";
     import RichTextEditor from "$lib/components/editor/EditorComposer.svelte";
     import TypstEditor from "$lib/components/editor/TypstEditor.svelte";
@@ -365,22 +366,7 @@
         const hostTab = get(tabs).find((t) => t.id === cg.hostTabId);
         if (!hostTab || hostTab.type !== "lexical") return;
         if ($activeTabId === cg.hostTabId) return; // host is active — normal save applies
-        const hostTabId = cg.hostTabId;
-        const unregister = editor.registerUpdateListener(
-            ({ dirtyElements, dirtyLeaves, tags }) => {
-                if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
-                if (tags.has('history-merge')) return;
-                const json = JSON.stringify(editor.getEditorState().toJSON());
-                tabs.update((ts) =>
-                    ts.map((t) =>
-                        t.id === hostTabId
-                            ? { ...t, content: json, isDirty: true }
-                            : t,
-                    ),
-                );
-            },
-        );
-        return unregister;
+        return syncLexicalEditorToTab(editor, cg.hostTabId);
     });
 
     // Split tab id (for badge visibility)

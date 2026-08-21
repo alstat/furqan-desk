@@ -1683,6 +1683,56 @@ mod votd_tests {
         assert_eq!(a, b);
     }
 
+    /// What loading a surah actually costs, end to end.
+    /// `cargo test --lib votd_tests::surah_load -- --ignored --nocapture`
+    #[test]
+    #[ignore = "measurement; needs the bundled 393 MB database"]
+    fn surah_load_cost() {
+        let db_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("data/quran_static.db");
+        if !db_path.exists() {
+            println!("skipped: {} not present", db_path.display());
+            return;
+        }
+        let tmp = std::env::temp_dir().join(format!("surah-load-{}", std::process::id()));
+        std::fs::create_dir_all(&tmp).unwrap();
+        let db = crate::db::Database::new(db_path, tmp.clone()).expect("open db");
+
+        for surah in [2i64, 1, 114, 18] {
+            let conn = db.0.lock().unwrap();
+            let t = std::time::Instant::now();
+            let mut stmt = conn
+                .prepare(
+                    "SELECT ayah, word, token, form_buckwalter, form_arabic, tag, features
+                     FROM morphology WHERE surah = ? ORDER BY ayah, word, token",
+                )
+                .unwrap();
+            let mut rows_n = 0usize;
+            let mut parsed_bytes = 0usize;
+            let rows = stmt
+                .query_map([surah], |row| {
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, String>(5)?,
+                        row.get::<_, String>(6)?,
+                    ))
+                })
+                .unwrap();
+            for r in rows {
+                let (_ayah, tag, features) = r.unwrap();
+                let _p = parse_features(&features);
+                parsed_bytes += get_tag_name(&tag).len();
+                rows_n += 1;
+            }
+            let ms = t.elapsed().as_secs_f64() * 1000.0;
+            println!(
+                "  surah {surah:>3}: {rows_n:>6} morphology rows  query+parse {ms:>7.1} ms  (parsed {} fields)",
+                parsed_bytes
+            );
+        }
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
     /// The page-reuse protocol must never let a client keep a stale page.
     #[test]
     fn svg_reuse_only_applies_to_the_matching_epoch() {
