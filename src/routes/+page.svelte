@@ -7,6 +7,8 @@
     import TypstEditor from "$lib/components/editor/TypstEditor.svelte";
     import RichTextEditor from "$lib/components/editor/EditorComposer.svelte";
     import JuliaEditor from "$lib/components/editor/JuliaEditor.svelte";
+    import LeanEditor from "$lib/components/editor/LeanEditor.svelte";
+    import LeanInfoviewPane from "$lib/components/editor/LeanInfoviewPane.svelte";
     import SurahWidget from "$lib/components/widgets/surah_ayah/SurahWidget.svelte";
     import EditorToolbar from "$lib/components/widgets/editor/EditorToolbar.svelte";
     import Sidebar from "$lib/components/sidebar/Sidebar.svelte";
@@ -39,19 +41,25 @@
     import {
         crossGroups,
         juliaGroups,
+        leanGroups,
         typstGroups,
     } from "$lib/stores/julia-terminal.store";
     import type {
         CrossGroup,
         JuliaGroup,
+        LeanGroup,
         TypstGroup,
     } from "$lib/stores/julia-terminal.store";
     import {
         lexicalEditorInstance,
         singlePageMargin,
         juliaRightSplitRatio,
+        leanRightSplitRatio,
         typstRightSplitRatio,
+        codeMirrorViewsByTab,
+        codeMirrorViewInstance,
     } from "$lib/stores/editor.store";
+    import { leanEditorRuntime } from "$lib/stores/lean-compiler.store";
     import StackSplitDivider from "$lib/components/shared/StackSplitDivider.svelte";
     import { get } from "svelte/store";
     import { checkFirstRun, tourActive } from "$lib/stores/tour.store";
@@ -145,6 +153,47 @@
               ) ?? null)
             : null,
     );
+    // Lean infoview side-panel mode: active tab is lean AND hideSurahPage is on.
+    // Excluded when in a cross-type pair (the infoview stays embedded in the
+    // sidebar then, because the left panel belongs to the partner editor).
+    let leanInfoviewMode = $derived(
+        $hideSurahPage() && $activeTab?.type === "lean" && !activeCrossGroup,
+    );
+
+    // Lean group whose member is the active tab — drives the third editor that
+    // stacks above the infoview in the right column (the quad split layout).
+    let activeLeanGroup = $derived(
+        leanInfoviewMode
+            ? ($leanGroups.find(
+                  (g: LeanGroup) =>
+                      g.tabA === $activeTabId ||
+                      g.tabB === $activeTabId ||
+                      g.tabC === $activeTabId,
+              ) ?? null)
+            : null,
+    );
+
+    // The shared infoview compiles whichever Lean tab is active, so it reads
+    // its source from the tab rather than from any one mounted editor.
+    function activeLeanCode(): string {
+        return $activeTab?.type === "lean" ? $activeTab.content : "";
+    }
+
+    // Jump the caret to a diagnostic. With a split there are several mounted
+    // editors, so address the one registered for the active tab rather than
+    // whichever view happened to focus last.
+    function jumpToLeanPosition(line: number, column: number) {
+        const view =
+            ($activeTabId ? $codeMirrorViewsByTab[$activeTabId] : null) ??
+            get(codeMirrorViewInstance);
+        if (!view) return;
+        const lineNo = Math.max(1, Math.min(view.state.doc.lines, line));
+        const docLine = view.state.doc.line(lineNo);
+        const pos = Math.min(docLine.from + column, docLine.to);
+        view.dispatch({ selection: { anchor: pos }, scrollIntoView: true });
+        view.focus();
+    }
+
     let typstMode = $derived(
         $hideSurahPage() && $activeTab?.type === "typst" && !activeCrossGroup,
     );
@@ -242,6 +291,12 @@
                         tabId={activeCrossGroup.partnerTabId}
                         hideRepl={false}
                     />
+                {:else if partnerTab?.type === "lean"}
+                    <!-- Partner=Lean: left = LeanEditor with embedded infoview -->
+                    <LeanEditor
+                        tabId={activeCrossGroup.partnerTabId}
+                        hideInfoview={false}
+                    />
                 {:else if partnerTab?.type === "typst"}
                     <!-- Partner=Typst: use TypstEditor's own resizable inline preview -->
                     <TypstEditor
@@ -291,6 +346,42 @@
                     <JuliaReplPane />
                 </div>
             </div>
+        {:else if leanInfoviewMode}
+            <!-- Lean infoview on the right (or left in RTL layout) — shared by
+                 the active Lean group. When that group has a third file, it
+                 stacks above the infoview, separated by a draggable horizontal
+                 divider (quad split layout). -->
+            <div
+                class="relative z-1 flex flex-col items-center
+                        flex-1 min-w-0 rounded-r-md
+                        {$zenMode
+                    ? ''
+                    : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]'}"
+            >
+                {#if activeLeanGroup?.tabC}
+                    <div
+                        class="w-full min-h-0 overflow-visible px-1"
+                        style="flex: 0 0 {$leanRightSplitRatio}%"
+                    >
+                        <LeanEditor
+                            tabId={activeLeanGroup.tabC}
+                            hideInfoview={true}
+                        />
+                    </div>
+                    <StackSplitDivider
+                        setRatio={(p) => leanRightSplitRatio.set(p)}
+                    />
+                {/if}
+                <div
+                    class="mb-5 w-full flex-1 flex flex-col min-h-0 overflow-hidden"
+                >
+                    <LeanInfoviewPane
+                        runtime={leanEditorRuntime}
+                        getCode={activeLeanCode}
+                        onJump={jumpToLeanPosition}
+                    />
+                </div>
+            </div>
         {:else if typstMode}
             <!-- Typst preview on the right. When the active Typst group has a third
                  file, it stacks above the preview (resizable). The preview always
@@ -328,6 +419,7 @@
         <div
             class="flex-1 min-w-0 h-full {activeCrossGroup ||
             juliaReplMode ||
+            leanInfoviewMode ||
             typstMode
                 ? 'hidden'
                 : ''}"
@@ -346,7 +438,7 @@
                 <SukunPeekToggle />
             </div>
         {/if}
-        {#if (juliaReplMode || typstMode) && $isSidebar}
+        {#if (juliaReplMode || leanInfoviewMode || typstMode) && $isSidebar}
             <SplitDivider />
         {/if}
         <Sidebar />

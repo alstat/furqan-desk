@@ -22,18 +22,25 @@
         removeTypstGroupByTab,
         addThirdToTypstGroup,
         detachThirdFromTypstGroup,
+        leanGroups,
+        createLeanGroup,
+        removeLeanGroup,
+        removeLeanGroupByTab,
+        addThirdToLeanGroup,
+        detachThirdFromLeanGroup,
         flashingTabId,
         crossGroups,
         createCrossGroup,
         removeCrossGroup,
         removeCrossGroupByTab,
     } from "$lib/stores/julia-terminal.store";
-    import type { JuliaGroup, TypstGroup, CrossGroup } from "$lib/stores/julia-terminal.store";
+    import type { JuliaGroup, TypstGroup, LeanGroup, CrossGroup } from "$lib/stores/julia-terminal.store";
 
-    // Julia and Typst groups stack identically in the tab strip — only creation
-    // and the fourth pane (REPL vs preview) differ. Treat them uniformly here.
-    type StackKind = "julia" | "typst";
-    type StackGroup = (JuliaGroup | TypstGroup) & { kind: StackKind };
+    // Julia, Typst and Lean groups stack identically in the tab strip — only
+    // creation and the fourth pane (REPL / preview / infoview) differ. Treat
+    // them uniformly here.
+    type StackKind = "julia" | "typst" | "lean";
+    type StackGroup = (JuliaGroup | TypstGroup | LeanGroup) & { kind: StackKind };
 
     function stackMembers(g: { tabA: string; tabB: string; tabC?: string }): string[] {
         return g.tabC ? [g.tabA, g.tabB, g.tabC] : [g.tabA, g.tabB];
@@ -42,18 +49,22 @@
     let stackGroups = $derived<StackGroup[]>([
         ...$juliaGroups.map((g) => ({ ...g, kind: "julia" as const })),
         ...$typstGroups.map((g) => ({ ...g, kind: "typst" as const })),
+        ...$leanGroups.map((g) => ({ ...g, kind: "lean" as const })),
     ]);
 
     function removeStackGroup(g: StackGroup): void {
         if (g.kind === "julia") removeJuliaGroup(g.id);
+        else if (g.kind === "lean") removeLeanGroup(g.id);
         else removeTypstGroup(g.id);
     }
     function detachThirdStack(g: StackGroup): void {
         if (g.kind === "julia") detachThirdFromJuliaGroup(g.id);
+        else if (g.kind === "lean") detachThirdFromLeanGroup(g.id);
         else detachThirdFromTypstGroup(g.id);
     }
     function addThirdStack(g: StackGroup, tabCId: string): void {
         if (g.kind === "julia") addThirdToJuliaGroup(g.id, tabCId);
+        else if (g.kind === "lean") addThirdToLeanGroup(g.id, tabCId);
         else addThirdToTypstGroup(g.id, tabCId);
     }
     import Icon from "@iconify/svelte";
@@ -195,6 +206,7 @@
         }
         removeJuliaGroupByTab(id);
         removeTypstGroupByTab(id);
+        removeLeanGroupByTab(id);
         removeCrossGroupByTab(id);
         closeTab(id);
     }
@@ -219,7 +231,10 @@
         ]);
         const available = $tabs.filter(
             (t) =>
-                (t.type === "julia" || t.type === "typst" || t.type === "lexical") &&
+                (t.type === "julia" ||
+                    t.type === "typst" ||
+                    t.type === "lean" ||
+                    t.type === "lexical") &&
                 t.id !== tabId &&
                 !allGroupedIds.has(t.id) &&
                 // Lexical still shares global editor state, so no Lexical+Lexical.
@@ -233,6 +248,8 @@
                 createJuliaGroup(tabId, p.id);
             } else if (hostType === "typst" && p.type === "typst") {
                 createTypstGroup(tabId, p.id);
+            } else if (hostType === "lean" && p.type === "lean") {
+                createLeanGroup(tabId, p.id);
             } else {
                 createCrossGroup(tabId, p.id);
             }
@@ -601,11 +618,17 @@
             ...$crossGroups.flatMap((g) => [g.hostTabId, g.partnerTabId]),
         ])}
         {@const isUngroupedSplittable =
-            (tab.type === "julia" || tab.type === "typst" || tab.type === "lexical") &&
+            (tab.type === "julia" ||
+                tab.type === "typst" ||
+                tab.type === "lean" ||
+                tab.type === "lexical") &&
             !stackGroup && !crossGroupForTab}
         {@const availablePartners = $tabs.filter(
             (t) =>
-                (t.type === "julia" || t.type === "typst" || t.type === "lexical") &&
+                (t.type === "julia" ||
+                    t.type === "typst" ||
+                    t.type === "lean" ||
+                    t.type === "lexical") &&
                 t.id !== tab.id &&
                 !allGroupedIds.has(t.id) &&
                 !(tab.type === "lexical" && t.type === "lexical"),
@@ -683,7 +706,9 @@
                           ? "solar:text-bold-duotone"
                           : tab.type === "julia"
                             ? "solar:code-bold-duotone"
-                            : "solar:file-bold-duotone"}
+                            : tab.type === "lean"
+                              ? "solar:verified-check-bold-duotone"
+                              : "solar:file-bold-duotone"}
                     width="0.75rem"
                     class="shrink-0 opacity-60"
                 />
@@ -866,6 +891,8 @@
                             createJuliaGroup(pickerForTabId!, partner.id);
                         } else if (hostType === "typst" && partner.type === "typst") {
                             createTypstGroup(pickerForTabId!, partner.id);
+                        } else if (hostType === "lean" && partner.type === "lean") {
+                            createLeanGroup(pickerForTabId!, partner.id);
                         } else {
                             createCrossGroup(pickerForTabId!, partner.id);
                         }
@@ -880,7 +907,9 @@
                             ? "solar:document-text-bold-duotone"
                             : partner.type === "lexical"
                               ? "solar:text-bold-duotone"
-                              : "solar:code-bold-duotone"}
+                              : partner.type === "lean"
+                                ? "solar:verified-check-bold-duotone"
+                                : "solar:code-bold-duotone"}
                         width="0.75rem"
                         class="shrink-0"
                     />

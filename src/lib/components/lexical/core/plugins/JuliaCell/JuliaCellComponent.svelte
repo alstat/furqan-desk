@@ -61,6 +61,7 @@
         hasError?: boolean;
         plots?: JuliaCellPlot[];
         displayMode?: JuliaCellDisplayMode;
+        elapsedMs?: number;
         nodeKey?: string;
         autoEdit?: boolean;
     }
@@ -71,6 +72,7 @@
         hasError = false,
         plots = [],
         displayMode = "both",
+        elapsedMs = 0,
         nodeKey = "",
         autoEdit = false,
     }: Props = $props();
@@ -84,6 +86,7 @@
     let liveOutput = $state(output);
     let liveError = $state(hasError);
     let livePlots = $state<JuliaCellPlot[]>(plots);
+    let liveElapsed = $state(elapsedMs);
     let running = $state(false);
     let runCount = $state(0);
     let mode = $state<JuliaCellDisplayMode>(displayMode);
@@ -221,6 +224,10 @@
         );
     }
 
+    function formatElapsed(ms: number): string {
+        return ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)} s`;
+    }
+
     function highlightExt(dark: boolean) {
         return syntaxHighlighting(
             dark ? juliaDarkHighlight : juliaLightHighlight,
@@ -277,6 +284,7 @@
         liveOutput = "";
         liveError = false;
         livePlots = [];
+        liveElapsed = 0;
         persistCode();
 
         const result = await runJuliaCell(editCode, (partial) => {
@@ -288,6 +296,7 @@
         liveOutput = result.text;
         liveError = result.hasError;
         livePlots = result.plots;
+        liveElapsed = result.elapsedMs;
         running = false;
         runCount += 1;
 
@@ -295,7 +304,12 @@
         editor.update(() => {
             const node = getNodeByKey(nodeKey);
             if (node && isJuliaCellNode(node)) {
-                node.setResult(result.text, result.hasError, result.plots);
+                node.setResult(
+                    result.text,
+                    result.hasError,
+                    result.plots,
+                    result.elapsedMs,
+                );
             }
         });
     }
@@ -319,11 +333,12 @@
         liveOutput = "";
         liveError = false;
         livePlots = [];
+        liveElapsed = 0;
         runCount = 0;
         editor.update(() => {
             const node = getNodeByKey(nodeKey);
             if (node && isJuliaCellNode(node)) {
-                node.setResult("", false, []);
+                node.setResult("", false, [], 0);
             }
         });
     }
@@ -1026,9 +1041,9 @@ end
              plot background it would bleed under the paragraphs below the
              cell, hiding the editor caret on empty lines. -->
         <div
-            class="flow-root py-1 px-2 {livePlots.length > 0
+            class="relative flow-root py-1 px-2 {livePlots.length > 0
                 ? 'bg-white dark:bg-white'
-                : '-mb-5.5 border-t border-brand-sand-200 dark:border-[#363a4f] bg-brand-sand-50 dark:bg-[#1e2030]'}"
+                : 'border-t border-brand-sand-200 dark:border-[#363a4f] bg-brand-sand-50 dark:bg-[#1e2030]'}"
             class:border-t-0={!showCode}
         >
             {#if liveOutput}
@@ -1081,6 +1096,21 @@ end
                     class="julia-cell-empty-output font-mono text-[11px] leading-tight italic text-brand-charcoal-300 dark:text-[#626880]"
                     >{$t("julia_cell.no_output")}</span
                 > -->
+            {/if}
+            {#if liveElapsed > 0}
+                <!-- Pinned to the panel's top-right corner rather than placed in
+                     the flow, so the timing costs no vertical space. It carries
+                     the panel's own background — which differs for a plot — and a
+                     little left padding, so a long first line passes cleanly
+                     underneath instead of colliding with it. -->
+                <div
+                    class="pointer-events-none absolute top-1 right-2 pl-1 font-mono text-[9.5px] leading-none text-brand-charcoal-300 dark:text-[#626880] {livePlots.length >
+                    0
+                        ? 'bg-white dark:bg-white'
+                        : 'bg-brand-sand-50 dark:bg-[#1e2030]'}"
+                >
+                    {formatElapsed(liveElapsed)}
+                </div>
             {/if}
         </div>
     {/if}
@@ -1214,6 +1244,10 @@ end
             opacity: 1;
             transform: translateY(0) scale(1);
         }
+    }
+
+    .julia-cell {
+        white-space: normal;
     }
 
     .julia-cell-editor :global(.cm-editor) {

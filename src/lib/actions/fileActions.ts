@@ -35,7 +35,7 @@ export async function openFile(): Promise<void> {
         filters: [
             {
                 name: "All Supported Files",
-                extensions: ["typ", "bib", "txt", "md", "lexical", "json", "jl"],
+                extensions: ["typ", "bib", "txt", "md", "lexical", "json", "jl", "lean"],
             },
         ],
     });
@@ -84,12 +84,15 @@ export async function saveFile(tabId?: string | null): Promise<void> {
         }
         await writeTextFile(path, json);
         markTabSaved(tab.id, path);
-    } else if (tab.type === "julia") {
+    } else if (tab.type === "julia" || tab.type === "lean") {
+        const isLean = tab.type === "lean";
         let path = tab.path;
         if (!path) {
             path = await saveDialog({
-                defaultPath: `${tab.name}.jl`,
-                filters: [{ name: "Julia", extensions: ["jl"] }],
+                defaultPath: `${tab.name}.${isLean ? "lean" : "jl"}`,
+                filters: isLean
+                    ? [{ name: "Lean 4", extensions: ["lean"] }]
+                    : [{ name: "Julia", extensions: ["jl"] }],
             });
             if (!path) return;
         }
@@ -137,11 +140,14 @@ export async function saveAs(tabId?: string | null): Promise<void> {
         if (!path) return;
         await writeTextFile(path, JSON.stringify(doc, null, 2));
         markTabSaved(tab.id, path);
-    } else if (tab.type === "julia") {
+    } else if (tab.type === "julia" || tab.type === "lean") {
+        const isLean = tab.type === "lean";
         const path = await saveDialog({
             title: "Save As",
-            defaultPath: `${tab.name}.jl`,
-            filters: [{ name: "Julia", extensions: ["jl"] }],
+            defaultPath: `${tab.name}.${isLean ? "lean" : "jl"}`,
+            filters: isLean
+                ? [{ name: "Lean 4", extensions: ["lean"] }]
+                : [{ name: "Julia", extensions: ["jl"] }],
         });
         if (!path) return;
         await writeTextFile(path, tab.content);

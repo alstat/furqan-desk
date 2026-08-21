@@ -188,6 +188,42 @@ export const typstRightSplitRatio = {
   },
 };
 
+// ── Lean split (two/three stacked Lean editors) height ratios ─────────────────
+// Same shape as the Typst split: left column = tabA/tabB, right column = tabC
+// above the shared infoview. Same 20–80 clamp.
+
+const _leanSplitRatio = writable<number>(loadRatio("lean-split-ratio"));
+
+export const leanSplitRatio = {
+  subscribe: _leanSplitRatio.subscribe,
+  set(v: number) {
+    const clamped = Math.max(JULIA_SPLIT_MIN, Math.min(JULIA_SPLIT_MAX, v));
+    try {
+      localStorage.setItem("lean-split-ratio", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _leanSplitRatio.set(clamped);
+  },
+};
+
+const _leanRightSplitRatio = writable<number>(
+  loadRatio("lean-right-split-ratio"),
+);
+
+export const leanRightSplitRatio = {
+  subscribe: _leanRightSplitRatio.subscribe,
+  set(v: number) {
+    const clamped = Math.max(JULIA_SPLIT_MIN, Math.min(JULIA_SPLIT_MAX, v));
+    try {
+      localStorage.setItem("lean-right-split-ratio", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _leanRightSplitRatio.set(clamped);
+  },
+};
+
 // ── Editor theme ──────────────────────────────────────────────────────────────
 
 export type EditorTheme =

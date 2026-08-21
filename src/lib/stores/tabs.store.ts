@@ -3,7 +3,7 @@ import { rename, exists } from '@tauri-apps/plugin-fs';
 import { invoke } from '@tauri-apps/api/core';
 import { lexicalToTypst } from '$lib/functions/utils/typstConverters';
 
-export type TabType = 'typst' | 'lexical' | 'text' | 'julia';
+export type TabType = 'typst' | 'lexical' | 'text' | 'julia' | 'lean';
 
 export interface EditorTab {
 	id: string;
@@ -161,7 +161,7 @@ const FLAT_FILE_EXTENSIONS = new Set([
 	// style
 	'css', 'scss', 'sass', 'less',
 	// code — scripting languages
-	'jl',
+	'jl', 'lean',
 	// misc text
 	'lexical', 'log', 'diff', 'patch', 'sql', 'graphql', 'gql',
 	'dockerfile', 'makefile', 'gitignore', 'prettierrc', 'eslintrc',
@@ -195,6 +195,7 @@ export function detectType(path: string): TabType {
 	if (ext === 'typ') return 'typst';
 	if (ext === 'lexical' || ext === 'json') return 'lexical';
 	if (ext === 'jl') return 'julia';
+	if (ext === 'lean') return 'lean';
 	return 'text';
 }
 

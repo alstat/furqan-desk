@@ -5,6 +5,7 @@
     import RichTextEditor from "$lib/components/editor/EditorComposer.svelte";
     import TypstEditor from "$lib/components/editor/TypstEditor.svelte";
     import JuliaEditor from "$lib/components/editor/JuliaEditor.svelte";
+    import LeanEditor from "$lib/components/editor/LeanEditor.svelte";
     import EditorTabs from "$lib/components/editor/EditorTabs.svelte";
     import ActionBar from "$lib/components/lexical/components/actionbar/ActionBar.svelte";
     import FileExplorer from "$lib/components/shared/FileExplorer.svelte";
@@ -22,6 +23,7 @@
         zenMode,
         juliaSplitRatio,
         typstSplitRatio,
+        leanSplitRatio,
     } from "$lib/stores/editor.store";
     import {
         tabs,
@@ -33,6 +35,7 @@
     import {
         juliaGroups,
         typstGroups,
+        leanGroups,
         crossGroups,
     } from "$lib/stores/julia-terminal.store";
     import type { CrossGroup } from "$lib/stores/julia-terminal.store";
@@ -265,6 +268,11 @@
     let juliaMode = $derived(
         $hideSurahPage() && $activeTab?.type === "julia" && !activeCrossGroup,
     );
+    // Same idea for Lean: with the Parchment hidden, the infoview moves out of
+    // the editor and into the right column, shared by the group's members.
+    let leanMode = $derived(
+        $hideSurahPage() && $activeTab?.type === "lean" && !activeCrossGroup,
+    );
 
     // In a cross pair the sidebar always renders the HOST tab's editor while the
     // partner sits in the left panel, so the sidebar's action bar and file-type
@@ -401,6 +409,12 @@
                 label: "Julia",
                 color: c,
             };
+        if (tab.type === "lean")
+            return {
+                icon: "solar:verified-check-bold-duotone",
+                label: "Lean 4",
+                color: c,
+            };
         if (tab.type === "typst")
             return {
                 icon: "solar:document-text-bold-duotone",
@@ -439,7 +453,7 @@
     }
 </script>
 
-<CollapsibleSidebar roundRight={!juliaMode && !activeCrossGroup}>
+<CollapsibleSidebar roundRight={!juliaMode && !leanMode && !activeCrossGroup}>
     <div class="relative h-full flex flex-col overflow-visible">
         <!-- File Explorer button: outside editor on the left/right, same height as sidebar toggle -->
         <FileExplorer />
@@ -474,6 +488,13 @@
                     <JuliaEditor
                         tabId={$activeTabId !== hostTabId ? hostTabId : null}
                         hideRepl={false}
+                    />
+                {:else if hostTab?.type === "lean"}
+                    <!-- Infoview stays embedded below the editor, as with the
+                         Julia REPL: the left panel belongs to the partner. -->
+                    <LeanEditor
+                        tabId={$activeTabId !== hostTabId ? hostTabId : null}
+                        hideInfoview={false}
                     />
                 {:else if hostTab?.type === "typst" || hostTab?.type === "text"}
                     <!-- inCrossHost=true: shows inline preview instead of side-by-side preview -->
@@ -558,6 +579,49 @@
                 {:else}
                     <!-- Normal mode: editor + embedded REPL panel at the bottom -->
                     <JuliaEditor />
+                {/if}
+            {:else if $activeTab?.type === "lean"}
+                {@const activeLeanGroup = $leanGroups.find(
+                    (g) =>
+                        g.tabA === $activeTabId ||
+                        g.tabB === $activeTabId ||
+                        g.tabC === $activeTabId,
+                )}
+                {#if leanMode}
+                    {#if activeLeanGroup}
+                        <!-- Split view: the two primary Lean editors stack in this
+                             (left) column, the shared infoview — and an optional
+                             third editor — on the right. tabA/tabB are rendered
+                             explicitly so the layout is stable no matter which
+                             group member is the active tab. -->
+                        <div class="flex flex-col h-full">
+                            <div
+                                class="min-h-0 overflow-visible"
+                                style="flex: 0 0 {$leanSplitRatio}%"
+                            >
+                                <LeanEditor
+                                    tabId={activeLeanGroup.tabA}
+                                    hideInfoview={true}
+                                />
+                            </div>
+                            <StackSplitDivider
+                                class="-mx-1"
+                                setRatio={(p) => leanSplitRatio.set(p)}
+                            />
+                            <div class="flex-1 min-h-0 overflow-visible">
+                                <LeanEditor
+                                    tabId={activeLeanGroup.tabB}
+                                    hideInfoview={true}
+                                />
+                            </div>
+                        </div>
+                    {:else}
+                        <!-- Single full-height Lean editor, infoview on the right -->
+                        <LeanEditor hideInfoview={true} />
+                    {/if}
+                {:else}
+                    <!-- Normal mode: editor + embedded infoview at the bottom -->
+                    <LeanEditor />
                 {/if}
             {:else}
                 <RichTextEditor />
