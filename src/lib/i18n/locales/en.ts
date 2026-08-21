@@ -1206,6 +1206,7 @@ export const en: Record<string, string> = {
   "postcard.bg_plain": "Plain",
   "postcard.bg_pattern": "Pattern",
   "postcard.bg_manuscript": "Manuscript",
+  "postcard.bg_combo": "Manuscript + Pattern",
   "postcard.base_color": "Base colour",
   "postcard.pattern": "Islamic pattern",
   "postcard.pattern_color": "Pattern colour",

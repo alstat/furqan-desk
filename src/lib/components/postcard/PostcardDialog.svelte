@@ -127,7 +127,14 @@
     let borderOn = $state(true);
 
     // ── Background ───────────────────────────────────────────────────────────
-    let bgMode = $state<"plain" | "manuscript" | "pattern">("pattern");
+    let bgMode = $state<"plain" | "manuscript" | "pattern" | "combo">(
+        "pattern",
+    );
+    /** `combo` draws both layers, so each arm has to run for it too. */
+    const wantsManuscript = $derived(
+        bgMode === "manuscript" || bgMode === "combo",
+    );
+    const wantsPattern = $derived(bgMode === "pattern" || bgMode === "combo");
     let baseColor = $state("#0f2f28");
 
     let patternId = $state("star8");
@@ -321,7 +328,7 @@
     });
 
     const usingManuscript = $derived(
-        bgMode === "manuscript" && !!bgImage && !!bgCredit,
+        wantsManuscript && !!bgImage && !!bgCredit,
     );
 
     // ── Open / reset ─────────────────────────────────────────────────────────
@@ -418,7 +425,7 @@
 
     // ── Manuscript list / image ──────────────────────────────────────────────
     $effect(() => {
-        if (!open || bgMode !== "manuscript") return;
+        if (!open || !wantsManuscript) return;
         const ayah = sortedSelection[0];
         if (!ayah) return;
         const key = `${surah}:${ayah}`;
@@ -511,7 +518,7 @@
     // carry a 1080px card.
     $effect(() => {
         const img = msImage;
-        if (bgMode !== "manuscript" || !img?.image_url?.trim()) return;
+        if (!wantsManuscript || !img?.image_url?.trim()) return;
         const req = ++msImageReq;
         msImageLoading = true;
         msImageError = false;
@@ -552,7 +559,7 @@
     let patternImg = $state<HTMLImageElement | null>(null);
 
     $effect(() => {
-        if (bgMode !== "pattern") return;
+        if (!wantsPattern) return;
         const def = PATTERNS.find((p) => p.id === patternId);
         if (!def) {
             patternImg = null;
@@ -983,81 +990,74 @@
         style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
         onpointerdown={() => (zIndex = bringToFront())}
     >
-        <!-- Header -->
+        <!-- Header / drag handle — same compact bar as the manuscript viewer -->
         <div
-            class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-3.5 select-none {isDragging
-                ? 'cursor-grabbing'
-                : 'cursor-grab'}"
+            class="flex items-center justify-between px-4 py-1.5 shrink-0
+               border-b border-brand-gold-200 dark:border-[#414559]
+               bg-brand-gold-100 dark:bg-[#292c3c]
+               select-none rounded-t-3xl
+               {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
             onpointerdown={startDrag}
             role="banner"
         >
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div
-                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]"
-                    >
-                        <Icon
-                            icon="solar:gallery-send-bold-duotone"
-                            class="text-brand-gold-500 dark:text-[#e5c890]"
-                            width="1rem"
-                        />
-                    </div>
-                    <div class="min-w-0">
-                        <h2
-                            class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] truncate"
-                        >
-                            {$t("postcard.title")}
-                        </h2>
-                        <p
-                            class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] truncate"
-                        >
-                            {$surahLabels[surah - 1]?.en ?? ""}
-                            {rangeLabel ? `· ${surah}:${rangeLabel}` : ""}
-                        </p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-1.5 shrink-0">
-                    {#if statusMsg}
-                        <span
-                            class="mr-1 max-w-56 truncate text-[11px] font-medium text-brand-gold-600 dark:text-[#e5c890]"
-                            >{statusMsg}</span
+            <div class="flex items-center gap-2 min-w-0">
+                <Icon
+                    icon="solar:gallery-send-bold-duotone"
+                    width="1.1rem"
+                    class="shrink-0 text-brand-gold-500"
+                />
+                <span
+                    class="truncate py-2 text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
+                >
+                    {$t("postcard.title")}
+                    {#if rangeLabel}
+                        <span class="font-normal normal-case"
+                            >— {$surahLabels[surah - 1]?.en ?? ""} · {surah}:{rangeLabel}</span
                         >
                     {/if}
-                    <button
-                        onclick={copyPng}
-                        onpointerdown={(e) => e.stopPropagation()}
-                        title={$t("postcard.copy")}
-                        aria-label={$t("postcard.copy")}
-                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                </span>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+                {#if statusMsg}
+                    <span
+                        class="mr-1 max-w-56 truncate text-[11px] font-medium text-brand-gold-600 dark:text-[#e5c890]"
+                        >{statusMsg}</span
                     >
-                        <Icon icon="solar:copy-bold-duotone" width="1rem" />
-                    </button>
-                    <button
-                        onclick={exportPng}
-                        onpointerdown={(e) => e.stopPropagation()}
-                        disabled={exporting || !arabicText}
-                        class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 px-3 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-brand-gold-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Icon
-                            icon={exporting
-                                ? "svg-spinners:180-ring-with-bg"
-                                : "solar:download-minimalistic-bold-duotone"}
-                            width="0.85rem"
-                        />
-                        {$t("postcard.export")}
-                    </button>
-                    <button
-                        onclick={onClose}
-                        onpointerdown={(e) => e.stopPropagation()}
-                        aria-label={$t("common.close")}
-                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    >
-                        <Icon
-                            icon="solar:close-circle-bold-duotone"
-                            width="1rem"
-                        />
-                    </button>
-                </div>
+                {/if}
+                <button
+                    onclick={copyPng}
+                    onpointerdown={(e) => e.stopPropagation()}
+                    title={$t("postcard.copy")}
+                    aria-label={$t("postcard.copy")}
+                    class="cursor-pointer p-1 rounded-lg text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-gold-200 dark:hover:bg-[#414559] transition-colors"
+                >
+                    <Icon icon="solar:copy-bold-duotone" width="1rem" />
+                </button>
+                <button
+                    onclick={exportPng}
+                    onpointerdown={(e) => e.stopPropagation()}
+                    disabled={exporting || !arabicText}
+                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 px-2.5 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-brand-gold-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <Icon
+                        icon={exporting
+                            ? "svg-spinners:180-ring-with-bg"
+                            : "solar:download-minimalistic-bold-duotone"}
+                        width="0.8rem"
+                    />
+                    {$t("postcard.export")}
+                </button>
+                <button
+                    onclick={onClose}
+                    onpointerdown={(e) => e.stopPropagation()}
+                    aria-label={$t("common.close")}
+                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                >
+                    <Icon
+                        icon="solar:close-circle-bold-duotone"
+                        width="0.85rem"
+                    />
+                </button>
             </div>
         </div>
 
@@ -1452,12 +1452,12 @@
                                 <span class={labelClass}
                                     >{$t("postcard.bg_source")}</span
                                 >
-                                <div class="grid grid-cols-3 gap-1.5">
-                                    {#each ["plain", "pattern", "manuscript"] as mode}
+                                <div class="grid grid-cols-2 gap-1.5">
+                                    {#each ["plain", "pattern", "manuscript", "combo"] as mode}
                                         <button
                                             onclick={() =>
                                                 (bgMode = mode as typeof bgMode)}
-                                            class="cursor-pointer rounded-lg border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors {bgMode ===
+                                            class="cursor-pointer flex min-h-10 items-center justify-center rounded-lg border px-2 py-1.5 text-center text-[10px] font-semibold uppercase tracking-wide leading-tight transition-colors {bgMode ===
                                             mode
                                                 ? 'border-brand-gold-400 bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-600 dark:text-[#e5c890]'
                                                 : 'border-brand-sand-200 dark:border-[#414559] text-brand-charcoal-300 dark:text-[#838ba7] hover:border-brand-gold-300'}"
@@ -1473,7 +1473,7 @@
                                 (v) => (baseColor = v),
                             )}
 
-                            {#if bgMode === "pattern"}
+                            {#if wantsPattern}
                                 <div>
                                     <span class={labelClass}
                                         >{$t("postcard.pattern")}</span
@@ -1540,7 +1540,7 @@
                                 )}
                             {/if}
 
-                            {#if bgMode === "manuscript"}
+                            {#if wantsManuscript}
                                 <div>
                                     <span class={labelClass}
                                         >{$t("postcard.manuscripts_for", {
