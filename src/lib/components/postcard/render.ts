@@ -441,7 +441,7 @@ export function renderPostcard(
     // keeps the mark clear of both the card edge and the frame's corner
     // medallions.
     const sigSize = Math.max(15, Math.min(W, H) * 0.019);
-    const sigBaseline = H - pad * 1.15;
+    const sigBaseline = H - pad * 0.75;
     const sigTop = sigBaseline - sigSize * 1.5;
     const contentBottom = sigTop - pad * 0.6;
     const available = contentBottom - pad;
