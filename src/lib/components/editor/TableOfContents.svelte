@@ -82,11 +82,25 @@
                             }
                         }
                     });
-                headings = entries;
+                // Reassigning unconditionally re-rendered the outline on every
+                // keystroke, even though a heading only changes when one is
+                // added, removed, retitled or re-levelled. Comparing first
+                // keeps typing inside a paragraph free.
+                if (!sameHeadings(headings, entries)) headings = entries;
             });
         });
         return unregister;
     });
+
+    function sameHeadings(a: TocEntry[], b: TocEntry[]): boolean {
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) {
+            if (a[i].key !== b[i].key || a[i].text !== b[i].text || a[i].tag !== b[i].tag) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     function scrollToHeading(key: string) {
         activeKey = key;

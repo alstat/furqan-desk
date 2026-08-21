@@ -2,13 +2,16 @@ import { selectedSurahIdx, surahMorphology, basmallahMorphology } from '$lib/sto
 import { get } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
 import type { AyahMorphology, SurahMorphology } from '$lib/types/morphology';
+import { cachedMorphology } from '$lib/stores/surah-cache';
 
 let loadGeneration = 0;
 
 export async function loadMorphologySurah(surahNumber: number): Promise<void> {
     const gen = ++loadGeneration;
     try {
-        const data = await invoke<SurahMorphology>('get_surah_morphology', { surahNumber });
+        const data = await cachedMorphology(surahNumber, () =>
+            invoke<SurahMorphology>('get_surah_morphology', { surahNumber }),
+        );
         if (gen !== loadGeneration) return;
         surahMorphology.set(data);
     } catch (error) {

@@ -60,6 +60,7 @@
         codeMirrorViewInstance,
     } from "$lib/stores/editor.store";
     import { leanEditorRuntime } from "$lib/stores/lean-compiler.store";
+    import { syncLexicalEditorToTab } from "$lib/utils/lexicalTabSync";
     import StackSplitDivider from "$lib/components/shared/StackSplitDivider.svelte";
     import { get } from "svelte/store";
     import { checkFirstRun, tourActive } from "$lib/stores/tour.store";
@@ -243,22 +244,7 @@
         const partnerTab = get(tabs).find((t) => t.id === cg.partnerTabId);
         if (!partnerTab || partnerTab.type !== "lexical") return;
         if ($activeTabId === cg.partnerTabId) return; // partner is active — normal save applies
-        const lexicalTabId = cg.partnerTabId;
-        const unregister = editor.registerUpdateListener(
-            ({ dirtyElements, dirtyLeaves, tags }) => {
-                if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
-                if (tags.has('history-merge')) return;
-                const json = JSON.stringify(editor.getEditorState().toJSON());
-                tabs.update((ts) =>
-                    ts.map((t) =>
-                        t.id === lexicalTabId
-                            ? { ...t, content: json, isDirty: true }
-                            : t,
-                    ),
-                );
-            },
-        );
-        return unregister;
+        return syncLexicalEditorToTab(editor, cg.partnerTabId);
     });
 </script>
 
