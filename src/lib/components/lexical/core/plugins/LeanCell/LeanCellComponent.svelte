@@ -290,7 +290,9 @@
         });
     }
 
-    async function run() {
+    /** `force` re-runs even when the source is unchanged — see the runtime's
+     *  `compile`. Live mode leaves it off so an idle pause costs nothing. */
+    async function run(force = false) {
         if (running) {
             // In live mode an edit that lands mid-compile would otherwise be
             // dropped, leaving the shown messages describing stale source.
@@ -308,7 +310,7 @@
         running = true;
         persistCode();
         try {
-            const result = await runLeanCell(editCode);
+            const result = await runLeanCell(editCode, force);
             if (result) {
                 applyResult(result);
                 runCount += 1;
@@ -577,7 +579,7 @@
             {
                 key: "Mod-Enter",
                 run: () => {
-                    void run();
+                    void run(true);
                     return true;
                 },
             },
@@ -617,7 +619,7 @@
 
         // Expose this cell's run handler so "Run all" can drive it, and its
         // clear handler so "clear all outputs" can wipe it.
-        leanCellRunners.set(nodeKey, run);
+        leanCellRunners.set(nodeKey, () => run(true));
         leanCellClearers.set(nodeKey, clearOutput);
 
         if (autoEdit) {
@@ -841,7 +843,7 @@
                 <!-- Compile split button — main compiles this cell, caret opens options -->
                 <span class="relative flex items-center">
                     <button
-                        onclick={run}
+                        onclick={() => run(true)}
                         title="{$t('lean_cell.compile')} (Ctrl/Cmd+Enter)"
                         class="flex h-[22px] cursor-pointer items-center gap-1 rounded-l-md border border-r-0 border-brand-sand-200 px-2 font-sans text-[10px] font-semibold text-brand-gold-600 transition-colors hover:bg-brand-gold-100 disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent dark:border-[#414559] dark:text-brand-gold-400 dark:hover:bg-[#414559]"
                     >
@@ -872,7 +874,7 @@
                             <button
                                 onclick={() => {
                                     showRunMenu = false;
-                                    void run();
+                                    void run(true);
                                 }}
                                 class="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-left font-sans text-[10px] text-brand-charcoal-700 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
                             >

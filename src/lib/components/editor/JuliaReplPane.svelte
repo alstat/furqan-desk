@@ -16,6 +16,7 @@
     } from "$lib/stores/julia-terminal.store";
     import {
         juliaReplHistory,
+        pushReplLines,
         juliaPlots,
         cmFontSize,
         replFontSize,
@@ -910,27 +911,19 @@
                                                         (n) => n > maxAyah,
                                                     );
                                                 if (missing.length > 0) {
-                                                    juliaReplHistory.update(
-                                                        (h) => [
-                                                            ...h,
-                                                            {
-                                                                text: `Surah ${surahNum} has only ${maxAyah} ayahs — requested: ${missing.join(", ")}`,
-                                                                kind: "error" as const,
-                                                            },
-                                                        ],
-                                                    );
+                                                    pushReplLines({
+                                                        text: `Surah ${surahNum} has only ${maxAyah} ayahs — requested: ${missing.join(", ")}`,
+                                                        kind: "error" as const,
+                                                    });
                                                     scrollReplToBottom();
                                                 }
                                             }
                                             loaded.push(data);
                                         } catch (e) {
-                                            juliaReplHistory.update((h) => [
-                                                ...h,
-                                                {
-                                                    text: `Failed to load surah ${surahNum}: ${e}`,
-                                                    kind: "error" as const,
-                                                },
-                                            ]);
+                                            pushReplLines({
+                                                text: `Failed to load surah ${surahNum}: ${e}`,
+                                                kind: "error" as const,
+                                            });
                                             scrollReplToBottom();
                                         }
                                     }
@@ -970,13 +963,10 @@
 
                 const displayChunk = restLines.join("\n");
                 if (displayChunk) {
-                    juliaReplHistory.update((h) => [
-                        ...h,
-                        {
-                            text: displayChunk,
-                            kind: classifyOutput(displayChunk, error !== null),
-                        },
-                    ]);
+                    pushReplLines({
+                        text: displayChunk,
+                        kind: classifyOutput(displayChunk, error !== null),
+                    });
                     parsePrecompileChunk(displayChunk);
                     // Keep spinner alive while output is still streaming in
                     isStreaming = true;

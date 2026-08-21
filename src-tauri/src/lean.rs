@@ -17,7 +17,8 @@
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager, State};
 
 /// Default kernel name when a command doesn't specify one.
@@ -37,12 +38,12 @@ const COMPILE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(300)
 
 /// A compile that is currently running for one kernel.
 struct RunningCompile {
-    /// OS process id, so a newer request can kill the one it supersedes.
-    pid: Option<u32>,
     /// Monotonic request id. A finished compile only reports its result if it
-    /// is still the newest request for its kernel — otherwise it was cancelled
+    /// is still the newest request for its kernel — otherwise it was superseded
     /// mid-flight by a keystroke and its diagnostics are already stale.
     generation: u64,
+    /// Aborting this tears the process down; see `abort_running`.
+    abort: tokio::task::AbortHandle,
 }
 
 pub struct LeanState {
@@ -52,6 +53,25 @@ pub struct LeanState {
     running: Mutex<HashMap<String, RunningCompile>>,
     /// Next generation number, shared across kernels (uniqueness is all we need).
     next_generation: Mutex<u64>,
+    /// Last successfully resolved `lean` binary.
+    ///
+    /// Resolution walks every directory on PATH plus a list of well-known
+    /// install locations. That is a lot of stat(2) calls to repeat on each
+    /// compile — and live mode compiles on every pause in typing — while the
+    /// answer only changes when the user sets a path or an install finishes.
+    /// Only successful lookups are cached, so a Lean installed by other means
+    /// while the app runs is still picked up on the next attempt.
+    resolved: Mutex<Option<PathBuf>>,
+    /// The resident language server, started on first use.
+    ///
+    /// One server hosts every kernel as a separate document rather than a
+    /// process per kernel: documents are independent inside the server anyway,
+    /// and a second process would double resident import memory for nothing.
+    server: tokio::sync::Mutex<Option<Arc<crate::lean_lsp::LeanLsp>>>,
+    /// Whether to use the server at all. Batch mode stays reachable so a
+    /// toolchain that ships a broken server, or any regression here, is one
+    /// toggle away from the previous behaviour.
+    use_server: AtomicBool,
 }
 
 impl LeanState {
@@ -60,7 +80,46 @@ impl LeanState {
             custom_path: Mutex::new(custom_path),
             running: Mutex::new(HashMap::new()),
             next_generation: Mutex::new(1),
+            resolved: Mutex::new(None),
+            server: tokio::sync::Mutex::new(None),
+            use_server: AtomicBool::new(true),
         }
+    }
+}
+
+/// Turn the language server on or off. Off falls back to `lean --json`.
+#[tauri::command]
+pub fn set_lean_use_server(enabled: bool, state: State<'_, LeanState>) {
+    state.use_server.store(enabled, Ordering::Relaxed);
+}
+
+#[tauri::command]
+pub fn get_lean_use_server(state: State<'_, LeanState>) -> bool {
+    state.use_server.load(Ordering::Relaxed)
+}
+
+/// Locate the `lean` binary, reusing the cached answer when it still resolves.
+fn resolve_lean(state: &LeanState) -> Option<PathBuf> {
+    if let Ok(cache) = state.resolved.lock() {
+        if let Some(cached) = cache.as_ref() {
+            // One stat(2) to confirm, versus rescanning every PATH entry.
+            if cached.exists() {
+                return Some(cached.clone());
+            }
+        }
+    }
+    let custom = state.custom_path.lock().ok().and_then(|g| g.clone());
+    let found = lean_binary_path(custom.as_deref())?;
+    if let Ok(mut cache) = state.resolved.lock() {
+        *cache = Some(found.clone());
+    }
+    Some(found)
+}
+
+/// Drop the cached path — after the user sets one, or an install moves it.
+fn invalidate_resolved(state: &LeanState) {
+    if let Ok(mut cache) = state.resolved.lock() {
+        *cache = None;
     }
 }
 
@@ -207,17 +266,27 @@ macro_rules! no_window {
 
 #[tauri::command]
 pub async fn check_lean(state: State<'_, LeanState>) -> Result<String, String> {
-    let custom = state.custom_path.lock().ok().and_then(|g| g.clone());
-    let result = tokio::task::spawn_blocking(move || {
-        if lean_binary_path(custom.as_deref()).is_some() {
-            "installed".to_string()
-        } else {
-            "not_installed".to_string()
+    // A cache hit is a single stat and returns without touching the pool; only
+    // a miss pays for the directory walk, and that runs off the async runtime
+    // so PATH scanning can never stall it (most noticeable on Windows).
+    if let Ok(cache) = state.resolved.lock() {
+        if cache.as_ref().is_some_and(|p| p.exists()) {
+            return Ok("installed".to_string());
         }
-    })
-    .await
-    .unwrap_or_else(|_| "not_installed".to_string());
-    Ok(result)
+    }
+    let custom = state.custom_path.lock().ok().and_then(|g| g.clone());
+    let found = tokio::task::spawn_blocking(move || lean_binary_path(custom.as_deref()))
+        .await
+        .unwrap_or(None);
+    match found {
+        Some(path) => {
+            if let Ok(mut cache) = state.resolved.lock() {
+                *cache = Some(path);
+            }
+            Ok("installed".to_string())
+        }
+        None => Ok("not_installed".to_string()),
+    }
 }
 
 /// Return the currently saved custom Lean binary path (empty string if none).
@@ -244,6 +313,7 @@ pub fn set_lean_path(
 
     if path.is_empty() {
         *state.custom_path.lock().map_err(|e| e.to_string())? = None;
+        invalidate_resolved(&state);
         clear_persisted_path(&app);
         let custom = state.custom_path.lock().ok().and_then(|g| g.clone());
         return Ok(if lean_binary_path(custom.as_deref()).is_some() {
@@ -274,6 +344,7 @@ pub fn set_lean_path(
     }
 
     *state.custom_path.lock().map_err(|e| e.to_string())? = Some(p.clone());
+    invalidate_resolved(&state);
     save_persisted_path(&app, &p);
 
     Ok("installed".to_string())
@@ -286,10 +357,8 @@ struct InstallProgress {
 
 #[tauri::command]
 pub async fn get_lean_version(state: State<'_, LeanState>) -> Result<String, String> {
-    let custom = state.custom_path.lock().ok().and_then(|g| g.clone());
+    let lean = resolve_lean(&state).ok_or_else(|| "Lean is not installed".to_string())?;
     tokio::task::spawn_blocking(move || {
-        let lean = lean_binary_path(custom.as_deref())
-            .ok_or_else(|| "Lean is not installed".to_string())?;
         let mut cmd = std::process::Command::new(&lean);
         cmd.arg("--version")
             .stdout(std::process::Stdio::piped())
@@ -692,6 +761,7 @@ async fn install_toolchain(
     if let Ok(mut guard) = state.custom_path.lock() {
         *guard = Some(lean_shim.clone());
     }
+    invalidate_resolved(&state);
     save_persisted_path(&app, &lean_shim);
 
     emit(&format!("Lean {toolchain} installed successfully."));
@@ -701,17 +771,22 @@ async fn install_toolchain(
 // ── Compilation ──────────────────────────────────────────────────────────────
 
 /// One elaborator message, mapped onto the shape the infoview renders.
+/// One elaborator message, in the shape the infoview renders.
+///
+/// Fields are crate-visible so `lean_lsp` can build these from LSP diagnostics:
+/// both paths must produce the identical contract, which is what lets the server
+/// slot in behind `lean_compile` without the frontend changing at all.
 #[derive(Clone, serde::Serialize)]
 pub struct LeanDiagnostic {
     /// `"error"` | `"warning"` | `"information"`
-    severity: String,
+    pub(crate) severity: String,
     /// 1-based line, 0-based column — Lean's own convention, kept as-is so the
     /// infoview can print `line:col` matching what `lean` prints on a terminal.
-    line: u32,
-    column: u32,
-    end_line: u32,
-    end_column: u32,
-    message: String,
+    pub(crate) line: u32,
+    pub(crate) column: u32,
+    pub(crate) end_line: u32,
+    pub(crate) end_column: u32,
+    pub(crate) message: String,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -731,26 +806,50 @@ pub struct LeanCompileResult {
     timed_out: bool,
 }
 
-/// Turn one `lean --json` output line into a diagnostic.
+/// The subset of a `lean --json` message we care about. Lean emits several more
+/// fields (`isSilent`, `keepFullRange`, `kind`, `fileName`); serde skips them.
 ///
-/// The JSON shape is `{"severity":…,"pos":{"line":…,"column":…},"endPos":…,
-/// "data":…}`. `endPos` is null for a point message, and `caption` is usually
-/// empty but is prepended when present (that's how `#check` labels its output).
+/// Deserializing straight into this is meaningfully cheaper than walking a
+/// `serde_json::Value`, which would allocate a map and a boxed value per field
+/// for every message — and a file full of `#eval`s produces one message per
+/// line, re-parsed on every keystroke in live mode.
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct LeanJsonMessage {
+    /// Required: a line without a position is not a diagnostic, so its absence
+    /// is what makes the parse fall through to the plain-text reader.
+    pos: LeanJsonPos,
+    /// Null for a point message.
+    #[serde(default)]
+    end_pos: Option<LeanJsonPos>,
+    #[serde(default)]
+    severity: Option<String>,
+    /// Usually empty; `#check` uses it to label its output.
+    #[serde(default)]
+    caption: Option<String>,
+    #[serde(default)]
+    data: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+struct LeanJsonPos {
+    #[serde(default = "one")]
+    line: u32,
+    #[serde(default)]
+    column: u32,
+}
+
+fn one() -> u32 {
+    1
+}
+
+/// Turn one `lean --json` output line into a diagnostic.
 fn parse_json_diagnostic(line: &str) -> Option<LeanDiagnostic> {
-    let v: serde_json::Value = serde_json::from_str(line).ok()?;
-    let pos = v.get("pos")?;
-    let get_line = |p: &serde_json::Value| p.get("line").and_then(|n| n.as_u64()).unwrap_or(1) as u32;
-    let get_col = |p: &serde_json::Value| p.get("column").and_then(|n| n.as_u64()).unwrap_or(0) as u32;
+    let msg: LeanJsonMessage = serde_json::from_str(line).ok()?;
 
-    let start_line = get_line(pos);
-    let start_col = get_col(pos);
-    let (end_line, end_column) = match v.get("endPos") {
-        Some(p) if !p.is_null() => (get_line(p), get_col(p)),
-        _ => (start_line, start_col),
-    };
-
-    let caption = v.get("caption").and_then(|c| c.as_str()).unwrap_or("").trim();
-    let data = v.get("data").and_then(|d| d.as_str()).unwrap_or("").trim();
+    let end = msg.end_pos.as_ref().unwrap_or(&msg.pos);
+    let caption = msg.caption.as_deref().unwrap_or("").trim();
+    let data = msg.data.as_deref().unwrap_or("").trim();
     let message = if caption.is_empty() {
         data.to_string()
     } else if data.is_empty() {
@@ -760,15 +859,11 @@ fn parse_json_diagnostic(line: &str) -> Option<LeanDiagnostic> {
     };
 
     Some(LeanDiagnostic {
-        severity: v
-            .get("severity")
-            .and_then(|s| s.as_str())
-            .unwrap_or("information")
-            .to_string(),
-        line: start_line,
-        column: start_col,
-        end_line,
-        end_column,
+        severity: msg.severity.unwrap_or_else(|| "information".to_string()),
+        line: msg.pos.line,
+        column: msg.pos.column,
+        end_line: end.line,
+        end_column: end.column,
         message,
     })
 }
@@ -837,30 +932,18 @@ fn work_dir(app: &AppHandle, kernel: &str) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
-/// Kill whatever compile is currently running for `kernel`, if any.
-fn kill_running(state: &LeanState, kernel: &str) {
-    let pid = {
-        let guard = match state.running.lock() {
-            Ok(g) => g,
-            Err(_) => return,
-        };
-        guard.get(kernel).and_then(|r| r.pid)
-    };
-    let Some(pid) = pid else { return };
-
-    #[cfg(unix)]
-    {
-        // SAFETY: kill(2) with a pid we spawned and a standard signal number.
-        unsafe { libc::kill(pid as libc::pid_t, libc::SIGKILL) };
-    }
-    #[cfg(windows)]
-    {
-        let mut cmd = std::process::Command::new("taskkill");
-        cmd.args(["/PID", &pid.to_string(), "/T", "/F"])
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null());
-        no_window!(cmd);
-        let _ = cmd.status();
+/// Abort whatever compile is currently running for `kernel`, if any.
+///
+/// Aborting the task drops the future that owns the `Child`, and because the
+/// command is spawned with `kill_on_drop`, tokio terminates the process and
+/// reaps it. That replaces killing by pid, which needed a `libc::kill` on Unix
+/// and — far worse — a whole `taskkill.exe` spawn on Windows, on every single
+/// superseded keystroke in live mode. One mechanism now covers all three
+/// platforms, with no extra process and no orphan risk.
+fn abort_running(state: &LeanState, kernel: &str) {
+    let Ok(mut guard) = state.running.lock() else { return };
+    if let Some(entry) = guard.remove(kernel) {
+        entry.abort.abort();
     }
 }
 
@@ -869,17 +952,72 @@ fn kill_running(state: &LeanState, kernel: &str) {
 #[tauri::command]
 pub fn cancel_lean_compile(kernel: Option<String>, state: State<'_, LeanState>) {
     let kernel = kernel.unwrap_or_else(|| DEFAULT_KERNEL.to_string());
-    kill_running(&state, &kernel);
-    if let Ok(mut guard) = state.running.lock() {
-        guard.remove(&kernel);
+    abort_running(&state, &kernel);
+}
+
+fn superseded(elapsed_ms: u64) -> LeanCompileResult {
+    LeanCompileResult {
+        diagnostics: Vec::new(),
+        raw: String::new(),
+        ok: false,
+        elapsed_ms,
+        cancelled: true,
+        timed_out: false,
     }
+}
+
+/// Compile through the resident server, starting it if this is the first use.
+///
+/// Supersession needs no special handling here: an abandoned request simply
+/// stops waiting, and the next `didChange` replaces the document contents. There
+/// is no process to kill, which is most of why this path is simpler than batch.
+async fn compile_via_server(
+    state: &LeanState,
+    lean: &Path,
+    dir: &Path,
+    file: &Path,
+    code: &str,
+) -> Result<LeanCompileResult, String> {
+    let started = std::time::Instant::now();
+
+    let server = {
+        let mut slot = state.server.lock().await;
+        // A server whose process has exited is worse than none: every request
+        // against it fails. Replace it rather than handing it back out.
+        if slot.as_ref().is_some_and(|s| !s.is_alive()) {
+            *slot = None;
+        }
+        match slot.as_ref() {
+            Some(server) => Arc::clone(server),
+            None => {
+                let started = crate::lean_lsp::LeanLsp::start(lean, dir, elan_home_for(lean)).await?;
+                *slot = Some(Arc::clone(&started));
+                started
+            }
+        }
+    };
+
+    let uri = crate::lean_lsp::path_to_uri(file);
+    let diagnostics = server.compile(&uri, code).await?;
+
+    let ok = !diagnostics.iter().any(|d| d.severity == "error");
+    Ok(LeanCompileResult {
+        diagnostics,
+        // Everything the server reports arrives as a diagnostic; there is no
+        // stray stdout to collect the way there is from a batch process.
+        raw: String::new(),
+        ok,
+        elapsed_ms: started.elapsed().as_millis() as u64,
+        cancelled: false,
+        timed_out: false,
+    })
 }
 
 /// Compile a Lean 4 source buffer and return its elaborator messages.
 ///
 /// Each call supersedes any compile still running for the same kernel, which
 /// is what makes live (type-as-you-go) compilation viable: the newest keystroke
-/// always wins and the stale process is killed rather than left to finish.
+/// always wins and the stale process is torn down rather than left to finish.
 #[tauri::command]
 pub async fn lean_compile(
     app: AppHandle,
@@ -889,166 +1027,180 @@ pub async fn lean_compile(
 ) -> Result<LeanCompileResult, String> {
     let kernel = kernel.unwrap_or_else(|| DEFAULT_KERNEL.to_string());
 
-    let lean = {
-        let custom = state.custom_path.lock().map_err(|e| e.to_string())?.clone();
-        lean_binary_path(custom.as_deref())
-            .ok_or("Lean is not installed. Please install it or set the path manually.")?
-    };
+    let lean = resolve_lean(&state)
+        .ok_or("Lean is not installed. Please install it or set the path manually.")?;
 
     let dir = work_dir(&app, &kernel)?;
     let file = dir.join("Main.lean");
 
-    // Claim a generation and stop the compile this one replaces.
+    // ── Fast path: the resident language server ──────────────────────────────
+    // Tried first and silently abandoned on any failure. A user should never be
+    // stuck because the server would not start — they should just be back on the
+    // slower path that has always worked.
+    if state.use_server.load(Ordering::Relaxed) {
+        match compile_via_server(&state, &lean, &dir, &file, &code).await {
+            Ok(result) => return Ok(result),
+            Err(err) => {
+                // Drop the handle so the next attempt starts a fresh server
+                // rather than reusing one that has died or wedged.
+                *state.server.lock().await = None;
+                eprintln!("[lean] server path unavailable, using batch mode: {err}");
+            }
+        }
+    }
+
+    // Claim a generation, then stop the compile this one replaces.
     let generation = {
         let mut next = state.next_generation.lock().map_err(|e| e.to_string())?;
         let g = *next;
         *next += 1;
         g
     };
-    kill_running(&state, &kernel);
-    {
-        let mut guard = state.running.lock().map_err(|e| e.to_string())?;
-        guard.insert(kernel.clone(), RunningCompile { pid: None, generation });
-    }
+    abort_running(&state, &kernel);
 
+    // Written before the spawn and after the abort, so the process we are about
+    // to start is the only one reading this path.
     std::fs::write(&file, code.as_bytes())
         .map_err(|e| format!("Failed to write Lean source: {e}"))?;
 
-    let started = std::time::Instant::now();
+    let elan_home = elan_home_for(&lean);
+    let task = tokio::spawn(async move {
+        let started = std::time::Instant::now();
 
-    let mut cmd = tokio::process::Command::new(&lean);
-    cmd.arg("--json")
-        .arg(&file)
-        .current_dir(&dir)
-        .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped());
-    if let Some(home) = elan_home_for(&lean) {
-        cmd.env("ELAN_HOME", home);
-    }
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
-    }
+        let mut cmd = tokio::process::Command::new(&lean);
+        cmd.arg("--json")
+            .arg(&file)
+            .current_dir(&dir)
+            // The whole cancellation story rests on this: dropping the future
+            // must take the process down with it.
+            .kill_on_drop(true)
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped());
+        if let Some(home) = elan_home {
+            cmd.env("ELAN_HOME", home);
+        }
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+        }
 
-    let child = cmd
-        .spawn()
-        .map_err(|e| format!("Failed to spawn Lean: {e}"))?;
+        let child = cmd
+            .spawn()
+            .map_err(|e| format!("Failed to spawn Lean: {e}"))?;
 
-    // Record the pid so a newer request (or an explicit cancel) can kill it.
-    // If we were already superseded between the spawn and here, stop now.
-    {
-        let mut guard = state.running.lock().map_err(|e| e.to_string())?;
-        match guard.get_mut(&kernel) {
-            Some(entry) if entry.generation == generation => entry.pid = child.id(),
-            _ => {
+        let output = match tokio::time::timeout(COMPILE_TIMEOUT, child.wait_with_output()).await {
+            Ok(result) => result.map_err(|e| format!("Lean process failed: {e}"))?,
+            Err(_) => {
+                // The timeout drops the inner future, so `kill_on_drop` has
+                // already terminated and reaped the process by this point.
                 return Ok(LeanCompileResult {
                     diagnostics: Vec::new(),
-                    raw: String::new(),
+                    raw: format!(
+                        "Lean did not finish within {}s and was stopped.\n\n\
+                         If this is the first compile after installing or changing \
+                         toolchains, elan may have been downloading the Lean \
+                         toolchain in the background — run `elan toolchain list` to \
+                         check that the default toolchain is installed. Otherwise a \
+                         definition here is likely not terminating.",
+                        COMPILE_TIMEOUT.as_secs()
+                    ),
                     ok: false,
-                    elapsed_ms: 0,
-                    cancelled: true,
-                    timed_out: false,
-                })
+                    elapsed_ms: started.elapsed().as_millis() as u64,
+                    cancelled: false,
+                    timed_out: true,
+                });
+            }
+        };
+
+        let mut diagnostics = Vec::new();
+        let mut raw = String::new();
+
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        for line in stdout.lines().chain(stderr.lines()) {
+            let trimmed = line.trim_end();
+            if trimmed.is_empty() {
+                continue;
+            }
+            if let Some(diag) = parse_json_diagnostic(trimmed) {
+                diagnostics.push(diag);
+            } else if let Some(diag) = parse_text_diagnostic(trimmed) {
+                diagnostics.push(diag);
+            } else {
+                if !raw.is_empty() {
+                    raw.push('\n');
+                }
+                raw.push_str(trimmed);
             }
         }
-    }
 
-    let output = match tokio::time::timeout(COMPILE_TIMEOUT, child.wait_with_output()).await {
-        Ok(result) => result.map_err(|e| format!("Lean process failed: {e}"))?,
-        Err(_) => {
-            // Dropping the future does not reap the process, so kill it by pid.
-            kill_running(&state, &kernel);
-            if let Ok(mut guard) = state.running.lock() {
-                guard.remove(&kernel);
-            }
-            return Ok(LeanCompileResult {
-                diagnostics: Vec::new(),
-                raw: format!(
-                    "Lean did not finish within {}s and was stopped.\n\n\
-                     If this is the first compile after installing or changing \
-                     toolchains, elan may have been downloading the Lean \
-                     toolchain in the background — run `elan toolchain list` to \
-                     check that the default toolchain is installed. Otherwise a \
-                     definition here is likely not terminating.",
-                    COMPILE_TIMEOUT.as_secs()
-                ),
-                ok: false,
-                elapsed_ms: started.elapsed().as_millis() as u64,
-                cancelled: false,
-                timed_out: true,
-            });
-        }
-    };
+        let ok =
+            !diagnostics.iter().any(|d| d.severity == "error") && output.status.success();
 
-    // Superseded while compiling — the caller must not render this.
+        Ok::<LeanCompileResult, String>(LeanCompileResult {
+            diagnostics,
+            raw,
+            ok,
+            elapsed_ms: started.elapsed().as_millis() as u64,
+            cancelled: false,
+            timed_out: false,
+        })
+    });
+
+    // Publish the handle so a later request can abort us — unless one already
+    // overtook us in the gap since `abort_running`, in which case stand down.
     {
         let mut guard = state.running.lock().map_err(|e| e.to_string())?;
         match guard.get(&kernel) {
-            Some(entry) if entry.generation == generation => {
-                guard.remove(&kernel);
+            Some(entry) if entry.generation > generation => {
+                task.abort();
+                return Ok(superseded(0));
             }
             _ => {
-                return Ok(LeanCompileResult {
-                    diagnostics: Vec::new(),
-                    raw: String::new(),
-                    ok: false,
-                    elapsed_ms: started.elapsed().as_millis() as u64,
-                    cancelled: true,
-                    timed_out: false,
-                })
+                guard.insert(
+                    kernel.clone(),
+                    RunningCompile { generation, abort: task.abort_handle() },
+                );
             }
         }
     }
 
-    let mut diagnostics = Vec::new();
-    let mut raw = String::new();
+    let joined = task.await;
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    for line in stdout.lines().chain(stderr.lines()) {
-        let trimmed = line.trim_end();
-        if trimmed.is_empty() {
-            continue;
-        }
-        if let Some(diag) = parse_json_diagnostic(trimmed) {
-            diagnostics.push(diag);
-        } else if let Some(diag) = parse_text_diagnostic(trimmed) {
-            diagnostics.push(diag);
-        } else {
-            if !raw.is_empty() {
-                raw.push('\n');
-            }
-            raw.push_str(trimmed);
+    // Clear our entry, but only if it is still ours: a superseding request has
+    // already replaced it with its own and must not have it removed.
+    if let Ok(mut guard) = state.running.lock() {
+        if guard.get(&kernel).is_some_and(|e| e.generation == generation) {
+            guard.remove(&kernel);
         }
     }
 
-    let ok = !diagnostics.iter().any(|d| d.severity == "error") && output.status.success();
-
-    Ok(LeanCompileResult {
-        diagnostics,
-        raw,
-        ok,
-        elapsed_ms: started.elapsed().as_millis() as u64,
-        cancelled: false,
-        timed_out: false,
-    })
+    match joined {
+        Ok(result) => result,
+        // Aborted by a newer request — the caller discards this.
+        Err(e) if e.is_cancelled() => Ok(superseded(0)),
+        Err(e) => Err(format!("Lean compile task failed: {e}")),
+    }
 }
 
 /// Stop every in-flight compile across all kernels. Called when the window is
 /// destroyed so a long elaboration can't outlive the app as an orphan process.
 pub fn kill_all(state: &LeanState) {
-    let kernels: Vec<String> = state
-        .running
-        .lock()
-        .map(|g| g.keys().cloned().collect())
-        .unwrap_or_default();
-    for kernel in kernels {
-        kill_running(state, &kernel);
-    }
     if let Ok(mut guard) = state.running.lock() {
-        guard.clear();
+        for (_, entry) in guard.drain() {
+            entry.abort.abort();
+        }
+    }
+    // The language server is long-lived by design, so unlike a batch compile it
+    // will not simply finish on its own. `try_lock` because this runs on window
+    // teardown where blocking is not an option; the child is spawned with
+    // `kill_on_drop`, so a contended lock still ends with the process gone.
+    if let Ok(mut slot) = state.server.try_lock() {
+        if let Some(server) = slot.take() {
+            tokio::spawn(async move { server.shutdown().await });
+        }
     }
 }
 

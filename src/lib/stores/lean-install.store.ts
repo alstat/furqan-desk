@@ -86,12 +86,22 @@ export async function initLeanInstallStore(): Promise<void> {
 }
 
 /**
- * Whether a Lean toolchain is available right now. Cheap (a filesystem scan on
- * the Rust side, no subprocess), so callers can check before every compile.
+ * Whether a Lean toolchain is available right now.
+ *
+ * Called before every compile, including each tick of live mode, so the answer
+ * is remembered once it is affirmative: a toolchain that exists does not stop
+ * existing during a session under any normal use, and if it somehow does the
+ * compile itself reports it. A negative is never cached — that is the state the
+ * user is actively trying to change by installing.
  */
+let _knownInstalled = false;
+
 export async function isLeanInstalled(): Promise<boolean> {
+    if (_knownInstalled) return true;
     try {
-        return (await invoke<string>('check_lean')) === 'installed';
+        const installed = (await invoke<string>('check_lean')) === 'installed';
+        if (installed) _knownInstalled = true;
+        return installed;
     } catch {
         return false;
     }
@@ -124,6 +134,7 @@ export function installLean(): Promise<void> {
         leanInstallMessage.set('');
         try {
             await invoke('install_lean');
+            _knownInstalled = true;
             try {
                 leanInstalledVersion.set(await invoke<string>('get_lean_version'));
             } catch {

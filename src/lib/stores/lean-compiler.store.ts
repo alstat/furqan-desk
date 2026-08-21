@@ -54,8 +54,17 @@ export type LeanStatus =
     /** Couldn't run at all (Lean missing, spawn failed). */
     | 'unavailable';
 
-/** How long typing must pause before live mode fires a compile. */
-export const LIVE_COMPILE_DEBOUNCE_MS = 700;
+/**
+ * How long typing must pause before live mode fires a compile.
+ *
+ * This was 700 ms when every tick meant respawning `lean` and re-importing the
+ * whole file — at that cost a short debounce just queued work faster than it
+ * could drain. The resident language server settles an edit in ~205 ms
+ * regardless of import weight, so the pause no longer has to hide a slow
+ * compile. Kept a little above that figure so a burst of typing still
+ * coalesces, and so the batch fallback stays sane when the server is off.
+ */
+export const LIVE_COMPILE_DEBOUNCE_MS = 300;
 
 export interface LeanRuntime {
     readonly kernel: string;
@@ -72,8 +81,19 @@ export interface LeanRuntime {
     /** `Date.now()` of the last completed compile, or 0 if never. */
     lastCompiledAt: Writable<number>;
 
-    /** Compile now, cancelling anything already running in this runtime. */
-    compile(code: string): Promise<LeanCompileResult | null>;
+    /**
+     * Compile now, cancelling anything already running in this runtime.
+     *
+     * Recompiling source identical to what is already on screen is skipped and
+     * the previous result returned — elaboration is deterministic, so the work
+     * would only reproduce the messages already displayed. This matters because
+     * a compile is a whole process spawn plus a full elaboration of the buffer,
+     * and live mode fires on every pause in typing, including pauses after
+     * edits that leave the text unchanged (undo then redo, a formatting no-op,
+     * a store write triggered by moving the caret). Pass `force` for an
+     * explicit Compile press, which must always re-run.
+     */
+    compile(code: string, force?: boolean): Promise<LeanCompileResult | null>;
     /** Debounced compile, for live mode. Safe to call on every keystroke. */
     scheduleCompile(code: string, delayMs?: number): void;
     /** Drop any pending debounce and kill the in-flight process. */
@@ -109,15 +129,25 @@ function createLeanRuntime(kernel: string): LeanRuntime {
     const lastCompiledAt = writable(0);
 
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    /** Source of the messages currently on display, and those messages. */
+    let lastCompiledCode: string | null = null;
+    let lastResult: LeanCompileResult | null = null;
     /** Guards against an older in-flight compile overwriting a newer result:
      *  the Rust side already cancels superseded processes, but a request that
      *  finishes during the gap would still resolve here. */
     let generation = 0;
 
-    async function compile(code: string): Promise<LeanCompileResult | null> {
+    async function compile(
+        code: string,
+        force = false,
+    ): Promise<LeanCompileResult | null> {
         if (debounceTimer !== null) {
             clearTimeout(debounceTimer);
             debounceTimer = null;
+        }
+
+        if (!force && lastResult !== null && code === lastCompiledCode) {
+            return lastResult;
         }
 
         const mine = ++generation;
@@ -138,10 +168,19 @@ function createLeanRuntime(kernel: string): LeanRuntime {
             elapsedMs.set(result.elapsed_ms);
             lastCompiledAt.set(Date.now());
             status.set(result.ok ? 'ok' : 'error');
+            // A timeout says nothing about the source, so it is not memoized —
+            // pressing Compile again has to be able to retry.
+            if (!result.timed_out) {
+                lastCompiledCode = code;
+                lastResult = result;
+            }
             return result;
         } catch (e) {
             if (mine !== generation) return null;
             const msg = typeof e === 'string' ? e : String(e);
+            // The failure was in reaching Lean at all, not in the source, so a
+            // retry of the same text must not be short-circuited.
+            invalidate();
             diagnostics.set([]);
             raw.set('');
             errorMessage.set(msg);
@@ -189,6 +228,12 @@ function createLeanRuntime(kernel: string): LeanRuntime {
         clear();
     }
 
+    /** Forget the memo, so the next compile genuinely runs. */
+    function invalidate(): void {
+        lastCompiledCode = null;
+        lastResult = null;
+    }
+
     let mounted = 0;
 
     function retain(): () => void {
@@ -211,6 +256,7 @@ function createLeanRuntime(kernel: string): LeanRuntime {
             debounceTimer = null;
         }
         generation++;
+        invalidate();
         diagnostics.set([]);
         raw.set('');
         elapsedMs.set(0);
