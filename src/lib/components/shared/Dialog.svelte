@@ -27,13 +27,13 @@
         onclick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         onkeydown={(e) => { if (e.key === 'Escape') onClose(); }}
     >
-        <div transition:fly={{ y: 8, duration: 180, opacity: 0 }} class="relative mx-4 w-full {maxWidth} {minHeight} rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 flex flex-col max-h-[80vh] overflow-hidden">
+        <div transition:fly={{ y: 8, duration: 180, opacity: 0 }} class="relative mx-4 w-full {maxWidth} {minHeight} rounded-3xl border border-brand-sand-200 bg-white dark:bg-brand-sand-50 shadow-xl dark:shadow-black/40 flex flex-col max-h-[80vh] overflow-hidden">
             <!-- Header -->
-            <div class="flex items-center justify-between border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 bg-brand-gold-100 dark:bg-[#292c3c] rounded-t-3xl">
-                <h2 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">{title}</h2>
+            <div class="flex items-center justify-between border-b border-brand-gold-200 px-5 py-4 bg-brand-gold-100 dark:bg-brand-sand-100 rounded-t-3xl">
+                <h2 class="text-sm font-semibold text-brand-charcoal-900">{title}</h2>
                 <button
                     onclick={onClose}
-                    class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                    class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-brand-sand-200 text-brand-gold-600 hover:bg-brand-gold-200/80 dark:hover:bg-brand-sand-400 transition-colors"
                     aria-label={$t('common.close')}
                 >
                     <Icon icon="solar:close-circle-bold-duotone" width="1.1rem" />
@@ -47,7 +47,7 @@
 
             <!-- Footer (optional) -->
             {#if footer}
-                <div class="border-t border-slate-100 dark:border-[#414559] px-5 py-3">
+                <div class="border-t border-slate-100 dark:border-brand-sand-200 px-5 py-3">
                     {@render footer()}
                 </div>
             {/if}

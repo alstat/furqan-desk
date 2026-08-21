@@ -1139,7 +1139,7 @@
             {step}
             {value}
             oninput={(e) => onInput(Number((e.currentTarget as HTMLInputElement).value))}
-            class="pc-range w-full"
+            class="range-slider w-full"
         />
     </div>
 {/snippet}
@@ -1244,7 +1244,7 @@
                     onclick={exportPng}
                     onpointerdown={(e) => e.stopPropagation()}
                     disabled={exporting || !arabicText}
-                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 px-2.5 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-brand-gold-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-2.5 py-1 text-[10px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 transition-colors hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Icon
                         icon={exporting
@@ -2154,26 +2154,6 @@
         pointer-events: none;
     }
 
-    .pc-range {
-        appearance: none;
-        height: 4px;
-        border-radius: 999px;
-        background: var(--color-brand-sand-200, #ede2ce);
-        outline: none;
-    }
-    :global(.dark) .pc-range {
-        background: #414559;
-    }
-    .pc-range::-webkit-slider-thumb {
-        appearance: none;
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        background: var(--color-brand-gold-400, #c8a96a);
-        cursor: pointer;
-        border: 2px solid #fff;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-    }
     .pc-color::-webkit-color-swatch-wrapper {
         padding: 0;
     }

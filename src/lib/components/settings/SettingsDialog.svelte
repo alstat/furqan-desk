@@ -79,7 +79,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         restartTour();
     }
 
-    const groupTitle = 'text-[13px] font-bold tracking-tight text-brand-charcoal-900 dark:text-[#c6d0f5]';
+    const groupTitle = 'text-[0.8125rem] font-bold tracking-tight text-brand-charcoal-900 dark:text-[#c6d0f5]';
     const sectionLabel = 'text-xs font-semibold uppercase tracking-wide text-brand-charcoal-300 mb-2';
     const rowLabel = 'text-xs text-slate-600 dark:text-[#c6d0f5]';
     const actionBtn =
@@ -293,7 +293,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                             value={$zenTabsOpacity}
                             oninput={(e) => zenTabsOpacity.set(Number(e.currentTarget.value))}
                             aria-label={$t('settings.zen.tabs_opacity')}
-                            class="zen-opacity-slider w-32 cursor-pointer"
+                            class="range-slider w-32 cursor-pointer"
                         />
                         <span class="w-11 text-center text-xs font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]">
                             {$zenTabsOpacity}%
