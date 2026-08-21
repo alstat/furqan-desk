@@ -61,7 +61,8 @@ export interface PostcardOptions {
     creditText: string | null;
 
     baseColor: string;
-    bgMode: "plain" | "manuscript" | "pattern";
+    /** `combo` lays the geometric tile over the manuscript scan. */
+    bgMode: "plain" | "manuscript" | "pattern" | "combo";
 
     bgImage: CanvasImageSource | null;
     bgImageWidth: number;
@@ -395,8 +396,12 @@ export function renderPostcard(
     ctx.fillStyle = o.baseColor;
     ctx.fillRect(0, 0, W, H);
 
-    // 2 — background layer
-    if (o.bgMode === "manuscript" && o.bgImage && o.bgImageWidth > 0) {
+    // 2 — background layer. `combo` runs both arms: the scan goes down first
+    // and the tile is laid over it, each keeping its own opacity.
+    const wantsScan = o.bgMode === "manuscript" || o.bgMode === "combo";
+    const wantsTile = o.bgMode === "pattern" || o.bgMode === "combo";
+
+    if (wantsScan && o.bgImage && o.bgImageWidth > 0) {
         ctx.save();
         ctx.globalAlpha = o.bgOpacity / 100;
         if (supportsCanvasFilter(ctx)) {
@@ -417,7 +422,9 @@ export function renderPostcard(
             dh,
         );
         ctx.restore();
-    } else if (o.bgMode === "pattern" && o.patternImage) {
+    }
+
+    if (wantsTile && o.patternImage) {
         const pat = ctx.createPattern(o.patternImage, "repeat");
         if (pat) {
             ctx.save();
