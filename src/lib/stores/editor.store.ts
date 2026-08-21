@@ -188,6 +188,42 @@ export const typstRightSplitRatio = {
   },
 };
 
+// ── Lean split (two/three stacked Lean editors) height ratios ─────────────────
+// Same shape as the Typst split: left column = tabA/tabB, right column = tabC
+// above the shared infoview. Same 20–80 clamp.
+
+const _leanSplitRatio = writable<number>(loadRatio("lean-split-ratio"));
+
+export const leanSplitRatio = {
+  subscribe: _leanSplitRatio.subscribe,
+  set(v: number) {
+    const clamped = Math.max(JULIA_SPLIT_MIN, Math.min(JULIA_SPLIT_MAX, v));
+    try {
+      localStorage.setItem("lean-split-ratio", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _leanSplitRatio.set(clamped);
+  },
+};
+
+const _leanRightSplitRatio = writable<number>(
+  loadRatio("lean-right-split-ratio"),
+);
+
+export const leanRightSplitRatio = {
+  subscribe: _leanRightSplitRatio.subscribe,
+  set(v: number) {
+    const clamped = Math.max(JULIA_SPLIT_MIN, Math.min(JULIA_SPLIT_MAX, v));
+    try {
+      localStorage.setItem("lean-right-split-ratio", String(clamped));
+    } catch {
+      /* ignore */
+    }
+    _leanRightSplitRatio.set(clamped);
+  },
+};
+
 // ── Editor theme ──────────────────────────────────────────────────────────────
 
 export type EditorTheme =
@@ -542,6 +578,38 @@ export interface ReplLine {
 }
 /** Shared REPL output lines for all Julia tabs */
 export const juliaReplHistory: Writable<ReplLine[]> = writable([]);
+
+/**
+ * Upper bound on retained REPL lines.
+ *
+ * The history was unbounded, and every append rebuilt the whole array — so a
+ * session's cost grew quadratically with its own output, and each retained line
+ * also stayed rendered in the DOM. One `for i in 1:100000 println(i) end` was
+ * enough to wedge the pane. Trimming from the front keeps the recent output
+ * that is actually being read, at a bound generous enough that ordinary work
+ * never reaches it.
+ */
+const REPL_HISTORY_LIMIT = 5000;
+
+/**
+ * Append lines to the REPL history, trimming the oldest past the limit.
+ *
+ * Every append goes through here rather than calling `.update` directly, so the
+ * bound cannot be bypassed by a new call site.
+ */
+export function pushReplLines(...lines: ReplLine[]): void {
+  if (lines.length === 0) return;
+  juliaReplHistory.update((history) => {
+    const next = history.length + lines.length;
+    if (next <= REPL_HISTORY_LIMIT) return [...history, ...lines];
+    // Keep the tail. A single push larger than the limit keeps only its own end.
+    const keepFromHistory = Math.max(0, REPL_HISTORY_LIMIT - lines.length);
+    return [
+      ...history.slice(history.length - keepFromHistory),
+      ...lines.slice(Math.max(0, lines.length - REPL_HISTORY_LIMIT)),
+    ];
+  });
+}
 export const juliaReplStarted: Writable<boolean> = writable(false);
 /** Active Julia project/environment name (empty string = default global env). */
 export const juliaActiveEnv: Writable<string> = writable("");

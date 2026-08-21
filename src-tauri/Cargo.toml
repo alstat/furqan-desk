@@ -26,7 +26,9 @@ tauri-build = { version = "2", features = [] }
 dotenvy = "0.15"
 
 [dependencies]
-tauri = { version = "2", features = ["devtools"] }
+# `image-png` lets the clipboard plugin accept the PNG bytes the postcard
+# editor hands it; without it `writeImage` cannot decode them.
+tauri = { version = "2", features = ["devtools", "image-png"] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"

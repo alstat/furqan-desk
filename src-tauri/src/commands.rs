@@ -1,10 +1,10 @@
 use crate::db::Database;
-use crate::typst_world::get_world;
+use crate::typst_world::with_world;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
-    Arc,
+    Arc, Mutex,
 };
 use tauri::{AppHandle, Emitter, Manager, State};
 use tokio::sync::Semaphore;
@@ -635,9 +635,15 @@ pub fn cancel_recitation_download(dl_state: State<'_, DownloadState>) -> Result<
     Ok(())
 }
 
+/// Returned as a raw IPC body rather than `Vec<u8>`: serde encodes a byte
+/// vector as a JSON array of numbers, which inflates the payload by roughly
+/// 4.6x, hands JavaScript one boxed number per byte to parse, and is then
+/// copied again into a `Uint8Array`. `Response` carries the bytes through
+/// untouched and arrives as an `ArrayBuffer`.
 #[tauri::command]
-pub async fn read_audio_bytes(path: String) -> Result<Vec<u8>, String> {
-    tokio::fs::read(&path).await.map_err(|e| e.to_string())
+pub async fn read_audio_bytes(path: String) -> Result<tauri::ipc::Response, String> {
+    let bytes = tokio::fs::read(&path).await.map_err(|e| e.to_string())?;
+    Ok(tauri::ipc::Response::new(bytes))
 }
 
 // ── User-data structs ────────────────────────────────────────────────────────
@@ -1677,26 +1683,236 @@ mod votd_tests {
         assert_eq!(a, b);
     }
 
+    /// What loading a surah actually costs, end to end.
+    /// `cargo test --lib votd_tests::surah_load -- --ignored --nocapture`
+    #[test]
+    #[ignore = "measurement; needs the bundled 393 MB database"]
+    fn surah_load_cost() {
+        let db_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("data/quran_static.db");
+        if !db_path.exists() {
+            println!("skipped: {} not present", db_path.display());
+            return;
+        }
+        let tmp = std::env::temp_dir().join(format!("surah-load-{}", std::process::id()));
+        std::fs::create_dir_all(&tmp).unwrap();
+        let db = crate::db::Database::new(db_path, tmp.clone()).expect("open db");
+
+        for surah in [2i64, 1, 114, 18] {
+            let conn = db.0.lock().unwrap();
+            let t = std::time::Instant::now();
+            let mut stmt = conn
+                .prepare(
+                    "SELECT ayah, word, token, form_buckwalter, form_arabic, tag, features
+                     FROM morphology WHERE surah = ? ORDER BY ayah, word, token",
+                )
+                .unwrap();
+            let mut rows_n = 0usize;
+            let mut parsed_bytes = 0usize;
+            let rows = stmt
+                .query_map([surah], |row| {
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, String>(5)?,
+                        row.get::<_, String>(6)?,
+                    ))
+                })
+                .unwrap();
+            for r in rows {
+                let (_ayah, tag, features) = r.unwrap();
+                let _p = parse_features(&features);
+                parsed_bytes += get_tag_name(&tag).len();
+                rows_n += 1;
+            }
+            let ms = t.elapsed().as_secs_f64() * 1000.0;
+            println!(
+                "  surah {surah:>3}: {rows_n:>6} morphology rows  query+parse {ms:>7.1} ms  (parsed {} fields)",
+                parsed_bytes
+            );
+        }
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    /// The page-reuse protocol must never let a client keep a stale page.
+    #[test]
+    fn svg_reuse_only_applies_to_the_matching_epoch() {
+        let body: String = (0..40)
+            .map(|i| format!("= Section {i}\n\n#lorem(50)\n\n"))
+            .collect();
+
+        // First compile: the client holds nothing, so every page is sent.
+        let first = compile_typst_svg(body.clone(), None, None).expect("first compile");
+        assert!(
+            first.pages.iter().all(|p| p.is_some()),
+            "a client with no epoch must receive every page"
+        );
+        assert!(first.pages.len() > 1, "test needs a multi-page document");
+
+        // Same source, correct epoch: nothing changed, so nothing is resent.
+        let same = compile_typst_svg(body.clone(), None, Some(first.epoch)).expect("recompile");
+        assert!(
+            same.pages.iter().all(|p| p.is_none()),
+            "an unchanged document must resend no pages at all"
+        );
+
+        // One edit, correct epoch: only the affected pages come back.
+        let edited = body.replacen("= Section 30", "= Section 30x", 1);
+        let after = compile_typst_svg(edited, None, Some(same.epoch)).expect("edited compile");
+        let sent = after.pages.iter().filter(|p| p.is_some()).count();
+        assert!(
+            sent >= 1 && sent < after.pages.len(),
+            "expected a partial update, got {sent} of {}",
+            after.pages.len()
+        );
+
+        // A stale epoch — a cleared preview, a new window — must force a full
+        // send, because the client's pages cannot be trusted to line up.
+        let stale = compile_typst_svg(body.clone(), None, Some(first.epoch)).expect("stale");
+        assert!(
+            stale.pages.iter().all(|p| p.is_some()),
+            "a mismatched epoch must resend everything"
+        );
+
+        // So must a different document, even at the right epoch.
+        let other = compile_typst_svg(
+            body,
+            Some("/tmp/other.typ".into()),
+            Some(stale.epoch),
+        )
+        .expect("other path");
+        assert!(
+            other.pages.iter().all(|p| p.is_some()),
+            "switching documents must resend everything"
+        );
+    }
+
+    /// How many pages a single keystroke actually changes. The whole case for
+    /// shipping only changed pages rests on this being a small number.
+    /// `cargo test --lib votd_tests::pages_changed -- --ignored --nocapture`
+    #[test]
+    #[ignore = "measurement, not an assertion"]
+    fn pages_changed_by_one_keystroke() {
+        use std::hash::{Hash, Hasher};
+        let hashes = |src: &str| -> Vec<u64> {
+            crate::typst_world::with_world(|world| {
+                world.set_project_root(None);
+                world.set_source(src.to_string());
+                let doc = typst::compile::<typst_layout::PagedDocument>(world)
+                    .output
+                    .expect("compiles");
+                doc.pages()
+                    .iter()
+                    .map(|p| {
+                        let mut h = std::collections::hash_map::DefaultHasher::new();
+                        p.frame.hash(&mut h);
+                        h.finish()
+                    })
+                    .collect()
+            })
+        };
+
+        let body: String = (0..200)
+            .map(|i| format!("= Section {i}\n\n#lorem(60)\n\n"))
+            .collect();
+        let before = hashes(&body);
+
+        // A keystroke late in the document — the common case while writing.
+        let edited = body.replacen("= Section 180", "= Section 180x", 1);
+        let after = hashes(&edited);
+
+        let changed = before
+            .iter()
+            .zip(after.iter())
+            .filter(|(a, b)| a != b)
+            .count()
+            + after.len().abs_diff(before.len());
+        println!(
+            "pages: {} -> {}   changed by a one-character edit: {}",
+            before.len(),
+            after.len(),
+            changed
+        );
+
+        // And an edit at the very top, which reflows everything after it.
+        let top = body.replacen("= Section 0", "= Section 0 with a much longer heading", 1);
+        let after_top = hashes(&top);
+        let changed_top = before
+            .iter()
+            .zip(after_top.iter())
+            .filter(|(a, b)| a != b)
+            .count();
+        println!("edit at the top instead: {changed_top} pages changed");
+    }
+
+    /// Where the per-keystroke preview cost actually goes, and how much data
+    /// crosses the IPC boundary each time.
+    /// `cargo test --lib votd_tests::preview_cost -- --ignored --nocapture`
+    #[test]
+    #[ignore = "measurement, not an assertion"]
+    fn preview_cost_breakdown() {
+        let body: String = (0..200)
+            .map(|i| format!("= Section {i}\n\n#lorem(60)\n\n"))
+            .collect();
+        crate::typst_world::with_world(|world| {
+            world.set_project_root(None);
+            world.set_source(body.clone());
+
+            let t = std::time::Instant::now();
+            let doc = typst::compile::<typst_layout::PagedDocument>(world)
+                .output
+                .expect("compiles");
+            let compile_ms = t.elapsed().as_millis();
+
+            let opts = typst_svg::SvgOptions::default();
+            let t = std::time::Instant::now();
+            let svgs: Vec<String> =
+                doc.pages().iter().map(|p| typst_svg::svg(p, &opts)).collect();
+            let svg_ms = t.elapsed().as_millis();
+
+            let t = std::time::Instant::now();
+            let layers: Vec<String> =
+                doc.pages().iter().map(typst_text_layer).collect();
+            let layer_ms = t.elapsed().as_millis();
+
+            let svg_bytes: usize = svgs.iter().map(|s| s.len()).sum();
+            let layer_bytes: usize = layers.iter().map(|s| s.len()).sum();
+            println!(
+                "pages={}  compile={compile_ms}ms  svg={svg_ms}ms  textlayer={layer_ms}ms",
+                doc.pages().len()
+            );
+            println!(
+                "payload: svg={:.2} MB + textlayer={:.2} MB = {:.2} MB per keystroke",
+                svg_bytes as f64 / 1e6,
+                layer_bytes as f64 / 1e6,
+                (svg_bytes + layer_bytes) as f64 / 1e6
+            );
+        });
+    }
+
     // A Typst error must report the exact `file:line:column` of the offending
     // token, not the raw opaque `Span(..)` debug dump.
     #[test]
     fn typst_diagnostic_reports_line_and_column() {
-        let world = crate::typst_world::get_world();
-        world.set_project_root(None);
-        // A bogus symbol modifier on line 3.
-        world.set_source("#set page(width: 10cm)\n\n$angle.foobar$\n".into());
-        let errors = typst::compile::<typst_layout::PagedDocument>(world)
-            .output
-            .expect_err("expected a compile error");
-        let msg = format_typst_diagnostics(world, &errors);
-        assert!(
-            msg.contains("main.typ:3:"),
-            "expected a main.typ line-3 location, got:\n{msg}"
-        );
-        assert!(
-            !msg.contains("Span("),
-            "message still leaks the raw span debug dump:\n{msg}"
-        );
+        // Through `with_world`, so this holds the world for the whole
+        // set-source-compile-format sequence. Without it the test raced the
+        // other world tests and compiled *their* source.
+        crate::typst_world::with_world(|world| {
+            world.set_project_root(None);
+            // A bogus symbol modifier on line 3.
+            world.set_source("#set page(width: 10cm)\n\n$angle.foobar$\n".into());
+            let errors = typst::compile::<typst_layout::PagedDocument>(world)
+                .output
+                .expect_err("expected a compile error");
+            let msg = format_typst_diagnostics(world, &errors);
+            assert!(
+                msg.contains("main.typ:3:"),
+                "expected a main.typ line-3 location, got:\n{msg}"
+            );
+            assert!(
+                !msg.contains("Span("),
+                "message still leaks the raw span debug dump:\n{msg}"
+            );
+        });
     }
 }
 
@@ -2061,34 +2277,89 @@ fn format_typst_diagnostics(
     out
 }
 
+/// One compile's worth of preview pages.
+///
+/// A page whose layout is byte-identical to the previous compile comes back as
+/// `None`, meaning "reuse the copy you already have". Measured on a 29-page
+/// document, a one-character edit changes exactly one page — so re-rendering
+/// and shipping all 29 spent about 1.2 s of SVG serialisation and 9 MB of IPC
+/// per keystroke to redeliver 28 pages the preview was already showing.
+#[derive(serde::Serialize)]
+pub struct TypstSvgPages {
+    /// Identifies the state the client now holds. Sending it back on the next
+    /// compile is what makes omitting pages safe: any other value — a fresh
+    /// window, a cleared preview, a compile that errored in between — means the
+    /// client's pages cannot be assumed to match, so everything is sent.
+    epoch: u64,
+    pages: Vec<Option<String>>,
+}
+
+struct SvgCache {
+    epoch: u64,
+    /// Which document these hashes describe; switching files invalidates.
+    path: Option<String>,
+    hashes: Vec<u64>,
+}
+
+static SVG_CACHE: Mutex<Option<SvgCache>> = Mutex::new(None);
+
+fn hash_frame(frame: &typst::layout::Frame) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    frame.hash(&mut hasher);
+    hasher.finish()
+}
+
+fn render_page(page: &typst_layout::Page, opts: &typst_svg::SvgOptions) -> String {
+    // typst renders every glyph as a vector <path>, so the exported SVG
+    // contains no selectable text. Pair the visible SVG with a transparent,
+    // selectable text layer (positioned over the glyphs) so the preview
+    // supports highlighting and copying — the same approach PDF.js and
+    // typst-preview use.
+    let visible = typst_svg::svg(page, opts);
+    let overlay = typst_text_layer(page);
+    format!("<div class=\"typst-doc\" style=\"position:relative\">{visible}{overlay}</div>")
+}
+
 #[tauri::command]
 pub fn compile_typst_svg(
     source: String,
     path: Option<String>,
-) -> Result<Vec<String>, String> {
-    let world = get_world();
-    world.set_project_root(project_root_from_path(path));
-    world.set_source(source);
-    let doc = typst::compile::<typst_layout::PagedDocument>(world)
-        .output
-        .map_err(|e| format_typst_diagnostics(world, &e))?;
-    let opts = typst_svg::SvgOptions::default();
-    Ok(doc
-        .pages()
-        .iter()
-        .map(|p| {
-            // typst renders every glyph as a vector <path>, so the exported SVG
-            // contains no selectable text. Pair the visible SVG with a
-            // transparent, selectable text layer (positioned over the glyphs)
-            // so the preview supports highlighting and copying — the same
-            // approach PDF.js and typst-preview use.
-            let visible = typst_svg::svg(p, &opts);
-            let overlay = typst_text_layer(p);
-            format!(
-                "<div class=\"typst-doc\" style=\"position:relative\">{visible}{overlay}</div>"
-            )
-        })
-        .collect())
+    epoch: Option<u64>,
+) -> Result<TypstSvgPages, String> {
+    with_world(|world| {
+        world.set_project_root(project_root_from_path(path.clone()));
+        world.set_source(source);
+        let doc = typst::compile::<typst_layout::PagedDocument>(world)
+            .output
+            .map_err(|e| format_typst_diagnostics(world, &e))?;
+        let opts = typst_svg::SvgOptions::default();
+
+        let mut cache = SVG_CACHE.lock().unwrap_or_else(|p| p.into_inner());
+        // Only trust the client's copy when it came from the compile
+        // immediately before this one, for this same document.
+        let previous: Option<&[u64]> = cache
+            .as_ref()
+            .filter(|c| Some(c.epoch) == epoch && c.path == path)
+            .map(|c| c.hashes.as_slice());
+
+        let mut hashes = Vec::with_capacity(doc.pages().len());
+        let mut pages = Vec::with_capacity(doc.pages().len());
+        for (index, page) in doc.pages().iter().enumerate() {
+            let hash = hash_frame(&page.frame);
+            // A page beyond what the client holds has no previous hash, so it
+            // is always sent — which is what makes a lengthened document safe.
+            let unchanged = previous
+                .and_then(|prev| prev.get(index))
+                .is_some_and(|&old| old == hash);
+            pages.push((!unchanged).then(|| render_page(page, &opts)));
+            hashes.push(hash);
+        }
+
+        let next_epoch = cache.as_ref().map_or(1, |c| c.epoch.wrapping_add(1));
+        *cache = Some(SvgCache { epoch: next_epoch, path, hashes });
+        Ok(TypstSvgPages { epoch: next_epoch, pages })
+    })
 }
 
 /// Build a transparent SVG text layer for a page: one `<text>` element per text
@@ -2190,15 +2461,22 @@ fn xml_escape(s: &str) -> String {
 pub fn compile_typst_pdf(
     source: String,
     path: Option<String>,
-) -> Result<Vec<u8>, String> {
-    let world = get_world();
-    world.set_project_root(project_root_from_path(path));
-    world.set_source(source);
-    let doc = typst::compile::<typst_layout::PagedDocument>(world)
-        .output
-        .map_err(|e| format_typst_diagnostics(world, &e))?;
-    typst_pdf::pdf(&doc, &typst_pdf::PdfOptions::default())
-        .map_err(|e| format_typst_diagnostics(world, &e))
+) -> Result<tauri::ipc::Response, String> {
+    with_world(|world| {
+        world.set_project_root(project_root_from_path(path));
+        world.set_source(source);
+        let doc = typst::compile::<typst_layout::PagedDocument>(world)
+            .output
+            .map_err(|e| format_typst_diagnostics(world, &e))?;
+        let bytes = typst_pdf::pdf(&doc, &typst_pdf::PdfOptions::default())
+            .map_err(|e| format_typst_diagnostics(world, &e))?;
+        // Returned as a raw IPC body rather than `Vec<u8>`. Serde encodes a
+        // byte vector as a JSON array of numbers, which inflates a 1 MB PDF to
+        // roughly 4.6 MB of text, hands JavaScript a million boxed numbers to
+        // parse, and is then copied again into a `Uint8Array`. `Response`
+        // carries the bytes through untouched and arrives as an `ArrayBuffer`.
+        Ok(tauri::ipc::Response::new(bytes))
+    })
 }
 
 /// Format Typst source with the `typstyle` pretty printer.
@@ -2352,13 +2630,18 @@ fn manuscript_cache_rel(image_url: &str, thumbnail: bool) -> std::path::PathBuf 
 /// `image_url` is the complete Scaler thumbnail URL returned by the API
 /// (e.g. `…Scaler?fn=…&dw=800&dh=800&mo=q1,jpg`).
 /// When `thumbnail=false` the size params are swapped for a higher-res version.
+///
+/// Returned as a raw IPC body rather than `Vec<u8>` — see `read_audio_bytes`
+/// for why. This one matters most of the three: a full-resolution page scan is
+/// several megabytes, and it was crossing the boundary as a JSON array of
+/// per-byte integers.
 #[tauri::command]
 pub async fn get_manuscript_image(
     app: AppHandle,
     http: State<'_, HttpClient>,
     image_url: String,
     thumbnail: bool,
-) -> Result<Vec<u8>, String> {
+) -> Result<tauri::ipc::Response, String> {
     let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
 
     let cache_rel = manuscript_cache_rel(&image_url, thumbnail);
@@ -2366,7 +2649,8 @@ pub async fn get_manuscript_image(
 
     // Serve from cache — no network, no semaphore needed
     if cache_path.exists() {
-        return tokio::fs::read(&cache_path).await.map_err(|e| e.to_string());
+        let cached = tokio::fs::read(&cache_path).await.map_err(|e| e.to_string())?;
+        return Ok(tauri::ipc::Response::new(cached));
     }
 
     // Acquire permit before opening a network connection.
@@ -2408,7 +2692,7 @@ pub async fn get_manuscript_image(
     }
     tokio::fs::write(&cache_path, &bytes).await.map_err(|e| e.to_string())?;
 
-    Ok(bytes.to_vec())
+    Ok(tauri::ipc::Response::new(bytes.to_vec()))
 }
 
 #[tauri::command]
@@ -2631,15 +2915,26 @@ pub async fn get_manuscript_cache_size(app: AppHandle) -> Result<String, String>
 
 /// Serve a bundled demo manuscript image (index 0-2) from resources — used by
 /// the first-run tour so images display offline without network calls.
+/// Returned as a raw IPC body rather than `Vec<u8>`: serde encodes a byte
+/// vector as a JSON array of numbers, which inflates the payload by roughly
+/// 4.6x, hands JavaScript one boxed number per byte to parse, and is then
+/// copied again into a `Uint8Array`. `Response` carries the bytes through
+/// untouched and arrives as an `ArrayBuffer`.
 #[tauri::command]
-pub async fn get_manuscript_demo_image(app: AppHandle, index: usize) -> Result<Vec<u8>, String> {
+pub async fn get_manuscript_demo_image(
+    app: AppHandle,
+    index: usize,
+) -> Result<tauri::ipc::Response, String> {
     if index > 2 {
         return Err("index out of range".into());
     }
     let resource_dir = app.path().resource_dir().map_err(|e| e.to_string())?;
     let filename = format!("demo-{}.jpg", index);
     let path = resource_dir.join("data/manuscripts/demo").join(&filename);
-    tokio::fs::read(&path).await.map_err(|e| format!("Failed to read demo image {}: {}", filename, e))
+    let bytes = tokio::fs::read(&path)
+        .await
+        .map_err(|e| format!("Failed to read demo image {}: {}", filename, e))?;
+    Ok(tauri::ipc::Response::new(bytes))
 }
 
 // ── Quranic search ────────────────────────────────────────────────────────────

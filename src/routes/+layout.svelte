@@ -4,6 +4,8 @@
 	import { appDarkMode, zenMode, uiFontScale } from '$lib/stores/editor.store';
 	import OpenTabFileWatcher from '$lib/components/shared/OpenTabFileWatcher.svelte';
 	import JuliaInstallPrompt from '$lib/components/shared/JuliaInstallPrompt.svelte';
+	import LeanInstallPrompt from '$lib/components/shared/LeanInstallPrompt.svelte';
+	import LeanInstallToast from '$lib/components/shared/LeanInstallToast.svelte';
 	import JuliaInstallToast from '$lib/components/shared/JuliaInstallToast.svelte';
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
@@ -149,6 +151,8 @@
 
 <JuliaInstallPrompt />
 <JuliaInstallToast />
+<LeanInstallPrompt />
+<LeanInstallToast />
 
 <style>
 

@@ -63,6 +63,7 @@
                     g.partnerTabId === $activeTabId,
             ) ||
             $activeTab?.type === "julia" ||
+            $activeTab?.type === "lean" ||
             $activeTab?.type === "typst",
     );
 
@@ -70,7 +71,9 @@
     // In that mode the user can drag the divider, so the sidebar width is variable.
     let inResizableSplit = $derived(
         $hideSurahPage() &&
-            ($activeTab?.type === "julia" || $activeTab?.type === "typst") &&
+            ($activeTab?.type === "julia" ||
+                $activeTab?.type === "lean" ||
+                $activeTab?.type === "typst") &&
             !$crossGroups.some(
                 (g) =>
                     g.hostTabId === $activeTabId ||

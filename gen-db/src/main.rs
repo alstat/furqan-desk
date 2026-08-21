@@ -23,7 +23,7 @@ use std::path::{Path, PathBuf};
 
 /// Increment this whenever the schema or data changes.
 /// Must match DB_VERSION in db.rs.
-const DB_VERSION: i64 = 14;
+const DB_VERSION: i64 = 15;
 
 fn main() {
     // Works whether invoked from the workspace root (`cargo run -p gen-db`) or
@@ -136,12 +136,12 @@ fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
         (
             "EN".into(),
             "Abdel Haleem".into(),
-            data_dir.join("translation/en/en-haleem-with-footnote-tags.json"),
+            data_dir.join("translation/en/en-haleem-simple.json"),
         ),
         (
             "EN".into(),
             "Sahih International".into(),
-            data_dir.join("translation/en/en-sahih-international-with-footnote-tags.json"),
+            data_dir.join("translation/en/en-sahih-international-simple.json"),
         ),
         (
             "FA".into(),
@@ -151,19 +151,17 @@ fn build_static_db(data_dir: &Path, output: &Path) -> Result<()> {
         (
             "HA".into(),
             "Abubakar Mahmood Jummi".into(),
-            data_dir.join("translation/ha/abubakar-mahmood-jummi-with-footnote-tags.json"),
+            data_dir.join("translation/ha/abubakar-mahmood-jummi-simple.json"),
         ),
         (
             "HI".into(),
             "Maulana Azizul Haque Al-Umari".into(),
-            data_dir.join(
-                "translation/hi/maulana-azizul-haque-al-umari-with-footnote-tags.json",
-            ),
+            data_dir.join("translation/hi/maulana-azizul-haque-al-umari-simple.json"),
         ),
         (
             "ID".into(),
             "Quran Indonesia".into(),
-            data_dir.join("translation/id/quran-id-with-footnote-tags.json"),
+            data_dir.join("translation/id/quran-id-simple.json"),
         ),
         (
             "MS".into(),

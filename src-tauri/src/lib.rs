@@ -4,6 +4,8 @@ mod db;
 #[cfg(any(unix, windows))]
 mod git;
 mod julia;
+mod lean;
+mod lean_lsp;
 #[cfg(any(unix, windows))]
 mod pty;
 mod references;
@@ -113,6 +115,10 @@ pub fn run() {
             // Load any previously saved custom Julia binary path before managing state
             let julia_custom_path = julia::load_persisted_path(&app.handle());
             app.manage(julia::JuliaState::new(julia_custom_path));
+            // Same pattern for Lean: the installer persists the path of the
+            // launcher it produced, so restore it before managing the state.
+            let lean_custom_path = lean::load_persisted_path(&app.handle());
+            app.manage(lean::LeanState::new(lean_custom_path));
             app.manage(terminal::TerminalState::new());
             #[cfg(any(unix, windows))]
             app.manage(pty::PtyState::new());
@@ -261,6 +267,18 @@ pub fn run() {
             julia::get_latest_julia_version,
             julia::update_julia,
             julia::set_julia_version,
+            lean::check_lean,
+            lean::get_lean_path,
+            lean::set_lean_path,
+            lean::install_lean,
+            lean::update_lean,
+            lean::set_lean_toolchain,
+            lean::get_lean_version,
+            lean::get_latest_lean_version,
+            lean::lean_compile,
+            lean::cancel_lean_compile,
+            lean::set_lean_use_server,
+            lean::get_lean_use_server,
             terminal::start_terminal,
             terminal::send_terminal_input,
             terminal::signal_terminal,
@@ -317,6 +335,11 @@ pub fn run() {
                     if let Ok(mut guard) = state.processes.lock() {
                         guard.clear(); // drop stdin of every kernel → Julia exits
                     }
+                }
+                // A Lean compile that outlives the window would keep running
+                // detached; stop whatever each runtime still has in flight.
+                if let Some(state) = window.try_state::<lean::LeanState>() {
+                    lean::kill_all(&state);
                 }
             }
         })

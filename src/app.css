@@ -1902,3 +1902,26 @@ html.dark ::highlight(find-match-current) {
     background-color: #e5c890;
     color: #232634;
 }
+
+/* ── Frosted panels ────────────────────────────────────────────────────────
+   Several floating panels are drawn at partial opacity and rely on
+   `backdrop-filter` to turn that into legible frosted glass. WebKitGTK — the
+   webview Tauri uses on Linux — does not implement `backdrop-filter`, so the
+   blur silently does nothing there and the panel is left merely see-through;
+   on macOS (WKWebView) and Windows (WebView2) it renders as intended. The
+   recitation player was the worst of it at 50% opacity.
+
+   Rather than sniffing the platform, ask the engine: where the property is
+   missing, drop back to an opaque background so the panel reads the same
+   everywhere. If a future WebKitGTK gains support this stops applying on its
+   own. Panels can override the two colours to match their own tint. */
+@supports not (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+    .glass-panel {
+        background-color: var(--glass-solid, #ffffff);
+    }
+    html.dark .glass-panel {
+        background-color: var(--glass-solid-dark, #292c3c);
+    }
+}

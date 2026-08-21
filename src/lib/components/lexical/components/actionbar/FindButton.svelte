@@ -61,9 +61,9 @@
 >
     {#if !enabled}
         <span class="text-slate-300">
-            <Icon icon="material-symbols:search-rounded" width="1rem" />
+            <Icon icon="solar:magnifer-bold-duotone" width="1rem" />
         </span>
     {:else}
-        <Icon icon="material-symbols:search-rounded" width="1rem" />
+        <Icon icon="solar:magnifer-bold-duotone" width="1rem" />
     {/if}
 </button>

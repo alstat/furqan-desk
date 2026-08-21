@@ -15,6 +15,7 @@
     } from "$lib/stores/quran.svelte";
     import type { SurahMorphology } from "$lib/types/morphology";
     import { morphFontSize } from "$lib/stores/morphology.store";
+    import { cachedMorphology } from "$lib/stores/surah-cache";
     import MorphologyView from "./MorphologyView.svelte";
     import {
         pendingJumpAyah,
@@ -204,9 +205,11 @@
             const surahNums = [...surahAyahMap.keys()].sort((a, b) => a - b);
             const morphResults = await Promise.all(
                 surahNums.map((s) =>
-                    invoke<SurahMorphology>("get_surah_morphology", {
-                        surahNumber: s,
-                    }),
+                    cachedMorphology(s, () =>
+                        invoke<SurahMorphology>("get_surah_morphology", {
+                            surahNumber: s,
+                        }),
+                    ),
                 ),
             );
 

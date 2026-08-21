@@ -18,6 +18,15 @@ pub struct JuliaState {
     pub processes: Mutex<HashMap<String, JuliaProcess>>,
     /// User-specified binary path, persisted across sessions.
     pub custom_path: Mutex<Option<PathBuf>>,
+    /// Last successfully resolved `julia` binary.
+    ///
+    /// Resolution walks PATH plus several platform install directories — on
+    /// Windows it enumerates `Program Files` looking for a `Julia*` folder.
+    /// The answer only changes when the user sets a path or an install
+    /// finishes, so it is remembered and revalidated with a single stat.
+    /// Only successes are cached, so a Julia installed by other means during
+    /// the session is still found on the next attempt.
+    resolved: Mutex<Option<PathBuf>>,
 }
 
 impl JuliaState {
@@ -25,7 +34,32 @@ impl JuliaState {
         Self {
             processes: Mutex::new(HashMap::new()),
             custom_path: Mutex::new(custom_path),
+            resolved: Mutex::new(None),
         }
+    }
+}
+
+/// Locate the `julia` binary, reusing the cached answer when it still resolves.
+fn resolve_julia(state: &JuliaState) -> Option<PathBuf> {
+    if let Ok(cache) = state.resolved.lock() {
+        if let Some(cached) = cache.as_ref() {
+            if cached.exists() {
+                return Some(cached.clone());
+            }
+        }
+    }
+    let custom = state.custom_path.lock().ok().and_then(|g| g.clone());
+    let found = julia_binary_path(custom.as_deref())?;
+    if let Ok(mut cache) = state.resolved.lock() {
+        *cache = Some(found.clone());
+    }
+    Some(found)
+}
+
+/// Drop the cached path — after the user sets one, or an install moves it.
+fn invalidate_resolved(state: &JuliaState) {
+    if let Ok(mut cache) = state.resolved.lock() {
+        *cache = None;
     }
 }
 
@@ -231,6 +265,7 @@ pub fn set_julia_path(
     if path.is_empty() {
         // Clear the custom path — fall back to auto-detection
         *state.custom_path.lock().map_err(|e| e.to_string())? = None;
+        invalidate_resolved(&state);
         clear_persisted_path(&app);
         let custom = state.custom_path.lock().ok().and_then(|g| g.clone());
         return Ok(if julia_binary_path(custom.as_deref()).is_some() {
@@ -263,6 +298,7 @@ pub fn set_julia_path(
     }
 
     *state.custom_path.lock().map_err(|e| e.to_string())? = Some(p.clone());
+    invalidate_resolved(&state);
     save_persisted_path(&app, &p);
 
     Ok("installed".to_string())
@@ -426,6 +462,7 @@ pub async fn install_julia(
     if let Ok(mut guard) = state.custom_path.lock() {
         *guard = Some(julia_launcher.clone());
     }
+    invalidate_resolved(&state);
     save_persisted_path(&app, &julia_launcher);
 
     emit("Julia LTS installed successfully.");
@@ -751,14 +788,22 @@ while true
   end
   code = String(take!(buf))
   if startswith(code, "__JULIA_COMPLETE__:")
-    prefix = strip(code[length("__JULIA_COMPLETE__:")+1:end])
+    # `String(...)` is load-bearing: strip() yields a SubString, and
+    # REPLCompletions.completions is only defined for ::String. Passing the
+    # SubString raised a MethodError that the bare `catch` below swallowed, so
+    # this returned an empty list for every query — the editor silently fell
+    # back to its static word list and nobody saw an error.
+    prefix = String(strip(code[length("__JULIA_COMPLETE__:")+1:end]))
     print(stdout, "__JULIA_COMPLETE_START__\n")
     try
       completions_list, _, _ = REPL.REPLCompletions.completions(prefix, lastindex(prefix))
       for c in completions_list
         println(stdout, REPL.REPLCompletions.completion_text(c))
       end
-    catch
+    catch e
+      # Still swallowed — a failed completion must not disturb the session —
+      # but no longer silently: the reason reaches the app's stderr stream.
+      println(stderr, "completion failed: ", sprint(showerror, e))
     end
   elseif startswith(code, "__JULIA_DEFINITION__:")
     sym = strip(code[length("__JULIA_DEFINITION__:")+1:end])
@@ -857,6 +902,26 @@ struct JuliaOutput {
     error: Option<String>,
 }
 
+/// Join and clear the pending stdout lines into one chunk.
+///
+/// The eval sentinel is written with a leading newline, so output that already
+/// ended in one produces an empty first line. It is dropped, but only from the
+/// first chunk of a statement — a later flush landing mid-output would
+/// otherwise swallow a genuine blank line the program printed.
+fn drain_chunk(buf: &mut Vec<String>, emitted_any: &mut bool) -> String {
+    let start = if !*emitted_any && buf.first().map(|s| s.is_empty()).unwrap_or(false) {
+        1
+    } else {
+        0
+    };
+    let chunk = buf[start.min(buf.len())..].join("\n");
+    buf.clear();
+    if !chunk.is_empty() {
+        *emitted_any = true;
+    }
+    chunk
+}
+
 #[tauri::command]
 pub async fn start_julia_repl(
     app: AppHandle,
@@ -874,12 +939,8 @@ pub async fn start_julia_repl(
         }
     }
 
-    let julia = {
-        let custom = state.custom_path.lock().map_err(|e| e.to_string())?
-            .clone();
-        julia_binary_path(custom.as_deref())
-            .ok_or("Julia is not installed. Please install it or set the path manually.")?
-    };
+    let julia = resolve_julia(&state)
+        .ok_or("Julia is not installed. Please install it or set the path manually.")?;
 
     // spawn() on TokioCommand is synchronous — no await needed
     let mut cmd = TokioCommand::new(julia);
@@ -927,22 +988,69 @@ pub async fn start_julia_repl(
     let completion_tx_for_reader = Arc::clone(&completion_tx_arc);
 
     // stdout reader task
+    //
+    // Output is coalesced rather than either buffered to the end or forwarded
+    // per line. Holding everything until `__JULIA_DONE__` — which is what this
+    // used to do — meant a cell that prints progress showed nothing at all
+    // until it finished, even though Julia flushes `println` promptly through a
+    // pipe. Forwarding each line instead would be worse: every chunk becomes
+    // its own REPL history entry and its own store write, so a loop printing
+    // ten thousand lines would produce ten thousand of each. Flushing on a
+    // short interval, or once a batch grows large, gives live progress at a
+    // bounded number of updates.
     let app_stdout = app.clone();
     let kernel_stdout = kernel.clone();
     tokio::spawn(async move {
+        use std::time::{Duration, Instant};
+        /// Longest a line waits before being shown.
+        const FLUSH_AFTER: Duration = Duration::from_millis(120);
+        /// Flush early once a burst gets this big, so a fast producer streams
+        /// steadily instead of arriving in one lump at the interval.
+        const FLUSH_LINES: usize = 400;
+
         let reader = BufReader::new(stdout);
         let mut lines = reader.lines();
         let mut output_buf: Vec<String> = Vec::new();
+        // Set while output is pending; `None` means nothing is waiting.
+        let mut flush_at: Option<Instant> = None;
+        // Whether anything has been emitted for the statement now running.
+        let mut emitted_any = false;
+
+        // A completion reply shares this stream and must be captured whole, so
+        // it is never partially flushed. Its first line is the marker.
+        let is_completion = |buf: &Vec<String>| {
+            buf.first().map(|s| s == "__JULIA_COMPLETE_START__").unwrap_or(false)
+        };
 
         loop {
+            let deadline = flush_at;
             tokio::select! {
                 _ = abort_rx.recv() => break,
+                _ = async {
+                    match deadline {
+                        Some(at) => tokio::time::sleep_until(tokio::time::Instant::from_std(at)).await,
+                        // Nothing pending: park forever and let the other arms win.
+                        None => std::future::pending::<()>().await,
+                    }
+                } => {
+                    if !output_buf.is_empty() && !is_completion(&output_buf) {
+                        let chunk = drain_chunk(&mut output_buf, &mut emitted_any);
+                        if !chunk.is_empty() {
+                            let _ = app_stdout.emit("julia-output", JuliaOutput {
+                                kernel: kernel_stdout.clone(),
+                                chunk,
+                                is_done: false,
+                                error: None,
+                            });
+                        }
+                    }
+                    flush_at = None;
+                }
                 result = lines.next_line() => {
                     match result {
                         Ok(Some(l)) => {
                             if l == "__JULIA_DONE__" {
-                                // Check if this is a completion response
-                                if output_buf.first().map(|s| s == "__JULIA_COMPLETE_START__").unwrap_or(false) {
+                                if is_completion(&output_buf) {
                                     let completions: Vec<String> = output_buf[1..]
                                         .iter()
                                         .filter(|s| !s.is_empty())
@@ -955,12 +1063,10 @@ pub async fn start_julia_repl(
                                         }
                                     }
                                 } else {
-                                    // Strip the leading empty line produced by the
-                                    // sentinel's leading '\n' when output already
-                                    // ended with a newline (println case).
-                                    let start = if output_buf.first().map(|s| s.is_empty()).unwrap_or(false) { 1 } else { 0 };
-                                    let chunk = output_buf[start..].join("\n");
-                                    output_buf.clear();
+                                    // Whatever is left, plus the end-of-statement
+                                    // signal. The chunk may be empty when the
+                                    // last interval already flushed it.
+                                    let chunk = drain_chunk(&mut output_buf, &mut emitted_any);
                                     let _ = app_stdout.emit("julia-output", JuliaOutput {
                                         kernel: kernel_stdout.clone(),
                                         chunk,
@@ -968,8 +1074,26 @@ pub async fn start_julia_repl(
                                         error: None,
                                     });
                                 }
+                                flush_at = None;
+                                emitted_any = false;
                             } else {
                                 output_buf.push(l);
+                                if !is_completion(&output_buf) {
+                                    if output_buf.len() >= FLUSH_LINES {
+                                        let chunk = drain_chunk(&mut output_buf, &mut emitted_any);
+                                        if !chunk.is_empty() {
+                                            let _ = app_stdout.emit("julia-output", JuliaOutput {
+                                                kernel: kernel_stdout.clone(),
+                                                chunk,
+                                                is_done: false,
+                                                error: None,
+                                            });
+                                        }
+                                        flush_at = None;
+                                    } else if flush_at.is_none() {
+                                        flush_at = Some(Instant::now() + FLUSH_AFTER);
+                                    }
+                                }
                             }
                         }
                         _ => break,
