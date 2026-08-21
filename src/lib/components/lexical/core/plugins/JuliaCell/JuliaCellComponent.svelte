@@ -989,7 +989,7 @@ end
                             : $t("julia_cell.format_failed")}
                     </div>
                     <div
-                        class="-mt-3 text-[10.5px] break-words
+                        class="mt-0.5 text-[10.5px] break-words
                                {isReplDown
                             ? 'text-amber-700/90 dark:text-amber-300/90'
                             : 'text-red-600/90 dark:text-red-300/90'}"

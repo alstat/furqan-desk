@@ -310,9 +310,9 @@
     ];
 
     const selectClass =
-        "w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#626880] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]";
+        "w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 transition-all focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100";
     const labelClass =
-        "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
+        "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300";
 
     let windowWidth = $state(0);
     $effect(() => {
@@ -352,7 +352,7 @@
         <button
             type="button"
             onclick={() => openPostcard("new")}
-            class="cursor-pointer mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100 dark:bg-[#292c3c] px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
+            class="cursor-pointer mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 bg-brand-gold-100 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 hover:bg-brand-gold-200/70 transition-colors"
         >
             <Icon icon="solar:gallery-send-bold-duotone" width="0.85rem" />
             {$t('postcard.open')}
@@ -443,7 +443,7 @@
                 }}
                 class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {hideSurah
                     ? 'bg-brand-gold-400'
-                    : 'bg-brand-charcoal-100'}"
+                    : 'bg-brand-charcoal-100 dark:bg-[#51576d]'}"
             >
                 <span
                     class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {hideSurah
@@ -485,14 +485,14 @@
             <button
                 type="button"
                 onclick={() => translationDialogOpen.set(true)}
-                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100 dark:bg-[#292c3c] px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
+                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 bg-brand-gold-100 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 hover:bg-brand-gold-200/70 transition-colors"
             >
                 <Icon icon="garden:translation-exists-stroke-12" width="0.85rem" />
                 {$t('surah.translation_view_dialog')}
             </button>
         {/if}
         <div class="flex items-center justify-between">
-            <span class={labelClass}>{$t('surah.transliteration')}</span>
+            <span class={labelClass + " mb-0"}>{$t('surah.transliteration')}</span>
             <button
                 role="switch"
                 aria-checked={translitEnabled}
@@ -502,7 +502,7 @@
                 }}
                 class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {translitEnabled
                     ? 'bg-brand-gold-400'
-                    : 'bg-brand-charcoal-100'}"
+                    : 'bg-brand-charcoal-100 dark:bg-[#51576d]'}"
             >
                 <span
                     class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {translitEnabled
@@ -512,7 +512,7 @@
             </button>
         </div>
         <div class="flex items-center justify-between">
-            <span class={labelClass}>{$t('surah.word_by_word')}</span>
+            <span class={labelClass + " mb-0"}>{$t('surah.word_by_word')}</span>
             <button
                 role="switch"
                 aria-checked={wbwEnabled}
@@ -522,7 +522,7 @@
                 }}
                 class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {wbwEnabled
                     ? 'bg-brand-gold-400'
-                    : 'bg-brand-charcoal-100'}"
+                    : 'bg-brand-charcoal-100 dark:bg-[#51576d]'}"
             >
                 <span
                     class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {wbwEnabled
@@ -545,7 +545,7 @@
         {/if}
         <div class="border-t border-brand-sand-100 dark:border-[#414559] pt-3">
             <div class="flex items-center justify-between mb-2">
-                <span class={labelClass}>{$t('surah.tafsir')}</span>
+                <span class={labelClass + " mb-0"}>{$t('surah.tafsir')}</span>
                 <button
                     role="switch"
                     aria-checked={tafsirOn}
@@ -555,7 +555,7 @@
                     }}
                     class="cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors {tafsirOn
                         ? 'bg-brand-gold-400'
-                        : 'bg-brand-charcoal-100'}"
+                        : 'bg-brand-charcoal-100 dark:bg-[#51576d]'}"
                 >
                     <span
                         class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform {tafsirOn
@@ -592,7 +592,7 @@
                     <button
                         type="button"
                         onclick={() => (tafsirDialogOpen.set(true))}
-                        class="cursor-pointer mb-1 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100 dark:bg-[#292c3c] px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
+                        class="cursor-pointer mb-1 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 bg-brand-gold-100 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 hover:bg-brand-gold-200/70 transition-colors"
                     >
                         <Icon icon="solar:book-2-bold-duotone" width="0.85rem" />
                         {$t('surah.tafsir_view_dialog')}

@@ -37,7 +37,7 @@
     }
 
     const labelClass =
-        "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
+        "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300";
 
     let { onOpenSettings = () => {} }: { onOpenSettings?: () => void } =
         $props();
@@ -100,7 +100,7 @@
         <div>
             <button
                 onclick={onOpenSettings}
-                class="cursor-pointer mt-1.5 w-full px-3 py-1 text-[11px] font-semibold rounded-full
+                class="cursor-pointer mt-1.5 w-full px-3 py-1 text-[0.6875rem] font-semibold rounded-full
 					   border border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
 					   text-brand-charcoal-500 transition-colors flex items-center justify-center gap-1.5"
             >
@@ -118,7 +118,7 @@
             <div class="flex gap-2 mt-1.5">
                 <button
                     onclick={() => appDarkMode.set(false)}
-                    class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
+                    class={`cursor-pointer flex-1 px-2.5 py-1 text-[0.6875rem] font-semibold rounded-full border transition-colors
 						${
                             !$appDarkMode
                                 ? "bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90"
@@ -129,10 +129,10 @@
                 </button>
                 <button
                     onclick={() => appDarkMode.set(true)}
-                    class={`cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors
+                    class={`cursor-pointer flex-1 px-2.5 py-1 text-[0.6875rem] font-semibold rounded-full border transition-colors
 						${
                             $appDarkMode
-                                ? "bg-[#1a1d2e] text-brand-gold-400 border-[#3e4568]"
+                                ? "bg-brand-sand-50 text-brand-gold-400 border-brand-sand-400"
                                 : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500"
                         }`}
                 >
@@ -153,12 +153,12 @@
                     <button
                         onclick={() => editorTheme.set(themeId)}
                         title={info?.label ?? themeId}
-                        class={`cursor-pointer flex-1 min-w-0 overflow-hidden px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-colors ${
+                        class={`cursor-pointer flex-1 min-w-0 overflow-hidden px-2.5 py-1 text-[0.6875rem] font-semibold rounded-full border transition-colors ${
                             $editorTheme === themeId
                                 ? info?.dark
                                     ? "bg-[#1f2430] text-[#ffa759] border-[#ffa759]"
                                     : "bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 border-transparent"
-                                : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]"
+                                : "border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 text-brand-charcoal-500"
                         }`}
                     >
                         <span
@@ -174,8 +174,7 @@
                     aria-label="Choose editor themes"
                     class="cursor-pointer shrink-0 flex h-7 w-7 items-center justify-center rounded-full border
                            border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
-                           dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559]
-                           text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors"
+                           text-brand-charcoal-500 transition-colors"
                 >
                     <Icon icon="solar:settings-bold-duotone" width="0.8rem" />
                 </button>
@@ -202,7 +201,7 @@
                     </svg>
                 </button>
                 <span
-                    class="flex-1 text-center text-[12px] font-mono font-semibold text-brand-charcoal-500"
+                    class="flex-1 text-center text-[0.75rem] font-mono font-semibold text-brand-charcoal-500"
                 >
                     {$cmFontSize}px
                 </span>
@@ -242,7 +241,7 @@
                             <line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                         </svg>
                     </button>
-                    <span class="flex-1 text-center text-[12px] font-mono font-semibold text-brand-charcoal-500">
+                    <span class="flex-1 text-center text-[0.75rem] font-mono font-semibold text-brand-charcoal-500">
                         {Math.round($singlePageMargin / 12 * 100)}%
                     </span>
                     <button
@@ -272,7 +271,7 @@
                 <div class="flex gap-2 mt-1.5">
                     <button
                         onclick={() => createNew("lexical")}
-                        class="cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full
+                        class="cursor-pointer flex-1 px-2.5 py-1 text-[0.6875rem] font-semibold rounded-full
 							   border border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
 							   text-brand-charcoal-500 transition-colors"
                     >
@@ -280,21 +279,21 @@
                     </button>
                     <button
                         onclick={() => createNew("typst")}
-                        class="cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full
+                        class="cursor-pointer flex-1 px-2.5 py-1 text-[0.6875rem] font-semibold rounded-full
 							   bg-brand-gold-400 hover:bg-brand-gold-500 dark:bg-brand-gold-600 dark:hover:bg-brand-gold-500 dark:text-[#1a1d2e] text-white transition-colors"
                     >
                         Typst
                     </button>
                     <button
                         onclick={() => createNew("julia")}
-                        class="cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full
+                        class="cursor-pointer flex-1 px-2.5 py-1 text-[0.6875rem] font-semibold rounded-full
 						   bg-violet-500 hover:bg-violet-600 dark:bg-violet-800 dark:hover:bg-violet-700 dark:text-violet-200 text-white transition-colors"
                     >
                         Julia
                     </button>
                     <button
                         onclick={() => createNew("lean")}
-                        class="cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full
+                        class="cursor-pointer flex-1 px-2.5 py-1 text-[0.6875rem] font-semibold rounded-full
 						   bg-sky-600 hover:bg-sky-700 dark:bg-sky-800 dark:hover:bg-sky-700 dark:text-sky-200 text-white transition-colors"
                     >
                         Lean
@@ -303,7 +302,7 @@
             {:else}
                 <button
                     onclick={() => (showNewOptions = true)}
-                    class="cursor-pointer mt-1.5 w-full px-3 py-1 text-[11px] font-semibold rounded-full
+                    class="cursor-pointer mt-1.5 w-full px-3 py-1 text-[0.6875rem] font-semibold rounded-full
 						   border border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
 						   text-brand-charcoal-500 transition-colors flex items-center justify-center gap-1.5"
                 >
