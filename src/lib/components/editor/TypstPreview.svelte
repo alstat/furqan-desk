@@ -116,7 +116,9 @@
     async function exportPdf() {
         typstCompileError.set("");
         try {
-            const bytes = await invoke<number[]>("compile_typst_pdf", {
+            // Raw ArrayBuffer, not a JSON array of byte values — see the
+            // command's own note on why.
+            const bytes = await invoke<ArrayBuffer>("compile_typst_pdf", {
                 source: get(typstSource),
                 path: get(typstPreviewPath),
             });

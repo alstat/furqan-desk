@@ -229,10 +229,26 @@ fn get_world() -> &'static MinimalWorld {
 /// turn one bad document into a permanently broken previewer.
 ///
 /// Not reentrant: `f` must not call back into `with_world`.
+///
+/// Also where typst's incremental cache is trimmed. `typst::compile` memoizes
+/// through `comemo`, which is what makes recompiling an edited document fast —
+/// but that cache is global and grows on every compile, and nothing reclaims it
+/// unless the embedder asks. Measured here, a live preview leaked ~35 MB per
+/// 200 compiles and never gave it back; a long editing session is thousands of
+/// compiles. Evicting after each one bounds that while keeping the recent
+/// entries the next edit will actually reuse. Doing it here rather than at each
+/// call site means a new compile path cannot forget to.
 pub fn with_world<T>(f: impl FnOnce(&'static MinimalWorld) -> T) -> T {
     let _guard = WORLD_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    f(get_world())
+    let result = f(get_world());
+    // Age threshold matches typst's own CLI in watch mode: entries untouched
+    // for this many evictions are dropped.
+    typst::comemo::evict(COMEMO_MAX_AGE);
+    result
 }
+
+/// How many eviction rounds an unused cache entry survives.
+const COMEMO_MAX_AGE: usize = 5;
 
 #[cfg(test)]
 mod tests {
@@ -241,6 +257,48 @@ mod tests {
     // The lexical→typst exporter emits native citations tied to an inline
     // (bytes) BibTeX bibliography; make sure this app's compiler build
     // actually renders them (format sniffing for bytes sources, CSL styles).
+    fn rss_kb() -> u64 {
+        let out = std::process::Command::new("ps")
+            .args(["-o", "rss=", "-p", &std::process::id().to_string()])
+            .output()
+            .expect("ps");
+        String::from_utf8_lossy(&out.stdout).trim().parse().unwrap_or(0)
+    }
+
+    /// Measures memory growth across repeated compiles of a live-preview loop.
+    /// `cargo test --lib typst_world::tests::memory -- --ignored --nocapture`
+    #[test]
+    #[ignore = "measurement, not an assertion"]
+    fn memory_growth_over_repeated_compiles() {
+        let body: String = (0..120)
+            .map(|i| format!("= Section {i}\n\nSome text for section {i}. #lorem(40)\n\n"))
+            .collect();
+        // Warm up so one-time allocations are not counted as growth.
+        for i in 0..5 {
+            with_world(|w| {
+                w.set_project_root(None);
+                w.set_source(format!("{body}\n// edit {i}\n"));
+                let _ = typst::compile::<typst_layout::PagedDocument>(w).output;
+            });
+        }
+        let before = rss_kb();
+        for i in 0..200 {
+            with_world(|w| {
+                w.set_project_root(None);
+                // A new source each time, as typing produces.
+                w.set_source(format!("{body}\n// edit {i}\n"));
+                let _ = typst::compile::<typst_layout::PagedDocument>(w).output;
+            });
+        }
+        let after = rss_kb();
+        println!(
+            "RSS {} MB -> {} MB over 200 compiles (delta {} MB)",
+            before / 1024,
+            after / 1024,
+            (after as i64 - before as i64) / 1024
+        );
+    }
+
     /// Two compiles running at once must each get their own document.
     ///
     /// This is the bug `with_world` exists to prevent: the world is shared and
