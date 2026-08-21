@@ -21,7 +21,7 @@
     let showNewOptions = $state(false);
     let themeDialogOpen = $state(false);
 
-    function createNew(type: "lexical" | "typst" | "julia") {
+    function createNew(type: "lexical" | "typst" | "julia" | "lean") {
         const tab = createTab(type);
         tabs.update((ts) => [...ts, tab]);
         activeTabId.set(tab.id);
@@ -50,6 +50,7 @@
             (!$hideSurahPage() ||
              $crossGroups.some(g => g.hostTabId === $activeTabId || g.partnerTabId === $activeTabId) ||
              activeTabType === "julia" ||
+             activeTabType === "lean" ||
              activeTabType === "typst") &&
             $isSidebar;
         if (expanded) {
@@ -68,6 +69,7 @@
             (!$hideSurahPage() ||
              $crossGroups.some(g => g.hostTabId === $activeTabId || g.partnerTabId === $activeTabId) ||
              activeTabType === "julia" ||
+             activeTabType === "lean" ||
              activeTabType === "typst") &&
             $isSidebar;
         if (expanded) {
@@ -289,6 +291,13 @@
 						   bg-violet-500 hover:bg-violet-600 dark:bg-violet-800 dark:hover:bg-violet-700 dark:text-violet-200 text-white transition-colors"
                     >
                         Julia
+                    </button>
+                    <button
+                        onclick={() => createNew("lean")}
+                        class="cursor-pointer flex-1 px-2.5 py-1 text-[11px] font-semibold rounded-full
+						   bg-sky-600 hover:bg-sky-700 dark:bg-sky-800 dark:hover:bg-sky-700 dark:text-sky-200 text-white transition-colors"
+                    >
+                        Lean
                     </button>
                 </div>
             {:else}

@@ -99,9 +99,17 @@ export interface JuliaCellResult {
     text: string;
     hasError: boolean;
     plots: JuliaCellPlot[];
+    /**
+     * Wall-clock duration of the run, in milliseconds. Timed from the moment
+     * this job reaches the front of the queue rather than from when it was
+     * enqueued, so "Run all" reports each cell's own execution instead of
+     * charging it for the wait behind the cells before it.
+     */
+    elapsedMs: number;
 }
 
-type CellUpdate = (partial: JuliaCellResult) => void;
+/** Streaming updates carry no timing — only the settled result is timed. */
+type CellUpdate = (partial: Omit<JuliaCellResult, 'elapsedMs'>) => void;
 
 /**
  * Apply an `AL.surah` / `AL.ayah` navigation command emitted by a cell (the
@@ -198,6 +206,7 @@ async function processQueue(): Promise<void> {
     let text = '';
     let hasError = false;
     const plots: JuliaCellPlot[] = [];
+    const startedAt = performance.now();
 
     let finished = false;
     const finish = (unlisten: () => void) => {
@@ -206,7 +215,12 @@ async function processQueue(): Promise<void> {
         abortActiveJob = null;
         unlisten();
         active = false;
-        job.resolve({ text, hasError, plots });
+        job.resolve({
+            text,
+            hasError,
+            plots,
+            elapsedMs: Math.round(performance.now() - startedAt),
+        });
         // Drain any cells queued while this one was running.
         void processQueue();
     };

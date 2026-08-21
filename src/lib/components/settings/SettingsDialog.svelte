@@ -31,6 +31,18 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         setJuliaVersion as setJuliaVersionStore,
         juliaSettingsOpen,
     } from '$lib/stores/julia-install.store';
+    import {
+        leanInstalledVersion,
+        leanLatestVersion,
+        leanInstallState,
+        leanInstallError,
+        leanInstallMessage,
+        initLeanInstallStore,
+        checkLeanVersion,
+        updateLean,
+        setLeanVersion as setLeanVersionStore,
+        leanSettingsOpen,
+    } from '$lib/stores/lean-install.store';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { getVersion } from '@tauri-apps/api/app';
     import { locale, LOCALE_NAMES, t, type Locale } from '$lib/i18n';
@@ -55,7 +67,11 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     // install/update toast can hide itself while Settings is showing progress.
     $effect(() => {
         juliaSettingsOpen.set(open);
-        return () => juliaSettingsOpen.set(false);
+        leanSettingsOpen.set(open);
+        return () => {
+            juliaSettingsOpen.set(false);
+            leanSettingsOpen.set(false);
+        };
     });
 
     function handleRestartTour() {
@@ -115,10 +131,20 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         if ($juliaInstallState === 'idle') juliaTargetVersion = '';
     }
 
+    // ── Lean version state (same store-backed pattern as Julia) ──────────────
+    let leanTargetVersion = $state('');
+
+    async function setLeanVersion() {
+        const target = leanTargetVersion;
+        await setLeanVersionStore(target);
+        if ($leanInstallState === 'idle') leanTargetVersion = '';
+    }
+
     onMount(async () => {
         try { appVersion = await getVersion(); } catch {}
         await refreshCacheSize();
         await initJuliaInstallStore();
+        await initLeanInstallStore();
     });
 </script>
 
@@ -523,6 +549,103 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
 
             {#if $juliaInstallState === 'error'}
                 <p class="mt-1 text-[11px] text-red-500 dark:text-red-400 break-all">{$juliaInstallError}</p>
+            {/if}
+        </div>
+
+            <!-- Lean 4 -->
+            <div>
+                <p class={sectionLabel}>Lean 4</p>
+                <div class="flex items-center justify-between mb-2">
+                <span class={rowLabel}>
+                    {$t('settings.lean.installed')}
+                    {#if $leanInstalledVersion}
+                        <span class="ml-1 font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]">{$leanInstalledVersion}</span>
+                    {:else}
+                        <span class="ml-1 text-brand-charcoal-300 dark:text-[#838ba7]">{$t('settings.lean.not_installed')}</span>
+                    {/if}
+                </span>
+                <button
+                    onclick={checkLeanVersion}
+                    disabled={$leanInstallState === 'checking' || $leanInstallState === 'updating'}
+                    class={actionBtn}
+                >
+                    {#if $leanInstallState === 'checking'}
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin" />
+                        {$t('settings.lean.checking')}
+                    {:else}
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" />
+                        {$t('settings.lean.check')}
+                    {/if}
+                </button>
+            </div>
+
+            {#if $leanInstallState === 'updating'}
+                <div class="mt-2 mb-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/70 dark:bg-[#292c3c] px-3 py-2.5">
+                    <div class="flex items-center gap-2 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5]">
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin shrink-0 text-brand-gold-500 dark:text-[#e5c890]" />
+                        <span class="truncate">{$leanInstallMessage || $t('settings.lean.updating')}</span>
+                    </div>
+                    <IndeterminateProgress class="mt-2" ariaLabel={$t('settings.lean.updating')} />
+                    <p class="mt-2 text-[10.5px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                        {$t('settings.lean.background_hint')}
+                    </p>
+                </div>
+            {/if}
+
+            {#if $leanLatestVersion && $leanInstalledVersion}
+                <div class="flex items-center justify-between mt-1">
+                    <span class={rowLabel}>
+                        {$t('settings.lean.latest')}
+                        <span class="ml-1 font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]">{$leanLatestVersion}</span>
+                    </span>
+                    {#if isNewer($leanLatestVersion, $leanInstalledVersion)}
+                        <button
+                            onclick={updateLean}
+                            disabled={$leanInstallState === 'updating'}
+                            class={actionBtn}
+                        >
+                            <Icon icon="solar:upload-bold-duotone" width="0.85rem" />
+                            {$t('settings.lean.update')}
+                        </button>
+                    {:else}
+                        <span class="text-xs text-brand-charcoal-300 dark:text-[#838ba7]">{$t('settings.lean.up_to_date')}</span>
+                    {/if}
+                </div>
+            {/if}
+
+            <!-- Switch to a specific Lean toolchain -->
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-[#414559]">
+                <div class="flex items-start justify-between gap-3 mb-1">
+                    <div class="min-w-0">
+                        <span class={rowLabel}>Switch toolchain</span>
+                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                            Install and switch the default to a specific Lean toolchain (e.g. <span class="font-mono">4.15.0</span>, <span class="font-mono">stable</span> or <span class="font-mono">nightly</span>).
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input
+                        type="text"
+                        spellcheck={false}
+                        placeholder="e.g. 4.15.0"
+                        bind:value={leanTargetVersion}
+                        onkeydown={(e) => { if (e.key === 'Enter') setLeanVersion(); }}
+                        disabled={$leanInstallState === 'updating'}
+                        class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-xs font-mono text-brand-charcoal-500 dark:text-[#c6d0f5] placeholder:text-brand-charcoal-300 dark:placeholder:text-[#626880] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <button
+                        onclick={setLeanVersion}
+                        disabled={$leanInstallState === 'updating' || !leanTargetVersion.trim()}
+                        class="{actionBtn} disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <Icon icon="solar:download-bold-duotone" width="0.85rem" />
+                        Switch
+                    </button>
+                </div>
+            </div>
+
+            {#if $leanInstallState === 'error'}
+                <p class="mt-1 text-[11px] text-red-500 dark:text-red-400 break-all">{$leanInstallError}</p>
             {/if}
         </div>
 

@@ -140,8 +140,63 @@ export function removeTypstGroupByTab(tabId: string): void {
 }
 
 /**
- * A paired group where any editor type (Julia/Typst/Lexical) can be the host.
- * hostTabId stays in the sidebar; partnerTabId goes to the left panel.
+ * A group of Lean editors sharing split view — structurally identical to a
+ * TypstGroup, but the fourth pane is the shared Lean infoview (which follows
+ * whichever member is the active tab) instead of the preview:
+ *
+ *     tabA | tabC
+ *     tabB | infoview
+ */
+export type LeanGroup = {
+    id: string;
+    tabA: string;
+    tabB: string;
+    tabC?: string;
+    colorIdx: number;
+};
+
+export const leanGroups = writable<LeanGroup[]>([]);
+
+export function leanGroupMembers(g: LeanGroup): string[] {
+    return g.tabC ? [g.tabA, g.tabB, g.tabC] : [g.tabA, g.tabB];
+}
+
+export function createLeanGroup(tabA: string, tabB: string): void {
+    leanGroups.update(gs => {
+        const usedColors = new Set(gs.map(g => g.colorIdx));
+        let colorIdx = 0;
+        while (usedColors.has(colorIdx)) colorIdx++;
+        return [...gs, { id: crypto.randomUUID(), tabA, tabB, colorIdx }];
+    });
+}
+
+export function addThirdToLeanGroup(groupId: string, tabC: string): void {
+    leanGroups.update(gs =>
+        gs.map(g => (g.id === groupId ? { ...g, tabC } : g)),
+    );
+}
+
+export function detachThirdFromLeanGroup(groupId: string): void {
+    leanGroups.update(gs =>
+        gs.map(g => (g.id === groupId ? { ...g, tabC: undefined } : g)),
+    );
+}
+
+export function removeLeanGroup(groupId: string): void {
+    leanGroups.update(gs => gs.filter(g => g.id !== groupId));
+}
+
+export function removeLeanGroupByTab(tabId: string): void {
+    leanGroups.update(gs =>
+        gs
+            .map(g => (g.tabC === tabId ? { ...g, tabC: undefined } : g))
+            .filter(g => g.tabA !== tabId && g.tabB !== tabId),
+    );
+}
+
+/**
+ * A paired group where any editor type (Julia/Typst/Lean/Lexical) can be the
+ * host. hostTabId stays in the sidebar; partnerTabId goes to the left panel.
  */
 export type CrossGroup = {
     id: string;

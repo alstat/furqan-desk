@@ -59,6 +59,9 @@
     // Shared, type-aware Julia language so the file editor and the editor's
     // Julia code cells highlight identically from a single source of truth.
     import { juliaLanguage, juliaCommentData } from "$lib/codemirror/julia";
+    // Lean 4 shares the same arrangement: one language definition used by both
+    // the file editor and the Lexical editor's Lean code cells.
+    import { leanLanguage, leanCommentData } from "$lib/codemirror/lean";
     import {
         editorTheme,
         editorIndentSize,
@@ -1063,6 +1066,7 @@
 
     function getLangExt(lang: string): Extension {
         if (lang === "julia") return [juliaLanguage, juliaCommentData];
+        if (lang === "lean") return [leanLanguage, leanCommentData];
         if (lang === "typst") return [typstLanguage, typstCommentData];
         return [];
     }
@@ -1370,7 +1374,7 @@
         onchange,
     }: {
         value?: string;
-        language: "julia" | "typst" | "text";
+        language: "julia" | "lean" | "typst" | "text";
         extraKeymap?: KeyBinding[];
         extensions?: Extension[];
         class?: string;
@@ -1713,8 +1717,11 @@
                 search({ top: true }),
                 // Typing a quote over a selection wraps it instead of replacing.
                 wrapSelection,
-                // Julia-style `\latex`+Tab → Unicode (e.g. \sigma → σ).
-                ...(language === "julia" ? [latexInput] : []),
+                // `\latex`+Tab → Unicode (e.g. \sigma → σ). Julia offers this
+                // in its REPL and Lean in its editors, so both get it here.
+                ...(language === "julia" || language === "lean"
+                    ? [latexInput]
+                    : []),
                 keymap.of([
                     ...extraKeymap,
                     {
@@ -1751,9 +1758,11 @@
                 Prec.high(gitDiffGutter()),
                 gitDiffOverviewRuler(),
                 // Spell checking: prose languages check everything; code
-                // languages (Julia) restrict to comments and strings.
+                // languages (Julia, Lean) restrict to comments and strings.
                 spellcheckExtension(
-                    language === "julia" ? "code" : "prose",
+                    language === "julia" || language === "lean"
+                        ? "code"
+                        : "prose",
                     (info) => (spellContext = info),
                 ),
                 ...extraExtensions,

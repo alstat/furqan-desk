@@ -11,6 +11,8 @@
     import QuranBlockPlugin from "$lexical/core/plugins/Quran/QuranBlockPlugin.svelte";
     import { JuliaCellNode } from "$lexical/core/plugins/JuliaCell/JuliaCellNode";
     import JuliaCellPlugin from "$lexical/core/plugins/JuliaCell/JuliaCellPlugin.svelte";
+    import { LeanCellNode } from "$lexical/core/plugins/LeanCell/LeanCellNode";
+    import LeanCellPlugin from "$lexical/core/plugins/LeanCell/LeanCellPlugin.svelte";
     import AiSelectionPlugin from "$lexical/core/plugins/AiSelectionPlugin.svelte";
     // import {
     // 	Composer,
@@ -303,6 +305,7 @@
             CitationNode,
             QuranBlockNode,
             JuliaCellNode,
+            LeanCellNode,
             CodeNode,
             TableNode,
             TableRowNode,
@@ -370,6 +373,7 @@
             <CiteMenuPlugin />
             <QuranBlockPlugin />
             <JuliaCellPlugin />
+            <LeanCellPlugin />
             <SpellcheckLexicalPlugin />
             <FindReplacePlugin />
             <EditorStorePlugin />
