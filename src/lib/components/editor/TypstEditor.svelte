@@ -1,4 +1,8 @@
 <script module lang="ts">
+    // Epoch of the pages currently in `typstSvgPages`, or null when we hold
+    // none. Paired with the store: clearing one must clear the other.
+    let svgEpoch: number | null = null;
+
     // What the pages currently sitting in `typstSvgPages` were compiled from.
     // Switching to a non-Typst tab unmounts this editor, so without a record
     // that outlives the instance, switching back would re-run a full compile of
@@ -191,6 +195,7 @@
         isFirstCompileRun = false;
         if (previewTab?.type !== "typst") {
             typstSvgPages.set([]);
+            svgEpoch = null;
             typstCompileError.set("");
             lastCompiled = null;
             return;
@@ -298,6 +303,7 @@
     ) {
         if (!src.trim()) {
             typstSvgPages.set([]);
+            svgEpoch = null;
             typstCompileError.set("");
             lastCompiled = null;
             return;
@@ -318,16 +324,26 @@
         typstCompileError.set("");
         try {
             await ensurePackagesInstalled(src);
+            // The compiler returns `null` for any page whose layout is
+            // unchanged since the epoch we hand it, so a keystroke normally
+            // ships one page instead of the whole document. Anything other than
+            // the epoch from the immediately preceding compile makes it send
+            // everything, so a stale or cleared preview can never be patched
+            // against the wrong pages.
+            const result = await invoke<{
+                epoch: number;
+                pages: (string | null)[];
+            }>("compile_typst_svg", { source: src, path, epoch: svgEpoch });
+            const previous = get(typstSvgPages);
             typstSvgPages.set(
-                await invoke<string[]>("compile_typst_svg", {
-                    source: src,
-                    path,
-                }),
+                result.pages.map((page, i) => page ?? previous[i] ?? ""),
             );
+            svgEpoch = result.epoch;
             lastCompiled = { src, path };
         } catch (e) {
             typstCompileError.set(String(e));
             typstSvgPages.set([]);
+            svgEpoch = null;
             lastCompiled = null;
         } finally {
             typstIsCompiling.set(false);
@@ -339,7 +355,10 @@
         try {
             const src = get(typstSource);
             await ensurePackagesInstalled(src);
-            const bytes = await invoke<number[]>("compile_typst_pdf", {
+            // Arrives as a raw ArrayBuffer — the command returns an IPC
+            // Response rather than Vec<u8>, so the bytes are not round-tripped
+            // through a JSON array of numbers.
+            const bytes = await invoke<ArrayBuffer>("compile_typst_pdf", {
                 source: src,
                 path: get(typstPreviewPath),
             });

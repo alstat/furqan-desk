@@ -284,7 +284,7 @@
     let selectedId = $state<number | null>(null); // track by ID to survive re-sort
     let folioIdx = $state(0);
     let imageSrc = $state<string | null>(null);
-    let thumbnailBytes = $state<number[] | null>(null);
+    let thumbnailBytes = $state<ArrayBuffer | null>(null);
     let loadedIds = $state(new Set<number>());
     let imageLoading = $state(false);
     let imageError = $state(false);
@@ -544,14 +544,12 @@
             const demoIdx = DEMO_ENTRIES.findIndex(
                 (e) => e.manuscript_id === selectedManuscript?.manuscript_id,
             );
-            invoke<number[]>("get_manuscript_demo_image", {
+            invoke<ArrayBuffer>("get_manuscript_demo_image", {
                 index: demoIdx >= 0 ? demoIdx : 0,
             })
                 .then((bytes) => {
                     const url = URL.createObjectURL(
-                        new Blob([new Uint8Array(bytes)], {
-                            type: "image/jpeg",
-                        }),
+                        new Blob([bytes], { type: "image/jpeg" }),
                     );
                     objectUrls.push(url);
                     imageSrc = url;
@@ -567,7 +565,7 @@
         }
 
         const msId = selectedManuscript?.manuscript_id;
-        invoke<number[]>("get_manuscript_image", {
+        invoke<ArrayBuffer>("get_manuscript_image", {
             imageUrl: img.image_url,
             thumbnail: true,
         })
@@ -576,7 +574,7 @@
                 if (msId !== undefined)
                     loadedIds = new Set([...loadedIds, msId]);
                 const url = URL.createObjectURL(
-                    new Blob([new Uint8Array(bytes)], { type: "image/jpeg" }),
+                    new Blob([bytes], { type: "image/jpeg" }),
                 );
                 objectUrls.push(url);
                 imageSrc = url;
@@ -618,7 +616,7 @@
     }
 
     // ── Insert into Lexical editor ────────────────────────────────────────────
-    function bytesToDataUrl(bytes: number[], mime: string): string {
+    function bytesToDataUrl(bytes: ArrayBuffer, mime: string): string {
         const uint8 = new Uint8Array(bytes);
         let binary = "";
         const chunk = 8192;
@@ -771,7 +769,7 @@
                     (e) =>
                         e.manuscript_id === selectedManuscript?.manuscript_id,
                 );
-                const bytes = await invoke<number[]>(
+                const bytes = await invoke<ArrayBuffer>(
                     "get_manuscript_demo_image",
                     {
                         index: demoIdx >= 0 ? demoIdx : 0,
@@ -783,7 +781,7 @@
                 if (!img) return;
                 const bytes =
                     thumbnailBytes ??
-                    (await invoke<number[]>("get_manuscript_image", {
+                    (await invoke<ArrayBuffer>("get_manuscript_image", {
                         imageUrl: img.image_url,
                         thumbnail: false,
                     }));

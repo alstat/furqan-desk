@@ -183,13 +183,13 @@
 
             // Set the audio source (blob for local files, URL for remote)
             if (result.is_local) {
-                const bytes = await invoke<number[]>("read_audio_bytes", {
+                // Arrives as a raw ArrayBuffer — Blob takes it directly, with
+                // no per-byte JSON array to parse and no intermediate copy.
+                const bytes = await invoke<ArrayBuffer>("read_audio_bytes", {
                     path: result.audio_url,
                 });
                 if (gen !== playGeneration) return;
-                const blob = new Blob([new Uint8Array(bytes)], {
-                    type: "audio/mpeg",
-                });
+                const blob = new Blob([bytes], { type: "audio/mpeg" });
                 currentBlobUrl = URL.createObjectURL(blob);
                 audioEl.src = currentBlobUrl;
             } else {
