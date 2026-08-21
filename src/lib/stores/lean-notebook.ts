@@ -84,6 +84,8 @@ export const EMPTY_LEAN_RESULT: LeanCellResult = {
 
 interface Job {
     code: string;
+    /** Set for an explicit Compile press, which must re-run unchanged source. */
+    force: boolean;
     resolve: (result: LeanCellResult | null) => void;
 }
 
@@ -97,7 +99,10 @@ async function processQueue(): Promise<void> {
 
     active = true;
     try {
-        const result: LeanCompileResult | null = await leanCellRuntime.compile(job.code);
+        const result: LeanCompileResult | null = await leanCellRuntime.compile(
+            job.code,
+            job.force,
+        );
         job.resolve(
             result === null
                 ? null
@@ -120,9 +125,12 @@ async function processQueue(): Promise<void> {
  * the cell's result, or `null` when the compile was superseded (which only
  * happens if something cancelled the runtime mid-flight).
  */
-export function runLeanCell(code: string): Promise<LeanCellResult | null> {
+export function runLeanCell(
+    code: string,
+    force = false,
+): Promise<LeanCellResult | null> {
     return new Promise<LeanCellResult | null>((resolve) => {
-        queue.push({ code, resolve });
+        queue.push({ code, force, resolve });
         void processQueue();
     });
 }

@@ -364,7 +364,7 @@ export async function executeJuliaCode(
     mode: ReplMode = 'julia',
 ): Promise<void> {
     // Lazy import to avoid circular deps at module load time
-    const { juliaReplHistory, juliaReplStarted } = await import('./editor.store');
+    const { pushReplLines, juliaReplStarted } = await import('./editor.store');
 
     snippet = snippet.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     if (!snippet.trim()) return;
@@ -372,7 +372,7 @@ export async function executeJuliaCode(
     juliaIsRunning.set(true);
     onStart?.();
 
-    juliaReplHistory.update(h => [...h, { text: snippet, kind: 'input' as const, mode }]);
+    pushReplLines({ text: snippet, kind: 'input' as const, mode });
 
     try {
         if (!get(juliaReplStarted)) {
@@ -382,10 +382,7 @@ export async function executeJuliaCode(
             const status = await invoke<string>('check_julia');
             if (status !== 'installed') {
                 juliaIsRunning.set(false);
-                juliaReplHistory.update(h => [
-                    ...h,
-                    { text: 'Julia is not installed.', kind: 'error' as const },
-                ]);
+                pushReplLines({ text: 'Julia is not installed.', kind: 'error' as const });
                 const { openJuliaInstallPrompt } = await import('./julia-install.store');
                 openJuliaInstallPrompt();
                 return;
@@ -400,7 +397,7 @@ export async function executeJuliaCode(
         // rejection go unhandled.
         juliaIsRunning.set(false);
         const msg = String(e);
-        juliaReplHistory.update(h => [...h, { text: msg, kind: 'error' as const }]);
+        pushReplLines({ text: msg, kind: 'error' as const });
         if (/not installed|set the path/i.test(msg)) {
             const { openJuliaInstallPrompt } = await import('./julia-install.store');
             openJuliaInstallPrompt();

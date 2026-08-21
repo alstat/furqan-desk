@@ -92,7 +92,7 @@
             openLeanInstallPrompt();
             return;
         }
-        await leanEditorRuntime.compile(currentCode());
+        await leanEditorRuntime.compile(currentCode(), true);
     }
 
     /** True when this pane owns the shared infoview — i.e. it holds the active

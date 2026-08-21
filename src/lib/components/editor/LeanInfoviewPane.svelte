@@ -81,7 +81,8 @@
     };
 
     async function compileNow() {
-        await runtime.compile(getCode());
+        // Explicit press: always re-run, even if the source is unchanged.
+        await runtime.compile(getCode(), true);
     }
 
     function toggleFilter(severity: LeanSeverity) {

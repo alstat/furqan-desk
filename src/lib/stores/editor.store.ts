@@ -578,6 +578,38 @@ export interface ReplLine {
 }
 /** Shared REPL output lines for all Julia tabs */
 export const juliaReplHistory: Writable<ReplLine[]> = writable([]);
+
+/**
+ * Upper bound on retained REPL lines.
+ *
+ * The history was unbounded, and every append rebuilt the whole array — so a
+ * session's cost grew quadratically with its own output, and each retained line
+ * also stayed rendered in the DOM. One `for i in 1:100000 println(i) end` was
+ * enough to wedge the pane. Trimming from the front keeps the recent output
+ * that is actually being read, at a bound generous enough that ordinary work
+ * never reaches it.
+ */
+const REPL_HISTORY_LIMIT = 5000;
+
+/**
+ * Append lines to the REPL history, trimming the oldest past the limit.
+ *
+ * Every append goes through here rather than calling `.update` directly, so the
+ * bound cannot be bypassed by a new call site.
+ */
+export function pushReplLines(...lines: ReplLine[]): void {
+  if (lines.length === 0) return;
+  juliaReplHistory.update((history) => {
+    const next = history.length + lines.length;
+    if (next <= REPL_HISTORY_LIMIT) return [...history, ...lines];
+    // Keep the tail. A single push larger than the limit keeps only its own end.
+    const keepFromHistory = Math.max(0, REPL_HISTORY_LIMIT - lines.length);
+    return [
+      ...history.slice(history.length - keepFromHistory),
+      ...lines.slice(Math.max(0, lines.length - REPL_HISTORY_LIMIT)),
+    ];
+  });
+}
 export const juliaReplStarted: Writable<boolean> = writable(false);
 /** Active Julia project/environment name (empty string = default global env). */
 export const juliaActiveEnv: Writable<string> = writable("");

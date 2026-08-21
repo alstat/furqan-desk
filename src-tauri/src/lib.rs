@@ -5,6 +5,7 @@ mod db;
 mod git;
 mod julia;
 mod lean;
+mod lean_lsp;
 #[cfg(any(unix, windows))]
 mod pty;
 mod references;
@@ -276,6 +277,8 @@ pub fn run() {
             lean::get_latest_lean_version,
             lean::lean_compile,
             lean::cancel_lean_compile,
+            lean::set_lean_use_server,
+            lean::get_lean_use_server,
             terminal::start_terminal,
             terminal::send_terminal_input,
             terminal::signal_terminal,

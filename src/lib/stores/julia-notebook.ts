@@ -188,6 +188,35 @@ let active = false;
 /** Force-resolves the in-flight cell (if any) — used when restarting the kernel. */
 let abortActiveJob: (() => void) | null = null;
 
+interface JuliaOutputEvent {
+    kernel: string;
+    chunk: string;
+    is_done: boolean;
+    error: string | null;
+}
+
+/**
+ * The cell currently consuming `julia-output`, or null between runs.
+ *
+ * A single listener is registered for the module rather than one per execution.
+ * `listen` and its unlisten are each a round-trip to the Rust side, so the old
+ * arrangement spent two of them on every cell run — including every tick of a
+ * live-compiling notebook — purely on subscription bookkeeping.
+ */
+let activeSink: ((event: JuliaOutputEvent) => void) | null = null;
+let listenerReady: Promise<void> | null = null;
+
+function ensureOutputListener(): Promise<void> {
+    if (!listenerReady) {
+        listenerReady = listen<JuliaOutputEvent>('julia-output', (event) => {
+            // Output from the REPL pane's kernel is not ours.
+            if (event.payload.kernel !== CELL_KERNEL) return;
+            activeSink?.(event.payload);
+        }).then(() => undefined);
+    }
+    return listenerReady;
+}
+
 async function ensureReplStarted(): Promise<void> {
     if (!cellKernelStarted) {
         const { openFolderPath } = await import('./tabs.store');
@@ -209,11 +238,11 @@ async function processQueue(): Promise<void> {
     const startedAt = performance.now();
 
     let finished = false;
-    const finish = (unlisten: () => void) => {
+    const finish = () => {
         if (finished) return;
         finished = true;
         abortActiveJob = null;
-        unlisten();
+        activeSink = null;
         active = false;
         job.resolve({
             text,
@@ -225,15 +254,9 @@ async function processQueue(): Promise<void> {
         void processQueue();
     };
 
-    const unlisten = await listen<{
-        kernel: string;
-        chunk: string;
-        is_done: boolean;
-        error: string | null;
-    }>('julia-output', (event) => {
-        // Ignore output from the REPL pane's kernel — only handle our own.
-        if (event.payload.kernel !== CELL_KERNEL) return;
-        const { chunk, is_done, error } = event.payload;
+    await ensureOutputListener();
+    activeSink = (payload) => {
+        const { chunk, is_done, error } = payload;
         if (chunk) {
             const rest: string[] = [];
             for (const line of chunk.split('\n')) {
@@ -282,13 +305,13 @@ async function processQueue(): Promise<void> {
             job.onUpdate({ text, hasError, plots: [...plots] });
         }
         if (is_done) {
-            finish(unlisten);
+            finish();
         }
-    });
+    };
 
     // Let a kernel restart resolve this cell even if `__JULIA_DONE__` never
     // arrives (because the kernel process was killed).
-    abortActiveJob = () => finish(unlisten);
+    abortActiveJob = () => finish();
 
     try {
         await ensureReplStarted();
@@ -296,7 +319,7 @@ async function processQueue(): Promise<void> {
     } catch (err) {
         text += text ? `\n${err}` : String(err);
         hasError = true;
-        finish(unlisten);
+        finish();
         if (/not installed|set the path/i.test(String(err))) {
             const { openJuliaInstallPrompt } = await import('./julia-install.store');
             openJuliaInstallPrompt();

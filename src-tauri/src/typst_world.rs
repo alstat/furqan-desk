@@ -205,8 +205,33 @@ fn unix_days_to_ymd(z: i64) -> (i32, u8, u8) {
 
 static WORLD: OnceCell<MinimalWorld> = OnceCell::new();
 
-pub fn get_world() -> &'static MinimalWorld {
+/// Serialises use of the shared world.
+///
+/// Building a world loads and indexes the bundled fonts, so there is one for
+/// the whole process. But compiling means *mutating* it — set the project root,
+/// set the source, compile, then read the source back to turn spans into
+/// `file:line:column`. That sequence is only correct if nothing else changes the
+/// world in the middle of it, and two overlapping compiles otherwise silently
+/// render one caller's document from the other's source.
+static WORLD_LOCK: Mutex<()> = Mutex::new(());
+
+fn get_world() -> &'static MinimalWorld {
     WORLD.get_or_init(MinimalWorld::new)
+}
+
+/// Run `f` with exclusive use of the shared world.
+///
+/// Every compile goes through here; the world is deliberately not reachable
+/// otherwise, so the critical section cannot be skipped by a new call site.
+///
+/// A panic inside `f` — typst does panic on some malformed input — poisons the
+/// lock, so the poison is stepped over rather than propagated. Leaving it would
+/// turn one bad document into a permanently broken previewer.
+///
+/// Not reentrant: `f` must not call back into `with_world`.
+pub fn with_world<T>(f: impl FnOnce(&'static MinimalWorld) -> T) -> T {
+    let _guard = WORLD_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    f(get_world())
 }
 
 #[cfg(test)]
@@ -216,9 +241,52 @@ mod tests {
     // The lexical→typst exporter emits native citations tied to an inline
     // (bytes) BibTeX bibliography; make sure this app's compiler build
     // actually renders them (format sniffing for bytes sources, CSL styles).
+    /// Two compiles running at once must each get their own document.
+    ///
+    /// This is the bug `with_world` exists to prevent: the world is shared and
+    /// mutable, so an interleaved `set_source` used to make one caller render
+    /// the other's source. It only appears under real concurrency, which is why
+    /// it survived as a mysterious flake in the suite rather than a failing
+    /// test — the two Typst tests were racing each other.
+    #[test]
+    fn concurrent_compiles_do_not_cross_sources() {
+        let one = std::thread::spawn(|| {
+            with_world(|world| {
+                world.set_project_root(None);
+                world.set_source("#set page(width: 8cm)\nALPHA\n".into());
+                let doc = typst::compile::<typst_layout::PagedDocument>(world)
+                    .output
+                    .expect("alpha compiles");
+                typst_svg::svg(&doc.pages()[0], &typst_svg::SvgOptions::default())
+            })
+        });
+        let two = std::thread::spawn(|| {
+            with_world(|world| {
+                world.set_project_root(None);
+                // Deliberately invalid, so a crossed source shows up as the
+                // wrong *outcome* and not merely different glyphs.
+                world.set_source("#set page(width: 8cm)\n$angle.nope$\n".into());
+                typst::compile::<typst_layout::PagedDocument>(world)
+                    .output
+                    .err()
+                    .map(|e| e.len())
+            })
+        });
+
+        let svg = one.join().expect("alpha thread");
+        let errors = two.join().expect("beta thread");
+
+        assert!(!svg.is_empty(), "the valid document still rendered");
+        assert!(
+            errors.is_some_and(|n| n > 0),
+            "the invalid document must still fail; if it compiled, it was \
+             handed the other thread's source"
+        );
+    }
+
     #[test]
     fn bibliography_from_bytes_compiles() {
-        let world = get_world();
+        with_world(|world| {
         world.set_project_root(None);
         world.set_source(String::from(
             "As Khan argues #cite(label(\"khan2020\")) and #cite(label(\"khan2020\"), form: \"prose\") elaborates.\n\n#bibliography(bytes(\"@book{khan2020,\\n  title = {Understanding the Quran},\\n  author = {Khan, A.},\\n  year = {2020}\\n}\"), style: \"apa\", title: \"References\", full: true)\n",
@@ -232,5 +300,6 @@ mod tests {
         assert!(!svg.is_empty());
         // The bibliography heading and entry should have been laid out.
         assert!(doc.pages().len() >= 1);
+        });
     }
 }

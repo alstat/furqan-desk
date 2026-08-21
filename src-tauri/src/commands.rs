@@ -1,5 +1,5 @@
 use crate::db::Database;
-use crate::typst_world::get_world;
+use crate::typst_world::with_world;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{
@@ -1681,22 +1681,26 @@ mod votd_tests {
     // token, not the raw opaque `Span(..)` debug dump.
     #[test]
     fn typst_diagnostic_reports_line_and_column() {
-        let world = crate::typst_world::get_world();
-        world.set_project_root(None);
-        // A bogus symbol modifier on line 3.
-        world.set_source("#set page(width: 10cm)\n\n$angle.foobar$\n".into());
-        let errors = typst::compile::<typst_layout::PagedDocument>(world)
-            .output
-            .expect_err("expected a compile error");
-        let msg = format_typst_diagnostics(world, &errors);
-        assert!(
-            msg.contains("main.typ:3:"),
-            "expected a main.typ line-3 location, got:\n{msg}"
-        );
-        assert!(
-            !msg.contains("Span("),
-            "message still leaks the raw span debug dump:\n{msg}"
-        );
+        // Through `with_world`, so this holds the world for the whole
+        // set-source-compile-format sequence. Without it the test raced the
+        // other world tests and compiled *their* source.
+        crate::typst_world::with_world(|world| {
+            world.set_project_root(None);
+            // A bogus symbol modifier on line 3.
+            world.set_source("#set page(width: 10cm)\n\n$angle.foobar$\n".into());
+            let errors = typst::compile::<typst_layout::PagedDocument>(world)
+                .output
+                .expect_err("expected a compile error");
+            let msg = format_typst_diagnostics(world, &errors);
+            assert!(
+                msg.contains("main.typ:3:"),
+                "expected a main.typ line-3 location, got:\n{msg}"
+            );
+            assert!(
+                !msg.contains("Span("),
+                "message still leaks the raw span debug dump:\n{msg}"
+            );
+        });
     }
 }
 
@@ -2066,29 +2070,30 @@ pub fn compile_typst_svg(
     source: String,
     path: Option<String>,
 ) -> Result<Vec<String>, String> {
-    let world = get_world();
-    world.set_project_root(project_root_from_path(path));
-    world.set_source(source);
-    let doc = typst::compile::<typst_layout::PagedDocument>(world)
-        .output
-        .map_err(|e| format_typst_diagnostics(world, &e))?;
-    let opts = typst_svg::SvgOptions::default();
-    Ok(doc
-        .pages()
-        .iter()
-        .map(|p| {
-            // typst renders every glyph as a vector <path>, so the exported SVG
-            // contains no selectable text. Pair the visible SVG with a
-            // transparent, selectable text layer (positioned over the glyphs)
-            // so the preview supports highlighting and copying — the same
-            // approach PDF.js and typst-preview use.
-            let visible = typst_svg::svg(p, &opts);
-            let overlay = typst_text_layer(p);
-            format!(
-                "<div class=\"typst-doc\" style=\"position:relative\">{visible}{overlay}</div>"
-            )
-        })
-        .collect())
+    with_world(|world| {
+        world.set_project_root(project_root_from_path(path));
+        world.set_source(source);
+        let doc = typst::compile::<typst_layout::PagedDocument>(world)
+            .output
+            .map_err(|e| format_typst_diagnostics(world, &e))?;
+        let opts = typst_svg::SvgOptions::default();
+        Ok(doc
+            .pages()
+            .iter()
+            .map(|p| {
+                // typst renders every glyph as a vector <path>, so the exported
+                // SVG contains no selectable text. Pair the visible SVG with a
+                // transparent, selectable text layer (positioned over the
+                // glyphs) so the preview supports highlighting and copying —
+                // the same approach PDF.js and typst-preview use.
+                let visible = typst_svg::svg(p, &opts);
+                let overlay = typst_text_layer(p);
+                format!(
+                    "<div class=\"typst-doc\" style=\"position:relative\">{visible}{overlay}</div>"
+                )
+            })
+            .collect())
+    })
 }
 
 /// Build a transparent SVG text layer for a page: one `<text>` element per text
@@ -2191,14 +2196,15 @@ pub fn compile_typst_pdf(
     source: String,
     path: Option<String>,
 ) -> Result<Vec<u8>, String> {
-    let world = get_world();
-    world.set_project_root(project_root_from_path(path));
-    world.set_source(source);
-    let doc = typst::compile::<typst_layout::PagedDocument>(world)
-        .output
-        .map_err(|e| format_typst_diagnostics(world, &e))?;
-    typst_pdf::pdf(&doc, &typst_pdf::PdfOptions::default())
-        .map_err(|e| format_typst_diagnostics(world, &e))
+    with_world(|world| {
+        world.set_project_root(project_root_from_path(path));
+        world.set_source(source);
+        let doc = typst::compile::<typst_layout::PagedDocument>(world)
+            .output
+            .map_err(|e| format_typst_diagnostics(world, &e))?;
+        typst_pdf::pdf(&doc, &typst_pdf::PdfOptions::default())
+            .map_err(|e| format_typst_diagnostics(world, &e))
+    })
 }
 
 /// Format Typst source with the `typstyle` pretty printer.
