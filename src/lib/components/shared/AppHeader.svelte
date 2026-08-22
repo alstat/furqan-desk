@@ -26,10 +26,16 @@
   to the header: as header padding it would shift the whole grid — and with it
   the centred strip — off the window's midline.
 
-  Windows has no equivalent overlay mode, so its window is undecorated instead
-  (see tauri.windows.conf.json) and this bar *is* the caption bar: it carries
-  the drag region and the minimise/maximise/close buttons at its right end.
-  Linux keeps its compositor's decorations above this bar and needs neither.
+  Windows and Linux have no equivalent overlay mode, so their windows are
+  undecorated instead (see tauri.windows.conf.json / tauri.linux.conf.json) and
+  this bar *is* the caption bar: it carries the drag region and the
+  minimise/maximise/close buttons at its right end. Leaving Linux decorated
+  would stack GNOME's own title bar on top of this one, so the action bars
+  would cost a second row of height instead of folding into the first — the
+  opposite of the pattern this bar exists to follow. WindowControls draws its
+  "gnome" variant there. Dropping GTK's decorations does not cost the window
+  its resize edges: tao hit-tests a 5px border itself and calls
+  begin_resize_drag whenever the window is undecorated.
 -->
 <script lang="ts">
     import ActionBar from "$lib/components/lexical/components/actionbar/ActionBar.svelte";
@@ -43,8 +49,11 @@
 
     const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
     const isMac = ua.includes("Mac");
-    // Only Windows runs undecorated, so only Windows needs drawn controls.
+    // Windows and Linux run undecorated, so both need drawn controls; they
+    // just disagree about what those look like. Android also says "Linux", so
+    // rule it out — a phone has no caption buttons to draw.
     const isWindows = ua.includes("Windows");
+    const isLinux = ua.includes("Linux") && !ua.includes("Android");
 
     // The page sizes itself from window.innerHeight rather than from a flex
     // parent, so it needs the height this bar actually took — which moves with
@@ -106,8 +115,8 @@
         {#if !$hideSurahPage()}
             <ParchmentActionBar variant="header" />
         {/if}
-        {#if isWindows}
-            <WindowControls />
+        {#if isWindows || isLinux}
+            <WindowControls variant={isLinux ? "gnome" : "windows"} />
         {/if}
     </div>
 </header>

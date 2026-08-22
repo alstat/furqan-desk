@@ -1,4 +1,7 @@
 import { spawnSync } from 'child_process';
+import { readFileSync, rmSync } from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
 
 const args = process.argv.slice(2); // e.g. ['dev', '--tablet', 'ipad']
 const tabletIdx = args.indexOf('--tablet');
@@ -31,5 +34,41 @@ if (tabletIdx !== -1) {
   cmd = ['tauri', ...args];
 }
 
+if (process.platform === 'linux' && args[0] === 'dev') {
+  // WebKitGTK's NetworkProcess crashes when it revalidates a disk-cached dev
+  // module while Vite is holding responses open (which Vite does whenever it
+  // re-optimizes deps mid-page-load). Every in-flight load then fails at once:
+  //
+  //   ERROR: WebKit encountered an internal error. This is a WebKit bug.
+  //   Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp(641) :
+  //     void WebKit::WebLoaderStrategy::internallyFailedLoadTimerFired()
+  //
+  // leaving a half-loaded window that never recovers. vite.config.js keeps new
+  // dev responses out of that cache, but entries written before then are still
+  // enough to trigger it -- no request header can un-store them -- so drop the
+  // cache on the way in. It only holds dev-server responses and WebKit rebuilds
+  // it on demand.
+  try {
+    const { identifier } = JSON.parse(
+      readFileSync(new URL('../src-tauri/tauri.conf.json', import.meta.url), 'utf8'),
+    );
+    if (identifier) {
+      const dataHome =
+        process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share');
+      rmSync(join(dataHome, identifier, 'WebKitCache'), {
+        recursive: true,
+        force: true,
+      });
+    }
+  } catch (e) {
+    console.warn(`Could not clear the WebKit dev cache: ${e.message}`);
+  }
+}
+
+// NOTE: this deliberately does not set WEBKIT_DISABLE_DMABUF_RENDERER. Forcing
+// it put WebKit on a software-composited path that cannot render a transparent
+// window, which black-boxed the corners of the frame the Linux build draws for
+// itself (see src-tauri/src/lib.rs). Machines that need it set it themselves;
+// the child inherits the environment either way.
 const result = spawnSync(cmd[0], cmd.slice(1), { stdio: 'inherit', shell: true });
 process.exit(result.status ?? 1);

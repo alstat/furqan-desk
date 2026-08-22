@@ -18,6 +18,27 @@ use std::sync::{atomic::AtomicBool, Arc};
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::{Emitter, Manager};
 
+/// Whether WebKit is on its software-composited fallback, where a transparent
+/// window loses its alpha.
+///
+/// The Linux build rounds its own corners and relies on the area outside the
+/// radius being see-through. On the fallback path that area renders black
+/// instead, which looks far worse than no rounding at all — so the frontend
+/// asks this and squares the corners off when it is true. Only ever true when
+/// someone has opted into WEBKIT_DISABLE_DMABUF_RENDERER; see the note in
+/// `run()` for why that is no longer the default.
+#[tauri::command]
+fn software_compositing() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_some()
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        false
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Before anything that can fail: a release build has no console, so without
@@ -27,15 +48,30 @@ pub fn run() {
     // WebKitGTK's DMA-BUF renderer fails to initialise EGL on some Linux
     // configurations (notably Fedora + Mesa ≥ 25 with AMD/Radeon GPUs), which
     // produces "Could not create default EGL display: EGL_BAD_PARAMETER.
-    // Aborting…" and prevents the app from starting.  Disabling it here makes
-    // WebKit fall back to a software-composited path that works everywhere.
-    // Safe to set unconditionally on Linux; no effect on other platforms.
+    // Aborting…" and prevents the app from starting. Setting
+    // WEBKIT_DISABLE_DMABUF_RENDERER drops WebKit onto a software-composited
+    // path that starts everywhere, and this used to be forced on unconditionally.
+    //
+    // It is not free, though: that path composites the webview onto an *opaque*
+    // surface, so the `transparent: true` window the Linux build uses to round
+    // its own corners (see tauri.linux.conf.json) loses its alpha and the area
+    // outside the corner radius comes out black instead of showing the desktop.
+    // Forcing it therefore traded a broken window frame on every Linux machine
+    // for a startup fix that only a few need, so it is now opt-in: a machine
+    // that hits the EGL abort sets WEBKIT_DISABLE_DMABUF_RENDERER=1 itself.
+    //
+    // WebKit tests this variable by *presence*, not value, so a caller passing
+    // "0" to mean "off" would still get the renderer disabled. Treat the falsey
+    // spellings as opting out and remove it, so the variable behaves the way
+    // someone setting it would expect.
     #[cfg(target_os = "linux")]
     {
-        // Only set if the caller has not already overridden it.
-        if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+        if matches!(
+            std::env::var("WEBKIT_DISABLE_DMABUF_RENDERER").as_deref(),
+            Ok("0") | Ok("false") | Ok("")
+        ) {
             // SAFETY: single-threaded at this point (before Tauri spawns workers).
-            unsafe { std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1") };
+            unsafe { std::env::remove_var("WEBKIT_DISABLE_DMABUF_RENDERER") };
         }
         // NOTE: We deliberately do NOT set GTK_OVERLAY_SCROLLING=0 here.
         // Forcing overlay scrolling off pushes WebKitGTK onto its legacy native
@@ -205,6 +241,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            software_compositing,
             commands::greet,
             commands::get_surah_labels,
             commands::get_surah,
