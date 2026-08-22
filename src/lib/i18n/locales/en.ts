@@ -984,6 +984,8 @@ export const en: Record<string, string> = {
   // ── Lean editor / infoview / cells ────────────────────────────────────────
   "lean_editor.fallback_name": "Lean",
   "lean_editor.resize_infoview": "Resize the infoview panel",
+  "lean_editor.format": "Tidy",
+  "lean_editor.format_title": "Tidy whitespace \u2014 trailing spaces, tabs, blank lines. Does not re-indent.",
   "lean_infoview.title": "Infoview",
   "lean_infoview.compile": "Compile",
   "lean_infoview.compiling": "Compiling…",
@@ -1005,6 +1007,8 @@ export const en: Record<string, string> = {
   "lean_infoview.all_filtered": "All messages are hidden by the current filter.",
   "lean_infoview.messages_count": "{count} message(s)",
   "lean_cell.title": "Lean 4",
+  "lean_cell.format": "Tidy whitespace \u2014 trailing spaces, tabs, blank lines. Does not re-indent.",
+  "lean_cell.format_code": "Tidy whitespace in this cell",
   "lean_cell.compile": "Compile",
   "lean_cell.compile_cell": "Compile cell",
   "lean_cell.compile_all": "Compile all",

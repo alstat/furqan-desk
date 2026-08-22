@@ -837,13 +837,13 @@
                 <!-- Always show file-type icon for all tabs -->
                 <Icon
                     icon={tab.type === "typst"
-                        ? "solar:document-text-bold-duotone"
+                        ? "simple-icons:typst"
                         : tab.type === "lexical"
-                          ? "solar:text-bold-duotone"
+                          ? "at-icons:cursor-text"
                           : tab.type === "julia"
-                            ? "solar:code-bold-duotone"
+                            ? "devicon-plain:julia"
                             : tab.type === "lean"
-                              ? "solar:verified-check-bold-duotone"
+                              ? "vscode-icons:file-type-light-lean"
                               : "solar:file-bold-duotone"}
                     width="0.75rem"
                     class="shrink-0 opacity-60"
@@ -1048,12 +1048,12 @@
                 >
                     <Icon
                         icon={partner.type === "typst"
-                            ? "solar:document-text-bold-duotone"
+                            ? "simple-icons:typst"
                             : partner.type === "lexical"
-                              ? "solar:text-bold-duotone"
+                              ? "at-icons:cursor-text"
                               : partner.type === "lean"
-                                ? "solar:verified-check-bold-duotone"
-                                : "solar:code-bold-duotone"}
+                                ? "vscode-icons:file-type-light-lean"
+                                : "devicon-plain:julia"}
                         width="0.75rem"
                         class="shrink-0"
                     />
@@ -1081,8 +1081,10 @@
                 >
                     <Icon
                         icon={candidate.type === "typst"
-                            ? "solar:document-text-bold-duotone"
-                            : "solar:code-bold-duotone"}
+                            ? "simple-icons:typst"
+                            : candidate.type === "julia"
+                              ? "devicon-plain:julia"
+                              : "at-icons:cursor-text"}
                         width="0.75rem"
                         class="shrink-0"
                     />
