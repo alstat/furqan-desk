@@ -14,8 +14,32 @@
 	import { t as i18n } from '$lib/i18n';
 	import { supabase, isSupabaseConfigured } from '$lib/supabase';
 	import { openFile, openFolder, saveFile, saveAs } from '$lib/actions/fileActions';
+	import { windowMaximized } from '$lib/stores/window-state.store';
 
 	let { children } = $props();
+
+	// Linux runs the window undecorated so the header can be the title bar (see
+	// AppHeader), which also means GTK draws no window frame. The app supplies
+	// one itself — see the client-side-decorations block in app.css. Android
+	// also reports "Linux" and has no window frame to draw.
+	const isLinuxCsd =
+		typeof navigator !== 'undefined' &&
+		navigator.userAgent.includes('Linux') &&
+		!navigator.userAgent.includes('Android');
+
+	// Rounding the corners only works while the window can actually be
+	// transparent. On WebKit's software-composited fallback it cannot, and the
+	// area outside the radius renders black — worse than square corners — so ask
+	// the backend which path we are on and drop the radius if it is that one.
+	let softwareCompositing = $state(false);
+	onMount(async () => {
+		try {
+			const { invoke } = await import('@tauri-apps/api/core');
+			softwareCompositing = await invoke('software_compositing');
+		} catch {
+			// not running inside Tauri (e.g. browser dev)
+		}
+	});
 
 	// Completes the Google OAuth flow: the system browser redirects back to our
 	// `ayahlab://auth-callback?code=…` custom scheme, the deep-link plugin hands
@@ -45,6 +69,17 @@
 		} else {
 			document.documentElement.classList.remove('dark');
 		}
+	});
+
+	$effect(() => {
+		const root = document.documentElement;
+		root.classList.toggle('linux-csd', isLinuxCsd);
+		// Corners only while the window floats; flush against the screen edge
+		// GNOME squares its own off too.
+		root.classList.toggle(
+			'csd-round',
+			isLinuxCsd && !$windowMaximized && !softwareCompositing
+		);
 	});
 
 	$effect(() => {
@@ -145,7 +180,7 @@
 	});
 </script>
 
-<div class="bg-gradient-radial flex h-screen flex-col overflow-hidden">
+<div class="app-shell bg-gradient-radial flex h-screen flex-col overflow-hidden">
 	<OpenTabFileWatcher />
 	<AppHeader />
 	<div class="min-h-0 flex-1">

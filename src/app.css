@@ -1988,3 +1988,58 @@ html.dark ::highlight(find-match-current) {
         background-color: var(--glass-solid-dark, var(--color-brand-sand-100));
     }
 }
+
+/* ── Linux client-side decorations ─────────────────────────────────────────
+   The Linux window is undecorated (see AppHeader / tauri.linux.conf.json) so
+   the header can be the title bar. That also means GTK no longer draws the
+   window frame, and without one the app reads as bare content butted against
+   the desktop. These rules put the frame back in GNOME's shape.
+
+   The window is `transparent: true` so the corners outside the radius are
+   genuinely see-through rather than a square of app colour. That costs us the
+   webview's opaque backdrop, which is what painted the page white in light
+   mode, so `.app-shell` has to state the page colour itself. Dark mode already
+   declares #1c1c1c on `html.dark body` above; this repeats it one element in.
+
+   `csd-round` is toggled on <html> from +layout.svelte and tracks the shared
+   windowMaximized store: a maximised or fullscreen window sits flush against
+   the screen edge, and GNOME squares its corners off there too.
+
+   GNOME's drop shadow is drawn by the compositor for its own decorations and
+   cannot be reproduced from inside the window, so it is simply absent. */
+html.linux-csd,
+html.linux-csd body {
+    background: transparent;
+}
+
+html.linux-csd .app-shell {
+    background-color: #ffffff;
+}
+
+html.linux-csd.dark .app-shell {
+    background-color: #1c1c1c;
+}
+
+/* 12px matches Adwaita's window radius. The hairline is the frame's own
+   border, not a shadow: it keeps the corner from fraying against a light
+   wallpaper, which is the job GNOME gives its outermost 1px. */
+html.linux-csd.csd-round .app-shell {
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.22);
+}
+
+html.linux-csd.csd-round.dark .app-shell {
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* Every dialog in the app lays a `fixed inset-0` backdrop over the viewport,
+   and those are siblings of .app-shell rather than children — `position:
+   fixed` escapes its overflow clip regardless, so the shell's radius cannot
+   trim them. Left alone they paint their tint into the rounded corners and the
+   window reads square for as long as any dialog is open. Rounding them to the
+   same radius is enough: they are exactly viewport-sized, so their corners and
+   the window's coincide. Backdrops with no background of their own are
+   unaffected either way. */
+html.linux-csd.csd-round .fixed.inset-0 {
+    border-radius: 12px;
+}
