@@ -702,7 +702,7 @@
             class="flex-none flex flex-col mx-2 mb-2 overflow-hidden rounded-md border border-brand-sand-200 dark:border-[#414559]"
             style:height="{replHeight}px"
         >
-            <JuliaReplPane />
+            <JuliaReplPane embedded={true} />
         </div>
     {/if}
 </div>

@@ -359,6 +359,86 @@ export const replLineSpacing = {
   },
 };
 
+// ── REPL input height ─────────────────────────────────────────────────────────
+
+export const REPL_INPUT_MIN_HEIGHT = 24;
+export const REPL_INPUT_MAX_HEIGHT = 400;
+
+/** Vertical padding of the input row (py-1.5 top and bottom). */
+export const REPL_INPUT_PADDING = 12;
+
+/**
+ * Where a Julia REPL is mounted. The embedded one under an editor opens at a
+ * single line the way it always has; the one filling the right-hand column has
+ * the room for a proper multi-line prompt. Each slot remembers its own height.
+ */
+export type ReplInputSlot = "embedded" | "panel";
+
+export const REPL_INPUT_DEFAULT_LINES: Record<ReplInputSlot, number> = {
+  embedded: 1,
+  panel: 7,
+};
+
+/** null = follow the slot's line-count default. */
+type ReplInputHeights = Record<ReplInputSlot, number | null>;
+
+function loadReplInputHeights(): ReplInputHeights {
+  const heights: ReplInputHeights = { embedded: null, panel: null };
+  try {
+    const raw = localStorage.getItem("repl-input-heights");
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<Record<ReplInputSlot, unknown>>;
+      for (const slot of ["embedded", "panel"] as const) {
+        const n = parsed[slot];
+        if (
+          typeof n === "number" &&
+          n >= REPL_INPUT_MIN_HEIGHT &&
+          n <= REPL_INPUT_MAX_HEIGHT
+        ) {
+          heights[slot] = n;
+        }
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return heights;
+}
+
+const _replInputHeights = writable<ReplInputHeights>(loadReplInputHeights());
+
+function persistReplInputHeights(heights: ReplInputHeights) {
+  try {
+    localStorage.setItem("repl-input-heights", JSON.stringify(heights));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Height the user dragged the REPL input box to, per mount slot. */
+export const replInputHeights = {
+  subscribe: _replInputHeights.subscribe,
+  setHeight(slot: ReplInputSlot, v: number) {
+    const clamped = Math.max(
+      REPL_INPUT_MIN_HEIGHT,
+      Math.min(REPL_INPUT_MAX_HEIGHT, Math.round(v)),
+    );
+    _replInputHeights.update(heights => {
+      const next = { ...heights, [slot]: clamped };
+      persistReplInputHeights(next);
+      return next;
+    });
+  },
+  /** Drop the override so the slot falls back to its line-count default. */
+  reset(slot: ReplInputSlot) {
+    _replInputHeights.update(heights => {
+      const next = { ...heights, [slot]: null };
+      persistReplInputHeights(next);
+      return next;
+    });
+  },
+};
+
 // ── App dark mode ─────────────────────────────────────────────────────────────
 
 function loadAppDarkMode(): boolean {
