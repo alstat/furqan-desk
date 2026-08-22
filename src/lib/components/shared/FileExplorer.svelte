@@ -1068,7 +1068,7 @@
         transition:fly={{ x: isRtl ? 8 : -8, duration: 180, opacity: 0 }}
         class="{panelPos
             ? 'fixed'
-            : 'absolute top-1/3 left-1.5 ml-2'} rounded-3xl {panelSize
+            : 'absolute top-1/3 left-1.5 ml-2'} rounded-xl {panelSize
             ? ''
             : 'w-72 max-h-[33vh]'} bg-white dark:bg-[#292c3c]
 		       border border-stone-200 dark:border-[#414559]
@@ -1226,7 +1226,7 @@
         <!-- Tree body -->
         <div
             data-tree-body="true"
-            class="flex-1 min-h-0 overflow-y-auto py-1 px-1 rounded-b-3xl bg-brand-sand-50 dark:bg-[#232634] {draggingPath &&
+            class="flex-1 min-h-0 overflow-y-auto py-1 px-1 rounded-b-xl bg-brand-sand-50 dark:bg-[#232634] {draggingPath &&
             dragOverDir === $openFolderPath
                 ? 'ring-2 ring-inset ring-brand-gold-400 bg-brand-gold-50/40 dark:bg-[#363a4f]/40'
                 : ''}"

@@ -1025,7 +1025,7 @@
         <div
             data-picker-dropdown
             style="position: fixed; left: {pickerPos.x}px; top: {pickerPos.y}px; transform: {popupShift}; z-index: 9999;"
-            class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-3xl shadow-xl p-3 min-w-40"
+            class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-xl shadow-xl p-3 min-w-40"
         >
             {#each pickerPartners as partner}
                 <button
@@ -1072,7 +1072,7 @@
         <div
             data-add-third-dropdown
             style="position: fixed; left: {addThirdPos.x}px; top: {addThirdPos.y}px; transform: {popupShiftLeft}; z-index: 9999;"
-            class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-3xl shadow-xl p-3 min-w-40"
+            class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-xl shadow-xl p-3 min-w-40"
         >
             {#each thirdCandidates as candidate}
                 <button

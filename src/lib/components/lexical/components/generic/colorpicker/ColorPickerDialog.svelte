@@ -148,7 +148,7 @@
         aria-modal="true"
         aria-label={title}
         tabindex="-1"
-        class="fixed flex flex-col overflow-hidden rounded-3xl
+        class="fixed flex flex-col overflow-hidden rounded-xl
                bg-white dark:bg-[#292c3c]
                border border-brand-sand-200 dark:border-[#414559]
                shadow-xl dark:shadow-black/40"

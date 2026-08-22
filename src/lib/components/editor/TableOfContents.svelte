@@ -125,7 +125,7 @@
     <div
         transition:fly={{ y: 9, duration: 180, opacity: 0 }}
         class="fixed max-h-[65vh]
-		       rounded-3xl overflow-hidden flex flex-col
+		       rounded-xl overflow-hidden flex flex-col
 		       bg-white dark:bg-[#292c3c]
 		       border border-stone-200 dark:border-[#414559]
 		       shadow-md shadow-black/5 dark:shadow-black/20"

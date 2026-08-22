@@ -140,7 +140,7 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="my-1">
         <div
-            class="flex flex-col rounded-3xl border border-brand-gold-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-lg overflow-hidden"
+            class="flex flex-col rounded-xl border border-brand-gold-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-lg overflow-hidden"
         >
             <!-- Header -->
             <span

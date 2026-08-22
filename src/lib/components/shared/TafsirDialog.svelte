@@ -398,7 +398,7 @@
         aria-modal="false"
         aria-label={$t("tafsir.dialog_title")}
         tabindex="-1"
-        class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+        class="fixed flex flex-col rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
         onpointerdown={() => {
             zIndex = bringToFront();
@@ -477,7 +477,7 @@
                             onpointerdown={(e) => e.stopPropagation()}
                             role="menu"
                             tabindex="-1"
-                            class="absolute right-0 top-9 z-20 w-72 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
+                            class="absolute right-0 top-9 z-20 w-72 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
                         >
                             <div
                                 class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2"
@@ -837,7 +837,7 @@
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
                 role="presentation"
-                class="fixed z-[1000] flex w-80 items-center gap-1.5 rounded-3xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+                class="fixed z-[1000] flex w-80 items-center gap-1.5 rounded-xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
                 style="left:{aiPromptX}px; top:{aiPromptY}px; transform: translateX(-50%);"
                 onclick={(e) => e.stopPropagation()}
                 onpointerdown={(e) => e.stopPropagation()}
@@ -847,7 +847,7 @@
                     bind:this={aiPromptInput}
                     bind:value={aiPromptText}
                     placeholder={$t("morphology.ai_prompt_placeholder")}
-                    class="min-w-0 flex-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+                    class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
                     onkeydown={(e) => {
                         if (e.key === "Enter") {
                             e.preventDefault();

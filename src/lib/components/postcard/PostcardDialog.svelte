@@ -1193,7 +1193,7 @@
         aria-modal="false"
         aria-label={$t("postcard.title")}
         tabindex="-1"
-        class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+        class="fixed flex flex-col rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
         onpointerdown={() => (zIndex = bringToFront())}
     >
@@ -1202,7 +1202,7 @@
             class="flex items-center justify-between px-4 py-1.5 shrink-0
                border-b border-brand-gold-200 dark:border-[#414559]
                bg-brand-gold-100 dark:bg-[#292c3c]
-               select-none rounded-t-3xl
+               select-none rounded-t-xl
                {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
             onpointerdown={startDrag}
             role="banner"

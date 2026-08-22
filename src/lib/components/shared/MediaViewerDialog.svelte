@@ -388,7 +388,7 @@
         role="dialog"
         aria-modal="true"
         aria-label={fileName}
-        class="fixed z-9999 flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+        class="fixed z-9999 flex flex-col rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px;"
     >
         <!-- Header (drag handle) — compact, JuliaPlotViewer-style -->
@@ -398,7 +398,7 @@
             class="flex items-center justify-between gap-2 px-4 py-1.75 shrink-0
                    border-b border-brand-gold-200 dark:border-[#414559]
                    bg-brand-gold-100 dark:bg-[#292c3c]
-                   select-none touch-none rounded-t-3xl
+                   select-none touch-none rounded-t-xl
                    {dragging ? 'cursor-grabbing' : 'cursor-grab'}"
         >
             <div class="flex items-center gap-2 min-w-0">

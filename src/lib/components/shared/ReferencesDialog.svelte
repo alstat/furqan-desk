@@ -452,7 +452,7 @@
         aria-modal="false"
         aria-label={$t("references.title")}
         tabindex="-1"
-        class="fixed flex flex-col overflow-hidden rounded-3xl border border-brand-sand-200 bg-brand-sand-50 shadow-xl dark:border-[#414559] dark:bg-[#232634] dark:shadow-black/40"
+        class="fixed flex flex-col overflow-hidden rounded-xl border border-brand-sand-200 bg-brand-sand-50 shadow-xl dark:border-[#414559] dark:bg-[#232634] dark:shadow-black/40"
         style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
         onpointerdown={() => {
             zIndex = bringToFront();
