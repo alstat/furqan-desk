@@ -103,7 +103,7 @@
         <div
             transition:fly={{ y: 4, duration: 180, opacity: 0 }}
             role="menu"
-            class="absolute right-0 z-50 mt-1.5 flex max-h-[60vh] w-64 flex-col overflow-hidden rounded-3xl border border-stone-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] shadow-xl shadow-black/15 dark:shadow-black/40"
+            class="absolute right-0 z-50 mt-1.5 flex max-h-[60vh] w-64 flex-col overflow-hidden rounded-xl border border-stone-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] shadow-xl shadow-black/15 dark:shadow-black/40"
         >
             <!-- Header -->
             <div

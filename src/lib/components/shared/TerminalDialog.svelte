@@ -693,7 +693,7 @@
 <div
     role="dialog"
     aria-label={$t("terminal.title")}
-    class="fixed flex-col overflow-hidden rounded-3xl
+    class="fixed flex-col overflow-hidden rounded-xl
                bg-white dark:bg-[#292c3c]
                border border-brand-sand-200 dark:border-[#414559]
                shadow-xl dark:shadow-black/40 transition-opacity duration-150
@@ -719,7 +719,7 @@
         class="flex items-center gap-2 px-4 py-1.5 shrink-0
                    bg-brand-gold-100 dark:bg-[#292c3c]
                    border-b border-brand-gold-200 dark:border-[#414559]
-                   select-none rounded-t-3xl
+                   select-none rounded-t-xl
                    {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
         onpointerdown={startDrag}
     >
@@ -776,14 +776,14 @@
                         onpointerdown={(e) => e.stopPropagation()}
                         role="group"
                         aria-label="Terminal search"
-                        class="absolute right-0 top-9 z-30 flex items-center gap-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-1 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur"
+                        class="absolute right-0 top-9 z-30 flex items-center gap-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-1 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur"
                     >
                         <input
                             bind:this={searchInputEl}
                             bind:value={searchQuery}
                             oninput={refreshSearchMatches}
                             onkeydown={handleSearchKeydown}
-                            class="h-7 w-44 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-2 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 dark:focus:border-[#e5c890]"
+                            class="h-7 w-44 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-2 text-xs text-brand-charcoal-900 dark:text-[#c6d0f5] outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 dark:focus:border-[#e5c890]"
                             placeholder="Search terminal"
                             aria-label="Search active terminal"
                         />
@@ -855,7 +855,7 @@
                     onpointerdown={(e) => e.stopPropagation()}
                     role="menu"
                     tabindex="-1"
-                    class="absolute right-0 top-9 z-20 w-72 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
+                    class="absolute right-0 top-9 z-20 w-72 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
                 >
                     <div
                         class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2"

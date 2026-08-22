@@ -614,7 +614,7 @@
     <!-- Floating player pill -->
     <div
         class="flex items-center gap-1 px-2 py-1.5
-               rounded-3xl
+               rounded-xl
                glass-panel
                bg-white/50 dark:bg-[#292c3c]/50
                backdrop-blur-md
@@ -807,7 +807,7 @@
         use:portal
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         class="fixed flex items-center gap-1 px-2 py-1.5 font-sans
-               rounded-3xl
+               rounded-xl
                glass-panel
                bg-white/80 dark:bg-[#292c3c]/90
                backdrop-blur-md

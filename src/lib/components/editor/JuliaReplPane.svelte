@@ -947,7 +947,7 @@
                         role="menu"
                         tabindex="-1"
                         onpointerdown={(e) => e.stopPropagation()}
-                        class="absolute right-0 top-full z-50 mt-1.5 w-72 overflow-hidden rounded-3xl border border-stone-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] p-3.5 shadow-xl shadow-black/15 dark:shadow-black/40 space-y-3.5"
+                        class="absolute right-0 top-full z-50 mt-1.5 w-72 overflow-hidden rounded-xl border border-stone-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] p-3.5 shadow-xl shadow-black/15 dark:shadow-black/40 space-y-3.5"
                     >
                         <div
                             class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2"
@@ -1161,7 +1161,7 @@
 
                 {#if showSearch}
                     <div
-                        class="absolute right-0 top-7 z-50 mt-1.5 flex items-center gap-1 overflow-hidden rounded-3xl border border-stone-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] p-1 shadow-xl shadow-black/15 dark:shadow-black/40"
+                        class="absolute right-0 top-7 z-50 mt-1.5 flex items-center gap-1 overflow-hidden rounded-xl border border-stone-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] p-1 shadow-xl shadow-black/15 dark:shadow-black/40"
                     >
                         <input
                             bind:this={searchInputEl}

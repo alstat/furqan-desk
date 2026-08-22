@@ -104,7 +104,7 @@
     // shaped translucent card, fully rounded inputs, and borderless round
     // buttons that pick up a gold wash on hover.
     const inputClass =
-        "min-w-0 w-full rounded-3xl border px-3 py-1.5 text-[11px] " +
+        "min-w-0 w-full rounded-xl border px-3 py-1.5 text-[11px] " +
         "border-brand-sand-200 dark:border-[#414559] " +
         "bg-brand-sand-50 dark:bg-[#1e2030] " +
         "text-brand-charcoal-900 dark:text-[#c6d0f5] " +
@@ -147,7 +147,7 @@
 <div
     bind:this={root}
     class="absolute top-2 right-3 z-40 flex w-[21rem] max-w-[calc(100%-1.5rem)]
-           flex-col gap-1.5 rounded-3xl border border-brand-sand-200 bg-white/95
+           flex-col gap-1.5 rounded-xl border border-brand-sand-200 bg-white/95
            p-1.5 font-sans shadow-xl backdrop-blur-sm
            dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
     role="search"

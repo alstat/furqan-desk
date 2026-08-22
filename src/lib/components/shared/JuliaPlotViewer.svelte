@@ -294,7 +294,7 @@
 {#if $juliaViewerOpen}
     <div
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-        class="fixed flex flex-col overflow-hidden rounded-3xl
+        class="fixed flex flex-col overflow-hidden rounded-xl
                bg-white dark:bg-[#292c3c]
                border border-brand-sand-200 dark:border-[#414559]
                shadow-xl dark:shadow-black/40"
@@ -308,7 +308,7 @@
             class="flex items-center justify-between px-4 py-1.5 shrink-0
                border-b border-brand-gold-200 dark:border-[#414559]
                bg-brand-gold-100 dark:bg-[#292c3c]
-               select-none rounded-t-3xl
+               select-none rounded-t-xl
                {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
             onpointerdown={startDrag}
             role="banner"

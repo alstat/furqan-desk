@@ -923,7 +923,7 @@
 {#if open}
     <div
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-        class="fixed flex flex-col rounded-3xl overflow-hidden shadow-xl dark:shadow-black/40
+        class="fixed flex flex-col rounded-xl overflow-hidden shadow-xl dark:shadow-black/40
            bg-white dark:bg-[#303446]
            border border-brand-sand-200 dark:border-[#414559]
            {demoMode ? 'z-9998' : ''}"
@@ -939,7 +939,7 @@
             class="flex items-center justify-between px-4 py-1.5 shrink-0
                border-b border-brand-gold-200 dark:border-[#414559]
                bg-brand-gold-100 dark:bg-[#292c3c]
-               select-none rounded-t-3xl
+               select-none rounded-t-xl
                {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
             onpointerdown={startDrag}
             role="banner"
@@ -1758,7 +1758,7 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         role="presentation"
-        class="fixed z-[10001] flex w-96 items-center gap-1.5 rounded-3xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+        class="fixed z-[10001] flex w-96 items-center gap-1.5 rounded-xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
         style="left:{aiPromptX}px; top:{aiPromptY}px; transform: translateX(-100%);"
         onclick={(e) => e.stopPropagation()}
         onkeydown={(e) => {
@@ -1769,7 +1769,7 @@
             bind:this={aiPromptInput}
             bind:value={aiPromptText}
             placeholder={$t("manuscript.ai_placeholder")}
-            class="min-w-0 flex-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+            class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
             onkeydown={(e) => {
                 if (e.key === "Enter") {
                     e.preventDefault();

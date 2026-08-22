@@ -78,7 +78,7 @@
         <div
             bind:this={panelRef}
             transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-            class="absolute z-10000 block w-auto rounded-3xl border border-brand-sand-200 bg-brand-sand-50 bg-opacity-95 p-2 shadow-xl backdrop-blur-sm"
+            class="absolute z-10000 block w-auto rounded-xl border border-brand-sand-200 bg-brand-sand-50 bg-opacity-95 p-2 shadow-xl backdrop-blur-sm"
         >
             <button
                 type="button"

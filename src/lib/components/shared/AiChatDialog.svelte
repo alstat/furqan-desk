@@ -363,7 +363,7 @@
         aria-modal="false"
         aria-label={$t("ai_chat.title")}
         tabindex="-1"
-        class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+        class="fixed flex flex-col rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
         onpointerdown={() => {
             zIndex = bringToFront();
@@ -371,7 +371,7 @@
     >
         <!-- Header -->
         <div
-            class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 select-none rounded-t-3xl {isDragging
+            class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 select-none rounded-t-xl {isDragging
                 ? 'cursor-grabbing'
                 : 'cursor-grab'}"
             onpointerdown={startDrag}
@@ -667,7 +667,7 @@
                         </div>
                         {/if}
                         <div
-                            class="flex-1 flex items-stretch min-h-0 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] pl-3 pr-2 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-brand-gold-900/30 transition-colors"
+                            class="flex-1 flex items-stretch min-h-0 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] pl-3 pr-2 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-brand-gold-900/30 transition-colors"
                         >
                             <textarea
                                 bind:value={input}

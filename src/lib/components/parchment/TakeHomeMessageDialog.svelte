@@ -519,7 +519,7 @@
         tabindex="-1"
         aria-modal="false"
         aria-label={$t("takehome.title")}
-        class="fixed flex w-[min(92vw,440px)] flex-col overflow-hidden rounded-3xl border border-brand-sand-200 bg-white shadow-xl dark:border-[#414559] dark:bg-[#303446] dark:shadow-black/40"
+        class="fixed flex w-[min(92vw,440px)] flex-col overflow-hidden rounded-xl border border-brand-sand-200 bg-white shadow-xl dark:border-[#414559] dark:bg-[#303446] dark:shadow-black/40"
         style="left:{dragPos ? dragPos.x : (pos?.x ?? 0)}px; top:{dragPos
             ? dragPos.y
             : (pos?.y ?? 0)}px; width:{pos?.w ?? 440}px; max-height:{pos?.maxH ??

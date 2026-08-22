@@ -20,7 +20,7 @@
 <div
     class="flex flex-col shrink-0 bg-brand-gold-100 dark:bg-[#292c3c]
            border-b border-brand-gold-200 dark:border-[#414559]
-           select-none rounded-t-3xl
+           select-none rounded-t-xl
            {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
     {onpointerdown}
     role="banner"

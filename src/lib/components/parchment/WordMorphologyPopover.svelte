@@ -437,7 +437,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     use:portal
-    class={`ayah-tooltip fixed flex w-88 max-h-[76vh] flex-col overflow-hidden rounded-3xl shadow-2xl border ${$morphGlassEffect ? 'backdrop-blur-sm border-slate-200/70 dark:border-[#414559]/70 bg-white/50 dark:bg-[#292c3c]/50' : 'border-slate-200 dark:border-[#414559] bg-white dark:bg-[#292c3c]'}`}
+    class={`ayah-tooltip fixed flex w-88 max-h-[76vh] flex-col overflow-hidden rounded-xl shadow-2xl border ${$morphGlassEffect ? 'backdrop-blur-sm border-slate-200/70 dark:border-[#414559]/70 bg-white/50 dark:bg-[#292c3c]/50' : 'border-slate-200 dark:border-[#414559] bg-white dark:bg-[#292c3c]'}`}
     onpointerdown={(e) => { zIndex = bringToFront(); startDragFromBorder(e); }}
     onpointermove={updateBorderCursor}
     onpointerleave={() => { isNearBorder = false; }}
@@ -517,7 +517,7 @@
                     bind:this={aiPromptInput}
                     bind:value={aiPromptText}
                     placeholder={$t('morphology.ai_word_placeholder')}
-                    class="min-w-0 flex-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+                    class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
                     onkeydown={(e) => {
                         if (e.key === 'Enter') { e.preventDefault(); submitAiPrompt(); }
                         else if (e.key === 'Escape') { aiPromptOpen = false; }
