@@ -50,9 +50,10 @@
         "hover:bg-brand-sand-200 dark:hover:bg-[#414559]";
 </script>
 
-<!-- -mr-2 cancels the header's px-2 so the strip meets the window corner, the
-     way a native caption bar does. -->
-<div class="-mr-2 ml-1 flex h-full shrink-0 items-stretch">
+<!-- -mr-2 cancels the header's px-2 so the strip meets the window corner, and
+     h-full makes each button's hover fill the whole caption-bar height rather
+     than just boxing its glyph — the way a native caption bar does. -->
+<div class="-mr-2 ml-1 flex h-full shrink-0 items-stretch self-stretch">
     <button onclick={minimize} class={btn} title="Minimize" aria-label="Minimize">
         <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
             <path d="M0 5h10" stroke="currentColor" stroke-width="1" fill="none" />
