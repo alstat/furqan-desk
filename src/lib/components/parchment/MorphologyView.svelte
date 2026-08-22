@@ -587,7 +587,11 @@
     </div>
 {/snippet}
 
-<div dir="rtl" class="w-full min-w-0">
+<!-- pb-20 on top of the scroller's own pb-20: the recitation player floats over
+     the bottom of the frame (bottom-20 plus its own height, so it starts ~116px
+     up), and 80px of scroller padding alone left the closing verse sitting
+     underneath it. -->
+<div dir="rtl" class="w-full min-w-0 pb-20">
     {#if $morphologyMultiSurahList !== null}
         <!-- Multi-surah mode: render each surah stacked -->
         {#each $morphologyMultiSurahList as surahData}

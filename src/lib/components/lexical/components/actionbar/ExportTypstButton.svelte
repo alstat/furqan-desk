@@ -10,7 +10,10 @@
     import { lexicalStateToTypst } from "$lib/components/lexical/utils/lexicalToTypst";
 
     // tabId scopes the export to a specific panel in split layouts.
-    let { tabId = null }: { tabId?: string | null } = $props();
+    let {
+        tabId = null,
+        btnClass = actionBtnStyle,
+    }: { tabId?: string | null; btnClass?: string } = $props();
 
     async function exportTypst() {
         const tab = tabId
@@ -62,7 +65,7 @@
 </script>
 
 <button
-    class={actionBtnStyle}
+    class={btnClass}
     onclick={exportTypst}
     title={$t("toolbar.export_typst")}
     aria-label={$t("toolbar.export_typst")}

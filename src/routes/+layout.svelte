@@ -2,6 +2,7 @@
 	import '../app.css';
 	import '$lib/icons';
 	import { appDarkMode, zenMode, uiFontScale } from '$lib/stores/editor.store';
+	import AppHeader from '$lib/components/shared/AppHeader.svelte';
 	import OpenTabFileWatcher from '$lib/components/shared/OpenTabFileWatcher.svelte';
 	import JuliaInstallPrompt from '$lib/components/shared/JuliaInstallPrompt.svelte';
 	import LeanInstallPrompt from '$lib/components/shared/LeanInstallPrompt.svelte';
@@ -144,9 +145,12 @@
 	});
 </script>
 
-<div class="bg-gradient-radial h-screen overflow-hidden">
+<div class="bg-gradient-radial flex h-screen flex-col overflow-hidden">
 	<OpenTabFileWatcher />
-	{@render children()}
+	<AppHeader />
+	<div class="min-h-0 flex-1">
+		{@render children()}
+	</div>
 </div>
 
 <JuliaInstallPrompt />

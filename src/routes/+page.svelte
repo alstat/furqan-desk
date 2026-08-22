@@ -12,7 +12,6 @@
     import SurahWidget from "$lib/components/widgets/surah_ayah/SurahWidget.svelte";
     import EditorToolbar from "$lib/components/widgets/editor/EditorToolbar.svelte";
     import Sidebar from "$lib/components/sidebar/Sidebar.svelte";
-    import ActionBar from "$lib/components/lexical/components/actionbar/ActionBar.svelte";
     import TourOverlay from "$lib/components/tour/TourOverlay.svelte";
     import SplashScreen from "$lib/components/shared/SplashScreen.svelte";
     import UpdateToast from "$lib/components/shared/UpdateToast.svelte";
@@ -75,6 +74,7 @@
         localDateKey,
     } from "$lib/data/verse-of-day";
     import { verseOfDayDialogOpen } from "$lib/stores/verse-of-day.store";
+    import { headerHeight } from "$lib/stores/header.store";
 
     let height: number = $state(
         typeof window !== "undefined" ? window.innerHeight : 600,
@@ -250,27 +250,23 @@
 
 <svelte:window bind:innerHeight={height} onkeydown={handleGlobalKeydown} />
 <div
-    class="max-w-[95%] rounded-r-md relative mx-auto sm:py-6"
+    class="max-w-[95%] relative mx-auto"
     style:width="{Math.round(($singlePageMargin / 12) * 100)}%"
 >
     <div
-        class={`flex rounded-r-md ${$surahOrientation()} ${$isSidebar && !$zenMode ? "bg-white dark:bg-[#232634] " : ""} flex-row justify-center`}
-        style:height="{height - 47}px"
+        class={`flex ${$surahOrientation()} ${$isSidebar && !$zenMode ? "bg-white dark:bg-[#232634] " : ""} flex-row justify-center`}
+        style:height="{height - $headerHeight}px"
     >
         {#if activeCrossGroup}
             {@const partnerTab = $tabs.find(
                 (t) => t.id === activeCrossGroup.partnerTabId,
             )}
             <div
-                class="relative z-1 px-1 flex flex-col flex-1 min-w-0 rounded-r-md
+                class="relative z-1 px-1 flex flex-col flex-1 min-w-0
                         {$zenMode
                     ? ''
-                    : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]'}"
+                    : 'border-x border-stone-200 dark:border-[#414559] bg-white dark:bg-[#1c1c1c]'}"
             >
-                <!-- The sidebar's action bar drives the host tab, so the partner
-                     panel carries its own bar pinned to the partner tab: each
-                     side of the split gets undo/redo/save for its own editor. -->
-                <ActionBar tabId={activeCrossGroup.partnerTabId} />
                 {#if partnerTab?.type === "julia"}
                     <!-- Partner=Julia: left = JuliaEditor with embedded REPL -->
                     <JuliaEditor
@@ -300,10 +296,10 @@
                  separated by a draggable horizontal divider (quad split layout). -->
             <div
                 class="relative z-1 flex flex-col items-center
-                        flex-1 min-w-0 rounded-r-md
+                        flex-1 min-w-0
                         {$zenMode
                     ? ''
-                    : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]'}"
+                    : 'border-x border-stone-200 dark:border-[#414559] bg-white dark:bg-[#1c1c1c]'}"
             >
                 {#if activeJuliaGroup?.tabC}
                     <div
@@ -316,19 +312,11 @@
                         setRatio={(p) => juliaRightSplitRatio.set(p)}
                     />
                 {/if}
+                <!-- Same flush wrapper the Lean infoview gets; the pane's own
+                     tab bar already names the active panel. -->
                 <div
-                    class=" mb-5
-                            w-full flex-1 flex flex-col min-h-0 pt-1 pb-2 px-3 overflow-hidden"
+                    class="mb-5 w-full flex-1 flex flex-col min-h-0 overflow-hidden"
                 >
-                    <div
-                        class="flex items-center justify-between px-1 pb-1 shrink-0"
-                    >
-                        <span
-                            class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
-                        >
-                            Terminal
-                        </span>
-                    </div>
                     <JuliaReplPane />
                 </div>
             </div>
@@ -339,10 +327,10 @@
                  divider (quad split layout). -->
             <div
                 class="relative z-1 flex flex-col items-center
-                        flex-1 min-w-0 rounded-r-md
+                        flex-1 min-w-0
                         {$zenMode
                     ? ''
-                    : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]'}"
+                    : 'border-x border-stone-200 dark:border-[#414559] bg-white dark:bg-[#1c1c1c]'}"
             >
                 {#if activeLeanGroup?.tabC}
                     <div
@@ -373,15 +361,14 @@
                  file, it stacks above the preview (resizable). The preview always
                  reflects whichever Typst editor is the active tab. -->
             <div
-                class="flex-1 min-w-0 h-full flex flex-col {$zenMode
+                class="relative z-1 flex-1 min-w-0 h-full flex flex-col
+                        {$zenMode
                     ? ''
-                    : 'sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30'}"
+                    : 'border-x border-stone-200 dark:border-[#414559] bg-white dark:bg-[#1c1c1c]'}"
             >
                 {#if activeTypstGroup?.tabC}
                     <div
-                        class="w-full min-h-0 overflow-visible px-1 {$zenMode
-                            ? ''
-                            : 'border-t border-x border-stone-200 dark:border-[#414559] rounded-tr-md'}"
+                        class="w-full min-h-0 overflow-visible px-1"
                         style="flex: 0 0 {$typstRightSplitRatio}%"
                     >
                         <TypstEditor tabId={activeTypstGroup.tabC} />
@@ -390,10 +377,9 @@
                         setRatio={(p) => typstRightSplitRatio.set(p)}
                     />
                     <!-- flex flex-col so TypstPreview's flex-1 root gets a bounded
-                         height and its internal scroller works. The top border is
-                         dropped since the divider already separates it from tabC. -->
+                         height and its internal scroller works. -->
                     <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
-                        <TypstPreview embedded={true} noTopBorder={true} />
+                        <TypstPreview embedded={true} />
                     </div>
                 {:else}
                     <TypstPreview embedded={true} />
