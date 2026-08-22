@@ -24,21 +24,27 @@
   `titleBarStyle: "Overlay"` (see tauri.macos.conf.json), so the left group
   starts after the space they occupy. That inset belongs to the left slot, not
   to the header: as header padding it would shift the whole grid — and with it
-  the centred strip — off the window's midline. Other platforms keep their own
-  decorations above this bar and need no such inset.
+  the centred strip — off the window's midline.
+
+  Windows has no equivalent overlay mode, so its window is undecorated instead
+  (see tauri.windows.conf.json) and this bar *is* the caption bar: it carries
+  the drag region and the minimise/maximise/close buttons at its right end.
+  Linux keeps its compositor's decorations above this bar and needs neither.
 -->
 <script lang="ts">
     import ActionBar from "$lib/components/lexical/components/actionbar/ActionBar.svelte";
     import EditorTabs from "$lib/components/editor/EditorTabs.svelte";
     import ParchmentActionBar from "$lib/components/parchment/ParchmentActionBar.svelte";
+    import WindowControls from "./WindowControls.svelte";
     import { headerHeight } from "$lib/stores/header.store";
     import { zenMode, zenPeek } from "$lib/stores/editor.store";
     import { hideSurahPage, isSidebar } from "$lib/stores/quran.svelte";
     import { activeTab, tabs } from "$lib/stores/tabs.store";
 
-    const isMac =
-        typeof navigator !== "undefined" &&
-        navigator.userAgent.includes("Mac");
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    const isMac = ua.includes("Mac");
+    // Only Windows runs undecorated, so only Windows needs drawn controls.
+    const isWindows = ua.includes("Windows");
 
     // The page sizes itself from window.innerHeight rather than from a flex
     // parent, so it needs the height this bar actually took — which moves with
@@ -91,9 +97,12 @@
         {/if}
     </div>
 
-    <div class="flex min-w-0 items-center justify-end">
+    <div data-tauri-drag-region class="flex min-w-0 items-center justify-end">
         {#if !$hideSurahPage()}
             <ParchmentActionBar variant="header" />
+        {/if}
+        {#if isWindows}
+            <WindowControls />
         {/if}
     </div>
 </header>
