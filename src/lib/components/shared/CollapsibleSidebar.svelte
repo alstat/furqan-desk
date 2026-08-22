@@ -8,7 +8,6 @@
         surahOrientation,
     } from "$lib/stores/quran.svelte";
     import {
-        typstMode,
         juliaMode,
         juliaViewerOpen,
         juliaPlots,
@@ -51,7 +50,7 @@
         aiChatDialogOpen.set(!$aiChatDialogOpen);
     }
 
-    let { children, roundRight = true } = $props();
+    let { children } = $props();
 
     let sidebarWidth = $derived($isSidebar ? "w-full" : "");
 
@@ -349,13 +348,9 @@
             class="relative w-full space-y-2 overflow-visible {$zenMode &&
             $appDarkMode
                 ? 'bg-transparent'
-                : 'bg-white dark:bg-[#292c3c]'} px-1 pb-4 text-xl {$zenMode
+                : 'bg-white dark:bg-[#1c1c1c]'} px-1 pb-4 text-xl {$zenMode
                 ? ''
-                : 'border border-stone-200 dark:border-[#414559] sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/40'} {roundRight &&
-            $hideSurahPage() &&
-            !$typstMode
-                ? 'rounded-md'
-                : 'rounded-l-md'}"
+                : 'border-x border-stone-200 dark:border-[#414559]'}"
         >
             {#if $zenMode}
                 <div

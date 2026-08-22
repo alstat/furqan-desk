@@ -20,7 +20,10 @@
     import { t } from "$lib/i18n";
 
     // See UndoButton: tabId names the panel's tab in split layouts.
-    let { tabId = null }: { tabId?: string | null } = $props();
+    let {
+        tabId = null,
+        btnClass = actionBtnStyle,
+    }: { tabId?: string | null; btnClass?: string } = $props();
 
     const targetTab = $derived(
         tabId ? ($tabs.find((tb) => tb.id === tabId) ?? null) : $activeTab,
@@ -78,7 +81,7 @@
     onclick={handleRedo}
     title={IS_APPLE ? `${$t('toolbar.redo')} (⌘⇧Z)` : `${$t('toolbar.redo')} (Ctrl+Y)`}
     type="button"
-    class={actionBtnStyle}
+    class={btnClass}
     aria-label={$t('toolbar.redo')}
 >
     {#if !canRedo}

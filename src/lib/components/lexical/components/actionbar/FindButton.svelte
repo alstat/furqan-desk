@@ -20,7 +20,10 @@
     // In split layouts each panel renders its own action bar and names the tab
     // it drives; omitting tabId keeps the single-bar behaviour of following the
     // active tab.
-    let { tabId = null }: { tabId?: string | null } = $props();
+    let {
+        tabId = null,
+        btnClass = actionBtnStyle,
+    }: { tabId?: string | null; btnClass?: string } = $props();
 
     const targetTab = $derived(
         tabId ? ($tabs.find((tb) => tb.id === tabId) ?? null) : $activeTab,
@@ -57,7 +60,7 @@
     title="{$t('toolbar.find')} ({shortcut})"
     aria-label={$t("toolbar.find")}
     type="button"
-    class={actionBtnStyle}
+    class={btnClass}
 >
     {#if !enabled}
         <span class="text-slate-300">

@@ -1,7 +1,6 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import NextPrevButton from "./NextPrevButton.svelte";
-    import ParchmentActionBar from "./ParchmentActionBar.svelte";
     import BookmarkDialog from "./BookmarkDialog.svelte";
     import HighlightDialog from "./HighlightDialog.svelte";
     import RecitationPlayer from "./RecitationPlayer.svelte";
@@ -42,12 +41,28 @@
         zenPeek,
         singlePageMargin,
     } from "$lib/stores/editor.store";
+    import {
+        parchmentActions,
+        parchmentSearching,
+    } from "$lib/stores/header.store";
 
     let scrollContainer = $state<HTMLElement | null>(null);
     let showBookmarks = $state(false);
     let showHighlights = $state(false);
     let showTakeHome = $state(false);
     let takeHomeBtnEl = $state<HTMLButtonElement | null>(null);
+
+    // The Quran buttons sit in the window header (GNOME-style), so the bar is
+    // no longer a child of this component. Publish the handlers it drives; the
+    // dialogs, the search request and the stores it writes stay here.
+    $effect(() => {
+        parchmentActions.set({
+            onOpenBookmarks: () => (showBookmarks = true),
+            onOpenHighlights: () => (showHighlights = true),
+            onSearch: handleSearch,
+        });
+        return () => parchmentActions.set(null);
+    });
 
     // The take-home button needs displayed ayahs to reflect on.
     let hasDisplayedAyahs = $derived(
@@ -153,7 +168,6 @@
         };
     }
 
-    let isSearching = $state(false);
 
     async function handleSearch(query: string) {
         if (!query.trim()) {
@@ -178,7 +192,7 @@
             }
         }
 
-        isSearching = true;
+        parchmentSearching.set(true);
         try {
             const matches = await invoke<{ surah: number; ayah: number }[]>(
                 "search_quran",
@@ -234,7 +248,7 @@
         } catch (e) {
             console.error("Search failed", e);
         } finally {
-            isSearching = false;
+            parchmentSearching.set(false);
         }
     }
 </script>
@@ -242,17 +256,8 @@
 <!-- style:width="{Math.round(($singlePageMargin / 12) * 100)}%" -->
 <div
     id="tour-parchment"
-    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 h-full justify-center min-w-0 text-center flex flex-col items-center rounded-sm ${$zenMode && $appDarkMode ? "bg-transparent" : "bg-white dark:bg-[#303446]"} ${$zenMode ? "" : "sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30"}`}
+    class={`${$hideSurahPage() ? "hidden " : ""}relative z-1 h-full justify-center min-w-0 text-center flex flex-col items-center ${$zenMode && $appDarkMode ? "bg-transparent" : "bg-white dark:bg-[#1c1c1c]"}`}
 >
-    <div class="w-full z-30">
-        <ParchmentActionBar
-            onOpenBookmarks={() => (showBookmarks = true)}
-            onOpenHighlights={() => (showHighlights = true)}
-            onSearch={handleSearch}
-            {isSearching}
-        />
-    </div>
-
     {#if $zenMode}
         {#if !$isSidebar}
             <div
@@ -274,14 +279,20 @@
         ></div>
     {/if}
 
-    <!-- Surah label — anchored to outer stable div so font-size reflows don't shift it -->
+    <!-- Surah label — anchored to outer stable div so font-size reflows don't
+         shift it. It rides the right edge at top-4, the same level the sidebar
+         toggle sits at on its own edge; the h-8 box centres the shorter pill on
+         that button's midline rather than merely sharing its top. Centring it
+         on the border with translate-x-1/2 keeps it there whether it reads "2"
+         or "114", which a fixed -right-4 (sized for the 32px round buttons
+         below it) would not. -->
     <div
         dir="ltr"
         class="{$zenMode
             ? $zenPeek
                 ? 'opacity-50 transition-opacity duration-200'
                 : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
-            : ''} absolute -top-3.5 right-12 z-50"
+            : ''} absolute right-0 top-4 z-50 flex h-8 translate-x-1/2 items-center"
     >
         {#if $morphologyMultiSurahList !== null}
             <span
@@ -313,19 +324,24 @@
         bind:this={scrollContainer}
         role="document"
         onmouseup={handleMouseUp}
-        class={`default-scroll relative w-full flex-1 min-h-0 overflow-y-auto px-12 pt-10 pb-20 text-right ${$morphFontSize} leading-loose text-slate-600 dark:text-[#c6d0f5] ${$isSidebar ? "rounded-r-md" : "rounded-md"} ${$zenMode ? "" : "border border-stone-200 dark:border-[#414559]"}`}
+        class={`default-scroll relative w-full flex-1 min-h-0 overflow-y-auto px-12 pt-10 pb-20 text-right ${$morphFontSize} leading-loose text-slate-600 dark:text-[#c6d0f5] ${$zenMode ? "" : "border-x border-stone-200 dark:border-[#414559]"}`}
     >
         <MorphologyView />
     </div>
 
     <div
-        class="absolute bottom-7 inset-x-6 z-30 flex justify-center pointer-events-none"
+        class="absolute bottom-20 inset-x-6 z-30 flex justify-center pointer-events-none"
     >
         <div class="pointer-events-auto">
             <RecitationPlayer {scrollContainer} />
         </div>
     </div>
-    <NextPrevButton position={"absolute -bottom-4 inset-x-0 z-20"} />
+    <!-- Both this and the recitation player above it clear the bottom edge on
+         their own now: they used to lean on the frame's 24px margin, the nav
+         straddling the border at -bottom-4 and the player sitting just above
+         it, which left them jammed against the window once the frame went
+         flush. -->
+    <NextPrevButton position={"absolute bottom-6 inset-x-0 z-20"} />
 
     <!-- Take-home message button — mirrors the File Explorer button on the
          opposite (right) edge, at the same vertical level -->

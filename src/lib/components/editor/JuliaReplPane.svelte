@@ -99,10 +99,10 @@
     function termTheme(dark: boolean) {
         if (dark) {
             return {
-                background: "#303446",
+                background: "#1c1c1c",
                 foreground: "#a5adce",
                 cursor: "#e5c890",
-                cursorAccent: "#303446",
+                cursorAccent: "#1c1c1c",
                 selectionBackground: "#3a3f57",
                 black: "#51576d",
                 red: "#e78284",
@@ -123,10 +123,10 @@
             };
         }
         return {
-            background: "#faf7f2",
+            background: "#ffffff",
             foreground: "#707070",
             cursor: "#c8a96a",
-            cursorAccent: "#faf7f2",
+            cursorAccent: "#ffffff",
             selectionBackground: "#cfe3ff",
             black: "#707070",
             red: "#c44545",
@@ -1158,30 +1158,44 @@
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
     const settingsAdjustBtnClass =
         "cursor-pointer w-7 h-7 flex items-center justify-center rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#363a4f] hover:bg-brand-sand-200 dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
+
+    // Toolbar controls share LeanInfoviewPane's Live/Compile design: a
+    // rounded-full text-[10px] pill, gold when active and sand when idle.
+    // pillIcon is the unlabelled sibling — same shape and palette, icon only,
+    // for the actions that have no short translated label.
+    const pillBase =
+        "flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors";
+    const pillIdle =
+        "bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]";
+    const pillActive =
+        "bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25";
+    const pillIcon =
+        "flex cursor-pointer h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors";
+    const pillIconIdle =
+        "text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-gold-600 dark:hover:text-brand-gold-400";
 </script>
 
+<!-- Borderless like LeanInfoviewPane: the column wrapper in +page.svelte draws
+     the single border-x, so the pane adds no box of its own. -->
 <div
-    class="flex-1 mt-0.5 flex flex-col rounded-md overflow-hidden border border-brand-sand-200 dark:border-[#414559] min-h-0 h-full"
+    class="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
     style="--repl-font-size: {$replFontSize}px; --repl-line-height: {$replLineSpacing};"
 >
     <!-- Tab bar -->
     <div
-        class="relative flex items-center py-1 border-b border-brand-sand-200 dark:border-[#414559] shrink-0
-               {ts.activePanel === 'julia'
-            ? 'bg-brand-sand-100 dark:bg-[#292c3c]'
-            : 'bg-brand-sand-50 dark:bg-[#303446]'}"
+        class="relative flex items-stretch shrink-0 border-b border-brand-sand-200 dark:border-[#414559]"
     >
-        <div class="flex items-center flex-1 min-w-0 overflow-x-auto">
+        <div class="flex items-stretch flex-1 min-w-0 overflow-x-auto">
             <!-- Julia REPL tab -->
             <div
-                class="flex items-center flex-none border-r rounded-full mx-2 border-brand-sand-400 dark:border-[#414559]
+                class="flex items-center flex-none gap-1.5 px-2 border-b-2
                     {ts.activePanel === 'julia'
-                    ? 'bg-brand-sand-50 dark:bg-[#414559]'
-                    : 'hover:bg-brand-sand-100 dark:hover:bg-[#303446]'}"
+                    ? 'border-brand-gold-400'
+                    : 'border-transparent hover:bg-brand-sand-100 dark:hover:bg-[#292c3c]'}"
             >
                 <button
                     onclick={() => (ts.activePanel = "julia")}
-                    class="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none cursor-pointer
+                    class="px-1 py-1.5 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none cursor-pointer
                        {ts.activePanel === 'julia'
                         ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
                         : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
@@ -1220,33 +1234,21 @@
                             e.stopPropagation();
                             clearRepl();
                         }}
-                        class="cursor-pointer pr-1 text-[10px] font-medium text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] transition-colors select-none"
-                        title={$t("julia_repl.clear_title")}>{$t("julia_repl.clear")}</button
+                        class="{pillBase} {pillIdle} select-none"
+                        title={$t("julia_repl.clear_title")}
                     >
+                        <Icon icon="lucide:eraser" width="11" />
+                        {$t("julia_repl.clear")}
+                    </button>
                     <button
                         onclick={(e) => {
                             e.stopPropagation();
                             restartRepl();
                         }}
-                        class="cursor-pointer px-2 flex items-center gap-0.5 text-[10px] font-medium text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 dark:hover:text-red-400 transition-colors select-none"
+                        class="{pillBase} {pillIdle} select-none hover:text-red-500 dark:hover:text-red-400"
                         title={$t("julia_repl.restart_title")}
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="10"
-                            height="10"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-                            <path
-                                d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
-                            />
-                            <path d="M3 3v5h5" />
-                        </svg>
+                        <Icon icon="lucide:rotate-ccw" width="11" />
                         {$t("julia_repl.restart")}
                     </button>
                 {/if}
@@ -1255,14 +1257,14 @@
             <!-- Terminal tabs -->
             {#each ts.termTabs as tab (tab.id)}
                 <div
-                    class="flex items-center flex-none mr-2 rounded-full border-r border-brand-sand-400 dark:border-[#414559]
+                    class="flex items-center flex-none px-2 border-b-2
                         {ts.activePanel === tab.id
-                        ? 'bg-brand-sand-50 dark:bg-[#414559]'
-                        : 'hover:bg-brand-sand-100 dark:hover:bg-[#303446]'}"
+                        ? 'border-brand-gold-400'
+                        : 'border-transparent hover:bg-brand-sand-100 dark:hover:bg-[#292c3c]'}"
                 >
                     <button
                         onclick={() => (ts.activePanel = tab.id)}
-                        class="cursor-pointer px-3 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none
+                        class="cursor-pointer px-1 py-1.5 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none
                            {ts.activePanel === tab.id
                             ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
                             : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
@@ -1275,7 +1277,7 @@
                             e.stopPropagation();
                             closeTerminal(tab.id);
                         }}
-                        class="cursor-pointer pr-2 py-1 text-[10px] leading-none text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 transition-colors"
+                        class="cursor-pointer pl-1 py-1 text-[10px] leading-none text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 transition-colors"
                         title={$t("terminal.close")}>×</button
                     >
                 </div>
@@ -1283,16 +1285,15 @@
         </div>
 
         <!-- Right-aligned tab-bar actions -->
-        <div class="ml-auto flex items-center gap-0.5 pr-2 shrink-0">
+        <div class="ml-auto flex items-center gap-0.5 py-1 pr-2 shrink-0">
             {#if ts.activePanel !== "julia" && !ts.termExited[ts.activePanel]}
                 <button
                     onclick={killActiveTerm}
                     aria-label={$t("terminal.send_ctrl_c")}
                     title={$t("julia_repl.send_ctrl_c_full_title")}
-                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md
-                           text-brand-charcoal-300 dark:text-brand-charcoal-300
-                           hover:text-red-500 dark:hover:text-red-400
-                           hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 transition-colors"
+                    class="{pillIcon} text-brand-charcoal-300 dark:text-[#838ba7]
+                           hover:bg-brand-sand-200 dark:hover:bg-[#414559]
+                           hover:text-red-500 dark:hover:text-red-400"
                 >
                     <Icon
                         icon="solar:stop-circle-bold-duotone"
@@ -1304,10 +1305,7 @@
             <div bind:this={settingsAnchorEl} class="relative">
                 <button
                     onclick={() => (showSettings = !showSettings)}
-                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-brand-charcoal-300 hover:text-brand-gold-600 dark:hover:text-brand-gold-400 hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 shrink-0 transition-colors
-                           {showSettings
-                        ? 'bg-brand-sand-100 dark:bg-brand-sand-200 text-brand-gold-600 dark:text-brand-gold-400'
-                        : ''}"
+                    class="{pillIcon} {showSettings ? pillActive : pillIconIdle}"
                     title={$t("julia_repl.display_settings")}
                     aria-label={$t("julia_repl.display_settings")}
                     aria-expanded={showSettings}
@@ -1319,13 +1317,13 @@
                         role="menu"
                         tabindex="-1"
                         onpointerdown={(e) => e.stopPropagation()}
-                        class="absolute right-0 top-full mt-1 z-50 w-72 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
+                        class="absolute right-0 top-full mt-1 z-50 w-72 border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#1c1c1c]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
                     >
                         <div
                             class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2"
                         >
                             <div
-                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]"
+                                class="flex h-8 w-8 shrink-0 items-center justify-center bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]"
                             >
                                 <Icon
                                     icon="solar:settings-bold-duotone"
@@ -1378,7 +1376,7 @@
                                     </svg>
                                 </button>
                                 <span
-                                    class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
+                                    class="flex-1 border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
                                 >
                                     {$replFontSize}px
                                 </span>
@@ -1463,7 +1461,7 @@
                                     </svg>
                                 </button>
                                 <span
-                                    class="flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
+                                    class="flex-1 border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 text-center text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
                                 >
                                     {$replLineSpacing.toFixed(1)}x
                                 </span>
@@ -1523,10 +1521,7 @@
             <div class="relative">
                 <button
                     onclick={showSearch ? closeSearch : openSearch}
-                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-brand-charcoal-300 hover:text-brand-gold-600 dark:hover:text-brand-gold-400 hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 shrink-0 transition-colors
-                           {showSearch
-                        ? 'bg-brand-sand-100 dark:bg-brand-sand-200 text-brand-gold-600 dark:text-brand-gold-400'
-                        : ''}"
+                    class="{pillIcon} {showSearch ? pillActive : pillIconIdle}"
                     title={$t("julia_repl.search_active_pane")}
                     aria-label={$t("julia_repl.search_active_pane")}
                     aria-expanded={showSearch}
@@ -1536,14 +1531,14 @@
 
                 {#if showSearch}
                     <div
-                        class="absolute right-0 top-7 z-50 flex items-center gap-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] p-1 shadow-lg"
+                        class="absolute right-0 top-7 z-50 flex items-center gap-1 border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#1c1c1c]/95 p-1 shadow-lg backdrop-blur"
                     >
                         <input
                             bind:this={searchInputEl}
                             bind:value={searchQuery}
                             oninput={refreshSearchMatches}
                             onkeydown={handleSearchKeydown}
-                            class="h-7 w-44 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#232634] px-2 text-xs text-brand-charcoal-700 dark:text-[#c6d0f5] outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 dark:focus:border-[#e5c890]"
+                            class="h-7 w-44 border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#1c1c1c] px-2 text-xs text-brand-charcoal-700 dark:text-[#c6d0f5] outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 dark:focus:border-[#e5c890]"
                             placeholder={ts.activePanel === 'julia'
                                 ? $t("julia_repl.search_repl")
                                 : $t("julia_repl.search_terminal")}
@@ -1559,7 +1554,7 @@
                         <button
                             onclick={() => stepSearch(-1)}
                             disabled={searchMatches.length === 0}
-                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
+                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-gold-600 dark:hover:text-brand-gold-400 disabled:cursor-not-allowed disabled:opacity-40"
                             title={$t("julia_repl.previous_match")}
                             aria-label={$t("julia_repl.previous_match")}
                         >
@@ -1571,7 +1566,7 @@
                         <button
                             onclick={() => stepSearch(1)}
                             disabled={searchMatches.length === 0}
-                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
+                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-gold-600 dark:hover:text-brand-gold-400 disabled:cursor-not-allowed disabled:opacity-40"
                             title={$t("julia_repl.next_match")}
                             aria-label={$t("julia_repl.next_match")}
                         >
@@ -1586,7 +1581,7 @@
             <!-- Add terminal button -->
             <button
                 onclick={addTerminal}
-                class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-brand-charcoal-300 hover:text-brand-gold-600 dark:hover:text-brand-gold-400 hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 shrink-0 transition-colors"
+                class="{pillIcon} {pillIconIdle}"
                 title={$t("terminal.add")}
                 aria-label={$t("terminal.add")}
             >
@@ -1601,7 +1596,7 @@
             <!-- Output -->
             <div
                 bind:this={replOutputEl}
-                class="default-scroll flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono repl-mono"
+                class="default-scroll flex-1 overflow-y-auto min-h-0 px-3 py-2 font-mono repl-mono"
                 role="log"
                 aria-label={$t("julia_repl.output_label")}
             >
@@ -1745,7 +1740,7 @@
             <div
                 role="group"
                 aria-label={$t("julia_repl.input_label")}
-                class="flex items-start gap-2 px-3 py-1.5 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-200 dark:border-[#414559] shrink-0"
+                class="flex items-start gap-2 px-3 py-1.5 border-t border-brand-sand-200 dark:border-[#414559] shrink-0"
                 onclick={() => replInputEl?.focus()}
                 onkeydown={(e) => {
                     if (e.key === "Enter") replInputEl?.focus();
@@ -1831,8 +1826,8 @@
 
     {#if ts.termTabs.length > 0}
         <div
-            class="relative flex-1 min-h-0 bg-brand-sand-50 dark:bg-[#303446]"
-            style:--terminal-bg={$appDarkMode ? "#303446" : "#faf7f2"}
+            class="relative flex-1 min-h-0"
+            style:--terminal-bg={$appDarkMode ? "#1c1c1c" : "#ffffff"}
             style="display: {ts.activePanel !== 'julia' ? 'block' : 'none'};"
         >
             {#each ts.termTabs as tab (tab.id)}

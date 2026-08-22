@@ -9,11 +9,14 @@
     // (File > Save) so the menu item and the keyboard shortcut stay in sync.
 
     // tabId scopes the save to a specific panel in split layouts.
-    let { tabId = null }: { tabId?: string | null } = $props();
+    let {
+        tabId = null,
+        btnClass = actionBtnStyle,
+    }: { tabId?: string | null; btnClass?: string } = $props();
 </script>
 
 <button
-    class={actionBtnStyle}
+    class={btnClass}
     onclick={() => saveFile(tabId)}
     title={IS_APPLE ? `${$t('toolbar.save')} (⌘S)` : `${$t('toolbar.save')} (Ctrl+S)`}
     aria-label={$t('toolbar.save')}

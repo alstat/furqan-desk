@@ -68,9 +68,29 @@
         else addThirdToTypstGroup(g.id, tabCId);
     }
     import Icon from "@iconify/svelte";
+    import { tick } from "svelte";
     import { t } from "$lib/i18n";
     import { confirm } from "@tauri-apps/plugin-dialog";
     import { singlePageMargin, zenMode, zenPeek, zenTabsOpacity } from "$lib/stores/editor.store";
+
+    // variant "header" drops the absolute positioning and the zen dimming: the
+    // strip becomes a plain flex child the window header centres itself, and
+    // the header applies its own zen fade to everything it holds.
+    let { variant = "floating" }: { variant?: "floating" | "header" } =
+        $props();
+
+    const inHeader = $derived(variant === "header");
+
+    // Every tab popup opens away from the strip: downward from the window
+    // header, upward from the strip's floating position under the sidebar.
+    const popupShift = $derived(
+        inHeader ? "translateY(4px)" : "translateY(calc(-100% - 4px))",
+    );
+    const popupShiftLeft = $derived(
+        inHeader
+            ? "translate(-100%, 4px)"
+            : "translate(-100%, calc(-100% - 4px))",
+    );
 
     const GROUP_COLORS = [
         {
@@ -191,7 +211,9 @@
             );
             const rect = anchor?.getBoundingClientRect();
             addThirdForGroupId = group.id;
-            addThirdPos = rect ? { x: rect.right, y: rect.top } : null;
+            addThirdPos = rect
+                ? { x: rect.right, y: inHeader ? rect.bottom : rect.top }
+                : null;
         }
     }
 
@@ -266,7 +288,9 @@
                 );
                 const rect = anchor?.getBoundingClientRect();
                 pickerForTabId = tabId;
-                pickerPos = rect ? { x: rect.left, y: rect.top } : null;
+                pickerPos = rect
+                    ? { x: rect.left, y: inHeader ? rect.bottom : rect.top }
+                    : null;
             }
         }
     }
@@ -274,6 +298,69 @@
     // Any editor type can show the split icon when the Parchment is hidden
     let canShowSplit = $derived($hideSurahPage());
     let windowWidth = $state(0);
+
+    // ── horizontal overflow ────────────────────────────────────────────────
+    // The strip is narrower than the tab list once enough files are open. Fade
+    // whichever edge still has tabs behind it, so the cut-off reads as "there
+    // is more this way" rather than as a tab clipped by a hard border.
+    let scrollEl = $state<HTMLElement | null>(null);
+    let canScrollLeft = $state(false);
+    let canScrollRight = $state(false);
+
+    function updateScrollEdges() {
+        const el = scrollEl;
+        if (!el) return;
+        canScrollLeft = el.scrollLeft > 1;
+        canScrollRight =
+            el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+    }
+
+    $effect(() => {
+        const el = scrollEl;
+        if (!el) return;
+        updateScrollEdges();
+
+        // Svelte attaches wheel listeners passively, so preventDefault() from a
+        // markup handler would be ignored; bind it directly instead.
+        const onWheel = (e: WheelEvent) => {
+            if (el.scrollWidth <= el.clientWidth) return;
+            // Leave real horizontal gestures (trackpads, tilt wheels) alone —
+            // only a vertical wheel needs redirecting onto the strip.
+            if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+            e.preventDefault();
+            el.scrollLeft += e.deltaY;
+        };
+        el.addEventListener("wheel", onWheel, { passive: false });
+
+        const ro = new ResizeObserver(updateScrollEdges);
+        ro.observe(el);
+        return () => {
+            el.removeEventListener("wheel", onWheel);
+            ro.disconnect();
+        };
+    });
+
+    // Opening or closing a tab changes scrollWidth without firing either scroll
+    // or resize, so re-measure once the DOM has caught up.
+    $effect(() => {
+        $tabs.length;
+        void tick().then(updateScrollEdges);
+    });
+
+    // A mask rather than a painted overlay: the strip sits on the header in one
+    // layout and on the page background in the other, and a fade to transparent
+    // is right on both.
+    const edgeFade = $derived.by(() => {
+        if (!canScrollLeft && !canScrollRight) return "";
+        const stops = [
+            canScrollLeft ? "transparent 0, #000 1.5rem" : "#000 0",
+            canScrollRight
+                ? "#000 calc(100% - 1.5rem), transparent 100%"
+                : "#000 100%",
+        ].join(", ");
+        const gradient = `linear-gradient(to right, ${stops})`;
+        return `-webkit-mask-image: ${gradient}; mask-image: ${gradient};`;
+    });
 
     $effect(() => {
       if ($hideSurahPage() && $crossGroups.length > 0 ) {
@@ -592,12 +679,22 @@
 
 <!-- Outer: clips scrollbar thumb to the rounded-full boundary -->
 <div
-    class="{$zenMode ? 'zen-tabs' : ''} select-none absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(38rem,90%)] rounded-md border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30 overflow-hidden"
-    style={$zenMode ? `--zen-tabs-opacity: ${$zenPeek ? 1 : $zenTabsOpacity / 100}` : ''}
+    class="{$zenMode && !inHeader ? 'zen-tabs' : ''} select-none rounded-md border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 overflow-hidden {inHeader
+        ? 'min-w-0 max-w-full'
+        : 'absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(38rem,90%)] z-30'}"
+    style={$zenMode && !inHeader
+        ? `--zen-tabs-opacity: ${$zenPeek ? 1 : $zenTabsOpacity / 100}`
+        : ""}
 >
-<!-- Inner: handles horizontal scrolling -->
+<!-- Inner: handles horizontal scrolling, and fades whichever edge has tabs
+     scrolled out of sight -->
 <div
-    class="tabs-scroll flex flex-row min-h-8 {pointerDragging ? 'cursor-grabbing' : ''}"
+    bind:this={scrollEl}
+    onscroll={updateScrollEdges}
+    style={edgeFade}
+    class="tabs-scroll flex flex-row min-h-8 {inHeader
+        ? 'tabs-scroll-bare'
+        : ''} {pointerDragging ? 'cursor-grabbing' : ''}"
     role="tablist"
     aria-label="Editor tabs"
 >
@@ -880,7 +977,7 @@
     {#if pickerTab && pickerPartners.length > 1}
         <div
             data-picker-dropdown
-            style="position: fixed; left: {pickerPos.x}px; top: {pickerPos.y}px; transform: translateY(calc(-100% - 4px)); z-index: 9999;"
+            style="position: fixed; left: {pickerPos.x}px; top: {pickerPos.y}px; transform: {popupShift}; z-index: 9999;"
             class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-3xl shadow-xl p-3 min-w-40"
         >
             {#each pickerPartners as partner}
@@ -927,7 +1024,7 @@
     {#if addThirdGroup && thirdCandidates.length > 0}
         <div
             data-add-third-dropdown
-            style="position: fixed; left: {addThirdPos.x}px; top: {addThirdPos.y}px; transform: translate(-100%, calc(-100% - 4px)); z-index: 9999;"
+            style="position: fixed; left: {addThirdPos.x}px; top: {addThirdPos.y}px; transform: {popupShiftLeft}; z-index: 9999;"
             class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-3xl shadow-xl p-3 min-w-40"
         >
             {#each thirdCandidates as candidate}
@@ -957,7 +1054,7 @@
     {@const hasRight = ctxIdx >= 0 && ctxIdx < $tabs.length - 1}
     <div
         data-context-menu
-        style="position: fixed; left: {contextMenuPos.x}px; top: {contextMenuPos.y}px; transform: translateY(calc(-100% - 4px)); z-index: 9999;"
+        style="position: fixed; left: {contextMenuPos.x}px; top: {contextMenuPos.y}px; transform: {popupShift}; z-index: 9999;"
         class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-2xl shadow-xl p-1.5 min-w-40"
     >
         <button
@@ -1015,6 +1112,15 @@
         overflow-x: auto;
         scrollbar-width: thin;
         scrollbar-color: rgba(130, 130, 130, 0.4) transparent;
+    }
+
+    /* In the window header the bar would eat a visible slice of a 44px strip,
+       and the faded edges already say there is more to scroll to. */
+    .tabs-scroll-bare {
+        scrollbar-width: none;
+    }
+    .tabs-scroll-bare::-webkit-scrollbar {
+        display: none;
     }
 
     /* Zen Mode: tab strip opacity is user-configurable (Settings → Sukūn Mode).
