@@ -8,7 +8,9 @@
  * the app might reference, without the fragile pick() filter.
  */
 
-import { addCollection } from '@iconify/svelte';
+import { addCollection, addIcon } from '@iconify/svelte';
+
+import { generatedIcons } from './icons.generated';
 
 import solarData from '@iconify-json/solar/icons.json';
 import fluentData from '@iconify-json/fluent/icons.json';
@@ -59,4 +61,12 @@ const collections: any[] = [
 
 for (const data of collections) {
     addCollection(data);
+}
+
+// Brand and file-type marks come from collections that run to several megabytes
+// of JSON each, and the app uses one icon from each. Those are copied into
+// icons.generated.ts by scripts/generate-icon-subset.mjs and registered
+// individually, so the bundle carries the icons rather than the collections.
+for (const [name, icon] of Object.entries(generatedIcons)) {
+    addIcon(name, icon);
 }
