@@ -97,7 +97,12 @@
         {/if}
     </div>
 
-    <div data-tauri-drag-region class="flex min-w-0 items-center justify-end">
+    <!-- self-stretch overrides the header's items-center for this track only:
+         the window buttons need a definite full-row height to hover against. -->
+    <div
+        data-tauri-drag-region
+        class="flex min-w-0 items-center justify-end self-stretch"
+    >
         {#if !$hideSurahPage()}
             <ParchmentActionBar variant="header" />
         {/if}
