@@ -1,28 +1,7 @@
 import { writable, get } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-export type TermTab = { id: string; label: string; count?: number };
-
-export interface SharedTermState {
-    activePanel: string;
-    termTabs:    TermTab[];
-    termExited:  Record<string, boolean>;
-    termCounter: number;
-}
-
 // ── Stores ────────────────────────────────────────────────────────────────────
-
-/** Shared terminal/REPL panel state for all Julia tabs. Terminal output and
- *  input are owned by xterm.js instances, so no buffered output/input state
- *  is kept here — only the tab list and which panel is currently visible. */
-export const sharedTermState = writable<SharedTermState>({
-    activePanel: 'julia',
-    termTabs:    [],
-    termExited:  {},
-    termCounter: 0,
-});
 
 /**
  * A group of Julia editors sharing split view. tabA/tabB stack in the left

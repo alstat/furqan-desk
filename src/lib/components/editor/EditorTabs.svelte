@@ -307,13 +307,50 @@
     let canScrollLeft = $state(false);
     let canScrollRight = $state(false);
 
+    // The native bar is hidden (a persistent one steals a row from a 32px
+    // strip once macOS is set to always-show scrollbars). These drive a thumb
+    // painted over the strip instead, so it costs no layout height.
+    let thumbLeft = $state(0);
+    let thumbWidth = $state(0);
+    let overflowing = $state(false);
+    let scrolledRecently = $state(false);
+    let thumbHideTimer: ReturnType<typeof setTimeout> | null = null;
+
+    /** Smallest thumb that still reads as a scrollbar, as a % of the track. */
+    const MIN_THUMB_PERCENT = 10;
+
     function updateScrollEdges() {
         const el = scrollEl;
         if (!el) return;
         canScrollLeft = el.scrollLeft > 1;
         canScrollRight =
             el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+
+        overflowing = el.scrollWidth > el.clientWidth + 1;
+        if (!overflowing) return;
+        thumbWidth = Math.max(
+            (el.clientWidth / el.scrollWidth) * 100,
+            MIN_THUMB_PERCENT,
+        );
+        // Clamping the width shortens the track the thumb travels along.
+        const progress = el.scrollLeft / (el.scrollWidth - el.clientWidth);
+        thumbLeft = progress * (100 - thumbWidth);
     }
+
+    /** Show the thumb, then fade it out once scrolling stops. */
+    function onStripScroll() {
+        updateScrollEdges();
+        scrolledRecently = true;
+        if (thumbHideTimer) clearTimeout(thumbHideTimer);
+        thumbHideTimer = setTimeout(() => {
+            scrolledRecently = false;
+            thumbHideTimer = null;
+        }, 900);
+    }
+
+    $effect(() => () => {
+        if (thumbHideTimer) clearTimeout(thumbHideTimer);
+    });
 
     $effect(() => {
         const el = scrollEl;
@@ -679,8 +716,10 @@
 
 <!-- Outer: clips scrollbar thumb to the rounded-full boundary -->
 <div
-    class="{$zenMode && !inHeader ? 'zen-tabs' : ''} select-none rounded-md border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 overflow-hidden {inHeader
-        ? 'min-w-0 max-w-full'
+    class="tabs-strip {$zenMode && !inHeader
+        ? 'zen-tabs'
+        : ''} select-none rounded-md border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 overflow-hidden {inHeader
+        ? 'relative min-w-0 max-w-full'
         : 'absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(38rem,90%)] z-30'}"
     style={$zenMode && !inHeader
         ? `--zen-tabs-opacity: ${$zenPeek ? 1 : $zenTabsOpacity / 100}`
@@ -690,11 +729,11 @@
      scrolled out of sight -->
 <div
     bind:this={scrollEl}
-    onscroll={updateScrollEdges}
+    onscroll={onStripScroll}
     style={edgeFade}
-    class="tabs-scroll flex flex-row min-h-8 {inHeader
-        ? 'tabs-scroll-bare'
-        : ''} {pointerDragging ? 'cursor-grabbing' : ''}"
+    class="tabs-scroll flex flex-row min-h-8 {pointerDragging
+        ? 'cursor-grabbing'
+        : ''}"
     role="tablist"
     aria-label="Editor tabs"
 >
@@ -953,6 +992,14 @@
         </div>
     {/each}
 </div><!-- end inner scroll div -->
+{#if overflowing}
+    <!-- Overlay scroll indicator: painted over the strip, so it never claims a
+         row of its own. Fades in on hover and while scrolling. -->
+    <div
+        class="tabs-thumb {scrolledRecently ? 'tabs-thumb-visible' : ''}"
+        style="left: {thumbLeft}%; width: {thumbWidth}%"
+    ></div>
+{/if}
 </div><!-- end outer clip div -->
 
 <div aria-live="polite" aria-atomic="true" class="sr-only">
@@ -1104,23 +1151,37 @@
         cursor: grab;
     }
 
-    /* Thin horizontal scrollbar via the standard scrollbar API, which all three
-       webviews honor (WKWebView / WebView2 / WebKitGTK). `overflow: overlay` is
-       avoided on purpose — on macOS with a mouse attached it renders a thick,
-       non-styleable classic scrollbar. The dark-mode colour is set in app.css. */
+    /* No native scrollbar in either layout. macOS set to "show scrollbars
+       always" (what happens once a mouse is attached) renders a classic bar
+       that reserves layout height, which a 32px strip cannot spare. The
+       .tabs-thumb overlay below stands in for it. */
     .tabs-scroll {
         overflow-x: auto;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(130, 130, 130, 0.4) transparent;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .tabs-scroll::-webkit-scrollbar {
+        display: none;
     }
 
-    /* In the window header the bar would eat a visible slice of a 44px strip,
-       and the faded edges already say there is more to scroll to. */
-    .tabs-scroll-bare {
-        scrollbar-width: none;
+    /* Sits over the bottom edge of the strip, clipped by the parent's rounded
+       overflow-hidden. Transparent until the strip is hovered or scrolled. */
+    .tabs-thumb {
+        position: absolute;
+        bottom: 1px;
+        height: 3px;
+        border-radius: 9999px;
+        background: rgba(130, 130, 130, 0.45);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        pointer-events: none;
     }
-    .tabs-scroll-bare::-webkit-scrollbar {
-        display: none;
+    :global(html.dark) .tabs-thumb {
+        background: rgba(150, 150, 150, 0.45);
+    }
+    .tabs-strip:hover .tabs-thumb,
+    .tabs-thumb-visible {
+        opacity: 1;
     }
 
     /* Zen Mode: tab strip opacity is user-configurable (Settings → Sukūn Mode).

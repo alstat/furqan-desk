@@ -159,7 +159,7 @@
 
     {#if showSearch}
         <div
-            class="flex items-center gap-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/90 dark:bg-[#303446]/95 px-2 py-0.5 shadow-sm z-50"
+            class="flex items-center gap-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white/90 dark:bg-[#343434]/95 px-2 py-0.5 z-50"
         >
             <input
                 bind:this={inputEl}

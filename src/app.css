@@ -264,14 +264,8 @@ html.dark ::-webkit-scrollbar-corner {
     background: #2b2b2b;
 }
 
-/* ── EditorTabs: thin horizontal scrollbar (dark) ──────────────────────────
-   Uses the standard scrollbar API only — consistent across WKWebView /
-   WebView2 / WebKitGTK. Overrides the html.dark * track colour so the tab
-   strip keeps a transparent track. The thin width is set on .tabs-scroll. */
-html.dark .tabs-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(150, 150, 150, 0.4) transparent;
-}
+/* EditorTabs draws its own overlay scroll indicator (see EditorTabs.svelte);
+   the native bar is hidden there, so no dark-mode scrollbar rule is needed. */
 
 /* ── LexicalEditor: scrollbar track matches its panel background. ─────────── */
 html.dark .editor-shell .ContentEditable__root {
