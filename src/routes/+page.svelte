@@ -19,6 +19,8 @@
     import JuliaPlotViewer from "$lib/components/shared/JuliaPlotViewer.svelte";
     import { installPlotSync } from "$lib/stores/julia-plot-window";
     import { installReaderSnapshotHost } from "$lib/stores/reader-windows.store";
+    import { installManuscriptInsertHost } from "$lib/stores/manuscripts.store";
+    import { installDrawingSaveHost } from "$lexical/core/plugins/Drawing/drawingEditorStore";
     import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
     import CustomFontDialog from "$lib/components/settings/CustomFontDialog.svelte";
     import {
@@ -99,6 +101,12 @@
         // The translation and tafsir readers render a view only this window can
         // derive; broadcast it so their windows can show it.
         void installReaderSnapshotHost();
+        // The manuscript viewer's own window has no Lexical editor to insert
+        // into; it asks this window to do it.
+        void installManuscriptInsertHost();
+        // The drawing editor window sends its finished scene back here,
+        // where the Lexical editor it belongs in actually lives.
+        void installDrawingSaveHost();
         try {
             const [labels] = await Promise.all([
                 invoke<SurahLabel[]>("get_surah_labels"),

@@ -10,7 +10,8 @@
     "terminal",
     "julia-plots",
     "translation",
-    "tafsir"
+    "tafsir",
+    "drawing"
   ],
   "permissions": [
     "core:default",

@@ -19,7 +19,7 @@
 	import { clearSelection, createNodeSelectionStore } from '../../nodeSelectionStore.js';
 	import { sceneToSvg, type Scene } from './drawingScene.js';
 	import { $isDrawingNode as isDrawingNode } from './DrawingNode.js';
-	import { openDrawingEditor } from './drawingEditorStore.js';
+	import { openDrawingEditor, launchDrawingEditor } from './drawingEditorStore.js';
 
 	interface Props {
 		scene: Scene;
@@ -70,8 +70,8 @@
 	};
 
 	function openEditor() {
-		const opener = get(openDrawingEditor);
-		if (opener) opener(scene, nodeKey);
+		// Prefers the editor's own window; the in-app panel is the fallback.
+		void launchDrawingEditor(scene, nodeKey, get(openDrawingEditor));
 	}
 
 	onMount(() => {

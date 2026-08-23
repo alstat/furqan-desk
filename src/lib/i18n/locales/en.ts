@@ -984,7 +984,7 @@ export const en: Record<string, string> = {
   // ── Lean editor / infoview / cells ────────────────────────────────────────
   "lean_editor.fallback_name": "Lean",
   "lean_editor.resize_infoview": "Resize the infoview panel",
-  "lean_editor.format": "Tidy",
+  "lean_editor.format": "Format",
   "lean_editor.format_title": "Tidy whitespace \u2014 trailing spaces, tabs, blank lines. Does not re-indent.",
   "lean_infoview.title": "Infoview",
   "lean_infoview.compile": "Compile",

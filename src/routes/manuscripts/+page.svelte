@@ -12,7 +12,10 @@
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import ManuscriptViewer from "$lib/components/manuscripts/ManuscriptViewer.svelte";
-    import { manuscriptAyah } from "$lib/stores/manuscripts.store";
+    import {
+        manuscriptAyah,
+        installManuscriptInsertClient,
+    } from "$lib/stores/manuscripts.store";
     import { ensureSurahLabels } from "$lib/stores/quran.svelte";
 
     const params = page.url.searchParams;
@@ -29,6 +32,10 @@
     }
 
     onMount(() => {
+        // Mirror whether the main window has an editor, and route inserts there.
+        let unlistenInsert: (() => void) | undefined;
+        void installManuscriptInsertClient().then((fn) => (unlistenInsert = fn));
+
         // The surah list lives in a plain in-memory store that the main window
         // fills during its own startup; this window has to load it itself.
         void ensureSurahLabels().catch((e) =>
@@ -49,7 +56,10 @@
                 // Outside Tauri there is nothing to listen to.
             }
         })();
-        return () => unlisten?.();
+        return () => {
+            unlisten?.();
+            unlistenInsert?.();
+        };
     });
 
     async function closeWindow() {

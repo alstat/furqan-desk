@@ -32,10 +32,42 @@
 		INSERT_DRAWING_COMMAND,
 		UPDATE_DRAWING_COMMAND
 	} from './DrawingPlugin.svelte';
-	import { openDrawingEditor } from './drawingEditorStore.js';
+	import {
+		openDrawingEditor,
+		submitDrawing,
+		takeDrawingSeed,
+		onDrawingSeed,
+	} from './drawingEditorStore.js';
 
-	const editor = getEditor();
-	const activeEditor = getActiveEditor();
+	/**
+	 * In its own window there is no Lexical composer above this component, so
+	 * the context getters have nothing to read. Guarded rather than assumed:
+	 * everything that needs a real editor is behind `standalone` below, and the
+	 * finished drawing is sent to the main window to be committed there.
+	 */
+	let {
+		standalone = false,
+		onDone,
+	}: {
+		/** Fills its own OS window instead of floating inside the document. */
+		standalone?: boolean;
+		/** Called after a standalone save, so the window can close itself. */
+		onDone?: () => void;
+	} = $props();
+
+	// The context getters must run during init and throw when there is no
+	// composer above this component — which is exactly the case in the editor's
+	// own window. Detected rather than inferred from a prop, so the component
+	// mounts correctly wherever it is put; everything needing a real editor is
+	// guarded on these being non-null.
+	let editor: ReturnType<typeof getEditor> | null = null;
+	let activeEditor: ReturnType<typeof getActiveEditor> | null = null;
+	try {
+		editor = getEditor();
+		activeEditor = getActiveEditor();
+	} catch {
+		/* no Lexical composer here */
+	}
 
 	// Header control button styling (matches the header's gold surface).
 	const headerBtn =
@@ -88,6 +120,20 @@
 	let canGroup = $derived(canGroupSelection(scene.shapes, selectedIds));
 	let hasGroup = $derived(selectionHasGroup(scene.shapes, selectedIds));
 
+	// A window of its own opens straight onto whatever seed was left for it, and
+	// re-opens when the main window pushes another while this stays up.
+	onMount(() => {
+		if (!standalone) return;
+		const consume = () => {
+			const seed = takeDrawingSeed();
+			open(seed?.scene ?? null, seed?.nodeKey ?? null);
+		};
+		consume();
+		let unlisten: (() => void) | undefined;
+		void onDrawingSeed(consume).then((fn) => (unlisten = fn));
+		return () => unlisten?.();
+	});
+
 	// ── open / close ───────────────────────────────────────────────────────
 	export function open(initialScene: Scene | null, nodeKey: string | null) {
 		editingKey = nodeKey;
@@ -106,7 +152,8 @@
 	async function close() {
 		showModal = false;
 		await tick();
-		getCommands().FocusEditor.execute(editor);
+		// Nothing to hand focus back to in a window of its own.
+		if (editor) getCommands().FocusEditor.execute(editor);
 	}
 
 	// Register the shared opener so DrawingComponent double-clicks reuse this dialog.
@@ -344,7 +391,14 @@
 	function confirmInsert() {
 		const width = scene.width;
 		const height = scene.height;
-		const target = get(activeEditor) ?? editor;
+		if (standalone) {
+			// The editor is in the main window; send the drawing there to be
+			// committed, then close.
+			void submitDrawing({ scene, width, height, nodeKey: editingKey });
+			void onDone?.();
+			return;
+		}
+		const target = (activeEditor ? get(activeEditor) : null) ?? editor!;
 		if (editingKey) {
 			target.dispatchCommand(UPDATE_DRAWING_COMMAND, { nodeKey: editingKey, scene, width, height });
 		} else {
@@ -555,21 +609,28 @@
 {#if showModal}
 	<div
 		use:portal
-		transition:fly={{ y: 8, duration: 160, opacity: 0 }}
+		transition:fly={standalone ? { duration: 0 } : { y: 8, duration: 160, opacity: 0 }}
 		role="dialog"
-		aria-modal="true"
+		aria-modal={standalone ? undefined : 'true'}
 		aria-label="Insert drawing"
 		tabindex="-1"
-		class="fixed flex flex-col rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
-		style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
-		onpointerdown={() => {
-			zIndex = bringToFront();
-		}}
+		class="flex flex-col overflow-hidden bg-white dark:bg-[#303446] {standalone
+			? 'fixed inset-0'
+			: 'fixed rounded-xl border border-brand-sand-200 dark:border-[#414559] shadow-xl dark:shadow-black/40'}"
+		style={standalone
+			? ''
+			: `left:${x}px; top:${y}px; width:${panelW}px; height:${panelH}px; z-index:${zIndex};`}
+		onpointerdown={standalone
+			? undefined
+			: () => {
+					zIndex = bringToFront();
+				}}
 	>
 		<DialogPanelHeader
 			icon="mdi:draw"
 			title={editingKey ? 'Edit drawing' : 'Insert drawing'}
 			{isDragging}
+			{standalone}
 			onClose={close}
 			onpointerdown={startDrag}
 		>
@@ -673,7 +734,9 @@
 		</div>
 
 		<!-- Resize handles -->
-		{#each resizeHandles as { cls, dir }}
+		<!-- Only the floating panel resizes itself; a native window is resized by
+		     its own frame. -->
+		{#each standalone ? [] : resizeHandles as { cls, dir }}
 			<div
 				aria-hidden="true"
 				class="resize-handle {cls}"

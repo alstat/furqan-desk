@@ -7,6 +7,31 @@ export const manuscriptViewerOpen = writable(false);
 export const manuscriptDemoOpen = writable(false);
 export const manuscriptAyah = writable<{ surah: number; ayah: number } | null>(null);
 
+/**
+ * Payload the viewer window hands the main window to insert into the editor.
+ * The Lexical editor is a live object in the main window's memory, so a viewer
+ * running in its own window cannot dispatch to it directly — it ships the
+ * finished image and caption instead.
+ */
+export interface ManuscriptInsertRequest {
+    src: string;
+    altText: string;
+    captionText: string;
+    /** Absent when the folio has no Corpus Coranicum page to link to. */
+    linkUrl?: string;
+}
+
+const INSERT_EVENT = 'manuscript:insert';
+const EDITOR_STATE_EVENT = 'manuscript:editor-available';
+const EDITOR_STATE_REQUEST = 'manuscript:editor-available?';
+
+/**
+ * Whether the main window currently has a Lexical editor to insert into. The
+ * viewer window mirrors it so its Insert button can be disabled for the same
+ * reason it always was, rather than because the editor is simply out of reach.
+ */
+export const lexicalEditorAvailable = writable(false);
+
 /** Label of the viewer's own OS window. */
 export const MANUSCRIPT_WINDOW = 'manuscripts';
 
@@ -85,6 +110,65 @@ async function openManuscriptWindow(): Promise<boolean> {
         // unavailable — the caller falls back to the in-app panel.
         return false;
     }
+}
+
+/**
+ * Main window: answer the viewer's insert requests by dispatching into the
+ * live Lexical editor, and keep the viewer told whether there is one.
+ */
+export async function installManuscriptInsertHost(): Promise<void> {
+    if (!browser) return;
+    try {
+        const [{ emit, listen }, editorStore, commands] = await Promise.all([
+            import('@tauri-apps/api/event'),
+            import('./editor.store'),
+            import(
+                '$lib/components/lexical/core/plugins/Image/ImagePlugin.svelte'
+            ),
+        ]);
+
+        const publish = (available: boolean) =>
+            void emit(EDITOR_STATE_EVENT, available);
+
+        editorStore.lexicalEditorInstance.subscribe((editor) => {
+            lexicalEditorAvailable.set(!!editor);
+            publish(!!editor);
+        });
+        await listen(EDITOR_STATE_REQUEST, () =>
+            publish(!!get(editorStore.lexicalEditorInstance)),
+        );
+
+        await listen<ManuscriptInsertRequest>(INSERT_EVENT, (e) => {
+            const editor = get(editorStore.lexicalEditorInstance);
+            if (!editor) return;
+            editor.dispatchCommand(commands.INSERT_IMAGE_COMMAND, e.payload);
+        });
+    } catch (err) {
+        console.error('manuscript insert host failed', err);
+    }
+}
+
+/** Viewer window: mirror editor availability and send insert requests. */
+export async function installManuscriptInsertClient(): Promise<() => void> {
+    if (!browser) return () => {};
+    try {
+        const { emit, listen } = await import('@tauri-apps/api/event');
+        const unlisten = await listen<boolean>(EDITOR_STATE_EVENT, (e) =>
+            lexicalEditorAvailable.set(e.payload),
+        );
+        await emit(EDITOR_STATE_REQUEST, null);
+        return unlisten;
+    } catch {
+        return () => {};
+    }
+}
+
+/** Ask the main window to insert this image into its editor. */
+export async function requestManuscriptInsert(
+    payload: ManuscriptInsertRequest,
+): Promise<void> {
+    const { emit } = await import('@tauri-apps/api/event');
+    await emit(INSERT_EVENT, payload);
 }
 
 /**

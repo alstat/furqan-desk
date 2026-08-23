@@ -16,6 +16,7 @@
     } from "$lib/stores/translation.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import WindowControls from "./WindowControls.svelte";
+    import LoadingDots from "./LoadingDots.svelte";
     import type { TranslationSnapshot } from "$lib/stores/reader-windows.store";
     import {
         customFontFamilies,
@@ -125,8 +126,21 @@
             ? snapshot.isMulti
             : ($morphologyMultiSurahList?.length ?? 0) > 1,
     );
+
     const totalEntries = $derived(
         sections.reduce((sum, section) => sum + section.entries.length, 0),
+    );
+
+    /**
+     * Nothing to show *yet*, as opposed to nothing to show at all. In a reader
+     * window that means the main window's broadcast has not arrived; in the
+     * panel it means a translator is chosen but its text is still loading.
+     * With no translator chosen there is nothing coming, so the empty message
+     * is the honest answer.
+     */
+    const loading = $derived(
+        totalEntries === 0 &&
+            (standalone ? snapshot === null : $activeTranslatorId !== null),
     );
 
     const fontFamilyOptions = $derived.by(() => {
@@ -511,6 +525,10 @@
                         </div>
                     {/if}
                 {/each}
+            {:else if loading}
+                <div class="flex justify-center py-10">
+                    <LoadingDots />
+                </div>
             {:else}
                 <div class="py-6 text-center text-sm text-brand-charcoal-300 dark:text-[#838ba7]">{$t("translation.empty")}</div>
             {/if}

@@ -1,7 +1,7 @@
 use crate::db::Database;
 use crate::typst_world::with_world;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, Mutex,
@@ -26,6 +26,21 @@ pub struct HttpClient {
     pub client: reqwest::Client,
     detail_sem: Arc<Semaphore>,
     image_sem: Arc<Semaphore>,
+    /// Manuscript lists already fetched, keyed by (surah, ayah).
+    ///
+    /// The folio images have been cached on disk for a while; the list that
+    /// names them was not, so every time the viewer was reopened it went back
+    /// to Corpus Coranicum for a result that had not changed. This lives as
+    /// long as the app, so closing and reopening the viewer is free and only a
+    /// verse the user has not asked for before costs a request.
+    manuscript_lists: Arc<Mutex<HashMap<(u32, u32), String>>>,
+    /// Per-manuscript metadata already fetched, keyed by manuscript id.
+    ///
+    /// This is where the reopening cost actually was: a single list request,
+    /// then 60–90 detail requests to flesh it out. Manuscript metadata does not
+    /// change, and the same manuscript turns up under many verses, so this is
+    /// keyed by id alone and shared across every verse the user visits.
+    manuscript_details: Arc<Mutex<HashMap<u32, String>>>,
 }
 
 impl HttpClient {
@@ -38,6 +53,8 @@ impl HttpClient {
             client,
             detail_sem: Arc::new(Semaphore::new(6)),
             image_sem: Arc::new(Semaphore::new(2)),
+            manuscript_lists: Arc::new(Mutex::new(HashMap::new())),
+            manuscript_details: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 }
@@ -2500,6 +2517,15 @@ pub async fn get_manuscript_detail(
     http: State<'_, HttpClient>,
     manuscript_id: u32,
 ) -> Result<String, String> {
+    // Served from memory when this manuscript has been fetched before. Reopening
+    // the viewer re-requests every manuscript in the list, so without this the
+    // detail burst ran again in full every time.
+    if let Ok(cache) = http.manuscript_details.lock() {
+        if let Some(hit) = cache.get(&manuscript_id) {
+            return Ok(hit.clone());
+        }
+    }
+
     let _permit = http.detail_sem.acquire().await.map_err(|e| e.to_string())?;
     let url = format!(
         "https://api.corpuscoranicum.de/api/data/manuscripts/{}",
@@ -2511,7 +2537,12 @@ pub async fn get_manuscript_detail(
         .send()
         .await
         .map_err(|e| e.to_string())?;
-    response.text().await.map_err(|e| e.to_string())
+    let body = response.text().await.map_err(|e| e.to_string())?;
+
+    if let Ok(mut cache) = http.manuscript_details.lock() {
+        cache.insert(manuscript_id, body.clone());
+    }
+    Ok(body)
 }
 
 /// Download full-resolution manuscript image and save it to the user's Downloads folder.
@@ -2572,6 +2603,14 @@ pub async fn get_manuscript_list(
     surah: u32,
     ayah: u32,
 ) -> Result<String, String> {
+    // Served from memory when this verse has been fetched before, so reopening
+    // the viewer does not go back to the network for the same answer.
+    if let Ok(cache) = http.manuscript_lists.lock() {
+        if let Some(hit) = cache.get(&(surah, ayah)) {
+            return Ok(hit.clone());
+        }
+    }
+
     let _permit = http.detail_sem.acquire().await.map_err(|e| e.to_string())?;
     let url = format!(
         "https://api.corpuscoranicum.de/api/data/manuscripts/sura/{}/verse/{}",
@@ -2583,7 +2622,12 @@ pub async fn get_manuscript_list(
         .send()
         .await
         .map_err(|e| e.to_string())?;
-    response.text().await.map_err(|e| e.to_string())
+    let body = response.text().await.map_err(|e| e.to_string())?;
+
+    if let Ok(mut cache) = http.manuscript_lists.lock() {
+        cache.insert((surah, ayah), body.clone());
+    }
+    Ok(body)
 }
 
 /// Extract a safe relative cache path from the `fn=` parameter embedded in a
@@ -2696,7 +2740,18 @@ pub async fn get_manuscript_image(
 }
 
 #[tauri::command]
-pub async fn clear_manuscript_cache(app: AppHandle) -> Result<(), String> {
+pub async fn clear_manuscript_cache(
+    app: AppHandle,
+    http: State<'_, HttpClient>,
+) -> Result<(), String> {
+    // The list cache is part of "the manuscript cache" too — clearing the
+    // images but keeping the lists would leave a stale index behind.
+    if let Ok(mut cache) = http.manuscript_lists.lock() {
+        cache.clear();
+    }
+    if let Ok(mut cache) = http.manuscript_details.lock() {
+        cache.clear();
+    }
     let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let cache_dir = app_data_dir.join("manuscript-images");
     if cache_dir.exists() {

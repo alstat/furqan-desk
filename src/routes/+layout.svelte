@@ -30,7 +30,8 @@
 		'/terminal',
 		'/julia-plots',
 		'/translation',
-		'/tafsir'
+		'/tafsir',
+		'/drawing'
 	];
 	const isSecondaryWindow = $derived(
 		SECONDARY_ROUTES.some((route) => page.url.pathname.startsWith(route))
