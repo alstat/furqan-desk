@@ -14,6 +14,7 @@
     import { t, locale } from "$lib/i18n";
     import { get } from "svelte/store";
     import { lexicalEditorInstance } from "$lib/stores/editor.store";
+    import DialogPanelHeader from "$lib/components/shared/DialogPanelHeader.svelte";
     import {
         $createParagraphNode as createParagraphNode,
         $createTextNode as createTextNode,
@@ -77,7 +78,7 @@
     // Re-read on every open so a resized window or a moved button still lines
     // up, and so the panel follows the header when the UI scale changes.
     const placement = $derived(
-        open ? anchorBelow(anchor, PANEL_W, $headerHeight) : null,
+        open ? anchorBelow(anchor, PANEL_W, $headerHeight, 0) : null,
     );
 
     $effect(() => {
@@ -124,29 +125,29 @@
 {#if open}
     <div
         use:portal
-        transition:fly={{ y: -8, duration: 160, opacity: 0 }}
+        transition:fly={{ y: -10, duration: 160, opacity: 0 }}
         role="dialog"
         aria-label={$t("highlight.title")}
-        class="fixed flex flex-col rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+        class="fixed flex flex-col rounded-b-xl border border-t-0 border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-[0_14px_28px_-10px_rgba(0,0,0,0.28)] dark:shadow-[0_14px_28px_-10px_rgba(0,0,0,0.55)] overflow-hidden"
         style="left:{placement?.x ?? 0}px; top:{placement?.y ?? 0}px; width:{PANEL_W}px; max-height:{placement?.maxHeight ?? 0}px; z-index:{zIndex};"
     >
-        <!-- Header — the same slim bar GlobalSearch uses. -->
-        <div
-            class="shrink-0 px-5 py-2 border-b border-stone-200 dark:border-[#414559]
-                   bg-brand-sand-50 dark:bg-[#232634] flex items-center justify-between gap-2 select-none"
-            role="banner"
+        <DialogPanelHeader
+            icon="solar:pen-new-square-bold-duotone"
+            title={$t("highlight.title")}
+            isDragging={false}
+            hideClose={true}
+            sheet={true}
+            {onClose}
+            onpointerdown={() => {}}
         >
-            <span
-                class="text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
-            >
-                {$t("highlight.title")}
-            </span>
-            <span
-                class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]"
-            >
-                {$t("highlight.n_saved", { n: $highlights.length })}
-            </span>
-        </div>
+            {#snippet action()}
+                <span
+                    class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                >
+                    {$t("highlight.n_saved", { n: $highlights.length })}
+                </span>
+            {/snippet}
+        </DialogPanelHeader>
 
         <!-- List -->
         <div class="flex-1 overflow-y-auto bg-brand-sand-50 dark:bg-[#232634]">

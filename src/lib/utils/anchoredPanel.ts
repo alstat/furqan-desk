@@ -30,11 +30,15 @@ export interface PanelPosition {
  * the window header, so hanging the panel off the button alone would tuck it
  * against — or under — the header's bottom border. Clearing the bar instead
  * leaves a visible gap between the two.
+ *
+ * `gap` is that clearance. Pass 0 for a panel meant to hang *from* the bar
+ * rather than float below it, so its top edge meets the bar's bottom border.
  */
 export function anchorBelow(
     anchor: DOMRect | null | undefined,
     width: number,
     barBottom = 0,
+    gap = PANEL_GAP,
 ): PanelPosition {
     if (typeof window === "undefined") return { x: 0, y: 0, maxHeight: 0 };
 
@@ -42,7 +46,7 @@ export function anchorBelow(
     const x = anchor
         ? Math.min(Math.max(MARGIN, anchor.right - width), rightEdge)
         : rightEdge;
-    const y = Math.max(anchor?.bottom ?? 0, barBottom) + PANEL_GAP;
+    const y = Math.max(anchor?.bottom ?? 0, barBottom) + gap;
 
     return {
         x,

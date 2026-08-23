@@ -13,6 +13,7 @@
     import { t } from '$lib/i18n';
     import { get } from 'svelte/store';
     import { bringToFront } from '$lib/stores/window-manager.store';
+    import { headerHeight } from '$lib/stores/header.store';
     import DialogPanelHeader from '$lib/components/shared/DialogPanelHeader.svelte';
 
     const editor = getEditor();
@@ -141,71 +142,55 @@
         fileError = "";
     }
 
-    // ── Drag ────────────────────────────────────────────────────────────────
+    // ── Sheet placement ─────────────────────────────────────────────────────
     const PANEL_W = 384; // matches max-w-sm
 
-    let x = $state(0);
-    let y = $state(0);
     let zIndex = $state(500);
-    let isDragging = $state(false);
-    let dragStartX = 0, dragStartY = 0, startX = 0, startY = 0;
     let initialized = false;
 
+    // The sheet hangs off the header, so only its stacking needs setting.
     $effect(() => {
         if (showModal && !initialized) {
-            x = Math.max(0, (window.innerWidth - PANEL_W) / 2);
-            y = Math.max(8, (window.innerHeight - 460) * 0.25);
             zIndex = bringToFront();
             initialized = true;
         }
         if (!showModal) initialized = false;
     });
 
-    function startDrag(e: PointerEvent) {
-        isDragging = true;
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        startX = x;
-        startY = y;
-        window.addEventListener('pointermove', onDrag);
-        window.addEventListener('pointerup', stopDrag, { once: true });
-    }
-
-    function onDrag(e: PointerEvent) {
-        x = Math.max(0, Math.min(window.innerWidth - PANEL_W, startX + (e.clientX - dragStartX)));
-        y = Math.max(0, Math.min(window.innerHeight - 60, startY + (e.clientY - dragStartY)));
-    }
-
-    function stopDrag() {
-        isDragging = false;
-        window.removeEventListener('pointermove', onDrag);
-    }
-
-    onDestroy(() => {
-        if (typeof window !== 'undefined') window.removeEventListener('pointermove', onDrag);
-    });
 </script>
 
 {#if showModal}
+    <!-- Backdrop: a click anywhere outside dismisses the sheet, which no longer
+         has a close button of its own. Transparent — this is a panel hanging
+         off the header, not a modal over the page. -->
     <div
         use:portal
-        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
+        role="presentation"
+        class="fixed inset-0"
+        style="z-index:{zIndex - 1};"
+        onclick={close}
+        onkeydown={() => {}}
+    ></div>
+
+    <div
+        use:portal
+        transition:fly={{ y: -10, duration: 180, opacity: 0 }}
         role="dialog"
-        aria-modal="true"
         aria-label={$t('dialog.insert_image')}
         tabindex="-1"
-        class="fixed flex flex-col rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
-        style="left:{x}px; top:{y}px; width:{PANEL_W}px; z-index:{zIndex};"
-        onpointerdown={() => { zIndex = bringToFront(); }}
+        class="fixed flex flex-col -translate-x-1/2 rounded-b-xl border border-t-0 border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-[0_14px_28px_-10px_rgba(0,0,0,0.28)] dark:shadow-[0_14px_28px_-10px_rgba(0,0,0,0.55)] overflow-hidden"
+        style="left:50%; top:{$headerHeight}px; width:{PANEL_W}px; z-index:{zIndex};"
         onkeydown={(e) => { if (e.key === 'Escape') close(); }}
     >
         <!-- Header -->
         <DialogPanelHeader
             icon="solar:gallery-bold-duotone"
             title={$t('dialog.insert_image')}
-            {isDragging}
+            isDragging={false}
+            hideClose={true}
+            sheet={true}
             onClose={close}
-            onpointerdown={startDrag}
+            onpointerdown={() => {}}
         >
             {#snippet children()}
                 <!-- Tabs -->

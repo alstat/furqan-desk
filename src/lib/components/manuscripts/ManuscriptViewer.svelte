@@ -5,7 +5,11 @@
     import Icon from "@iconify/svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { message } from "@tauri-apps/plugin-dialog";
-    import { manuscriptAyah } from "$lib/stores/manuscripts.store";
+    import {
+        manuscriptAyah,
+        lexicalEditorAvailable,
+        requestManuscriptInsert,
+    } from "$lib/stores/manuscripts.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import WindowControls from "$lib/components/shared/WindowControls.svelte";
     import { lexicalEditorInstance } from "$lib/stores/editor.store";
@@ -634,6 +638,12 @@
     }
 
     // ── Insert into Lexical editor ────────────────────────────────────────────
+    // Standalone mirrors the main window's editor state over an event; in the
+    // panel the store is right there.
+    const hasEditor = $derived(
+        standalone ? $lexicalEditorAvailable : !!$lexicalEditorInstance,
+    );
+
     function bytesToDataUrl(bytes: ArrayBuffer, mime: string): string {
         const uint8 = new Uint8Array(bytes);
         let binary = "";
@@ -776,8 +786,10 @@
     }
 
     async function insertToLexical() {
-        const editor = get(lexicalEditorInstance);
-        if (!editor || !imageSrc) return;
+        // In its own window there is no editor to reach — the main window holds
+        // it — so the finished image is sent there to be inserted instead.
+        const editor = standalone ? null : get(lexicalEditorInstance);
+        if ((!standalone && !editor) || !imageSrc) return;
         inserting = true;
         insertMsg = "";
         try {
@@ -815,12 +827,12 @@
                 : $t("manuscript.image_alt_default");
             const captionText = buildCaptionText();
             const linkUrl = buildCorpusCoranicumUrl();
-            editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
-                src: dataUrl,
-                altText,
-                captionText,
-                linkUrl,
-            });
+            const payload = { src: dataUrl, altText, captionText, linkUrl };
+            if (standalone) {
+                await requestManuscriptInsert(payload);
+            } else {
+                editor!.dispatchCommand(INSERT_IMAGE_COMMAND, payload);
+            }
             insertMsg = $t("manuscript.inserted");
         } catch (e) {
             await message(
@@ -1697,10 +1709,8 @@
                             </button>
                             <button
                                 onclick={insertToLexical}
-                                disabled={inserting ||
-                                    !imageSrc ||
-                                    !$lexicalEditorInstance}
-                                title={!$lexicalEditorInstance
+                                disabled={inserting || !imageSrc || !hasEditor}
+                                title={!hasEditor
                                     ? $t("manuscript.no_editor")
                                     : $t("manuscript.insert_tooltip")}
                                 class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full border border-transparent
