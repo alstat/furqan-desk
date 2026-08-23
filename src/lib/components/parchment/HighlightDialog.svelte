@@ -1,6 +1,5 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import { onDestroy } from "svelte";
     import { fly } from "svelte/transition";
     import {
         loadHighlights,
@@ -10,6 +9,8 @@
     import { highlights, pendingJumpAyah } from "$lib/stores/bookmarks.store";
     import { surahLabels, selectedSurahIdx } from "$lib/stores/quran.svelte";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import { anchorBelow } from "$lib/utils/anchoredPanel";
+    import { headerHeight } from "$lib/stores/header.store";
     import { t, locale } from "$lib/i18n";
     import { get } from "svelte/store";
     import { lexicalEditorInstance } from "$lib/stores/editor.store";
@@ -22,8 +23,14 @@
     interface Props {
         open: boolean;
         onClose: () => void;
+        /**
+         * Rect of the header button this drops out of. The panel is a menu now
+         * rather than a floating window: it hangs under its button, closes on
+         * an outside click or Escape, and is not dragged around.
+         */
+        anchor?: DOMRect | null;
     }
-    let { open, onClose }: Props = $props();
+    let { open, onClose, anchor = null }: Props = $props();
 
     let insertingId = $state<number | null>(null);
 
@@ -64,62 +71,27 @@
     // ── Drag ────────────────────────────────────────────────────────────────
     const PANEL_W = 440;
 
-    let x = $state(0);
-    let y = $state(0);
     let zIndex = $state(500);
-    let isDragging = $state(false);
-    let dragStartX = 0,
-        dragStartY = 0,
-        startX = 0,
-        startY = 0;
     let initialized = false;
+
+    // Re-read on every open so a resized window or a moved button still lines
+    // up, and so the panel follows the header when the UI scale changes.
+    const placement = $derived(
+        open ? anchorBelow(anchor, PANEL_W, $headerHeight) : null,
+    );
 
     $effect(() => {
         if (open && !initialized) {
-            x = Math.max(0, (window.innerWidth - PANEL_W) / 2);
-            y = Math.max(8, (window.innerHeight - 420) * 0.25);
             zIndex = bringToFront();
             initialized = true;
         }
         if (!open) initialized = false;
     });
 
-    function startDrag(e: PointerEvent) {
-        isDragging = true;
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        startX = x;
-        startY = y;
-        window.addEventListener("pointermove", onDrag);
-        window.addEventListener("pointerup", stopDrag, { once: true });
+    function handleKeydown(e: KeyboardEvent) {
+        if (e.key === "Escape") onClose();
     }
 
-    function onDrag(e: PointerEvent) {
-        x = Math.max(
-            0,
-            Math.min(
-                window.innerWidth - PANEL_W,
-                startX + (e.clientX - dragStartX),
-            ),
-        );
-        y = Math.max(
-            0,
-            Math.min(
-                window.innerHeight - 60,
-                startY + (e.clientY - dragStartY),
-            ),
-        );
-    }
-
-    function stopDrag() {
-        isDragging = false;
-        window.removeEventListener("pointermove", onDrag);
-    }
-
-    onDestroy(() => {
-        if (typeof window !== "undefined")
-            window.removeEventListener("pointermove", onDrag);
-    });
 
     // Rendered inside Parchment, whose root gets display:none when the surah
     // page is hidden. Portal the dialog to <body> so it escapes that hidden
@@ -134,57 +106,46 @@
     }
 </script>
 
+<svelte:window on:keydown={open ? handleKeydown : undefined} />
+
+<!-- Backdrop: a click anywhere outside dismisses the menu, the way GlobalSearch
+     does. Transparent — a menu should not dim the page behind it. -->
 {#if open}
     <div
         use:portal
-        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
+        role="presentation"
+        class="fixed inset-0"
+        style="z-index:{zIndex - 1};"
+        onclick={onClose}
+        onkeydown={() => {}}
+    ></div>
+{/if}
+
+{#if open}
+    <div
+        use:portal
+        transition:fly={{ y: -8, duration: 160, opacity: 0 }}
         role="dialog"
-        aria-modal="true"
         aria-label={$t("highlight.title")}
         class="fixed flex flex-col rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
-        style="left:{x}px; top:{y}px; width:{PANEL_W}px; max-height:85vh; z-index:{zIndex};"
-        onpointerdown={() => {
-            zIndex = bringToFront();
-        }}
+        style="left:{placement?.x ?? 0}px; top:{placement?.y ?? 0}px; width:{PANEL_W}px; max-height:{placement?.maxHeight ?? 0}px; z-index:{zIndex};"
     >
-        <!-- Header -->
+        <!-- Header — the same slim bar GlobalSearch uses. -->
         <div
-            class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 select-none {isDragging
-                ? 'cursor-grabbing'
-                : 'cursor-grab'}"
-            onpointerdown={startDrag}
+            class="shrink-0 px-5 py-2 border-b border-stone-200 dark:border-[#414559]
+                   bg-brand-sand-50 dark:bg-[#232634] flex items-center justify-between gap-2 select-none"
             role="banner"
         >
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div
-                        class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]"
-                    >
-                        <Icon
-                            icon="solar:pen-new-square-bold-duotone"
-                            class="text-brand-gold-500"
-                            width="1rem"
-                        />
-                    </div>
-                    <div>
-                        <h2
-                            class="text-sm font-semibold text-brand-charcoal-900"
-                        >
-                            {$t("highlight.title")}
-                        </h2>
-                        <p class="text-[11px] text-brand-charcoal-300">
-                            {$t("highlight.n_saved", { n: $highlights.length })}
-                        </p>
-                    </div>
-                </div>
-                <button
-                    onclick={onClose}
-                    aria-label={$t("common.close")}
-                    class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                >
-                    <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
-                </button>
-            </div>
+            <span
+                class="text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+            >
+                {$t("highlight.title")}
+            </span>
+            <span
+                class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]"
+            >
+                {$t("highlight.n_saved", { n: $highlights.length })}
+            </span>
         </div>
 
         <!-- List -->

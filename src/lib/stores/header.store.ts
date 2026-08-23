@@ -10,8 +10,9 @@ export const headerHeight = writable(0);
 // morphology stores it writes into). Parchment publishes its handlers here on
 // mount and the header calls back into them.
 export interface ParchmentHeaderActions {
-	onOpenBookmarks: () => void;
-	onOpenHighlights: () => void;
+	/** `anchor` is the triggering button's rect, so the panel can drop out of it. */
+	onOpenBookmarks: (anchor?: DOMRect) => void;
+	onOpenHighlights: (anchor?: DOMRect) => void;
 	onSearch: (query: string) => void;
 }
 

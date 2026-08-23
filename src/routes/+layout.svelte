@@ -15,8 +15,26 @@
 	import { supabase, isSupabaseConfigured } from '$lib/supabase';
 	import { openFile, openFolder, saveFile, saveAs } from '$lib/actions/fileActions';
 	import { windowMaximized } from '$lib/stores/window-state.store';
+	import { page } from '$app/state';
 
 	let { children } = $props();
+
+	// Secondary windows (the postcard editor, the manuscript viewer) render
+	// their route and nothing else: no app header, no file watcher, no install
+	// prompts, and none of the main window's menu/deep-link/close-confirm
+	// wiring, which all belongs to the one window that owns the documents.
+	const SECONDARY_ROUTES = [
+		'/postcard',
+		'/manuscripts',
+		'/ai-chat',
+		'/terminal',
+		'/julia-plots',
+		'/translation',
+		'/tafsir'
+	];
+	const isSecondaryWindow = $derived(
+		SECONDARY_ROUTES.some((route) => page.url.pathname.startsWith(route))
+	);
 
 	// Linux runs the window undecorated so the header can be the title bar (see
 	// AppHeader), which also means GTK draws no window frame. The app supplies
@@ -100,6 +118,7 @@
 
 	onMount(async () => {
 		if (typeof window === 'undefined') return;
+		if (isSecondaryWindow) return;
 		try {
 			const { getCurrentWindow } = await import('@tauri-apps/api/window');
 			const { ask } = await import('@tauri-apps/plugin-dialog');
@@ -180,18 +199,22 @@
 	});
 </script>
 
-<div class="app-shell bg-gradient-radial flex h-screen flex-col overflow-hidden">
-	<OpenTabFileWatcher />
-	<AppHeader />
-	<div class="min-h-0 flex-1">
-		{@render children()}
+{#if isSecondaryWindow}
+	{@render children()}
+{:else}
+	<div class="app-shell bg-gradient-radial flex h-screen flex-col overflow-hidden">
+		<OpenTabFileWatcher />
+		<AppHeader />
+		<div class="min-h-0 flex-1">
+			{@render children()}
+		</div>
 	</div>
-</div>
 
-<JuliaInstallPrompt />
-<JuliaInstallToast />
-<LeanInstallPrompt />
-<LeanInstallToast />
+	<JuliaInstallPrompt />
+	<JuliaInstallToast />
+	<LeanInstallPrompt />
+	<LeanInstallToast />
+{/if}
 
 <style>
 

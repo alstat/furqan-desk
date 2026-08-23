@@ -367,6 +367,28 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
+                // These runtimes belong to the app, not to any one window, and
+                // this handler fires for every window. Secondary windows (the
+                // postcard editor) open and close freely — tearing down the
+                // user's REPLs because they closed one would be a nasty
+                // surprise, so only the main window's teardown cleans up.
+                if window.label() != "main" {
+                    return;
+                }
+
+                // The postcard editor and the manuscript viewer are secondary
+                // to this window; once it is gone there is nothing for them to
+                // be secondary to, and on macOS — where closing the main window
+                // does not quit the app — they would otherwise be left behind
+                // with no way back to the reader. Destroy rather than close: the
+                // session is already ending, so there is nothing left to prompt
+                // about.
+                for (label, secondary) in window.app_handle().webview_windows() {
+                    if label != "main" {
+                        let _ = secondary.destroy();
+                    }
+                }
+
                 // Clean up Julia process to avoid zombies
                 if let Some(state) = window.try_state::<julia::JuliaState>() {
                     if let Ok(mut guard) = state.processes.lock() {

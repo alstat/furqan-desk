@@ -15,6 +15,8 @@
         availableTafsirAuthors,
     } from "$lib/stores/translation.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import WindowControls from "./WindowControls.svelte";
+    import type { TafsirSnapshot } from "$lib/stores/reader-windows.store";
     import { isPro } from "$lib/stores/auth.store";
     import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
     import { getSurahNameTashkeel } from "$lib/data/surah-names-tashkeel";
@@ -120,9 +122,31 @@
     interface Props {
         open: boolean;
         onClose: () => void;
+        /**
+         * The reader owns a native window of its own rather than floating
+         * inside the main one: it fills the viewport, drops the drag handle,
+         * resize grips and z-index juggling.
+         */
+        standalone?: boolean;
+        /**
+         * The view the main window derived. Only a reader window uses it — the
+         * stores it would otherwise read are filled by MorphologyView, which
+         * does not run there.
+         */
+        snapshot?: TafsirSnapshot | null;
     }
 
-    const { open, onClose }: Props = $props();
+    const {
+        open,
+        onClose,
+        standalone = false,
+        snapshot = null,
+    }: Props = $props();
+
+    // macOS keeps native traffic lights overlaid on the header; the other
+    // platforms run the window undecorated and draw their own controls.
+    const isMac =
+        typeof navigator !== "undefined" && navigator.userAgent.includes("Mac");
 
     const RTL_TAFSIR_LANGS = new Set(["AR", "UR", "PS", "FA"]);
 
@@ -140,7 +164,8 @@
         return author ? author.name.replace(/ \([^)]+\)$/, "") : "";
     });
 
-    const surahName = $derived($surahLabels[$selectedSurahIdx - 1]?.en ?? "");
+    const currentSurah = $derived(snapshot?.surah ?? $selectedSurahIdx);
+    const surahName = $derived($surahLabels[currentSurah - 1]?.en ?? "");
 
     function labelFor(n: number): string {
         return $surahLabels[n - 1]?.en ?? $t("dialog.surah_fallback", { n });
@@ -149,6 +174,8 @@
     type Section = { surah: number; entries: { ayah: number; text: string }[] };
 
     const sections = $derived.by((): Section[] => {
+        // In a window of its own the view arrives ready-made.
+        if (snapshot) return snapshot.sections;
         const list = $morphologyMultiSurahList;
         if (list && list.length > 0 && $multiSurahTafsirMap) {
             return list.map((s) => {
@@ -175,7 +202,11 @@
         return [];
     });
 
-    const isMulti = $derived(($morphologyMultiSurahList?.length ?? 0) > 1);
+    const isMulti = $derived(
+        snapshot
+            ? snapshot.isMulti
+            : ($morphologyMultiSurahList?.length ?? 0) > 1,
+    );
     const totalEntries = $derived(
         sections.reduce((sum, s) => sum + s.entries.length, 0),
     );
@@ -197,6 +228,9 @@
     let initialized = false;
 
     $effect(() => {
+        // Floating mode has to place and size itself; a native window is
+        // already exactly where the OS put it.
+        if (standalone) return;
         if (open && !initialized) {
             x = Math.max(0, (window.innerWidth - panelW) / 2);
             y = Math.max(8, (window.innerHeight - panelH) * 0.2);
@@ -299,6 +333,10 @@
     });
 
     // --- AI prompt about a tafsir entry (Pro) ---
+    // Size of the ask-AI prompt, used to keep it on screen when placing it.
+    const AI_PROMPT_W = 320; // w-80
+    const AI_PROMPT_H = 44;
+
     let aiPromptOpen = $state(false);
     let aiPromptX = $state(0);
     let aiPromptY = $state(0);
@@ -354,8 +392,26 @@
         const rect = (
             event.currentTarget as HTMLElement
         ).getBoundingClientRect();
-        aiPromptX = rect.left + rect.width / 2;
-        aiPromptY = rect.bottom + 8;
+        // Beside the button, not centred under it: the button sits near the
+        // dialog's right edge, so a centred 320px panel ran off the side and
+        // the input was clipped. Flip to the button's left when the right has
+        // no room, then clamp so neither edge can leave the screen.
+        const margin = 8;
+        const gap = 8;
+        let left = rect.right + gap;
+        if (left + AI_PROMPT_W > window.innerWidth - margin) {
+            left = rect.left - gap - AI_PROMPT_W;
+        }
+        aiPromptX = Math.max(
+            margin,
+            Math.min(left, window.innerWidth - AI_PROMPT_W - margin),
+        );
+        // Centred on the button vertically, kept clear of the window edges.
+        const top = rect.top + rect.height / 2 - AI_PROMPT_H / 2;
+        aiPromptY = Math.max(
+            margin,
+            Math.min(top, window.innerHeight - AI_PROMPT_H - margin),
+        );
         aiPromptText = "";
         aiPromptOpen = true;
         queueMicrotask(() => aiPromptInput?.focus());
@@ -393,83 +449,98 @@
 
 {#if open}
     <div
-        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
+        transition:fly={standalone
+            ? { duration: 0 }
+            : { y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="false"
         aria-label={$t("tafsir.dialog_title")}
         tabindex="-1"
-        class="fixed flex flex-col rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
-        style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
-        onpointerdown={() => {
-            zIndex = bringToFront();
-        }}
+        class="flex flex-col overflow-hidden bg-white dark:bg-[#303446] {standalone
+            ? 'h-screen w-screen'
+            : 'fixed rounded-xl border border-brand-sand-200 dark:border-[#414559] shadow-xl dark:shadow-black/40'}"
+        style={standalone
+            ? ""
+            : `left:${x}px; top:${y}px; width:${panelW}px; height:${panelH}px; z-index:${zIndex};`}
+        onpointerdown={standalone
+            ? undefined
+            : () => {
+                  zIndex = bringToFront();
+              }}
     >
         <!-- Header (drag handle) -->
         <div
-            class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 select-none {isDragging
-                ? 'cursor-grabbing'
-                : 'cursor-grab'}"
-            onpointerdown={startDrag}
+            data-tauri-drag-region={standalone ? true : undefined}
+            class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-4 py-1.5 select-none {standalone
+                ? ''
+                : isDragging
+                  ? 'cursor-grabbing'
+                  : 'cursor-grab'}"
+            style:padding-left={standalone && isMac ? "5rem" : undefined}
+            onpointerdown={standalone ? undefined : startDrag}
             role="banner"
         >
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div
-                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]"
+            <div
+                data-tauri-drag-region={standalone ? true : undefined}
+                class="flex items-center justify-between"
+            >
+                <div
+                    data-tauri-drag-region={standalone ? true : undefined}
+                    class="flex items-center gap-2 min-w-0"
+                >
+                    <Icon
+                        icon="solar:book-2-bold-duotone"
+                        width="1.1rem"
+                        class="shrink-0 text-brand-gold-500"
+                    />
+                    <span
+                        class="truncate py-2 text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
                     >
-                        <Icon
-                            icon="solar:book-2-bold-duotone"
-                            class="text-brand-gold-500"
-                            width="1rem"
-                        />
-                    </div>
-                    <div class="min-w-0">
-                        <h2
-                            class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] truncate"
-                        >
-                            {#if isMulti}
-                                {$t("tafsir.dialog_title")} — {sections
-                                    .map((s) => labelFor(s.surah))
-                                    .join(", ")}
-                            {:else}
-                                {$t("tafsir.dialog_title")}{surahName
-                                    ? ` — ${surahName}`
-                                    : ""}
-                            {/if}
-                        </h2>
-                        {#if authorName}
-                            <p
-                                class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] truncate"
+                        {$t("tafsir.dialog_title")}
+                        {#if isMulti || surahName}
+                            <span class="font-normal normal-case"
+                                >— {isMulti
+                                    ? sections
+                                          .map((s) => labelFor(s.surah))
+                                          .join(", ")
+                                    : surahName}</span
                             >
-                                {authorName}
-                            </p>
                         {/if}
-                    </div>
+                        {#if authorName}
+                            <span class="font-normal normal-case"
+                                >· {authorName}</span
+                            >
+                        {/if}
+                    </span>
                 </div>
-                <div class="flex items-center gap-1.5 shrink-0 relative">
+                <div class="flex items-center gap-1 shrink-0 relative">
                     <button
                         bind:this={optionsBtn}
                         onclick={toggleOptions}
                         onpointerdown={(e) => e.stopPropagation()}
                         aria-label={$t("dialog.display_options")}
                         title={$t("dialog.display_options")}
-                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors {showOptions
+                        class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors {showOptions
                             ? 'ring-2 ring-brand-gold-300 dark:ring-[#e5c890]/50'
                             : ''}"
                     >
-                        <Icon icon="solar:settings-bold-duotone" width="1rem" />
+                        <Icon icon="solar:settings-bold-duotone" width="0.85rem" />
                     </button>
-                    <button
-                        onclick={onClose}
-                        onpointerdown={(e) => e.stopPropagation()}
-                        aria-label={$t("common.close")}
-                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    >
-                        <Icon
-                            icon="solar:close-circle-bold-duotone"
-                            width="1rem"
-                        />
-                    </button>
+                    <!-- Closing is the window's job once this bar *is* the
+                         title bar; the floating panel keeps its button. -->
+                    {#if !standalone}
+                        <button
+                            onclick={onClose}
+                            onpointerdown={(e) => e.stopPropagation()}
+                            aria-label={$t("common.close")}
+                            class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                        >
+                            <Icon
+                                icon="solar:close-circle-bold-duotone"
+                                width="0.85rem"
+                            />
+                        </button>
+                    {/if}
 
                     {#if showOptions}
                         <div
@@ -730,6 +801,16 @@
                         </div>
                     {/if}
                 </div>
+
+                <!-- Windows and Linux run this window undecorated, so the
+                     header supplies the minimise / maximise / close buttons
+                     itself. macOS overlays its own traffic lights instead
+                     (see the 5rem inset). -->
+                {#if standalone && !isMac}
+                    <div class="-my-1.5 -mr-4 flex self-stretch">
+                        <WindowControls />
+                    </div>
+                {/if}
             </div>
         </div>
 
@@ -838,7 +919,7 @@
             <div
                 role="presentation"
                 class="fixed z-[1000] flex w-80 items-center gap-1.5 rounded-xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
-                style="left:{aiPromptX}px; top:{aiPromptY}px; transform: translateX(-50%);"
+                style="left:{aiPromptX}px; top:{aiPromptY}px;"
                 onclick={(e) => e.stopPropagation()}
                 onpointerdown={(e) => e.stopPropagation()}
                 onkeydown={handleAiPanelKeydown}
@@ -870,6 +951,7 @@
         {/if}
 
         <!-- Resize handles -->
+        {#if !standalone}
         <div
             aria-hidden="true"
             class="resize-handle resize-n"
@@ -918,6 +1000,7 @@
             onpointerdown={(e) =>
                 startResize(e, { n: true, s: false, e: false, w: true })}
         ></div>
+        {/if}
     </div>
 {/if}
 

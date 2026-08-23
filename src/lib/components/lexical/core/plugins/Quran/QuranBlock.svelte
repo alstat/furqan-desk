@@ -4,7 +4,7 @@
     import { getSurahNameTashkeel } from "$lib/data/surah-names-tashkeel";
     import { pendingJumpAyah } from "$lib/stores/bookmarks.store";
     import { requestPlayBlock } from "$lib/stores/recitation.store";
-    import { manuscriptsEnabled, manuscriptAyah, manuscriptViewerOpen } from "$lib/stores/manuscripts.store";
+    import { manuscriptsEnabled, openManuscriptViewer } from "$lib/stores/manuscripts.store";
     import { isPro } from "$lib/stores/auth.store";
     import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
     import { t } from "$lib/i18n";
@@ -134,8 +134,7 @@
     function viewManuscripts(e: MouseEvent, surah: number, ayah: number) {
         e.preventDefault();
         e.stopPropagation();
-        manuscriptAyah.set({ surah, ayah });
-        manuscriptViewerOpen.set(true);
+        void openManuscriptViewer({ surah, ayah });
     }
 
     // --- AI prompt for an ayah (Pro) ---

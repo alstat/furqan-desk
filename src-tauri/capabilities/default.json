@@ -1,9 +1,16 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
+  "description": "Capability for the main window and the secondary editor windows",
   "windows": [
-    "main"
+    "main",
+    "postcard",
+    "manuscripts",
+    "ai-chat",
+    "terminal",
+    "julia-plots",
+    "translation",
+    "tafsir"
   ],
   "permissions": [
     "core:default",
@@ -13,6 +20,9 @@
     "core:window:allow-minimize",
     "core:window:allow-close",
     "core:window:allow-is-maximized",
+    "core:window:allow-set-focus",
+    "core:window:allow-unminimize",
+    "core:webview:allow-create-webview-window",
     "core:window:allow-is-fullscreen",
     "opener:default",
     "deep-link:default",

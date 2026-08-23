@@ -1199,7 +1199,11 @@ pub fn kill_all(state: &LeanState) {
     // `kill_on_drop`, so a contended lock still ends with the process gone.
     if let Ok(mut slot) = state.server.try_lock() {
         if let Some(server) = slot.take() {
-            tokio::spawn(async move { server.shutdown().await });
+            // `tauri::async_runtime::spawn`, not `tokio::spawn`: this runs from
+            // a window-event callback on the UI thread, which is outside any
+            // Tokio runtime context. `tokio::spawn` panics there ("there is no
+            // reactor running"), taking the whole app down with it.
+            tauri::async_runtime::spawn(async move { server.shutdown().await });
         }
     }
 }

@@ -13,6 +13,7 @@
     import { bumpGitRefresh } from "$lib/stores/git.store";
     import { isPro } from "$lib/stores/auth.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import WindowControls from "./WindowControls.svelte";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
 
     const askAiContextPrompt =
@@ -26,9 +27,21 @@
     interface Props {
         open: boolean;
         onClose: () => void;
+        /**
+         * The terminal owns a native window of its own rather than floating
+         * inside the main one: it fills the viewport, drops the drag handle,
+         * resize grips and z-index juggling, and lets the OS place and stack
+         * it.
+         */
+        standalone?: boolean;
     }
 
-    let { open, onClose }: Props = $props();
+    let { open, onClose, standalone = false }: Props = $props();
+
+    // macOS keeps native traffic lights overlaid on the header; the other
+    // platforms run the window undecorated and draw their own controls.
+    const isMac =
+        typeof navigator !== "undefined" && navigator.userAgent.includes("Mac");
 
     type TermTab = { id: string; label: string; count?: number };
 
@@ -604,6 +617,9 @@
 
     // Center the panel and bring it to front on first open.
     $effect(() => {
+        // Floating mode has to place itself; a native window is already exactly
+        // where the OS put it.
+        if (standalone) return;
         if (open && !initialized && typeof window !== "undefined") {
             x = Math.max(0, (window.innerWidth - panelW) / 2);
             y = Math.max(0, (window.innerHeight - panelH) / 2);
@@ -693,17 +709,21 @@
 <div
     role="dialog"
     aria-label={$t("terminal.title")}
-    class="fixed flex-col overflow-hidden rounded-xl
-               bg-white dark:bg-[#292c3c]
-               border border-brand-sand-200 dark:border-[#414559]
-               shadow-xl dark:shadow-black/40 transition-opacity duration-150
-               {open ? 'flex opacity-100' : 'opacity-0 pointer-events-none'}"
-    style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex}; display:{open
-        ? 'flex'
-        : 'none'};"
-    onpointerdown={() => {
-        zIndex = bringToFront();
-    }}
+    class="flex-col overflow-hidden bg-white dark:bg-[#292c3c] {standalone
+        ? 'h-screen w-screen'
+        : `fixed rounded-xl border border-brand-sand-200 dark:border-[#414559] shadow-xl dark:shadow-black/40 transition-opacity duration-150 ${
+              open ? 'flex opacity-100' : 'opacity-0 pointer-events-none'
+          }`}"
+    style={standalone
+        ? "display:flex;"
+        : `left:${x}px; top:${y}px; width:${panelW}px; height:${panelH}px; z-index:${zIndex}; display:${
+              open ? "flex" : "none"
+          };`}
+    onpointerdown={standalone
+        ? undefined
+        : () => {
+              zIndex = bringToFront();
+          }}
     onkeydown={(e) => {
         if (
             e.key === "Escape" &&
@@ -714,14 +734,22 @@
     tabindex="-1"
 >
     <!-- Header (drag handle) -->
+    <!-- Header / drag handle. In a native window the OS moves the window, so
+         this becomes a plain drag region instead of a pointer-dragged panel —
+         and doubles as the title bar. -->
     <div
         role="banner"
+        data-tauri-drag-region={standalone ? true : undefined}
         class="flex items-center gap-2 px-4 py-1.5 shrink-0
                    bg-brand-gold-100 dark:bg-[#292c3c]
                    border-b border-brand-gold-200 dark:border-[#414559]
-                   select-none rounded-t-xl
-                   {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
-        onpointerdown={startDrag}
+                   select-none {standalone
+            ? ''
+            : isDragging
+              ? 'rounded-t-xl cursor-grabbing'
+              : 'rounded-t-xl cursor-grab'}"
+        style:padding-left={standalone && isMac ? "5rem" : undefined}
+        onpointerdown={standalone ? undefined : startDrag}
     >
         <Icon
             icon="icon-park-twotone:terminal"
@@ -729,6 +757,7 @@
             class="text-brand-gold-500"
         />
         <span
+            data-tauri-drag-region={standalone ? true : undefined}
             class="text-[11px] py-1 font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
         >
             {$t("terminal.title")}
@@ -837,17 +866,31 @@
             >
                 <Icon icon="solar:settings-bold-duotone" width="0.85rem" />
             </button>
-            <button
-                onclick={handleClose}
-                aria-label={$t("terminal.close")}
-                title={$t("common.close")}
-                class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
+            <!-- Closing is the window's job once this bar *is* the title bar.
+                 The floating panel has no frame of its own, so it keeps its own
+                 button. -->
+            {#if !standalone}
+                <button
+                    onclick={handleClose}
+                    aria-label={$t("terminal.close")}
+                    title={$t("common.close")}
+                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
                            bg-brand-gold-200 dark:bg-[#414559]
                            text-brand-gold-600 dark:text-[#c6d0f5]
                            hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-            >
-                <Icon icon="solar:close-circle-bold-duotone" width="0.85rem" />
-            </button>
+                >
+                    <Icon icon="solar:close-circle-bold-duotone" width="0.85rem" />
+                </button>
+            {/if}
+
+            <!-- Windows and Linux run this window undecorated, so the header
+                 supplies the minimise / maximise / close buttons itself. macOS
+                 overlays its own traffic lights instead (see the 5rem inset). -->
+            {#if standalone && !isMac}
+                <div class="-my-1.5 -mr-4 flex self-stretch">
+                    <WindowControls />
+                </div>
+            {/if}
 
             {#if showOptions}
                 <div
@@ -1120,7 +1163,9 @@
         {/each}
     </div>
 
-    <!-- Resize handles -->
+    <!-- Resize handles. Only the floating panel resizes itself; a native
+         window is resized by its own frame. -->
+    {#if !standalone}
     <div
         aria-hidden="true"
         class="resize-handle resize-n"
@@ -1169,6 +1214,7 @@
         onpointerdown={(e) =>
             startResize(e, { n: true, s: false, e: false, w: true })}
     ></div>
+    {/if}
 </div>
 
 <style>
