@@ -7,7 +7,7 @@
     import {
         manuscriptAyah,
         manuscriptsEnabled,
-        manuscriptViewerOpen,
+        openManuscriptViewer,
     } from "$lib/stores/manuscripts.store";
     import {
         openPostcard,
@@ -68,7 +68,7 @@
     }
 
     function reopenManuscripts() {
-        manuscriptViewerOpen.set(true);
+        void openManuscriptViewer();
     }
 
     // Reopens the last design rather than seeding a fresh card, which is what
@@ -101,7 +101,8 @@
     dir="ltr"
 >
     <button
-        onclick={() => onOpenBookmarks?.()}
+        onclick={(e) =>
+            onOpenBookmarks?.(e.currentTarget.getBoundingClientRect())}
         class={btn}
         title={$t("parchment.bookmarks")}
         aria-label={$t("parchment.open_bookmarks")}
@@ -110,7 +111,8 @@
     </button>
 
     <button
-        onclick={() => onOpenHighlights?.()}
+        onclick={(e) =>
+            onOpenHighlights?.(e.currentTarget.getBoundingClientRect())}
         class={btn}
         title={$t("parchment.highlights")}
         aria-label={$t("parchment.open_highlights")}

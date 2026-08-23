@@ -4,6 +4,7 @@
     import { onDestroy, tick } from "svelte";
     import { t } from "$lib/i18n";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import WindowControls from "./WindowControls.svelte";
     import {
         messages,
         streaming,
@@ -34,9 +35,20 @@
     interface Props {
         open: boolean;
         onClose: () => void;
+        /**
+         * The chat owns a native window of its own rather than floating inside
+         * the main one: it fills the viewport, drops the drag handle, resize
+         * grips and z-index juggling, and lets the OS place and stack it.
+         */
+        standalone?: boolean;
     }
 
-    let { open, onClose }: Props = $props();
+    let { open, onClose, standalone = false }: Props = $props();
+
+    // macOS keeps native traffic lights overlaid on the header; the other
+    // platforms run the window undecorated and draw their own controls.
+    const isMac =
+        typeof navigator !== "undefined" && navigator.userAgent.includes("Mac");
 
     let input = $state("");
     let scrollEl = $state<HTMLDivElement | null>(null);
@@ -105,11 +117,15 @@
         if (typeof window === "undefined") return;
 
         if (open && !initialized) {
-            panelW = Math.min(panelW, Math.max(MIN_W, window.innerWidth - 16));
-            panelH = Math.min(panelH, Math.max(MIN_H, window.innerHeight - 16));
-            x = Math.max(0, (window.innerWidth - panelW) / 2);
-            y = Math.max(0, (window.innerHeight - panelH) / 2);
-            zIndex = bringToFront();
+            // Floating mode has to place and size itself; a native window is
+            // already exactly where the OS put it.
+            if (!standalone) {
+                panelW = Math.min(panelW, Math.max(MIN_W, window.innerWidth - 16));
+                panelH = Math.min(panelH, Math.max(MIN_H, window.innerHeight - 16));
+                x = Math.max(0, (window.innerWidth - panelW) / 2);
+                y = Math.max(0, (window.innerHeight - panelH) / 2);
+                zIndex = bringToFront();
+            }
             initialized = true;
         }
 
@@ -358,50 +374,59 @@
 
 {#if open}
     <div
-        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
+        transition:fly={standalone
+            ? { duration: 0 }
+            : { y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="false"
         aria-label={$t("ai_chat.title")}
         tabindex="-1"
-        class="fixed flex flex-col rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
-        style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
-        onpointerdown={() => {
-            zIndex = bringToFront();
-        }}
+        class="flex flex-col overflow-hidden bg-white dark:bg-[#303446] {standalone
+            ? 'h-screen w-screen'
+            : 'fixed rounded-xl border border-brand-sand-200 dark:border-[#414559] shadow-xl dark:shadow-black/40'}"
+        style={standalone
+            ? ""
+            : `left:${x}px; top:${y}px; width:${panelW}px; height:${panelH}px; z-index:${zIndex};`}
+        onpointerdown={standalone
+            ? undefined
+            : () => {
+                  zIndex = bringToFront();
+              }}
     >
-        <!-- Header -->
+        <!-- Header. In a native window the OS moves the window, so this becomes
+             a plain drag region instead of a pointer-dragged panel — and
+             doubles as the title bar. -->
         <div
-            class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 select-none rounded-t-xl {isDragging
-                ? 'cursor-grabbing'
-                : 'cursor-grab'}"
-            onpointerdown={startDrag}
+            data-tauri-drag-region={standalone ? true : undefined}
+            class="flex items-center justify-between shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-4 py-1.5 select-none {standalone
+                ? ''
+                : isDragging
+                  ? 'rounded-t-xl cursor-grabbing'
+                  : 'rounded-t-xl cursor-grab'}"
+            style:padding-left={standalone && isMac ? "5rem" : undefined}
+            onpointerdown={standalone ? undefined : startDrag}
             role="banner"
         >
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div
-                        class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]"
+            <div
+                data-tauri-drag-region={standalone ? true : undefined}
+                class="flex items-center gap-2 min-w-0"
+            >
+                <Icon
+                    icon="ri:chat-smile-ai-fill"
+                    width="1.1rem"
+                    class="shrink-0 text-brand-gold-500"
+                />
+                <span
+                    data-tauri-drag-region={standalone ? true : undefined}
+                    class="truncate py-2 text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
+                >
+                    {$t("ai_chat.title")}
+                    <span class="font-normal normal-case"
+                        >— {$t("ai_chat.subtitle")}</span
                     >
-                        <Icon
-                            icon="ri:chat-smile-ai-fill"
-                            class="text-brand-gold-500 dark:text-[#e5c890]"
-                            width="1rem"
-                        />
-                    </div>
-                    <div>
-                        <h2
-                            class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
-                        >
-                            {$t("ai_chat.title")}
-                        </h2>
-                        <p
-                            class="text-[11px] text-brand-charcoal-300 dark:text-[#8087a2]"
-                        >
-                            {$t("ai_chat.subtitle")}
-                        </p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-1.5">
+                </span>
+            </div>
+            <div class="flex items-center gap-1">
                     {#if $keyState === "unlocked"}
                         {#if !sidebarOpen}
                             <button
@@ -409,11 +434,11 @@
                                 disabled={$streaming}
                                 aria-label={$t("ai_chat.new_chat")}
                                 title={$t("ai_chat.new_chat")}
-                                class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-color"
+                                class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-color"
                             >
                                 <Icon
                                     icon="ri:chat-ai-line"
-                                    width="1rem"
+                                    width="0.85rem"
                                     class="dark:text-brand-charcoal-300"
                                 />
                             </button>
@@ -426,13 +451,13 @@
                             title={sidebarOpen
                                 ? "Hide chat list"
                                 : "Show chat list"}
-                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-color"
+                            class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-color"
                         >
                             <Icon
                                 icon={sidebarOpen
                                     ? "solar:sidebar-minimalistic-bold-duotone"
                                     : "solar:sidebar-minimalistic-bold"}
-                                width="1rem"
+                                width="0.85rem"
                                 class="dark:text-brand-charcoal-300"
                             />
                         </button>
@@ -440,26 +465,39 @@
                             onclick={lock}
                             aria-label="Lock"
                             title="Lock"
-                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                            class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
                         >
                             <Icon
                                 icon="solar:lock-keyhole-bold-duotone"
-                                width="0.95rem"
+                                width="0.85rem"
                             />
                         </button>
                     {/if}
-                    <button
-                        onclick={handleClose}
-                        aria-label={$t("common.close")}
-                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    >
-                        <Icon
-                            icon="solar:close-circle-bold-duotone"
-                            width="1rem"
-                        />
-                    </button>
-                </div>
+                    <!-- Closing is the window's job once this bar *is* the
+                         title bar. The floating panel has no frame of its own,
+                         so it keeps its own button. -->
+                    {#if !standalone}
+                        <button
+                            onclick={handleClose}
+                            aria-label={$t("common.close")}
+                            class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                        >
+                            <Icon
+                                icon="solar:close-circle-bold-duotone"
+                                width="0.85rem"
+                            />
+                        </button>
+                    {/if}
             </div>
+
+            <!-- Windows and Linux run this window undecorated, so the header
+                 supplies the minimise / maximise / close buttons itself. macOS
+                 overlays its own traffic lights instead (see the 5rem inset). -->
+            {#if standalone && !isMac}
+                <div class="-my-1.5 -mr-4 flex self-stretch">
+                    <WindowControls />
+                </div>
+            {/if}
         </div>
 
         <!-- Body -->
@@ -735,6 +773,9 @@
             <ChatLockScreen />
         {/if}
 
+        <!-- Resize handles. Only the floating panel resizes itself; a native
+             window is resized by its own frame. -->
+        {#if !standalone}
         <div
             aria-hidden="true"
             class="resize-handle resize-n"
@@ -783,6 +824,7 @@
             onpointerdown={(e) =>
                 startResize(e, { n: true, s: false, e: false, w: true })}
         ></div>
+        {/if}
     </div>
 {/if}
 

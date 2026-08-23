@@ -17,6 +17,8 @@
     import UpdateToast from "$lib/components/shared/UpdateToast.svelte";
     import NewBlogToast from "$lib/components/shared/NewBlogToast.svelte";
     import JuliaPlotViewer from "$lib/components/shared/JuliaPlotViewer.svelte";
+    import { installPlotSync } from "$lib/stores/julia-plot-window";
+    import { installReaderSnapshotHost } from "$lib/stores/reader-windows.store";
     import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
     import CustomFontDialog from "$lib/components/settings/CustomFontDialog.svelte";
     import {
@@ -91,6 +93,12 @@
     }
 
     onMount(async () => {
+        // Plots live only in this window's store; mirror them so the viewer's
+        // own window sees what the REPL produces here.
+        void installPlotSync();
+        // The translation and tafsir readers render a view only this window can
+        // derive; broadcast it so their windows can show it.
+        void installReaderSnapshotHost();
         try {
             const [labels] = await Promise.all([
                 invoke<SurahLabel[]>("get_surah_labels"),

@@ -648,6 +648,46 @@ export const UI_FONT_SCALE_BOUNDS = {
   step: UI_FONT_SCALE_STEP,
 };
 
+// ── Cross-window preference sync ──────────────────────────────────────────────
+
+/**
+ * Every window on the origin runs its own copy of these stores, so a preference
+ * changed in one is invisible to the others: a secondary window (the postcard
+ * editor, manuscript viewer, AI chat, terminal) reads the value once at boot
+ * and then never hears about it again — leaving it in the old theme until it is
+ * closed and reopened.
+ *
+ * `storage` events fire only in the *other* windows on the origin, which is
+ * exactly the direction needed, and means the window that made the change never
+ * echoes it back to itself. The setters below all write through localStorage,
+ * so every change is announced this way whichever window makes it.
+ */
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.newValue === null) return;
+    switch (e.key) {
+      case "app-dark-mode":
+        _appDarkMode.set(e.newValue === "true");
+        break;
+      case UI_FONT_SCALE_KEY: {
+        const n = parseFloat(e.newValue);
+        if (Number.isFinite(n)) _uiFontScale.set(n);
+        break;
+      }
+      case "repl-font-size": {
+        const n = parseInt(e.newValue, 10);
+        if (Number.isFinite(n)) _replFontSize.set(n);
+        break;
+      }
+      case "repl-line-spacing": {
+        const n = parseFloat(e.newValue);
+        if (Number.isFinite(n)) _replLineSpacing.set(n);
+        break;
+      }
+    }
+  });
+}
+
 export type ReplMode = "julia" | "pkg" | "shell" | "help";
 
 export interface ReplLine {

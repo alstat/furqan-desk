@@ -23,6 +23,11 @@
     import UserAccountDialog from "./UserAccountDialog.svelte";
     import AiChatDialog from "./AiChatDialog.svelte";
     import TerminalDialog from "./TerminalDialog.svelte";
+    import {
+        terminalDialogOpen,
+        openTerminal,
+    } from "$lib/stores/terminal-window.store";
+    import { openJuliaPlotViewer } from "$lib/stores/julia-plot-window";
     import ReferencesDialog from "./ReferencesDialog.svelte";
     import {
         referencesOpen,
@@ -34,11 +39,13 @@
     import { t } from "$lib/i18n";
     import { zenMode, appDarkMode } from "$lib/stores/editor.store";
     import { authUser, isPro } from "$lib/stores/auth.store";
-    import { aiChatDialogOpen } from "$lib/stores/ai-chat.store";
+    import { aiChatDialogOpen, openAiChat } from "$lib/stores/ai-chat.store";
     import { openUrl } from "@tauri-apps/plugin-opener";
 
     let accountOpen = $state(false);
-    let terminalOpen = $state(false);
+    // Only the in-app fallback uses this; inside Tauri the terminal gets an OS
+    // window of its own.
+    let terminalOpen = $derived($terminalDialogOpen);
     let tocBtnEl = $state<HTMLButtonElement | null>(null);
     let referencesBtnEl = $state<HTMLButtonElement | null>(null);
 
@@ -47,7 +54,9 @@
             accountOpen = true;
             return;
         }
-        aiChatDialogOpen.set(!$aiChatDialogOpen);
+        // A window cannot be "toggled" from here the way a floating panel
+        // could — openAiChat focuses it if it is already up.
+        void openAiChat();
     }
 
     let { children } = $props();
@@ -199,7 +208,7 @@
     <button
         id="tour-terminal-button"
         class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} top-26 z-3 ${terminalOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? "opacity-50 transition-opacity duration-200" : "opacity-0 hover:opacity-100 transition-opacity duration-200") : ""}`}
-        onclick={() => (terminalOpen = !terminalOpen)}
+        onclick={() => void openTerminal()}
         aria-label="Open terminal"
         title="Open terminal"
     >
@@ -250,7 +259,12 @@
         <button
             class={`${actionBtnStyle} cursor-pointer absolute ${$surahOrientation() == "flex-row-reverse" ? "sm:-right-4 -right-10" : "sm:-left-4 left-2"} bottom-37 z-3 rounded-full
 			       ${$juliaViewerOpen ? "bg-brand-gold-400 dark:bg-[#363a4f]" : ""} ${$zenMode ? ($zenPeek ? "opacity-50 transition-opacity duration-200" : "opacity-0 hover:opacity-100 transition-opacity duration-200") : ""}`}
-            onclick={() => ($juliaViewerOpen = !$juliaViewerOpen)}
+            onclick={() =>
+                void openJuliaPlotViewer().then((opened) => {
+                    // A window cannot be toggled shut from here; the fallback
+                    // panel still can.
+                    if (!opened) $juliaViewerOpen = !$juliaViewerOpen;
+                })}
             aria-label="Julia Plot Viewer"
             title="Julia Plot Viewer"
         >
@@ -324,7 +338,7 @@
     />
     <TerminalDialog
         open={terminalOpen}
-        onClose={() => (terminalOpen = false)}
+        onClose={() => terminalDialogOpen.set(false)}
     />
     <ReferencesDialog />
 

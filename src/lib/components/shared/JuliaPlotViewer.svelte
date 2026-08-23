@@ -8,6 +8,20 @@
         type JuliaPlot,
     } from "$lib/stores/editor.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import WindowControls from "./WindowControls.svelte";
+    import { openJuliaPlotViewer } from "$lib/stores/julia-plot-window";
+
+    /**
+     * The viewer owns a native window of its own rather than floating inside
+     * the main one: it fills the viewport, drops the drag handle, resize grips
+     * and z-index juggling, and lets the OS place and stack it.
+     */
+    let { standalone = false }: { standalone?: boolean } = $props();
+
+    // macOS keeps native traffic lights overlaid on the header; the other
+    // platforms run the window undecorated and draw their own controls.
+    const isMac =
+        typeof navigator !== "undefined" && navigator.userAgent.includes("Mac");
     import { t } from "$lib/i18n";
 
     let currentIndex = $state(0);
@@ -119,16 +133,21 @@
         }
     });
 
-    // Auto-open panel and jump to latest when a new plot arrives
+    // Auto-open and jump to latest when a new plot arrives. In the main window
+    // that means raising the viewer's own window; the fallback flag is only
+    // reached when there is no window to open (browser dev).
     $effect(() => {
-        if (plots.length > 0) {
-            currentIndex = plots.length - 1;
-            $juliaViewerOpen = true;
-        }
+        if (plots.length === 0) return;
+        currentIndex = plots.length - 1;
+        if (standalone) return;
+        void openJuliaPlotViewer().then((opened) => {
+            if (!opened) $juliaViewerOpen = true;
+        });
     });
 
-    // Initial centering effect
+    // Initial centering effect. A native window is already where the OS put it.
     $effect(() => {
+        if (standalone) return;
         if ($juliaViewerOpen && !initialized && typeof window !== "undefined") {
             x = Math.max(0, (window.innerWidth - panelW) / 2);
             y = Math.max(0, (window.innerHeight - panelH) / 2);
@@ -291,29 +310,44 @@
 {/if}
 
 <!-- Floating panel -->
-{#if $juliaViewerOpen}
+{#if standalone || $juliaViewerOpen}
     <div
-        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-        class="fixed flex flex-col overflow-hidden rounded-xl
-               bg-white dark:bg-[#292c3c]
-               border border-brand-sand-200 dark:border-[#414559]
-               shadow-xl dark:shadow-black/40"
-        style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
-        onpointerdown={() => {
-            zIndex = bringToFront();
-        }}
+        transition:fly={standalone
+            ? { duration: 0 }
+            : { y: 8, duration: 180, opacity: 0 }}
+        class="flex flex-col overflow-hidden bg-white dark:bg-[#292c3c] {standalone
+            ? 'h-screen w-screen'
+            : 'fixed rounded-xl border border-brand-sand-200 dark:border-[#414559] shadow-xl dark:shadow-black/40'}"
+        style={standalone
+            ? ""
+            : `left:${x}px; top:${y}px; width:${panelW}px; height:${panelH}px; z-index:${zIndex};`}
+        onpointerdown={standalone
+            ? undefined
+            : () => {
+                  zIndex = bringToFront();
+              }}
     >
-        <!-- Header -->
+        <!-- Header / drag handle. In a native window the OS moves the window,
+             so this becomes a plain drag region instead of a pointer-dragged
+             panel — and doubles as the title bar. -->
         <div
+            data-tauri-drag-region={standalone ? true : undefined}
             class="flex items-center justify-between px-4 py-1.5 shrink-0
                border-b border-brand-gold-200 dark:border-[#414559]
                bg-brand-gold-100 dark:bg-[#292c3c]
-               select-none rounded-t-xl
-               {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
-            onpointerdown={startDrag}
+               select-none {standalone
+                ? ''
+                : isDragging
+                  ? 'rounded-t-xl cursor-grabbing'
+                  : 'rounded-t-xl cursor-grab'}"
+            style:padding-left={standalone && isMac ? "5rem" : undefined}
+            onpointerdown={standalone ? undefined : startDrag}
             role="banner"
         >
-            <div class="flex items-center gap-2">
+            <div
+                data-tauri-drag-region={standalone ? true : undefined}
+                class="flex items-center gap-2"
+            >
                 <Icon
                     icon="solar:chart-bold-duotone"
                     width="1.1rem"
@@ -358,22 +392,35 @@
                         {$t("julia.clear_all")}
                     </button>
                 {/if}
-                <!-- Close button -->
-                <button
-                    onclick={() => ($juliaViewerOpen = false)}
-                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
+                <!-- Closing is the window's job once this bar *is* the title
+                     bar. The floating panel has no frame of its own, so it
+                     keeps its own button. -->
+                {#if !standalone}
+                    <button
+                        onclick={() => ($juliaViewerOpen = false)}
+                        class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg
                            bg-brand-gold-200 dark:bg-[#414559]
                            text-brand-gold-600 dark:text-[#c6d0f5]
                            hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    aria-label={$t("julia.close_viewer")}
-                    title={$t("common.close")}
-                >
-                    <Icon
-                        icon="solar:close-circle-bold-duotone"
-                        width="0.85rem"
-                    />
-                </button>
+                        aria-label={$t("julia.close_viewer")}
+                        title={$t("common.close")}
+                    >
+                        <Icon
+                            icon="solar:close-circle-bold-duotone"
+                            width="0.85rem"
+                        />
+                    </button>
+                {/if}
             </div>
+
+            <!-- Windows and Linux run this window undecorated, so the header
+                 supplies the minimise / maximise / close buttons itself. macOS
+                 overlays its own traffic lights instead (see the 5rem inset). -->
+            {#if standalone && !isMac}
+                <div class="-my-1.5 -mr-4 flex self-stretch">
+                    <WindowControls />
+                </div>
+            {/if}
         </div>
 
         <!-- Plot display area -->
@@ -578,6 +625,7 @@
         </div>
 
         <!-- Resize handles -->
+        {#if !standalone}
         <div
             aria-hidden="true"
             class="resize-handle resize-n"
@@ -626,6 +674,7 @@
             onpointerdown={(e) =>
                 startResize(e, { n: true, s: false, e: false, w: true })}
         ></div>
+        {/if}
     </div>
 {/if}
 

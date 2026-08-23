@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { browser } from '$app/environment';
 
 export interface TranslatorInfo {
@@ -21,6 +21,20 @@ activeTranslatorId.subscribe(v => {
 });
 
 export const availableTranslators = writable<TranslatorInfo[]>([]);
+
+/**
+ * Fill `availableTranslators` if this window has not already. SurahWidget loads
+ * the list for the main window; secondary windows (the postcard editor) boot a
+ * fresh store and would otherwise show an empty translation picker.
+ */
+export async function ensureTranslators(): Promise<TranslatorInfo[]> {
+    const current = get(availableTranslators);
+    if (current.length) return current;
+    const { invoke } = await import('@tauri-apps/api/core');
+    const list = await invoke<TranslatorInfo[]>('get_translators');
+    availableTranslators.set(list);
+    return list;
+}
 export const surahTranslation = writable<AyahTranslation[] | null>(null);
 export const basmallahTranslation = writable<AyahTranslation | null>(null);
 
@@ -82,7 +96,35 @@ activeTafsirId.subscribe(v => {
 });
 
 export const availableTafsirAuthors = writable<TafsirAuthorInfo[]>([]);
+
+/**
+ * Fill `availableTafsirAuthors` if this window has not already. SurahWidget
+ * loads the list for the main window; secondary windows (the tafsir reader)
+ * boot a fresh store and would otherwise show no author name.
+ */
+export async function ensureTafsirAuthors(): Promise<TafsirAuthorInfo[]> {
+    const current = get(availableTafsirAuthors);
+    if (current.length) return current;
+    const { invoke } = await import('@tauri-apps/api/core');
+    const list = await invoke<TafsirAuthorInfo[]>('get_tafsir_authors');
+    availableTafsirAuthors.set(list);
+    return list;
+}
 export const surahTafsir = writable<AyahTafsir[] | null>(null);
 
+/**
+ * "A reader is showing this text" — MorphologyView reads these to suppress its
+ * inline copy in the parchment. True whether the reader is its own window or
+ * the in-app panel, so the parchment behaves the same either way.
+ */
 export const tafsirDialogOpen = writable<boolean>(false);
 export const translationDialogOpen = writable<boolean>(false);
+
+/**
+ * "The in-app panel is mounted" — only the fallback path, when there is no
+ * window to open. Kept apart from the flags above: those are also true while a
+ * reader *window* is up, and mounting the panel then would show the same text
+ * twice, once per window.
+ */
+export const tafsirPanelOpen = writable<boolean>(false);
+export const translationPanelOpen = writable<boolean>(false);

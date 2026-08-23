@@ -49,6 +49,9 @@
     let scrollContainer = $state<HTMLElement | null>(null);
     let showBookmarks = $state(false);
     let showHighlights = $state(false);
+    // Where each panel drops from — the header button that opened it.
+    let bookmarksAnchor = $state<DOMRect | null>(null);
+    let highlightsAnchor = $state<DOMRect | null>(null);
     let showTakeHome = $state(false);
     let takeHomeBtnEl = $state<HTMLButtonElement | null>(null);
 
@@ -57,8 +60,14 @@
     // dialogs, the search request and the stores it writes stay here.
     $effect(() => {
         parchmentActions.set({
-            onOpenBookmarks: () => (showBookmarks = true),
-            onOpenHighlights: () => (showHighlights = true),
+            onOpenBookmarks: (anchor) => {
+                bookmarksAnchor = anchor ?? null;
+                showBookmarks = true;
+            },
+            onOpenHighlights: (anchor) => {
+                highlightsAnchor = anchor ?? null;
+                showHighlights = true;
+            },
             onSearch: handleSearch,
         });
         return () => parchmentActions.set(null);
@@ -405,9 +414,14 @@
 </div>
 
 <!-- Dialogs — rendered outside the z-1 stacking context so their fixed backdrop covers the full viewport -->
-<BookmarkDialog open={showBookmarks} onClose={() => (showBookmarks = false)} />
+<BookmarkDialog
+    open={showBookmarks}
+    anchor={bookmarksAnchor}
+    onClose={() => (showBookmarks = false)}
+/>
 <HighlightDialog
     open={showHighlights}
+    anchor={highlightsAnchor}
     onClose={() => (showHighlights = false)}
 />
 <HighlightSaveDialog />

@@ -3,6 +3,10 @@
     import ControlCard from "../cards/ControlCard.svelte";
     import GroupCards from "../cards/GroupCards.svelte";
     import TafsirDialog from "$lib/components/shared/TafsirDialog.svelte";
+    import {
+        openTafsirReader,
+        openTranslationReader,
+    } from "$lib/stores/reader-windows.store";
     import TranslationDialog from "$lib/components/shared/TranslationDialog.svelte";
     import {
         selectedSurahIdx,
@@ -38,7 +42,9 @@
         activeTafsirId,
         availableTafsirAuthors,
         tafsirDialogOpen,
+        tafsirPanelOpen,
         translationDialogOpen,
+        translationPanelOpen,
     } from "$lib/stores/translation.store";
     import PostcardDialog from "$lib/components/postcard/PostcardDialog.svelte";
     import { postcardDialogOpen, openPostcard } from "$lib/stores/postcard.store";
@@ -484,7 +490,7 @@
         {#if selectedTranslatorId}
             <button
                 type="button"
-                onclick={() => translationDialogOpen.set(true)}
+                onclick={() => void openTranslationReader()}
                 class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 bg-brand-gold-100 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 hover:bg-brand-gold-200/70 transition-colors"
             >
                 <Icon icon="garden:translation-exists-stroke-12" width="0.85rem" />
@@ -591,7 +597,7 @@
                 {#if selectedTafsirId}
                     <button
                         type="button"
-                        onclick={() => (tafsirDialogOpen.set(true))}
+                        onclick={() => void openTafsirReader()}
                         class="cursor-pointer mb-1 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 bg-brand-gold-100 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 hover:bg-brand-gold-200/70 transition-colors"
                     >
                         <Icon icon="solar:book-2-bold-duotone" width="0.85rem" />
@@ -622,6 +628,19 @@
     id="tour-surah-widget"
 />
 
-<TafsirDialog open={$tafsirDialogOpen} onClose={() => tafsirDialogOpen.set(false)} />
-<TranslationDialog open={$translationDialogOpen} onClose={() => translationDialogOpen.set(false)} />
+<!-- Fallback panels: mounted only when no reader window could be opened. -->
+<TafsirDialog
+    open={$tafsirPanelOpen}
+    onClose={() => {
+        tafsirPanelOpen.set(false);
+        tafsirDialogOpen.set(false);
+    }}
+/>
+<TranslationDialog
+    open={$translationPanelOpen}
+    onClose={() => {
+        translationPanelOpen.set(false);
+        translationDialogOpen.set(false);
+    }}
+/>
 <PostcardDialog open={$postcardDialogOpen} onClose={() => postcardDialogOpen.set(false)} />
