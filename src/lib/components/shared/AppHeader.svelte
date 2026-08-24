@@ -42,7 +42,7 @@
     import EditorTabs from "$lib/components/editor/EditorTabs.svelte";
     import ParchmentActionBar from "$lib/components/parchment/ParchmentActionBar.svelte";
     import WindowControls from "./WindowControls.svelte";
-    import { headerHeight } from "$lib/stores/header.store";
+    import { headerBottom, headerHeight } from "$lib/stores/header.store";
     import { zenMode, zenPeek } from "$lib/stores/editor.store";
     import { hideSurahPage, isSidebar } from "$lib/stores/quran.svelte";
     import { activeTab, tabs } from "$lib/stores/tabs.store";
@@ -61,6 +61,31 @@
     let measured = $state(0);
     $effect(() => headerHeight.set(measured));
 
+    // The panels that hang off this bar need its bottom edge in viewport
+    // coordinates, which only the rect knows: `clientHeight` leaves out the
+    // border and is rounded, and the bar's Y also shifts when the Linux frame
+    // takes on (or drops) its shadow margin. Remeasured whenever the bar
+    // changes size — the maximise that moves the margin resizes it too — and
+    // on any window resize, since a bar that keeps its size can still move.
+    let headerEl = $state<HTMLElement | null>(null);
+
+    $effect(() => {
+        if (!headerEl) return;
+        // Touch `measured` so a font-scale change re-runs this too.
+        void measured;
+        const publish = () =>
+            headerBottom.set(headerEl!.getBoundingClientRect().bottom);
+        publish();
+
+        const observer = new ResizeObserver(publish);
+        observer.observe(headerEl);
+        window.addEventListener("resize", publish);
+        return () => {
+            observer.disconnect();
+            window.removeEventListener("resize", publish);
+        };
+    });
+
     const title = $derived($activeTab?.name ?? "AyahLab");
     const dirty = $derived($activeTab?.isDirty ?? false);
 
@@ -77,6 +102,7 @@
 
 <header
     data-tauri-drag-region
+    bind:this={headerEl}
     bind:clientHeight={measured}
     class="relative z-40 grid h-11 shrink-0 select-none grid-cols-[minmax(min-content,1fr)_minmax(0,32rem)_minmax(min-content,1fr)] items-center gap-3 px-2 {$zenMode
         ? 'border-transparent bg-transparent'
