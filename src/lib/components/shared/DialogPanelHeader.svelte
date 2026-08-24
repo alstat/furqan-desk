@@ -102,7 +102,7 @@
         </div>
 
         {#if standalone && !isMac}
-            <div class="-my-1.5 -mr-4 flex self-stretch">
+            <div class="-my-1.5 -mr-2 flex self-stretch">
                 <WindowControls />
             </div>
         {/if}

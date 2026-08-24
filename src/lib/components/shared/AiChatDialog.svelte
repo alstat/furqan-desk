@@ -494,7 +494,7 @@
                  supplies the minimise / maximise / close buttons itself. macOS
                  overlays its own traffic lights instead (see the 5rem inset). -->
             {#if standalone && !isMac}
-                <div class="-my-1.5 -mr-4 flex self-stretch">
+                <div class="-my-1.5 -mr-2 flex self-stretch">
                     <WindowControls />
                 </div>
             {/if}
