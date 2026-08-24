@@ -26,6 +26,26 @@ const WANTED = [
     "at-icons:cursor-text",
 ];
 
+/**
+ * Icons whose artwork carries a hard-coded colour, rewritten to inherit the
+ * one the surrounding text uses.
+ *
+ * The brand marks (Julia, Typst) are drawn in `currentColor` already, so they
+ * read correctly in either theme wherever they are placed. vscode-icons draws
+ * its file-type marks in fixed colours instead — the Lean one is a #000 stroke,
+ * which all but disappears against the dark tab strip. Recolouring keeps the
+ * artwork and puts it on the same footing as its neighbours.
+ */
+const INHERIT_COLOR = new Set(["vscode-icons:file-type-light-lean"]);
+
+/** Swap literal colours for `currentColor` in fill/stroke attributes. */
+function inheritColor(body) {
+    return body.replace(
+        /(fill|stroke)="(?!none|currentColor)[^"]*"/g,
+        '$1="currentColor"',
+    );
+}
+
 const OUT = resolve(root, "src/lib/icons.generated.ts");
 
 /** Read one collection's icons.json from node_modules. */
@@ -76,6 +96,7 @@ for (const full of WANTED) {
     if (!prefix || !name) throw new Error(`Expected "prefix:name", got "${full}"`);
     const icon = resolveIcon(loadCollection(prefix), name);
     if (!icon) throw new Error(`${full} is not in @iconify-json/${prefix}`);
+    if (INHERIT_COLOR.has(full)) icon.body = inheritColor(icon.body);
     entries.push([full, icon]);
 }
 
