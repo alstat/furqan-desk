@@ -202,7 +202,16 @@
 </script>
 
 {#if isSecondaryWindow}
-	{@render children()}
+	<!-- The dialog windows are undecorated on Windows and Linux exactly like the
+	     main one, so they need the same shell: the Linux client-side frame (its
+	     hairline border, Adwaita radius and the squaring-off when maximised)
+	     hangs off `.app-shell` in app.css, and `overflow-hidden` is what trims
+	     the dialog's own square corners to that radius. Each dialog fills this
+	     box with `h-full w-full` rather than `h-screen`, so the frame's border
+	     is not pushed off the bottom edge. -->
+	<div class="app-shell flex h-screen flex-col overflow-hidden">
+		{@render children()}
+	</div>
 {:else}
 	<div class="app-shell bg-gradient-radial flex h-screen flex-col overflow-hidden">
 		<OpenTabFileWatcher />

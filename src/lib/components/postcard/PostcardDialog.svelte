@@ -1212,7 +1212,7 @@
         aria-label={$t("postcard.title")}
         tabindex="-1"
         class="flex flex-col overflow-hidden bg-white dark:bg-[#303446] {standalone
-            ? 'h-screen w-screen'
+            ? 'h-full w-full'
             : 'fixed rounded-xl border border-brand-sand-200 dark:border-[#414559] shadow-xl dark:shadow-black/40'}"
         style={standalone
             ? ""

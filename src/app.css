@@ -1995,6 +1995,10 @@ html.dark ::highlight(find-match-current) {
    window frame, and without one the app reads as bare content butted against
    the desktop. These rules put the frame back in GNOME's shape.
 
+   Every window gets it: +layout.svelte wraps the main window and each dialog
+   window (terminal, tafsir, drawing, …) in the same `.app-shell` box, so a
+   dialog is framed exactly like the app it came from.
+
    The window is `transparent: true` so the corners outside the radius are
    genuinely see-through rather than a square of app colour. That costs us the
    webview's opaque backdrop, which is what painted the page white in light
