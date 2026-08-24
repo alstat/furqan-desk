@@ -317,7 +317,7 @@
                     onmouseup={updateAiSelection}
                     oninput={updateAiSelection}
                     rows="2"
-                    class="mb-3 w-full resize-none rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 px-3 py-2.5 text-[11px] text-brand-charcoal-900 placeholder-brand-charcoal-300 focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100 transition-all"
+                    class="mb-3 w-full resize-none rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 dark:bg-[#2b2b2b]/80 px-3 py-2.5 text-[11px] text-brand-charcoal-900 placeholder-brand-charcoal-300 focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100 transition-all"
                 ></textarea>
 
                 {#if saveError}

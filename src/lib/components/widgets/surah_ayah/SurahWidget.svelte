@@ -358,7 +358,7 @@
         <button
             type="button"
             onclick={() => openPostcard("new")}
-            class="cursor-pointer mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 bg-brand-gold-100 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 hover:bg-brand-gold-200/70 transition-colors"
+            class="cursor-pointer mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 bg-brand-gold-100 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 hover:bg-brand-gold-200/70 dark:hover:bg-[#554c3a]/70 transition-colors"
         >
             <Icon icon="solar:gallery-send-bold-duotone" width="0.85rem" />
             {$t('postcard.open')}
@@ -491,7 +491,7 @@
             <button
                 type="button"
                 onclick={() => void openTranslationReader()}
-                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 bg-brand-gold-100 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 hover:bg-brand-gold-200/70 transition-colors"
+                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 bg-brand-gold-100 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 hover:bg-brand-gold-200/70 dark:hover:bg-[#554c3a]/70 transition-colors"
             >
                 <Icon icon="garden:translation-exists-stroke-12" width="0.85rem" />
                 {$t('surah.translation_view_dialog')}
@@ -598,7 +598,7 @@
                     <button
                         type="button"
                         onclick={() => void openTafsirReader()}
-                        class="cursor-pointer mb-1 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 bg-brand-gold-100 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 hover:bg-brand-gold-200/70 transition-colors"
+                        class="cursor-pointer mb-1 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 bg-brand-gold-100 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 hover:bg-brand-gold-200/70 dark:hover:bg-[#554c3a]/70 transition-colors"
                     >
                         <Icon icon="solar:book-2-bold-duotone" width="0.85rem" />
                         {$t('surah.tafsir_view_dialog')}
