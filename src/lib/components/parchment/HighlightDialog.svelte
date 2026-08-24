@@ -82,7 +82,7 @@
     // the CSD shadow margin (the header's top edge sits that far down from the
     // true window top while the shell floats) to get the bar's actual bottom.
     const placement = $derived(
-        open ? anchorBelow(anchor, PANEL_W, $headerHeight + $csdMarginPx, 0) : null,
+        open ? anchorBelow(anchor, PANEL_W, $headerHeight + $csdMarginPx, 1) : null,
     );
 
     $effect(() => {

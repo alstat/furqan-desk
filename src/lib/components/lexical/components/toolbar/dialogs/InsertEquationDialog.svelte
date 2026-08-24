@@ -175,7 +175,7 @@
         aria-label={$t("dialog.insert_equation")}
         tabindex="-1"
         class="fixed flex flex-col -translate-x-1/2 rounded-b-xl border border-t-0 border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-[0_14px_28px_-10px_rgba(0,0,0,0.28)] dark:shadow-[0_14px_28px_-10px_rgba(0,0,0,0.55)] overflow-hidden"
-        style="left:50%; top:{$headerHeight + $csdMarginPx}px; width:{PANEL_W}px; z-index:{zIndex};"
+        style="left:50%; top:{$headerHeight + $csdMarginPx + 1}px; width:{PANEL_W}px; z-index:{zIndex};"
         onpointerdown={() => {
             zIndex = bringToFront();
         }}
@@ -224,7 +224,7 @@
                     onkeyup={updateAiSelection}
                     onmouseup={updateAiSelection}
                     data-test-id="equation-modal-input"
-                    class="w-full resize-none rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                    class="w-full resize-y rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                 ></textarea>
             </div>
 
