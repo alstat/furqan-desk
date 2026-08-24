@@ -69,11 +69,12 @@
 	});
 </script>
 
+<!-- `text-wrap` needs Safari 17.4 / WebKitGTK 2.44; use legacy `white-space`. -->
 <button
 	type="button"
 	{disabled}
 	aria-label={buttonAriaLabel || buttonLabel}
-	class={`${buttonClassName} overflow-hidden text-ellipsis text-nowrap text-center text-sm ${toolBarBtnStyle}`}
+	class={`${buttonClassName} overflow-hidden text-ellipsis whitespace-nowrap text-center text-sm ${toolBarBtnStyle}`}
 	onclick={() => (showDropDown = !showDropDown)}
 	bind:this={buttonRef}
 	{title}
@@ -84,7 +85,7 @@
 
 	<div class="relative flex flex-row items-center">
 		{#if buttonLabel}
-			<div class="my-1 flex-1 px-2 font-sans text-xs font-medium">{buttonLabel}</div>
+			<div class="my-1 min-w-0 flex-1 truncate px-2 font-sans text-xs font-medium">{buttonLabel}</div>
 		{:else if buttonIconClassName}
 			<div class="my-1 flex-1 mx-2 pr-2">
 				<Icon icon={icons[buttonIconClassName as keyof typeof icons]} width=1rem/>

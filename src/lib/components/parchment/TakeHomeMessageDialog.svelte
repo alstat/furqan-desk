@@ -733,7 +733,7 @@
                     <!-- The Take-Home Message always runs on the Advanced
                          model (Pro and Pro+ alike) — static badge, no toggle. -->
                     <span
-                        class="flex items-center gap-1.5 rounded-full border border-brand-gold-400 bg-brand-gold-100 dark:bg-brand-gold-900/30 px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890]"
+                        class="flex items-center gap-1.5 rounded-full border border-brand-gold-400 bg-brand-gold-100 dark:bg-[#e5c890]/30 px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890]"
                         title={$t("account.usage.advanced_takehome_note")}
                     >
                         <Icon icon="solar:bolt-bold-duotone" width="0.7rem" />

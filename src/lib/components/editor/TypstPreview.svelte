@@ -186,8 +186,8 @@
                     onclick={exportPdf}
                     title={$t("typst.export_pdf")}
                     class="flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors
-                           bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400
-                           hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25
+                           bg-brand-gold-100 dark:bg-[#e5c890]/15 text-brand-gold-600 dark:text-brand-gold-400
+                           hover:bg-brand-gold-200 dark:hover:bg-[#e5c890]/25
                            {$zenMode
                         ? $zenPeek
                             ? 'opacity-50 transition-opacity duration-200'
@@ -277,4 +277,3 @@
         </div>
     </div>
 </div>
-

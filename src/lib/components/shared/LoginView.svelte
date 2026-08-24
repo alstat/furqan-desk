@@ -13,7 +13,7 @@
     let successMsg = $state("");
 
     const inputClass =
-        "w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-3 py-2 text-[12px] text-brand-charcoal-500 dark:text-[#c6d0f5] placeholder-brand-charcoal-200 dark:placeholder-[#626880] outline-none focus:border-brand-gold-400 focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30 transition-colors";
+        "w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-3 py-2 text-[12px] text-brand-charcoal-500 dark:text-[#c6d0f5] placeholder-brand-charcoal-200 dark:placeholder-[#626880] outline-none focus:border-brand-gold-400 focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 transition-colors";
 
     function clearMessages() {
         error = "";
@@ -155,10 +155,10 @@
 
     <!-- Pro callout -->
     <div
-        class="rounded-2xl border border-brand-gold-200 dark:border-brand-gold-800/40 bg-brand-gold-50 dark:bg-brand-gold-900/20 px-4 py-3 flex flex-col gap-1"
+        class="rounded-2xl border border-brand-gold-200 dark:border-[#c4a26e]/40 bg-brand-gold-50 dark:bg-[#e5c890]/20 px-4 py-3 flex flex-col gap-1"
     >
         <p
-            class="text-[11px] font-semibold text-brand-gold-700 dark:text-brand-gold-400"
+            class="text-[11px] font-semibold text-brand-gold-600 dark:text-brand-gold-400"
         >
             {$t("auth.pro_callout_title")}
         </p>

@@ -135,7 +135,7 @@
 
 	const btn =
 		'flex h-7 w-7 items-center justify-center rounded-md text-brand-charcoal-600 dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed';
-	const activeBtn = 'bg-brand-gold-200 dark:bg-[#51576d] text-brand-gold-700 dark:text-[#e5c890]';
+	const activeBtn = 'bg-brand-gold-200 dark:bg-[#51576d] text-brand-gold-600 dark:text-[#e5c890]';
 </script>
 
 <div

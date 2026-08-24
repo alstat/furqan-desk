@@ -37,9 +37,9 @@
         "flex flex-col gap-2.5 rounded-2xl border px-4 py-3";
     const cardFree = "border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446]";
     const cardPro =
-        "border-brand-gold-300 dark:border-brand-gold-700/60 bg-brand-gold-50 dark:bg-brand-gold-900/20";
+        "border-brand-gold-300 dark:border-[#c4a26e]/60 bg-brand-gold-50 dark:bg-[#e5c890]/20";
     const cardProPlus =
-        "border-brand-gold-400 dark:border-brand-gold-600/70 bg-linear-to-br from-brand-gold-50 to-brand-gold-100 dark:from-brand-gold-900/30 dark:to-brand-gold-900/10";
+        "border-brand-gold-400 dark:border-[#c4a26e]/70 bg-linear-to-br from-brand-gold-50 to-brand-gold-100 dark:from-[#e5c890]/30 dark:to-[#e5c890]/10";
 
     const featureRow = "flex items-center gap-2 text-[11px] text-brand-charcoal-500 dark:text-[#c6d0f5] leading-relaxed";
     const checkIcon = "text-brand-gold-500 dark:text-brand-gold-400 shrink-0";
@@ -89,7 +89,7 @@
     <!-- Pro -->
     <div class="{cardBase} {cardPro}">
         <div class="flex items-center gap-2">
-            <span class="text-[12px] font-semibold text-brand-gold-700 dark:text-brand-gold-400">
+            <span class="text-[12px] font-semibold text-brand-gold-600 dark:text-brand-gold-400">
                 {$t("billing.tier.pro.name")}
             </span>
             <span class="text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">
@@ -122,7 +122,7 @@
     <div class="{cardBase} {cardProPlus}">
         <div class="flex items-center gap-2">
             <Icon icon="solar:crown-star-bold-duotone" width="0.95rem" class="text-brand-gold-500 dark:text-brand-gold-400 shrink-0" />
-            <span class="text-[12px] font-semibold text-brand-gold-700 dark:text-brand-gold-400">
+            <span class="text-[12px] font-semibold text-brand-gold-600 dark:text-brand-gold-400">
                 {$t("billing.tier.pro_plus.name")}
             </span>
             <span class="text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">

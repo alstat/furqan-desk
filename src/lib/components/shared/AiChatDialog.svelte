@@ -679,7 +679,7 @@
                                 disabled={$streaming}
                                 class="cursor-pointer flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                                         {$useAdvanced
-                                    ? 'border-brand-gold-400 bg-brand-gold-100 dark:bg-brand-gold-900/30 text-brand-gold-600 dark:text-[#e5c890]'
+                                    ? 'border-brand-gold-400 bg-brand-gold-100 dark:bg-[#e5c890]/30 text-brand-gold-600 dark:text-[#e5c890]'
                                     : 'border-brand-sand-200 dark:border-[#414559] text-brand-charcoal-500 bg-transparent text-brand-charcoal-400 dark:text-[#8087a2] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c]'}"
                                 title={$useAdvanced
                                     ? $t("ai_chat.advanced_on")
@@ -705,7 +705,7 @@
                         </div>
                         {/if}
                         <div
-                            class="flex-1 flex items-stretch min-h-0 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] pl-3 pr-2 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-brand-gold-900/30 transition-colors"
+                            class="flex-1 flex items-stretch min-h-0 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] pl-3 pr-2 py-2 focus-within:border-brand-gold-400 focus-within:ring-2 focus-within:ring-brand-gold-100 dark:focus-within:ring-[#e5c890]/20 transition-colors"
                         >
                             <textarea
                                 bind:value={input}

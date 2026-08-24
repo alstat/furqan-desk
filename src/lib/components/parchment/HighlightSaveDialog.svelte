@@ -216,7 +216,7 @@
                     onmouseup={updateAiSelection}
                     oninput={updateAiSelection}
                     rows="3"
-                    class="mb-3 w-full resize-none rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30 hover:border-brand-sand-400 dark:hover:border-[#51576d] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c] transition-all"
+                    class="mb-3 w-full resize-none rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#51576d] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c] transition-all"
                 ></textarea>
 
                 {#if saveError}
