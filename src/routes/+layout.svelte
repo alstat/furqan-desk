@@ -136,11 +136,12 @@
 				console.error('menu listener setup failed', e);
 			}
 
-			// On Windows/Linux the menu bar is hidden (lib.rs), and a hidden
-			// menu no longer delivers its accelerators there — only macOS keeps
-			// them via the system menu bar. Recreate the File shortcuts with a
-			// window-level keydown handler routed to the same actions. macOS is
-			// excluded so Cmd shortcuts aren't double-handled by menu + DOM.
+			// Windows and Linux get no application menu at all (see lib.rs:
+			// a menu there is drawn as a bar inside every window), so nothing
+			// delivers its accelerators — only macOS keeps them via the system
+			// menu bar. Recreate the File shortcuts with a window-level keydown
+			// handler routed to the same actions. macOS is excluded so Cmd
+			// shortcuts aren't double-handled by menu + DOM.
 			const isMac = navigator.userAgent.includes('Mac');
 			if (!isMac) {
 				window.addEventListener(

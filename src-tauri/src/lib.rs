@@ -15,6 +15,7 @@ mod terminal;
 mod typst_world;
 
 use std::sync::{atomic::AtomicBool, Arc};
+#[cfg(target_os = "macos")]
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::{Emitter, Manager};
 
@@ -164,56 +165,57 @@ pub fn run() {
             app.manage(commands::HttpClient::new());
 
             // --- Native application menu --------------------------------
-            // By default macOS shows only "Close" under the File menu. Build a
-            // richer File menu (Open File / Open Folder / Save / Save As) and
-            // keep the standard App/Edit menus so Quit and Copy/Paste continue
-            // to work. Each custom item emits an event the frontend listens for
-            // (see src/routes/+layout.svelte); the accelerators also drive the
-            // same shortcuts on every platform.
-            let handle = app.handle().clone();
-
-            let open_file = MenuItemBuilder::with_id("open_file", "Open File…")
-                .accelerator("CmdOrCtrl+O")
-                .build(&handle)?;
-            let open_folder = MenuItemBuilder::with_id("open_folder", "Open Folder…")
-                .accelerator("CmdOrCtrl+Shift+O")
-                .build(&handle)?;
-            let save = MenuItemBuilder::with_id("save", "Save")
-                .accelerator("CmdOrCtrl+S")
-                .build(&handle)?;
-            let save_as = MenuItemBuilder::with_id("save_as", "Save As…")
-                .accelerator("CmdOrCtrl+Shift+S")
-                .build(&handle)?;
-
-            #[allow(unused_mut)]
-            let mut file_builder = SubmenuBuilder::new(&handle, "File")
-                .item(&open_file)
-                .item(&open_folder)
-                .separator()
-                .item(&save)
-                .item(&save_as)
-                .separator()
-                .close_window();
-            #[cfg(not(target_os = "macos"))]
-            {
-                file_builder = file_builder.separator().quit();
-            }
-            let file_menu = file_builder.build()?;
-
-            let edit_menu = SubmenuBuilder::new(&handle, "Edit")
-                .undo()
-                .redo()
-                .separator()
-                .cut()
-                .copy()
-                .paste()
-                .select_all()
-                .build()?;
-
-            #[allow(unused_mut)]
-            let mut menu_builder = MenuBuilder::new(&handle);
+            // macOS only. There the menu lives in the global menu bar, and the
+            // default File menu offers just "Close", so it is worth replacing
+            // with a real one (Open File / Open Folder / Save / Save As) beside
+            // the standard App and Edit menus. Each custom item emits an event
+            // the frontend listens for (see src/routes/+layout.svelte).
+            //
+            // Windows and GTK have no global menu bar: a menu set here is drawn
+            // *inside* every window as a menubar row, and `hide_menu()` only
+            // reaches windows that already exist — so each dialog window opened
+            // later (terminal, tafsir, drawing, …) came up with a File/Edit bar
+            // above its own title bar. Those platforms therefore get no menu at
+            // all; +layout.svelte already re-implements the accelerators with a
+            // keydown handler, which is what actually drove the shortcuts there
+            // even while the menu was merely hidden.
             #[cfg(target_os = "macos")]
             {
+                let handle = app.handle().clone();
+
+                let open_file = MenuItemBuilder::with_id("open_file", "Open File…")
+                    .accelerator("CmdOrCtrl+O")
+                    .build(&handle)?;
+                let open_folder = MenuItemBuilder::with_id("open_folder", "Open Folder…")
+                    .accelerator("CmdOrCtrl+Shift+O")
+                    .build(&handle)?;
+                let save = MenuItemBuilder::with_id("save", "Save")
+                    .accelerator("CmdOrCtrl+S")
+                    .build(&handle)?;
+                let save_as = MenuItemBuilder::with_id("save_as", "Save As…")
+                    .accelerator("CmdOrCtrl+Shift+S")
+                    .build(&handle)?;
+
+                let file_menu = SubmenuBuilder::new(&handle, "File")
+                    .item(&open_file)
+                    .item(&open_folder)
+                    .separator()
+                    .item(&save)
+                    .item(&save_as)
+                    .separator()
+                    .close_window()
+                    .build()?;
+
+                let edit_menu = SubmenuBuilder::new(&handle, "Edit")
+                    .undo()
+                    .redo()
+                    .separator()
+                    .cut()
+                    .copy()
+                    .paste()
+                    .select_all()
+                    .build()?;
+
                 let app_menu = SubmenuBuilder::new(&handle, "AyahLab")
                     .about(None)
                     .separator()
@@ -225,18 +227,14 @@ pub fn run() {
                     .separator()
                     .quit()
                     .build()?;
-                menu_builder = menu_builder.item(&app_menu);
-            }
-            let menu = menu_builder.item(&file_menu).item(&edit_menu).build()?;
-            app.set_menu(menu)?;
 
-            // On Windows/Linux the menu renders as a bar below the title bar,
-            // wasting vertical space, so hide it. A hidden menu stops
-            // delivering its accelerators on those platforms, so the frontend
-            // re-implements Ctrl+O / Ctrl+S / etc. with a keydown handler (see
-            // src/routes/+layout.svelte). This is a no-op on macOS, where the
-            // menu (and its Cmd shortcuts) live in the global system menu bar.
-            app.hide_menu()?;
+                let menu = MenuBuilder::new(&handle)
+                    .item(&app_menu)
+                    .item(&file_menu)
+                    .item(&edit_menu)
+                    .build()?;
+                app.set_menu(menu)?;
+            }
 
             Ok(())
         })

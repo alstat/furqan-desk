@@ -4,8 +4,9 @@
   (tauri.linux.conf.json). macOS keeps its native traffic lights
   (`titleBarStyle: "Overlay"`) and never renders these.
 
-  The two platforms disagree about what a caption button *is*, so `variant`
-  picks the shape rather than one compromise shape looking foreign on both:
+  The two platforms disagree about what a caption button *is*, so the shape is
+  picked per platform rather than one compromise shape looking foreign on both.
+  It follows the running desktop unless a caller overrides it with `variant`:
 
   - "windows": full-bleed rectangles that run the whole height of the bar and
     meet the window corner, with a red close. Hairline glyphs on a 10px grid,
@@ -27,9 +28,20 @@
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { windowMaximized } from "$lib/stores/window-state.store";
 
-    let { variant = "windows" }: { variant?: "windows" | "gnome" } = $props();
+    let { variant }: { variant?: "windows" | "gnome" } = $props();
 
-    const gnome = $derived(variant === "gnome");
+    // Left unset — which is what the dialog title bars do — the shape follows
+    // the desktop the app is running on, so a dialog opened on Ubuntu gets
+    // Adwaita's circles rather than Windows' rectangles. Android also reports
+    // "Linux" but never draws these at all.
+    const platform: "windows" | "gnome" =
+        typeof navigator !== "undefined" &&
+        navigator.userAgent.includes("Linux") &&
+        !navigator.userAgent.includes("Android")
+            ? "gnome"
+            : "windows";
+
+    const gnome = $derived((variant ?? platform) === "gnome");
 
     // Shared with the Linux window frame, which has to square its corners on
     // the same edge this button swaps its glyph on.
