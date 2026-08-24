@@ -710,7 +710,7 @@
     role="dialog"
     aria-label={$t("terminal.title")}
     class="flex-col overflow-hidden bg-white dark:bg-[#292c3c] {standalone
-        ? 'h-screen w-screen'
+        ? 'h-full w-full'
         : `fixed rounded-xl border border-brand-sand-200 dark:border-[#414559] shadow-xl dark:shadow-black/40 transition-opacity duration-150 ${
               open ? 'flex opacity-100' : 'opacity-0 pointer-events-none'
           }`}"

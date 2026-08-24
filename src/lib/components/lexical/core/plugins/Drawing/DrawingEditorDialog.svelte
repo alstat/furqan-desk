@@ -73,7 +73,13 @@
 	const headerBtn =
 		'flex h-6 w-6 items-center justify-center rounded-md text-brand-charcoal-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200 dark:hover:bg-[#51576d] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed';
 
-	function portal(node: HTMLElement) {
+	// Embedded in the editor the dialog has to escape the Lexical DOM (and the
+	// stacking contexts along the way), so it is moved to <body>. In its own
+	// window there is nothing to escape, and staying put keeps it inside the
+	// layout's `.app-shell` — which is what draws the Linux window frame and
+	// clips the dialog to its rounded corners.
+	function portal(node: HTMLElement, enabled: boolean) {
+		if (!enabled) return;
 		document.body.appendChild(node);
 		return {
 			destroy() {
@@ -608,14 +614,14 @@
 
 {#if showModal}
 	<div
-		use:portal
+		use:portal={!standalone}
 		transition:fly={standalone ? { duration: 0 } : { y: 8, duration: 160, opacity: 0 }}
 		role="dialog"
 		aria-modal={standalone ? undefined : 'true'}
 		aria-label="Insert drawing"
 		tabindex="-1"
 		class="flex flex-col overflow-hidden bg-white dark:bg-[#303446] {standalone
-			? 'fixed inset-0'
+			? 'h-full w-full'
 			: 'fixed rounded-xl border border-brand-sand-200 dark:border-[#414559] shadow-xl dark:shadow-black/40'}"
 		style={standalone
 			? ''
