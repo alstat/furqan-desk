@@ -7,8 +7,6 @@
     import TypstEditor from "$lib/components/editor/TypstEditor.svelte";
     import JuliaEditor from "$lib/components/editor/JuliaEditor.svelte";
     import LeanEditor from "$lib/components/editor/LeanEditor.svelte";
-    import EditorTabs from "$lib/components/editor/EditorTabs.svelte";
-    import ActionBar from "$lib/components/lexical/components/actionbar/ActionBar.svelte";
     import FileExplorer from "$lib/components/shared/FileExplorer.svelte";
     import GlobalSearch from "$lib/components/shared/GlobalSearch.svelte";
     import TableOfContents from "$lib/components/editor/TableOfContents.svelte";
@@ -40,7 +38,6 @@
         crossGroups,
     } from "$lib/stores/julia-terminal.store";
     import type { CrossGroup } from "$lib/stores/julia-terminal.store";
-    import Icon from "@iconify/svelte";
     import type { EditorTab } from "$lib/stores/tabs.store";
     import { CAN_UNDO_COMMAND, CAN_REDO_COMMAND } from "lexical";
     import type { LexicalEditor } from "lexical";
@@ -275,17 +272,6 @@
         $hideSurahPage() && $activeTab?.type === "lean" && !activeCrossGroup,
     );
 
-    // In a cross pair the sidebar always renders the HOST tab's editor while the
-    // partner sits in the left panel, so the sidebar's action bar and file-type
-    // badge must describe the host — not whichever of the two is active. The
-    // partner gets its own bar next to its own editor (+page.svelte).
-    let sidebarTabId = $derived(activeCrossGroup?.hostTabId ?? null);
-    let sidebarTab = $derived(
-        sidebarTabId
-            ? ($tabs.find((t) => t.id === sidebarTabId) ?? null)
-            : $activeTab,
-    );
-
     // Entering/leaving a cross group swaps the editor markup branch, which
     // destroys and remounts the RichTextEditor WITHOUT a tab switch — so
     // Effect A never fires and any unsaved Lexical state would be lost with
@@ -383,63 +369,9 @@
             : null,
     );
 
-    function fileTypeInfo(tab: EditorTab): {
-        icon: string;
-        label: string;
-        color: string;
-    } {
-        const c = "text-brand-charcoal-300";
-        if (tab.type === "julia")
-            return {
-                icon: "solar:code-bold-duotone",
-                label: "Julia",
-                color: c,
-            };
-        if (tab.type === "lean")
-            return {
-                icon: "solar:verified-check-bold-duotone",
-                label: "Lean 4",
-                color: c,
-            };
-        if (tab.type === "typst")
-            return {
-                icon: "solar:document-text-bold-duotone",
-                label: "Typst",
-                color: c,
-            };
-        if (tab.type === "lexical")
-            return {
-                icon: "solar:text-bold-duotone",
-                label: "Rich Text",
-                color: c,
-            };
-        const ext =
-            (tab.path ?? tab.name).split(".").pop()?.toLowerCase() ?? "";
-        const extMap: Record<string, { icon: string; label: string }> = {
-            py: { icon: "solar:code-bold-duotone", label: ".py" },
-            r: { icon: "solar:code-bold-duotone", label: ".r" },
-            bib: { icon: "solar:book-bold-duotone", label: ".bib" },
-            tex: { icon: "solar:document-text-bold-duotone", label: ".tex" },
-            md: { icon: "solar:text-bold-duotone", label: ".md" },
-            csv: { icon: "solar:database-bold-duotone", label: ".csv" },
-            js: { icon: "solar:code-bold-duotone", label: ".js" },
-            ts: { icon: "solar:code-bold-duotone", label: ".ts" },
-            json: { icon: "solar:file-text-bold-duotone", label: ".json" },
-            sh: { icon: "solar:command-bold-duotone", label: ".sh" },
-            sql: { icon: "solar:database-bold-duotone", label: ".sql" },
-            html: { icon: "solar:code-bold-duotone", label: ".html" },
-            css: { icon: "solar:palette-bold-duotone", label: ".css" },
-            typ: { icon: "solar:document-text-bold-duotone", label: ".typ" },
-        };
-        const e = extMap[ext] ?? {
-            icon: "solar:file-bold-duotone",
-            label: ext ? `.${ext}` : "Text",
-        };
-        return { ...e, color: c };
-    }
 </script>
 
-<CollapsibleSidebar roundRight={!juliaMode && !leanMode && !activeCrossGroup}>
+<CollapsibleSidebar>
     <div class="relative h-full flex flex-col overflow-visible">
         <!-- File Explorer button: outside editor on the left/right, same height as sidebar toggle -->
         <FileExplorer />
@@ -447,24 +379,6 @@
         <GlobalSearch />
         <!-- Table of Contents panel -->
         <TableOfContents />
-        <ActionBar tabId={sidebarTabId} />
-        {#if sidebarTab}
-            {@const ft = fileTypeInfo(sidebarTab)}
-            <div
-                class="{$zenMode
-                    ? 'opacity-0 hover:opacity-100 transition-opacity duration-200'
-                    : ''} absolute -top-4.5 left-1/12 z-50 pointer-events-none"
-            >
-                <span
-                    class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold
-							 bg-brand-sand-100/80 border border-brand-sand-200 backdrop-blur-sm
-							 dark:bg-[#292c3c]/80 dark:border-[#414559] {ft.color}"
-                >
-                    <Icon icon={ft.icon} width="0.6rem" />
-                    {ft.label}
-                </span>
-            </div>
-        {/if}
         <div class="flex-1 min-h-0 overflow-visible">
             {#if activeCrossGroup}
                 <!-- Cross pair: sidebar always shows the HOST tab's editor -->
@@ -613,6 +527,5 @@
                 <RichTextEditor />
             {/if}
         </div>
-        <EditorTabs />
     </div>
 </CollapsibleSidebar>

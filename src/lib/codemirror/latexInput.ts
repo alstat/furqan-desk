@@ -1,12 +1,15 @@
 /**
- * Julia-style LaTeX → Unicode input for CodeMirror.
+ * LaTeX → Unicode input for CodeMirror.
  *
- * Mirrors the Julia REPL: type a LaTeX abbreviation such as `\sigma` and press
- * Tab to replace it with the corresponding Unicode glyph (`σ`). Subscripts
- * (`\_1`), superscripts (`\^2`) and blackboard-bold (`\bbR`) work the same way.
+ * Type an abbreviation such as `\sigma` and press Tab to replace it with the
+ * corresponding Unicode glyph (`σ`). Subscripts (`\_1`), superscripts (`\^2`)
+ * and blackboard-bold (`\bbR`) work the same way.
  *
- * Shared by the file editor (CodeMirrorEditor.svelte) and the notebook's Julia
- * code cells (JuliaCellComponent.svelte).
+ * Two tables are exported. `latexInput` mirrors the Julia REPL and is used by
+ * Julia files and Julia notebook cells. `leanInput` layers Lean's own
+ * abbreviations on top — its single-letter set names (`\N`, `\R`), its logic
+ * shorthands (`\and`, `\ex`) and its anonymous-constructor brackets
+ * (`\<`, `\>`) — for Lean files and Lean notebook cells.
  */
 import { EditorView, keymap } from "@codemirror/view";
 import type { Extension } from "@codemirror/state";
@@ -76,45 +79,72 @@ const LATEX_SYMBOLS: Record<string, string> = {
     "\\^i": "ⁱ", "\\^n": "ⁿ", "\\^o": "ᵒ", "\\^p": "ᵖ", "\\^x": "ˣ",
 };
 
-// Longest abbreviation in the table — used to bound the look-back when
-// scanning the text before the caret.
-const MAX_LEN = Object.keys(LATEX_SYMBOLS).reduce(
-    (m, k) => Math.max(m, k.length),
-    0,
-);
+// Lean's abbreviations, layered over the shared table above. Entries that
+// repeat a key deliberately win: Lean writes the anonymous-function placeholder
+// as `·` (U+00B7), so its `\cdot` is not Julia's `⋅` (U+22C5).
+const LEAN_SYMBOLS: Record<string, string> = {
+    // ── Set names — Lean spells these with a single letter ───────────────
+    "\\N": "ℕ", "\\Z": "ℤ", "\\Q": "ℚ", "\\R": "ℝ", "\\C": "ℂ",
+    "\\P": "ℙ", "\\nat": "ℕ", "\\real": "ℝ",
+    // ── Logic ────────────────────────────────────────────────────────────
+    "\\and": "∧", "\\or": "∨", "\\not": "¬", "\\all": "∀",
+    "\\ex": "∃", "\\imp": "→", "\\iff": "↔", "\\gets": "←",
+    "\\l": "←", "\\r": "→",
+    // ── Anonymous constructor and dot notation ───────────────────────────
+    "\\<": "⟨", "\\>": "⟩", "\\langle": "⟨", "\\rangle": "⟩",
+    "\\.": "·", "\\cdot": "·",
+    // ── Functions, products, sets ─────────────────────────────────────────
+    "\\lam": "λ", "\\fun": "λ", "\\o": "∘", "\\comp": "∘",
+    "\\x": "×", "\\u": "∪", "\\un": "∪", "\\i": "∩",
+    "\\inter": "∩", "\\ss": "⊆", "\\mem": "∈", "\\nin": "∉",
+    "\\empty": "∅", "\\Union": "⋃", "\\Inter": "⋂", "\\dvd": "∣",
+};
 
-// A LaTeX token: a backslash followed by abbreviation characters (letters,
-// digits and the `_`/`^`/`+`/`-`/`(`/`)`/`=` used by sub/superscripts).
-const TOKEN_RE = /\\[A-Za-z0-9_^+()=-]+$/;
+// A token: a backslash followed by abbreviation characters. Beyond the letters
+// and digits, this covers `_`/`^`/`+`/`-`/`(`/`)`/`=` from the sub- and
+// superscripts and `<`/`>`/`.`/`|` from Lean's bracket and dot abbreviations.
+const TOKEN_RE = /\\[A-Za-z0-9_^+()=<>.|-]+$/;
 
-// On Tab, if the text immediately before the caret is a known LaTeX
-// abbreviation, replace it with the Unicode glyph. Returns false (so Tab keeps
-// its normal indent behaviour) when there's no match.
-function completeLatex(view: EditorView): boolean {
-    const { state } = view;
-    const sel = state.selection.main;
-    if (!sel.empty) return false;
-    const pos = sel.head;
-    const line = state.doc.lineAt(pos);
-    const before = line.text.slice(
-        Math.max(0, pos - line.from - MAX_LEN),
-        pos - line.from,
-    );
-    const match = before.match(TOKEN_RE);
-    if (!match) return false;
-    const glyph = LATEX_SYMBOLS[match[0]];
-    if (!glyph) return false;
-    const from = pos - match[0].length;
-    view.dispatch({
-        changes: { from, to: pos, insert: glyph },
-        selection: { anchor: from + glyph.length },
-        userEvent: "input.complete",
-        scrollIntoView: true,
-    });
-    return true;
+/**
+ * Build the Tab handler for one table: if the text immediately before the
+ * caret is a known abbreviation, replace it with the glyph. Returns false — so
+ * Tab keeps its normal indent behaviour — when there is no match.
+ */
+function completer(table: Record<string, string>) {
+    // Bounds the look-back when scanning the text before the caret.
+    const maxLen = Object.keys(table).reduce((m, k) => Math.max(m, k.length), 0);
+
+    return (view: EditorView): boolean => {
+        const { state } = view;
+        const sel = state.selection.main;
+        if (!sel.empty) return false;
+        const pos = sel.head;
+        const line = state.doc.lineAt(pos);
+        const before = line.text.slice(
+            Math.max(0, pos - line.from - maxLen),
+            pos - line.from,
+        );
+        const match = before.match(TOKEN_RE);
+        if (!match) return false;
+        const glyph = table[match[0]];
+        if (!glyph) return false;
+        const from = pos - match[0].length;
+        view.dispatch({
+            changes: { from, to: pos, insert: glyph },
+            selection: { anchor: from + glyph.length },
+            userEvent: "input.complete",
+            scrollIntoView: true,
+        });
+        return true;
+    };
 }
 
 /** CodeMirror extension: Julia-style `\latex`+Tab → Unicode substitution. */
 export const latexInput: Extension = keymap.of([
-    { key: "Tab", run: completeLatex },
+    { key: "Tab", run: completer(LATEX_SYMBOLS) },
+]);
+
+/** As `latexInput`, plus Lean's own abbreviations (`\N` → ℕ, `\<` → ⟨, …). */
+export const leanInput: Extension = keymap.of([
+    { key: "Tab", run: completer({ ...LATEX_SYMBOLS, ...LEAN_SYMBOLS }) },
 ]);

@@ -26,6 +26,21 @@
     font-display: swap;
 }
 
+/* Ubuntu is pulled from Google Fonts (see app.html) rather than referenced by
+   local system name — `local("Ubuntu")` was tried first, but Ubuntu ships as
+   a single variable font now (`Ubuntu[wdth,wght].ttf`), and fontconfig's
+   static-instance matching for it is badly broken on this kind of build:
+   `fc-match "Ubuntu:weight=400"` returns the "Extra Bold" instance,
+   `weight=700` returns "Extra Bold" too, `weight=200` returns "Bold" — every
+   CSS weight WebKitGTK asked fontconfig to resolve came back wrong, which is
+   what read as bold, gappy, low-contrast text (worst on light backgrounds,
+   where the broken hinting shows up most). Declaring the weight as a range on
+   an `@font-face { src: local(...) }` didn't fix it either — WebKitGTK still
+   goes through the same broken fontconfig lookup for a `local()` variable
+   font regardless. A `url()`-loaded face never touches fontconfig at all, so
+   the four static Google Fonts weights (400/500/700 + italic) are what's
+   actually in play here; see `html.linux-csd` below. */
+
 /* Class-based dark mode: applies dark: variants when html has .dark class */
 @variant dark (&:where(.dark, .dark *));
 
@@ -77,8 +92,17 @@
     --color-brand-charcoal-50: #f2f2f2;
     --color-brand-charcoal-100: #e0e0e0;
     --color-brand-charcoal-200: #c8c8c8;
-    --color-brand-charcoal-300: #ababab;
-    --color-brand-charcoal-400: #8d8d8d;
+    /* 300/400 were #ababab/#8d8d8d — under 2.4:1 and 3.4:1 against white, well
+       short of WCAG's 4.5:1 floor for normal text. At the small sizes this app
+       uses for secondary text (10-13px), that undercontrast is what read as
+       fuzzy/"ghosted" glyphs: anti-aliasing has too little tonal range to draw
+       a crisp edge, so it falls back to a soft blend that looks like a lighter
+       and darker copy of the same letterform. Darkened to ~4.3:1 / ~4.6:1 —
+       still a visibly lighter, secondary-text gray, just no longer below the
+       threshold where the renderer can draw it cleanly. Dark mode redefines
+       this whole scale separately below and was never affected. */
+    --color-brand-charcoal-300: #7a7a7a;
+    --color-brand-charcoal-400: #757575;
     --color-brand-charcoal-500: #707070;
     --color-brand-charcoal-600: #5c5c5c;
     --color-brand-charcoal-700: #4a4a4a;
@@ -91,40 +115,36 @@
     --color-slate-350: #b0bccc;
 }
 
-/* ── App dark theme (Catppuccin Frappe) ──────────────────────────────────────── */
-/* Frappe palette reference:
-   Crust #232634 · Mantle #292c3c · Base #303446
-   Surface0 #414559 · Surface1 #51576d · Surface2 #626880
-   Overlay0 #737994 · Overlay1 #838ba7 · Overlay2 #949cbb
-   Subtext0 #a5adce · Subtext1 #b5bfe2 · Text #c6d0f5
-   Yellow #e5c890 · Peach #ef9f76 · Green #a6d189 · Blue #8caaee */
+/* ── App dark theme (neutral charcoal) ─────────────────────────────────────── */
 html.dark {
-    /* Sand → Frappe surfaces (lightest = Base, not Crust) */
-    --color-brand-sand-50: #303446; /* Base  — editor/REPL backgrounds */
-    --color-brand-sand-100: #292c3c; /* Mantle — panel backgrounds */
-    --color-brand-sand-200: #414559; /* Surface0 — dividers, headers */
-    --color-brand-sand-400: #626880; /* Surface2 — borders */
+    color-scheme: dark;
 
-    /* Gold → Frappe yellow/peach accent */
-    --color-brand-gold-50: #2a2740;
-    --color-brand-gold-100: #3b3757;
-    --color-brand-gold-200: #534e70;
-    --color-brand-gold-300: #9c8b80;
-    --color-brand-gold-400: #e5c890; /* Frappe Yellow — main accent */
+    /* Sand becomes a neutral surface scale in dark mode. */
+    --color-brand-sand-50: #2b2b2b;
+    --color-brand-sand-100: #242424;
+    --color-brand-sand-200: #404040;
+    --color-brand-sand-400: #666666;
+
+    /* Keep the gold accent warm without introducing a purple tint. */
+    --color-brand-gold-50: #2d2922;
+    --color-brand-gold-100: #3a3428;
+    --color-brand-gold-200: #554c3a;
+    --color-brand-gold-300: #9c8b70;
+    --color-brand-gold-400: #e5c890;
     --color-brand-gold-500: #d4b57f;
     --color-brand-gold-600: #c4a26e;
 
-    /* Charcoal → Frappe text scale */
-    --color-brand-charcoal-50: #c6d0f5; /* Text */
-    --color-brand-charcoal-100: #b5bfe2; /* Subtext1 */
-    --color-brand-charcoal-200: #9ca3c0; /* between Subtext1 and Overlay2 */
-    --color-brand-charcoal-300: #838ba7; /* Overlay1 — labels, muted */
-    --color-brand-charcoal-400: #949cbb; /* Overlay2 — muted-to-body */
-    --color-brand-charcoal-500: #a5adce; /* Subtext0 — body text */
-    --color-brand-charcoal-600: #b5bfe2; /* Subtext1 — emphasised body */
-    --color-brand-charcoal-700: #c6d0f5; /* Text — strong */
-    --color-brand-charcoal-800: #d7def7; /* between Text and heading */
-    --color-brand-charcoal-900: #e8edff; /* near-white headings */
+    /* Neutral text scale, from muted labels to high-emphasis headings. */
+    --color-brand-charcoal-50: #f2f2f2;
+    --color-brand-charcoal-100: #e3e3e3;
+    --color-brand-charcoal-200: #c9c9c9;
+    --color-brand-charcoal-300: #a3a3a3;
+    --color-brand-charcoal-400: #b5b5b5;
+    --color-brand-charcoal-500: #c7c7c7;
+    --color-brand-charcoal-600: #d4d4d4;
+    --color-brand-charcoal-700: #e1e1e1;
+    --color-brand-charcoal-800: #ededed;
+    --color-brand-charcoal-900: #f7f7f7;
 
     --ayah-flash-bg: color-mix(
         in srgb,
@@ -135,7 +155,72 @@ html.dark {
 
 html.dark body,
 html.dark .bg-gradient-radial {
-    background-color: #232634; /* Frappe Crust — outer app background */
+    background-color: #1c1c1c;
+}
+
+/* Older components still contain arbitrary Frappe utilities. Map those class
+   names onto the semantic charcoal palette until those components are touched. */
+html.dark [class*="dark:bg-[#232634]"],
+html.dark [class*="dark:bg-[#1e2030]"] {
+    background-color: #1c1c1c;
+}
+html.dark [class*="dark:bg-[#292c3c]"] {
+    background-color: var(--color-brand-sand-100);
+}
+html.dark [class*="dark:bg-[#303446]"] {
+    background-color: var(--color-brand-sand-50);
+}
+html.dark [class*="dark:bg-[#363a4f]"] {
+    background-color: #343434;
+}
+html.dark [class*="dark:bg-[#414559]"] {
+    background-color: var(--color-brand-sand-200);
+}
+html.dark [class*="dark:bg-[#51576d]"],
+html.dark [class*="dark:bg-[#4a4e5c]"] {
+    background-color: #555555;
+}
+html.dark [class*="dark:bg-[#3b3757]"] {
+    background-color: var(--color-brand-gold-100);
+}
+html.dark [class*="dark:hover:bg-[#292c3c]"]:hover {
+    background-color: var(--color-brand-sand-100);
+}
+html.dark [class*="dark:hover:bg-[#363a4f]"]:hover {
+    background-color: #343434;
+}
+html.dark [class*="dark:hover:bg-[#414559]"]:hover {
+    background-color: var(--color-brand-sand-200);
+}
+html.dark [class*="dark:hover:bg-[#51576d]"]:hover,
+html.dark [class*="dark:hover:bg-[#4a4e5c]"]:hover,
+html.dark [class*="dark:hover:bg-[#626880]"]:hover {
+    background-color: #555555;
+}
+html.dark [class*="dark:hover:bg-[#3b3757]"]:hover {
+    background-color: var(--color-brand-gold-100);
+}
+html.dark [class*="dark:active:bg-[#414559]"]:active {
+    background-color: var(--color-brand-sand-200);
+}
+html.dark [class*="dark:border-[#414559]"] {
+    border-color: var(--color-brand-sand-200);
+}
+html.dark [class*="dark:border-[#51576d]"],
+html.dark [class*="dark:border-[#626880]"] {
+    border-color: var(--color-brand-sand-400);
+}
+html.dark [class*="dark:text-[#c6d0f5]"] {
+    color: var(--color-brand-charcoal-700);
+}
+html.dark [class*="dark:text-[#838ba7]"] {
+    color: var(--color-brand-charcoal-300);
+}
+html.dark [class*="dark:text-[#626880]"] {
+    color: #858585;
+}
+html.dark [class*="dark:placeholder"][class*="[#626880]"]::placeholder {
+    color: #858585;
 }
 
 /* ── Light mode scrollbars (global baseline) ─────────────────────────────── */
@@ -175,7 +260,7 @@ html.dark .bg-gradient-radial {
 /* ── Dark mode scrollbars ─────────────────────────────────────────────────── */
 /* Firefox */
 html.dark * {
-    scrollbar-color: #626880 #303446;
+    scrollbar-color: #686868 #2b2b2b;
     scrollbar-width: thin;
 }
 
@@ -186,46 +271,40 @@ html.dark ::-webkit-scrollbar {
 }
 
 html.dark ::-webkit-scrollbar-track {
-    background: #303446;
+    background: #2b2b2b;
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-    background-color: #626880;
+    background-color: #686868;
     border-radius: 4px;
-    border: 2px solid #303446;
+    border: 2px solid #2b2b2b;
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-    background-color: #838ba7;
+    background-color: #858585;
 }
 
 html.dark ::-webkit-scrollbar-corner {
-    background: #303446;
+    background: #2b2b2b;
 }
 
-/* ── EditorTabs: thin horizontal scrollbar (dark) ──────────────────────────
-   Uses the standard scrollbar API only — consistent across WKWebView /
-   WebView2 / WebKitGTK. Overrides the html.dark * track colour so the tab
-   strip keeps a transparent track. The thin width is set on .tabs-scroll. */
-html.dark .tabs-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(150, 150, 150, 0.4) transparent;
-}
+/* EditorTabs draws its own overlay scroll indicator (see EditorTabs.svelte);
+   the native bar is hidden there, so no dark-mode scrollbar rule is needed. */
 
-/* ── LexicalEditor: scrollbar track matches its bg (#292c3c), not Parchment's (#303446) ── */
+/* ── LexicalEditor: scrollbar track matches its panel background. ─────────── */
 html.dark .editor-shell .ContentEditable__root {
-    scrollbar-color: #626880 #292c3c;
+    scrollbar-color: #686868 #242424;
 }
 html.dark .editor-shell ::-webkit-scrollbar-track {
-    background: #292c3c;
+    background: #242424;
 }
 html.dark .editor-shell ::-webkit-scrollbar-thumb {
-    border-color: #292c3c;
+    border-color: #242424;
 }
 
 /* ── Zen + dark mode: both panels are bg-transparent, so scrollbar track must be too ── */
 html.dark.zen * {
-    scrollbar-color: #626880 transparent;
+    scrollbar-color: #686868 transparent;
 }
 html.dark.zen ::-webkit-scrollbar-track {
     background: transparent;
@@ -235,7 +314,7 @@ html.dark.zen ::-webkit-scrollbar-thumb {
 }
 /* LexicalEditor-specific zen override (higher specificity than the non-zen editor rule above) */
 html.dark.zen .editor-shell .ContentEditable__root {
-    scrollbar-color: #626880 transparent;
+    scrollbar-color: #686868 transparent;
 }
 html.dark.zen .editor-shell ::-webkit-scrollbar-track {
     background: transparent;
@@ -382,7 +461,7 @@ html.dark .xterm .xterm-viewport::-webkit-scrollbar-corner {
     background: var(--terminal-bg, transparent);
 }
 html.dark .xterm .xterm-viewport::-webkit-scrollbar-thumb {
-    background-color: #62688082;
+    background-color: #68686882;
     border: 2px solid var(--terminal-bg, transparent);
     background-clip: padding-box;
 }
@@ -417,7 +496,7 @@ html.dark .xterm .xterm-viewport::-webkit-scrollbar-thumb {
 }
 
 html.dark .cm-scroller {
-    scrollbar-color: #62688082 transparent;
+    scrollbar-color: #68686882 transparent;
 }
 
 html.dark .cm-scroller::-webkit-scrollbar-thumb {
@@ -427,46 +506,54 @@ html.dark .cm-scroller::-webkit-scrollbar-thumb {
 
 html.dark .cm-scroller:hover::-webkit-scrollbar-thumb,
 html.dark .cm-scroller:active::-webkit-scrollbar-thumb {
-    background-color: #62688082;
+    background-color: #68686882;
 }
 
-/* ── Opacity slider (Settings → Sukūn Mode tabs opacity) ───────────────────
-   Fully custom so the track + thumb follow the brand palette, which already
-   flips in dark mode (html.dark redefines the --color-brand-* variables). */
-.zen-opacity-slider {
+/* ── Range slider ─────────────────────────────────────────────────────────
+   One definition shared by the postcard editor and Settings so the two cannot
+   drift apart. Track colours come from the brand palette, which html.dark
+   already redefines; the dark track is pinned explicitly because
+   --color-brand-sand-200 doubles as a divider colour there. */
+.range-slider {
     -webkit-appearance: none;
     appearance: none;
-    height: 6px;
-    border-radius: 9999px;
-    background: var(--color-brand-sand-200);
+    height: 4px;
+    border-radius: 999px;
+    background: var(--color-brand-sand-200, #ede2ce);
     outline: none;
 }
-.zen-opacity-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 16px;
-    border-radius: 10px;
-    background: var(--color-brand-gold-400);
-    /*border: 2px solid var(--color-brand-sand-50);*/
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-    cursor: pointer;
-}
-.zen-opacity-slider::-moz-range-track {
-    height: 6px;
-    border-radius: 9999px;
+html.dark .range-slider {
     background: var(--color-brand-sand-200);
 }
-.zen-opacity-slider::-moz-range-thumb {
-    width: 20px;
-    height: 16px;
-    border-radius: 10px;
-    background: var(--color-brand-gold-400);
-    /*border: 2px solid var(--color-brand-sand-50);*/
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+.range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--color-brand-gold-400, #c8a96a);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
     cursor: pointer;
 }
-.zen-opacity-slider:focus-visible {
+.range-slider::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: var(--color-brand-sand-200, #ede2ce);
+}
+html.dark .range-slider::-moz-range-track {
+    background: var(--color-brand-sand-200);
+}
+.range-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--color-brand-gold-400, #c8a96a);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+.range-slider:focus-visible {
     outline: 2px solid var(--color-brand-gold-400);
     outline-offset: 2px;
 }
@@ -1121,12 +1208,12 @@ select.font-family {
     color: var(--color-brand-gold-600);
 }
 html.dark .editor-shell .editor-image .image-caption-button {
-    background-color: #292c3c;
+    background-color: var(--color-brand-sand-100);
     border-color: #e5c890;
     color: #e5c890;
 }
 html.dark .editor-shell .editor-image .image-caption-button:hover {
-    background-color: #363a4f;
+    background-color: #343434;
 }
 
 /* Image control wrapper: overlay the image, no flow impact */
@@ -1900,7 +1987,7 @@ html.dark ::highlight(find-match) {
 }
 html.dark ::highlight(find-match-current) {
     background-color: #e5c890;
-    color: #232634;
+    color: #1c1c1c;
 }
 
 /* ── Frosted panels ────────────────────────────────────────────────────────
@@ -1922,6 +2009,146 @@ html.dark ::highlight(find-match-current) {
         background-color: var(--glass-solid, #ffffff);
     }
     html.dark .glass-panel {
-        background-color: var(--glass-solid-dark, #292c3c);
+        background-color: var(--glass-solid-dark, var(--color-brand-sand-100));
     }
+}
+
+/* Ubuntu is Canonical's default UI typeface, hence the preference here on
+   Linux. "Ubuntu" resolves to the Google Fonts `@font-face` faces loaded in
+   app.html (see the note up top on why those, not the system copy) — an
+   `@font-face`-declared family always wins over a local font of the same
+   name, so this is unambiguous regardless of what's installed. Preflight's
+   plain `html` rule (below, compiled from Tailwind's default `--font-sans`
+   stack) only has element specificity, so this class selector overrides it
+   for body text while leaving explicit per-element fonts — Quranic Arabic,
+   code blocks, the handwriting face, … — untouched, same as it would for any
+   other more-specific `font-*` class. Falls back to the exact same stack
+   Preflight uses elsewhere without a network connection to load Ubuntu from
+   (there's no local copy bundled — see the app.html note). */
+html.linux-csd {
+    font-family:
+        "Ubuntu",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        "Helvetica Neue",
+        "Noto Sans",
+        Arial,
+        sans-serif,
+        "Apple Color Emoji",
+        "Segoe UI Emoji",
+        "Segoe UI Symbol",
+        "Noto Color Emoji";
+}
+
+/* ── Linux client-side decorations ─────────────────────────────────────────
+   The Linux window is undecorated (see AppHeader / tauri.linux.conf.json) so
+   the header can be the title bar. That also means GTK no longer draws the
+   window frame, and without one the app reads as bare content butted against
+   the desktop. These rules put the frame back in GNOME's shape.
+
+   Every window gets it: +layout.svelte wraps the main window and each dialog
+   window (terminal, tafsir, drawing, …) in the same `.app-shell` box, so a
+   dialog is framed exactly like the app it came from.
+
+   The window is `transparent: true` so the corners outside the radius are
+   genuinely see-through rather than a square of app colour. That costs us the
+   webview's opaque backdrop, which is what painted the page white in light
+   mode, so `.app-shell` has to state the page colour itself. Dark mode already
+   declares #1c1c1c on `html.dark body` above; this repeats it one element in.
+
+   `csd-round` is toggled on <html> from +layout.svelte and tracks the shared
+   windowMaximized store: a maximised or fullscreen window sits flush against
+   the screen edge, and GNOME squares its corners off there too.
+
+   GNOME's drop shadow is drawn by the compositor for its own decorations and
+   cannot be reproduced from inside the window, so it is simply absent. */
+html.linux-csd,
+html.linux-csd body {
+    background: transparent;
+}
+
+html.linux-csd .app-shell {
+    background-color: #ffffff;
+    /* Everything that floats — SurahWidget/EditorToolbar's docked buttons
+       (`position: absolute`), toasts and notifications (`position: fixed`),
+       modal backdrops, TourOverlay, … — needs to anchor to the visible frame,
+       not to the true window bounds, once the frame is inset from those
+       bounds by the shadow margin below. `position: relative` alone makes
+       this the containing block for `absolute` descendants; `translateZ(0)`
+       is the standard trick that does the same for `fixed` ones (a `fixed`
+       element normally always uses the viewport, ignoring DOM nesting, unless
+       an ancestor establishes a new containing block this way). Paired with
+       `overflow-hidden` already on this element, anything positioned this way
+       is clipped to the shell's own rounded box for free, so a `fixed inset-0`
+       overlay fills exactly the frame with no separate inset/radius math
+       needed to keep it off the shadow band. */
+    position: relative;
+    transform: translateZ(0);
+}
+
+html.linux-csd.dark .app-shell {
+    background-color: #1c1c1c;
+}
+
+/* 12px matches Adwaita's window radius. The hairline is the frame's own
+   border, not a shadow: it keeps the corner from fraying against a light
+   wallpaper, which is the job GNOME gives its outermost 1px. Adwaita draws
+   that line at roughly 12% black and lets the drop shadow do the separating,
+   so anything heavier reads as a drawn-on grey rectangle in light mode. */
+html.linux-csd.csd-round .app-shell {
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+html.linux-csd.csd-round.dark .app-shell {
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* The drop shadow, for every window (`csd-dialog` is set on <html> from
+   +layout.svelte for the main window and each dialog alike). GNOME's
+   compositor draws one for its own decorations and cannot be asked to draw
+   ours, but a window can cast its own as long as there is transparent room
+   inside it for the shadow to fall into: the shell is inset by the margin
+   below, the window is created with `transparent: true` on Linux (see the
+   window stores and tauri.linux.conf.json), and the band around the frame
+   carries the shadow. GTK reserves exactly this margin for the same reason.
+
+   Every floating panel and full-window overlay (terminal, manuscripts,
+   toasts, modal backdrops, …) is `position: fixed` or `absolute`, but now
+   anchors to this box rather than the true window bounds — see the note on
+   `.app-shell`'s `position`/`transform` above — so nothing spills into the
+   band; a `fixed inset-0` overlay simply fills the frame exactly.
+
+   Kept small on purpose: this margin is also the only room clipped-by-design
+   UI (a docked toggle button that deliberately hangs a little past its own
+   panel's edge, say) has before `overflow-hidden` above starts trimming it,
+   so a wide margin both reads as an oversized shadow and eats into that
+   budget. The resize handles below stay a few px deeper than the margin so
+   the grab zone still comfortably covers the visible border, not just the
+   band outside it. `CSD_SHADOW_MARGIN_PX` in window-state.store.ts is this
+   same number — keep the two in sync, it's how +page.svelte's own
+   JS-measured layout knows how much of `100vh` this margin actually eats.
+
+   Each shadow layer's own reach — offset plus blur — is kept at or under the
+   margin on purpose: give a layer more than the transparent room it has to
+   fade into and the compositor has nowhere left to fade it, so instead of
+   tapering to nothing it gets sheared off hard at the true window edge,
+   right where the shadow should have been faintest. Two layers, as Adwaita
+   has: a short contact shadow that grounds the edge and a soft, wider one
+   that carries the depth. Both are dropped when the window is maximised,
+   along with the margin — `csd-round` already tracks that. */
+html.linux-csd.csd-round.csd-dialog .app-shell {
+    margin: 8px;
+    height: calc(100vh - 16px);
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.12),
+        0 2px 6px rgba(0, 0, 0, 0.16);
+}
+
+html.linux-csd.csd-round.csd-dialog.dark .app-shell {
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.3),
+        0 2px 6px rgba(0, 0, 0, 0.4);
 }

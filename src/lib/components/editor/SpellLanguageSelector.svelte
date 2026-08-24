@@ -80,7 +80,7 @@
 
     {#if open}
         <div
-            class="absolute right-0 z-[9999] w-56 max-h-72 flex flex-col overflow-hidden rounded-3xl shadow-lg text-[12px]
+            class="absolute right-0 z-[9999] w-56 max-h-72 flex flex-col overflow-hidden rounded-xl shadow-lg text-[12px]
                    bg-white dark:bg-[#292c3c] border border-stone-200 dark:border-[#414559]
                    text-brand-charcoal-600 dark:text-[#c6d0f5]
                    {up ? 'bottom-full mb-1' : 'top-full mt-1'}"

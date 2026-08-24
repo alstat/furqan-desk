@@ -240,7 +240,7 @@
 
     {#if toneMenuAction && !askOnly}
         <div
-            class="flex items-center gap-1 rounded-3xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+            class="flex items-center gap-1 rounded-xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
         >
             {#each tones as tone (tone.id)}
                 <button
@@ -256,7 +256,7 @@
 
     {#if promptOpen}
         <div
-            class="relative flex w-80 items-center gap-1.5 rounded-3xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+            class="relative flex w-80 items-center gap-1.5 rounded-xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
         >
             {#if busyAction === "prompt"}
                 <span class="prompt-runborder" aria-hidden="true"></span>
@@ -265,7 +265,7 @@
                 bind:this={promptInput}
                 bind:value={promptText}
                 placeholder={$t("ai_selection.prompt_placeholder")}
-                class="min-w-0 flex-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+                class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
                 onkeydown={(e) => {
                     if (e.key === "Enter") submitPrompt();
                     if (e.key === "Escape") promptOpen = false;
@@ -284,13 +284,13 @@
 
     {#if askPromptOpen}
         <div
-            class="flex w-80 items-center gap-1.5 rounded-3xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+            class="flex w-80 items-center gap-1.5 rounded-xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
         >
             <input
                 bind:this={askPromptInput}
                 bind:value={askPromptText}
                 placeholder={$t("ai_selection.ask_placeholder")}
-                class="min-w-0 flex-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+                class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
                 onkeydown={(e) => {
                     if (e.key === "Enter") submitAskPrompt();
                     if (e.key === "Escape") askPromptOpen = false;

@@ -1,6 +1,6 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import { onDestroy, tick } from "svelte";
+    import { tick } from "svelte";
     import { fly } from "svelte/transition";
     import {
         loadBookmarks,
@@ -17,6 +17,9 @@
     } from "$lib/stores/bookmarks.store";
     import { surahLabels, selectedSurahIdx } from "$lib/stores/quran.svelte";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import { anchorBelow } from "$lib/utils/anchoredPanel";
+    import { headerHeight } from "$lib/stores/header.store";
+    import { csdMarginPx } from "$lib/stores/window-state.store";
     import { t, locale } from "$lib/i18n";
     import { get } from "svelte/store";
     import { invoke } from "@tauri-apps/api/core";
@@ -29,12 +32,19 @@
     import type { SurahMorphology } from "$lib/types/morphology";
     import { isPro } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
+    import DialogPanelHeader from "$lib/components/shared/DialogPanelHeader.svelte";
 
     interface Props {
         open: boolean;
         onClose: () => void;
+        /**
+         * Rect of the header button this drops out of. The panel is a menu now
+         * rather than a floating window: it hangs under its button, closes on
+         * an outside click or Escape, and is not dragged around.
+         */
+        anchor?: DOMRect | null;
     }
-    let { open, onClose }: Props = $props();
+    let { open, onClose, anchor = null }: Props = $props();
 
     let ayahInput = $state(1);
     let noteInput = $state("");
@@ -173,63 +183,30 @@
     // ── Drag ────────────────────────────────────────────────────────────────
     const PANEL_W = 440;
 
-    let x = $state(0);
-    let y = $state(0);
     let zIndex = $state(500);
-    let isDragging = $state(false);
-    let dragStartX = 0,
-        dragStartY = 0,
-        startX = 0,
-        startY = 0;
     let initialized = false;
+
+    // Re-read on every open so a resized window or a moved button still lines
+    // up, and so the panel follows the header when the UI scale changes.
+    // $headerHeight is the bar's own measured height, not its Y position — add
+    // the CSD shadow margin (the header's top edge sits that far down from the
+    // true window top while the shell floats) to get the bar's actual bottom.
+    const placement = $derived(
+        open ? anchorBelow(anchor, PANEL_W, $headerHeight + $csdMarginPx, 0) : null,
+    );
 
     $effect(() => {
         if (open && !initialized) {
-            x = Math.max(0, (window.innerWidth - PANEL_W) / 2);
-            y = Math.max(8, (window.innerHeight - 420) * 0.25);
             zIndex = bringToFront();
             initialized = true;
         }
         if (!open) initialized = false;
     });
 
-    function startDrag(e: PointerEvent) {
-        isDragging = true;
-        aiSelection = null;
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        startX = x;
-        startY = y;
-        window.addEventListener("pointermove", onDrag);
-        window.addEventListener("pointerup", stopDrag, { once: true });
+    function handleKeydown(e: KeyboardEvent) {
+        if (e.key === "Escape") onClose();
     }
 
-    function onDrag(e: PointerEvent) {
-        x = Math.max(
-            0,
-            Math.min(
-                window.innerWidth - PANEL_W,
-                startX + (e.clientX - dragStartX),
-            ),
-        );
-        y = Math.max(
-            0,
-            Math.min(
-                window.innerHeight - 60,
-                startY + (e.clientY - dragStartY),
-            ),
-        );
-    }
-
-    function stopDrag() {
-        isDragging = false;
-        window.removeEventListener("pointermove", onDrag);
-    }
-
-    onDestroy(() => {
-        if (typeof window !== "undefined")
-            window.removeEventListener("pointermove", onDrag);
-    });
 
     // Rendered inside Parchment, whose root gets display:none when the surah
     // page is hidden. Portal the dialog to <body> so it escapes that hidden
@@ -244,58 +221,47 @@
     }
 </script>
 
+<svelte:window on:keydown={open ? handleKeydown : undefined} />
+
+<!-- Backdrop: a click anywhere outside dismisses the menu, the way GlobalSearch
+     does. Transparent — a menu should not dim the page behind it. -->
 {#if open}
     <div
         use:portal
-        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
+        role="presentation"
+        class="fixed inset-0"
+        style="z-index:{zIndex - 1};"
+        onclick={onClose}
+        onkeydown={() => {}}
+    ></div>
+{/if}
+
+{#if open}
+    <div
+        use:portal
+        transition:fly={{ y: -10, duration: 160, opacity: 0 }}
         role="dialog"
-        aria-modal="true"
         aria-label={$t("bookmark.title")}
-        class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
-        style="left:{x}px; top:{y}px; width:{PANEL_W}px; max-height:85vh; z-index:{zIndex};"
-        onpointerdown={() => {
-            zIndex = bringToFront();
-        }}
+        class="fixed flex flex-col rounded-b-xl border border-t-0 border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-[0_14px_28px_-10px_rgba(0,0,0,0.28)] dark:shadow-[0_14px_28px_-10px_rgba(0,0,0,0.55)] overflow-hidden"
+        style="left:{placement?.x ?? 0}px; top:{placement?.y ?? 0}px; width:{PANEL_W}px; max-height:{placement?.maxHeight ?? 0}px; z-index:{zIndex};"
     >
-        <!-- Header -->
-        <div
-            class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 select-none {isDragging
-                ? 'cursor-grabbing'
-                : 'cursor-grab'}"
-            onpointerdown={startDrag}
-            role="banner"
+        <DialogPanelHeader
+            icon="solar:bookmark-bold-duotone"
+            title={$t("bookmark.title")}
+            isDragging={false}
+            hideClose={true}
+            sheet={true}
+            {onClose}
+            onpointerdown={() => {}}
         >
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div
-                        class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]"
-                    >
-                        <Icon
-                            icon="solar:bookmark-bold-duotone"
-                            class="text-brand-gold-500"
-                            width="1rem"
-                        />
-                    </div>
-                    <div>
-                        <h2
-                            class="text-sm font-semibold text-brand-charcoal-900"
-                        >
-                            {$t("bookmark.title")}
-                        </h2>
-                        <p class="text-[11px] text-brand-charcoal-300">
-                            {$t("bookmark.n_saved", { n: $bookmarks.length })}
-                        </p>
-                    </div>
-                </div>
-                <button
-                    onclick={onClose}
-                    aria-label={$t("common.close")}
-                    class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+            {#snippet action()}
+                <span
+                    class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
-                    <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
-                </button>
-            </div>
-        </div>
+                    {$t("bookmark.n_saved", { n: $bookmarks.length })}
+                </span>
+            {/snippet}
+        </DialogPanelHeader>
 
         <div
             class="flex-1 overflow-y-auto bg-brand-sand-50 dark:bg-[#232634]"

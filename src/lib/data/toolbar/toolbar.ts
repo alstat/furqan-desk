@@ -3,6 +3,11 @@ import { activeClass } from "../config";
 
 export let actionBtnStyle =
   "cursor-pointer rounded-full bg-brand-sand-100 dark:bg-[#292c3c] hover:bg-brand-sand-200 dark:hover:bg-[#363a4f] active:bg-brand-sand-400 dark:active:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] p-2 shadow-sm";
+// The window header's flat variant of actionBtnStyle: no pill, no shadow, and
+// tighter padding — in a headerbar the bar itself is the surface, so each
+// button only needs a hover wash to read as a control.
+export let headerBtnStyle =
+  "cursor-pointer rounded-md bg-transparent hover:bg-brand-sand-200 dark:hover:bg-[#363a4f] active:bg-brand-sand-400 dark:active:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] p-1.5";
 export let toolBarBtnStyle =
   "cursor-pointer hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] active:bg-brand-sand-200 dark:active:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] rounded-md";
 export let activeBtnStyle = "bg-brand-sand-200 dark:bg-[#414559] rounded-md";

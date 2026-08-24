@@ -15,6 +15,7 @@
     import { writeFile } from "@tauri-apps/plugin-fs";
     import { writeImage } from "@tauri-apps/plugin-clipboard-manager";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import WindowControls from "$lib/components/shared/WindowControls.svelte";
     import {
         selectedSurahIdx,
         surahLabels,
@@ -59,9 +60,20 @@
     interface Props {
         open: boolean;
         onClose: () => void;
+        /**
+         * The editor owns a native window of its own rather than floating
+         * inside the main one: it fills the viewport, drops the drag handle and
+         * z-index juggling, and lets the OS place and stack it.
+         */
+        standalone?: boolean;
     }
 
-    let { open, onClose }: Props = $props();
+    let { open, onClose, standalone = false }: Props = $props();
+
+    // macOS keeps native traffic lights overlaid on the header; the other
+    // platforms run the window undecorated and draw their own controls.
+    const isMac =
+        typeof navigator !== "undefined" && navigator.userAgent.includes("Mac");
 
     const selectClass =
         "w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#626880]";
@@ -492,12 +504,16 @@
                     : "";
                 pendingManuscript = null;
             }
-            // The editor wants room, but never more than the window has.
-            panelW = Math.max(MIN_W, Math.min(1160, window.innerWidth - 48));
-            panelH = Math.max(MIN_H, Math.min(820, window.innerHeight - 48));
-            x = Math.max(0, (window.innerWidth - panelW) / 2);
-            y = Math.max(8, (window.innerHeight - panelH) / 2);
-            zIndex = bringToFront();
+            // Floating mode has to place and size itself; a native window is
+            // already exactly where the OS put it.
+            if (!standalone) {
+                // The editor wants room, but never more than the window has.
+                panelW = Math.max(MIN_W, Math.min(1160, window.innerWidth - 48));
+                panelH = Math.max(MIN_H, Math.min(820, window.innerHeight - 48));
+                x = Math.max(0, (window.innerWidth - panelW) / 2);
+                y = Math.max(8, (window.innerHeight - panelH) / 2);
+                zIndex = bringToFront();
+            }
         }
         if (!open) initialized = false;
     });
@@ -1139,7 +1155,7 @@
             {step}
             {value}
             oninput={(e) => onInput(Number((e.currentTarget as HTMLInputElement).value))}
-            class="pc-range w-full"
+            class="range-slider w-full"
         />
     </div>
 {/snippet}
@@ -1188,26 +1204,43 @@
 
 {#if open}
     <div
-        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
+        transition:fly={standalone
+            ? { duration: 0 }
+            : { y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="false"
         aria-label={$t("postcard.title")}
         tabindex="-1"
-        class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
-        style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
-        onpointerdown={() => (zIndex = bringToFront())}
+        class="flex flex-col overflow-hidden bg-white dark:bg-[#303446] {standalone
+            ? 'h-full w-full'
+            : 'fixed rounded-xl border border-brand-sand-200 dark:border-[#414559] shadow-xl dark:shadow-black/40'}"
+        style={standalone
+            ? ""
+            : `left:${x}px; top:${y}px; width:${panelW}px; height:${panelH}px; z-index:${zIndex};`}
+        onpointerdown={standalone ? undefined : () => (zIndex = bringToFront())}
     >
-        <!-- Header / drag handle — same compact bar as the manuscript viewer -->
+        <!-- Header / drag handle — same compact bar as the manuscript viewer.
+             In a native window the OS moves the window,
+             so this becomes a plain drag region instead of a pointer-dragged
+             panel. -->
         <div
-            class="flex items-center justify-between px-4 py-1.5 shrink-0
+            data-tauri-drag-region={standalone ? true : undefined}
+            class="flex items-center justify-between gap-2 px-4 py-1.5 shrink-0
                border-b border-brand-gold-200 dark:border-[#414559]
                bg-brand-gold-100 dark:bg-[#292c3c]
-               select-none rounded-t-3xl
-               {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
-            onpointerdown={startDrag}
+               select-none {standalone
+                ? ''
+                : isDragging
+                  ? 'rounded-t-xl cursor-grabbing'
+                  : 'rounded-t-xl cursor-grab'}"
+            style:padding-left={standalone && isMac ? "5rem" : undefined}
+            onpointerdown={standalone ? undefined : startDrag}
             role="banner"
         >
-            <div class="flex items-center gap-2 min-w-0">
+            <div
+                data-tauri-drag-region={standalone ? true : undefined}
+                class="flex items-center gap-2 min-w-0"
+            >
                 <Icon
                     icon="solar:gallery-send-bold-duotone"
                     width="1.1rem"
@@ -1224,7 +1257,7 @@
                     {/if}
                 </span>
             </div>
-            <div class="flex items-center gap-1 shrink-0">
+            <div class="ml-auto flex items-center gap-1 shrink-0">
                 {#if statusMsg}
                     <span
                         class="mr-1 max-w-56 truncate text-[11px] font-medium text-brand-gold-600 dark:text-[#e5c890]"
@@ -1244,7 +1277,7 @@
                     onclick={exportPng}
                     onpointerdown={(e) => e.stopPropagation()}
                     disabled={exporting || !arabicText}
-                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 px-2.5 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-brand-gold-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-2.5 py-1 text-[10px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 transition-colors hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Icon
                         icon={exporting
@@ -1254,18 +1287,32 @@
                     />
                     {$t("postcard.export")}
                 </button>
-                <button
-                    onclick={onClose}
-                    onpointerdown={(e) => e.stopPropagation()}
-                    aria-label={$t("common.close")}
-                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                >
-                    <Icon
-                        icon="solar:close-circle-bold-duotone"
-                        width="0.85rem"
-                    />
-                </button>
+                <!-- Closing is the window's job once this bar *is* the title
+                     bar. The floating fallback panel has no frame of its own,
+                     so it keeps its own button. -->
+                {#if !standalone}
+                    <button
+                        onclick={onClose}
+                        onpointerdown={(e) => e.stopPropagation()}
+                        aria-label={$t("common.close")}
+                        class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                    >
+                        <Icon
+                            icon="solar:close-circle-bold-duotone"
+                            width="0.85rem"
+                        />
+                    </button>
+                {/if}
             </div>
+
+            <!-- Windows and Linux run this window undecorated, so the header
+                 supplies the minimise / maximise / close buttons itself. macOS
+                 overlays its own traffic lights instead (see the 5rem inset). -->
+            {#if standalone && !isMac}
+                <div class="-my-1.5 -mr-2 flex self-stretch">
+                    <WindowControls />
+                </div>
+            {/if}
         </div>
 
         <div class="flex min-h-0 flex-1">
@@ -2106,13 +2153,17 @@
             </div>
         </div>
 
-        {#each resizeHandles as { cls, dir }}
-            <div
-                aria-hidden="true"
-                class="resize-handle {cls}"
-                onpointerdown={(e) => startResize(e, dir)}
-            ></div>
-        {/each}
+        <!-- Only the floating panel resizes itself; a native window is resized
+             by its own frame. -->
+        {#if !standalone}
+            {#each resizeHandles as { cls, dir }}
+                <div
+                    aria-hidden="true"
+                    class="resize-handle {cls}"
+                    onpointerdown={(e) => startResize(e, dir)}
+                ></div>
+            {/each}
+        {/if}
     </div>
 {/if}
 
@@ -2154,26 +2205,6 @@
         pointer-events: none;
     }
 
-    .pc-range {
-        appearance: none;
-        height: 4px;
-        border-radius: 999px;
-        background: var(--color-brand-sand-200, #ede2ce);
-        outline: none;
-    }
-    :global(.dark) .pc-range {
-        background: #414559;
-    }
-    .pc-range::-webkit-slider-thumb {
-        appearance: none;
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        background: var(--color-brand-gold-400, #c8a96a);
-        cursor: pointer;
-        border: 2px solid #fff;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-    }
     .pc-color::-webkit-color-swatch-wrapper {
         padding: 0;
     }

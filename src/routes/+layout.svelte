@@ -2,6 +2,7 @@
 	import '../app.css';
 	import '$lib/icons';
 	import { appDarkMode, zenMode, uiFontScale } from '$lib/stores/editor.store';
+	import AppHeader from '$lib/components/shared/AppHeader.svelte';
 	import OpenTabFileWatcher from '$lib/components/shared/OpenTabFileWatcher.svelte';
 	import JuliaInstallPrompt from '$lib/components/shared/JuliaInstallPrompt.svelte';
 	import LeanInstallPrompt from '$lib/components/shared/LeanInstallPrompt.svelte';
@@ -13,8 +14,32 @@
 	import { t as i18n } from '$lib/i18n';
 	import { supabase, isSupabaseConfigured } from '$lib/supabase';
 	import { openFile, openFolder, saveFile, saveAs } from '$lib/actions/fileActions';
+	import { isLinuxCsd, csdRound as csdRoundStore } from '$lib/stores/window-state.store';
+	import { page } from '$app/state';
 
 	let { children } = $props();
+
+	// Secondary windows (the postcard editor, the manuscript viewer) render
+	// their route and nothing else: no app header, no file watcher, no install
+	// prompts, and none of the main window's menu/deep-link/close-confirm
+	// wiring, which all belongs to the one window that owns the documents.
+	const SECONDARY_ROUTES = [
+		'/postcard',
+		'/manuscripts',
+		'/ai-chat',
+		'/terminal',
+		'/julia-plots',
+		'/translation',
+		'/tafsir',
+		'/drawing'
+	];
+	const isSecondaryWindow = $derived(
+		SECONDARY_ROUTES.some((route) => page.url.pathname.startsWith(route))
+	);
+
+	// isLinuxCsd/csdRound live in window-state.store so +page.svelte's own
+	// height math (JS-measured, not CSS flex) can agree with the margin these
+	// classes put on `.app-shell` — see `csdMarginPx` there.
 
 	// Completes the Google OAuth flow: the system browser redirects back to our
 	// `ayahlab://auth-callback?code=…` custom scheme, the deep-link plugin hands
@@ -46,6 +71,58 @@
 		}
 	});
 
+	// Corners (and the shadow margin) only while the window floats; flush
+	// against the screen edge GNOME squares its own off too. Mirrors
+	// window-state.store's `csdRound`, which +page.svelte also reads.
+	const csdRound = $derived($csdRoundStore);
+
+	$effect(() => {
+		const root = document.documentElement;
+		root.classList.toggle('linux-csd', isLinuxCsd);
+		root.classList.toggle('csd-round', csdRound);
+		// Every window reserves the margin for its drop shadow — main window
+		// included — so it reads the same as its dialogs. See the note on
+		// `.csd-dialog` in app.css.
+		root.classList.toggle('csd-dialog', isLinuxCsd);
+	});
+
+	// The shadow margin (see `.app-shell` in app.css) sits outside the frame
+	// the user can actually see, so a handle sized to just that band would only
+	// catch a drag started in the band itself — missing clicks that land right
+	// on the visible border, which is where users actually aim. 16px, deeper
+	// than the margin, deliberately overlaps a few px of the visible frame too.
+	type ResizeDir =
+		| 'North'
+		| 'South'
+		| 'East'
+		| 'West'
+		| 'NorthEast'
+		| 'NorthWest'
+		| 'SouthEast'
+		| 'SouthWest';
+
+	const RESIZE_HANDLES: { dir: ResizeDir; cls: string }[] = [
+		{ dir: 'NorthWest', cls: 'left-0 top-0 h-4 w-4 cursor-nw-resize' },
+		{ dir: 'NorthEast', cls: 'right-0 top-0 h-4 w-4 cursor-ne-resize' },
+		{ dir: 'SouthWest', cls: 'bottom-0 left-0 h-4 w-4 cursor-sw-resize' },
+		{ dir: 'SouthEast', cls: 'bottom-0 right-0 h-4 w-4 cursor-se-resize' },
+		{ dir: 'North', cls: 'left-4 right-4 top-0 h-4 cursor-n-resize' },
+		{ dir: 'South', cls: 'bottom-0 left-4 right-4 h-4 cursor-s-resize' },
+		{ dir: 'West', cls: 'bottom-4 left-0 top-4 w-4 cursor-w-resize' },
+		{ dir: 'East', cls: 'bottom-4 right-0 top-4 w-4 cursor-e-resize' }
+	];
+
+	async function startResize(e: PointerEvent, dir: ResizeDir) {
+		if (e.button !== 0) return;
+		e.preventDefault();
+		try {
+			const { getCurrentWindow } = await import('@tauri-apps/api/window');
+			await getCurrentWindow().startResizeDragging(dir);
+		} catch {
+			// not running inside Tauri (e.g. browser dev)
+		}
+	}
+
 	$effect(() => {
 		if ($zenMode) {
 			document.documentElement.classList.add('zen');
@@ -64,6 +141,7 @@
 
 	onMount(async () => {
 		if (typeof window === 'undefined') return;
+		if (isSecondaryWindow) return;
 		try {
 			const { getCurrentWindow } = await import('@tauri-apps/api/window');
 			const { ask } = await import('@tauri-apps/plugin-dialog');
@@ -80,11 +158,12 @@
 				console.error('menu listener setup failed', e);
 			}
 
-			// On Windows/Linux the menu bar is hidden (lib.rs), and a hidden
-			// menu no longer delivers its accelerators there — only macOS keeps
-			// them via the system menu bar. Recreate the File shortcuts with a
-			// window-level keydown handler routed to the same actions. macOS is
-			// excluded so Cmd shortcuts aren't double-handled by menu + DOM.
+			// Windows and Linux get no application menu at all (see lib.rs:
+			// a menu there is drawn as a bar inside every window), so nothing
+			// delivers its accelerators — only macOS keeps them via the system
+			// menu bar. Recreate the File shortcuts with a window-level keydown
+			// handler routed to the same actions. macOS is excluded so Cmd
+			// shortcuts aren't double-handled by menu + DOM.
 			const isMac = navigator.userAgent.includes('Mac');
 			if (!isMac) {
 				window.addEventListener(
@@ -144,15 +223,45 @@
 	});
 </script>
 
-<div class="bg-gradient-radial h-screen overflow-hidden">
-	<OpenTabFileWatcher />
-	{@render children()}
-</div>
+{#if isSecondaryWindow}
+	<!-- The dialog windows are undecorated on Windows and Linux exactly like the
+	     main one, so they need the same shell: the Linux client-side frame (its
+	     hairline border, Adwaita radius and the squaring-off when maximised)
+	     hangs off `.app-shell` in app.css, and `overflow-hidden` is what trims
+	     the dialog's own square corners to that radius. Each dialog fills this
+	     box with `h-full w-full` rather than `h-screen`, so the frame's border
+	     is not pushed off the bottom edge. -->
+	<div class="app-shell flex h-screen flex-col overflow-hidden">
+		{@render children()}
+	</div>
+{:else}
+	<div class="app-shell bg-gradient-radial flex h-screen flex-col overflow-hidden">
+		<OpenTabFileWatcher />
+		<AppHeader />
+		<div class="min-h-0 flex-1">
+			{@render children()}
+		</div>
 
-<JuliaInstallPrompt />
-<JuliaInstallToast />
-<LeanInstallPrompt />
-<LeanInstallToast />
+		<!-- Inside the shell, not siblings of it: on Linux CSD these are
+		     `position: fixed`, and .app-shell is their containing block (see
+		     app.css), so nesting them here is what keeps them anchored to the
+		     visible frame instead of the true window bounds. -->
+		<JuliaInstallPrompt />
+		<JuliaInstallToast />
+		<LeanInstallPrompt />
+		<LeanInstallToast />
+	</div>
+{/if}
+
+{#if csdRound}
+	{#each RESIZE_HANDLES as handle (handle.dir)}
+		<div
+			role="presentation"
+			class="fixed z-50 {handle.cls}"
+			onpointerdown={(e) => startResize(e, handle.dir)}
+		></div>
+	{/each}
+{/if}
 
 <style>
 

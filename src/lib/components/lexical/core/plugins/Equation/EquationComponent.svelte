@@ -408,7 +408,7 @@
     <span class="inline-block my-1 max-w-full align-middle">
         <span
             bind:this={cardEl}
-            class="equation-editor-card relative flex flex-col rounded-3xl border border-brand-gold-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-lg overflow-hidden"
+            class="equation-editor-card relative flex flex-col rounded-xl border border-brand-gold-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-lg overflow-hidden"
             style:--eq-editor-w="{$equationEditorSize.width}px"
             style:--eq-editor-h="{$equationEditorSize.height}px"
             style:--eq-editor-max-w={maxCardWidth ? `${maxCardWidth}px` : null}

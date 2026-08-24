@@ -68,7 +68,7 @@
     <!-- Style-picker card (mirrors the equation editor's double-click UI) -->
     <div class="my-3 w-72">
         <div
-            class="flex flex-col rounded-3xl border border-brand-gold-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-lg overflow-hidden"
+            class="flex flex-col rounded-xl border border-brand-gold-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-lg overflow-hidden"
         >
             <!-- Editor header -->
             <div

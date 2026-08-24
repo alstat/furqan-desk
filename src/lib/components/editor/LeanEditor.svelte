@@ -8,12 +8,15 @@
         setTabContent,
         tabs,
     } from "$lib/stores/tabs.store";
+    import Icon from "@iconify/svelte";
     import {
         zenMode,
         zenPeek,
         codeMirrorViewInstance,
         appDarkMode,
+        editorIndentSize,
     } from "$lib/stores/editor.store";
+    import { formatLeanSource } from "$lib/utils/leanFormat";
     import CodeMirrorEditor from "./CodeMirrorEditor.svelte";
     import SpellLanguageSelector from "./SpellLanguageSelector.svelte";
     import LeanInfoviewPane from "./LeanInfoviewPane.svelte";
@@ -142,6 +145,24 @@
     onDestroy(() => {
         window.removeEventListener("pointermove", onDrag);
     });
+
+    // ── Lean formatter ────────────────────────────────────────────────────────
+    // Whitespace only — see leanFormat.ts for why it stops short of the
+    // re-indenting the Julia formatter does.
+    function formatLean() {
+        const view = get(codeMirrorViewInstance);
+        if (!view) return;
+        const code = view.state.doc.toString();
+        if (!code.trim()) return;
+        const formatted = formatLeanSource(code, {
+            indentSize: get(editorIndentSize),
+        });
+        if (formatted === code) return;
+        // Full-document replace, kept in the editor's undo history.
+        view.dispatch({
+            changes: { from: 0, to: view.state.doc.length, insert: formatted },
+        });
+    }
 
     /** Move the caret to a diagnostic's position (Lean: 1-based line, 0-based col). */
     function jumpTo(line: number, column: number) {
@@ -410,6 +431,18 @@
             >
                 <!-- Spelling language -->
                 <SpellLanguageSelector />
+
+                <!-- Lean formatter -->
+                <button
+                    onclick={formatLean}
+                    title={$t("lean_editor.format_title")}
+                    class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
+                           bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400
+                           hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25"
+                >
+                    <Icon icon="icon-park-twotone:format-brush" width="11" />
+                    {$t("lean_editor.format")}
+                </button>
 
                 <!-- Live / Compile live in the infoview's own header — that is
                      the panel they act on, and keeping them there means the

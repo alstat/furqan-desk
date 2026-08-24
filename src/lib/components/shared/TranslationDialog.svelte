@@ -15,6 +15,9 @@
         type AyahTranslation,
     } from "$lib/stores/translation.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import WindowControls from "./WindowControls.svelte";
+    import LoadingDots from "./LoadingDots.svelte";
+    import type { TranslationSnapshot } from "$lib/stores/reader-windows.store";
     import {
         customFontFamilies,
         translationFontFamily,
@@ -50,9 +53,31 @@
     interface Props {
         open: boolean;
         onClose: () => void;
+        /**
+         * The reader owns a native window of its own rather than floating
+         * inside the main one: it fills the viewport, drops the drag handle,
+         * resize grips and z-index juggling.
+         */
+        standalone?: boolean;
+        /**
+         * The view the main window derived. Only a reader window uses it — the
+         * stores it would otherwise read are filled by MorphologyView, which
+         * does not run there.
+         */
+        snapshot?: TranslationSnapshot | null;
     }
 
-    const { open, onClose }: Props = $props();
+    const {
+        open,
+        onClose,
+        standalone = false,
+        snapshot = null,
+    }: Props = $props();
+
+    // macOS keeps native traffic lights overlaid on the header; the other
+    // platforms run the window undecorated and draw their own controls.
+    const isMac =
+        typeof navigator !== "undefined" && navigator.userAgent.includes("Mac");
 
     type Section = { surah: number; entries: AyahTranslation[] };
 
@@ -74,9 +99,12 @@
         return translator?.name ?? "";
     });
 
-    const surahName = $derived($surahLabels[$selectedSurahIdx - 1]?.en ?? "");
+    const currentSurah = $derived(snapshot?.surah ?? $selectedSurahIdx);
+    const surahName = $derived($surahLabels[currentSurah - 1]?.en ?? "");
 
     const sections = $derived.by((): Section[] => {
+        // In a window of its own the view arrives ready-made.
+        if (snapshot) return snapshot.sections;
         const list = $morphologyMultiSurahList;
         if (list && list.length > 0 && $multiSurahTranslationMap) {
             return list.map((s) => {
@@ -93,9 +121,26 @@
         return [];
     });
 
-    const isMulti = $derived(($morphologyMultiSurahList?.length ?? 0) > 1);
+    const isMulti = $derived(
+        snapshot
+            ? snapshot.isMulti
+            : ($morphologyMultiSurahList?.length ?? 0) > 1,
+    );
+
     const totalEntries = $derived(
         sections.reduce((sum, section) => sum + section.entries.length, 0),
+    );
+
+    /**
+     * Nothing to show *yet*, as opposed to nothing to show at all. In a reader
+     * window that means the main window's broadcast has not arrived; in the
+     * panel it means a translator is chosen but its text is still loading.
+     * With no translator chosen there is nothing coming, so the empty message
+     * is the honest answer.
+     */
+    const loading = $derived(
+        totalEntries === 0 &&
+            (standalone ? snapshot === null : $activeTranslatorId !== null),
     );
 
     const fontFamilyOptions = $derived.by(() => {
@@ -184,6 +229,9 @@
         startY = 0;
 
     $effect(() => {
+        // Floating mode has to place and size itself; a native window is
+        // already exactly where the OS put it.
+        if (standalone) return;
         if (open && !initialized) {
             x = Math.max(0, (window.innerWidth - panelW) / 2);
             y = Math.max(8, (window.innerHeight - panelH) * 0.2);
@@ -285,53 +333,90 @@
 
 {#if open}
     <div
-        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
+        transition:fly={standalone
+            ? { duration: 0 }
+            : { y: 8, duration: 180, opacity: 0 }}
         role="dialog"
         aria-modal="false"
         aria-label={$t("translation.dialog_title")}
         tabindex="-1"
-        class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
-        style="left:{x}px; top:{y}px; width:{panelW}px; height:{panelH}px; z-index:{zIndex};"
-        onpointerdown={() => (zIndex = bringToFront())}
+        class="flex flex-col overflow-hidden bg-white dark:bg-[#303446] {standalone
+            ? 'h-full w-full'
+            : 'fixed rounded-xl border border-brand-sand-200 dark:border-[#414559] shadow-xl dark:shadow-black/40'}"
+        style={standalone
+            ? ""
+            : `left:${x}px; top:${y}px; width:${panelW}px; height:${panelH}px; z-index:${zIndex};`}
+        onpointerdown={standalone ? undefined : () => (zIndex = bringToFront())}
     >
+        <!-- Header / drag handle. In a native window the OS moves the window,
+             so this becomes a plain drag region and doubles as the title bar. -->
         <div
-            class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-5 py-4 select-none {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
-            onpointerdown={startDrag}
+            data-tauri-drag-region={standalone ? true : undefined}
+            class="shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-4 py-1.5 select-none {standalone
+                ? ''
+                : isDragging
+                  ? 'cursor-grabbing'
+                  : 'cursor-grab'}"
+            style:padding-left={standalone && isMac ? "5rem" : undefined}
+            onpointerdown={standalone ? undefined : startDrag}
             role="banner"
         >
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-200 dark:bg-[#414559]">
-                        <Icon icon="garden:translation-exists-stroke-12" class="text-brand-gold-500" width="1rem" />
-                    </div>
-                    <div class="min-w-0">
-                        <h2 class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] truncate">
-                            {$t("translation.dialog_title")}{isMulti ? ` - ${sections.map((s) => labelFor(s.surah)).join(", ")}` : surahName ? ` - ${surahName}` : ""}
-                        </h2>
-                        {#if translatorName}
-                            <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] truncate">{translatorName}</p>
+            <div
+                data-tauri-drag-region={standalone ? true : undefined}
+                class="flex items-center justify-between gap-2"
+            >
+                <div
+                    data-tauri-drag-region={standalone ? true : undefined}
+                    class="flex items-center gap-2 min-w-0"
+                >
+                    <Icon
+                        icon="garden:translation-exists-stroke-12"
+                        width="1.1rem"
+                        class="shrink-0 text-brand-gold-500"
+                    />
+                    <span
+                        class="truncate py-2 text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
+                    >
+                        {$t("translation.dialog_title")}
+                        {#if isMulti || surahName}
+                            <span class="font-normal normal-case"
+                                >— {isMulti
+                                    ? sections
+                                          .map((s) => labelFor(s.surah))
+                                          .join(", ")
+                                    : surahName}</span
+                            >
                         {/if}
-                    </div>
+                        {#if translatorName}
+                            <span class="font-normal normal-case"
+                                >· {translatorName}</span
+                            >
+                        {/if}
+                    </span>
                 </div>
-                <div class="flex items-center gap-1.5 shrink-0 relative">
+                <div class="ml-auto flex items-center gap-1 shrink-0 relative">
                     <button
                         bind:this={optionsBtn}
                         onclick={() => (showOptions = !showOptions)}
                         onpointerdown={(e) => e.stopPropagation()}
                         aria-label={$t("dialog.display_options")}
                         title={$t("dialog.display_options")}
-                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors {showOptions ? 'ring-2 ring-brand-gold-300 dark:ring-[#e5c890]/50' : ''}"
+                        class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors {showOptions ? 'ring-2 ring-brand-gold-300 dark:ring-[#e5c890]/50' : ''}"
                     >
-                        <Icon icon="solar:settings-bold-duotone" width="1rem" />
+                        <Icon icon="solar:settings-bold-duotone" width="0.85rem" />
                     </button>
-                    <button
-                        onclick={onClose}
-                        onpointerdown={(e) => e.stopPropagation()}
-                        aria-label={$t("common.close")}
-                        class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    >
-                        <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
-                    </button>
+                    <!-- Closing is the window's job once this bar *is* the
+                         title bar; the floating panel keeps its button. -->
+                    {#if !standalone}
+                        <button
+                            onclick={onClose}
+                            onpointerdown={(e) => e.stopPropagation()}
+                            aria-label={$t("common.close")}
+                            class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                        >
+                            <Icon icon="solar:close-circle-bold-duotone" width="0.85rem" />
+                        </button>
+                    {/if}
 
                     {#if showOptions}
                         <div
@@ -339,11 +424,11 @@
                             onpointerdown={(e) => e.stopPropagation()}
                             role="menu"
                             tabindex="-1"
-                            class="absolute right-0 top-9 z-20 w-72 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
+                            class="absolute right-0 top-9 z-20 w-72 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
                         >
                             <div class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2">
                                 <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-500 dark:text-[#e5c890]">
-                                    <Icon icon="solar:settings-bold-duotone" width="1rem" />
+                                    <Icon icon="solar:settings-bold-duotone" width="0.85rem" />
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">{$t("dialog.display_options")}</p>
@@ -390,6 +475,16 @@
                         </div>
                     {/if}
                 </div>
+
+                <!-- Windows and Linux run this window undecorated, so the
+                     header supplies the minimise / maximise / close buttons
+                     itself. macOS overlays its own traffic lights instead
+                     (see the 5rem inset). -->
+                {#if standalone && !isMac}
+                    <div class="-my-1.5 -mr-2 flex self-stretch">
+                        <WindowControls />
+                    </div>
+                {/if}
             </div>
         </div>
 
@@ -430,12 +525,18 @@
                         </div>
                     {/if}
                 {/each}
+            {:else if loading}
+                <div class="flex justify-center py-10">
+                    <LoadingDots />
+                </div>
             {:else}
                 <div class="py-6 text-center text-sm text-brand-charcoal-300 dark:text-[#838ba7]">{$t("translation.empty")}</div>
             {/if}
         </div>
 
-        {#each resizeHandles as { cls, dir }}
+        <!-- Only the floating panel resizes itself; a native window is resized
+             by its own frame. -->
+        {#each standalone ? [] : resizeHandles as { cls, dir }}
             <div aria-hidden="true" class="resize-handle {cls}" onpointerdown={(e) => startResize(e, dir)}></div>
         {/each}
     </div>

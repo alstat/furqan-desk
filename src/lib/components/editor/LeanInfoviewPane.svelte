@@ -207,7 +207,7 @@
         {#if $status === "unavailable" && $errorMessage}
             <div
                 role="alert"
-                class="flex items-start gap-2 rounded-md border border-amber-200/80 bg-amber-50/90 px-2.5 py-2 dark:border-amber-700/40 dark:bg-amber-900/15"
+                class="flex items-start gap-2 border border-amber-200/80 bg-amber-50/90 px-2.5 py-2 dark:border-amber-700/40 dark:bg-amber-900/15"
             >
                 <Icon
                     icon="lucide:plug-zap"
@@ -250,13 +250,13 @@
         {:else}
             {#if $raw}
                 <pre
-                    class="mb-1.5 m-0 whitespace-pre-wrap break-words rounded-md border border-brand-sand-200 bg-brand-sand-50 px-2 py-1.5 font-mono text-[11px] leading-tight text-brand-charcoal-700 dark:border-[#414559] dark:bg-[#232634] dark:text-[#c6d0f5]">{$raw}</pre>
+                    class="mb-1.5 m-0 whitespace-pre-wrap break-words border border-brand-sand-200 bg-brand-sand-50 px-2 py-1.5 font-mono text-[11px] leading-tight text-brand-charcoal-700 dark:border-[#414559] dark:bg-[#232634] dark:text-[#c6d0f5]">{$raw}</pre>
             {/if}
 
             {#each visible as diag, i (`${diag.severity}-${diag.line}-${diag.column}-${i}`)}
                 {@const style = SEVERITY_STYLE[diag.severity]}
                 <div
-                    class="mb-1 flex items-start gap-2 rounded-md border px-2 py-1.5 {style.bg} {style.border}"
+                    class="mb-1 flex items-start gap-2 border px-2 py-1.5 {style.bg} {style.border}"
                 >
                     <Icon
                         icon={style.icon}
@@ -275,7 +275,7 @@
                                     onclick={() =>
                                         onJump?.(diag.line, diag.column)}
                                     title={$t("lean_infoview.jump_to")}
-                                    class="cursor-pointer rounded px-1 font-mono text-[10px] text-brand-charcoal-400 transition-colors hover:bg-black/5 hover:text-brand-charcoal-700 dark:text-[#838ba7] dark:hover:bg-white/10 dark:hover:text-[#c6d0f5]"
+                                    class="cursor-pointer rounded-full px-1 font-mono text-[10px] text-brand-charcoal-400 transition-colors hover:bg-black/5 hover:text-brand-charcoal-700 dark:text-[#838ba7] dark:hover:bg-white/10 dark:hover:text-[#c6d0f5]"
                                 >
                                     {positionLabel(diag)}
                                 </button>

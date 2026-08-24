@@ -212,7 +212,7 @@
 <div
   bind:this={editorRef}
   class="floating-link-editor {$isLink
-    ? 'flex w-80 items-center gap-1 rounded-3xl border border-brand-sand-200 bg-white/95 py-1 pl-3 pr-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40'
+    ? 'flex w-80 items-center gap-1 rounded-xl border border-brand-sand-200 bg-white/95 py-1 pl-3 pr-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40'
     : ''}"
 >
   {#if $isLink}

@@ -214,7 +214,7 @@
     aria-modal="true"
     aria-label="Crop Image"
     tabindex="-1"
-    class="fixed flex flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+    class="fixed flex flex-col rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
     style="left:{x}px; top:{y}px; width:{PANEL_W}px; z-index:{zIndex};"
     onpointerdown={() => {
         zIndex = bringToFront();

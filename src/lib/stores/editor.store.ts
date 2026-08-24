@@ -359,6 +359,86 @@ export const replLineSpacing = {
   },
 };
 
+// ── REPL input height ─────────────────────────────────────────────────────────
+
+export const REPL_INPUT_MIN_HEIGHT = 24;
+export const REPL_INPUT_MAX_HEIGHT = 400;
+
+/** Vertical padding of the input row (py-1.5 top and bottom). */
+export const REPL_INPUT_PADDING = 12;
+
+/**
+ * Where a Julia REPL is mounted. The embedded one under an editor opens at a
+ * single line the way it always has; the one filling the right-hand column has
+ * the room for a proper multi-line prompt. Each slot remembers its own height.
+ */
+export type ReplInputSlot = "embedded" | "panel";
+
+export const REPL_INPUT_DEFAULT_LINES: Record<ReplInputSlot, number> = {
+  embedded: 1,
+  panel: 7,
+};
+
+/** null = follow the slot's line-count default. */
+type ReplInputHeights = Record<ReplInputSlot, number | null>;
+
+function loadReplInputHeights(): ReplInputHeights {
+  const heights: ReplInputHeights = { embedded: null, panel: null };
+  try {
+    const raw = localStorage.getItem("repl-input-heights");
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<Record<ReplInputSlot, unknown>>;
+      for (const slot of ["embedded", "panel"] as const) {
+        const n = parsed[slot];
+        if (
+          typeof n === "number" &&
+          n >= REPL_INPUT_MIN_HEIGHT &&
+          n <= REPL_INPUT_MAX_HEIGHT
+        ) {
+          heights[slot] = n;
+        }
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return heights;
+}
+
+const _replInputHeights = writable<ReplInputHeights>(loadReplInputHeights());
+
+function persistReplInputHeights(heights: ReplInputHeights) {
+  try {
+    localStorage.setItem("repl-input-heights", JSON.stringify(heights));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Height the user dragged the REPL input box to, per mount slot. */
+export const replInputHeights = {
+  subscribe: _replInputHeights.subscribe,
+  setHeight(slot: ReplInputSlot, v: number) {
+    const clamped = Math.max(
+      REPL_INPUT_MIN_HEIGHT,
+      Math.min(REPL_INPUT_MAX_HEIGHT, Math.round(v)),
+    );
+    _replInputHeights.update(heights => {
+      const next = { ...heights, [slot]: clamped };
+      persistReplInputHeights(next);
+      return next;
+    });
+  },
+  /** Drop the override so the slot falls back to its line-count default. */
+  reset(slot: ReplInputSlot) {
+    _replInputHeights.update(heights => {
+      const next = { ...heights, [slot]: null };
+      persistReplInputHeights(next);
+      return next;
+    });
+  },
+};
+
 // ── App dark mode ─────────────────────────────────────────────────────────────
 
 function loadAppDarkMode(): boolean {
@@ -567,6 +647,46 @@ export const UI_FONT_SCALE_BOUNDS = {
   default: UI_FONT_SCALE_DEFAULT,
   step: UI_FONT_SCALE_STEP,
 };
+
+// ── Cross-window preference sync ──────────────────────────────────────────────
+
+/**
+ * Every window on the origin runs its own copy of these stores, so a preference
+ * changed in one is invisible to the others: a secondary window (the postcard
+ * editor, manuscript viewer, AI chat, terminal) reads the value once at boot
+ * and then never hears about it again — leaving it in the old theme until it is
+ * closed and reopened.
+ *
+ * `storage` events fire only in the *other* windows on the origin, which is
+ * exactly the direction needed, and means the window that made the change never
+ * echoes it back to itself. The setters below all write through localStorage,
+ * so every change is announced this way whichever window makes it.
+ */
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.newValue === null) return;
+    switch (e.key) {
+      case "app-dark-mode":
+        _appDarkMode.set(e.newValue === "true");
+        break;
+      case UI_FONT_SCALE_KEY: {
+        const n = parseFloat(e.newValue);
+        if (Number.isFinite(n)) _uiFontScale.set(n);
+        break;
+      }
+      case "repl-font-size": {
+        const n = parseInt(e.newValue, 10);
+        if (Number.isFinite(n)) _replFontSize.set(n);
+        break;
+      }
+      case "repl-line-spacing": {
+        const n = parseFloat(e.newValue);
+        if (Number.isFinite(n)) _replLineSpacing.set(n);
+        break;
+      }
+    }
+  });
+}
 
 export type ReplMode = "julia" | "pkg" | "shell" | "help";
 

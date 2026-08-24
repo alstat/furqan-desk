@@ -3,7 +3,7 @@
     import { t } from "$lib/i18n";
     import { listen, type UnlistenFn } from "@tauri-apps/api/event";
     import Icon from "@iconify/svelte";
-    import { fly } from "svelte/transition";
+    import { fade, fly } from "svelte/transition";
     import { onMount, onDestroy } from "svelte";
     import { selectedSurahIdx } from "$lib/stores/quran.svelte";
     import {
@@ -126,6 +126,7 @@
 {#if open}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
+        transition:fade={{ duration: 150 }}
         class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
         onclick={(e) => {
             if (e.target === e.currentTarget) handleClose();
@@ -140,7 +141,7 @@
     >
         <div
             transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-            class="flex w-full max-w-sm flex-col rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
+            class="flex w-full max-w-sm flex-col rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40 overflow-hidden"
         >
             <!-- Header -->
             <div

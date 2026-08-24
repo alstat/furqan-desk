@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
+    import { fade, fly } from "svelte/transition";
     import Icon from "@iconify/svelte";
     // Registers the cell's icons offline so they render without the Iconify API.
     import "$lib/icons/lean-cell-icons";
@@ -56,13 +57,14 @@
         leanLightHighlight,
         leanDarkHighlight,
     } from "$lib/codemirror/lean";
-    import { latexInput } from "$lib/codemirror/latexInput";
+    import { leanInput } from "$lib/codemirror/latexInput";
     import { wrapSelection } from "$lib/codemirror/wrapSelection";
     import {
         clearSelection,
         createNodeSelectionStore,
     } from "../../nodeSelectionStore.js";
-    import { appDarkMode } from "$lib/stores/editor.store";
+    import { appDarkMode, editorIndentSize } from "$lib/stores/editor.store";
+    import { formatLeanSource } from "$lib/utils/leanFormat";
     import { isPro } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
     import { t } from "$lib/i18n";
@@ -204,6 +206,24 @@
         });
         view.focus();
         aiSelection = null;
+    }
+
+    // ── Lean formatter ────────────────────────────────────────────────────────
+    // Whitespace only — see leanFormat.ts for why it stops short of the
+    // re-indenting the Julia formatter does.
+    function formatLean() {
+        if (!view) return;
+        const source = view.state.doc.toString();
+        if (!source.trim()) return;
+        const formatted = formatLeanSource(source, {
+            indentSize: $editorIndentSize,
+        });
+        if (formatted === source) return;
+        // Full-document replace, kept in the cell's undo history.
+        view.dispatch({
+            changes: { from: 0, to: view.state.doc.length, insert: formatted },
+        });
+        editCode = formatted;
     }
 
     function toggleWrap() {
@@ -591,9 +611,10 @@
                 lineNumbers(),
                 history(),
                 runKeymap,
-                // `\alpha`+Tab → α. Lean source is unicode-heavy and its own
-                // editors offer the same abbreviation input, so it belongs here.
-                latexInput,
+                // `\alpha`+Tab → α, `\N` → ℕ, `\<` → ⟨. Lean source is
+                // unicode-heavy and its own editors offer the same
+                // abbreviation input, so it belongs here.
+                leanInput,
                 wrapSelection,
                 keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
                 leanSupport,
@@ -789,6 +810,16 @@
                     icon={$leanCellLiveCompile ? "lucide:zap" : "lucide:zap-off"}
                     width="0.8rem"
                 />
+            </button>
+
+            <!-- Lean formatter -->
+            <button
+                onclick={formatLean}
+                title={$t("lean_cell.format")}
+                aria-label={$t("lean_cell.format_code")}
+                class="flex h-[22px] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 dark:border-[#414559] dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
+            >
+                <Icon icon="icon-park-twotone:format-brush" width="0.8rem" />
             </button>
 
             <!-- Line wrap toggle -->
@@ -1013,6 +1044,7 @@
 {#if showToolchainInfo}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
+        transition:fade={{ duration: 150 }}
         class="lean-toolchain-backdrop fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
         onclick={onToolchainBackdropClick}
         onkeydown={onToolchainKeydown}
@@ -1022,6 +1054,7 @@
         tabindex="-1"
     >
         <div
+            transition:fly={{ y: 8, duration: 180, opacity: 0 }}
             class="lean-toolchain-panel font-sans flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40"
         >
             <div

@@ -15,8 +15,30 @@ mod terminal;
 mod typst_world;
 
 use std::sync::{atomic::AtomicBool, Arc};
+#[cfg(target_os = "macos")]
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::{Emitter, Manager};
+
+/// Whether WebKit is on its software-composited fallback, where a transparent
+/// window loses its alpha.
+///
+/// The Linux build rounds its own corners and relies on the area outside the
+/// radius being see-through. On the fallback path that area renders black
+/// instead, which looks far worse than no rounding at all — so the frontend
+/// asks this and squares the corners off when it is true. Only ever true when
+/// someone has opted into WEBKIT_DISABLE_DMABUF_RENDERER; see the note in
+/// `run()` for why that is no longer the default.
+#[tauri::command]
+fn software_compositing() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_some()
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        false
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -27,15 +49,30 @@ pub fn run() {
     // WebKitGTK's DMA-BUF renderer fails to initialise EGL on some Linux
     // configurations (notably Fedora + Mesa ≥ 25 with AMD/Radeon GPUs), which
     // produces "Could not create default EGL display: EGL_BAD_PARAMETER.
-    // Aborting…" and prevents the app from starting.  Disabling it here makes
-    // WebKit fall back to a software-composited path that works everywhere.
-    // Safe to set unconditionally on Linux; no effect on other platforms.
+    // Aborting…" and prevents the app from starting. Setting
+    // WEBKIT_DISABLE_DMABUF_RENDERER drops WebKit onto a software-composited
+    // path that starts everywhere, and this used to be forced on unconditionally.
+    //
+    // It is not free, though: that path composites the webview onto an *opaque*
+    // surface, so the `transparent: true` window the Linux build uses to round
+    // its own corners (see tauri.linux.conf.json) loses its alpha and the area
+    // outside the corner radius comes out black instead of showing the desktop.
+    // Forcing it therefore traded a broken window frame on every Linux machine
+    // for a startup fix that only a few need, so it is now opt-in: a machine
+    // that hits the EGL abort sets WEBKIT_DISABLE_DMABUF_RENDERER=1 itself.
+    //
+    // WebKit tests this variable by *presence*, not value, so a caller passing
+    // "0" to mean "off" would still get the renderer disabled. Treat the falsey
+    // spellings as opting out and remove it, so the variable behaves the way
+    // someone setting it would expect.
     #[cfg(target_os = "linux")]
     {
-        // Only set if the caller has not already overridden it.
-        if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+        if matches!(
+            std::env::var("WEBKIT_DISABLE_DMABUF_RENDERER").as_deref(),
+            Ok("0") | Ok("false") | Ok("")
+        ) {
             // SAFETY: single-threaded at this point (before Tauri spawns workers).
-            unsafe { std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1") };
+            unsafe { std::env::remove_var("WEBKIT_DISABLE_DMABUF_RENDERER") };
         }
         // NOTE: We deliberately do NOT set GTK_OVERLAY_SCROLLING=0 here.
         // Forcing overlay scrolling off pushes WebKitGTK onto its legacy native
@@ -128,56 +165,57 @@ pub fn run() {
             app.manage(commands::HttpClient::new());
 
             // --- Native application menu --------------------------------
-            // By default macOS shows only "Close" under the File menu. Build a
-            // richer File menu (Open File / Open Folder / Save / Save As) and
-            // keep the standard App/Edit menus so Quit and Copy/Paste continue
-            // to work. Each custom item emits an event the frontend listens for
-            // (see src/routes/+layout.svelte); the accelerators also drive the
-            // same shortcuts on every platform.
-            let handle = app.handle().clone();
-
-            let open_file = MenuItemBuilder::with_id("open_file", "Open File…")
-                .accelerator("CmdOrCtrl+O")
-                .build(&handle)?;
-            let open_folder = MenuItemBuilder::with_id("open_folder", "Open Folder…")
-                .accelerator("CmdOrCtrl+Shift+O")
-                .build(&handle)?;
-            let save = MenuItemBuilder::with_id("save", "Save")
-                .accelerator("CmdOrCtrl+S")
-                .build(&handle)?;
-            let save_as = MenuItemBuilder::with_id("save_as", "Save As…")
-                .accelerator("CmdOrCtrl+Shift+S")
-                .build(&handle)?;
-
-            #[allow(unused_mut)]
-            let mut file_builder = SubmenuBuilder::new(&handle, "File")
-                .item(&open_file)
-                .item(&open_folder)
-                .separator()
-                .item(&save)
-                .item(&save_as)
-                .separator()
-                .close_window();
-            #[cfg(not(target_os = "macos"))]
-            {
-                file_builder = file_builder.separator().quit();
-            }
-            let file_menu = file_builder.build()?;
-
-            let edit_menu = SubmenuBuilder::new(&handle, "Edit")
-                .undo()
-                .redo()
-                .separator()
-                .cut()
-                .copy()
-                .paste()
-                .select_all()
-                .build()?;
-
-            #[allow(unused_mut)]
-            let mut menu_builder = MenuBuilder::new(&handle);
+            // macOS only. There the menu lives in the global menu bar, and the
+            // default File menu offers just "Close", so it is worth replacing
+            // with a real one (Open File / Open Folder / Save / Save As) beside
+            // the standard App and Edit menus. Each custom item emits an event
+            // the frontend listens for (see src/routes/+layout.svelte).
+            //
+            // Windows and GTK have no global menu bar: a menu set here is drawn
+            // *inside* every window as a menubar row, and `hide_menu()` only
+            // reaches windows that already exist — so each dialog window opened
+            // later (terminal, tafsir, drawing, …) came up with a File/Edit bar
+            // above its own title bar. Those platforms therefore get no menu at
+            // all; +layout.svelte already re-implements the accelerators with a
+            // keydown handler, which is what actually drove the shortcuts there
+            // even while the menu was merely hidden.
             #[cfg(target_os = "macos")]
             {
+                let handle = app.handle().clone();
+
+                let open_file = MenuItemBuilder::with_id("open_file", "Open File…")
+                    .accelerator("CmdOrCtrl+O")
+                    .build(&handle)?;
+                let open_folder = MenuItemBuilder::with_id("open_folder", "Open Folder…")
+                    .accelerator("CmdOrCtrl+Shift+O")
+                    .build(&handle)?;
+                let save = MenuItemBuilder::with_id("save", "Save")
+                    .accelerator("CmdOrCtrl+S")
+                    .build(&handle)?;
+                let save_as = MenuItemBuilder::with_id("save_as", "Save As…")
+                    .accelerator("CmdOrCtrl+Shift+S")
+                    .build(&handle)?;
+
+                let file_menu = SubmenuBuilder::new(&handle, "File")
+                    .item(&open_file)
+                    .item(&open_folder)
+                    .separator()
+                    .item(&save)
+                    .item(&save_as)
+                    .separator()
+                    .close_window()
+                    .build()?;
+
+                let edit_menu = SubmenuBuilder::new(&handle, "Edit")
+                    .undo()
+                    .redo()
+                    .separator()
+                    .cut()
+                    .copy()
+                    .paste()
+                    .select_all()
+                    .build()?;
+
                 let app_menu = SubmenuBuilder::new(&handle, "AyahLab")
                     .about(None)
                     .separator()
@@ -189,22 +227,19 @@ pub fn run() {
                     .separator()
                     .quit()
                     .build()?;
-                menu_builder = menu_builder.item(&app_menu);
-            }
-            let menu = menu_builder.item(&file_menu).item(&edit_menu).build()?;
-            app.set_menu(menu)?;
 
-            // On Windows/Linux the menu renders as a bar below the title bar,
-            // wasting vertical space, so hide it. A hidden menu stops
-            // delivering its accelerators on those platforms, so the frontend
-            // re-implements Ctrl+O / Ctrl+S / etc. with a keydown handler (see
-            // src/routes/+layout.svelte). This is a no-op on macOS, where the
-            // menu (and its Cmd shortcuts) live in the global system menu bar.
-            app.hide_menu()?;
+                let menu = MenuBuilder::new(&handle)
+                    .item(&app_menu)
+                    .item(&file_menu)
+                    .item(&edit_menu)
+                    .build()?;
+                app.set_menu(menu)?;
+            }
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            software_compositing,
             commands::greet,
             commands::get_surah_labels,
             commands::get_surah,
@@ -330,6 +365,28 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
+                // These runtimes belong to the app, not to any one window, and
+                // this handler fires for every window. Secondary windows (the
+                // postcard editor) open and close freely — tearing down the
+                // user's REPLs because they closed one would be a nasty
+                // surprise, so only the main window's teardown cleans up.
+                if window.label() != "main" {
+                    return;
+                }
+
+                // The postcard editor and the manuscript viewer are secondary
+                // to this window; once it is gone there is nothing for them to
+                // be secondary to, and on macOS — where closing the main window
+                // does not quit the app — they would otherwise be left behind
+                // with no way back to the reader. Destroy rather than close: the
+                // session is already ending, so there is nothing left to prompt
+                // about.
+                for (label, secondary) in window.app_handle().webview_windows() {
+                    if label != "main" {
+                        let _ = secondary.destroy();
+                    }
+                }
+
                 // Clean up Julia process to avoid zombies
                 if let Some(state) = window.try_state::<julia::JuliaState>() {
                     if let Ok(mut guard) = state.processes.lock() {

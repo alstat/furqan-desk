@@ -10,7 +10,10 @@
     import { lexicalStateToDocxBlob } from "$lib/components/lexical/utils/lexicalToDocx";
 
     // tabId scopes the export to a specific panel in split layouts.
-    let { tabId = null }: { tabId?: string | null } = $props();
+    let {
+        tabId = null,
+        btnClass = actionBtnStyle,
+    }: { tabId?: string | null; btnClass?: string } = $props();
 
     async function exportDocx() {
         const tab = tabId
@@ -35,7 +38,7 @@
 </script>
 
 <button
-    class={actionBtnStyle}
+    class={btnClass}
     onclick={exportDocx}
     title={$t("toolbar.export_docx")}
     aria-label={$t("toolbar.export_docx")}

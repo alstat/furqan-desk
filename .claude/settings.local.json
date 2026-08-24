@@ -330,7 +330,27 @@
       "Bash(awk '/^  insertText\\\\\\(text\\\\\\) \\\\{/,/^  insertNodes\\\\\\(nodes\\\\\\)/' node_modules/lexical/Lexical.dev.mjs)",
       "Bash(awk 'NR>=6400 && NR<=6560' node_modules/lexical/Lexical.dev.mjs)",
       "Bash(perl -0pi -e \"s/nodes: \\\\[HeadingNode\\\\]/nodes: [HeadingNode, QuoteNode]/\" ai-insert-test.mts)",
-      "Bash(awk '/^<style>/,0' src/lib/components/manuscripts/ManuscriptViewer.svelte)"
+      "Bash(awk '/^<style>/,0' src/lib/components/manuscripts/ManuscriptViewer.svelte)",
+      "Bash(sysctl kernel.apparmor_restrict_unprivileged_userns)",
+      "Bash(dpkg -l)",
+      "Bash(timeout 15 env WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 cargo run --manifest-path src-tauri/Cargo.toml --no-default-features)",
+      "Bash(timeout 10 env WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 /home/alasaad/Documents/Dev/furqan-desk/target/debug/AyahLab 2>&1 | tail -30)",
+      "Bash(pkill -f \"target/debug/AyahLab\")",
+      "Bash(pkill -f \"vite dev\")",
+      "Bash(rm *)",
+      "Bash(env)",
+      "Bash(getent hosts *)",
+      "Read(//run/systemd/resolve/**)",
+      "Bash(rm -f /tmp/t5.log)",
+      "Bash(timeout 10 env WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 /home/alasaad/Documents/Dev/furqan-desk/target/debug/AyahLab)",
+      "Bash(rm -f /tmp/t6.log)",
+      "Bash(rm -f /tmp/t7.log)",
+      "Bash(timeout 10 /home/alasaad/Documents/Dev/furqan-desk/target/debug/AyahLab)",
+      "Bash(rm -f /tmp/full_run.log)",
+      "Bash(timeout 20 pnpm run tauri dev)",
+      "Bash(pkill -9 -f \"vite\")",
+      "Bash(pkill -9 -f \"target/debug/AyahLab\")",
+      "Bash(kill -9 61276)"
     ]
   }
 }

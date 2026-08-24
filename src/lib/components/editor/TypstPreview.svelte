@@ -26,12 +26,7 @@
         zoomPreviewTo,
     } from "$lib/utils/preview-zoom";
 
-    // noTopBorder: drop the preview's top border when it sits below another pane
-    // (e.g. the third editor in a three-file Typst split), so the seam isn't doubled.
-    let {
-        embedded = false,
-        noTopBorder = false,
-    }: { embedded?: boolean; noTopBorder?: boolean } = $props();
+    let { embedded = false }: { embedded?: boolean } = $props();
     let previewScrollEl: HTMLDivElement | null = $state(null);
     let currentPreviewPage = $state(1);
 
@@ -146,25 +141,18 @@
     });
 </script>
 
-<!-- Outer: matches Parchment's outer wrapper exactly; stripped when embedded in a split panel -->
+<!-- Outer: borderless like LeanInfoviewPane — the column wrapper in +page.svelte
+     draws the single border-x and the background, so seams are never doubled. -->
 <div
     class={embedded
         ? "relative flex-1 flex flex-col min-h-0 w-full"
         : ($zenMode
               ? ""
-              : "sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#303446]") +
-          " relative z-1 flex flex-col items-center rounded-r-md sm:w-full md:w-9/12 lg:w-6/12"}
+              : "sm:shadow-xl sm:shadow-slate-200/60 dark:sm:shadow-black/30 bg-white dark:bg-[#1c1c1c]") +
+          " relative z-1 flex flex-col items-center sm:w-full md:w-9/12 lg:w-6/12"}
 >
-    <!-- Inner: matches Parchment's inner scrollable div (border + rounded-r-md) -->
     <div
-        class="{$zenMode
-            ? ''
-            : 'border border-stone-200 dark:border-[#414559]' +
-              (noTopBorder
-                  ? ' border-t-0'
-                  : '')} default-scroll w-full flex-1 overflow-y-auto {noTopBorder
-            ? 'rounded-br-md'
-            : 'rounded-r-md'} flex flex-col min-h-0"
+        class="default-scroll w-full flex-1 overflow-y-auto flex flex-col min-h-0"
     >
         <!-- Toolbar inside the border -->
         <div
@@ -173,7 +161,7 @@
                 : 'border-b border-stone-200 dark:border-[#414559]'} flex items-center justify-between px-4 py-1 shrink-0"
         >
             <span
-                class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
+                class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
             >
                 {#if $typstIsCompiling}
                     <span
@@ -221,12 +209,12 @@
                 >
                     <!-- Zoom controls — revealed while hovering the preview body -->
                     <div
-                        class="pointer-events-auto flex items-center gap-0.5 rounded-full border border-stone-200/60 dark:border-[#414559]/60 bg-white/70 dark:bg-[#303446]/70 px-1 py-0.5 shadow-sm backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                        class="pointer-events-auto flex items-center gap-0.5 border border-stone-200/60 dark:border-[#414559]/60 bg-white/70 dark:bg-[#1c1c1c]/70 px-1 py-0.5 shadow-sm backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-150"
                     >
                         <button
                             onclick={() => zoomBy(1 / PREVIEW_ZOOM_STEP)}
                             title={$t("typst.zoom_out")}
-                            class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+                            class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-gold-600 dark:hover:text-brand-gold-400 transition-colors"
                         >
                             <Icon icon="solar:magnifer-zoom-out-linear" width="12" />
                         </button>
@@ -238,7 +226,7 @@
                         <button
                             onclick={() => zoomBy(PREVIEW_ZOOM_STEP)}
                             title={$t("typst.zoom_in")}
-                            class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+                            class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-gold-600 dark:hover:text-brand-gold-400 transition-colors"
                         >
                             <Icon icon="solar:magnifer-zoom-in-linear" width="12" />
                         </button>
@@ -250,7 +238,7 @@
                                     1,
                                 )}
                             title={$t("typst.full_width")}
-                            class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+                            class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-gold-600 dark:hover:text-brand-gold-400 transition-colors"
                         >
                             <Icon icon="material-symbols:fit-width" width="13" />
                         </button>

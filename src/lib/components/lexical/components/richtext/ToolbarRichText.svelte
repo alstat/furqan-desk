@@ -27,6 +27,7 @@
 	import InsertImageDropDownItem from '../toolbar/InsertDropDown/InsertImageDropDownItem.svelte';
 	import InsertDrawingDropDownItem from '../toolbar/InsertDropDown/InsertDrawingDropDownItem.svelte';
 	import DrawingEditorDialog from '$lexical/core/plugins/Drawing/DrawingEditorDialog.svelte';
+	import { launchDrawingEditor } from '$lexical/core/plugins/Drawing/drawingEditorStore.js';
 	import Indent from '../toolbar/Indent.svelte';
 	import Outdent from '../toolbar/Outdent.svelte';
 	import CodeDropDownItem from '../toolbar/BlockFormatDropDown/CodeDropDownItem.svelte';
@@ -107,7 +108,12 @@
 	<InsertDropDown>
 		<InsertHRDropDownItem />
 		<InsertImageDropDownItem onclick={() => imageDialog?.open()} />
-		<InsertDrawingDropDownItem onclick={() => drawingDialog?.open(null, null)} />
+		<InsertDrawingDropDownItem
+			onclick={() =>
+				void launchDrawingEditor(null, null, (s, k) =>
+					drawingDialog?.open(s, k)
+				)}
+		/>
 		<InsertEquationDropDownItem onclick={() => equationDialog?.open()} />
 		<InsertTableDropDownItem onclick={() => tableDialog?.open()} />
 	</InsertDropDown>

@@ -93,7 +93,7 @@
         setGitBaseline,
     } from "$lib/codemirror/gitDiffGutter";
     import { gitRefreshTrigger, bumpGitRefresh } from "$lib/stores/git.store";
-    import { latexInput } from "$lib/codemirror/latexInput";
+    import { latexInput, leanInput } from "$lib/codemirror/latexInput";
     import { wrapSelection } from "$lib/codemirror/wrapSelection";
     import { readTextFile } from "@tauri-apps/plugin-fs";
     import { openOrFocusTab, tabs } from "$lib/stores/tabs.store";
@@ -1718,10 +1718,13 @@
                 // Typing a quote over a selection wraps it instead of replacing.
                 wrapSelection,
                 // `\latex`+Tab → Unicode (e.g. \sigma → σ). Julia offers this
-                // in its REPL and Lean in its editors, so both get it here.
-                ...(language === "julia" || language === "lean"
-                    ? [latexInput]
-                    : []),
+                // in its REPL and Lean in its editors, so both get it here —
+                // Lean with its own abbreviations layered on (\N → ℕ, \< → ⟨).
+                ...(language === "lean"
+                    ? [leanInput]
+                    : language === "julia"
+                      ? [latexInput]
+                      : []),
                 keymap.of([
                     ...extraKeymap,
                     {

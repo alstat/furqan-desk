@@ -63,17 +63,136 @@ export function newChat() {
     quotaBlock.set(null);
 }
 
+/** Label of the chat's own OS window. */
+export const AI_CHAT_WINDOW = "ai-chat";
+
+/**
+ * Where a pending "ask about this selection" payload waits for the chat window
+ * to pick it up. localStorage rather than an event: the window may still be
+ * booting when the payload is handed over, and a selection can be long enough
+ * that a query string is the wrong place for it. Every window on the origin
+ * shares this, and the chat window clears the key once it has read it.
+ */
+const PENDING_KEY = "aiChatPendingQuestion";
+
+export interface PendingSelectionQuestion {
+    prompt: string;
+    selectedText: string;
+    contextPrompt?: string;
+}
+
+/**
+ * The chat runs in a window of its own so it behaves like a native companion
+ * window — its own entry in the dock/taskbar, and it stays open beside the
+ * reader instead of floating over it.
+ */
+async function openAiChatWindow(): Promise<boolean> {
+    if (typeof window === "undefined") return false;
+    try {
+        const { WebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+
+        const existing = await WebviewWindow.getByLabel(AI_CHAT_WINDOW);
+        if (existing) {
+            // Already open: bring it forward. Any pending question is already in
+            // localStorage, and the window picks it up from the storage event.
+            await existing.unminimize().catch(() => {});
+            await existing.setFocus();
+            return true;
+        }
+
+        // Frameless: the chat's own header doubles as the title bar, the same
+        // trade the main window makes. macOS keeps its traffic lights by
+        // overlaying them on that header; Windows and Linux have no equivalent,
+        // so they go undecorated and the header draws its own controls.
+        const isMac = navigator.userAgent.includes("Mac");
+        // Linux goes transparent as well as undecorated: the frame is drawn in
+        // CSS, and its drop shadow needs the margin around it to be genuinely
+        // see-through (see `.csd-dialog` in app.css). Windows keeps an opaque
+        // frame — it has no such shadow to cast.
+        const isLinux =
+            navigator.userAgent.includes("Linux") &&
+            !navigator.userAgent.includes("Android");
+        const chrome = isMac
+            ? { titleBarStyle: "overlay" as const, hiddenTitle: true }
+            : { decorations: false, transparent: isLinux };
+
+        const win = new WebviewWindow(AI_CHAT_WINDOW, {
+            // Trailing slash: the build emits `ai-chat/index.html`, which is
+            // what Tauri's asset protocol resolves this path to.
+            url: "/ai-chat/",
+            title: "AI Chat",
+            width: 960,
+            height: 680,
+            minWidth: 720,
+            minHeight: 520,
+            resizable: true,
+            focus: true,
+            ...chrome,
+        });
+
+        // Creation is asynchronous on the Rust side; a failure arrives here
+        // rather than as a rejected constructor.
+        return await new Promise<boolean>((resolve) => {
+            let settled = false;
+            const settle = (ok: boolean) => {
+                if (settled) return;
+                settled = true;
+                resolve(ok);
+            };
+            void win.once("tauri://created", () => settle(true));
+            void win.once("tauri://error", (e) => {
+                console.error("ai chat window failed to open", e);
+                settle(false);
+            });
+            // Never leave the button dead if neither event arrives.
+            setTimeout(() => settle(false), 4000);
+        });
+    } catch {
+        // Not running inside Tauri (browser dev), or the webview API is
+        // unavailable — the caller falls back to the in-app panel.
+        return false;
+    }
+}
+
+/** Open the chat, or focus it if it is already open. */
+export async function openAiChat(): Promise<void> {
+    if (await openAiChatWindow()) return;
+    // Fallback: the floating panel inside the main window.
+    aiChatDialogOpen.set(true);
+}
+
 export function askAiAboutSelection({
     prompt,
     selectedText,
     contextPrompt,
-}: {
-    prompt: string;
-    selectedText: string;
-    contextPrompt?: string;
-}): void {
+}: PendingSelectionQuestion): void {
+    // Written before the window opens so it is already waiting, however long
+    // the window takes to boot.
+    try {
+        localStorage.setItem(
+            PENDING_KEY,
+            JSON.stringify({ prompt, selectedText, contextPrompt }),
+        );
+    } catch {
+        // Storage full or disabled — the in-app fallback still works below.
+    }
     pendingSelectionQuestion.set({ prompt, selectedText, contextPrompt });
-    aiChatDialogOpen.set(true);
+    void openAiChat();
+}
+
+/**
+ * Take whatever question is waiting, clearing it so it is delivered once. Used
+ * by the chat window on boot and whenever the main window leaves a new one.
+ */
+export function takePendingSelectionQuestion(): PendingSelectionQuestion | null {
+    try {
+        const raw = localStorage.getItem(PENDING_KEY);
+        if (!raw) return null;
+        localStorage.removeItem(PENDING_KEY);
+        return JSON.parse(raw) as PendingSelectionQuestion;
+    } catch {
+        return null;
+    }
 }
 
 export async function refreshChats(userId: string): Promise<void> {

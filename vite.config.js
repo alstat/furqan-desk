@@ -40,9 +40,50 @@ const lexicalDeps = [
   "@lexical/yjs",
 ];
 
+// WebKitGTK's NetworkProcess crashes if it revalidates disk-cached dev modules
+// (If-None-Match -> 304) while the dev server is holding responses open -- which
+// is exactly what Vite does whenever it re-optimizes deps mid-page-load. The
+// crash fails every in-flight load at once:
+//
+//   ERROR: WebKit encountered an internal error. This is a WebKit bug.
+//   Source/WebKit/WebProcess/Network/WebLoaderStrategy.cpp(641) :
+//     void WebKit::WebLoaderStrategy::internallyFailedLoadTimerFired()
+//
+// and the window is left half-loaded with no way to recover. Keeping dev
+// responses out of WebKit's disk cache avoids the revalidation entirely. Only
+// the dev server is affected (`apply: "serve"`), and over localhost the lost
+// 304s cost nothing.
+/** @type {import("vite").Plugin} */
+const webkitgtkNoDiskCache = {
+  name: "webkitgtk-no-disk-cache",
+  apply: "serve",
+  configureServer(server) {
+    server.middlewares.use((req, res, next) => {
+      // Answer 200 rather than 304 even if WebKit still holds an entry from an
+      // earlier session and asks to revalidate it.
+      delete req.headers["if-none-match"];
+      delete req.headers["if-modified-since"];
+      const setHeader = res.setHeader.bind(res);
+      res.setHeader = (name, value) => {
+        const n = String(name).toLowerCase();
+        // Without validators there is nothing to revalidate later.
+        if (n === "etag" || n === "last-modified") return res;
+        if (n === "cache-control") return setHeader("Cache-Control", "no-store");
+        return setHeader(name, value);
+      };
+      setHeader("Cache-Control", "no-store");
+      next();
+    });
+  },
+};
+
 // https://vite.dev/config/
 export default defineConfig(async () => ({
-  plugins: [sveltekit(), tailwindcss()],
+  plugins: [
+    ...(process.platform === "linux" ? [webkitgtkNoDiskCache] : []),
+    sveltekit(),
+    tailwindcss(),
+  ],
 
   resolve: {
     // Collapse any duplicate copies npm/pnpm may nest to a single resolution.
@@ -60,7 +101,7 @@ export default defineConfig(async () => ({
   server: {
     port: 1420,
     strictPort: true,
-    host: host || false,
+    host: host || "127.0.0.1",
     hmr: host
       ? {
           protocol: "ws",

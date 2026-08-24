@@ -4,11 +4,10 @@
     import { fly } from "svelte/transition";
     import Icon from "@iconify/svelte";
     import { invoke } from "@tauri-apps/api/core";
-    import { message } from "@tauri-apps/plugin-dialog";
     import { manuscriptAyah } from "$lib/stores/manuscripts.store";
+    import { writeImage } from "@tauri-apps/plugin-clipboard-manager";
     import { bringToFront } from "$lib/stores/window-manager.store";
-    import { lexicalEditorInstance } from "$lib/stores/editor.store";
-    import { INSERT_IMAGE_COMMAND } from "$lib/components/lexical/core/plugins/Image/ImagePlugin.svelte";
+    import WindowControls from "$lib/components/shared/WindowControls.svelte";
     import { isPro } from "$lib/stores/auth.store";
     import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
     import { t } from "$lib/i18n";
@@ -17,9 +16,26 @@
         open: boolean;
         onClose: () => void;
         demoMode?: boolean;
+        /**
+         * The viewer owns a native window of its own rather than floating
+         * inside the main one: it fills the viewport, drops the drag handle,
+         * resize grips and z-index juggling, and lets the OS place and stack
+         * it. The tour's demo viewer stays a floating panel.
+         */
+        standalone?: boolean;
     }
 
-    let { open, onClose, demoMode = false }: Props = $props();
+    let {
+        open,
+        onClose,
+        demoMode = false,
+        standalone = false,
+    }: Props = $props();
+
+    // macOS keeps native traffic lights overlaid on the header; the other
+    // platforms run the window undecorated and draw their own controls.
+    const isMac =
+        typeof navigator !== "undefined" && navigator.userAgent.includes("Mac");
 
     // ── Bundled demo data for tour (Surah 112:2 Al-Ikhlas, offline) ───────────
     const DEMO_ENTRIES: ManuscriptEntry[] = [
@@ -318,8 +334,8 @@
     let zoomed = $state(false);
     let downloading = $state(false);
     let downloadMsg = $state("");
-    let inserting = $state(false);
-    let insertMsg = $state("");
+    let copying = $state(false);
+    let copyMsg = $state("");
     let surahInput = $state(1);
     let ayahInput = $state(1);
     let referenceError = $state("");
@@ -615,7 +631,7 @@
         }
     }
 
-    // ── Insert into Lexical editor ────────────────────────────────────────────
+    // ── Copy the folio to the clipboard ──────────────────────────────────────
     function bytesToDataUrl(bytes: ArrayBuffer, mime: string): string {
         const uint8 = new Uint8Array(bytes);
         let binary = "";
@@ -623,35 +639,6 @@
         for (let i = 0; i < uint8.length; i += chunk)
             binary += String.fromCharCode(...uint8.subarray(i, i + chunk));
         return `data:${mime};base64,${btoa(binary)}`;
-    }
-
-    function buildCaptionText(): string {
-        const ms = selectedManuscript;
-        const page = selectedPage;
-        const img = selectedImage;
-        if (!ms) return "";
-
-        const ref = $manuscriptAyah;
-        const parts: string[] = [ms.title];
-        if (ref)
-            parts.push(
-                $t("manuscript.caption_reference", {
-                    surah: String(ref.surah),
-                    ayah: String(ref.ayah),
-                }),
-            );
-        const folioValue = `${page?.folio ?? ""}${page?.side ?? ""}`.trim();
-        if (folioValue)
-            parts.push($t("manuscript.caption_folio", { folio: folioValue }));
-        if (ms.archive.name) parts.push(ms.archive.name);
-        if (ms.archive.city) parts.push(ms.archive.city);
-        const date =
-            selectedDetail?.date?.trim() ||
-            selectedDetail?.carbon_dating?.trim();
-        if (date) parts.push(date);
-        if (img?.image_source?.trim()) parts.push(img.image_source.trim());
-
-        return parts.join(" · ");
     }
 
     function buildCorpusCoranicumUrl(): string | undefined {
@@ -757,11 +744,35 @@
         closeAiPrompt();
     }
 
-    async function insertToLexical() {
-        const editor = get(lexicalEditorInstance);
-        if (!editor || !imageSrc) return;
-        inserting = true;
-        insertMsg = "";
+    /**
+     * The clipboard takes PNG and nothing else in practice: Tauri's `writeImage`
+     * decodes PNG/ICO only, and `ClipboardItem` is limited to PNG in every
+     * browser engine we run on. Manuscript scans arrive as JPEG, so they go out
+     * through a canvas to be re-encoded.
+     */
+    async function toPngBlob(dataUrl: string): Promise<Blob> {
+        const img = new Image();
+        img.src = dataUrl;
+        await img.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("canvas 2d context unavailable");
+        ctx.drawImage(img, 0, 0);
+        return await new Promise<Blob>((resolve, reject) =>
+            canvas.toBlob(
+                (blob) =>
+                    blob ? resolve(blob) : reject(new Error("PNG encode failed")),
+                "image/png",
+            ),
+        );
+    }
+
+    async function copyImage() {
+        if (copying || !imageSrc) return;
+        copying = true;
+        copyMsg = "";
         try {
             let dataUrl: string;
             if (demoMode) {
@@ -779,6 +790,8 @@
             } else {
                 const img = selectedImage;
                 if (!img) return;
+                // Full resolution, not the thumbnail already on screen: what
+                // lands on the clipboard is what gets pasted into a document.
                 const bytes =
                     thumbnailBytes ??
                     (await invoke<ArrayBuffer>("get_manuscript_image", {
@@ -787,32 +800,33 @@
                     }));
                 dataUrl = bytesToDataUrl(bytes, "image/jpeg");
             }
-            const altText = selectedManuscript
-                ? `${selectedManuscript.title} — ${$t(
-                      "manuscript.caption_folio",
-                      {
-                          folio: `${selectedPage?.folio ?? ""}${selectedPage?.side ?? ""}`,
-                      },
-                  )}`
-                : $t("manuscript.image_alt_default");
-            const captionText = buildCaptionText();
-            const linkUrl = buildCorpusCoranicumUrl();
-            editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
-                src: dataUrl,
-                altText,
-                captionText,
-                linkUrl,
-            });
-            insertMsg = $t("manuscript.inserted");
+
+            const blob = await toPngBlob(dataUrl);
+            try {
+                // The desktop path. WKWebView does not expose the async
+                // Clipboard API on Tauri's custom scheme, so the plugin — which
+                // already holds `clipboard-manager:allow-write-image` — is what
+                // actually works in the packaged app.
+                await writeImage(new Uint8Array(await blob.arrayBuffer()));
+            } catch (pluginError) {
+                if (
+                    !navigator.clipboard?.write ||
+                    typeof ClipboardItem === "undefined"
+                ) {
+                    throw pluginError;
+                }
+                await navigator.clipboard.write([
+                    new ClipboardItem({ "image/png": blob }),
+                ]);
+            }
+            copyMsg = $t("manuscript.copied");
         } catch (e) {
-            await message(
-                $t("manuscript.insert_failed_message", { error: String(e) }),
-                { title: $t("manuscript.insert_failed_title"), kind: "error" },
-            );
+            console.error("manuscript copy failed", e);
+            copyMsg = $t("manuscript.copy_failed", { error: String(e) });
         } finally {
-            inserting = false;
+            copying = false;
             setTimeout(() => {
-                insertMsg = "";
+                copyMsg = "";
             }, 3000);
         }
     }
@@ -822,16 +836,20 @@
         if (typeof window === "undefined") return;
         if (open) {
             if (!initialized) {
-                // Clamp the (larger) default size to the viewport so it always
-                // fits, then centre it.
-                panelW = Math.max(MIN_W, Math.min(panelW, window.innerWidth - 32));
-                panelH = Math.max(MIN_H, Math.min(panelH, window.innerHeight - 32));
-                x = Math.max(0, (window.innerWidth - panelW) / 2);
-                // In demo mode, shift down so the tour tooltip at top-12px has room
-                y = demoMode
-                    ? Math.min(window.innerHeight - panelH - 8, 140)
-                    : Math.max(0, (window.innerHeight - panelH) / 2);
-                if (!demoMode) zIndex = bringToFront();
+                // Floating mode has to place and size itself; a native window
+                // is already exactly where the OS put it.
+                if (!standalone) {
+                    // Clamp the (larger) default size to the viewport so it
+                    // always fits, then centre it.
+                    panelW = Math.max(MIN_W, Math.min(panelW, window.innerWidth - 32));
+                    panelH = Math.max(MIN_H, Math.min(panelH, window.innerHeight - 32));
+                    x = Math.max(0, (window.innerWidth - panelW) / 2);
+                    // In demo mode, shift down so the tour tooltip at top-12px has room
+                    y = demoMode
+                        ? Math.min(window.innerHeight - panelH - 8, 140)
+                        : Math.max(0, (window.innerHeight - panelH) / 2);
+                    if (!demoMode) zIndex = bringToFront();
+                }
                 initialized = true;
             }
             window.addEventListener("keydown", handleKeydown);
@@ -922,29 +940,43 @@
 <!-- ── Main panel ───────────────────────────────────────────────────────── -->
 {#if open}
     <div
-        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-        class="fixed flex flex-col rounded-3xl overflow-hidden shadow-xl dark:shadow-black/40
-           bg-white dark:bg-[#303446]
-           border border-brand-sand-200 dark:border-[#414559]
-           {demoMode ? 'z-9998' : ''}"
-        style="width:{panelW}px; height:{panelH}px; left:{x}px; top:{y}px;{demoMode
-            ? ''
-            : ` z-index:${zIndex};`}"
+        transition:fly={standalone
+            ? { duration: 0 }
+            : { y: 8, duration: 180, opacity: 0 }}
+        class="flex flex-col overflow-hidden bg-white dark:bg-[#303446] {standalone
+            ? 'h-full w-full'
+            : 'fixed rounded-xl shadow-xl dark:shadow-black/40 border border-brand-sand-200 dark:border-[#414559]'}
+           {!standalone && demoMode ? 'z-9998' : ''}"
+        style={standalone
+            ? ""
+            : `width:${panelW}px; height:${panelH}px; left:${x}px; top:${y}px;${
+                  demoMode ? "" : ` z-index:${zIndex};`
+              }`}
         onpointerdown={() => {
-            if (!demoMode) zIndex = bringToFront();
+            if (!demoMode && !standalone) zIndex = bringToFront();
         }}
     >
-        <!-- Header / drag handle -->
+        <!-- Header / drag handle. In a native window the OS moves the window,
+             so this becomes a plain drag region instead of a pointer-dragged
+             panel — and doubles as the title bar. -->
         <div
-            class="flex items-center justify-between px-4 py-1.5 shrink-0
+            data-tauri-drag-region={standalone ? true : undefined}
+            class="flex items-center justify-between gap-2 px-4 py-1.5 shrink-0
                border-b border-brand-gold-200 dark:border-[#414559]
                bg-brand-gold-100 dark:bg-[#292c3c]
-               select-none rounded-t-3xl
-               {isDragging ? 'cursor-grabbing' : 'cursor-grab'}"
-            onpointerdown={startDrag}
+               select-none {standalone
+                ? ''
+                : isDragging
+                  ? 'rounded-t-xl cursor-grabbing'
+                  : 'rounded-t-xl cursor-grab'}"
+            style:padding-left={standalone && isMac ? "5rem" : undefined}
+            onpointerdown={standalone ? undefined : startDrag}
             role="banner"
         >
-            <div class="flex items-center gap-2">
+            <div
+                data-tauri-drag-region={standalone ? true : undefined}
+                class="flex items-center gap-2"
+            >
                 <Icon
                     icon="solar:document-text-bold-duotone"
                     width="1.1rem"
@@ -978,7 +1010,7 @@
                     </span>
                 {/if}
             </div>
-            <div class="flex items-center gap-1">
+            <div class="ml-auto flex items-center gap-1">
                 <!-- Sidebar toggle -->
                 <button
                     onclick={() => (sidebarOpen = !sidebarOpen)}
@@ -995,17 +1027,31 @@
                         width="1rem"
                     />
                 </button>
-                <button
-                    onclick={onClose}
-                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
-                    aria-label={$t("manuscript.close")}
-                >
-                    <Icon
-                        icon="solar:close-circle-bold-duotone"
-                        width="0.85rem"
-                    />
-                </button>
+                <!-- Closing is the window's job once this bar *is* the title
+                     bar. The floating panel has no frame of its own, so it
+                     keeps its own button. -->
+                {#if !standalone}
+                    <button
+                        onclick={onClose}
+                        class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-lg bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#c6d0f5] hover:bg-brand-gold-200/80 dark:hover:bg-[#51576d] transition-colors"
+                        aria-label={$t("manuscript.close")}
+                    >
+                        <Icon
+                            icon="solar:close-circle-bold-duotone"
+                            width="0.85rem"
+                        />
+                    </button>
+                {/if}
             </div>
+
+            <!-- Windows and Linux run this window undecorated, so the header
+                 supplies the minimise / maximise / close buttons itself. macOS
+                 overlays its own traffic lights instead (see the 5rem inset). -->
+            {#if standalone && !isMac}
+                <div class="-my-1.5 -mr-2 flex self-stretch">
+                    <WindowControls />
+                </div>
+            {/if}
         </div>
 
         {#if !demoMode}
@@ -1646,31 +1692,27 @@
                                 {/if}
                             </button>
                             <button
-                                onclick={insertToLexical}
-                                disabled={inserting ||
-                                    !imageSrc ||
-                                    !$lexicalEditorInstance}
-                                title={!$lexicalEditorInstance
-                                    ? $t("manuscript.no_editor")
-                                    : $t("manuscript.insert_tooltip")}
+                                onclick={copyImage}
+                                disabled={copying || !imageSrc}
+                                title={$t("manuscript.copy_tooltip")}
                                 class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full border border-transparent
                                bg-brand-gold-400 hover:bg-brand-gold-600 active:bg-brand-gold-600/90
                                text-gray-100 dark:text-gray-700 hover:dark:text-gray-100
                                transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {#if inserting}
+                                {#if copying}
                                     <span
                                         class="w-3 h-3 rounded-full border border-gray-100 border-t-transparent animate-spin"
                                     ></span>
-                                    {$t("manuscript.inserting")}
-                                {:else if insertMsg}
-                                    {insertMsg}
+                                    {$t("manuscript.copy")}
+                                {:else if copyMsg}
+                                    {copyMsg}
                                 {:else}
                                     <Icon
-                                        icon="solar:gallery-add-bold"
+                                        icon="solar:copy-bold-duotone"
                                         width="0.75rem"
                                     />
-                                    {$t("manuscript.insert")}
+                                    {$t("manuscript.copy")}
                                 {/if}
                             </button>
                         </div>
@@ -1702,7 +1744,9 @@
             </div>
         </div>
 
-        <!-- Resize handles -->
+        <!-- Resize handles. Only the floating panel resizes itself; a native
+             window is resized by its own frame. -->
+        {#if !standalone}
         <div
             aria-hidden="true"
             class="resize-handle resize-n"
@@ -1751,6 +1795,7 @@
             onpointerdown={(e) =>
                 startResize(e, { n: true, s: false, e: false, w: true })}
         ></div>
+        {/if}
     </div>
 {/if}
 
@@ -1758,7 +1803,7 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         role="presentation"
-        class="fixed z-[10001] flex w-96 items-center gap-1.5 rounded-3xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+        class="fixed z-[10001] flex w-96 items-center gap-1.5 rounded-xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
         style="left:{aiPromptX}px; top:{aiPromptY}px; transform: translateX(-100%);"
         onclick={(e) => e.stopPropagation()}
         onkeydown={(e) => {
@@ -1769,7 +1814,7 @@
             bind:this={aiPromptInput}
             bind:value={aiPromptText}
             placeholder={$t("manuscript.ai_placeholder")}
-            class="min-w-0 flex-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+            class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
             onkeydown={(e) => {
                 if (e.key === "Enter") {
                     e.preventDefault();

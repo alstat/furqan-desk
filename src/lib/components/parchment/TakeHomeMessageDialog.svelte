@@ -14,6 +14,7 @@
     import { fly } from "svelte/transition";
     import { get } from "svelte/store";
     import { isPro } from "$lib/stores/auth.store";
+    import { PANEL_GAP } from "$lib/utils/anchoredPanel";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { renderMarkdown } from "$lib/utils/markdown";
     import { fetchTakeHomeMessage } from "$lib/stores/ai-takehome.store";
@@ -392,7 +393,9 @@
     let reflowTick = $state(0);
 
     const PANEL_W = 440;
-    const GAP = 12;
+    // Shared with the other anchored panels so every one sits the same
+    // distance from its trigger.
+    const GAP = PANEL_GAP;
 
     // Bump `reflowTick` after a sidebar toggle so the panel re-anchors once the
     // button has slid to its new spot (the sidebar animates ~300ms). The bump
@@ -519,7 +522,7 @@
         tabindex="-1"
         aria-modal="false"
         aria-label={$t("takehome.title")}
-        class="fixed flex w-[min(92vw,440px)] flex-col overflow-hidden rounded-3xl border border-brand-sand-200 bg-white shadow-xl dark:border-[#414559] dark:bg-[#303446] dark:shadow-black/40"
+        class="fixed flex w-[min(92vw,440px)] flex-col overflow-hidden rounded-xl border border-brand-sand-200 bg-white shadow-xl dark:border-[#414559] dark:bg-[#303446] dark:shadow-black/40"
         style="left:{dragPos ? dragPos.x : (pos?.x ?? 0)}px; top:{dragPos
             ? dragPos.y
             : (pos?.y ?? 0)}px; width:{pos?.w ?? 440}px; max-height:{pos?.maxH ??

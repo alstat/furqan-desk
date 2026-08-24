@@ -1,18 +1,13 @@
 <script lang="ts">
-    import { onMount, onDestroy, tick } from "svelte";
+    import { onMount } from "svelte";
     import { get } from "svelte/store";
     import { listen } from "@tauri-apps/api/event";
     import { IS_APPLE } from "@lexical/utils";
     import Icon from "@iconify/svelte";
-    import { Terminal } from "@xterm/xterm";
-    import { FitAddon } from "@xterm/addon-fit";
-    import "@xterm/xterm/css/xterm.css";
     import {
-        sharedTermState,
         juliaIsRunning,
         executeJuliaCode,
         isIncompleteJulia,
-        type TermTab,
     } from "$lib/stores/julia-terminal.store";
     import {
         juliaReplHistory,
@@ -21,9 +16,13 @@
         cmFontSize,
         replFontSize,
         replLineSpacing,
+        replInputHeights,
+        REPL_INPUT_MIN_HEIGHT,
+        REPL_INPUT_MAX_HEIGHT,
+        REPL_INPUT_PADDING,
+        REPL_INPUT_DEFAULT_LINES,
         juliaReplStarted,
         juliaActiveEnv,
-        appDarkMode,
         type ReplLine,
     } from "$lib/stores/editor.store";
     import { invoke } from "@tauri-apps/api/core";
@@ -44,191 +43,11 @@
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
     import { t } from "$lib/i18n";
 
+    /** embedded — mounted under an editor rather than filling the right column. */
+    let { embedded = false }: { embedded?: boolean } = $props();
+
     const askAiContextPrompt =
         "This text is part of a Julia programming file, help provide explanation or correction on the code";
-
-    // ── Terminal state (shared across all Julia tabs) ─────────────────────────
-
-    let ts = $state(get(sharedTermState));
-
-    // Persist local state changes back to the shared store
-    $effect(() => {
-        const snapshot = {
-            activePanel: ts.activePanel,
-            termTabs: ts.termTabs,
-            termExited: ts.termExited,
-            termCounter: ts.termCounter,
-        };
-        sharedTermState.set(snapshot);
-    });
-
-    // ── xterm.js terminal bundles (one per terminal tab) ─────────────────────
-
-    type Bundle = {
-        term: Terminal;
-        fit: FitAddon;
-        onDataDispose: () => void;
-        attached: boolean;
-    };
-    const bundles = new Map<string, Bundle>();
-    let termContainerEls = $state<Record<string, HTMLDivElement | undefined>>(
-        {},
-    );
-
-    function b64ToBytes(b64: string): Uint8Array {
-        const bin = atob(b64);
-        const out = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-        return out;
-    }
-    function bytesToB64(bytes: Uint8Array): string {
-        let bin = "";
-        const CHUNK = 0x8000;
-        for (let i = 0; i < bytes.length; i += CHUNK) {
-            bin += String.fromCharCode.apply(
-                null,
-                bytes.subarray(i, i + CHUNK) as unknown as number[],
-            );
-        }
-        return btoa(bin);
-    }
-    function strToB64(s: string): string {
-        return bytesToB64(new TextEncoder().encode(s));
-    }
-
-    function termTheme(dark: boolean) {
-        if (dark) {
-            return {
-                background: "#303446",
-                foreground: "#a5adce",
-                cursor: "#e5c890",
-                cursorAccent: "#303446",
-                selectionBackground: "#3a3f57",
-                black: "#51576d",
-                red: "#e78284",
-                green: "#a6d189",
-                yellow: "#e5c890",
-                blue: "#8caaee",
-                magenta: "#f4b8e4",
-                cyan: "#81c8be",
-                white: "#b5bfe2",
-                brightBlack: "#626880",
-                brightRed: "#e78284",
-                brightGreen: "#a6d189",
-                brightYellow: "#e5c890",
-                brightBlue: "#8caaee",
-                brightMagenta: "#f4b8e4",
-                brightCyan: "#81c8be",
-                brightWhite: "#a5adce",
-            };
-        }
-        return {
-            background: "#faf7f2",
-            foreground: "#707070",
-            cursor: "#c8a96a",
-            cursorAccent: "#faf7f2",
-            selectionBackground: "#cfe3ff",
-            black: "#707070",
-            red: "#c44545",
-            green: "#5a8a3a",
-            yellow: "#b58900",
-            blue: "#268bd2",
-            magenta: "#d33682",
-            cyan: "#2aa198",
-            white: "#bdbdbd",
-            brightBlack: "#586e75",
-            brightRed: "#dc322f",
-            brightGreen: "#859900",
-            brightYellow: "#b58900",
-            brightBlue: "#268bd2",
-            brightMagenta: "#d33682",
-            brightCyan: "#2aa198",
-            brightWhite: "#fdf6e3",
-        };
-    }
-
-    async function attachTerm(id: string, container: HTMLDivElement) {
-        const existing = bundles.get(id);
-        if (existing?.attached) return;
-        const term =
-            existing?.term ??
-            new Terminal({
-                cursorBlink: true,
-                fontFamily:
-                    "Menlo, Monaco, 'JetBrainsMono Nerd Font', 'JetBrains Mono', 'Fira Code', monospace",
-                fontSize: $replFontSize,
-                lineHeight: $replLineSpacing,
-                theme: termTheme($appDarkMode),
-                allowProposedApi: true,
-                scrollback: 5000,
-            });
-        const fit = existing?.fit ?? new FitAddon();
-        if (!existing) term.loadAddon(fit);
-
-        term.open(container);
-        await tick();
-        try {
-            fit.fit();
-        } catch {
-            /* ignore */
-        }
-
-        const onData = term.onData((data) => {
-            invoke("pty_write", { id, dataB64: strToB64(data) }).catch(
-                () => {},
-            );
-        });
-
-        bundles.set(id, {
-            term,
-            fit,
-            onDataDispose: () => onData.dispose(),
-            attached: true,
-        });
-
-        try {
-            await invoke("start_pty", {
-                id,
-                cols: term.cols,
-                rows: term.rows,
-                cwd: get(openFolderPath),
-            });
-            await invoke("pty_resize", {
-                id,
-                cols: term.cols,
-                rows: term.rows,
-            }).catch(() => {});
-        } catch (e) {
-            term.writeln(`\r\n\x1b[31m${String(e)}\x1b[0m`);
-            ts.termExited[id] = true;
-        }
-
-        requestAnimationFrame(() => term.focus());
-    }
-
-    function disposeBundle(id: string) {
-        const b = bundles.get(id);
-        if (!b) return;
-        b.onDataDispose();
-        b.term.dispose();
-        bundles.delete(id);
-    }
-
-    function refitActiveTerm() {
-        const id = ts.activePanel;
-        const b = bundles.get(id);
-        if (!b) return;
-        try {
-            b.fit.fit();
-            invoke("pty_resize", {
-                id,
-                cols: b.term.cols,
-                rows: b.term.rows,
-            }).catch(() => {});
-        } catch {
-            /* ignore */
-        }
-    }
 
     // ── REPL lines (reactive from shared store) ───────────────────────────────
 
@@ -302,9 +121,70 @@
         };
     }
 
-    const replInputRows = $derived(
-        Math.max(1, (replInput.match(/\n/g) ?? []).length + 1),
+    // ── Input box height (drag the seam above the prompt) ────────────────────
+
+    // One line under an editor, seven in the right-hand column, unless the user
+    // has dragged this slot to a height of their own.
+    const inputSlot = $derived(embedded ? "embedded" : "panel");
+    const lineHeightPx = $derived($replFontSize * $replLineSpacing);
+
+    function heightForLines(lines: number): number {
+        return Math.round(lines * lineHeightPx) + REPL_INPUT_PADDING;
+    }
+
+    const defaultInputHeight = $derived(
+        heightForLines(REPL_INPUT_DEFAULT_LINES[inputSlot]),
     );
+
+    // The box still opens out to fit what has been typed, the way it did when
+    // its height came straight from the newline count.
+    const inputHeight = $derived(
+        Math.min(
+            REPL_INPUT_MAX_HEIGHT,
+            Math.max(
+                $replInputHeights[inputSlot] ?? defaultInputHeight,
+                heightForLines((replInput.match(/\n/g) ?? []).length + 1),
+            ),
+        ),
+    );
+
+    let inputDragging = $state(false);
+    let inputDragStartY = 0;
+    let inputDragStartHeight = 0;
+
+    function startInputDrag(e: PointerEvent) {
+        inputDragging = true;
+        inputDragStartY = e.clientY;
+        inputDragStartHeight = inputHeight;
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        e.preventDefault();
+    }
+
+    function onInputDrag(e: PointerEvent) {
+        if (!inputDragging) return;
+        // The seam is above the box, so dragging up makes it taller.
+        replInputHeights.setHeight(
+            inputSlot,
+            inputDragStartHeight + (inputDragStartY - e.clientY),
+        );
+    }
+
+    function endInputDrag(e: PointerEvent) {
+        if (!inputDragging) return;
+        inputDragging = false;
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    }
+
+    function nudgeInputHeight(e: KeyboardEvent) {
+        const step = e.shiftKey ? 32 : 8;
+        if (e.key === "ArrowUp") {
+            e.preventDefault();
+            replInputHeights.setHeight(inputSlot, inputHeight + step);
+        } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            replInputHeights.setHeight(inputSlot, inputHeight - step);
+        }
+    }
 
     let isRunning = $derived($juliaIsRunning);
     let isStreaming = $state(false);
@@ -594,59 +474,9 @@
         }
     }
 
-    // ── Terminal helpers ──────────────────────────────────────────────────────
-
-    async function addTerminal() {
-        ts.termCounter++;
-        const id = `pty-${ts.termCounter}-${Date.now()}`;
-        const count = ts.termCounter;
-        const label = $t("terminal.tab_label", { count });
-        ts.termTabs = [...ts.termTabs, { id, label, count }];
-        ts.termExited[id] = false;
-        ts.activePanel = id;
-        // The xterm instance is attached by the $effect once the container
-        // div is bound to the DOM.
-    }
-
-    async function closeTerminal(id: string) {
-        try {
-            await invoke("pty_kill", { id });
-        } catch {
-            /* ignore */
-        }
-        disposeBundle(id);
-        ts.termTabs = ts.termTabs.filter((t) => t.id !== id);
-        const { [id]: _ex, ...restEx } = ts.termExited;
-        ts.termExited = restEx;
-        const { [id]: _ce, ...restCe } = termContainerEls;
-        termContainerEls = restCe;
-        if (ts.activePanel === id) ts.activePanel = "julia";
-    }
-
-    async function killActiveTerm() {
-        const id = ts.activePanel;
-        if (id === "julia" || ts.termExited[id]) return;
-        // 0x03 = ETX = Ctrl-C; PTY line discipline turns this into SIGINT.
-        try {
-            await invoke("pty_write", {
-                id,
-                dataB64: bytesToB64(new Uint8Array([0x03])),
-            });
-        } catch {
-            /* ignore */
-        }
-        bundles.get(id)?.term.focus();
-    }
-
     // ── Active pane search ───────────────────────────────────────────────────
 
-    type PaneSearchMatch = {
-        panel: string;
-        line?: number;
-        col?: number;
-        index?: number;
-        length: number;
-    };
+    type PaneSearchMatch = { index: number; length: number };
 
     let showSearch = $state(false);
     let searchQuery = $state("");
@@ -659,22 +489,7 @@
         return replOutputEl?.textContent ?? "";
     }
 
-    function getActiveTerminalLines(): string[] {
-        const b = bundles.get(ts.activePanel);
-        if (!b) return [];
-        const buffer = b.term.buffer.active;
-        const lines: string[] = [];
-        for (let i = 0; i < buffer.length; i++) {
-            lines.push(buffer.getLine(i)?.translateToString(true) ?? "");
-        }
-        return lines;
-    }
-
-    function collectTextMatches(
-        text: string,
-        query: string,
-        panel: string,
-    ): PaneSearchMatch[] {
+    function collectTextMatches(text: string, query: string): PaneSearchMatch[] {
         if (!query) return [];
         const matches: PaneSearchMatch[] = [];
         const haystack = text.toLocaleLowerCase();
@@ -683,36 +498,14 @@
         while (from <= haystack.length) {
             const index = haystack.indexOf(needle, from);
             if (index === -1) break;
-            matches.push({ panel, index, length: query.length });
+            matches.push({ index, length: query.length });
             from = index + Math.max(needle.length, 1);
         }
         return matches;
     }
 
-    function collectTerminalMatches(query: string): PaneSearchMatch[] {
-        if (!query) return [];
-        const panel = ts.activePanel;
-        const needle = query.toLocaleLowerCase();
-        return getActiveTerminalLines().flatMap((line, row) => {
-            const matches: PaneSearchMatch[] = [];
-            const haystack = line.toLocaleLowerCase();
-            let from = 0;
-            while (from <= haystack.length) {
-                const col = haystack.indexOf(needle, from);
-                if (col === -1) break;
-                matches.push({ panel, line: row, col, length: query.length });
-                from = col + Math.max(needle.length, 1);
-            }
-            return matches;
-        });
-    }
-
     function refreshSearchMatches() {
-        const query = searchQuery.trim();
-        searchMatches =
-            ts.activePanel === "julia"
-                ? collectTextMatches(getReplText(), query, "julia")
-                : collectTerminalMatches(query);
+        searchMatches = collectTextMatches(getReplText(), searchQuery.trim());
         searchIndex = searchMatches.length > 0 ? 0 : -1;
         searchRevealed = false;
     }
@@ -764,20 +557,8 @@
 
     function revealSearchMatch() {
         const match = searchMatches[searchIndex];
-        if (!match) return;
-        if (match.panel === "julia") {
-            if (replOutputEl && match.index !== undefined) {
-                selectTextOffset(replOutputEl, match.index, match.length);
-            }
-            searchRevealed = true;
-            return;
-        }
-
-        const b = bundles.get(match.panel);
-        if (!b || match.line === undefined || match.col === undefined) return;
-        b.term.scrollToLine(match.line);
-        b.term.select(match.col, match.line, match.length);
-        b.term.focus();
+        if (!match || !replOutputEl) return;
+        selectTextOffset(replOutputEl, match.index, match.length);
         searchRevealed = true;
     }
 
@@ -807,8 +588,6 @@
         searchIndex = -1;
         searchRevealed = false;
         window.getSelection()?.removeAllRanges();
-        if (ts.activePanel !== "julia")
-            bundles.get(ts.activePanel)?.term.clearSelection();
     }
 
     function handleSearchKeydown(e: KeyboardEvent) {
@@ -822,7 +601,6 @@
     }
 
     $effect(() => {
-        const _activePanel = ts.activePanel;
         if (showSearch) {
             requestAnimationFrame(() => refreshSearchMatches());
         }
@@ -992,25 +770,6 @@
             scrollReplToBottom();
         });
 
-        const unlistenPtyOut = listen<{ id: string; data_b64: string }>(
-            "pty-output",
-            (event) => {
-                const { id, data_b64 } = event.payload;
-                const b = bundles.get(id);
-                if (!b) return;
-                b.term.write(b64ToBytes(data_b64));
-            },
-        );
-
-        const unlistenPtyExit = listen<{ id: string }>("pty-exit", (event) => {
-            const { id } = event.payload;
-            if (!(id in ts.termExited)) return;
-            ts.termExited[id] = true;
-        });
-
-        const onWinResize = () => refitActiveTerm();
-        window.addEventListener("resize", onWinResize);
-
         const onSelectionChange = () => updateReplAiSelection();
         document.addEventListener("selectionchange", onSelectionChange);
         const onScroll = () => updateReplAiSelection();
@@ -1035,69 +794,11 @@
 
         return () => {
             unlistenJulia.then((fn) => fn());
-            unlistenPtyOut.then((fn) => fn());
-            unlistenPtyExit.then((fn) => fn());
-            window.removeEventListener("resize", onWinResize);
             document.removeEventListener("selectionchange", onSelectionChange);
             replOutputEl?.removeEventListener("scroll", onScroll);
             if (streamingTimer) clearTimeout(streamingTimer);
             unsubFolder();
         };
-    });
-
-    onDestroy(() => {
-        for (const id of [...bundles.keys()]) {
-            invoke("pty_kill", { id }).catch(() => {});
-            disposeBundle(id);
-        }
-    });
-
-    // Attach xterm instances as containers become available.
-    $effect(() => {
-        for (const tab of ts.termTabs) {
-            const container = termContainerEls[tab.id];
-            if (container && !bundles.get(tab.id)?.attached) {
-                attachTerm(tab.id, container);
-            }
-        }
-    });
-
-    // Refit when the active panel changes (e.g., switching tabs).
-    $effect(() => {
-        const _activePanel = ts.activePanel;
-        requestAnimationFrame(() => {
-            refitActiveTerm();
-            const b = bundles.get(_activePanel);
-            b?.term.focus();
-        });
-    });
-
-    // Update theme on dark-mode flip.
-    $effect(() => {
-        const dark = $appDarkMode;
-        for (const b of bundles.values()) {
-            b.term.options.theme = termTheme(dark);
-        }
-    });
-
-    // Update font size / line spacing on store changes.
-    $effect(() => {
-        const fs = $replFontSize;
-        const lh = $replLineSpacing;
-        for (const [id, b] of bundles.entries()) {
-            b.term.options.fontSize = fs;
-            b.term.options.lineHeight = lh;
-            try {
-                b.fit.fit();
-                invoke("pty_resize", {
-                    id,
-                    cols: b.term.cols,
-                    rows: b.term.rows,
-                }).catch(() => {});
-            } catch {
-                /* ignore */
-            }
-        }
     });
 
     // ── Settings popover ──────────────────────────────────────────────────────
@@ -1158,168 +859,95 @@
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
     const settingsAdjustBtnClass =
         "cursor-pointer w-7 h-7 flex items-center justify-center rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#363a4f] hover:bg-brand-sand-200 dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
+
+    // Toolbar controls share LeanInfoviewPane's Live/Compile design and
+    // palette: plain actions carry the gold accent the way Compile does, and
+    // the two toggles flip between gold and sand the way Live does.
+    const pillBase =
+        "flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors";
+    const pillIdle =
+        "bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]";
+    const pillAccent =
+        "bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25";
 </script>
 
+<!-- Borderless like LeanInfoviewPane: the column wrapper in +page.svelte draws
+     the single border-x, so the pane adds no box of its own. -->
 <div
-    class="flex-1 mt-0.5 flex flex-col rounded-md overflow-hidden border border-brand-sand-200 dark:border-[#414559] min-h-0 h-full"
+    class="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
     style="--repl-font-size: {$replFontSize}px; --repl-line-height: {$replLineSpacing};"
 >
-    <!-- Tab bar -->
+    <!-- Header: status on the left, actions on the right — LeanInfoviewPane's
+         layout and spacing (px-4 py-1, gap-1.5 between controls). -->
     <div
-        class="relative flex items-center py-1 border-b border-brand-sand-200 dark:border-[#414559] shrink-0
-               {ts.activePanel === 'julia'
-            ? 'bg-brand-sand-100 dark:bg-[#292c3c]'
-            : 'bg-brand-sand-50 dark:bg-[#303446]'}"
+        class="flex shrink-0 items-center justify-between gap-2 border-b border-brand-sand-200 dark:border-[#414559] px-4 py-1"
     >
-        <div class="flex items-center flex-1 min-w-0 overflow-x-auto">
-            <!-- Julia REPL tab -->
-            <div
-                class="flex items-center flex-none border-r rounded-full mx-2 border-brand-sand-400 dark:border-[#414559]
-                    {ts.activePanel === 'julia'
-                    ? 'bg-brand-sand-50 dark:bg-[#414559]'
-                    : 'hover:bg-brand-sand-100 dark:hover:bg-[#303446]'}"
-            >
-                <button
-                    onclick={() => (ts.activePanel = "julia")}
-                    class="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none cursor-pointer
-                       {ts.activePanel === 'julia'
-                        ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
-                        : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
-                    >REPL</button
+        <span class="flex min-w-0 items-center gap-1.5">
+            {#if isRunning || isStreaming}
+                <span
+                    class="flex items-center gap-1 select-none text-brand-gold-400"
                 >
-                {#if ts.activePanel === "julia"}
-                    {#if isRunning || isStreaming}
-                        <span
-                            class="flex items-center gap-1 pr-2 select-none text-brand-gold-400"
-                        >
-                            <svg
-                                class="animate-spin h-3 w-3 shrink-0"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                            >
-                                <circle
-                                    class="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    stroke-width="4"
-                                ></circle>
-                                <path
-                                    class="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                                ></path>
-                            </svg>
-                            <span class="text-[10px] italic">{$t("julia_repl.running")}</span>
-                        </span>
-                    {/if}
-                    <button
-                        onclick={(e) => {
-                            e.stopPropagation();
-                            clearRepl();
-                        }}
-                        class="cursor-pointer pr-1 text-[10px] font-medium text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] transition-colors select-none"
-                        title={$t("julia_repl.clear_title")}>{$t("julia_repl.clear")}</button
+                    <svg
+                        class="animate-spin h-3 w-3 shrink-0"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
                     >
-                    <button
-                        onclick={(e) => {
-                            e.stopPropagation();
-                            restartRepl();
-                        }}
-                        class="cursor-pointer px-2 flex items-center gap-0.5 text-[10px] font-medium text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 dark:hover:text-red-400 transition-colors select-none"
-                        title={$t("julia_repl.restart_title")}
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="10"
-                            height="10"
-                            viewBox="0 0 24 24"
-                            fill="none"
+                        <circle
+                            class="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
                             stroke="currentColor"
-                            stroke-width="2.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-                            <path
-                                d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
-                            />
-                            <path d="M3 3v5h5" />
-                        </svg>
-                        {$t("julia_repl.restart")}
-                    </button>
-                {/if}
-            </div>
-
-            <!-- Terminal tabs -->
-            {#each ts.termTabs as tab (tab.id)}
-                <div
-                    class="flex items-center flex-none mr-2 rounded-full border-r border-brand-sand-400 dark:border-[#414559]
-                        {ts.activePanel === tab.id
-                        ? 'bg-brand-sand-50 dark:bg-[#414559]'
-                        : 'hover:bg-brand-sand-100 dark:hover:bg-[#303446]'}"
-                >
-                    <button
-                        onclick={() => (ts.activePanel = tab.id)}
-                        class="cursor-pointer px-3 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none
-                           {ts.activePanel === tab.id
-                            ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
-                            : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
-                        >{tab.count !== undefined
-                            ? $t("terminal.tab_label", { count: tab.count })
-                            : tab.label}</button
+                            stroke-width="4"
+                        ></circle>
+                        <path
+                            class="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                        ></path>
+                    </svg>
+                    <span class="text-[10px] italic"
+                        >{$t("julia_repl.running")}</span
                     >
-                    <button
-                        onclick={(e) => {
-                            e.stopPropagation();
-                            closeTerminal(tab.id);
-                        }}
-                        class="cursor-pointer pr-2 py-1 text-[10px] leading-none text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 transition-colors"
-                        title={$t("terminal.close")}>×</button
-                    >
-                </div>
-            {/each}
-        </div>
-
-        <!-- Right-aligned tab-bar actions -->
-        <div class="ml-auto flex items-center gap-0.5 pr-2 shrink-0">
-            {#if ts.activePanel !== "julia" && !ts.termExited[ts.activePanel]}
-                <button
-                    onclick={killActiveTerm}
-                    aria-label={$t("terminal.send_ctrl_c")}
-                    title={$t("julia_repl.send_ctrl_c_full_title")}
-                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md
-                           text-brand-charcoal-300 dark:text-brand-charcoal-300
-                           hover:text-red-500 dark:hover:text-red-400
-                           hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 transition-colors"
-                >
-                    <Icon
-                        icon="solar:stop-circle-bold-duotone"
-                        width="0.9rem"
-                    />
-                </button>
+                </span>
             {/if}
+        </span>
+
+        <span class="flex shrink-0 items-center gap-1.5">
+            <button
+                onclick={clearRepl}
+                class="{pillBase} {pillAccent} select-none"
+                title={$t("julia_repl.clear_title")}
+            >
+                <Icon icon="lucide:eraser" width="11" />
+                {$t("julia_repl.clear")}
+            </button>
+            <button
+                onclick={restartRepl}
+                class="{pillBase} {pillAccent} select-none"
+                title={$t("julia_repl.restart_title")}
+            >
+                <Icon icon="lucide:rotate-ccw" width="11" />
+                {$t("julia_repl.restart")}
+            </button>
             <!-- Settings button -->
             <div bind:this={settingsAnchorEl} class="relative">
                 <button
                     onclick={() => (showSettings = !showSettings)}
-                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-brand-charcoal-300 hover:text-brand-gold-600 dark:hover:text-brand-gold-400 hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 shrink-0 transition-colors
-                           {showSettings
-                        ? 'bg-brand-sand-100 dark:bg-brand-sand-200 text-brand-gold-600 dark:text-brand-gold-400'
-                        : ''}"
+                    class="{pillBase} {showSettings ? pillAccent : pillIdle}"
                     title={$t("julia_repl.display_settings")}
-                    aria-label={$t("julia_repl.display_settings")}
                     aria-expanded={showSettings}
                 >
-                    <Icon icon="solar:settings-bold-duotone" width="0.9rem" />
+                    <Icon icon="solar:settings-bold-duotone" width="11" />
+                    {$t("julia_repl.settings")}
                 </button>
                 {#if showSettings}
                     <div
                         role="menu"
                         tabindex="-1"
                         onpointerdown={(e) => e.stopPropagation()}
-                        class="absolute right-0 top-full mt-1 z-50 w-72 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white/95 dark:bg-[#303446]/95 p-3.5 shadow-xl shadow-brand-charcoal-900/10 dark:shadow-black/40 backdrop-blur space-y-3.5"
+                        class="absolute right-0 top-full z-50 mt-1.5 w-72 overflow-hidden rounded-xl border border-stone-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] p-3.5 shadow-xl shadow-black/15 dark:shadow-black/40 space-y-3.5"
                     >
                         <div
                             class="flex items-center gap-2 border-b border-brand-sand-100 dark:border-[#414559] pb-2"
@@ -1523,31 +1151,26 @@
             <div class="relative">
                 <button
                     onclick={showSearch ? closeSearch : openSearch}
-                    class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-brand-charcoal-300 hover:text-brand-gold-600 dark:hover:text-brand-gold-400 hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 shrink-0 transition-colors
-                           {showSearch
-                        ? 'bg-brand-sand-100 dark:bg-brand-sand-200 text-brand-gold-600 dark:text-brand-gold-400'
-                        : ''}"
-                    title={$t("julia_repl.search_active_pane")}
-                    aria-label={$t("julia_repl.search_active_pane")}
+                    class="{pillBase} {showSearch ? pillAccent : pillIdle}"
+                    title={$t("julia_repl.search_repl")}
                     aria-expanded={showSearch}
                 >
-                    <Icon icon="solar:magnifer-bold-duotone" width="0.9rem" />
+                    <Icon icon="solar:magnifer-bold-duotone" width="11" />
+                    {$t("julia_repl.search")}
                 </button>
 
                 {#if showSearch}
                     <div
-                        class="absolute right-0 top-7 z-50 flex items-center gap-1 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] p-1 shadow-lg"
+                        class="absolute right-0 top-7 z-50 mt-1.5 flex items-center gap-1 overflow-hidden rounded-xl border border-stone-200 dark:border-[#414559] bg-white dark:bg-[#292c3c] p-1 shadow-xl shadow-black/15 dark:shadow-black/40"
                     >
                         <input
                             bind:this={searchInputEl}
                             bind:value={searchQuery}
                             oninput={refreshSearchMatches}
                             onkeydown={handleSearchKeydown}
-                            class="h-7 w-44 rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#232634] px-2 text-xs text-brand-charcoal-700 dark:text-[#c6d0f5] outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 dark:focus:border-[#e5c890]"
-                            placeholder={ts.activePanel === 'julia'
-                                ? $t("julia_repl.search_repl")
-                                : $t("julia_repl.search_terminal")}
-                            aria-label={$t("julia_repl.search_active_pane")}
+                            class="h-7 w-44 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#1c1c1c] px-2 text-xs text-brand-charcoal-700 dark:text-[#c6d0f5] outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 dark:focus:border-[#e5c890]"
+                            placeholder={$t("julia_repl.search_repl")}
+                            aria-label={$t("julia_repl.search_repl")}
                         />
                         <span
                             class="min-w-11 text-center text-[10px] tabular-nums text-brand-charcoal-300 dark:text-[#838ba7]"
@@ -1559,7 +1182,7 @@
                         <button
                             onclick={() => stepSearch(-1)}
                             disabled={searchMatches.length === 0}
-                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
+                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-gold-600 dark:hover:text-brand-gold-400 disabled:cursor-not-allowed disabled:opacity-40"
                             title={$t("julia_repl.previous_match")}
                             aria-label={$t("julia_repl.previous_match")}
                         >
@@ -1571,7 +1194,7 @@
                         <button
                             onclick={() => stepSearch(1)}
                             disabled={searchMatches.length === 0}
-                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] hover:text-brand-gold-600 dark:hover:text-[#e5c890] disabled:cursor-not-allowed disabled:opacity-40"
+                            class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#414559] hover:text-brand-gold-600 dark:hover:text-brand-gold-400 disabled:cursor-not-allowed disabled:opacity-40"
                             title={$t("julia_repl.next_match")}
                             aria-label={$t("julia_repl.next_match")}
                         >
@@ -1583,25 +1206,15 @@
                     </div>
                 {/if}
             </div>
-            <!-- Add terminal button -->
-            <button
-                onclick={addTerminal}
-                class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md text-brand-charcoal-300 dark:text-brand-charcoal-300 hover:text-brand-gold-600 dark:hover:text-brand-gold-400 hover:bg-brand-sand-100 dark:hover:bg-brand-sand-200 shrink-0 transition-colors"
-                title={$t("terminal.add")}
-                aria-label={$t("terminal.add")}
-            >
-                <Icon icon="ic:outline-plus" width="0.9rem" />
-            </button>
-        </div>
+        </span>
     </div>
 
     <!-- Julia REPL content -->
-    {#if ts.activePanel === "julia"}
-        <div class="flex-1 flex flex-col overflow-hidden min-h-0">
-            <!-- Output -->
+    <div class="flex-1 flex flex-col overflow-hidden min-h-0">
+        <!-- Output -->
             <div
                 bind:this={replOutputEl}
-                class="default-scroll flex-1 overflow-y-auto min-h-0 bg-brand-sand-50 dark:bg-[#232634] px-3 py-2 font-mono repl-mono"
+                class="default-scroll flex-1 overflow-y-auto min-h-0 px-3 py-2 font-mono repl-mono"
                 role="log"
                 aria-label={$t("julia_repl.output_label")}
             >
@@ -1740,12 +1353,43 @@
                 {/if}
             </div>
 
+            <!-- Resize seam: drag (or arrow-key) to set the input box height.
+                 A focusable separator is the ARIA window-splitter pattern, which
+                 the linter reads as a non-interactive element. -->
+            <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+            <div
+                role="separator"
+                aria-orientation="horizontal"
+                aria-label={$t("julia_repl.resize_input")}
+                aria-valuenow={inputHeight}
+                aria-valuemin={REPL_INPUT_MIN_HEIGHT}
+                aria-valuemax={REPL_INPUT_MAX_HEIGHT}
+                tabindex="0"
+                title={$t("julia_repl.resize_input")}
+                onpointerdown={startInputDrag}
+                onpointermove={onInputDrag}
+                onpointerup={endInputDrag}
+                onpointercancel={endInputDrag}
+                onkeydown={nudgeInputHeight}
+                ondblclick={() => replInputHeights.reset(inputSlot)}
+                class="group/seam shrink-0 h-1.5 -mb-px cursor-row-resize outline-none"
+            >
+                <span
+                    class="pointer-events-none block h-px w-full transition-colors
+                           {inputDragging
+                        ? 'bg-brand-gold-400'
+                        : 'bg-transparent group-hover/seam:bg-brand-gold-400/50 group-focus/seam:bg-brand-gold-400/50'}"
+                ></span>
+            </div>
+
             <!-- Input -->
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <div
                 role="group"
                 aria-label={$t("julia_repl.input_label")}
-                class="flex items-start gap-2 px-3 py-1.5 bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-200 dark:border-[#414559] shrink-0"
+                style:height="{inputHeight}px"
+                class="flex items-start gap-2 px-3 py-1.5 border-t border-brand-sand-200 dark:border-[#414559] shrink-0"
                 onclick={() => replInputEl?.focus()}
                 onkeydown={(e) => {
                     if (e.key === "Enter") replInputEl?.focus();
@@ -1796,7 +1440,6 @@
                             replInput = fixed;
                         }
                     }}
-                    rows={replInputRows}
                     placeholder={isRunning || isStreaming
                         ? $t("julia_repl.running")
                         : replMode === "pkg"
@@ -1808,16 +1451,13 @@
                               : $t("julia_repl.placeholder_julia")}
                     use:noAutocorrect
                     spellcheck={false}
-                    class="flex-1 resize-none bg-transparent font-mono repl-mono text-brand-charcoal-700 dark:text-[#c6d0f5]
+                    class="default-scroll h-full flex-1 resize-none bg-transparent font-mono repl-mono text-brand-charcoal-700 dark:text-[#c6d0f5]
                            outline-none placeholder-brand-charcoal-300 dark:placeholder-[#626880]
                            disabled:opacity-40 disabled:cursor-not-allowed"
                 ></textarea>
             </div>
-        </div>
-    {/if}
+    </div>
 
-    <!-- Terminal panels (xterm.js). All container divs stay mounted so each
-         terminal keeps its scrollback when the user switches tabs. -->
     {#if $isPro && replAiSelection}
         <AiSelectionToolbar
             selectedText={replAiSelection.text}
@@ -1828,42 +1468,12 @@
             onClose={() => (replAiSelection = null)}
         />
     {/if}
-
-    {#if ts.termTabs.length > 0}
-        <div
-            class="relative flex-1 min-h-0 bg-brand-sand-50 dark:bg-[#303446]"
-            style:--terminal-bg={$appDarkMode ? "#303446" : "#faf7f2"}
-            style="display: {ts.activePanel !== 'julia' ? 'block' : 'none'};"
-        >
-            {#each ts.termTabs as tab (tab.id)}
-                <div
-                    bind:this={termContainerEls[tab.id]}
-                    class="absolute inset-0 {ts.activePanel === tab.id
-                        ? 'visible z-1'
-                        : 'invisible z-0 pointer-events-none'}"
-                ></div>
-            {/each}
-        </div>
-    {/if}
 </div>
 
 <style>
     :global(.repl-mono) {
         font-size: var(--repl-font-size, 13px);
         line-height: var(--repl-line-height, 1.3);
-    }
-
-    /* Keep every xterm-owned surface on the same background color so a
-       persistent scrollbar gutter blends into the terminal instead of reading as
-       a pale right border when the OS keeps scrollbars visible. */
-    :global(.xterm) {
-        background-color: var(--terminal-bg, transparent);
-    }
-    :global(.xterm .xterm-viewport),
-    :global(.xterm .xterm-screen),
-    :global(.xterm .xterm-scrollable-element),
-    :global(.xterm .xterm-scrollable-element > .scrollbar) {
-        background-color: var(--terminal-bg, transparent) !important;
     }
 
     /* Indeterminate precompile bar: slide left→right so it reads as "working"

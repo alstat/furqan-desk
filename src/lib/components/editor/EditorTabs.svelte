@@ -68,9 +68,29 @@
         else addThirdToTypstGroup(g.id, tabCId);
     }
     import Icon from "@iconify/svelte";
+    import { tick } from "svelte";
     import { t } from "$lib/i18n";
     import { confirm } from "@tauri-apps/plugin-dialog";
     import { singlePageMargin, zenMode, zenPeek, zenTabsOpacity } from "$lib/stores/editor.store";
+
+    // variant "header" drops the absolute positioning and the zen dimming: the
+    // strip becomes a plain flex child the window header centres itself, and
+    // the header applies its own zen fade to everything it holds.
+    let { variant = "floating" }: { variant?: "floating" | "header" } =
+        $props();
+
+    const inHeader = $derived(variant === "header");
+
+    // Every tab popup opens away from the strip: downward from the window
+    // header, upward from the strip's floating position under the sidebar.
+    const popupShift = $derived(
+        inHeader ? "translateY(4px)" : "translateY(calc(-100% - 4px))",
+    );
+    const popupShiftLeft = $derived(
+        inHeader
+            ? "translate(-100%, 4px)"
+            : "translate(-100%, calc(-100% - 4px))",
+    );
 
     const GROUP_COLORS = [
         {
@@ -191,7 +211,9 @@
             );
             const rect = anchor?.getBoundingClientRect();
             addThirdForGroupId = group.id;
-            addThirdPos = rect ? { x: rect.right, y: rect.top } : null;
+            addThirdPos = rect
+                ? { x: rect.right, y: inHeader ? rect.bottom : rect.top }
+                : null;
         }
     }
 
@@ -266,7 +288,9 @@
                 );
                 const rect = anchor?.getBoundingClientRect();
                 pickerForTabId = tabId;
-                pickerPos = rect ? { x: rect.left, y: rect.top } : null;
+                pickerPos = rect
+                    ? { x: rect.left, y: inHeader ? rect.bottom : rect.top }
+                    : null;
             }
         }
     }
@@ -274,6 +298,106 @@
     // Any editor type can show the split icon when the Parchment is hidden
     let canShowSplit = $derived($hideSurahPage());
     let windowWidth = $state(0);
+
+    // ── horizontal overflow ────────────────────────────────────────────────
+    // The strip is narrower than the tab list once enough files are open. Fade
+    // whichever edge still has tabs behind it, so the cut-off reads as "there
+    // is more this way" rather than as a tab clipped by a hard border.
+    let scrollEl = $state<HTMLElement | null>(null);
+    let canScrollLeft = $state(false);
+    let canScrollRight = $state(false);
+
+    // The native bar is hidden (a persistent one steals a row from a 32px
+    // strip once macOS is set to always-show scrollbars). These drive a thumb
+    // painted over the strip instead, so it costs no layout height.
+    let thumbLeft = $state(0);
+    let thumbWidth = $state(0);
+    let overflowing = $state(false);
+    let scrolledRecently = $state(false);
+    let thumbHideTimer: ReturnType<typeof setTimeout> | null = null;
+
+    /** Smallest thumb that still reads as a scrollbar, as a % of the track. */
+    const MIN_THUMB_PERCENT = 10;
+
+    function updateScrollEdges() {
+        const el = scrollEl;
+        if (!el) return;
+        canScrollLeft = el.scrollLeft > 1;
+        canScrollRight =
+            el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+
+        overflowing = el.scrollWidth > el.clientWidth + 1;
+        if (!overflowing) return;
+        thumbWidth = Math.max(
+            (el.clientWidth / el.scrollWidth) * 100,
+            MIN_THUMB_PERCENT,
+        );
+        // Clamping the width shortens the track the thumb travels along.
+        const progress = el.scrollLeft / (el.scrollWidth - el.clientWidth);
+        thumbLeft = progress * (100 - thumbWidth);
+    }
+
+    /** Show the thumb, then fade it out once scrolling stops. */
+    function onStripScroll() {
+        updateScrollEdges();
+        scrolledRecently = true;
+        if (thumbHideTimer) clearTimeout(thumbHideTimer);
+        thumbHideTimer = setTimeout(() => {
+            scrolledRecently = false;
+            thumbHideTimer = null;
+        }, 900);
+    }
+
+    $effect(() => () => {
+        if (thumbHideTimer) clearTimeout(thumbHideTimer);
+    });
+
+    $effect(() => {
+        const el = scrollEl;
+        if (!el) return;
+        updateScrollEdges();
+
+        // Svelte attaches wheel listeners passively, so preventDefault() from a
+        // markup handler would be ignored; bind it directly instead.
+        const onWheel = (e: WheelEvent) => {
+            if (el.scrollWidth <= el.clientWidth) return;
+            // Leave real horizontal gestures (trackpads, tilt wheels) alone —
+            // only a vertical wheel needs redirecting onto the strip.
+            if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+            e.preventDefault();
+            el.scrollLeft += e.deltaY;
+        };
+        el.addEventListener("wheel", onWheel, { passive: false });
+
+        const ro = new ResizeObserver(updateScrollEdges);
+        ro.observe(el);
+        return () => {
+            el.removeEventListener("wheel", onWheel);
+            ro.disconnect();
+        };
+    });
+
+    // Opening or closing a tab changes scrollWidth without firing either scroll
+    // or resize, so re-measure once the DOM has caught up.
+    $effect(() => {
+        $tabs.length;
+        void tick().then(updateScrollEdges);
+    });
+
+    // A mask rather than a painted overlay: the strip sits on the header in one
+    // layout and on the page background in the other, and a fade to transparent
+    // is right on both.
+    const edgeFade = $derived.by(() => {
+        if (!canScrollLeft && !canScrollRight) return "";
+        const stops = [
+            canScrollLeft ? "transparent 0, #000 1.5rem" : "#000 0",
+            canScrollRight
+                ? "#000 calc(100% - 1.5rem), transparent 100%"
+                : "#000 100%",
+        ].join(", ");
+        const gradient = `linear-gradient(to right, ${stops})`;
+        return `-webkit-mask-image: ${gradient}; mask-image: ${gradient};`;
+    });
 
     $effect(() => {
       if ($hideSurahPage() && $crossGroups.length > 0 ) {
@@ -592,12 +716,24 @@
 
 <!-- Outer: clips scrollbar thumb to the rounded-full boundary -->
 <div
-    class="{$zenMode ? 'zen-tabs' : ''} select-none absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(38rem,90%)] rounded-md border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 z-30 overflow-hidden"
-    style={$zenMode ? `--zen-tabs-opacity: ${$zenPeek ? 1 : $zenTabsOpacity / 100}` : ''}
+    class="tabs-strip {$zenMode && !inHeader
+        ? 'zen-tabs'
+        : ''} select-none rounded-md border border-stone-200 dark:border-[#414559] bg-brand-sand-50 shrink-0 min-h-8 overflow-hidden {inHeader
+        ? 'relative min-w-0 max-w-full'
+        : 'absolute -bottom-8 left-1/2 -translate-x-1/2 max-w-[min(38rem,90%)] z-30'}"
+    style={$zenMode && !inHeader
+        ? `--zen-tabs-opacity: ${$zenPeek ? 1 : $zenTabsOpacity / 100}`
+        : ""}
 >
-<!-- Inner: handles horizontal scrolling -->
+<!-- Inner: handles horizontal scrolling, and fades whichever edge has tabs
+     scrolled out of sight -->
 <div
-    class="tabs-scroll flex flex-row min-h-8 {pointerDragging ? 'cursor-grabbing' : ''}"
+    bind:this={scrollEl}
+    onscroll={onStripScroll}
+    style={edgeFade}
+    class="tabs-scroll flex flex-row min-h-8 {pointerDragging
+        ? 'cursor-grabbing'
+        : ''}"
     role="tablist"
     aria-label="Editor tabs"
 >
@@ -701,13 +837,13 @@
                 <!-- Always show file-type icon for all tabs -->
                 <Icon
                     icon={tab.type === "typst"
-                        ? "solar:document-text-bold-duotone"
+                        ? "simple-icons:typst"
                         : tab.type === "lexical"
-                          ? "solar:text-bold-duotone"
+                          ? "at-icons:cursor-text"
                           : tab.type === "julia"
-                            ? "solar:code-bold-duotone"
+                            ? "devicon-plain:julia"
                             : tab.type === "lean"
-                              ? "solar:verified-check-bold-duotone"
+                              ? "vscode-icons:file-type-light-lean"
                               : "solar:file-bold-duotone"}
                     width="0.75rem"
                     class="shrink-0 opacity-60"
@@ -856,6 +992,14 @@
         </div>
     {/each}
 </div><!-- end inner scroll div -->
+{#if overflowing}
+    <!-- Overlay scroll indicator: painted over the strip, so it never claims a
+         row of its own. Fades in on hover and while scrolling. -->
+    <div
+        class="tabs-thumb {scrolledRecently ? 'tabs-thumb-visible' : ''}"
+        style="left: {thumbLeft}%; width: {thumbWidth}%"
+    ></div>
+{/if}
 </div><!-- end outer clip div -->
 
 <div aria-live="polite" aria-atomic="true" class="sr-only">
@@ -880,8 +1024,8 @@
     {#if pickerTab && pickerPartners.length > 1}
         <div
             data-picker-dropdown
-            style="position: fixed; left: {pickerPos.x}px; top: {pickerPos.y}px; transform: translateY(calc(-100% - 4px)); z-index: 9999;"
-            class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-3xl shadow-xl p-3 min-w-40"
+            style="position: fixed; left: {pickerPos.x}px; top: {pickerPos.y}px; transform: {popupShift}; z-index: 9999;"
+            class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-xl shadow-xl p-3 min-w-40"
         >
             {#each pickerPartners as partner}
                 <button
@@ -904,12 +1048,12 @@
                 >
                     <Icon
                         icon={partner.type === "typst"
-                            ? "solar:document-text-bold-duotone"
+                            ? "simple-icons:typst"
                             : partner.type === "lexical"
-                              ? "solar:text-bold-duotone"
+                              ? "at-icons:cursor-text"
                               : partner.type === "lean"
-                                ? "solar:verified-check-bold-duotone"
-                                : "solar:code-bold-duotone"}
+                                ? "vscode-icons:file-type-light-lean"
+                                : "devicon-plain:julia"}
                         width="0.75rem"
                         class="shrink-0"
                     />
@@ -927,8 +1071,8 @@
     {#if addThirdGroup && thirdCandidates.length > 0}
         <div
             data-add-third-dropdown
-            style="position: fixed; left: {addThirdPos.x}px; top: {addThirdPos.y}px; transform: translate(-100%, calc(-100% - 4px)); z-index: 9999;"
-            class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-3xl shadow-xl p-3 min-w-40"
+            style="position: fixed; left: {addThirdPos.x}px; top: {addThirdPos.y}px; transform: {popupShiftLeft}; z-index: 9999;"
+            class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-xl shadow-xl p-3 min-w-40"
         >
             {#each thirdCandidates as candidate}
                 <button
@@ -937,8 +1081,10 @@
                 >
                     <Icon
                         icon={candidate.type === "typst"
-                            ? "solar:document-text-bold-duotone"
-                            : "solar:code-bold-duotone"}
+                            ? "simple-icons:typst"
+                            : candidate.type === "julia"
+                              ? "devicon-plain:julia"
+                              : "at-icons:cursor-text"}
                         width="0.75rem"
                         class="shrink-0"
                     />
@@ -957,7 +1103,7 @@
     {@const hasRight = ctxIdx >= 0 && ctxIdx < $tabs.length - 1}
     <div
         data-context-menu
-        style="position: fixed; left: {contextMenuPos.x}px; top: {contextMenuPos.y}px; transform: translateY(calc(-100% - 4px)); z-index: 9999;"
+        style="position: fixed; left: {contextMenuPos.x}px; top: {contextMenuPos.y}px; transform: {popupShift}; z-index: 9999;"
         class="bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-200 dark:border-[#414559] rounded-2xl shadow-xl p-1.5 min-w-40"
     >
         <button
@@ -1007,14 +1153,37 @@
         cursor: grab;
     }
 
-    /* Thin horizontal scrollbar via the standard scrollbar API, which all three
-       webviews honor (WKWebView / WebView2 / WebKitGTK). `overflow: overlay` is
-       avoided on purpose — on macOS with a mouse attached it renders a thick,
-       non-styleable classic scrollbar. The dark-mode colour is set in app.css. */
+    /* No native scrollbar in either layout. macOS set to "show scrollbars
+       always" (what happens once a mouse is attached) renders a classic bar
+       that reserves layout height, which a 32px strip cannot spare. The
+       .tabs-thumb overlay below stands in for it. */
     .tabs-scroll {
         overflow-x: auto;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(130, 130, 130, 0.4) transparent;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .tabs-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Sits over the bottom edge of the strip, clipped by the parent's rounded
+       overflow-hidden. Transparent until the strip is hovered or scrolled. */
+    .tabs-thumb {
+        position: absolute;
+        bottom: 1px;
+        height: 3px;
+        border-radius: 9999px;
+        background: rgba(130, 130, 130, 0.45);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        pointer-events: none;
+    }
+    :global(html.dark) .tabs-thumb {
+        background: rgba(150, 150, 150, 0.45);
+    }
+    .tabs-strip:hover .tabs-thumb,
+    .tabs-thumb-visible {
+        opacity: 1;
     }
 
     /* Zen Mode: tab strip opacity is user-configurable (Settings → Sukūn Mode).

@@ -300,7 +300,7 @@
         bind:this={menuEl}
         tabindex="-1"
         transition:fly={{ y: 4, duration: 120, opacity: 0 }}
-        class="fixed z-[60] flex w-72 flex-col overflow-hidden rounded-3xl border border-brand-sand-200 bg-white shadow-xl outline-none dark:border-[#414559] dark:bg-[#303446] dark:shadow-black/40"
+        class="fixed z-[60] flex w-72 flex-col overflow-hidden rounded-xl border border-brand-sand-200 bg-white shadow-xl outline-none dark:border-[#414559] dark:bg-[#303446] dark:shadow-black/40"
         style="top: {menuTop}px; left: {menuLeft}px;"
         onkeydown={onKeydown}
     >

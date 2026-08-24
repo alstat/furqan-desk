@@ -879,7 +879,7 @@
         bind:this={menuEl}
         transition:fly={{ y: 4, duration: 120, opacity: 0 }}
         role="listbox"
-        class="fixed z-50 w-64 max-h-72 overflow-y-auto rounded-3xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40"
+        class="fixed z-50 w-64 max-h-72 overflow-y-auto rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-xl dark:shadow-black/40"
         style="top: {menuTop}px; left: {menuLeft}px;"
     >
         {#each filteredCommands as cmd, i}
