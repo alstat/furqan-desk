@@ -146,11 +146,12 @@ html.dark {
     --color-brand-charcoal-800: #ededed;
     --color-brand-charcoal-900: #f7f7f7;
 
-    --ayah-flash-bg: color-mix(
-        in srgb,
-        var(--color-brand-gold-400) 25%,
-        transparent
-    );
+    /* The dark gold-400 (#e5c890) at 25%, written out rather than mixed.
+       `color-mix()` needs Safari 16.2 / WebKitGTK 2.42, and a custom property
+       whose value fails to substitute is dropped at use time — on an older
+       WebKit the ayah flash simply had no colour. The rest of this dark palette
+       is literal too, so this stays consistent with it. */
+    --ayah-flash-bg: rgb(229 200 144 / 0.25);
 }
 
 html.dark body,
@@ -378,11 +379,8 @@ html.dark.zen .editor-shell ::-webkit-scrollbar-thumb {
 }
 
 html.dark .ayah-playing {
-    background-color: color-mix(
-        in srgb,
-        var(--color-brand-gold-400) 12%,
-        transparent
-    );
+    /* Dark gold-400 (#e5c890) at 12% — see the note on --ayah-flash-bg above. */
+    background-color: rgb(229 200 144 / 0.12);
 }
 
 .default-scroll {

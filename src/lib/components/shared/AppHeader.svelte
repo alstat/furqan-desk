@@ -106,7 +106,7 @@
     bind:clientHeight={measured}
     class="relative z-40 grid h-11 shrink-0 select-none grid-cols-[minmax(min-content,1fr)_minmax(0,32rem)_minmax(min-content,1fr)] items-center gap-3 px-2 {$zenMode
         ? 'border-transparent bg-transparent'
-        : 'border-b border-brand-sand-200 bg-brand-sand-50/95'} {zenFade}"
+        : 'border-b border-brand-sand-200 bg-brand-sand-50/95 dark:bg-[#2b2b2b]/95'} {zenFade}"
 >
     <!-- Marked like the other two tracks, and for the same reason: a bare
          `data-tauri-drag-region` drags only when the click lands on *that*
