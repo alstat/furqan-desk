@@ -14,7 +14,7 @@
 	import { t as i18n } from '$lib/i18n';
 	import { supabase, isSupabaseConfigured } from '$lib/supabase';
 	import { openFile, openFolder, saveFile, saveAs } from '$lib/actions/fileActions';
-	import { windowMaximized } from '$lib/stores/window-state.store';
+	import { isLinuxCsd, csdRound as csdRoundStore } from '$lib/stores/window-state.store';
 	import { page } from '$app/state';
 
 	let { children } = $props();
@@ -37,28 +37,9 @@
 		SECONDARY_ROUTES.some((route) => page.url.pathname.startsWith(route))
 	);
 
-	// Linux runs the window undecorated so the header can be the title bar (see
-	// AppHeader), which also means GTK draws no window frame. The app supplies
-	// one itself — see the client-side-decorations block in app.css. Android
-	// also reports "Linux" and has no window frame to draw.
-	const isLinuxCsd =
-		typeof navigator !== 'undefined' &&
-		navigator.userAgent.includes('Linux') &&
-		!navigator.userAgent.includes('Android');
-
-	// Rounding the corners only works while the window can actually be
-	// transparent. On WebKit's software-composited fallback it cannot, and the
-	// area outside the radius renders black — worse than square corners — so ask
-	// the backend which path we are on and drop the radius if it is that one.
-	let softwareCompositing = $state(false);
-	onMount(async () => {
-		try {
-			const { invoke } = await import('@tauri-apps/api/core');
-			softwareCompositing = await invoke('software_compositing');
-		} catch {
-			// not running inside Tauri (e.g. browser dev)
-		}
-	});
+	// isLinuxCsd/csdRound live in window-state.store so +page.svelte's own
+	// height math (JS-measured, not CSS flex) can agree with the margin these
+	// classes put on `.app-shell` — see `csdMarginPx` there.
 
 	// Completes the Google OAuth flow: the system browser redirects back to our
 	// `ayahlab://auth-callback?code=…` custom scheme, the deep-link plugin hands
@@ -90,23 +71,26 @@
 		}
 	});
 
-	// Corners (and, in a dialog window, the shadow margin) only while the window
-	// floats; flush against the screen edge GNOME squares its own off too.
-	const csdRound = $derived(isLinuxCsd && !$windowMaximized && !softwareCompositing);
+	// Corners (and the shadow margin) only while the window floats; flush
+	// against the screen edge GNOME squares its own off too. Mirrors
+	// window-state.store's `csdRound`, which +page.svelte also reads.
+	const csdRound = $derived($csdRoundStore);
 
 	$effect(() => {
 		const root = document.documentElement;
 		root.classList.toggle('linux-csd', isLinuxCsd);
 		root.classList.toggle('csd-round', csdRound);
-		// Only the dialog windows reserve a margin for their drop shadow — see
-		// the note on `.csd-dialog` in app.css.
-		root.classList.toggle('csd-dialog', isSecondaryWindow);
+		// Every window reserves the margin for its drop shadow — main window
+		// included — so it reads the same as its dialogs. See the note on
+		// `.csd-dialog` in app.css.
+		root.classList.toggle('csd-dialog', isLinuxCsd);
 	});
 
-	// The shadow margin is part of the window, so the window manager's resize
-	// edge sits 16px outside the frame the user can actually see. These handles
-	// fill that band and hand the drag to the WM, which is how GTK treats its
-	// own shadow margin.
+	// The shadow margin (see `.app-shell` in app.css) sits outside the frame
+	// the user can actually see, so a handle sized to just that band would only
+	// catch a drag started in the band itself — missing clicks that land right
+	// on the visible border, which is where users actually aim. 16px, deeper
+	// than the margin, deliberately overlaps a few px of the visible frame too.
 	type ResizeDir =
 		| 'North'
 		| 'South'
@@ -250,16 +234,6 @@
 	<div class="app-shell flex h-screen flex-col overflow-hidden">
 		{@render children()}
 	</div>
-
-	{#if csdRound}
-		{#each RESIZE_HANDLES as handle (handle.dir)}
-			<div
-				role="presentation"
-				class="fixed z-50 {handle.cls}"
-				onpointerdown={(e) => startResize(e, handle.dir)}
-			></div>
-		{/each}
-	{/if}
 {:else}
 	<div class="app-shell bg-gradient-radial flex h-screen flex-col overflow-hidden">
 		<OpenTabFileWatcher />
@@ -267,12 +241,26 @@
 		<div class="min-h-0 flex-1">
 			{@render children()}
 		</div>
-	</div>
 
-	<JuliaInstallPrompt />
-	<JuliaInstallToast />
-	<LeanInstallPrompt />
-	<LeanInstallToast />
+		<!-- Inside the shell, not siblings of it: on Linux CSD these are
+		     `position: fixed`, and .app-shell is their containing block (see
+		     app.css), so nesting them here is what keeps them anchored to the
+		     visible frame instead of the true window bounds. -->
+		<JuliaInstallPrompt />
+		<JuliaInstallToast />
+		<LeanInstallPrompt />
+		<LeanInstallToast />
+	</div>
+{/if}
+
+{#if csdRound}
+	{#each RESIZE_HANDLES as handle (handle.dir)}
+		<div
+			role="presentation"
+			class="fixed z-50 {handle.cls}"
+			onpointerdown={(e) => startResize(e, handle.dir)}
+		></div>
+	{/each}
 {/if}
 
 <style>

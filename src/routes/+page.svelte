@@ -79,6 +79,7 @@
     } from "$lib/data/verse-of-day";
     import { verseOfDayDialogOpen } from "$lib/stores/verse-of-day.store";
     import { headerHeight } from "$lib/stores/header.store";
+    import { csdMarginPx } from "$lib/stores/window-state.store";
 
     let height: number = $state(
         typeof window !== "undefined" ? window.innerHeight : 600,
@@ -271,7 +272,7 @@
 >
     <div
         class={`flex ${$surahOrientation()} ${$isSidebar && !$zenMode ? "bg-white dark:bg-[#232634] " : ""} flex-row justify-center`}
-        style:height="{height - $headerHeight}px"
+        style:height="{height - $headerHeight - 2 * $csdMarginPx}px"
     >
         {#if activeCrossGroup}
             {@const partnerTab = $tabs.find(

@@ -1,6 +1,6 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import { fly } from "svelte/transition";
+    import { fade, fly } from "svelte/transition";
     import { t } from "$lib/i18n";
     import {
         editorTheme,
@@ -68,6 +68,7 @@
 {#if open}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
+        transition:fade={{ duration: 150 }}
         class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
         onclick={handleBackdropClick}
         onkeydown={handleKeydown}

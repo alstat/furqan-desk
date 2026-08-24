@@ -168,7 +168,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             <!-- Language -->
             <div>
                 <p class={sectionLabel}>{$t('settings.language')}</p>
-                <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] mb-2">
+                <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mb-2">
                     {$t('settings.language.desc')}
                 </p>
                 <div class="relative">
@@ -193,7 +193,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <div class="flex items-center justify-between">
                     <div>
                         <span class={rowLabel}>{$t('settings.appearance.glass')}</span>
-                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
                             {$t('settings.appearance.glass.desc')}
                         </p>
                     </div>
@@ -222,7 +222,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <div class="flex items-center justify-between mt-3">
                     <div>
                         <span class={rowLabel}>{$t('settings.appearance.typst_preview_dark')}</span>
-                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
                             {$t('settings.appearance.typst_preview_dark.desc')}
                         </p>
                     </div>
@@ -251,7 +251,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <div class="flex items-center justify-between mt-3">
                     <div>
                         <span class={rowLabel}>{$t('settings.zen')}</span>
-                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
                             {$t('settings.zen.desc')}
                         </p>
                     </div>
@@ -280,7 +280,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <div class="flex items-center justify-between gap-4 mt-3">
                     <div>
                         <span class={rowLabel}>{$t('settings.zen.tabs_opacity')}</span>
-                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
                             {$t('settings.zen.tabs_opacity.desc')}
                         </p>
                     </div>
@@ -308,7 +308,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <span class={rowLabel}>{$t('settings.accessibility.ui_font')}</span>
-                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
                             {$t('settings.accessibility.ui_font.desc')}
                         </p>
                     </div>
@@ -367,7 +367,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <span class={rowLabel}>Tab size</span>
-                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
                             Number of spaces inserted per indent level.
                         </p>
                     </div>
@@ -393,7 +393,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             <!-- Custom Fonts -->
             <div>
                 <p class={sectionLabel}>{$t('settings.custom_fonts')}</p>
-                <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] mb-2">
+                <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mb-2">
                     {$t('settings.custom_fonts.desc')}
                 </p>
                 <div class="flex items-center justify-between">
@@ -413,7 +413,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <span class={rowLabel}>{$t('settings.ai_tools.default_selection_model')}</span>
-                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
                             {$t('settings.ai_tools.default_selection_model.desc')}
                         </p>
                     </div>
@@ -488,7 +488,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                         <span class="truncate">{$juliaInstallMessage || $t('settings.julia.updating')}</span>
                     </div>
                     <IndeterminateProgress class="mt-2" ariaLabel={$t('settings.julia.updating')} />
-                    <p class="mt-2 text-[10.5px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                    <p class="mt-2 text-xs text-brand-charcoal-300 dark:text-[#838ba7]">
                         {$t('settings.julia.background_hint')}
                     </p>
                 </div>
@@ -520,7 +520,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <div class="flex items-start justify-between gap-3 mb-1">
                     <div class="min-w-0">
                         <span class={rowLabel}>Switch version</span>
-                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
                             Install and switch the default to a specific Julia version (e.g. <span class="font-mono">1.10.4</span>). Useful for downgrading.
                         </p>
                     </div>
@@ -548,7 +548,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             </div>
 
             {#if $juliaInstallState === 'error'}
-                <p class="mt-1 text-[11px] text-red-500 dark:text-red-400 break-all">{$juliaInstallError}</p>
+                <p class="mt-1 text-xs text-red-500 dark:text-red-400 break-all">{$juliaInstallError}</p>
             {/if}
         </div>
 
@@ -586,7 +586,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                         <span class="truncate">{$leanInstallMessage || $t('settings.lean.updating')}</span>
                     </div>
                     <IndeterminateProgress class="mt-2" ariaLabel={$t('settings.lean.updating')} />
-                    <p class="mt-2 text-[10.5px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                    <p class="mt-2 text-xs text-brand-charcoal-300 dark:text-[#838ba7]">
                         {$t('settings.lean.background_hint')}
                     </p>
                 </div>
@@ -618,7 +618,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <div class="flex items-start justify-between gap-3 mb-1">
                     <div class="min-w-0">
                         <span class={rowLabel}>Switch toolchain</span>
-                        <p class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
                             Install and switch the default to a specific Lean toolchain (e.g. <span class="font-mono">4.15.0</span>, <span class="font-mono">stable</span> or <span class="font-mono">nightly</span>).
                         </p>
                     </div>
@@ -645,14 +645,14 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             </div>
 
             {#if $leanInstallState === 'error'}
-                <p class="mt-1 text-[11px] text-red-500 dark:text-red-400 break-all">{$leanInstallError}</p>
+                <p class="mt-1 text-xs text-red-500 dark:text-red-400 break-all">{$leanInstallError}</p>
             {/if}
         </div>
 
             <!-- Typst Packages -->
             <div>
                 <p class={sectionLabel}>{$t('settings.typst')}</p>
-            <p class="mb-2 text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]">
+            <p class="mb-2 text-xs text-brand-charcoal-300 dark:text-[#838ba7]">
                 Default packages for the Typst editor. Downloaded automatically on first use and cached locally.
             </p>
             <div class="flex items-center justify-between mb-2">
@@ -660,7 +660,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                     <span class={rowLabel}>ilm
                         <span class="ml-1 font-mono text-brand-charcoal-300 dark:text-[#838ba7]">v1.4.2</span>
                     </span>
-                    <p class="text-[10.5px] text-brand-charcoal-300 dark:text-[#838ba7]">Book &amp; document format</p>
+                    <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7]">Book &amp; document format</p>
                 </div>
                 <button
                     onclick={() => openUrl('https://github.com/talal/ilm')}
@@ -675,7 +675,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                     <span class={rowLabel}>diatypst
                         <span class="ml-1 font-mono text-brand-charcoal-300 dark:text-[#838ba7]">v0.9.1</span>
                     </span>
-                    <p class="text-[10.5px] text-brand-charcoal-300 dark:text-[#838ba7]">Presentation format</p>
+                    <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7]">Presentation format</p>
                 </div>
                 <button
                     onclick={() => openUrl('https://github.com/skriptum/Diatypst')}
@@ -826,7 +826,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
 
             <!-- Error display -->
             {#if appCheckState === 'error'}
-                <p class="mt-1 text-[11px] text-red-500 dark:text-red-400 break-all">{appCheckError}</p>
+                <p class="mt-1 text-xs text-red-500 dark:text-red-400 break-all">{appCheckError}</p>
             {/if}
         </div>
 
@@ -835,7 +835,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <p class={sectionLabel}>{$t('settings.privacy')}</p>
                 <div class="flex items-start gap-2 rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-100 dark:border-[#414559] px-3 py-2.5">
                     <Icon icon="solar:shield-check-bold-duotone" class="text-brand-gold-400 shrink-0 mt-0.5" width="0.9rem" />
-                    <p class="text-[11px] text-brand-charcoal-500 dark:text-[#838ba7] leading-relaxed">
+                    <p class="text-xs text-brand-charcoal-500 dark:text-[#838ba7] leading-relaxed">
                         {$isPro ? $t('settings.privacy.text_pro') : $t('settings.privacy.text')}
                     </p>
                 </div>
