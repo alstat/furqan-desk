@@ -108,7 +108,16 @@
         ? 'border-transparent bg-transparent'
         : 'border-b border-brand-sand-200 bg-brand-sand-50/95'} {zenFade}"
 >
+    <!-- Marked like the other two tracks, and for the same reason: a bare
+         `data-tauri-drag-region` drags only when the click lands on *that*
+         element (tauri/src/window/scripts/drag.js: `return el ===
+         composedPath[0]`), so an unmarked track is dead space no matter that
+         the <header> above it is a drag region. This track stretches (1fr)
+         while the ActionBar shrinks to its buttons, which left everything from
+         the last button to the tab strip unable to move the window. Buttons
+         inside still block dragging on their own. -->
     <div
+        data-tauri-drag-region
         class="flex min-w-0 items-center"
         style:padding-left={isMac ? "5rem" : undefined}
     >

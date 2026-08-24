@@ -36,7 +36,14 @@
     const btnClass = $derived(inHeader ? headerBtnStyle : actionBtnStyle);
 </script>
 
+<!-- In the header this bar *is* part of the title bar, so the pixels between
+     its buttons should move the window like any other bare patch of chrome.
+     Tauri only drags when the click lands on the element carrying the
+     attribute (see AppHeader), so each container that can show a gap gets it;
+     the buttons themselves keep blocking the drag, as they should. Off the
+     header the bar floats over the page and must not drag anything. -->
 <div
+    data-tauri-drag-region={inHeader ? true : undefined}
     class={inHeader
         ? "flex flex-row flex-nowrap items-center gap-0.5"
         : `absolute ${topOffset} left-1/2 z-50 -translate-x-1/2 flex flex-row flex-nowrap items-center justify-stretch ${
@@ -54,6 +61,7 @@
          own: the row's gap spaces the two groups exactly as the buttons inside
          them are spaced, so the bar reads as one run of controls. -->
     <div
+        data-tauri-drag-region={inHeader ? true : undefined}
         class="flex shrink-0 flex-row items-center {inHeader
             ? 'gap-0.5'
             : 'mr-4 space-x-2'}"
@@ -62,6 +70,7 @@
         <RedoButton {tabId} {btnClass} />
     </div>
     <div
+        data-tauri-drag-region={inHeader ? true : undefined}
         class="flex shrink-0 flex-row items-center {inHeader
             ? 'gap-0.5'
             : 'ml-4 space-x-2'}"
