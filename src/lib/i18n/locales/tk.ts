@@ -113,6 +113,7 @@ export const tk: Record<string, string> = {
   "settings.julia.up_to_date": "Julia täzelendi",
   "julia.prompt.title": "Julia gurulmadyk",
   "julia.prompt.desc": "Julia kodyny işletmek üçin Julia programmirleme dili gerek. Ony häzir guruň ýa-da ulgamyňyzda eýýäm bar bolsa, Sazlamalar → Julia bölüminde ýörite ýoly belläň.",
+  "julia.prompt.background_note": "Işläp bilersiňiz — gurnama arka fonda dowam edýär.",
   "julia.prompt.install": "Julia-ny gurmak",
   "julia.prompt.installing": "Julia gurulýar…",
   "julia.prompt.cancel": "Häzir däl",

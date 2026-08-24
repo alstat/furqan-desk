@@ -108,6 +108,7 @@ export const ur: Record<string, string> = {
   "settings.julia.up_to_date": 'Julia اپڈیٹ ہے',
   "julia.prompt.title": 'Julia نصب نہیں ہے',
   "julia.prompt.desc": 'Julia کوڈ چلانے کے لیے Julia پروگرامنگ زبان درکار ہے۔ اسے ابھی نصب کریں، یا اگر یہ پہلے سے آپ کے سسٹم پر موجود ہے تو ترتیبات → Julia میں اپنی مرضی کا راستہ سیٹ کریں۔',
+  "julia.prompt.background_note": "آپ کام جاری رکھ سکتے ہیں — تنصیب پس منظر میں جاری ہے۔",
   "julia.prompt.install": 'Julia نصب کریں',
   "julia.prompt.installing": 'Julia نصب ہو رہا ہے…',
   "julia.prompt.cancel": 'ابھی نہیں',

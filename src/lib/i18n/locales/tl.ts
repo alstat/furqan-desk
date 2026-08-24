@@ -115,6 +115,7 @@ export const tl: Record<string, string> = {
   "settings.julia.up_to_date": "Napapanahon na ang Julia",
   "julia.prompt.title": "Hindi naka-install ang Julia",
   "julia.prompt.desc": "Ang pagpapatakbo ng Julia code ay nangangailangan ng Julia programming language. I-install ito ngayon, o magtakda ng custom na path sa Mga Setting → Julia kung naroon na ito sa iyong system.",
+  "julia.prompt.background_note": "Maaari kang magpatuloy sa trabaho — nagpapatuloy ang pag-install sa background.",
   "julia.prompt.install": "I-install ang Julia",
   "julia.prompt.installing": "Ini-install ang Julia…",
   "julia.prompt.cancel": "Hindi muna",

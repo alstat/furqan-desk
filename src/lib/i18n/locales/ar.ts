@@ -108,6 +108,7 @@ export const ar: Record<string, string> = {
   "settings.julia.up_to_date": 'Julia محدّثة',
   "julia.prompt.title": 'Julia غير مثبّت',
   "julia.prompt.desc": 'تشغيل شيفرة Julia يتطلب لغة البرمجة Julia. ثبّتها الآن، أو حدّد مسارًا مخصّصًا في الإعدادات → Julia إذا كانت مثبّتة بالفعل على نظامك.',
+  "julia.prompt.background_note": "يمكنك متابعة العمل — يستمر التثبيت في الخلفية.",
   "julia.prompt.install": 'تثبيت Julia',
   "julia.prompt.installing": 'جارٍ تثبيت Julia…',
   "julia.prompt.cancel": 'ليس الآن',

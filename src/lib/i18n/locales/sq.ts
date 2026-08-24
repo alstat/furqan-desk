@@ -112,6 +112,7 @@ export const sq: Record<string, string> = {
   "settings.julia.up_to_date": "Julia është e përditësuar",
   "julia.prompt.title": "Julia nuk është instaluar",
   "julia.prompt.desc": "Ekzekutimi i kodit Julia kërkon gjuhën e programimit Julia. Instalojeni tani, ose caktoni një shteg të personalizuar te Cilësimet → Julia nëse është tashmë në sistemin tuaj.",
+  "julia.prompt.background_note": "Mund të vazhdoni punën — instalimi vazhdon në sfond.",
   "julia.prompt.install": "Instalo Julia",
   "julia.prompt.installing": "Duke instaluar Julia…",
   "julia.prompt.cancel": "Jo tani",

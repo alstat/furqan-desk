@@ -1,4 +1,5 @@
 import { get } from 'svelte/store';
+import { openAppWindow } from '$lib/utils/appWindow';
 import { juliaPlots, type JuliaPlot } from './editor.store';
 
 /** Label of the plot viewer's own OS window. */
@@ -10,17 +11,68 @@ export const JULIA_PLOT_WINDOW = 'julia-plots';
  * owns, but plots exist only as entries in `juliaPlots`, appended by whichever
  * window is running the REPL. A fresh window starts with an empty store.
  *
- * So the store is mirrored across windows over Tauri events. Both sides send
- * the whole list on change and apply whatever they receive; a plot arrives, is
- * deleted or the list is cleared only at user pace, so the simplicity is worth
- * more than diffing. `applyingRemote` stops an applied update from being
+ * So the store is mirrored across windows over Tauri events. What travels is a
+ * message describing the change rather than the whole list: `plot.data` is
+ * base64 image bytes — or, for plotly, an entire HTML document — so resending
+ * every plot on every change costs one full session's worth of images per new
+ * plot, broadcast to every open window. Appending one plot now sends one plot,
+ * and dropping plots sends nothing but ids.
+ *
+ * The full list still travels on request, which is how a window that just
+ * opened gets a starting point, and as the fallback for any change the diff
+ * below cannot describe. `applyingRemote` stops an applied update from being
  * echoed straight back.
  */
 const PLOTS_EVENT = 'julia-plots:changed';
 const REQUEST_EVENT = 'julia-plots:request';
 
+type PlotSyncMessage =
+    /** The whole list, for a window that just asked or a change we cannot describe. */
+    | { kind: 'all'; plots: JuliaPlot[] }
+    /** One plot appended. */
+    | { kind: 'add'; plot: JuliaPlot }
+    /** Plots were removed or cleared: these are the ids that survive, in order. */
+    | { kind: 'keep'; ids: string[] };
+
 let applyingRemote = false;
 let installed = false;
+
+/** Describe `next` in terms of `prev`, as small a message as the change allows. */
+function diffPlots(prev: JuliaPlot[], next: JuliaPlot[]): PlotSyncMessage {
+    const prevIds = prev.map((p) => p.id);
+    const nextIds = next.map((p) => p.id);
+
+    const appended =
+        nextIds.length === prevIds.length + 1 &&
+        prevIds.every((id, i) => nextIds[i] === id);
+    if (appended) return { kind: 'add', plot: next[next.length - 1] };
+
+    // Nothing new, so whatever happened was a removal, a clear, or a reorder of
+    // plots the other side already has.
+    const prevSet = new Set(prevIds);
+    if (nextIds.every((id) => prevSet.has(id))) return { kind: 'keep', ids: nextIds };
+
+    return { kind: 'all', plots: next };
+}
+
+function applyRemote(message: PlotSyncMessage): void {
+    applyingRemote = true;
+    try {
+        if (message.kind === 'all') {
+            juliaPlots.set(message.plots);
+        } else if (message.kind === 'add') {
+            const plot = message.plot;
+            juliaPlots.update((plots) =>
+                plots.some((p) => p.id === plot.id) ? plots : [...plots, plot],
+            );
+        } else {
+            const keep = new Set(message.ids);
+            juliaPlots.update((plots) => plots.filter((p) => keep.has(p.id)));
+        }
+    } finally {
+        applyingRemote = false;
+    }
+}
 
 /**
  * Mirror `juliaPlots` between this window and the others. Safe to call from any
@@ -32,26 +84,27 @@ export async function installPlotSync(): Promise<void> {
     try {
         const { emit, listen } = await import('@tauri-apps/api/event');
 
-        await listen<JuliaPlot[]>(PLOTS_EVENT, (e) => {
-            applyingRemote = true;
-            try {
-                juliaPlots.set(e.payload);
-            } finally {
-                applyingRemote = false;
-            }
-        });
+        await listen<PlotSyncMessage>(PLOTS_EVENT, (e) => applyRemote(e.payload));
 
         // A window that has just opened asks for the current list; whoever has
         // one answers. The asker ignores its own request because its list is
         // empty at that point.
         await listen(REQUEST_EVENT, () => {
             const plots = get(juliaPlots);
-            if (plots.length) void emit(PLOTS_EVENT, plots);
+            if (plots.length) void emit(PLOTS_EVENT, { kind: 'all', plots });
         });
 
+        // Seeded before subscribing so the callback Svelte fires immediately —
+        // with the value we just read — is recognised as "nothing changed" and
+        // sent nowhere. It used to be published like any other change, which
+        // meant a plot window opening with an empty store broadcast that empty
+        // list and wiped the plots out of the window that had them.
+        let lastSeen = get(juliaPlots);
         juliaPlots.subscribe((plots) => {
-            if (applyingRemote) return;
-            void emit(PLOTS_EVENT, plots);
+            const previous = lastSeen;
+            lastSeen = plots;
+            if (applyingRemote || plots === previous) return;
+            void emit(PLOTS_EVENT, diffPlots(previous, plots));
         });
     } catch {
         // Not running inside Tauri (browser dev) — the single-window store is
@@ -73,65 +126,16 @@ export async function requestPlots(): Promise<void> {
  * The viewer runs in a window of its own so a plot can sit beside the code that
  * produced it instead of floating over it.
  */
-async function openPlotWindow(): Promise<boolean> {
-    if (typeof window === 'undefined') return false;
-    try {
-        const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-
-        const existing = await WebviewWindow.getByLabel(JULIA_PLOT_WINDOW);
-        if (existing) {
-            await existing.unminimize().catch(() => {});
-            await existing.setFocus();
-            return true;
-        }
-
-        // Frameless: the viewer's own header doubles as the title bar, the same
-        // trade the main window makes. macOS keeps its traffic lights by
-        // overlaying them on that header; Windows and Linux have no equivalent,
-        // so they go undecorated and the header draws its own controls.
-        const isMac = navigator.userAgent.includes('Mac');
-        // Linux goes transparent as well as undecorated: the frame is drawn in
-        // CSS, and its drop shadow needs the margin around it to be genuinely
-        // see-through (see `.csd-dialog` in app.css). Windows keeps an opaque
-        // frame — it has no such shadow to cast.
-        const isLinux =
-            navigator.userAgent.includes('Linux') &&
-            !navigator.userAgent.includes('Android');
-        const chrome = isMac
-            ? { titleBarStyle: 'overlay' as const, hiddenTitle: true }
-            : { decorations: false, transparent: isLinux };
-
-        const win = new WebviewWindow(JULIA_PLOT_WINDOW, {
-            // Trailing slash: the build emits `julia-plots/index.html`, which is
-            // what Tauri's asset protocol resolves this path to.
-            url: '/julia-plots/',
-            title: 'Plots',
-            width: 720,
-            height: 620,
-            minWidth: 420,
-            minHeight: 360,
-            resizable: true,
-            focus: true,
-            ...chrome,
-        });
-
-        return await new Promise<boolean>((resolve) => {
-            let settled = false;
-            const settle = (ok: boolean) => {
-                if (settled) return;
-                settled = true;
-                resolve(ok);
-            };
-            void win.once('tauri://created', () => settle(true));
-            void win.once('tauri://error', (e) => {
-                console.error('plot window failed to open', e);
-                settle(false);
-            });
-            setTimeout(() => settle(false), 4000);
-        });
-    } catch {
-        return false;
-    }
+function openPlotWindow(): Promise<boolean> {
+    return openAppWindow({
+        label: JULIA_PLOT_WINDOW,
+        url: '/julia-plots/',
+        title: 'Plots',
+        width: 720,
+        height: 620,
+        minWidth: 420,
+        minHeight: 360,
+    });
 }
 
 /** Open the plot viewer, or focus it if it is already open. */

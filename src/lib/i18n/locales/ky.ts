@@ -113,6 +113,7 @@ export const ky: Record<string, string> = {
   "settings.julia.up_to_date": "Julia жаңыртылган",
   "julia.prompt.title": "Julia орнотулган эмес",
   "julia.prompt.desc": "Julia кодун иштетүү үчүн Julia программалоо тили керек. Аны азыр орнотуңуз же системаңызда мурунтан бар болсо, Жөндөөлөр → Julia бөлүмүнөн өзгөчө жолду көрсөтүңүз.",
+  "julia.prompt.background_note": "Иштей бериңиз — орнотуу фондо улантылат.",
   "julia.prompt.install": "Julia орнотуу",
   "julia.prompt.installing": "Julia орнотулууда…",
   "julia.prompt.cancel": "Азыр эмес",

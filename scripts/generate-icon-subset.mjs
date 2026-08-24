@@ -1,30 +1,92 @@
 /**
- * Generates src/lib/icons.generated.ts — the offline data for icons taken from
- * collections we do NOT bundle whole.
+ * Generates src/lib/icons.generated.ts — offline data for exactly the icons the
+ * app uses.
  *
- * src/lib/icons.ts registers entire collections, which is fine for the sets the
- * app draws on heavily. The brand/file-type marks are different: each of those
- * collections is multiple megabytes of JSON and we want exactly one icon out of
- * it. Vite cannot tree-shake an `icons.json` that is looked up by runtime key,
- * so importing the collection would ship all of it. This copies out just the
- * icons named below.
+ * Vite cannot tree-shake an `icons.json` that is looked up by runtime key, so
+ * importing a collection ships all of it: the 21 sets this app draws on come to
+ * ~50MB of JSON, which every window — the main one and each of the dialog
+ * windows (terminal, manuscripts, postcard, drawing, plots, …) — used to parse
+ * at boot in its own webview, for the ~300 icons actually referenced.
  *
- * Run `pnpm icons:subset` after adding a name here. `pnpm build` runs it too,
- * so a forgotten regeneration cannot ship a blank icon.
+ * So the names are discovered from the source instead. Every `"prefix:name"`
+ * literal is collected, resolved against the installed @iconify-json packages
+ * and written out as a flat map that src/lib/icons.ts registers with `addIcon`.
+ * Nothing is hand-maintained: `pnpm build` runs this, so an icon added to a
+ * component is picked up on the next build.
+ *
+ * Run `pnpm icons:subset` to refresh it during development — until then a newly
+ * added icon falls back to the Iconify API, which in the packaged (offline) app
+ * means a blank space.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { dirname, resolve, join, extname } from "node:path";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Icons to copy out, as they are written in `<Icon icon="…" />`. */
-const WANTED = [
-    "devicon-plain:julia",
-    "vscode-icons:file-type-light-lean",
-    "simple-icons:typst",
-    "at-icons:cursor-text",
-];
+/**
+ * Collections installed as @iconify-json packages, i.e. what can be resolved.
+ * Read by name rather than by dirent type: pnpm links each package in, so the
+ * entries are symlinks and `isDirectory()` is false for every one of them.
+ */
+const COLLECTIONS = readdirSync(resolve(root, "node_modules/@iconify-json"))
+    .filter((name) => !name.startsWith("."))
+    .sort();
+
+/**
+ * Icons that no source scan can find — a name assembled at runtime, or one that
+ * only ever arrives as data. There are none today; the list is the escape hatch
+ * for when there is.
+ */
+const EXTRA = [];
+
+/** Source trees to read icon names out of. */
+const SCAN_DIRS = ["src", "static"];
+const SCAN_EXTENSIONS = new Set([".svelte", ".ts", ".js", ".mjs", ".json", ".html", ".css"]);
+
+/** Files big enough that scanning them is pointless (data blobs, dictionaries). */
+const MAX_SCAN_BYTES = 5_000_000;
+
+function* walk(dir) {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) {
+            yield* walk(path);
+        } else if (SCAN_EXTENSIONS.has(extname(entry.name))) {
+            yield path;
+        }
+    }
+}
+
+/**
+ * Every `"prefix:name"` string in the source, for prefixes we can resolve.
+ *
+ * Deliberately a plain string match rather than a parse: icon names show up in
+ * `<Icon icon="…" />`, in ternaries, in lookup tables and in plain constants,
+ * and all of those are string literals. `generate-icon-subset` fails loudly
+ * below if a name it finds is not in its collection, so a typo is caught here
+ * rather than shipping as a blank icon.
+ */
+function scanForIconNames() {
+    const pattern = new RegExp(
+        `["'\`](${COLLECTIONS.join("|")}):([a-z0-9][a-z0-9.-]*)["'\`]`,
+        "g",
+    );
+    const found = new Set();
+    for (const dir of SCAN_DIRS) {
+        for (const file of walk(resolve(root, dir))) {
+            if (statSync(file).size > MAX_SCAN_BYTES) continue;
+            const text = readFileSync(file, "utf8");
+            for (const match of text.matchAll(pattern)) {
+                found.add(`${match[1]}:${match[2]}`);
+            }
+        }
+    }
+    for (const name of EXTRA) found.add(name);
+    return [...found].sort();
+}
+
+const WANTED = scanForIconNames();
 
 /**
  * Icons whose artwork carries a hard-coded colour, rewritten to inherit the
@@ -91,11 +153,19 @@ function resolveIcon(collection, name) {
 }
 
 const entries = [];
+const unresolved = [];
 for (const full of WANTED) {
     const [prefix, name] = full.split(":");
     if (!prefix || !name) throw new Error(`Expected "prefix:name", got "${full}"`);
     const icon = resolveIcon(loadCollection(prefix), name);
-    if (!icon) throw new Error(`${full} is not in @iconify-json/${prefix}`);
+    if (!icon) {
+        // A name the collection does not have. That is a typo in the source (it
+        // renders blank in the packaged app either way, since there is no
+        // network to fall back to), so say which one rather than failing the
+        // build over it.
+        unresolved.push(full);
+        continue;
+    }
     if (INHERIT_COLOR.has(full)) icon.body = inheritColor(icon.body);
     entries.push([full, icon]);
 }
@@ -118,3 +188,9 @@ ${body}
 );
 
 console.log(`icons.generated.ts: ${entries.length} icons`);
+if (unresolved.length) {
+    console.warn(
+        `  ${unresolved.length} name(s) not found in their collection, so they will render blank:\n` +
+            unresolved.map((n) => `    - ${n}`).join("\n"),
+    );
+}

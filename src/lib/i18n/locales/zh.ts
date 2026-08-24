@@ -108,6 +108,7 @@ export const zh: Record<string, string> = {
   "settings.julia.up_to_date": 'Julia 已是最新',
   "julia.prompt.title": 'Julia 未安装',
   "julia.prompt.desc": '运行 Julia 代码需要 Julia 编程语言。立即安装，或者如果系统中已有 Julia，请在 设置 → Julia 中设置自定义路径。',
+  "julia.prompt.background_note": "您可以继续工作——安装会在后台继续。",
   "julia.prompt.install": '安装 Julia',
   "julia.prompt.installing": '正在安装 Julia…',
   "julia.prompt.cancel": '暂不',

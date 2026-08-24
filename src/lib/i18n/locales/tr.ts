@@ -108,6 +108,7 @@ export const tr: Record<string, string> = {
   "settings.julia.up_to_date": 'Julia güncel',
   "julia.prompt.title": 'Julia kurulu değil',
   "julia.prompt.desc": 'Julia kodu çalıştırmak için Julia programlama dili gereklidir. Şimdi kurun veya sisteminizde zaten varsa Ayarlar → Julia bölümünde özel bir yol belirleyin.',
+  "julia.prompt.background_note": "Çalışmaya devam edebilirsiniz — kurulum arka planda sürüyor.",
   "julia.prompt.install": 'Julia\'yı kur',
   "julia.prompt.installing": 'Julia kuruluyor…',
   "julia.prompt.cancel": 'Şimdi değil',

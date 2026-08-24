@@ -108,6 +108,7 @@ export const ko: Record<string, string> = {
   "settings.julia.up_to_date": 'Julia가 최신 버전입니다',
   "julia.prompt.title": 'Julia가 설치되지 않았습니다',
   "julia.prompt.desc": 'Julia 코드를 실행하려면 Julia 프로그래밍 언어가 필요합니다. 지금 설치하거나, 이미 시스템에 있다면 설정 → Julia에서 사용자 지정 경로를 설정하세요.',
+  "julia.prompt.background_note": "계속 작업하셔도 됩니다 — 설치는 백그라운드에서 이어집니다.",
   "julia.prompt.install": 'Julia 설치',
   "julia.prompt.installing": 'Julia 설치 중…',
   "julia.prompt.cancel": '나중에',

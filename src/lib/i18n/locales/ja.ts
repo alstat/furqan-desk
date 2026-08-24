@@ -113,6 +113,7 @@ export const ja: Record<string, string> = {
   "settings.julia.up_to_date": "Julia は最新です",
   "julia.prompt.title": "Julia がインストールされていません",
   "julia.prompt.desc": "Julia コードの実行には Julia プログラミング言語が必要です。今すぐインストールするか、すでにシステムにある場合は設定 → Julia でカスタムパスを設定してください。",
+  "julia.prompt.background_note": "作業を続けられます。インストールはバックグラウンドで続行します。",
   "julia.prompt.install": "Julia をインストール",
   "julia.prompt.installing": "Julia をインストール中…",
   "julia.prompt.cancel": "後で",

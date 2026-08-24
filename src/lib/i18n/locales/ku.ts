@@ -112,6 +112,7 @@ export const ku: Record<string, string> = {
   "settings.julia.up_to_date": "Julia نوێیە",
   "julia.prompt.title": "Julia دانەنراوە",
   "julia.prompt.desc": "بەکارهێنانی کۆدی Julia پێویستی بە زمانی بەرنامەنووسی Julia هەیە. ئێستا دایبمەزرێنە، یان ئەگەر پێشتر لەسەر سیستەمەکەت هەیە ڕێڕەوێکی تایبەت لە ڕێکخستن → Julia دابنێ.",
+  "julia.prompt.background_note": "Tu dikarî bidomînî — sazkirin di paşperdeyê de didome.",
   "julia.prompt.install": "دامەزراندنی Julia",
   "julia.prompt.installing": "Julia دادەمەزرێت…",
   "julia.prompt.cancel": "ئێستا نا",

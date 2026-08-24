@@ -113,6 +113,7 @@ export const hi: Record<string, string> = {
   "settings.julia.up_to_date": "Julia अप टू डेट है",
   "julia.prompt.title": "Julia इंस्टॉल नहीं है",
   "julia.prompt.desc": "Julia कोड चलाने के लिए Julia प्रोग्रामिंग भाषा आवश्यक है। इसे अभी इंस्टॉल करें, या यदि यह पहले से आपके सिस्टम पर है तो सेटिंग्स → Julia में कस्टम पाथ सेट करें।",
+  "julia.prompt.background_note": "आप काम करते रह सकते हैं — इंस्टॉलेशन पृष्ठभूमि में जारी है।",
   "julia.prompt.install": "Julia इंस्टॉल करें",
   "julia.prompt.installing": "Julia इंस्टॉल हो रहा है…",
   "julia.prompt.cancel": "अभी नहीं",

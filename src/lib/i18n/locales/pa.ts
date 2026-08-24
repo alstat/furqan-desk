@@ -112,6 +112,7 @@ export const pa: Record<string, string> = {
   "settings.julia.up_to_date": "Julia ਅੱਪ-ਟੂ-ਡੇਟ ਹੈ",
   "julia.prompt.title": "Julia ਇੰਸਟਾਲ ਨਹੀਂ ਹੈ",
   "julia.prompt.desc": "Julia ਕੋਡ ਚਲਾਉਣ ਲਈ Julia ਪ੍ਰੋਗਰਾਮਿੰਗ ਭਾਸ਼ਾ ਦੀ ਲੋੜ ਹੈ। ਇਸਨੂੰ ਹੁਣੇ ਇੰਸਟਾਲ ਕਰੋ, ਜਾਂ ਜੇ ਇਹ ਪਹਿਲਾਂ ਹੀ ਤੁਹਾਡੇ ਸਿਸਟਮ 'ਤੇ ਹੈ ਤਾਂ ਸੈਟਿੰਗਾਂ → Julia ਵਿੱਚ ਕਸਟਮ ਪਾਥ ਸੈੱਟ ਕਰੋ।",
+  "julia.prompt.background_note": "ਤੁਸੀਂ ਕੰਮ ਜਾਰੀ ਰੱਖ ਸਕਦੇ ਹੋ — ਇੰਸਟਾਲੇਸ਼ਨ ਪਿਛੋਕੜ ਵਿੱਚ ਜਾਰੀ ਹੈ।",
   "julia.prompt.install": "Julia ਇੰਸਟਾਲ ਕਰੋ",
   "julia.prompt.installing": "Julia ਇੰਸਟਾਲ ਹੋ ਰਿਹਾ ਹੈ…",
   "julia.prompt.cancel": "ਹੁਣੇ ਨਹੀਂ",

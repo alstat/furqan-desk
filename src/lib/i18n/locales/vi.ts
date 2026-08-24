@@ -113,6 +113,7 @@ export const vi: Record<string, string> = {
   "settings.julia.up_to_date": "Julia đã được cập nhật",
   "julia.prompt.title": "Julia chưa được cài đặt",
   "julia.prompt.desc": "Việc chạy mã Julia cần ngôn ngữ lập trình Julia. Hãy cài đặt ngay, hoặc đặt đường dẫn tùy chỉnh trong Cài đặt → Julia nếu nó đã có trên hệ thống của bạn.",
+  "julia.prompt.background_note": "Bạn có thể tiếp tục làm việc — quá trình cài đặt vẫn chạy nền.",
   "julia.prompt.install": "Cài đặt Julia",
   "julia.prompt.installing": "Đang cài đặt Julia…",
   "julia.prompt.cancel": "Để sau",

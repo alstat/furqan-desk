@@ -112,6 +112,7 @@ export const ta: Record<string, string> = {
   "settings.julia.up_to_date": "Julia புதுப்பிக்கப்பட்டது",
   "julia.prompt.title": "Julia நிறுவப்படவில்லை",
   "julia.prompt.desc": "Julia குறியீட்டை இயக்க Julia நிரலாக்க மொழி தேவை. இப்போது அதை நிறுவவும், அல்லது அது ஏற்கனவே உங்கள் கணினியில் இருந்தால் அமைப்புகள் → Julia இல் தனிப்பயன் பாதையை அமைக்கவும்.",
+  "julia.prompt.background_note": "நீங்கள் தொடர்ந்து வேலை செய்யலாம் — நிறுவல் பின்னணியில் தொடர்கிறது.",
   "julia.prompt.install": "Julia ஐ நிறுவு",
   "julia.prompt.installing": "Julia நிறுவப்படுகிறது…",
   "julia.prompt.cancel": "இப்போது வேண்டாம்",

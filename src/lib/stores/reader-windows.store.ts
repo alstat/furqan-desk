@@ -1,4 +1,5 @@
 import { derived, get, writable, type Readable } from 'svelte/store';
+import { openAppWindow } from '$lib/utils/appWindow';
 import {
     activeTafsirId,
     activeTranslatorId,
@@ -241,77 +242,26 @@ export async function installReaderSnapshotClient(): Promise<void> {
  * up. So the flag has to follow the window's lifetime, or the same text shows
  * twice.
  */
-async function openReaderWindow(
+function openReaderWindow(
     label: string,
     route: string,
     title: string,
     openFlag: typeof translationDialogOpen,
 ): Promise<boolean> {
-    if (typeof window === 'undefined') return false;
-    try {
-        const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-
-        const existing = await WebviewWindow.getByLabel(label);
-        if (existing) {
-            await existing.unminimize().catch(() => {});
-            await existing.setFocus();
-            openFlag.set(true);
-            return true;
-        }
-
-        // Frameless: the reader's own header doubles as the title bar, the same
-        // trade the main window makes. macOS keeps its traffic lights by
-        // overlaying them on that header; Windows and Linux have no equivalent,
-        // so they go undecorated and the header draws its own controls.
-        const isMac = navigator.userAgent.includes('Mac');
-        // Linux goes transparent as well as undecorated: the frame is drawn in
-        // CSS, and its drop shadow needs the margin around it to be genuinely
-        // see-through (see `.csd-dialog` in app.css). Windows keeps an opaque
-        // frame — it has no such shadow to cast.
-        const isLinux =
-            navigator.userAgent.includes('Linux') &&
-            !navigator.userAgent.includes('Android');
-        const chrome = isMac
-            ? { titleBarStyle: 'overlay' as const, hiddenTitle: true }
-            : { decorations: false, transparent: isLinux };
-
-        const win = new WebviewWindow(label, {
-            // Trailing slash: the build emits `<route>/index.html`, which is
-            // what Tauri's asset protocol resolves this path to.
-            url: `/${route}/`,
-            title,
-            width: 720,
-            height: 780,
-            minWidth: 480,
-            minHeight: 420,
-            resizable: true,
-            focus: true,
-            ...chrome,
-        });
-
-        return await new Promise<boolean>((resolve) => {
-            let settled = false;
-            const settle = (ok: boolean) => {
-                if (settled) return;
-                settled = true;
-                resolve(ok);
-            };
-            void win.once('tauri://created', () => {
-                openFlag.set(true);
-                settle(true);
-            });
-            void win.once('tauri://error', (e) => {
-                console.error(`${label} window failed to open`, e);
-                settle(false);
-            });
-            // The parchment must stop hiding its inline copy the moment the
-            // reader goes away.
-            void win.once('tauri://destroyed', () => openFlag.set(false));
-            setTimeout(() => settle(false), 4000);
-        });
-    } catch {
-        return false;
-    }
+    return openAppWindow({
+        label,
+        url: `/${route}/`,
+        title,
+        width: 720,
+        height: 780,
+        minWidth: 480,
+        minHeight: 420,
+        onExisting: () => openFlag.set(true),
+        onCreated: () => openFlag.set(true),
+        // The parchment must stop hiding its inline copy the moment the reader
+        // goes away.
+        onDestroyed: () => openFlag.set(false),
+    });
 }
 
 /** Open the translation reader, or focus it if it is already open. */

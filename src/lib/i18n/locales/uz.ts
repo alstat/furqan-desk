@@ -113,6 +113,7 @@ export const uz: Record<string, string> = {
   "settings.julia.up_to_date": "Julia yangilangan",
   "julia.prompt.title": "Julia o'rnatilmagan",
   "julia.prompt.desc": "Julia kodini ishga tushirish uchun Julia dasturlash tili kerak. Uni hozir o'rnating yoki tizimingizda allaqachon mavjud bo'lsa, Sozlamalar → Julia bo'limida maxsus yo'lni belgilang.",
+  "julia.prompt.background_note": "Ishlashda davom etishingiz mumkin — o‘rnatish fonda davom etadi.",
   "julia.prompt.install": "Julia o'rnatish",
   "julia.prompt.installing": "Julia o'rnatilmoqda…",
   "julia.prompt.cancel": "Hozir emas",
