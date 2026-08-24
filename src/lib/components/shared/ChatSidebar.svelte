@@ -73,7 +73,7 @@
                 <div
                     class="group relative mb-1 rounded-full px-3 {currentChatId ===
                     c.id
-                        ? 'bg-brand-gold-100 dark:bg-brand-gold-900/20'
+                        ? 'bg-brand-gold-100 dark:bg-[#e5c890]/20'
                         : 'hover:bg-brand-sand-100 dark:hover:bg-[#292c3c]'}"
                 >
                     <button

@@ -301,7 +301,7 @@
                         </div>
                         {#if section.note}
                             <p
-                                class="flex items-center gap-1.5 rounded-lg bg-brand-gold-100 dark:bg-brand-gold-400/15 px-2.5 py-1.5 text-xs font-medium text-brand-gold-600 dark:text-brand-gold-400"
+                                class="flex items-center gap-1.5 rounded-lg bg-brand-gold-100 dark:bg-[#e5c890]/15 px-2.5 py-1.5 text-xs font-medium text-brand-gold-600 dark:text-brand-gold-400"
                             >
                                 <Icon
                                     icon="solar:info-circle-bold-duotone"

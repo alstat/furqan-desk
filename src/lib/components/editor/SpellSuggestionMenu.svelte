@@ -101,7 +101,7 @@
                 type="button"
                 role="menuitem"
                 class="block w-full text-left px-3 py-1 font-medium cursor-pointer
-                       hover:bg-brand-gold-100 dark:hover:bg-brand-gold-400/15"
+                       hover:bg-brand-gold-100 dark:hover:bg-[#e5c890]/15"
                 onclick={() => onReplace(s)}
             >
                 {s}
@@ -113,7 +113,7 @@
         type="button"
         role="menuitem"
         class="block w-full text-left px-3 py-1 cursor-pointer
-               hover:bg-brand-gold-100 dark:hover:bg-brand-gold-400/15"
+               hover:bg-brand-gold-100 dark:hover:bg-[#e5c890]/15"
         onclick={onIgnore}
     >
         {$t("spellcheck.ignore")}
@@ -122,7 +122,7 @@
         type="button"
         role="menuitem"
         class="block w-full text-left px-3 py-1 cursor-pointer
-               hover:bg-brand-gold-100 dark:hover:bg-brand-gold-400/15"
+               hover:bg-brand-gold-100 dark:hover:bg-[#e5c890]/15"
         onclick={onIgnoreAll}
     >
         {$t("spellcheck.ignore_all")}
