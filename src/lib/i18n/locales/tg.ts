@@ -113,6 +113,7 @@ export const tg: Record<string, string> = {
   "settings.julia.up_to_date": "Julia навсозӣ шудааст",
   "julia.prompt.title": "Julia насб нашудааст",
   "julia.prompt.desc": "Барои иҷрои коди Julia забони барномасозии Julia лозим аст. Онро ҳозир насб кунед ё агар он аллакай дар системаи шумо бошад, дар Танзимот → Julia роҳи фармоиширо муайян кунед.",
+  "julia.prompt.background_note": "Шумо метавонед кор кунед — насб дар паснамо идома меёбад.",
   "julia.prompt.install": "Насби Julia",
   "julia.prompt.installing": "Julia насб шуда истодааст…",
   "julia.prompt.cancel": "Ҳоло не",

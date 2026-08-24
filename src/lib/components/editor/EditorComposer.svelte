@@ -107,6 +107,9 @@
     // overwrite the saved offset with 0.
     let restoring = false;
     let editorShell = $state<HTMLDivElement | null>(null);
+    // Whether the spelling dock's menu is open, so the dock can stop fading
+    // itself while it is (see the dock's markup below).
+    let spellMenuOpen = $state(false);
     // Measured width of the editor shell, fed to the toolbar so it can decide
     // whether the overflow menu items render inline or collapse to a dropdown.
     let editorWidth = $state(0);
@@ -380,13 +383,20 @@
         </div>
         <!-- Spelling language picker, pinned to the bottom-right of the page.
              In zen / Sukun mode it stays hidden until hovered; otherwise it
-             sits subtly and brightens on hover. -->
+             sits subtly and brightens on hover.
+             The fade is dropped while its menu is open: the panel is a child of
+             this dock, so at 35% it turns into a washed-out frame with the text
+             faded out of sight — the menu looks emptied rather than open, and
+             the pointer has usually left the dock by then (that is what opening
+             a menu and reaching for it does). -->
         <div
-            class="absolute bottom-0 right-4 z-20 transition-opacity duration-200 hover:opacity-100 {$zenMode
-                ? 'opacity-0'
-                : 'opacity-35'}"
+            class="absolute bottom-0 right-4 z-20 transition-opacity duration-200 hover:opacity-100 {spellMenuOpen
+                ? 'opacity-100'
+                : $zenMode
+                  ? 'opacity-0'
+                  : 'opacity-35'}"
         >
-            <SpellLanguageSelector up={true} />
+            <SpellLanguageSelector up={true} bind:open={spellMenuOpen} />
         </div>
     </div>
 </Composer>

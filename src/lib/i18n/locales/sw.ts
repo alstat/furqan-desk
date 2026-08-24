@@ -112,6 +112,7 @@ export const sw: Record<string, string> = {
   "settings.julia.up_to_date": "Julia imesasishwa",
   "julia.prompt.title": "Julia haijasakinishwa",
   "julia.prompt.desc": "Kuendesha msimbo wa Julia kunahitaji lugha ya programu ya Julia. Isakinishe sasa, au weka njia maalum katika Mipangilio → Julia ikiwa tayari ipo kwenye mfumo wako.",
+  "julia.prompt.background_note": "Unaweza kuendelea kufanya kazi — usakinishaji unaendelea chinichini.",
   "julia.prompt.install": "Sakinisha Julia",
   "julia.prompt.installing": "Inasakinisha Julia…",
   "julia.prompt.cancel": "Si sasa",

@@ -111,6 +111,7 @@ export const en: Record<string, string> = {
   "settings.julia.update_failed": "Julia update failed",
   "julia.prompt.title": "Julia is not installed",
   "julia.prompt.desc": "Running Julia code needs the Julia programming language. Install it now, or set a custom path in Settings → Julia if it's already on your system.",
+  "julia.prompt.background_note": "You can keep working — the install continues in the background.",
   "julia.prompt.install": "Install Julia",
   "julia.prompt.installing": "Installing Julia…",
   "julia.prompt.cancel": "Not now",

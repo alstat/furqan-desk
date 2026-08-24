@@ -113,6 +113,7 @@ export const de: Record<string, string> = {
   "settings.julia.up_to_date": "Julia ist aktuell",
   "julia.prompt.title": "Julia ist nicht installiert",
   "julia.prompt.desc": "Zum Ausführen von Julia-Code wird die Programmiersprache Julia benötigt. Installieren Sie sie jetzt oder legen Sie unter Einstellungen → Julia einen eigenen Pfad fest, falls sie bereits auf Ihrem System vorhanden ist.",
+  "julia.prompt.background_note": "Sie können weiterarbeiten — die Installation läuft im Hintergrund weiter.",
   "julia.prompt.install": "Julia installieren",
   "julia.prompt.installing": "Julia wird installiert…",
   "julia.prompt.cancel": "Nicht jetzt",

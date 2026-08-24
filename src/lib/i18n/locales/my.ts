@@ -113,6 +113,7 @@ export const my: Record<string, string> = {
   "settings.julia.up_to_date": "Julia သည် နောက်ဆုံးဗားရှင်းဖြစ်သည်",
   "julia.prompt.title": "Julia ကို မတပ်ဆင်ရသေးပါ",
   "julia.prompt.desc": "Julia ကုဒ်ကို လည်ပတ်ရန် Julia ပရိုဂရမ်းမင်းဘာသာစကား လိုအပ်သည်။ ယခု တပ်ဆင်ပါ၊ သို့မဟုတ် သင့်စနစ်တွင် ရှိပြီးသားဖြစ်ပါက ဆက်တင်များ → Julia တွင် စိတ်ကြိုက်လမ်းကြောင်း သတ်မှတ်ပါ။",
+  "julia.prompt.background_note": "ဆက်လက်အလုပ်လုပ်နိုင်သည် — ထည့်သွင်းမှုသည် နောက်ကွယ်တွင် ဆက်လက်လုပ်ဆောင်နေသည်။",
   "julia.prompt.install": "Julia တပ်ဆင်ရန်",
   "julia.prompt.installing": "Julia တပ်ဆင်နေသည်…",
   "julia.prompt.cancel": "ယခုမဟုတ်",

@@ -108,6 +108,7 @@ export const fa: Record<string, string> = {
   "settings.julia.up_to_date": 'Julia به‌روز است',
   "julia.prompt.title": 'Julia نصب نشده است',
   "julia.prompt.desc": 'اجرای کد Julia به زبان برنامه‌نویسی Julia نیاز دارد. اکنون آن را نصب کنید، یا اگر از قبل روی سیستم شما نصب است، در تنظیمات → Julia یک مسیر سفارشی تعیین کنید.',
+  "julia.prompt.background_note": "می‌توانید به کار ادامه دهید — نصب در پس‌زمینه ادامه می‌یابد.",
   "julia.prompt.install": 'نصب Julia',
   "julia.prompt.installing": 'در حال نصب Julia…',
   "julia.prompt.cancel": 'اکنون نه',

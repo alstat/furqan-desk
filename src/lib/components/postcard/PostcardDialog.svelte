@@ -219,6 +219,14 @@
     let msListedFor = "";
     let msImageReq = 0;
     let objectUrls: string[] = [];
+    /** Drop one tracked blob URL, if it is one of ours. */
+    function releaseObjectUrl(url: string | undefined | null) {
+        if (!url) return;
+        const i = objectUrls.indexOf(url);
+        if (i === -1) return;
+        objectUrls.splice(i, 1);
+        URL.revokeObjectURL(url);
+    }
 
     /** Index of the first folio carrying a scan, or -1 when none does. */
     function msFirstImagePage(ms: MsEntry): number {
@@ -725,6 +733,11 @@
                 const el = new Image();
                 el.onload = () => {
                     if (req !== msImageReq) return;
+                    // Each of these is a page scan fetched at full width, so
+                    // the one being replaced is released now rather than at
+                    // teardown — browsing folios otherwise keeps every scan of
+                    // the session alive behind the card.
+                    releaseObjectUrl(bgImage?.src);
                     bgImage = el;
                     bgCredit = buildCredit(img.image_source);
                     msImageLoading = false;

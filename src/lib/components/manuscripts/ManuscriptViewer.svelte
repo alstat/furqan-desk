@@ -447,11 +447,40 @@
     );
 
     // ── Object URL cleanup ────────────────────────────────────────────────────
+    //
+    // Only the folio on screen needs its blob: each one is a full page scan, so
+    // holding every folio the user has paged through keeps megabytes alive for
+    // the life of the window. The previous URL is released as the next one takes
+    // its place, and `revokeAll` is the sweep for whatever is current when the
+    // viewer closes or starts a new search.
     let objectUrls: string[] = [];
+    function trackObjectUrl(url: string) {
+        objectUrls.push(url);
+    }
     function revokeAll() {
         for (const u of objectUrls) URL.revokeObjectURL(u);
         objectUrls = [];
     }
+    /** Swap in a freshly created blob URL, releasing the one it replaces. */
+    function setImageSrc(url: string | null) {
+        const previous = imageSrc;
+        imageSrc = url;
+        if (previous && previous !== url) {
+            URL.revokeObjectURL(previous);
+            objectUrls = objectUrls.filter((u) => u !== previous);
+        }
+    }
+
+    /**
+     * Guards against an out-of-order image landing.
+     *
+     * Paging through folios fires a fetch per selection, and they can come back
+     * in any order — a slow page scan arriving after the user has moved on used
+     * to overwrite the newer one, leaving the viewer showing a folio the list no
+     * longer points at (and `thumbnailBytes`, which feeds the clipboard copy,
+     * pointing at that same stale image).
+     */
+    let imageReq = 0;
 
     // ── Fetch list ────────────────────────────────────────────────────────────
     $effect(() => {
@@ -533,7 +562,8 @@
     $effect(() => {
         const img = selectedImage;
         if (!img) {
-            imageSrc = null;
+            imageReq++;
+            setImageSrc(null);
             imageSource = "";
             imageLoading = false;
             imageError = false;
@@ -542,7 +572,8 @@
         // Corpus Coranicum sometimes returns entries with no image_url — render a
         // dedicated "no image" state instead of attempting a fetch that will fail.
         if (!img.image_url?.trim() && !demoMode) {
-            imageSrc = null;
+            imageReq++;
+            setImageSrc(null);
             thumbnailBytes = null;
             imageSource = img.image_source?.trim() ?? "";
             imageLoading = false;
@@ -550,6 +581,7 @@
             resetZoom();
             return;
         }
+        const req = ++imageReq;
         imageLoading = true;
         imageError = false;
         resetZoom();
@@ -564,18 +596,20 @@
                 index: demoIdx >= 0 ? demoIdx : 0,
             })
                 .then((bytes) => {
+                    if (req !== imageReq) return;
                     const url = URL.createObjectURL(
                         new Blob([bytes], { type: "image/jpeg" }),
                     );
-                    objectUrls.push(url);
-                    imageSrc = url;
+                    trackObjectUrl(url);
+                    setImageSrc(url);
                 })
                 .catch(() => {
+                    if (req !== imageReq) return;
                     imageError = true;
-                    imageSrc = null;
+                    setImageSrc(null);
                 })
                 .finally(() => {
-                    imageLoading = false;
+                    if (req === imageReq) imageLoading = false;
                 });
             return;
         }
@@ -586,21 +620,23 @@
             thumbnail: true,
         })
             .then((bytes) => {
+                if (req !== imageReq) return;
                 thumbnailBytes = bytes;
                 if (msId !== undefined)
                     loadedIds = new Set([...loadedIds, msId]);
                 const url = URL.createObjectURL(
                     new Blob([bytes], { type: "image/jpeg" }),
                 );
-                objectUrls.push(url);
-                imageSrc = url;
+                trackObjectUrl(url);
+                setImageSrc(url);
             })
             .catch(() => {
+                if (req !== imageReq) return;
                 imageError = true;
-                imageSrc = null;
+                setImageSrc(null);
             })
             .finally(() => {
-                imageLoading = false;
+                if (req === imageReq) imageLoading = false;
             });
     });
 
@@ -978,7 +1014,7 @@
                 class="flex items-center gap-2"
             >
                 <Icon
-                    icon="solar:document-text-bold-duotone"
+                    icon="streamline-plump:script-2-solid"
                     width="1.1rem"
                     class="text-brand-gold-500"
                 />
@@ -1728,7 +1764,7 @@
                         class="flex-1 flex flex-col items-center justify-center gap-2 px-6 text-center text-xs text-brand-charcoal-300 dark:text-[#838ba7]"
                     >
                         <Icon
-                            icon="solar:document-text-bold-duotone"
+                            icon="streamline-plump:script-2-solid"
                             width="2rem"
                             class="text-brand-sand-400 dark:text-[#626880]"
                         />

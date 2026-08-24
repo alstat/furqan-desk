@@ -87,8 +87,18 @@ marked.use({
             name: "mathInlineDollar",
             level: "inline",
             start(src: string) {
-                const idx = src.search(/(?<!\$)\$(?!\$)/);
-                return idx < 0 ? undefined : idx;
+                // A lone `$` — not one half of a `$$` display delimiter. The
+                // obvious spelling is /(?<!\$)\$(?!\$)/, but WebKit before
+                // Safari 16.4 (anything on a pre-2017 Mac, and the WKWebView
+                // this app runs in there) rejects lookbehind *while parsing the
+                // module*, taking the whole chunk down with "invalid regular
+                // expression: invalid group specifier name". Scanning by hand
+                // is the same test with no syntax to trip over.
+                for (let i = src.indexOf("$"); i >= 0; i = src.indexOf("$", i + 1)) {
+                    if (src[i - 1] === "$" || src[i + 1] === "$") continue;
+                    return i;
+                }
+                return undefined;
             },
             tokenizer(src: string) {
                 const m = /^\$(?!\$)((?:\\\$|[^\$\n])+?)\$(?!\d)/.exec(src);

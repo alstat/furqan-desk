@@ -113,6 +113,7 @@ export const th: Record<string, string> = {
   "settings.julia.up_to_date": "Julia เป็นเวอร์ชันล่าสุดแล้ว",
   "julia.prompt.title": "ยังไม่ได้ติดตั้ง Julia",
   "julia.prompt.desc": "การรันโค้ด Julia ต้องใช้ภาษาโปรแกรม Julia ติดตั้งตอนนี้ หรือกำหนดพาธที่กำหนดเองใน การตั้งค่า → Julia หากมีอยู่ในระบบของคุณแล้ว",
+  "julia.prompt.background_note": "คุณทำงานต่อได้ — การติดตั้งดำเนินต่อเบื้องหลัง",
   "julia.prompt.install": "ติดตั้ง Julia",
   "julia.prompt.installing": "กำลังติดตั้ง Julia…",
   "julia.prompt.cancel": "ไว้ภายหลัง",

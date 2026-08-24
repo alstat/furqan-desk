@@ -113,6 +113,7 @@ export const ms: Record<string, string> = {
   "settings.julia.up_to_date": "Julia sudah terkini",
   "julia.prompt.title": "Julia tidak dipasang",
   "julia.prompt.desc": "Menjalankan kod Julia memerlukan bahasa pengaturcaraan Julia. Pasang sekarang, atau tetapkan laluan tersuai dalam Tetapan → Julia jika ia sudah ada pada sistem anda.",
+  "julia.prompt.background_note": "Anda boleh terus bekerja — pemasangan diteruskan di latar belakang.",
   "julia.prompt.install": "Pasang Julia",
   "julia.prompt.installing": "Memasang Julia…",
   "julia.prompt.cancel": "Bukan sekarang",

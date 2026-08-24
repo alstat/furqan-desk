@@ -269,9 +269,9 @@
             <div class="flex items-center gap-2 mb-1">
                 <Icon
                     icon={currentStep === 0
-                        ? "solar:graduation-cap-bold-duotone"
+                        ? "solar:square-academic-cap-bold-duotone"
                         : currentStep === MANUSCRIPT_STEP
-                          ? "solar:document-text-bold-duotone"
+                          ? "streamline-plump:script-2-solid"
                           : currentStep === AUTHOR_STEP
                             ? "solar:heart-bold-duotone"
                             : "solar:star-bold-duotone"}

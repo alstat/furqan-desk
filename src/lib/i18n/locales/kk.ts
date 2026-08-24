@@ -113,6 +113,7 @@ export const kk: Record<string, string> = {
   "settings.julia.up_to_date": "Julia жаңартылған",
   "julia.prompt.title": "Julia орнатылмаған",
   "julia.prompt.desc": "Julia кодын іске қосу үшін Julia бағдарламалау тілі қажет. Оны қазір орнатыңыз немесе жүйеңізде бұрыннан бар болса, Параметрлер → Julia бөлімінде арнайы жолды көрсетіңіз.",
+  "julia.prompt.background_note": "Жұмысты жалғастыра беруіңізге болады — орнату фонда жалғасады.",
   "julia.prompt.install": "Julia орнату",
   "julia.prompt.installing": "Julia орнатылуда…",
   "julia.prompt.cancel": "Қазір емес",

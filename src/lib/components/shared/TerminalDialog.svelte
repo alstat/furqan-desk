@@ -3,7 +3,7 @@
     import { get } from "svelte/store";
     import { invoke } from "@tauri-apps/api/core";
     import { openFolderPath } from "$lib/stores/tabs.store";
-    import { listen } from "@tauri-apps/api/event";
+    import { listen, type UnlistenFn } from "@tauri-apps/api/event";
     import Icon from "@iconify/svelte";
     import { Terminal } from "@xterm/xterm";
     import { FitAddon } from "@xterm/addon-fit";
@@ -228,6 +228,7 @@
     async function attachTerm(id: string, container: HTMLDivElement) {
         const existing = bundles.get(id);
         if (existing?.attached) return;
+        ensurePtyListeners();
 
         const term =
             existing?.term ??
@@ -573,10 +574,23 @@
 
     // ── Event listeners ──────────────────────────────────────────────────────
 
-    onMount(() => {
-        const unlistenOut = listen<{ id: string; data_b64: string }>(
-            "pty-output",
-            (event) => {
+    /**
+     * PTY event plumbing, wired up only once this instance owns a terminal.
+     *
+     * The Rust side emits `pty-output` with `app.emit`, which broadcasts to
+     * every window. A listener here would therefore decode and discard every
+     * chunk a build prints — on the main window's thread, while the user is
+     * typing — even when the terminal is running in its own OS window and this
+     * copy of the panel is nothing but an unopened fallback. Deferring the
+     * registration to `attachTerm` means the window that never opens a terminal
+     * never pays for one.
+     */
+    let ptyListeners: Promise<UnlistenFn[]> | null = null;
+
+    function ensurePtyListeners(): void {
+        if (ptyListeners) return;
+        ptyListeners = Promise.all([
+            listen<{ id: string; data_b64: string }>("pty-output", (event) => {
                 const { id, data_b64 } = event.payload;
                 const b = bundles.get(id);
                 if (!b) return;
@@ -585,21 +599,21 @@
                 // include a git commit/push/checkout, so nudge the git views to
                 // re-read. Debounced: only fires once output settles.
                 bumpGitRefresh();
-            },
-        );
+            }),
+            listen<{ id: string }>("pty-exit", (event) => {
+                const { id } = event.payload;
+                if (!(id in exited)) return;
+                exited[id] = true;
+            }),
+        ]);
+    }
 
-        const unlistenExit = listen<{ id: string }>("pty-exit", (event) => {
-            const { id } = event.payload;
-            if (!(id in exited)) return;
-            exited[id] = true;
-        });
-
+    onMount(() => {
         const onWinResize = () => refitActive();
         window.addEventListener("resize", onWinResize);
 
         return () => {
-            unlistenOut.then((fn) => fn());
-            unlistenExit.then((fn) => fn());
+            void ptyListeners?.then((fns) => fns.forEach((fn) => fn()));
             window.removeEventListener("resize", onWinResize);
         };
     });

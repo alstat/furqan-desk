@@ -112,6 +112,7 @@ export const sr: Record<string, string> = {
   "settings.julia.up_to_date": "Julia је ажурирана",
   "julia.prompt.title": "Julia није инсталирана",
   "julia.prompt.desc": "Покретање Julia кода захтева програмски језик Julia. Инсталирајте га сада или подесите прилагођену путању у Подешавања → Julia ако је већ на вашем систему.",
+  "julia.prompt.background_note": "Можете наставити да радите — инсталација се наставља у позадини.",
   "julia.prompt.install": "Инсталирај Julia",
   "julia.prompt.installing": "Инсталирање Julia…",
   "julia.prompt.cancel": "Не сада",

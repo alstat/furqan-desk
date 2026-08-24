@@ -108,6 +108,7 @@ export const ru: Record<string, string> = {
   "settings.julia.up_to_date": 'Julia обновлена',
   "julia.prompt.title": 'Julia не установлена',
   "julia.prompt.desc": 'Для запуска кода Julia требуется язык программирования Julia. Установите его сейчас или укажите свой путь в разделе Настройки → Julia, если он уже есть в системе.',
+  "julia.prompt.background_note": "Можно продолжать работу — установка продолжается в фоне.",
   "julia.prompt.install": 'Установить Julia',
   "julia.prompt.installing": 'Установка Julia…',
   "julia.prompt.cancel": 'Не сейчас',

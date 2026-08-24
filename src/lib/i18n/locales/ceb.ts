@@ -113,6 +113,7 @@ export const ceb: Record<string, string> = {
   "settings.julia.up_to_date": "Ang Julia kay updated na",
   "julia.prompt.title": "Wala pa na-install ang Julia",
   "julia.prompt.desc": "Ang pagpadagan sa Julia code nanginahanglan sa Julia programming language. I-install kini karon, o pagtakda og custom nga path sa Mga Setting → Julia kung naa na kini sa imong sistema.",
+  "julia.prompt.background_note": "Mahimo kang magpadayon sa trabaho — magpadayon ang pag-install sa background.",
   "julia.prompt.install": "I-install ang Julia",
   "julia.prompt.installing": "Gi-install ang Julia…",
   "julia.prompt.cancel": "Dili karon",
