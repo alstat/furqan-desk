@@ -23,7 +23,7 @@ export interface ManuscriptInsertRequest {
 
 const INSERT_EVENT = 'manuscript:insert';
 const EDITOR_STATE_EVENT = 'manuscript:editor-available';
-const EDITOR_STATE_REQUEST = 'manuscript:editor-available?';
+const EDITOR_STATE_REQUEST = 'manuscript:editor-available-request';
 
 /**
  * Whether the main window currently has a Lexical editor to insert into. The
