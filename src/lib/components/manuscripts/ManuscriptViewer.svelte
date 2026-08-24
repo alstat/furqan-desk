@@ -5,7 +5,7 @@
     import Icon from "@iconify/svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { manuscriptAyah } from "$lib/stores/manuscripts.store";
-    import { writeImage } from "@tauri-apps/plugin-clipboard-manager";
+    import { writeHtml } from "@tauri-apps/plugin-clipboard-manager";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import WindowControls from "$lib/components/shared/WindowControls.svelte";
     import { isPro } from "$lib/stores/auth.store";
@@ -677,10 +677,11 @@
         return `data:${mime};base64,${btoa(binary)}`;
     }
 
-    function buildCorpusCoranicumUrl(): string | undefined {
-        const ms = selectedManuscript;
-        const page = selectedPage;
-        const ref = $manuscriptAyah;
+    function buildCorpusCoranicumUrl(
+        ms: ManuscriptEntry | null = selectedManuscript,
+        page: ManuscriptPage | null = selectedPage,
+        ref: { surah: number; ayah: number } | null = $manuscriptAyah,
+    ): string | undefined {
         if (!ms || !ref) return undefined;
 
         const folio = `${page?.folio ?? ""}${page?.side ?? ""}`.trim();
@@ -805,8 +806,172 @@
         );
     }
 
+    function buildClipboardContent(
+        pngDataUrl: string,
+        ms: ManuscriptEntry,
+        page: ManuscriptPage | null,
+        manuscriptImage: ManuscriptImage | null,
+        ref: { surah: number; ayah: number } | null,
+        detail: ManuscriptDetail | null,
+    ): { html: string; text: string } {
+        const folio = `${page?.folio ?? ""}${page?.side ?? ""}`.trim();
+        const archiveLocation = [ms.archive.city, ms.archive.country_code]
+            .filter(Boolean)
+            .join(", ");
+        const archive = `${ms.archive.name}${archiveLocation ? ` — ${archiveLocation}` : ""}`;
+        const reference = ref
+            ? `${$t("manuscript.surah")} ${ref.surah}, ${$t("manuscript.ayah")} ${ref.ayah}`
+            : "";
+        const folioLabel = folio
+            ? $t("manuscript.caption_folio", { folio })
+            : "";
+        const credit =
+            manuscriptImage?.image_source?.trim() ||
+            $t("manuscript.credit_corpus_coranicum");
+        const sourceUrl =
+            buildCorpusCoranicumUrl(ms, page, ref) ??
+            `https://corpuscoranicum.de/en/manuscripts/${ms.manuscript_id}`;
+        const lineMin = detail?.line_min?.trim() ?? "";
+        const lineMax = detail?.line_max?.trim() ?? "";
+        const lineRange =
+            lineMin && lineMax && lineMin !== lineMax
+                ? `${lineMin}–${lineMax}`
+                : lineMin || lineMax;
+        const rows: Array<[string, string]> = [
+            [
+                $t("manuscript.meta_date"),
+                detail?.date?.trim()
+                    ? $t("manuscript.date_ce", { date: detail.date })
+                    : "",
+            ],
+            [
+                $t("manuscript.meta_radiocarbon"),
+                detail?.carbon_dating?.trim() ?? "",
+            ],
+            [
+                $t("manuscript.meta_material"),
+                detail?.writing_surface?.trim() ?? "",
+            ],
+            [
+                $t("manuscript.meta_script"),
+                detail?.script_styles?.join(", ") ?? "",
+            ],
+            [
+                $t("manuscript.meta_size"),
+                detail?.dimensions?.trim()
+                    ? $t("manuscript.size_mm", { size: detail.dimensions })
+                    : "",
+            ],
+            [
+                $t("manuscript.meta_folios"),
+                detail?.number_of_folios != null
+                    ? String(detail.number_of_folios)
+                    : "",
+            ],
+            [
+                $t("manuscript.meta_callno"),
+                detail?.call_number?.trim() ?? "",
+            ],
+            [$t("manuscript.meta_lines"), lineRange],
+        ].filter((row): row is [string, string] => !!row[1]);
+
+        const figure = document.createElement("figure");
+        figure.style.margin = "0";
+
+        const image = document.createElement("img");
+        image.src = pngDataUrl;
+        image.alt = folio
+            ? $t("manuscript.image_alt_folio", { folio })
+            : $t("manuscript.image_alt_default");
+        image.style.display = "block";
+        image.style.maxWidth = "100%";
+        image.style.height = "auto";
+        figure.appendChild(image);
+
+        const caption = document.createElement("figcaption");
+        caption.style.marginTop = "12px";
+        caption.style.fontFamily =
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        caption.style.fontSize = "12px";
+        caption.style.lineHeight = "1.5";
+
+        const title = document.createElement("strong");
+        title.style.display = "block";
+        title.style.fontSize = "15px";
+        title.textContent = ms.title;
+        caption.appendChild(title);
+
+        const archiveLine = document.createElement("div");
+        archiveLine.textContent = archive;
+        caption.appendChild(archiveLine);
+
+        if (reference || folioLabel) {
+            const locationLine = document.createElement("div");
+            locationLine.style.marginTop = "4px";
+            locationLine.textContent = [reference, folioLabel]
+                .filter(Boolean)
+                .join(" · ");
+            caption.appendChild(locationLine);
+        }
+
+        if (rows.length) {
+            const table = document.createElement("table");
+            table.style.borderCollapse = "collapse";
+            table.style.marginTop = "8px";
+            for (const [label, value] of rows) {
+                const tr = table.insertRow();
+                const th = document.createElement("th");
+                th.scope = "row";
+                th.style.padding = "1px 14px 1px 0";
+                th.style.textAlign = "left";
+                th.style.verticalAlign = "top";
+                th.textContent = label;
+                const td = tr.insertCell();
+                td.style.padding = "1px 0";
+                td.textContent = value;
+                tr.append(th, td);
+            }
+            caption.appendChild(table);
+        }
+
+        const attribution = document.createElement("div");
+        attribution.style.marginTop = "8px";
+        attribution.textContent = credit;
+        caption.appendChild(attribution);
+
+        const source = document.createElement("div");
+        const link = document.createElement("a");
+        link.href = sourceUrl;
+        link.textContent = $t("manuscript.corpus_coranicum");
+        source.append(link);
+        caption.appendChild(source);
+        figure.appendChild(caption);
+
+        const text = [
+            ms.title,
+            archive,
+            [reference, folioLabel].filter(Boolean).join(" · "),
+            "",
+            ...rows.map(([label, value]) => `${label}: ${value}`),
+            "",
+            credit,
+            `${$t("manuscript.corpus_coranicum")}: ${sourceUrl}`,
+        ]
+            .filter((line, index, lines) => line || lines[index - 1] !== "")
+            .join("\n");
+
+        return { html: figure.outerHTML, text };
+    }
+
     async function copyImage() {
         if (copying || !imageSrc) return;
+        const manuscript = selectedManuscript;
+        const page = selectedPage;
+        const manuscriptImage = selectedImage;
+        const ref = $manuscriptAyah;
+        let detail = selectedDetail;
+        if (!manuscript) return;
+
         copying = true;
         copyMsg = "";
         try {
@@ -814,7 +979,7 @@
             if (demoMode) {
                 const demoIdx = DEMO_ENTRIES.findIndex(
                     (e) =>
-                        e.manuscript_id === selectedManuscript?.manuscript_id,
+                        e.manuscript_id === manuscript.manuscript_id,
                 );
                 const bytes = await invoke<ArrayBuffer>(
                     "get_manuscript_demo_image",
@@ -824,7 +989,7 @@
                 );
                 dataUrl = bytesToDataUrl(bytes, "image/jpeg");
             } else {
-                const img = selectedImage;
+                const img = manuscriptImage;
                 if (!img) return;
                 // Full resolution, not the thumbnail already on screen: what
                 // lands on the clipboard is what gets pasted into a document.
@@ -838,12 +1003,37 @@
             }
 
             const blob = await toPngBlob(dataUrl);
+            if (!detail && !demoMode) {
+                try {
+                    const raw = await invoke<string>("get_manuscript_detail", {
+                        manuscriptId: manuscript.manuscript_id,
+                    });
+                    detail = JSON.parse(raw).data as ManuscriptDetail;
+                    detailMap = new Map([
+                        ...detailMap,
+                        [manuscript.manuscript_id, detail],
+                    ]);
+                } catch {
+                    // The image, folio, archive and source are still useful when
+                    // the optional catalogue detail request is unavailable.
+                }
+            }
+            const pngDataUrl = bytesToDataUrl(
+                await blob.arrayBuffer(),
+                "image/png",
+            );
+            const clipboard = buildClipboardContent(
+                pngDataUrl,
+                manuscript,
+                page,
+                manuscriptImage,
+                ref,
+                detail,
+            );
             try {
-                // The desktop path. WKWebView does not expose the async
-                // Clipboard API on Tauri's custom scheme, so the plugin — which
-                // already holds `clipboard-manager:allow-write-image` — is what
-                // actually works in the packaged app.
-                await writeImage(new Uint8Array(await blob.arrayBuffer()));
+                // The plugin is the reliable desktop path on Tauri's custom
+                // scheme. HTML keeps the scan and its attribution together.
+                await writeHtml(clipboard.html, clipboard.text);
             } catch (pluginError) {
                 if (
                     !navigator.clipboard?.write ||
@@ -852,7 +1042,15 @@
                     throw pluginError;
                 }
                 await navigator.clipboard.write([
-                    new ClipboardItem({ "image/png": blob }),
+                    new ClipboardItem({
+                        "image/png": blob,
+                        "text/html": new Blob([clipboard.html], {
+                            type: "text/html",
+                        }),
+                        "text/plain": new Blob([clipboard.text], {
+                            type: "text/plain",
+                        }),
+                    }),
                 ]);
             }
             copyMsg = $t("manuscript.copied");
