@@ -2,7 +2,7 @@
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { t } from '$lib/i18n';
     import Icon from '@iconify/svelte';
-    import { fly } from 'svelte/transition';
+    import { fade, fly } from 'svelte/transition';
 
     const KOFI_URL = 'https://ko-fi.com/alahmadgaidasaad';
 
@@ -40,6 +40,7 @@
         aria-modal="true"
         aria-label={$t('donation.title')}
         tabindex="-1"
+        transition:fade={{ duration: 150 }}
         class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
         onclick={(e) => {
             if (e.target === e.currentTarget) onClose();

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { fly } from "svelte/transition";
+    import { fade, fly } from "svelte/transition";
     import Icon from "@iconify/svelte";
     import LoginView from "./LoginView.svelte";
     import ProfileView from "./ProfileView.svelte";
@@ -27,6 +27,7 @@
     <div
         role="dialog"
         aria-modal="true"
+        transition:fade={{ duration: 150 }}
         class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
         onclick={(e) => {
             if (e.target === e.currentTarget) handleClose();

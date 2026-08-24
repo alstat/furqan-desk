@@ -1,6 +1,6 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import { fly } from "svelte/transition";
+    import { fade, fly } from "svelte/transition";
     import { tick } from "svelte";
     import { addHighlight } from "$lib/functions/bookmarks";
     import { pendingHighlight } from "$lib/stores/bookmarks.store";
@@ -117,6 +117,7 @@
         aria-modal="true"
         aria-label={$t("highlight.save")}
         tabindex="-1"
+        transition:fade={{ duration: 150 }}
         class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
         onclick={(e) => {
             if (e.target === e.currentTarget) handleCancel();

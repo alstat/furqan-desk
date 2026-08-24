@@ -26,6 +26,21 @@
     font-display: swap;
 }
 
+/* Ubuntu is pulled from Google Fonts (see app.html) rather than referenced by
+   local system name — `local("Ubuntu")` was tried first, but Ubuntu ships as
+   a single variable font now (`Ubuntu[wdth,wght].ttf`), and fontconfig's
+   static-instance matching for it is badly broken on this kind of build:
+   `fc-match "Ubuntu:weight=400"` returns the "Extra Bold" instance,
+   `weight=700` returns "Extra Bold" too, `weight=200` returns "Bold" — every
+   CSS weight WebKitGTK asked fontconfig to resolve came back wrong, which is
+   what read as bold, gappy, low-contrast text (worst on light backgrounds,
+   where the broken hinting shows up most). Declaring the weight as a range on
+   an `@font-face { src: local(...) }` didn't fix it either — WebKitGTK still
+   goes through the same broken fontconfig lookup for a `local()` variable
+   font regardless. A `url()`-loaded face never touches fontconfig at all, so
+   the four static Google Fonts weights (400/500/700 + italic) are what's
+   actually in play here; see `html.linux-csd` below. */
+
 /* Class-based dark mode: applies dark: variants when html has .dark class */
 @variant dark (&:where(.dark, .dark *));
 
@@ -77,8 +92,17 @@
     --color-brand-charcoal-50: #f2f2f2;
     --color-brand-charcoal-100: #e0e0e0;
     --color-brand-charcoal-200: #c8c8c8;
-    --color-brand-charcoal-300: #ababab;
-    --color-brand-charcoal-400: #8d8d8d;
+    /* 300/400 were #ababab/#8d8d8d — under 2.4:1 and 3.4:1 against white, well
+       short of WCAG's 4.5:1 floor for normal text. At the small sizes this app
+       uses for secondary text (10-13px), that undercontrast is what read as
+       fuzzy/"ghosted" glyphs: anti-aliasing has too little tonal range to draw
+       a crisp edge, so it falls back to a soft blend that looks like a lighter
+       and darker copy of the same letterform. Darkened to ~4.3:1 / ~4.6:1 —
+       still a visibly lighter, secondary-text gray, just no longer below the
+       threshold where the renderer can draw it cleanly. Dark mode redefines
+       this whole scale separately below and was never affected. */
+    --color-brand-charcoal-300: #7a7a7a;
+    --color-brand-charcoal-400: #757575;
     --color-brand-charcoal-500: #707070;
     --color-brand-charcoal-600: #5c5c5c;
     --color-brand-charcoal-700: #4a4a4a;
@@ -1989,6 +2013,35 @@ html.dark ::highlight(find-match-current) {
     }
 }
 
+/* Ubuntu is Canonical's default UI typeface, hence the preference here on
+   Linux. "Ubuntu" resolves to the Google Fonts `@font-face` faces loaded in
+   app.html (see the note up top on why those, not the system copy) — an
+   `@font-face`-declared family always wins over a local font of the same
+   name, so this is unambiguous regardless of what's installed. Preflight's
+   plain `html` rule (below, compiled from Tailwind's default `--font-sans`
+   stack) only has element specificity, so this class selector overrides it
+   for body text while leaving explicit per-element fonts — Quranic Arabic,
+   code blocks, the handwriting face, … — untouched, same as it would for any
+   other more-specific `font-*` class. Falls back to the exact same stack
+   Preflight uses elsewhere without a network connection to load Ubuntu from
+   (there's no local copy bundled — see the app.html note). */
+html.linux-csd {
+    font-family:
+        "Ubuntu",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        "Helvetica Neue",
+        "Noto Sans",
+        Arial,
+        sans-serif,
+        "Apple Color Emoji",
+        "Segoe UI Emoji",
+        "Segoe UI Symbol",
+        "Noto Color Emoji";
+}
+
 /* ── Linux client-side decorations ─────────────────────────────────────────
    The Linux window is undecorated (see AppHeader / tauri.linux.conf.json) so
    the header can be the title bar. That also means GTK no longer draws the
@@ -2018,6 +2071,21 @@ html.linux-csd body {
 
 html.linux-csd .app-shell {
     background-color: #ffffff;
+    /* Everything that floats — SurahWidget/EditorToolbar's docked buttons
+       (`position: absolute`), toasts and notifications (`position: fixed`),
+       modal backdrops, TourOverlay, … — needs to anchor to the visible frame,
+       not to the true window bounds, once the frame is inset from those
+       bounds by the shadow margin below. `position: relative` alone makes
+       this the containing block for `absolute` descendants; `translateZ(0)`
+       is the standard trick that does the same for `fixed` ones (a `fixed`
+       element normally always uses the viewport, ignoring DOM nesting, unless
+       an ancestor establishes a new containing block this way). Paired with
+       `overflow-hidden` already on this element, anything positioned this way
+       is clipped to the shell's own rounded box for free, so a `fixed inset-0`
+       overlay fills exactly the frame with no separate inset/radius math
+       needed to keep it off the shadow band. */
+    position: relative;
+    transform: translateZ(0);
 }
 
 html.linux-csd.dark .app-shell {
@@ -2038,50 +2106,49 @@ html.linux-csd.csd-round.dark .app-shell {
     border-color: rgba(255, 255, 255, 0.14);
 }
 
-/* The drop shadow, for the dialog windows only (`csd-dialog` is set on <html>
-   from +layout.svelte). GNOME's compositor draws one for its own decorations
-   and cannot be asked to draw ours, but a window can cast its own as long as
-   there is transparent room inside it for the shadow to fall into: the shell
-   is inset by the margin below, the window is created with `transparent: true`
-   on Linux (see the window stores), and the band around the frame carries the
-   shadow. GTK reserves exactly this margin for the same reason.
+/* The drop shadow, for every window (`csd-dialog` is set on <html> from
+   +layout.svelte for the main window and each dialog alike). GNOME's
+   compositor draws one for its own decorations and cannot be asked to draw
+   ours, but a window can cast its own as long as there is transparent room
+   inside it for the shadow to fall into: the shell is inset by the margin
+   below, the window is created with `transparent: true` on Linux (see the
+   window stores and tauri.linux.conf.json), and the band around the frame
+   carries the shadow. GTK reserves exactly this margin for the same reason.
 
-   The main window stays full-bleed. Its floating panels (terminal, manuscripts,
-   …) are `position: fixed` against the viewport, so they would sit in the band
-   and read as spilling outside the window frame.
+   Every floating panel and full-window overlay (terminal, manuscripts,
+   toasts, modal backdrops, …) is `position: fixed` or `absolute`, but now
+   anchors to this box rather than the true window bounds — see the note on
+   `.app-shell`'s `position`/`transform` above — so nothing spills into the
+   band; a `fixed inset-0` overlay simply fills the frame exactly.
 
-   Two layers, as Adwaita has: a short contact shadow that grounds the edge and
-   a long soft one that carries the depth. Both are dropped when the window is
-   maximised, along with the margin — `csd-round` already tracks that. */
+   Kept small on purpose: this margin is also the only room clipped-by-design
+   UI (a docked toggle button that deliberately hangs a little past its own
+   panel's edge, say) has before `overflow-hidden` above starts trimming it,
+   so a wide margin both reads as an oversized shadow and eats into that
+   budget. The resize handles below stay a few px deeper than the margin so
+   the grab zone still comfortably covers the visible border, not just the
+   band outside it. `CSD_SHADOW_MARGIN_PX` in window-state.store.ts is this
+   same number — keep the two in sync, it's how +page.svelte's own
+   JS-measured layout knows how much of `100vh` this margin actually eats.
+
+   Each shadow layer's own reach — offset plus blur — is kept at or under the
+   margin on purpose: give a layer more than the transparent room it has to
+   fade into and the compositor has nowhere left to fade it, so instead of
+   tapering to nothing it gets sheared off hard at the true window edge,
+   right where the shadow should have been faintest. Two layers, as Adwaita
+   has: a short contact shadow that grounds the edge and a soft, wider one
+   that carries the depth. Both are dropped when the window is maximised,
+   along with the margin — `csd-round` already tracks that. */
 html.linux-csd.csd-round.csd-dialog .app-shell {
-    margin: 16px;
-    height: calc(100vh - 32px);
+    margin: 8px;
+    height: calc(100vh - 16px);
     box-shadow:
-        0 2px 6px rgba(0, 0, 0, 0.14),
-        0 10px 24px rgba(0, 0, 0, 0.22);
+        0 1px 2px rgba(0, 0, 0, 0.12),
+        0 2px 6px rgba(0, 0, 0, 0.16);
 }
 
 html.linux-csd.csd-round.csd-dialog.dark .app-shell {
     box-shadow:
-        0 2px 6px rgba(0, 0, 0, 0.36),
-        0 10px 24px rgba(0, 0, 0, 0.5);
-}
-
-/* A dialog window's own full-window overlays (the manuscript and plot
-   lightboxes) are `position: fixed`, so they ignore the shell's margin and
-   would paint over the shadow band. Pull them in to the frame. */
-html.linux-csd.csd-round.csd-dialog .fixed.inset-0 {
-    inset: 16px;
-}
-
-/* Every dialog in the app lays a `fixed inset-0` backdrop over the viewport,
-   and those are siblings of .app-shell rather than children — `position:
-   fixed` escapes its overflow clip regardless, so the shell's radius cannot
-   trim them. Left alone they paint their tint into the rounded corners and the
-   window reads square for as long as any dialog is open. Rounding them to the
-   same radius is enough: they are exactly viewport-sized, so their corners and
-   the window's coincide. Backdrops with no background of their own are
-   unaffected either way. */
-html.linux-csd.csd-round .fixed.inset-0 {
-    border-radius: 12px;
+        0 1px 2px rgba(0, 0, 0, 0.3),
+        0 2px 6px rgba(0, 0, 0, 0.4);
 }

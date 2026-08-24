@@ -11,6 +11,7 @@
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { anchorBelow } from "$lib/utils/anchoredPanel";
     import { headerHeight } from "$lib/stores/header.store";
+    import { csdMarginPx } from "$lib/stores/window-state.store";
     import { t, locale } from "$lib/i18n";
     import { get } from "svelte/store";
     import { lexicalEditorInstance } from "$lib/stores/editor.store";
@@ -77,8 +78,11 @@
 
     // Re-read on every open so a resized window or a moved button still lines
     // up, and so the panel follows the header when the UI scale changes.
+    // $headerHeight is the bar's own measured height, not its Y position — add
+    // the CSD shadow margin (the header's top edge sits that far down from the
+    // true window top while the shell floats) to get the bar's actual bottom.
     const placement = $derived(
-        open ? anchorBelow(anchor, PANEL_W, $headerHeight, 0) : null,
+        open ? anchorBelow(anchor, PANEL_W, $headerHeight + $csdMarginPx, 0) : null,
     );
 
     $effect(() => {

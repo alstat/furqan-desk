@@ -1,7 +1,7 @@
 <script lang="ts">
     import Icon from '@iconify/svelte';
     import type { Snippet } from 'svelte';
-    import { fly } from 'svelte/transition';
+    import { fade, fly } from 'svelte/transition';
     import { t } from '$lib/i18n';
 
     interface Props {
@@ -23,6 +23,7 @@
 {#if open}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
+        transition:fade={{ duration: 150 }}
         class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
         onclick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         onkeydown={(e) => { if (e.key === 'Escape') onClose(); }}
