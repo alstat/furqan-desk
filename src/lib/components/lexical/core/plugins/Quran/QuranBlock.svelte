@@ -196,32 +196,32 @@
         <div class="flex items-center">
             <!-- Left decorative arm -->
             <div class="flex flex-1 items-center">
-                <div class="h-px flex-1 bg-linear-to-r from-transparent to-brand-gold-200 dark:to-brand-gold-500/70"></div>
+                <div class="h-px flex-1 bg-linear-to-r from-transparent to-brand-gold-200 dark:to-[#d4b57f]/70"></div>
                 <div class="flex items-center gap-0.5 px-1.5">
-                    <span class="inline-block h-1 w-1 rotate-45 bg-brand-gold-200 dark:bg-brand-gold-500/65"></span>
-                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/90"></span>
-                    <span class="inline-block h-1 w-1 rotate-45 bg-brand-gold-200 dark:bg-brand-gold-500/65"></span>
+                    <span class="inline-block h-1 w-1 rotate-45 bg-brand-gold-200 dark:bg-[#d4b57f]/65"></span>
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-[#e5c890]/90"></span>
+                    <span class="inline-block h-1 w-1 rotate-45 bg-brand-gold-200 dark:bg-[#d4b57f]/65"></span>
                 </div>
             </div>
             <!-- Surah name panel -->
-            <div class="relative flex items-center justify-center border border-brand-gold-400/80 dark:border-brand-gold-400/70 bg-linear-to-b from-brand-gold-50/60 to-white/0 dark:from-brand-gold-400/10 dark:to-transparent px-4 h-7">
-                <div class="pointer-events-none absolute inset-0.5 border border-brand-gold-200/40 dark:border-brand-gold-400/40"></div>
-                <span class="absolute -top-[3px] left-1/2 inline-block h-1.5 w-1.5 -translate-x-1/2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/90"></span>
-                <span class="absolute -bottom-[3px] left-1/2 inline-block h-1.5 w-1.5 -translate-x-1/2 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/90"></span>
-                <span class="absolute -left-[3px] -top-[3px] inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/80"></span>
-                <span class="absolute -right-[3px] -top-[3px] inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/80"></span>
-                <span class="absolute -bottom-[3px] -left-[3px] inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/80"></span>
-                <span class="absolute -bottom-[3px] -right-[3px] inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/80"></span>
+            <div class="relative flex items-center justify-center border border-brand-gold-400/80 dark:border-[#e5c890]/70 bg-linear-to-b from-brand-gold-50/60 to-white/0 dark:from-[#e5c890]/10 dark:to-transparent px-4 h-7">
+                <div class="pointer-events-none absolute inset-0.5 border border-brand-gold-200/40 dark:border-[#e5c890]/40"></div>
+                <span class="absolute -top-[3px] left-1/2 inline-block h-1.5 w-1.5 -translate-x-1/2 rotate-45 bg-brand-gold-400 dark:bg-[#e5c890]/90"></span>
+                <span class="absolute -bottom-[3px] left-1/2 inline-block h-1.5 w-1.5 -translate-x-1/2 rotate-45 bg-brand-gold-400 dark:bg-[#e5c890]/90"></span>
+                <span class="absolute -left-[3px] -top-[3px] inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-[#e5c890]/80"></span>
+                <span class="absolute -right-[3px] -top-[3px] inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-[#e5c890]/80"></span>
+                <span class="absolute -bottom-[3px] -left-[3px] inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-[#e5c890]/80"></span>
+                <span class="absolute -bottom-[3px] -right-[3px] inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-[#e5c890]/80"></span>
                 <span class="relative block font-scheherazade text-sm leading-none text-brand-charcoal-500 dark:text-brand-charcoal-100 translate-y-[1px]">{name}</span>
             </div>
             <!-- Right decorative arm -->
             <div class="flex flex-1 items-center">
                 <div class="flex items-center gap-0.5 px-1.5">
-                    <span class="inline-block h-1 w-1 rotate-45 bg-brand-gold-200 dark:bg-brand-gold-500/65"></span>
-                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/90"></span>
-                    <span class="inline-block h-1 w-1 rotate-45 bg-brand-gold-200 dark:bg-brand-gold-500/65"></span>
+                    <span class="inline-block h-1 w-1 rotate-45 bg-brand-gold-200 dark:bg-[#d4b57f]/65"></span>
+                    <span class="inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-[#e5c890]/90"></span>
+                    <span class="inline-block h-1 w-1 rotate-45 bg-brand-gold-200 dark:bg-[#d4b57f]/65"></span>
                 </div>
-                <div class="h-px flex-1 bg-linear-to-l from-transparent to-brand-gold-200 dark:to-brand-gold-500/70"></div>
+                <div class="h-px flex-1 bg-linear-to-l from-transparent to-brand-gold-200 dark:to-[#d4b57f]/70"></div>
             </div>
         </div>
     </div>
@@ -315,7 +315,7 @@
                                     title={$t("morphology.view_manuscripts", { ayah: String(v.ayah) })}
                                     aria-label={$t("morphology.view_manuscripts", { ayah: String(v.ayah) })}
                                     class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
-                                    ><Icon icon="solar:document-text-bold-duotone" width="0.6rem" /></button
+                                    ><Icon icon="streamline-plump:script-2-solid" width="0.6rem" /></button
                                 >{/if}<button
                                 type="button"
                                 onmousedown={(e) => e.preventDefault()}
@@ -342,13 +342,13 @@
 
     <!-- Bottom decorative rule -->
     <div class="mt-2 flex items-center" dir="ltr">
-        <div class="h-px flex-1 bg-linear-to-r from-transparent to-brand-gold-200 dark:to-brand-gold-500/70"></div>
+        <div class="h-px flex-1 bg-linear-to-r from-transparent to-brand-gold-200 dark:to-[#d4b57f]/70"></div>
         <div class="flex items-center gap-0.5 px-1.5">
-            <span class="inline-block h-1 w-1 rotate-45 bg-brand-gold-200 dark:bg-brand-gold-500/65"></span>
-            <span class="inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-brand-gold-400/90"></span>
-            <span class="inline-block h-1 w-1 rotate-45 bg-brand-gold-200 dark:bg-brand-gold-500/65"></span>
+            <span class="inline-block h-1 w-1 rotate-45 bg-brand-gold-200 dark:bg-[#d4b57f]/65"></span>
+            <span class="inline-block h-1.5 w-1.5 rotate-45 bg-brand-gold-400 dark:bg-[#e5c890]/90"></span>
+            <span class="inline-block h-1 w-1 rotate-45 bg-brand-gold-200 dark:bg-[#d4b57f]/65"></span>
         </div>
-        <div class="h-px flex-1 bg-linear-to-l from-transparent to-brand-gold-200 dark:to-brand-gold-500/70"></div>
+        <div class="h-px flex-1 bg-linear-to-l from-transparent to-brand-gold-200 dark:to-[#d4b57f]/70"></div>
     </div>
 </div>
 
@@ -368,7 +368,7 @@
             bind:this={aiPromptInput}
             bind:value={aiPromptText}
             placeholder={$t("morphology.ai_prompt_placeholder")}
-            class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+            class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
             onkeydown={(e) => {
                 if (e.key === 'Enter') { e.preventDefault(); submitAiPrompt(); }
                 else if (e.key === 'Escape') { closeAiPrompt(); }

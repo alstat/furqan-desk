@@ -244,7 +244,7 @@
         >
             {#each tones as tone (tone.id)}
                 <button
-                    class="cursor-pointer whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium text-brand-charcoal-700 transition-colors hover:bg-brand-gold-200 hover:text-brand-gold-700 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:text-[#c6d0f5] dark:hover:bg-[#4a4e5c] dark:hover:text-brand-gold-400 disabled:cursor-wait disabled:opacity-50"
+                    class="cursor-pointer whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium text-brand-charcoal-700 transition-colors hover:bg-brand-gold-200 hover:text-brand-gold-600 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:text-[#c6d0f5] dark:hover:bg-[#4a4e5c] dark:hover:text-brand-gold-400 disabled:cursor-wait disabled:opacity-50"
                     disabled={busyAction !== null}
                     onclick={() => runWithTone(tone.id)}
                 >
@@ -265,7 +265,7 @@
                 bind:this={promptInput}
                 bind:value={promptText}
                 placeholder={$t("ai_selection.prompt_placeholder")}
-                class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+                class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
                 onkeydown={(e) => {
                     if (e.key === "Enter") submitPrompt();
                     if (e.key === "Escape") promptOpen = false;
@@ -290,7 +290,7 @@
                 bind:this={askPromptInput}
                 bind:value={askPromptText}
                 placeholder={$t("ai_selection.ask_placeholder")}
-                class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-brand-gold-900/30"
+                class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
                 onkeydown={(e) => {
                     if (e.key === "Enter") submitAskPrompt();
                     if (e.key === "Escape") askPromptOpen = false;

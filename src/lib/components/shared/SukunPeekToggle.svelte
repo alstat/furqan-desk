@@ -53,7 +53,7 @@
             d="M4 0 C4 0 7.5 3.5 7.5 6.5 C7.5 8.4 5.9 10 4 10 C2.1 10 0.5 8.4 0.5 6.5 C0.5 3.5 4 0 4 0Z"
             class={isPeeking
                 ? "fill-brand-gold-400 dark:fill-[#e5c890]"
-                : "fill-brand-gold-500/55 dark:fill-brand-gold-400/40"}
+                : "fill-brand-gold-500/55 dark:fill-[#e5c890]/40"}
         />
         <path
             d="M4 4 C4 4 5.8 5.8 5.8 7 C5.8 8 5 8.8 4 8.8 C3 8.8 2.2 8 2.2 7 C2.2 5.8 4 4 4 4Z"

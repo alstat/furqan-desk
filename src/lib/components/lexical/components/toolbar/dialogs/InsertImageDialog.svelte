@@ -13,8 +13,7 @@
     import { t } from '$lib/i18n';
     import { get } from 'svelte/store';
     import { bringToFront } from '$lib/stores/window-manager.store';
-    import { headerHeight } from '$lib/stores/header.store';
-    import { csdMarginPx } from '$lib/stores/window-state.store';
+    import { headerBottom } from '$lib/stores/header.store';
     import DialogPanelHeader from '$lib/components/shared/DialogPanelHeader.svelte';
 
     const editor = getEditor();
@@ -180,7 +179,7 @@
         aria-label={$t('dialog.insert_image')}
         tabindex="-1"
         class="fixed flex flex-col -translate-x-1/2 rounded-b-xl border border-t-0 border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-[0_14px_28px_-10px_rgba(0,0,0,0.28)] dark:shadow-[0_14px_28px_-10px_rgba(0,0,0,0.55)] overflow-hidden"
-        style="left:50%; top:{$headerHeight + $csdMarginPx}px; width:{PANEL_W}px; z-index:{zIndex};"
+        style="left:50%; top:{$headerBottom - 1}px; width:{PANEL_W}px; z-index:{zIndex};"
         onkeydown={(e) => { if (e.key === 'Escape') close(); }}
     >
         <!-- Header -->

@@ -181,7 +181,7 @@
                         class="group text-left w-full rounded-full cursor-pointer transition-all duration-150
 						       border-l-2 py-1 pr-2
 						       {isActive
-                            ? 'bg-brand-gold-50 dark:bg-brand-gold-100/20 border-brand-gold-400 dark:border-brand-gold-400'
+                            ? 'bg-brand-gold-50 dark:bg-[#3a3428]/20 border-brand-gold-400 dark:border-brand-gold-400'
                             : 'border-transparent hover:bg-brand-sand-50 dark:hover:bg-[#363a4f] hover:border-brand-gold-200 dark:hover:border-brand-gold-600'}
 						       {tag === 'h1' ? 'pl-2' : tag === 'h2' ? 'pl-4' : 'pl-6'}"
                         title={text}

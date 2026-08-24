@@ -197,7 +197,7 @@
 {:else}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <span
-        class="SL_Theme__citation_inline cursor-pointer rounded px-0.5 text-brand-gold-700 dark:text-[#e5c890] hover:bg-brand-gold-100 hover:outline hover:outline-1 hover:outline-brand-gold-300 transition-colors dark:hover:bg-[#414559]"
+        class="SL_Theme__citation_inline cursor-pointer rounded px-0.5 text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-100 hover:outline hover:outline-1 hover:outline-brand-gold-300 transition-colors dark:hover:bg-[#414559]"
         class:citation-selected={$isSelected}
         ondblclick={handleDoubleClick}
         title={$t("editor.citation.dblclick_hint")}

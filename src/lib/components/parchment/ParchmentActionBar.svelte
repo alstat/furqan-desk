@@ -87,8 +87,14 @@
     });
 </script>
 
+<!-- Same deal as the editor ActionBar: in the header this row sits in the
+     title bar, so the space between its buttons drags the window. Tauri
+     matches only the element the click lands on, hence the attribute here
+     rather than relying on the header above. Not in the floating variant,
+     which hovers over the page. -->
 <div
     id="tour-action-bar"
+    data-tauri-drag-region={inHeader ? true : undefined}
     class={inHeader
         ? "flex items-center space-x-0.5"
         : `${
@@ -137,7 +143,16 @@
                   })
                 : $t("parchment.open_manuscripts")}
         >
-            <Icon icon="solar:document-text-bold-duotone" width="1rem" />
+            <!-- A solid glyph in a row of duotone ones: at full strength it
+                 carries about 1.6x their ink (measured coverage 0.52 against
+                 a 0.31 average), which reads as too dark in light mode and
+                 too bright in dark. Fading it lands on the same weight the
+                 duotone icon it replaced had, in both themes at once. -->
+            <Icon
+                icon="streamline-plump:script-2-solid"
+                width="1rem"
+                class="opacity-65"
+            />
         </button>
     {/if}
 

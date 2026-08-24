@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import { openAppWindow } from '$lib/utils/appWindow';
 import type { Scene } from './drawingScene.js';
 
 // The DrawingEditorDialog registers its `open` handler here on mount so any
@@ -71,69 +72,25 @@ export function takeDrawingSeed(): DrawingSeed | null {
  */
 async function openDrawingWindow(seed: DrawingSeed): Promise<boolean> {
     if (typeof window === 'undefined') return false;
-    try {
-        const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
-        const { emit } = await import('@tauri-apps/api/event');
 
-        stashSeed(seed);
+    stashSeed(seed);
 
-        const existing = await WebviewWindow.getByLabel(DRAWING_WINDOW);
-        if (existing) {
-            // Already open: point it at this drawing instead of opening a
-            // second editor over the top of it.
-            await existing.unminimize().catch(() => {});
-            await existing.setFocus();
+    return openAppWindow({
+        label: DRAWING_WINDOW,
+        url: '/drawing/',
+        title: 'Drawing',
+        width: 1100,
+        height: 760,
+        minWidth: 720,
+        minHeight: 520,
+        // Already open: point it at this drawing instead of opening a second
+        // editor over the top of it. The seed is already stashed above; this
+        // just tells the window to pick it up.
+        onExisting: async () => {
+            const { emit } = await import('@tauri-apps/api/event');
             await emit(SEED_EVENT, null);
-            return true;
-        }
-
-        // Frameless: the editor's own header doubles as the title bar, the same
-        // trade the main window makes. macOS keeps its traffic lights by
-        // overlaying them on that header; Windows and Linux have no equivalent,
-        // so they go undecorated and the header draws its own controls.
-        const isMac = navigator.userAgent.includes('Mac');
-        // Linux goes transparent as well as undecorated: the frame is drawn in
-        // CSS, and its drop shadow needs the margin around it to be genuinely
-        // see-through (see `.csd-dialog` in app.css). Windows keeps an opaque
-        // frame — it has no such shadow to cast.
-        const isLinux =
-            navigator.userAgent.includes('Linux') &&
-            !navigator.userAgent.includes('Android');
-        const chrome = isMac
-            ? { titleBarStyle: 'overlay' as const, hiddenTitle: true }
-            : { decorations: false, transparent: isLinux };
-
-        const win = new WebviewWindow(DRAWING_WINDOW, {
-            // Trailing slash: the build emits `drawing/index.html`, which is
-            // what Tauri's asset protocol resolves this path to.
-            url: '/drawing/',
-            title: 'Drawing',
-            width: 1100,
-            height: 760,
-            minWidth: 720,
-            minHeight: 520,
-            resizable: true,
-            focus: true,
-            ...chrome,
-        });
-
-        return await new Promise<boolean>((resolve) => {
-            let settled = false;
-            const settle = (ok: boolean) => {
-                if (settled) return;
-                settled = true;
-                resolve(ok);
-            };
-            void win.once('tauri://created', () => settle(true));
-            void win.once('tauri://error', (e) => {
-                console.error('drawing window failed to open', e);
-                settle(false);
-            });
-            setTimeout(() => settle(false), 4000);
-        });
-    } catch {
-        return false;
-    }
+        },
+    });
 }
 
 /**

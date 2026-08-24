@@ -13,9 +13,13 @@
 
     // `up` opens the panel above the button (for editors whose toolbar sits at
     // the bottom, e.g. the Lexical composer).
-    let { up = false }: { up?: boolean } = $props();
-
-    let open = $state(false);
+    //
+    // `open` is bindable because the dock this sits in fades itself down when
+    // the pointer is elsewhere: an open menu has to be able to say so, or it
+    // ghosts out to 35% and reads as an empty box with its contents wiped (see
+    // EditorComposer).
+    let { up = false, open = $bindable(false) }: { up?: boolean; open?: boolean } =
+        $props();
     let installing = $state<string | null>(null);
     let anchor = $state<HTMLDivElement | null>(null);
 
@@ -49,14 +53,33 @@
         }
     }
 
-    function onOutside(e: PointerEvent) {
-        if (anchor && !anchor.contains(e.target as Node)) open = false;
-    }
+    /**
+     * Dismissal. A pointer press outside the anchor is the ordinary way out,
+     * but it is not the only way to leave the menu behind: Escape is expected
+     * to work in any menu, and a press that lands in an iframe or in another
+     * window never reaches this document at all — that one arrives as a blur.
+     * Without those two the panel can be stranded open, and in a dock that
+     * fades itself it is then near-invisible rather than obviously stuck.
+     */
     $effect(() => {
         if (!open) return;
-        const h = (e: PointerEvent) => onOutside(e);
-        window.addEventListener("pointerdown", h, true);
-        return () => window.removeEventListener("pointerdown", h, true);
+
+        const onPointerDown = (e: PointerEvent) => {
+            if (anchor && !anchor.contains(e.target as Node)) open = false;
+        };
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") open = false;
+        };
+        const onBlur = () => (open = false);
+
+        window.addEventListener("pointerdown", onPointerDown, true);
+        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("blur", onBlur);
+        return () => {
+            window.removeEventListener("pointerdown", onPointerDown, true);
+            window.removeEventListener("keydown", onKeyDown);
+            window.removeEventListener("blur", onBlur);
+        };
     });
 </script>
 
@@ -66,7 +89,7 @@
         title={$t("spellcheck.language")}
         class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                {$spellCheckEnabled
-            ? 'bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25'
+            ? 'bg-brand-gold-100 dark:bg-[#e5c890]/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-[#e5c890]/25'
             : 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'}"
     >
         <Icon icon="material-symbols:spellcheck-rounded" width="12" />
@@ -93,7 +116,7 @@
             <button
                 type="button"
                 class="flex w-full items-center justify-between px-3 py-1.5 cursor-pointer
-                       hover:bg-brand-gold-100 dark:hover:bg-brand-gold-400/15"
+                       hover:bg-brand-gold-100 dark:hover:bg-[#e5c890]/15"
                 onclick={() => spellCheckEnabled.set(!$spellCheckEnabled)}
             >
                 <span class="font-medium">{$t("spellcheck.enable")}</span>
@@ -120,7 +143,7 @@
                     role="menuitemradio"
                     aria-checked={l.code === $spellLanguage}
                     class="flex w-full items-center justify-between px-3 py-1 cursor-pointer
-                           hover:bg-brand-gold-100 dark:hover:bg-brand-gold-400/15"
+                           hover:bg-brand-gold-100 dark:hover:bg-[#e5c890]/15"
                     onclick={() => choose(l)}
                 >
                     <span>{l.name}</span>
@@ -147,7 +170,7 @@
                     <button
                         type="button"
                         class="flex w-full items-center justify-between px-3 py-1 cursor-pointer
-                               hover:bg-brand-gold-100 dark:hover:bg-brand-gold-400/15
+                               hover:bg-brand-gold-100 dark:hover:bg-[#e5c890]/15
                                disabled:opacity-50 disabled:cursor-wait"
                         disabled={installing !== null}
                         onclick={() => download(l)}

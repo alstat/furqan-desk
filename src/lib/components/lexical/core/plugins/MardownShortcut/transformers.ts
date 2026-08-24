@@ -216,9 +216,35 @@ export const EQUATION_INLINE: TextMatchTransformer = {
     if (!isEquationNode(node) || !node.isInline()) return null;
     return `\\(${node.getEquation()}\\)`;
   },
-  importRegExp: /\\\(([\s\S]+?)\\\)|(?<!\$)\$(?!\$)((?:\\\$|[^\$\n])+?)\$(?!\d)/,
-  regExp: /(?:\\\(([\s\S]+?)\\\)|(?<!\$)\$(?!\$)((?:\\\$|[^\$\n])+?)\$(?!\d))$/,
+  // The `$…$` half carried a `(?<!\$)` guard so it could not fire on the inner
+  // half of a `$$…$$` display block. WebKit before Safari 16.4 rejects
+  // lookbehind while *parsing* the module — the whole chunk dies with "invalid
+  // regular expression: invalid group specifier name" — so the same rule is
+  // spelled two ways that every engine understands:
+  //
+  //  - a `$$…$$` alternative that swallows a display block whole. It captures
+  //    nothing and `replace` declines it, which leaves the text alone and sends
+  //    the importer on to scan what follows (it recurses into the node after
+  //    each match), so `$$a$$ then $b$` still finds `$b$`.
+  //  - the preceding-character check in `replace`, for the anchored `regExp`:
+  //    mid-typing there is no closing `$$` to match yet, so `$$x$` has to be
+  //    turned down by looking at what sits before the match.
+  importRegExp:
+    /\\\(([\s\S]+?)\\\)|\$\$(?:[^$\n]|\$(?!\$))*\$\$|\$(?!\$)((?:\\\$|[^\$\n])+?)\$(?!\d)/,
+  regExp:
+    /(?:\\\(([\s\S]+?)\\\)|\$\$(?:[^$\n]|\$(?!\$))*\$\$|\$(?!\$)((?:\\\$|[^\$\n])+?)\$(?!\d))$/,
   replace: (textNode, match) => {
+    // Display math: EQUATION_BLOCK owns it, so leave the text as it is.
+    if (match[0].startsWith('$$')) return;
+    // An opening `$` sitting right after another one is the tail of a `$$`
+    // delimiter the user is still typing.
+    if (
+      match[0].startsWith('$') &&
+      match.index !== undefined &&
+      match.input?.[match.index - 1] === '$'
+    ) {
+      return;
+    }
     const latex = (match[1] ?? match[2] ?? '').trim();
     if (!latex) return;
     const eq = createEquationNode(latex, true);

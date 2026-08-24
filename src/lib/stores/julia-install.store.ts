@@ -23,9 +23,13 @@ export function openJuliaInstallPrompt(): void {
     juliaPromptOpen.set(true);
 }
 
+/**
+ * Close the prompt. Never refuses: the install is owned by this module rather
+ * than by the dialog, so dismissing the prompt hands an in-flight download off
+ * to JuliaInstallToast instead of cancelling it — the same deal Lean's prompt
+ * makes (see `closeLeanInstallPrompt`).
+ */
 export function closeJuliaInstallPrompt(): void {
-    // Leave an in-progress install running; just hide the dialog if idle.
-    if (_runningInstall) return;
     juliaPromptOpen.set(false);
 }
 
@@ -133,7 +137,10 @@ export function setJuliaVersion(version: string): Promise<void> {
 }
 
 /** Fresh install of Julia (via juliaup) for users who don't have it yet.
- *  Used by JuliaInstallPrompt.svelte. Emits progress on 'julia-install-progress'. */
+ *  Started by JuliaInstallPrompt.svelte, which then gets out of the way: the
+ *  promise lives here, so the download survives the dialog closing and its
+ *  progress surfaces through JuliaInstallToast. Emits progress on
+ *  'julia-install-progress'. */
 export function installJulia(): Promise<void> {
     if (_runningInstall) return _runningInstall;
     _runningInstall = (async () => {

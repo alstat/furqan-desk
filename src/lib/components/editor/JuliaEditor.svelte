@@ -540,8 +540,8 @@
                     disabled={formatting}
                     title={$t("julia_cell.format")}
                     class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
-                           bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400
-                           hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25
+                           bg-brand-gold-100 dark:bg-[#e5c890]/15 text-brand-gold-600 dark:text-brand-gold-400
+                           hover:bg-brand-gold-200 dark:hover:bg-[#e5c890]/25
                            disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Icon icon="icon-park-twotone:format-brush" width="11" />
@@ -554,7 +554,7 @@
                     class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
                        {lineWrap
                         ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'
-                        : 'bg-brand-gold-100 dark:bg-brand-gold-400/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-brand-gold-400/25'}"
+                        : 'bg-brand-gold-100 dark:bg-[#e5c890]/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-[#e5c890]/25'}"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
