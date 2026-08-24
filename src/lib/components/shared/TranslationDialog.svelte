@@ -363,7 +363,7 @@
         >
             <div
                 data-tauri-drag-region={standalone ? true : undefined}
-                class="flex items-center justify-between"
+                class="flex items-center justify-between gap-2"
             >
                 <div
                     data-tauri-drag-region={standalone ? true : undefined}
@@ -394,7 +394,7 @@
                         {/if}
                     </span>
                 </div>
-                <div class="flex items-center gap-1 shrink-0 relative">
+                <div class="ml-auto flex items-center gap-1 shrink-0 relative">
                     <button
                         bind:this={optionsBtn}
                         onclick={() => (showOptions = !showOptions)}

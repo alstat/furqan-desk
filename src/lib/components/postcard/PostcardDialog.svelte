@@ -1225,7 +1225,7 @@
              panel. -->
         <div
             data-tauri-drag-region={standalone ? true : undefined}
-            class="flex items-center justify-between px-4 py-1.5 shrink-0
+            class="flex items-center justify-between gap-2 px-4 py-1.5 shrink-0
                border-b border-brand-gold-200 dark:border-[#414559]
                bg-brand-gold-100 dark:bg-[#292c3c]
                select-none {standalone
@@ -1257,7 +1257,7 @@
                     {/if}
                 </span>
             </div>
-            <div class="flex items-center gap-1 shrink-0">
+            <div class="ml-auto flex items-center gap-1 shrink-0">
                 {#if statusMsg}
                     <span
                         class="mr-1 max-w-56 truncate text-[11px] font-medium text-brand-gold-600 dark:text-[#e5c890]"

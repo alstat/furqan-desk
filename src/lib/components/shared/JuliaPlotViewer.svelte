@@ -332,7 +332,7 @@
              panel — and doubles as the title bar. -->
         <div
             data-tauri-drag-region={standalone ? true : undefined}
-            class="flex items-center justify-between px-4 py-1.5 shrink-0
+            class="flex items-center justify-between gap-2 px-4 py-1.5 shrink-0
                border-b border-brand-gold-200 dark:border-[#414559]
                bg-brand-gold-100 dark:bg-[#292c3c]
                select-none {standalone
@@ -368,7 +368,7 @@
                 </span>
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="ml-auto flex items-center gap-2">
                 {#if hasPlots}
                     <button
                         onclick={removeCurrent}
