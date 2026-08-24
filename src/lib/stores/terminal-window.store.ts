@@ -37,9 +37,16 @@ async function openTerminalWindow(): Promise<boolean> {
         // overlaying them on that header; Windows and Linux have no equivalent,
         // so they go undecorated and the header draws its own controls.
         const isMac = navigator.userAgent.includes('Mac');
+        // Linux goes transparent as well as undecorated: the frame is drawn in
+        // CSS, and its drop shadow needs the margin around it to be genuinely
+        // see-through (see `.csd-dialog` in app.css). Windows keeps an opaque
+        // frame — it has no such shadow to cast.
+        const isLinux =
+            navigator.userAgent.includes('Linux') &&
+            !navigator.userAgent.includes('Android');
         const chrome = isMac
             ? { titleBarStyle: 'overlay' as const, hiddenTitle: true }
-            : { decorations: false };
+            : { decorations: false, transparent: isLinux };
 
         const win = new WebviewWindow(TERMINAL_WINDOW, {
             // Trailing slash: the build emits `terminal/index.html`, which is

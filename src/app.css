@@ -2026,14 +2026,52 @@ html.linux-csd.dark .app-shell {
 
 /* 12px matches Adwaita's window radius. The hairline is the frame's own
    border, not a shadow: it keeps the corner from fraying against a light
-   wallpaper, which is the job GNOME gives its outermost 1px. */
+   wallpaper, which is the job GNOME gives its outermost 1px. Adwaita draws
+   that line at roughly 12% black and lets the drop shadow do the separating,
+   so anything heavier reads as a drawn-on grey rectangle in light mode. */
 html.linux-csd.csd-round .app-shell {
     border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 html.linux-csd.csd-round.dark .app-shell {
     border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* The drop shadow, for the dialog windows only (`csd-dialog` is set on <html>
+   from +layout.svelte). GNOME's compositor draws one for its own decorations
+   and cannot be asked to draw ours, but a window can cast its own as long as
+   there is transparent room inside it for the shadow to fall into: the shell
+   is inset by the margin below, the window is created with `transparent: true`
+   on Linux (see the window stores), and the band around the frame carries the
+   shadow. GTK reserves exactly this margin for the same reason.
+
+   The main window stays full-bleed. Its floating panels (terminal, manuscripts,
+   …) are `position: fixed` against the viewport, so they would sit in the band
+   and read as spilling outside the window frame.
+
+   Two layers, as Adwaita has: a short contact shadow that grounds the edge and
+   a long soft one that carries the depth. Both are dropped when the window is
+   maximised, along with the margin — `csd-round` already tracks that. */
+html.linux-csd.csd-round.csd-dialog .app-shell {
+    margin: 16px;
+    height: calc(100vh - 32px);
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.14),
+        0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+html.linux-csd.csd-round.csd-dialog.dark .app-shell {
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.36),
+        0 10px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* A dialog window's own full-window overlays (the manuscript and plot
+   lightboxes) are `position: fixed`, so they ignore the shell's margin and
+   would paint over the shadow band. Pull them in to the frame. */
+html.linux-csd.csd-round.csd-dialog .fixed.inset-0 {
+    inset: 16px;
 }
 
 /* Every dialog in the app lays a `fixed inset-0` backdrop over the viewport,

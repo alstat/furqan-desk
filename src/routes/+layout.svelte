@@ -90,16 +90,54 @@
 		}
 	});
 
+	// Corners (and, in a dialog window, the shadow margin) only while the window
+	// floats; flush against the screen edge GNOME squares its own off too.
+	const csdRound = $derived(isLinuxCsd && !$windowMaximized && !softwareCompositing);
+
 	$effect(() => {
 		const root = document.documentElement;
 		root.classList.toggle('linux-csd', isLinuxCsd);
-		// Corners only while the window floats; flush against the screen edge
-		// GNOME squares its own off too.
-		root.classList.toggle(
-			'csd-round',
-			isLinuxCsd && !$windowMaximized && !softwareCompositing
-		);
+		root.classList.toggle('csd-round', csdRound);
+		// Only the dialog windows reserve a margin for their drop shadow — see
+		// the note on `.csd-dialog` in app.css.
+		root.classList.toggle('csd-dialog', isSecondaryWindow);
 	});
+
+	// The shadow margin is part of the window, so the window manager's resize
+	// edge sits 16px outside the frame the user can actually see. These handles
+	// fill that band and hand the drag to the WM, which is how GTK treats its
+	// own shadow margin.
+	type ResizeDir =
+		| 'North'
+		| 'South'
+		| 'East'
+		| 'West'
+		| 'NorthEast'
+		| 'NorthWest'
+		| 'SouthEast'
+		| 'SouthWest';
+
+	const RESIZE_HANDLES: { dir: ResizeDir; cls: string }[] = [
+		{ dir: 'NorthWest', cls: 'left-0 top-0 h-4 w-4 cursor-nw-resize' },
+		{ dir: 'NorthEast', cls: 'right-0 top-0 h-4 w-4 cursor-ne-resize' },
+		{ dir: 'SouthWest', cls: 'bottom-0 left-0 h-4 w-4 cursor-sw-resize' },
+		{ dir: 'SouthEast', cls: 'bottom-0 right-0 h-4 w-4 cursor-se-resize' },
+		{ dir: 'North', cls: 'left-4 right-4 top-0 h-4 cursor-n-resize' },
+		{ dir: 'South', cls: 'bottom-0 left-4 right-4 h-4 cursor-s-resize' },
+		{ dir: 'West', cls: 'bottom-4 left-0 top-4 w-4 cursor-w-resize' },
+		{ dir: 'East', cls: 'bottom-4 right-0 top-4 w-4 cursor-e-resize' }
+	];
+
+	async function startResize(e: PointerEvent, dir: ResizeDir) {
+		if (e.button !== 0) return;
+		e.preventDefault();
+		try {
+			const { getCurrentWindow } = await import('@tauri-apps/api/window');
+			await getCurrentWindow().startResizeDragging(dir);
+		} catch {
+			// not running inside Tauri (e.g. browser dev)
+		}
+	}
 
 	$effect(() => {
 		if ($zenMode) {
@@ -212,6 +250,16 @@
 	<div class="app-shell flex h-screen flex-col overflow-hidden">
 		{@render children()}
 	</div>
+
+	{#if csdRound}
+		{#each RESIZE_HANDLES as handle (handle.dir)}
+			<div
+				role="presentation"
+				class="fixed z-50 {handle.cls}"
+				onpointerdown={(e) => startResize(e, handle.dir)}
+			></div>
+		{/each}
+	{/if}
 {:else}
 	<div class="app-shell bg-gradient-radial flex h-screen flex-col overflow-hidden">
 		<OpenTabFileWatcher />

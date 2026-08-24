@@ -11,10 +11,12 @@
   - "windows": full-bleed rectangles that run the whole height of the bar and
     meet the window corner, with a red close. Hairline glyphs on a 10px grid,
     which is what Windows draws at any DPI.
-  - "gnome": 24px circles with a neutral hover, inset from the corner and
-    spaced apart. Adwaita gives all three the same neutral hover — it does not
-    single out close in red — and its glyphs are 16px symbolic strokes with
-    round caps, so they are drawn heavier than the Windows set.
+  - "gnome": 24px circles with a neutral hover, inset from the corner and set
+    10px apart — Adwaita spaces its titlebuttons well clear of each other, and
+    at anything tighter the three read as one run of blobs. It gives all three
+    the same neutral hover (it does not single out close in red) and its glyphs
+    are 16px symbolic strokes with round caps, so they are drawn heavier than
+    the Windows set.
 
   The glyphs are inline SVG rather than icon-font lookups: they are three
   straight-line shapes, and this keeps them crisp without a font round-trip.
@@ -67,7 +69,7 @@
     // corner; GNOME's buttons are meant to sit inset from it instead.
     const wrap = $derived(
         gnome
-            ? "ml-2 flex shrink-0 items-center gap-1.5"
+            ? "ml-2 flex shrink-0 items-center gap-2.5"
             : "-mr-2 ml-1 flex h-full shrink-0 items-stretch self-stretch",
     );
 
