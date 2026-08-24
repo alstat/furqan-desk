@@ -18,8 +18,7 @@
     import { surahLabels, selectedSurahIdx } from "$lib/stores/quran.svelte";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { anchorBelow } from "$lib/utils/anchoredPanel";
-    import { headerHeight } from "$lib/stores/header.store";
-    import { csdMarginPx } from "$lib/stores/window-state.store";
+    import { headerBottom } from "$lib/stores/header.store";
     import { t, locale } from "$lib/i18n";
     import { get } from "svelte/store";
     import { invoke } from "@tauri-apps/api/core";
@@ -188,11 +187,12 @@
 
     // Re-read on every open so a resized window or a moved button still lines
     // up, and so the panel follows the header when the UI scale changes.
-    // $headerHeight is the bar's own measured height, not its Y position — add
-    // the CSD shadow margin (the header's top edge sits that far down from the
-    // true window top while the shell floats) to get the bar's actual bottom.
+    // $headerBottom is the bar's measured bottom edge in viewport coordinates,
+    // border and CSD shadow margin included. Hanging the panel one pixel above
+    // it puts the panel — which is `border-t-0` — over the bar's bottom border,
+    // so the two read as one surface rather than being split by a hairline.
     const placement = $derived(
-        open ? anchorBelow(anchor, PANEL_W, $headerHeight + $csdMarginPx, 1) : null,
+        open ? anchorBelow(anchor, PANEL_W, $headerBottom - 1, 0) : null,
     );
 
     $effect(() => {

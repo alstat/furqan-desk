@@ -6,8 +6,7 @@
     import { fly } from "svelte/transition";
     import Icon from "@iconify/svelte";
     import { bringToFront } from "$lib/stores/window-manager.store";
-    import { headerHeight } from '$lib/stores/header.store';
-    import { csdMarginPx } from '$lib/stores/window-state.store';
+    import { headerBottom } from '$lib/stores/header.store';
     import DialogPanelHeader from "$lib/components/shared/DialogPanelHeader.svelte";
     import { t } from "$lib/i18n";
     import { isPro } from "$lib/stores/auth.store";
@@ -168,7 +167,7 @@
         aria-label={$t("dialog.insert_code")}
         tabindex="-1"
         class="fixed flex flex-col -translate-x-1/2 rounded-b-xl border border-t-0 border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] shadow-[0_14px_28px_-10px_rgba(0,0,0,0.28)] dark:shadow-[0_14px_28px_-10px_rgba(0,0,0,0.55)] overflow-hidden"
-        style="left:50%; top:{$headerHeight + $csdMarginPx + 1}px; width:{PANEL_W}px; z-index:{zIndex};"
+        style="left:50%; top:{$headerBottom - 1}px; width:{PANEL_W}px; z-index:{zIndex};"
         onpointerdown={() => {
             zIndex = bringToFront();
         }}
