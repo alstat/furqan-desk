@@ -4,16 +4,10 @@
     import { fly } from "svelte/transition";
     import Icon from "@iconify/svelte";
     import { invoke } from "@tauri-apps/api/core";
-    import { message } from "@tauri-apps/plugin-dialog";
-    import {
-        manuscriptAyah,
-        lexicalEditorAvailable,
-        requestManuscriptInsert,
-    } from "$lib/stores/manuscripts.store";
+    import { manuscriptAyah } from "$lib/stores/manuscripts.store";
+    import { writeImage } from "@tauri-apps/plugin-clipboard-manager";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import WindowControls from "$lib/components/shared/WindowControls.svelte";
-    import { lexicalEditorInstance } from "$lib/stores/editor.store";
-    import { INSERT_IMAGE_COMMAND } from "$lib/components/lexical/core/plugins/Image/ImagePlugin.svelte";
     import { isPro } from "$lib/stores/auth.store";
     import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
     import { t } from "$lib/i18n";
@@ -340,8 +334,8 @@
     let zoomed = $state(false);
     let downloading = $state(false);
     let downloadMsg = $state("");
-    let inserting = $state(false);
-    let insertMsg = $state("");
+    let copying = $state(false);
+    let copyMsg = $state("");
     let surahInput = $state(1);
     let ayahInput = $state(1);
     let referenceError = $state("");
@@ -637,13 +631,7 @@
         }
     }
 
-    // ── Insert into Lexical editor ────────────────────────────────────────────
-    // Standalone mirrors the main window's editor state over an event; in the
-    // panel the store is right there.
-    const hasEditor = $derived(
-        standalone ? $lexicalEditorAvailable : !!$lexicalEditorInstance,
-    );
-
+    // ── Copy the folio to the clipboard ──────────────────────────────────────
     function bytesToDataUrl(bytes: ArrayBuffer, mime: string): string {
         const uint8 = new Uint8Array(bytes);
         let binary = "";
@@ -651,35 +639,6 @@
         for (let i = 0; i < uint8.length; i += chunk)
             binary += String.fromCharCode(...uint8.subarray(i, i + chunk));
         return `data:${mime};base64,${btoa(binary)}`;
-    }
-
-    function buildCaptionText(): string {
-        const ms = selectedManuscript;
-        const page = selectedPage;
-        const img = selectedImage;
-        if (!ms) return "";
-
-        const ref = $manuscriptAyah;
-        const parts: string[] = [ms.title];
-        if (ref)
-            parts.push(
-                $t("manuscript.caption_reference", {
-                    surah: String(ref.surah),
-                    ayah: String(ref.ayah),
-                }),
-            );
-        const folioValue = `${page?.folio ?? ""}${page?.side ?? ""}`.trim();
-        if (folioValue)
-            parts.push($t("manuscript.caption_folio", { folio: folioValue }));
-        if (ms.archive.name) parts.push(ms.archive.name);
-        if (ms.archive.city) parts.push(ms.archive.city);
-        const date =
-            selectedDetail?.date?.trim() ||
-            selectedDetail?.carbon_dating?.trim();
-        if (date) parts.push(date);
-        if (img?.image_source?.trim()) parts.push(img.image_source.trim());
-
-        return parts.join(" · ");
     }
 
     function buildCorpusCoranicumUrl(): string | undefined {
@@ -785,13 +744,35 @@
         closeAiPrompt();
     }
 
-    async function insertToLexical() {
-        // In its own window there is no editor to reach — the main window holds
-        // it — so the finished image is sent there to be inserted instead.
-        const editor = standalone ? null : get(lexicalEditorInstance);
-        if ((!standalone && !editor) || !imageSrc) return;
-        inserting = true;
-        insertMsg = "";
+    /**
+     * The clipboard takes PNG and nothing else in practice: Tauri's `writeImage`
+     * decodes PNG/ICO only, and `ClipboardItem` is limited to PNG in every
+     * browser engine we run on. Manuscript scans arrive as JPEG, so they go out
+     * through a canvas to be re-encoded.
+     */
+    async function toPngBlob(dataUrl: string): Promise<Blob> {
+        const img = new Image();
+        img.src = dataUrl;
+        await img.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("canvas 2d context unavailable");
+        ctx.drawImage(img, 0, 0);
+        return await new Promise<Blob>((resolve, reject) =>
+            canvas.toBlob(
+                (blob) =>
+                    blob ? resolve(blob) : reject(new Error("PNG encode failed")),
+                "image/png",
+            ),
+        );
+    }
+
+    async function copyImage() {
+        if (copying || !imageSrc) return;
+        copying = true;
+        copyMsg = "";
         try {
             let dataUrl: string;
             if (demoMode) {
@@ -809,6 +790,8 @@
             } else {
                 const img = selectedImage;
                 if (!img) return;
+                // Full resolution, not the thumbnail already on screen: what
+                // lands on the clipboard is what gets pasted into a document.
                 const bytes =
                     thumbnailBytes ??
                     (await invoke<ArrayBuffer>("get_manuscript_image", {
@@ -817,32 +800,33 @@
                     }));
                 dataUrl = bytesToDataUrl(bytes, "image/jpeg");
             }
-            const altText = selectedManuscript
-                ? `${selectedManuscript.title} — ${$t(
-                      "manuscript.caption_folio",
-                      {
-                          folio: `${selectedPage?.folio ?? ""}${selectedPage?.side ?? ""}`,
-                      },
-                  )}`
-                : $t("manuscript.image_alt_default");
-            const captionText = buildCaptionText();
-            const linkUrl = buildCorpusCoranicumUrl();
-            const payload = { src: dataUrl, altText, captionText, linkUrl };
-            if (standalone) {
-                await requestManuscriptInsert(payload);
-            } else {
-                editor!.dispatchCommand(INSERT_IMAGE_COMMAND, payload);
+
+            const blob = await toPngBlob(dataUrl);
+            try {
+                // The desktop path. WKWebView does not expose the async
+                // Clipboard API on Tauri's custom scheme, so the plugin — which
+                // already holds `clipboard-manager:allow-write-image` — is what
+                // actually works in the packaged app.
+                await writeImage(new Uint8Array(await blob.arrayBuffer()));
+            } catch (pluginError) {
+                if (
+                    !navigator.clipboard?.write ||
+                    typeof ClipboardItem === "undefined"
+                ) {
+                    throw pluginError;
+                }
+                await navigator.clipboard.write([
+                    new ClipboardItem({ "image/png": blob }),
+                ]);
             }
-            insertMsg = $t("manuscript.inserted");
+            copyMsg = $t("manuscript.copied");
         } catch (e) {
-            await message(
-                $t("manuscript.insert_failed_message", { error: String(e) }),
-                { title: $t("manuscript.insert_failed_title"), kind: "error" },
-            );
+            console.error("manuscript copy failed", e);
+            copyMsg = $t("manuscript.copy_failed", { error: String(e) });
         } finally {
-            inserting = false;
+            copying = false;
             setTimeout(() => {
-                insertMsg = "";
+                copyMsg = "";
             }, 3000);
         }
     }
@@ -1708,29 +1692,27 @@
                                 {/if}
                             </button>
                             <button
-                                onclick={insertToLexical}
-                                disabled={inserting || !imageSrc || !hasEditor}
-                                title={!hasEditor
-                                    ? $t("manuscript.no_editor")
-                                    : $t("manuscript.insert_tooltip")}
+                                onclick={copyImage}
+                                disabled={copying || !imageSrc}
+                                title={$t("manuscript.copy_tooltip")}
                                 class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full border border-transparent
                                bg-brand-gold-400 hover:bg-brand-gold-600 active:bg-brand-gold-600/90
                                text-gray-100 dark:text-gray-700 hover:dark:text-gray-100
                                transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {#if inserting}
+                                {#if copying}
                                     <span
                                         class="w-3 h-3 rounded-full border border-gray-100 border-t-transparent animate-spin"
                                     ></span>
-                                    {$t("manuscript.inserting")}
-                                {:else if insertMsg}
-                                    {insertMsg}
+                                    {$t("manuscript.copy")}
+                                {:else if copyMsg}
+                                    {copyMsg}
                                 {:else}
                                     <Icon
-                                        icon="solar:gallery-add-bold"
+                                        icon="solar:copy-bold-duotone"
                                         width="0.75rem"
                                     />
-                                    {$t("manuscript.insert")}
+                                    {$t("manuscript.copy")}
                                 {/if}
                             </button>
                         </div>
