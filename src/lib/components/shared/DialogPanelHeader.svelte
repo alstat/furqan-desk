@@ -68,7 +68,7 @@
 >
     <div
         data-tauri-drag-region={standalone ? true : undefined}
-        class="flex items-center justify-between px-4 py-1.5"
+        class="flex items-center justify-between gap-2 px-4 py-1.5"
         style:padding-left={standalone && isMac ? '5rem' : undefined}
     >
         <div
@@ -81,7 +81,7 @@
                 {title}
             </span>
         </div>
-        <div class="flex items-center gap-1.5">
+        <div class="ml-auto flex items-center gap-1.5">
             {#if action}
                 {@render action()}
             {/if}

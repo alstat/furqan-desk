@@ -977,7 +977,7 @@
              panel — and doubles as the title bar. -->
         <div
             data-tauri-drag-region={standalone ? true : undefined}
-            class="flex items-center justify-between px-4 py-1.5 shrink-0
+            class="flex items-center justify-between gap-2 px-4 py-1.5 shrink-0
                border-b border-brand-gold-200 dark:border-[#414559]
                bg-brand-gold-100 dark:bg-[#292c3c]
                select-none {standalone
@@ -1026,7 +1026,7 @@
                     </span>
                 {/if}
             </div>
-            <div class="flex items-center gap-1">
+            <div class="ml-auto flex items-center gap-1">
                 <!-- Sidebar toggle -->
                 <button
                     onclick={() => (sidebarOpen = !sidebarOpen)}

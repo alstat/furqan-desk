@@ -398,7 +398,7 @@
              doubles as the title bar. -->
         <div
             data-tauri-drag-region={standalone ? true : undefined}
-            class="flex items-center justify-between shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-4 py-1.5 select-none {standalone
+            class="flex items-center justify-between gap-2 shrink-0 bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559] px-4 py-1.5 select-none {standalone
                 ? ''
                 : isDragging
                   ? 'rounded-t-xl cursor-grabbing'
@@ -426,7 +426,7 @@
                     >
                 </span>
             </div>
-            <div class="flex items-center gap-1">
+            <div class="ml-auto flex items-center gap-1">
                     {#if $keyState === "unlocked"}
                         {#if !sidebarOpen}
                             <button
