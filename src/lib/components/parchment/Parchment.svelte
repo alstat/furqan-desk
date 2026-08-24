@@ -333,7 +333,7 @@
         bind:this={scrollContainer}
         role="document"
         onmouseup={handleMouseUp}
-        class={`default-scroll relative w-full flex-1 min-h-0 overflow-y-auto px-12 pt-10 pb-20 text-right ${$morphFontSize} leading-loose text-slate-600 dark:text-[#c6d0f5] ${$zenMode ? "" : "border-x border-stone-200 dark:border-[#414559]"}`}
+        class={`default-scroll parchment-scroll relative w-full flex-1 min-h-0 overflow-y-auto px-12 pt-10 pb-20 text-right ${$morphFontSize} leading-loose text-slate-600 dark:text-[#c6d0f5] ${$zenMode ? "" : "border-x border-stone-200 dark:border-[#414559]"}`}
     >
         <MorphologyView />
     </div>

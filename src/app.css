@@ -292,15 +292,20 @@ html.dark ::-webkit-scrollbar-corner {
 /* EditorTabs draws its own overlay scroll indicator (see EditorTabs.svelte);
    the native bar is hidden there, so no dark-mode scrollbar rule is needed. */
 
-/* ── LexicalEditor: scrollbar track matches its panel background. ─────────── */
-html.dark .editor-shell .ContentEditable__root {
-    scrollbar-color: #686868 #242424;
+/* Keep the writing surfaces visually continuous: only the thumb should show,
+   not a contrasting scrollbar gutter. Parchment owns MorphologyView's scroll. */
+html.dark .editor-shell .ContentEditable__root,
+html.dark .parchment-scroll {
+    scrollbar-color: #686868 transparent;
 }
-html.dark .editor-shell ::-webkit-scrollbar-track {
-    background: #242424;
+html.dark .editor-shell ::-webkit-scrollbar-track,
+html.dark .parchment-scroll::-webkit-scrollbar-track,
+html.dark .parchment-scroll::-webkit-scrollbar-corner {
+    background: transparent;
 }
-html.dark .editor-shell ::-webkit-scrollbar-thumb {
-    border-color: #242424;
+html.dark .editor-shell ::-webkit-scrollbar-thumb,
+html.dark .parchment-scroll::-webkit-scrollbar-thumb {
+    border-color: transparent;
 }
 
 /* ── Zen + dark mode: both panels are bg-transparent, so scrollbar track must be too ── */
