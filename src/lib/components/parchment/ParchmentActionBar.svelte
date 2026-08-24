@@ -87,8 +87,14 @@
     });
 </script>
 
+<!-- Same deal as the editor ActionBar: in the header this row sits in the
+     title bar, so the space between its buttons drags the window. Tauri
+     matches only the element the click lands on, hence the attribute here
+     rather than relying on the header above. Not in the floating variant,
+     which hovers over the page. -->
 <div
     id="tour-action-bar"
+    data-tauri-drag-region={inHeader ? true : undefined}
     class={inHeader
         ? "flex items-center space-x-0.5"
         : `${
