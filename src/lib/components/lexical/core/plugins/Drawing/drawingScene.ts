@@ -43,6 +43,19 @@ export interface CommonProps {
     groups?: string[];
 }
 
+// A short piece of text centred inside a closed shape (rect/ellipse/polygon/
+// callout). Its position is never stored — it is always laid out from the
+// owning shape's current bounds, so moving/resizing/rotating the shape moves
+// the label for free with no separate sync step.
+export interface ShapeLabel {
+    text: string;
+    fontSize: number;
+    fontFamily: string;
+    fill: string; // text color
+    bold: boolean;
+    italic: boolean;
+}
+
 export interface RectShape extends CommonProps {
     type: 'rect';
     x: number;
@@ -50,6 +63,7 @@ export interface RectShape extends CommonProps {
     w: number;
     h: number;
     rx: number; // corner radius (0 = sharp)
+    label?: ShapeLabel;
 }
 
 export interface EllipseShape extends CommonProps {
@@ -58,6 +72,7 @@ export interface EllipseShape extends CommonProps {
     y: number;
     w: number;
     h: number;
+    label?: ShapeLabel;
 }
 
 export interface PolygonShape extends CommonProps {
@@ -67,6 +82,7 @@ export interface PolygonShape extends CommonProps {
     w: number;
     h: number;
     kind: PolygonKind;
+    label?: ShapeLabel;
 }
 
 export interface CalloutShape extends CommonProps {
@@ -79,6 +95,7 @@ export interface CalloutShape extends CommonProps {
     // Tail tip, in absolute scene coordinates.
     tailX: number;
     tailY: number;
+    label?: ShapeLabel;
 }
 
 export interface LineShape extends CommonProps {
@@ -195,6 +212,41 @@ export function isBoxShape(shape: Shape): shape is BoxShape {
         shape.type === 'text' ||
         shape.type === 'image'
     );
+}
+
+/** Closed shapes that can carry a centred text label. */
+export type LabelableShape = RectShape | EllipseShape | PolygonShape | CalloutShape;
+
+export function isLabelableShape(shape: Shape): shape is LabelableShape {
+    return (
+        shape.type === 'rect' ||
+        shape.type === 'ellipse' ||
+        shape.type === 'polygon' ||
+        shape.type === 'callout'
+    );
+}
+
+// Fraction of the shape's full bounding box a centred label may use, per
+// shape kind — small enough that wrapped text stays inside the visible
+// silhouette of round/pointed shapes instead of spilling past their edges.
+const LABEL_FIT: Record<string, number> = {
+    rect: 0.86,
+    callout: 0.78,
+    ellipse: 0.66,
+    triangle: 0.46,
+    diamond: 0.5,
+    pentagon: 0.62,
+    hexagon: 0.74,
+    star: 0.4,
+};
+
+/** The inset box a shape's label text is centred and wrapped/clipped into. */
+export function labelBounds(shape: LabelableShape): Bounds {
+    const b = shapeBounds(shape);
+    const fit = LABEL_FIT[shape.type === 'polygon' ? shape.kind : shape.type] ?? 0.8;
+    const w = b.w * fit;
+    const h = b.h * fit;
+    return { x: b.x + (b.w - w) / 2, y: b.y + (b.h - h) / 2, w, h };
 }
 
 // ── geometry ──────────────────────────────────────────────────────────────
@@ -1037,32 +1089,124 @@ function textMarkup(shape: TextShape): string {
     )}" text-anchor="${anchor}"${weight}${style} xml:space="preserve">${tspans}</text>`;
 }
 
+// ── shape label (centred text inside rect/ellipse/polygon/callout) ────────
+
+// Real glyph metrics when a DOM canvas is available (browser/Tauri webview);
+// falls back to an average-character-width estimate in non-DOM contexts
+// (e.g. unit tests) so this module stays usable without a DOM.
+let measureCtx: CanvasRenderingContext2D | null | undefined;
+function getMeasureCtx(): CanvasRenderingContext2D | null {
+    if (measureCtx !== undefined) return measureCtx;
+    measureCtx =
+        typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d');
+    return measureCtx;
+}
+function textWidth(
+    text: string,
+    fontSize: number,
+    fontFamily: string,
+    bold: boolean,
+    italic: boolean,
+): number {
+    const ctx = getMeasureCtx();
+    if (ctx) {
+        ctx.font = `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}${fontSize}px ${fontFamily}`;
+        return ctx.measureText(text).width;
+    }
+    return text.length * fontSize * (bold ? 0.56 : 0.5);
+}
+
+/** Word-wrap `text` (respecting existing newlines) to fit within `maxWidth`. */
+export function wrapLabelText(
+    text: string,
+    maxWidth: number,
+    fontSize: number,
+    fontFamily: string,
+    bold: boolean,
+    italic: boolean,
+): string[] {
+    const lines: string[] = [];
+    for (const paragraph of text.split('\n')) {
+        const words = paragraph.split(' ');
+        let line = '';
+        for (const word of words) {
+            const candidate = line ? `${line} ${word}` : word;
+            if (line && textWidth(candidate, fontSize, fontFamily, bold, italic) > maxWidth) {
+                lines.push(line);
+                line = word;
+            } else {
+                line = candidate;
+            }
+        }
+        lines.push(line);
+    }
+    return lines;
+}
+
+function labelMarkup(shape: LabelableShape): string {
+    const label = shape.label;
+    if (!label || !label.text.trim()) return '';
+    const box = labelBounds(shape);
+    const { fontSize, fontFamily, bold, italic } = label;
+    const lineHeight = fontSize * 1.25;
+    const lines = wrapLabelText(label.text, Math.max(4, box.w), fontSize, fontFamily, bold, italic);
+    const cx = box.x + box.w / 2;
+    // Vertically centre the text block, clipped to the inset box so long
+    // labels don't spill past the shape's edges.
+    const startY = box.y + box.h / 2 - (lines.length * lineHeight) / 2 + fontSize;
+    const weight = bold ? ' font-weight="bold"' : '';
+    const fstyle = italic ? ' font-style="italic"' : '';
+    const tspans = lines
+        .map(
+            (ln, i) =>
+                `<tspan x="${round(cx)}" y="${round(startY + i * lineHeight)}">${escapeXml(
+                    ln || ' ',
+                )}</tspan>`,
+        )
+        .join('');
+    const clipId = `lc${shape.id}`;
+    return (
+        `<clipPath id="${clipId}"><rect x="${round(box.x)}" y="${round(box.y)}" width="${round(
+            box.w,
+        )}" height="${round(box.h)}" /></clipPath>` +
+        `<text clip-path="url(#${clipId})" font-family="${escapeXml(
+            fontFamily,
+        )}" font-size="${fontSize}" fill="${escapeXml(
+            label.fill === 'none' ? '#000000' : label.fill,
+        )}" text-anchor="middle"${weight}${fstyle} xml:space="preserve">${tspans}</text>`
+    );
+}
+
 export function shapeToSvg(shape: Shape): string {
     let body = '';
     switch (shape.type) {
         case 'rect':
-            body = `<rect x="${round(shape.x)}" y="${round(shape.y)}" width="${round(
-                shape.w,
-            )}" height="${round(shape.h)}" rx="${round(shape.rx)}" ry="${round(
-                shape.rx,
-            )}" fill="${escapeXml(shape.fill)}" ${strokeAttrs(shape)} />`;
+            body =
+                `<rect x="${round(shape.x)}" y="${round(shape.y)}" width="${round(
+                    shape.w,
+                )}" height="${round(shape.h)}" rx="${round(shape.rx)}" ry="${round(
+                    shape.rx,
+                )}" fill="${escapeXml(shape.fill)}" ${strokeAttrs(shape)} />` + labelMarkup(shape);
             break;
         case 'ellipse':
-            body = `<ellipse cx="${round(shape.x + shape.w / 2)}" cy="${round(
-                shape.y + shape.h / 2,
-            )}" rx="${round(Math.abs(shape.w) / 2)}" ry="${round(
-                Math.abs(shape.h) / 2,
-            )}" fill="${escapeXml(shape.fill)}" ${strokeAttrs(shape)} />`;
+            body =
+                `<ellipse cx="${round(shape.x + shape.w / 2)}" cy="${round(
+                    shape.y + shape.h / 2,
+                )}" rx="${round(Math.abs(shape.w) / 2)}" ry="${round(
+                    Math.abs(shape.h) / 2,
+                )}" fill="${escapeXml(shape.fill)}" ${strokeAttrs(shape)} />` + labelMarkup(shape);
             break;
         case 'polygon':
-            body = `<polygon points="${polygonPoints(shape)}" fill="${escapeXml(
-                shape.fill,
-            )}" ${strokeAttrs(shape)} stroke-linejoin="round" />`;
+            body =
+                `<polygon points="${polygonPoints(shape)}" fill="${escapeXml(
+                    shape.fill,
+                )}" ${strokeAttrs(shape)} stroke-linejoin="round" />` + labelMarkup(shape);
             break;
         case 'callout':
-            body = `<path d="${calloutPath(shape)}" fill="${escapeXml(shape.fill)}" ${strokeAttrs(
-                shape,
-            )} stroke-linejoin="round" />`;
+            body =
+                `<path d="${calloutPath(shape)}" fill="${escapeXml(shape.fill)}" ${strokeAttrs(
+                    shape,
+                )} stroke-linejoin="round" />` + labelMarkup(shape);
             break;
         case 'line':
             body = lineMarkup(shape);
