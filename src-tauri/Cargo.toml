@@ -72,6 +72,11 @@ libc = "0.2"
 # dependency graph via Tauri, so this adds no extra compilation.
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-sys = { version = "0.60", features = ["Win32_UI_WindowsAndMessaging"] }
+# elan is the one dependency that ships a .zip rather than a .tar.gz on Windows
+# (juliaup uses a portable tar.gz, which flate2 + tar already handle). It is
+# unpacked in-process because the PowerShell route could not be relied on — see
+# `fetch_elan_init` in src/lean.rs. deflate is the only method the archive uses.
+zip = { version = "2", default-features = false, features = ["deflate"] }
 
 # git2 powers the File Explorer's VCS integration (status highlighting +
 # .gitignore graying). Available on desktop (macOS/Linux via unix, plus

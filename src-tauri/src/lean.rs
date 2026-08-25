@@ -468,12 +468,9 @@ fn elan_target() -> Option<&'static str> {
 /// Download elan's portable archive and unpack the single binary it contains
 /// (named `elan-init` in every published archive) into `dest_dir`.
 ///
-/// macOS/Linux ship `.tar.gz`; Windows ships `.zip`, which is expanded through
-/// PowerShell rather than adding a zip crate to the dependency graph — the
-/// archive is unpacked exactly once, at install time.
+/// macOS/Linux ship `.tar.gz`, Windows ships `.zip`; both are unpacked in
+/// process, straight out of the bytes just downloaded.
 async fn fetch_elan_init(version: &str, dest_dir: &Path) -> Result<PathBuf, String> {
-    use std::io::Read;
-
     let target = elan_target().ok_or_else(|| {
         "Automatic install isn't available for this platform. Please install Lean \
          from https://lean-lang.org/install/ and set the path manually."
@@ -502,34 +499,46 @@ async fn fetch_elan_init(version: &str, dest_dir: &Path) -> Result<PathBuf, Stri
 
     let elan_init = dest_dir.join(format!("elan-init{exe}"));
 
+    // Unpacked here rather than by shelling out to PowerShell's Expand-Archive,
+    // which this used to do. That cmdlet ships in a *script* module, so under a
+    // Restricted execution policy — the default on Windows Server, and common
+    // on managed machines — it cannot be auto-loaded at all and the install
+    // died with nothing to show but a non-zero exit code. Working from the
+    // bytes already in hand also drops the temporary .zip, which a virus
+    // scanner could hold open long enough to fail the extraction on its own.
     #[cfg(windows)]
     {
-        let archive = dest_dir.join("elan.zip");
-        std::fs::write(&archive, &bytes[..])
-            .map_err(|e| format!("Failed to write archive: {e}"))?;
-        let mut cmd = std::process::Command::new("powershell");
-        cmd.args([
-            "-NoProfile",
-            "-NonInteractive",
-            "-Command",
-            &format!(
-                "Expand-Archive -LiteralPath '{}' -DestinationPath '{}' -Force",
-                archive.display(),
-                dest_dir.display()
-            ),
-        ]);
-        no_window!(cmd);
-        let status = cmd
-            .status()
-            .map_err(|e| format!("Failed to extract elan: {e}"))?;
-        let _ = std::fs::remove_file(&archive);
-        if !status.success() {
-            return Err("Failed to extract the elan archive".to_string());
+        let mut archive = zip::ZipArchive::new(std::io::Cursor::new(&bytes[..]))
+            .map_err(|e| format!("elan archive could not be opened: {e}"))?;
+        let mut found = false;
+        for i in 0..archive.len() {
+            let mut entry = archive
+                .by_index(i)
+                .map_err(|e| format!("Bad archive entry: {e}"))?;
+            // The archive root holds one binary; accept either name it has
+            // shipped under rather than pinning to today's spelling.
+            let name = entry
+                .enclosed_name()
+                .and_then(|p| p.file_name().and_then(|n| n.to_str()).map(str::to_string));
+            if !matches!(name.as_deref(), Some("elan-init.exe") | Some("elan.exe")) {
+                continue;
+            }
+            let mut out = std::fs::File::create(&elan_init)
+                .map_err(|e| format!("Failed to write elan binary: {e}"))?;
+            std::io::copy(&mut entry, &mut out)
+                .map_err(|e| format!("Failed to unpack elan binary: {e}"))?;
+            found = true;
+            break;
+        }
+        if !found {
+            return Err("elan archive did not contain the expected binary".to_string());
         }
     }
 
     #[cfg(not(windows))]
     {
+        use std::io::Read;
+
         let decoder = flate2::read::GzDecoder::new(std::io::Cursor::new(&bytes[..]));
         let mut archive = tar::Archive::new(decoder);
         let mut found = false;
