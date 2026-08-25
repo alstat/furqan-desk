@@ -646,7 +646,7 @@
                     : ''} {hideRepl ? 'mb-3' : ''}"
             >
                 <CodeMirrorEditor
-                    value={effectiveTab.content}
+                    value={effectiveTab?.content ?? ""}
                     language="julia"
                     extraKeymap={juliaKeymap}
                     extensions={[juliaCompletionExtension]}
@@ -654,9 +654,9 @@
                     aiSelectionTools={true}
                     {aiContextPrompt}
                     {askAiContextPrompt}
-                    filePath={effectiveTab.path ?? null}
+                    filePath={effectiveTab?.path ?? null}
                     scrollKey={editorScrollKey}
-                    ownerTabId={effectiveTab.id}
+                    ownerTabId={effectiveTab?.id ?? null}
                     onchange={handleInput}
                     class="h-full font-mono"
                 />

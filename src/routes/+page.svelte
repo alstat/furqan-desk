@@ -234,13 +234,37 @@
         '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"type":"root","version":1}}';
 
     // Load the Lexical partner tab's content when host is active (partner is on the left panel)
+    //
+    // Seeded once per (tab, editor) pair, the way Sidebar's host-side effect
+    // does it. Without the guard every re-run replaced the whole editor state,
+    // and `setEditorState` is not cheap on a document made of decorators — each
+    // table, Qur'an block, equation and drawing is a Svelte component that
+    // unmounts and remounts. Re-running is easy to provoke: the effect tracks
+    // the editor instance and the cross group, both of which change when a
+    // split is created, dissolved or switched, which is when the app was
+    // hanging. `lastSeeded*` are plain variables on purpose — making them state
+    // would put the guard itself inside the effect's dependency graph.
+    let lastSeededPartnerTabId: string | null = null;
+    let lastSeededPartnerEditor: unknown = null;
     $effect(() => {
         const cg = activeCrossGroup;
         const editor = $lexicalEditorInstance;
-        if (!cg || !editor) return;
+        if (!cg || !editor) {
+            lastSeededPartnerTabId = null;
+            lastSeededPartnerEditor = null;
+            return;
+        }
         const partnerTab = get(tabs).find((t) => t.id === cg.partnerTabId);
         if (!partnerTab || partnerTab.type !== "lexical") return;
         if ($activeTabId === cg.partnerTabId) return; // partner is active — Sidebar effects handle it
+        if (
+            lastSeededPartnerTabId === partnerTab.id &&
+            lastSeededPartnerEditor === editor
+        ) {
+            return;
+        }
+        lastSeededPartnerTabId = partnerTab.id;
+        lastSeededPartnerEditor = editor;
         try {
             const parsed = JSON.parse(partnerTab.content || emptyLexicalState);
             const stateData = parsed.editorState ?? parsed;
@@ -274,10 +298,18 @@
         class={`flex ${$surahOrientation()} ${$isSidebar && !$zenMode ? "bg-white dark:bg-[#232634] " : ""} flex-row justify-center`}
         style:height="{height - $headerHeight - 2 * $csdMarginPx}px"
     >
+        <!-- `activeCrossGroup?.` throughout, never `activeCrossGroup.`: when the
+             split is dissolved the `{#if}` above turns false, but the
+             expressions inside it are separate reactive reads and Svelte
+             re-evaluates them before tearing the block down. Reading a property
+             off the now-null group threw
+             `null is not an object (partnerTabId)` mid-flush, which aborted the
+             update — the unsplit button appeared to do nothing — and left the
+             batch re-processing. The inner `{#if partnerTabId}` keeps the id a
+             plain string for everything below. -->
         {#if activeCrossGroup}
-            {@const partnerTab = $tabs.find(
-                (t) => t.id === activeCrossGroup.partnerTabId,
-            )}
+            {@const partnerTabId = activeCrossGroup?.partnerTabId ?? null}
+            {@const partnerTab = $tabs.find((t) => t.id === partnerTabId)}
             <div
                 class="relative z-1 px-1 flex flex-col flex-1 min-w-0
                         {$zenMode
@@ -287,19 +319,19 @@
                 {#if partnerTab?.type === "julia"}
                     <!-- Partner=Julia: left = JuliaEditor with embedded REPL -->
                     <JuliaEditor
-                        tabId={activeCrossGroup.partnerTabId}
+                        tabId={partnerTabId}
                         hideRepl={false}
                     />
                 {:else if partnerTab?.type === "lean"}
                     <!-- Partner=Lean: left = LeanEditor with embedded infoview -->
                     <LeanEditor
-                        tabId={activeCrossGroup.partnerTabId}
+                        tabId={partnerTabId}
                         hideInfoview={false}
                     />
                 {:else if partnerTab?.type === "typst"}
                     <!-- Partner=Typst: use TypstEditor's own resizable inline preview -->
                     <TypstEditor
-                        tabId={activeCrossGroup.partnerTabId}
+                        tabId={partnerTabId}
                         inCrossHost={true}
                     />
                 {:else if partnerTab?.type === "lexical"}
