@@ -21,6 +21,7 @@
     import { installReaderSnapshotHost } from "$lib/stores/reader-windows.store";
     import { installManuscriptInsertHost } from "$lib/stores/manuscripts.store";
     import { installDrawingSaveHost } from "$lexical/core/plugins/Drawing/drawingEditorStore";
+    import { installTerminalCwdHost } from "$lib/stores/terminal-window.store";
     import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
     import CustomFontDialog from "$lib/components/settings/CustomFontDialog.svelte";
     import {
@@ -108,6 +109,9 @@
         // The drawing editor window sends its finished scene back here,
         // where the Lexical editor it belongs in actually lives.
         void installDrawingSaveHost();
+        // The terminal window starts its shells in the folder the File Explorer
+        // has open; it cannot read this window's memory, so publish changes.
+        installTerminalCwdHost();
         try {
             const [labels] = await Promise.all([
                 invoke<SurahLabel[]>("get_surah_labels"),
