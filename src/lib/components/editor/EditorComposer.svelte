@@ -107,12 +107,47 @@
     // overwrite the saved offset with 0.
     let restoring = false;
     let editorShell = $state<HTMLDivElement | null>(null);
+    let lastMeasuredWidth = -1;
     // Whether the spelling dock's menu is open, so the dock can stop fading
     // itself while it is (see the dock's markup below).
     let spellMenuOpen = $state(false);
     // Measured width of the editor shell, fed to the toolbar so it can decide
     // whether the overflow menu items render inline or collapse to a dropdown.
+    //
+    // Observed by hand rather than with `bind:clientWidth`, because that writes
+    // during the ResizeObserver's own callback: the toolbar re-renders from this
+    // value, so the write dirties layout in the same pass the observer is
+    // delivering — which the browser reports as "ResizeObserver loop completed
+    // with undelivered notifications". Measuring on the next frame, and only
+    // publishing a width that actually changed, keeps the two apart. The
+    // toolbar's thresholds are tuned against `clientWidth`, so that is what is
+    // read here.
     let editorWidth = $state(0);
+
+    $effect(() => {
+        const el = editorShell;
+        if (!el || typeof ResizeObserver === "undefined") return;
+
+        let frame: number | null = null;
+        const measure = () => {
+            frame = null;
+            const next = el.clientWidth;
+            if (next !== lastMeasuredWidth) {
+                lastMeasuredWidth = next;
+                editorWidth = next;
+            }
+        };
+        const observer = new ResizeObserver(() => {
+            if (frame === null) frame = requestAnimationFrame(measure);
+        });
+        observer.observe(el);
+        measure();
+
+        return () => {
+            observer.disconnect();
+            if (frame !== null) cancelAnimationFrame(frame);
+        };
+    });
     let contentScroller: HTMLElement | null = null;
     let scrollCleanup: (() => void) | null = null;
 
@@ -333,7 +368,6 @@
     <div
         class="editor-shell p-2 relative overflow-visible"
         bind:this={editorShell}
-        bind:clientWidth={editorWidth}
     >
         <ToolbarRichText {editorWidth} />
         <!-- `relative` anchors the find & replace panel, which floats over the

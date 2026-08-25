@@ -323,13 +323,33 @@
     const emptyLexicalStateCross =
         '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"type":"root","version":1}}';
 
+    // Seeded once per (tab, editor) pair — the same guard the restore effect
+    // above uses, and for the same reason. Without it, every flip of "which side
+    // of the split is active" replaced the whole editor state, and each replace
+    // remounts every decorator in the document (tables, Qur'an blocks,
+    // equations, drawings). Focusing a pane sets the active tab, which flips
+    // this, which remounts, which moves focus — the loop behind the hang.
+    let lastSeededHostTabId: string | null = null;
+    let lastSeededHostEditor: unknown = null;
     $effect(() => {
         const cg = activeCrossGroup;
         const editor = $lexicalEditorInstance;
-        if (!cg || !editor) return;
+        if (!cg || !editor) {
+            lastSeededHostTabId = null;
+            lastSeededHostEditor = null;
+            return;
+        }
         const hostTab = get(tabs).find((t) => t.id === cg.hostTabId);
         if (!hostTab || hostTab.type !== "lexical") return;
         if ($activeTabId === cg.hostTabId) return; // host is active — Effect C handles it
+        if (
+            lastSeededHostTabId === hostTab.id &&
+            lastSeededHostEditor === editor
+        ) {
+            return;
+        }
+        lastSeededHostTabId = hostTab.id;
+        lastSeededHostEditor = editor;
         // Partner is active; load the Lexical host tab's content
         try {
             const parsed = JSON.parse(
@@ -382,7 +402,10 @@
         <div class="flex-1 min-h-0 overflow-visible">
             {#if activeCrossGroup}
                 <!-- Cross pair: sidebar always shows the HOST tab's editor -->
-                {@const hostTabId = activeCrossGroup.hostTabId}
+                <!-- Optional chaining for the same reason as +page.svelte: the
+                     `{#if}` above flips to false when a split is dissolved, but
+                     these reads re-run before the block is torn down. -->
+                {@const hostTabId = activeCrossGroup?.hostTabId ?? null}
                 {@const hostTab = $tabs.find((t) => t.id === hostTabId)}
                 {#if hostTab?.type === "julia"}
                     <JuliaEditor

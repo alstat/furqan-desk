@@ -369,11 +369,23 @@
         };
         el.addEventListener("wheel", onWheel, { passive: false });
 
-        const ro = new ResizeObserver(updateScrollEdges);
+        // Coalesced to the next frame: `updateScrollEdges` writes state that
+        // renders the strip's fades and thumb, and writing during the
+        // observer's own callback is what makes the browser report
+        // "ResizeObserver loop completed with undelivered notifications".
+        let edgeFrame: number | null = null;
+        const ro = new ResizeObserver(() => {
+            if (edgeFrame !== null) return;
+            edgeFrame = requestAnimationFrame(() => {
+                edgeFrame = null;
+                updateScrollEdges();
+            });
+        });
         ro.observe(el);
         return () => {
             el.removeEventListener("wheel", onWheel);
             ro.disconnect();
+            if (edgeFrame !== null) cancelAnimationFrame(edgeFrame);
         };
     });
 
@@ -1014,14 +1026,22 @@
         ...$crossGroups.flatMap((g) => [g.hostTabId, g.partnerTabId]),
     ])}
     {@const pickerHostType = pickerTab?.type}
+    <!-- Same eligibility test as `availablePartners` above and `available` in
+         handleSplitClick — all three must agree, or a tab shows a split button
+         that opens a list the tab is missing from. `lean` was absent here only,
+         which is why a Lean tab could split with a Lexical one but never turned
+         up in the Lexical tab's own list. -->
     {@const pickerPartners = $tabs.filter(
         (t) =>
-            (t.type === "julia" || t.type === "typst" || t.type === "lexical") &&
+            (t.type === "julia" ||
+                t.type === "typst" ||
+                t.type === "lean" ||
+                t.type === "lexical") &&
             t.id !== pickerForTabId &&
             !pickerAllGroupedIds.has(t.id) &&
             !(pickerHostType === "lexical" && t.type === "lexical"),
     )}
-    {#if pickerTab && pickerPartners.length > 1}
+    {#if pickerTab && pickerPartners.length > 0}
         <div
             data-picker-dropdown
             style="position: fixed; left: {pickerPos.x}px; top: {pickerPos.y}px; transform: {popupShift}; z-index: 9999;"

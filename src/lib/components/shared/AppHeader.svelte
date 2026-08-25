@@ -73,16 +73,34 @@
         if (!headerEl) return;
         // Touch `measured` so a font-scale change re-runs this too.
         void measured;
-        const publish = () =>
-            headerBottom.set(headerEl!.getBoundingClientRect().bottom);
+        // Written on the next frame, and only when it actually moved: this runs
+        // from a ResizeObserver, and a store write inside that callback can
+        // dirty layout again in the same pass — which the browser reports as
+        // "ResizeObserver loop completed with undelivered notifications".
+        let publishFrame: number | null = null;
+        let lastPublished = Number.NaN;
+        const publish = () => {
+            const next = headerEl!.getBoundingClientRect().bottom;
+            if (next === lastPublished) return;
+            lastPublished = next;
+            headerBottom.set(next);
+        };
+        const schedulePublish = () => {
+            if (publishFrame !== null) return;
+            publishFrame = requestAnimationFrame(() => {
+                publishFrame = null;
+                if (headerEl) publish();
+            });
+        };
         publish();
 
-        const observer = new ResizeObserver(publish);
+        const observer = new ResizeObserver(schedulePublish);
         observer.observe(headerEl);
-        window.addEventListener("resize", publish);
+        window.addEventListener("resize", schedulePublish);
         return () => {
             observer.disconnect();
-            window.removeEventListener("resize", publish);
+            window.removeEventListener("resize", schedulePublish);
+            if (publishFrame !== null) cancelAnimationFrame(publishFrame);
         };
     });
 

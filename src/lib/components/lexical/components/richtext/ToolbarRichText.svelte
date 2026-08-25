@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import BlockFormatDropDown from '../toolbar/BlockFormatDropDown/BlockFormatDropDown.svelte';
 	import BoldButton from '../toolbar/BoldButton.svelte';
 	import Divider from '../toolbar/Divider.svelte';
@@ -63,16 +64,71 @@
 		script: 455,
 	};
 
+	/**
+	 * Width a collapsed menu must regain before it comes back inline.
+	 *
+	 * Without it the thresholds are a knife edge, and `editorWidth` is measured
+	 * from an element whose width this very decision can change: collapsing a
+	 * menu shortens the toolbar, which can remove a wrapped row, which can take
+	 * away the writing area's scrollbar, which widens the measured element by
+	 * ~15px — back over the threshold, so the menu expands, and round again. The
+	 * browser reports that as "ResizeObserver loop completed with undelivered
+	 * notifications" and Svelte as `effect_update_depth_exceeded`. A dead band
+	 * wider than any scrollbar makes the flip impossible.
+	 */
+	const HYSTERESIS = 28;
+
 	let { editorWidth = 0 }: { editorWidth?: number } = $props();
+
+	// Whether each collapsible menu has moved into the overflow dropdown.
+	let collapsed = $state({
+		align: false,
+		insert: false,
+		highlight: false,
+		fontColor: false,
+		link: false,
+		script: false,
+		// The triple-dot group's inline items — same knife-edge, same remedy.
+		inline: true,
+	});
+
+	$effect(() => {
+		const width = editorWidth;
+		// Read the current decisions without depending on them: this effect must
+		// re-run when the width changes, never because it wrote its own state.
+		const current = untrack(() => ({ ...collapsed }));
+		let changed = false;
+		const next = { ...current };
+		for (const [key, threshold] of Object.entries(COLLAPSE)) {
+			const name = key as keyof typeof COLLAPSE;
+			// Collapse as soon as the width drops below the threshold; expand only
+			// once it is clearly back above it.
+			const shouldCollapse = current[name]
+				? width < threshold + HYSTERESIS
+				: width < threshold;
+			if (shouldCollapse !== current[name]) {
+				next[name] = shouldCollapse;
+				changed = true;
+			}
+		}
+		const inlineCollapsed = current.inline
+			? width < INLINE_EXPAND_WIDTH + HYSTERESIS
+			: width < INLINE_EXPAND_WIDTH;
+		if (inlineCollapsed !== current.inline) {
+			next.inline = inlineCollapsed;
+			changed = true;
+		}
+		if (changed) collapsed = next;
+	});
 
 	// Whether each collapsible menu is shown inline (true) or has moved into the
 	// overflow dropdown (false).
-	const showAlign = $derived(editorWidth >= COLLAPSE.align);
-	const showInsert = $derived(editorWidth >= COLLAPSE.insert);
-	const showHighlight = $derived(editorWidth >= COLLAPSE.highlight);
-	const showFontColor = $derived(editorWidth >= COLLAPSE.fontColor);
-	const showLink = $derived(editorWidth >= COLLAPSE.link);
-	const showScript = $derived(editorWidth >= COLLAPSE.script);
+	const showAlign = $derived(!collapsed.align);
+	const showInsert = $derived(!collapsed.insert);
+	const showHighlight = $derived(!collapsed.highlight);
+	const showFontColor = $derived(!collapsed.fontColor);
+	const showLink = $derived(!collapsed.link);
+	const showScript = $derived(!collapsed.script);
 	// Any menu currently overflowed → the dropdown must render the overflow row.
 	const hasOverflow = $derived(
 		!showAlign ||
@@ -168,7 +224,7 @@
 		<Divider />
 		<TripleDotsDropDownSmall
 			{windowWidth}
-			expanded={editorWidth >= INLINE_EXPAND_WIDTH}
+			expanded={!collapsed.inline}
 			overflow={hasOverflow ? overflow : undefined}
 			onInsertImageClick={() => imageDialog?.open()}
 			onInsertEquationClick={() => equationDialog?.open()}

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { untrack } from "svelte";
     import katex from "katex";
     // KaTeX's stylesheet + bundled fonts — required for the HTML renderer to
     // position accents (\bar, \hat, \overline, vectors) without overlap.
@@ -221,12 +222,34 @@
     // would happily grow past the edge of the editor column.
     let maxCardWidth = $state(0);
 
+    /**
+     * Ignore width changes smaller than this.
+     *
+     * The observer watches the element this card sits in, and the card's own
+     * width is what the measurement feeds — so a change small enough to be
+     * caused by the card itself (a scrollbar appearing as the card grows, then
+     * going away as it shrinks) is a loop, not a resize. Wider than any
+     * scrollbar, far narrower than a real pane change.
+     */
+    const WIDTH_EPSILON = 24;
+
+    let measureFrame: number | null = null;
+
     function measureMaxCardWidth() {
         const root = cardEl?.closest<HTMLElement>(".ContentEditable__root");
         const available = root
             ? root.clientWidth - 24
             : (window.innerWidth || 0) * 0.88;
-        maxCardWidth = Math.max(240, Math.round(available));
+        const next = Math.max(240, Math.round(available));
+        if (Math.abs(next - untrack(() => maxCardWidth)) < WIDTH_EPSILON) return;
+        // Applied on the next frame rather than inside the observer's own
+        // callback: writing during that pass is what makes the browser report
+        // "ResizeObserver loop completed with undelivered notifications".
+        if (measureFrame !== null) return;
+        measureFrame = requestAnimationFrame(() => {
+            measureFrame = null;
+            maxCardWidth = next;
+        });
     }
 
     $effect(() => {
@@ -242,6 +265,10 @@
         return () => {
             observer?.disconnect();
             window.removeEventListener("resize", measureMaxCardWidth);
+            if (measureFrame !== null) {
+                cancelAnimationFrame(measureFrame);
+                measureFrame = null;
+            }
         };
     });
 
