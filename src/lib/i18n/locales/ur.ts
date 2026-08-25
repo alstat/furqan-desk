@@ -510,7 +510,7 @@ export const ur: Record<string, string> = {
   "manuscript.fullscreen": 'پورا اسکرین',
   "manuscript.select": 'دیکھنے کے لیے مخطوطہ منتخب کریں',
   "manuscript.downloading": 'ڈاؤنلوڈ ہو رہا ہے…',
-  "manuscript.download": 'مکمل ڈاؤنلوڈ',
+  "manuscript.download": "ڈاؤن لوڈ",
   "manuscript.inserting": 'داخل ہو رہا ہے…',
   "manuscript.insert": 'ایڈیٹر میں داخل کریں',
   "manuscript.insert_tooltip": 'ایڈیٹر میں تصویر داخل کریں',

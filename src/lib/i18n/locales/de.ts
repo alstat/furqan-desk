@@ -563,7 +563,7 @@ export const de: Record<string, string> = {
   "manuscript.fullscreen": "Vollbild",
   "manuscript.select": "Manuskript zum Anzeigen auswählen",
   "manuscript.downloading": "Wird heruntergeladen…",
-  "manuscript.download": "Vollständig herunterladen",
+  "manuscript.download": "Herunterladen",
   "manuscript.inserting": "Wird eingefügt…",
   "manuscript.insert": "In Editor einfügen",
   "manuscript.insert_tooltip": "Bild in Editor einfügen",

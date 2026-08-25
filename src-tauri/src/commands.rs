@@ -2547,36 +2547,46 @@ pub async fn get_manuscript_detail(
 
 /// Download full-resolution manuscript image and save it to the user's Downloads folder.
 /// Returns the absolute path of the saved file.
-#[tauri::command]
-pub async fn save_manuscript_to_downloads(
-    http: State<'_, HttpClient>,
-    image_url: String,
-    filename: String,
-) -> Result<String, String> {
-    // Build a high-res URL by keeping only the fn= param and adding dw=1200
-    let fn_param: Option<String> = image_url
-        .split(|c| c == '?' || c == '&')
-        .find_map(|seg| {
-            let s = seg.trim_start_matches('?');
-            if s.starts_with("fn=") { Some(s.to_string()) } else { None }
-        });
+/// Fetch one folio at full width from Corpus Coranicum.
+///
+/// The viewer's own URLs carry whatever size the list happened to ask for, so
+/// the `fn=` parameter — the only part identifying the image — is kept and the
+/// rest replaced with `dw=1200`. A thumbnail is far too soft to be worth saving.
+async fn fetch_manuscript_full(http: &HttpClient, image_url: &str) -> Result<Vec<u8>, String> {
+    let fn_param: Option<String> = image_url.split(|c| c == '?' || c == '&').find_map(|seg| {
+        let s = seg.trim_start_matches('?');
+        if s.starts_with("fn=") {
+            Some(s.to_string())
+        } else {
+            None
+        }
+    });
 
     let fetch_url = match fn_param {
         Some(ref fp) => format!(
             "https://corpuscoranicum.de/digitallibrary/servlet/Scaler?{}&dw=1200",
             fp
         ),
-        None => image_url.clone(),
+        None => image_url.to_string(),
     };
 
-    let bytes = http.client
+    let response = http
+        .client
         .get(&fetch_url)
         .send()
         .await
-        .map_err(|e| e.to_string())?
-        .bytes()
-        .await
         .map_err(|e| e.to_string())?;
+    let bytes = response.bytes().await.map_err(|e| e.to_string())?;
+    Ok(bytes.to_vec())
+}
+
+#[tauri::command]
+pub async fn save_manuscript_to_downloads(
+    http: State<'_, HttpClient>,
+    image_url: String,
+    filename: String,
+) -> Result<String, String> {
+    let bytes = fetch_manuscript_full(&http, &image_url).await?;
 
     let downloads_dir = dirs::download_dir()
         .ok_or_else(|| "Cannot locate Downloads folder".to_string())?;

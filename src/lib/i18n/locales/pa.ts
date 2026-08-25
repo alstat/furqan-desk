@@ -469,7 +469,7 @@ export const pa: Record<string, string> = {
   "manuscript.fullscreen": "ਪੂਰੀ ਸਕ੍ਰੀਨ",
   "manuscript.select": "ਵੇਖਣ ਲਈ ਇੱਕ ਹੱਥ-ਲਿਖਤ ਚੁਣੋ",
   "manuscript.downloading": "ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",
-  "manuscript.download": "ਪੂਰਾ ਡਾਊਨਲੋਡ ਕਰੋ",
+  "manuscript.download": "ਡਾਊਨਲੋਡ",
   "manuscript.inserting": "ਸ਼ਾਮਲ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...",
   "manuscript.insert": "Lexical ਵਿੱਚ ਸ਼ਾਮਲ ਕਰੋ",
   "manuscript.insert_tooltip": "ਸੰਪਾਦਕ ਵਿੱਚ ਚਿੱਤਰ ਸ਼ਾਮਲ ਕਰੋ",

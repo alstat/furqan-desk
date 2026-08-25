@@ -469,7 +469,7 @@ export const sr: Record<string, string> = {
   "manuscript.fullscreen": "Фуллсцреен",
   "manuscript.select": "Изаберите рукопис за преглед",
   "manuscript.downloading": "Преузимање…",
-  "manuscript.download": "Преузмите комплетно",
+  "manuscript.download": "Преузми",
   "manuscript.inserting": "Уметање…",
   "manuscript.insert": "Инсерт то Лекицал",
   "manuscript.insert_tooltip": "Уметните слику у едитор",

@@ -489,7 +489,7 @@ export const ar: Record<string, string> = {
   "manuscript.fullscreen": 'ملء الشاشة',
   "manuscript.select": 'اختر مخطوطة للعرض',
   "manuscript.downloading": 'جارٍ التنزيل…',
-  "manuscript.download": 'تنزيل كامل',
+  "manuscript.download": "تنزيل",
   "manuscript.download_saved": '✓ تم الحفظ: {filename}',
   "manuscript.download_failed": '✗ فشل: {error}',
   "manuscript.inserting": 'جارٍ الإدراج…',

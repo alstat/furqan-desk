@@ -469,7 +469,7 @@ export const sq: Record<string, string> = {
   "manuscript.fullscreen": "Ekrani i plotë",
   "manuscript.select": "Zgjidhni një dorëshkrim për ta parë",
   "manuscript.downloading": "Po shkarkohet…",
-  "manuscript.download": "Shkarko të plotë",
+  "manuscript.download": "Shkarko",
   "manuscript.inserting": "Po futet…",
   "manuscript.insert": "Fut në leksik",
   "manuscript.insert_tooltip": "Fut imazhin në redaktues",

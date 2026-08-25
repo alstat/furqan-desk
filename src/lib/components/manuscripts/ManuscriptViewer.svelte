@@ -641,13 +641,72 @@
     });
 
     // ── Download to Downloads folder ──────────────────────────────────────────
+    /**
+     * One path segment, safe to write on any of the three platforms.
+     *
+     * Windows is the strict one: it rejects `< > : " / \\ | ? *`, control
+     * characters, and names that end in a dot or a space, and it still reserves
+     * the old device names (CON, PRN, COM1…). Letters and digits pass through
+     * whatever the script — Arabic titles keep their own characters — while
+     * everything else collapses to a single hyphen, so a name stays readable
+     * rather than turning into a row of underscores.
+     */
+    function safeSegment(value: string | number | null | undefined, max = 48): string {
+        const text = String(value ?? "").trim();
+        if (!text) return "";
+        const cleaned = text
+            // eslint-disable-next-line no-control-regex
+            .replace(/[\u0000-\u001f<>:"/\\|?*]+/g, " ")
+            .replace(/[^\p{L}\p{N}]+/gu, "-")
+            .replace(/-{2,}/g, "-")
+            .replace(/^-+|-+$/g, "");
+        const clipped = cleaned.slice(0, max).replace(/-+$/, "");
+        // CON.jpg is still a device on Windows, whatever the extension.
+        return /^(con|prn|aux|nul|com\d|lpt\d)$/i.test(clipped)
+            ? `${clipped}-ms`
+            : clipped;
+    }
+
+    /**
+     * The dating to put in a filename: the carbon date if the manuscript has
+     * one, otherwise the catalogue date, reduced to the year or year range it
+     * contains ("1st half of the 8th century, 700-750" → "700-750"). Empty when
+     * the manuscript is undated, in which case the segment is simply left out.
+     */
+    function yearSegment(detail: ManuscriptDetail | undefined): string {
+        const raw = detail?.carbon_dating?.trim() || detail?.date?.trim() || "";
+        if (!raw) return "";
+        const range = raw.match(/(\d{3,4})\s*[-–—]\s*(\d{3,4})/);
+        if (range) return `${range[1]}-${range[2]}`;
+        const single = raw.match(/\d{3,4}/);
+        return single ? single[0] : "";
+    }
+
     async function downloadFull() {
         const img = selectedImage;
         const ms = selectedManuscript;
         if (!img || !ms || downloading) return;
         downloading = true;
         downloadMsg = "";
-        const filename = `cc-ms-${ms.manuscript_id}-${selectedPage?.folio}${selectedPage?.side ?? ""}.jpg`;
+        // Named for what it is, not for the id it came from: a folio that ends
+        // up in Downloads beside a hundred other files should say which library
+        // holds it, which manuscript it belongs to and roughly when it was
+        // written — `cc-ms-118-12r.jpg` says none of that.
+        const detail = detailMap.get(ms.manuscript_id);
+        const folio = safeSegment(
+            `${selectedPage?.folio ?? ""}${selectedPage?.side ?? ""}`,
+            16,
+        );
+        const filename =
+            [
+                safeSegment(ms.archive?.name, 40),
+                safeSegment(ms.archive?.city, 24),
+                safeSegment(ms.title, 60),
+                safeSegment(yearSegment(detail), 12),
+                `ms${ms.manuscript_id}`,
+            ]
+                .filter(Boolean)
+                .join("_") + `${folio ? `_f${folio}` : ""}.jpg`;
         try {
             const path = await invoke<string>("save_manuscript_to_downloads", {
                 imageUrl: img.image_url,

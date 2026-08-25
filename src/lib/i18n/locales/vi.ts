@@ -556,7 +556,7 @@ export const vi: Record<string, string> = {
   "manuscript.fullscreen": "Toàn màn hình",
   "manuscript.select": "Chọn bản thảo để xem",
   "manuscript.downloading": "Đang tải xuống…",
-  "manuscript.download": "Tải xuống đầy đủ",
+  "manuscript.download": "Tải xuống",
   "manuscript.inserting": "Đang chèn…",
   "manuscript.insert": "Chèn vào Lexical",
   "manuscript.insert_tooltip": "Chèn hình ảnh vào trình soạn thảo",
