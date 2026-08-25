@@ -125,8 +125,12 @@
                         >
                             {$t("lean.prompt.error_title")}
                         </p>
+                        <!-- The installer's own output comes through here, so
+                             it arrives as several lines: keep them apart, cap
+                             the height rather than growing the prompt, and let
+                             it be selected so it can be copied into a report. -->
                         <p
-                            class="mt-0.5 text-[11px] text-red-500 dark:text-red-300/90 break-words"
+                            class="mt-0.5 max-h-32 overflow-y-auto text-[11px] whitespace-pre-line break-words select-text text-red-500 dark:text-red-300/90"
                         >
                             {$leanInstallError}
                         </p>

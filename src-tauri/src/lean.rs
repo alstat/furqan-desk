@@ -15,7 +15,7 @@
 //! compile in one never cancels or contaminates the other. This mirrors the
 //! two-kernel split in `julia.rs`.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -23,6 +23,12 @@ use tauri::{AppHandle, Emitter, Manager, State};
 
 /// Default kernel name when a command doesn't specify one.
 const DEFAULT_KERNEL: &str = "repl";
+
+/// How many lines of an installer's output to keep for its error message.
+///
+/// Enough to carry elan's error plus the context above it, without pasting a
+/// whole toolchain download into a toast.
+const TAIL_LINES: usize = 12;
 
 /// Upper bound on a single compile.
 ///
@@ -626,6 +632,10 @@ async fn run_streaming(
     let mut cmd = tokio::process::Command::new(program);
     cmd.args(args)
         .env("ELAN_HOME", elan_home)
+        // elan writes into ELAN_HOME throughout; run it from there rather than
+        // inheriting whatever directory the app happened to be launched from,
+        // which on Windows can be a location the app cannot write to.
+        .current_dir(elan_home)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped());
@@ -642,24 +652,53 @@ async fn run_streaming(
     let mut stdout = child.stdout.take();
     let mut stderr = child.stderr.take();
 
+    // elan reports why it gave up on its own stderr and then exits non-zero
+    // (`report_error` + `process::exit(1)` in its installer). Those lines used
+    // to go out as progress events and nowhere else, so a failed install
+    // surfaced as nothing but "elan … failed" — true, and of no use to anyone
+    // trying to work out what went wrong on a machine we cannot see. Keep the
+    // tail of both streams so the error can carry it.
+    let tail: Arc<Mutex<VecDeque<String>>> = Arc::new(Mutex::new(VecDeque::new()));
+
     // Both streams are pumped concurrently: elan writes the progress bar to one
     // and diagnostics to the other, and letting either pipe fill would deadlock
     // the child.
     let pump = |mut reader: Option<tokio::process::ChildStdout>,
-                app: AppHandle| async move {
+                app: AppHandle,
+                tail: Arc<Mutex<VecDeque<String>>>| async move {
         let Some(reader) = reader.take() else { return };
-        emit_segments(reader, app).await;
+        emit_segments(reader, app, tail).await;
     };
     let pump_err = |mut reader: Option<tokio::process::ChildStderr>,
-                    app: AppHandle| async move {
+                    app: AppHandle,
+                    tail: Arc<Mutex<VecDeque<String>>>| async move {
         let Some(reader) = reader.take() else { return };
-        emit_segments(reader, app).await;
+        emit_segments(reader, app, tail).await;
     };
 
-    async fn emit_segments<R>(mut reader: R, app: AppHandle)
+    async fn emit_segments<R>(mut reader: R, app: AppHandle, tail: Arc<Mutex<VecDeque<String>>>)
     where
         R: tokio::io::AsyncRead + Unpin,
     {
+        let publish = |segment: String| {
+            if segment.is_empty() {
+                return;
+            }
+            if let Ok(mut tail) = tail.lock() {
+                // A redrawn progress bar arrives as thousands of segments; only
+                // the last few can matter, and the reason for a failure is
+                // always among them.
+                if tail.len() == TAIL_LINES {
+                    tail.pop_front();
+                }
+                tail.push_back(segment.clone());
+            }
+            let _ = app.emit(
+                "lean-install-progress",
+                InstallProgress { message: segment },
+            );
+        };
+
         let mut buf = [0u8; 4096];
         let mut pending = String::new();
         loop {
@@ -671,24 +710,22 @@ async fn run_streaming(
                     while let Some(idx) = pending.find(['\n', '\r']) {
                         let segment = pending[..idx].trim().to_string();
                         pending.drain(..=idx);
-                        if segment.is_empty() {
-                            continue;
-                        }
-                        let _ = app.emit(
-                            "lean-install-progress",
-                            InstallProgress { message: segment },
-                        );
+                        publish(segment);
                     }
                 }
             }
         }
+        // Whatever is left never got its newline. A process that dies partway
+        // through a line still said something, and on a failure that last line
+        // is the one worth having.
+        publish(pending.trim().to_string());
     }
 
     let app_out = app.clone();
     let app_err = app.clone();
     let (_, _, status) = tokio::join!(
-        pump(stdout.take(), app_out),
-        pump_err(stderr.take(), app_err),
+        pump(stdout.take(), app_out, Arc::clone(&tail)),
+        pump_err(stderr.take(), app_err, Arc::clone(&tail)),
         child.wait(),
     );
 
@@ -696,7 +733,34 @@ async fn run_streaming(
     if status.success() {
         Ok(())
     } else {
-        Err(format!("elan {} failed", args.join(" ")))
+        let detail = tail
+            .lock()
+            .map(|tail| {
+                tail.iter()
+                    .map(|line| {
+                        // One pathological line should not swallow the rest.
+                        if line.chars().count() > 300 {
+                            line.chars().take(300).collect::<String>() + "…"
+                        } else {
+                            line.clone()
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            })
+            .unwrap_or_default();
+        if detail.trim().is_empty() {
+            // No output at all usually means it never got as far as running:
+            // on Windows a missing runtime DLL fails the image load after the
+            // process is created, so spawn succeeds and the exit code is all
+            // there is.
+            Err(format!(
+                "elan {} failed with no output ({status})",
+                args.join(" ")
+            ))
+        } else {
+            Err(format!("elan {} failed:\n{detail}", args.join(" ")))
+        }
     }
 }
 
