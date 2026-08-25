@@ -55,35 +55,40 @@
     const isWindows = ua.includes("Windows");
     const isLinux = ua.includes("Linux") && !ua.includes("Android");
 
-    // The page sizes itself from window.innerHeight rather than from a flex
-    // parent, so it needs the height this bar actually took — which moves with
-    // the UI font scale.
-    let measured = $state(0);
-    $effect(() => headerHeight.set(measured));
-
-    // The panels that hang off this bar need its bottom edge in viewport
-    // coordinates, which only the rect knows: `clientHeight` leaves out the
-    // border and is rounded, and the bar's Y also shifts when the Linux frame
-    // takes on (or drops) its shadow margin. Remeasured whenever the bar
-    // changes size — the maximise that moves the margin resizes it too — and
-    // on any window resize, since a bar that keeps its size can still move.
+    // Two things are published from this bar, and both are measured by the one
+    // observer below rather than by `bind:clientHeight`:
+    //
+    //   headerHeight — its height, because the page sizes itself from
+    //     window.innerHeight rather than from a flex parent.
+    //   headerBottom — its bottom edge in viewport coordinates, which only the
+    //     rect knows: `clientHeight` leaves out the border and is rounded, and
+    //     the bar's Y also shifts when the Linux frame takes on (or drops) its
+    //     shadow margin.
+    //
+    // `bind:clientHeight` writes during the ResizeObserver's own delivery pass,
+    // and `headerHeight` sizes the entire page below the bar — so that write
+    // dirties layout in the pass the observer is still delivering, which the
+    // browser reports as "ResizeObserver loop completed with undelivered
+    // notifications". At startup that fires as webfonts land and the bar
+    // settles. Measuring on the next frame keeps the write out of that pass;
+    // the first measurement stays synchronous so nothing reflows after paint.
     let headerEl = $state<HTMLElement | null>(null);
 
     $effect(() => {
         if (!headerEl) return;
-        // Touch `measured` so a font-scale change re-runs this too.
-        void measured;
-        // Written on the next frame, and only when it actually moved: this runs
-        // from a ResizeObserver, and a store write inside that callback can
-        // dirty layout again in the same pass — which the browser reports as
-        // "ResizeObserver loop completed with undelivered notifications".
         let publishFrame: number | null = null;
-        let lastPublished = Number.NaN;
+        let lastHeight = Number.NaN;
+        let lastBottom = Number.NaN;
         const publish = () => {
-            const next = headerEl!.getBoundingClientRect().bottom;
-            if (next === lastPublished) return;
-            lastPublished = next;
-            headerBottom.set(next);
+            const rect = headerEl!.getBoundingClientRect();
+            if (rect.height !== lastHeight) {
+                lastHeight = rect.height;
+                headerHeight.set(rect.height);
+            }
+            if (rect.bottom !== lastBottom) {
+                lastBottom = rect.bottom;
+                headerBottom.set(rect.bottom);
+            }
         };
         const schedulePublish = () => {
             if (publishFrame !== null) return;
@@ -121,7 +126,6 @@
 <header
     data-tauri-drag-region
     bind:this={headerEl}
-    bind:clientHeight={measured}
     class="relative z-40 grid h-11 shrink-0 select-none grid-cols-[minmax(min-content,1fr)_minmax(0,32rem)_minmax(min-content,1fr)] items-center gap-3 px-2 {$zenMode
         ? 'border-transparent bg-transparent'
         : 'border-b border-brand-sand-200 bg-brand-sand-50/95 dark:bg-[#2b2b2b]/95'} {zenFade}"
