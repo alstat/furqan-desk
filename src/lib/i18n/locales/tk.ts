@@ -556,7 +556,7 @@ export const tk: Record<string, string> = {
   "manuscript.fullscreen": "Doly ekran",
   "manuscript.select": "Görmek üçin el ýazma saýlaň",
   "manuscript.downloading": "Ýüklenýär…",
-  "manuscript.download": "Doly ýüklemek",
+  "manuscript.download": "Ýükle",
   "manuscript.inserting": "Goşulýar…",
   "manuscript.insert": "Lexical-e goşmak",
   "manuscript.insert_tooltip": "Suraty redaktora goşmak",

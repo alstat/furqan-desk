@@ -564,7 +564,7 @@ export const es: Record<string, string> = {
   "manuscript.fullscreen": "Pantalla completa",
   "manuscript.select": "Selecciona un manuscrito para ver",
   "manuscript.downloading": "Descargando…",
-  "manuscript.download": "Descargar completo",
+  "manuscript.download": "Descargar",
   "manuscript.inserting": "Insertando…",
   "manuscript.insert": "Insertar en el editor",
   "manuscript.insert_tooltip": "Insertar imagen en el editor",

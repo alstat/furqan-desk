@@ -510,7 +510,7 @@ export const ru: Record<string, string> = {
   "manuscript.fullscreen": 'Полный экран',
   "manuscript.select": 'Выберите рукопись для просмотра',
   "manuscript.downloading": 'Загрузка…',
-  "manuscript.download": 'Скачать полностью',
+  "manuscript.download": "Загрузить",
   "manuscript.inserting": 'Вставка…',
   "manuscript.insert": 'Вставить в редактор',
   "manuscript.insert_tooltip": 'Вставить изображение в редактор',

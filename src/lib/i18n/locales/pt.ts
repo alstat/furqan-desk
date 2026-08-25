@@ -563,7 +563,7 @@ export const pt: Record<string, string> = {
   "manuscript.fullscreen": "Tela cheia",
   "manuscript.select": "Selecione um manuscrito para visualizar",
   "manuscript.downloading": "Baixando…",
-  "manuscript.download": "Baixar completo",
+  "manuscript.download": "Baixar",
   "manuscript.inserting": "Inserindo…",
   "manuscript.insert": "Inserir no Lexical",
   "manuscript.insert_tooltip": "Inserir imagem no editor",

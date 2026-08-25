@@ -562,7 +562,7 @@ export const bn: Record<string, string> = {
   "manuscript.fullscreen": "পূর্ণ স্ক্রিন",
   "manuscript.select": "দেখতে একটি পাণ্ডুলিপি নির্বাচন করুন",
   "manuscript.downloading": "ডাউনলোড হচ্ছে…",
-  "manuscript.download": "সম্পূর্ণ ডাউনলোড করুন",
+  "manuscript.download": "ডাউনলোড",
   "manuscript.inserting": "সন্নিবেশ করা হচ্ছে…",
   "manuscript.insert": "Lexical-এ সন্নিবেশ করুন",
   "manuscript.insert_tooltip": "এডিটরে ছবি সন্নিবেশ করুন",

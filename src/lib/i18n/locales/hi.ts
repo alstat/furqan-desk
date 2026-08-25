@@ -560,7 +560,7 @@ export const hi: Record<string, string> = {
   "manuscript.fullscreen": "पूर्ण स्क्रीन",
   "manuscript.select": "देखने के लिए एक पांडुलिपि चुनें",
   "manuscript.downloading": "डाउनलोड हो रहा है…",
-  "manuscript.download": "पूर्ण डाउनलोड करें",
+  "manuscript.download": "डाउनलोड",
   "manuscript.inserting": "सम्मिलित किया जा रहा है…",
   "manuscript.insert": "Lexical में सम्मिलित करें",
   "manuscript.insert_tooltip": "एडिटर में छवि सम्मिलित करें",

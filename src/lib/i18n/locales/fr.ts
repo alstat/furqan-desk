@@ -510,7 +510,7 @@ export const fr: Record<string, string> = {
   "manuscript.fullscreen": 'Plein écran',
   "manuscript.select": 'Sélectionner un manuscrit à afficher',
   "manuscript.downloading": 'Téléchargement…',
-  "manuscript.download": 'Télécharger complet',
+  "manuscript.download": "Télécharger",
   "manuscript.inserting": 'Insertion…',
   "manuscript.insert": 'Insérer dans l\'éditeur',
   "manuscript.insert_tooltip": 'Insérer l\'image dans l\'éditeur',

@@ -469,7 +469,7 @@ export const bs: Record<string, string> = {
   "manuscript.fullscreen": "Cijeli ekran",
   "manuscript.select": "Odaberite rukopis za pregled",
   "manuscript.downloading": "Preuzimanje…",
-  "manuscript.download": "Preuzmi kompletno",
+  "manuscript.download": "Preuzmi",
   "manuscript.inserting": "Umetanje…",
   "manuscript.insert": "Umetnuti u Lexical",
   "manuscript.insert_tooltip": "Ubaci sliku u editor",

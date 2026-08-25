@@ -556,7 +556,7 @@ export const ceb: Record<string, string> = {
   "manuscript.fullscreen": "Fullscreen",
   "manuscript.select": "Pagpili og manuskrito aron tan-awon",
   "manuscript.downloading": "Nagda-download…",
-  "manuscript.download": "I-download ang bug-os",
+  "manuscript.download": "I-download",
   "manuscript.inserting": "Nagsal-ot…",
   "manuscript.insert": "Isal-ot sa Lexical",
   "manuscript.insert_tooltip": "Isal-ot ang imahe sa editor",

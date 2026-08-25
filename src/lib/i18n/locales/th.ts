@@ -556,7 +556,7 @@ export const th: Record<string, string> = {
   "manuscript.fullscreen": "เต็มหน้าจอ",
   "manuscript.select": "เลือกต้นฉบับเพื่อดู",
   "manuscript.downloading": "กำลังดาวน์โหลด…",
-  "manuscript.download": "ดาวน์โหลดทั้งหมด",
+  "manuscript.download": "ดาวน์โหลด",
   "manuscript.inserting": "กำลังแทรก…",
   "manuscript.insert": "แทรกใน Lexical",
   "manuscript.insert_tooltip": "แทรกรูปภาพในตัวแก้ไข",

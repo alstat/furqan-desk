@@ -559,7 +559,7 @@ export const ms: Record<string, string> = {
   "manuscript.fullscreen": "Skrin penuh",
   "manuscript.select": "Pilih manuskrip untuk dilihat",
   "manuscript.downloading": "Memuat turun…",
-  "manuscript.download": "Muat turun penuh",
+  "manuscript.download": "Muat turun",
   "manuscript.inserting": "Memasukkan…",
   "manuscript.insert": "Masukkan ke Lexical",
   "manuscript.insert_tooltip": "Masukkan imej ke editor",

@@ -565,7 +565,7 @@ export const tl: Record<string, string> = {
   "manuscript.fullscreen": "Full screen",
   "manuscript.select": "Pumili ng manuskrito upang tingnan",
   "manuscript.downloading": "Dina-download…",
-  "manuscript.download": "I-download ang buong kopya",
+  "manuscript.download": "I-download",
   "manuscript.inserting": "Ipinapasok…",
   "manuscript.insert": "Ipasok sa Lexical",
   "manuscript.insert_tooltip": "Ipasok ang larawan sa editor",

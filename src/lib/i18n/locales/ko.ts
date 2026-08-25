@@ -510,7 +510,7 @@ export const ko: Record<string, string> = {
   "manuscript.fullscreen": '전체 화면',
   "manuscript.select": '볼 필사본을 선택하세요',
   "manuscript.downloading": '다운로드 중…',
-  "manuscript.download": '전체 다운로드',
+  "manuscript.download": "다운로드",
   "manuscript.inserting": '삽입 중…',
   "manuscript.insert": '편집기에 삽입',
   "manuscript.insert_tooltip": '편집기에 이미지 삽입',
