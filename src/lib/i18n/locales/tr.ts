@@ -510,7 +510,7 @@ export const tr: Record<string, string> = {
   "manuscript.fullscreen": 'Tam ekran',
   "manuscript.select": 'Görüntülemek için el yazması seçin',
   "manuscript.downloading": 'İndiriliyor…',
-  "manuscript.download": 'Tamamını indir',
+  "manuscript.download": "İndir",
   "manuscript.inserting": 'Ekleniyor…',
   "manuscript.insert": 'Lexical\'e Ekle',
   "manuscript.insert_tooltip": 'Editöre resim ekle',

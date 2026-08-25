@@ -556,7 +556,7 @@ export const kk: Record<string, string> = {
   "manuscript.fullscreen": "Толық экран",
   "manuscript.select": "Қарау үшін қолжазба таңдаңыз",
   "manuscript.downloading": "Жүктелуде…",
-  "manuscript.download": "Толық жүктеу",
+  "manuscript.download": "Жүктеп алу",
   "manuscript.inserting": "Кірістірілуде…",
   "manuscript.insert": "Lexical-ге кірістіру",
   "manuscript.insert_tooltip": "Суретті редакторға кірістіру",

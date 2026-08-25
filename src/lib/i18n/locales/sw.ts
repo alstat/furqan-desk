@@ -469,7 +469,7 @@ export const sw: Record<string, string> = {
   "manuscript.fullscreen": "Skrini nzima",
   "manuscript.select": "Chagua muswada ili kutazama",
   "manuscript.downloading": "Inapakua...",
-  "manuscript.download": "Pakua kamili",
+  "manuscript.download": "Pakua",
   "manuscript.inserting": "Inaingiza...",
   "manuscript.insert": "Ingiza kwa Lexical",
   "manuscript.insert_tooltip": "Ingiza picha kwenye kihariri",

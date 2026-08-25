@@ -556,7 +556,7 @@ export const tg: Record<string, string> = {
   "manuscript.fullscreen": "Экрани пурра",
   "manuscript.select": "Барои дидан дастнависро интихоб кунед",
   "manuscript.downloading": "Бордорӣ…",
-  "manuscript.download": "Бордорӣ пурра",
+  "manuscript.download": "Боргирӣ",
   "manuscript.inserting": "Дохил карда мешавад…",
   "manuscript.insert": "Дохил кардан ба Lexical",
   "manuscript.insert_tooltip": "Дохил кардани тасвир ба таҳрирӣ",

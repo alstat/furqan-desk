@@ -12,12 +12,16 @@
 		syncConnections,
 		connectorPolyline,
 		elbowMidSegment,
+		isLabelableShape,
+		labelBounds,
 		type Scene,
 		type Shape,
 		type Bounds,
 		type DrawTool,
 		type StyleDefaults,
 		type TextShape,
+		type LabelableShape,
+		type TextAlign,
 		type AnchorId,
 		type Connection
 	} from './drawingScene.js';
@@ -328,7 +332,7 @@
 
 	// ── pointer handlers ────────────────────────────────────────────────────
 	function onPointerDown(e: PointerEvent) {
-		if (editingId) commitText();
+		if (editingId) commitEdit();
 		viewportEl!.setPointerCapture(e.pointerId);
 		dirtied = false;
 		const p = screenToScene(e.clientX, e.clientY);
@@ -566,7 +570,9 @@
 	function onDblClick(e: MouseEvent) {
 		const p = screenToScene(e.clientX, e.clientY);
 		const hit = hitTest(p);
-		if (hit && hit.type === 'text') startEdit(hit.id);
+		if (!hit) return;
+		if (hit.type === 'text') startEdit(hit.id);
+		else if (isLabelableShape(hit)) startLabelEdit(hit, '');
 	}
 
 	function onWheel(e: WheelEvent) {
@@ -582,7 +588,7 @@
 		onViewChange(nz, { x: nx, y: ny });
 	}
 
-	// ── text editing ────────────────────────────────────────────────────────
+	// ── text editing (standalone text shapes + shape labels) ───────────────────
 	function startEdit(id: string) {
 		const shape = scene.shapes.find((s) => s.id === id);
 		if (!shape || shape.type !== 'text') return;
@@ -591,38 +597,153 @@
 		onEditingChange(true);
 		onSelect([id]);
 	}
-	function commitText() {
+	// Keys that already have a bare (no-modifier) meaning on the canvas and so
+	// must not also be treated as "start typing a label" seed characters.
+	const LABEL_TRIGGER_EXCLUDE = new Set([' ', '[', ']']);
+	/** Begin editing `shape`'s centred label, seeded with the key that triggered it. */
+	function startLabelEdit(shape: LabelableShape, seed: string) {
+		editingId = shape.id;
+		editValue = (shape.label?.text ?? '') + seed;
+		onEditingChange(true);
+		onSelect([shape.id]);
+	}
+	function commitEdit() {
 		if (!editingId) return;
 		const id = editingId;
-		const shape = scene.shapes.find((s) => s.id === id) as TextShape | undefined;
+		const shape = scene.shapes.find((s) => s.id === id);
 		editingId = null;
 		onEditingChange(false);
 		if (!shape) return;
-		if (editValue.trim() === '') {
-			// remove empty text box
-			requestHistory();
-			onSceneChange({ ...scene, shapes: scene.shapes.filter((s) => s.id !== id) });
+		if (shape.type === 'text') {
+			if (editValue.trim() === '') {
+				// remove empty text box
+				requestHistory();
+				onSceneChange({ ...scene, shapes: scene.shapes.filter((s) => s.id !== id) });
+				return;
+			}
+			if (editValue !== shape.text) {
+				requestHistory();
+				onSceneChange({
+					...scene,
+					shapes: scene.shapes.map((s) =>
+						s.id === id ? { ...(s as TextShape), text: editValue } : s
+					)
+				});
+			}
 			return;
 		}
-		if (editValue !== shape.text) {
+		if (!isLabelableShape(shape)) return;
+		if (editValue.trim() === '') {
+			if (!shape.label) return;
 			requestHistory();
 			onSceneChange({
 				...scene,
-				shapes: scene.shapes.map((s) => (s.id === id ? { ...(s as TextShape), text: editValue } : s))
+				shapes: scene.shapes.map((s) => (s.id === id ? { ...s, label: undefined } : s))
+			});
+			return;
+		}
+		if (editValue !== shape.label?.text) {
+			requestHistory();
+			const label = shape.label
+				? { ...shape.label, text: editValue }
+				: {
+						text: editValue,
+						fontSize: style.fontSize,
+						fontFamily: style.fontFamily,
+						fill: style.stroke,
+						bold: style.bold,
+						italic: style.italic
+					};
+			onSceneChange({
+				...scene,
+				shapes: scene.shapes.map((s) => (s.id === id ? ({ ...s, label } as Shape) : s))
 			});
 		}
 	}
-	function editingShape(): TextShape | null {
+	// Unified view of whatever is currently being edited (a text shape or a
+	// shape's label), in a common shape for the edit overlay to render from.
+	function editView(): {
+		x: number;
+		y: number;
+		w: number;
+		h: number;
+		fontSize: number;
+		fontFamily: string;
+		fill: string;
+		align: TextAlign;
+		bold: boolean;
+		italic: boolean;
+	} | null {
 		if (!editingId) return null;
 		const s = scene.shapes.find((sh) => sh.id === editingId);
-		return s && s.type === 'text' ? s : null;
+		if (!s) return null;
+		if (s.type === 'text') {
+			return {
+				x: s.x,
+				y: s.y,
+				w: s.w,
+				h: s.h,
+				fontSize: s.fontSize,
+				fontFamily: s.fontFamily,
+				fill: s.fill,
+				align: s.align,
+				bold: s.bold,
+				italic: s.italic
+			};
+		}
+		if (isLabelableShape(s)) {
+			const b = labelBounds(s);
+			const label = s.label;
+			return {
+				x: b.x,
+				y: b.y,
+				w: b.w,
+				h: b.h,
+				fontSize: label?.fontSize ?? style.fontSize,
+				fontFamily: label?.fontFamily ?? style.fontFamily,
+				fill: label?.fill ?? style.stroke,
+				align: 'center',
+				bold: label?.bold ?? style.bold,
+				italic: label?.italic ?? style.italic
+			};
+		}
+		return null;
 	}
 
-	// ── space-to-pan tracking ────────────────────────────────────────────────
+	// ── space-to-pan tracking + "start typing to label a shape" ────────────────
 	let spaceDown = $state(false);
 	function onKeyDown(e: KeyboardEvent) {
 		if (e.code === 'Space' && !editingId && !(e.target instanceof HTMLTextAreaElement)) {
 			spaceDown = true;
+		}
+		if (
+			!e.ctrlKey &&
+			!e.metaKey &&
+			!e.altKey &&
+			e.key.length === 1 &&
+			!(e.target instanceof HTMLInputElement) &&
+			!(e.target instanceof HTMLTextAreaElement) &&
+			!(e.target instanceof HTMLSelectElement)
+		) {
+			if (editingId) {
+				// The edit textarea for a key that already started this edit hasn't
+				// taken focus yet (it grabs it a frame later, in `focusOnMount`) —
+				// once it has, this listener stops receiving events at all, since
+				// the textarea's own handler calls stopPropagation. Until then, keep
+				// appending here (space included) so typing quickly right after the
+				// shape is selected loses nothing.
+				e.preventDefault();
+				editValue += e.key;
+			} else if (selectedIds.length === 1 && !LABEL_TRIGGER_EXCLUDE.has(e.key)) {
+				// Only exclude the reserved trigger keys (space/[/]) from *starting*
+				// a new edit, so their bare-key meaning (pan / reorder) still works
+				// while nothing is being edited.
+				const shape = scene.shapes.find((s) => s.id === selectedIds[0]);
+				if (shape && isLabelableShape(shape)) {
+					e.preventDefault();
+					startLabelEdit(shape, e.key);
+				}
+			}
 		}
 	}
 	function onKeyUp(e: KeyboardEvent) {
@@ -643,9 +764,9 @@
 	}
 
 	let editScreen = $derived.by(() => {
-		const s = editingShape();
-		if (!s) return null;
-		return boundsToScreen(shapeBounds(s));
+		const v = editView();
+		if (!v) return null;
+		return boundsToScreen({ x: v.x, y: v.y, w: v.w, h: v.h });
 	});
 	let marqueeScreen = $derived(
 		marqueeActive
@@ -769,20 +890,20 @@
 		{/if}
 	{/if}
 
-	<!-- Text editing overlay -->
-	{#if editScreen && editingShape()}
-		{@const es = editingShape()}
+	<!-- Text editing overlay (standalone text shape or a shape's label) -->
+	{#if editScreen && editView()}
+		{@const es = editView()}
 		<textarea
 			class="text-edit"
 			use:focusOnMount
 			bind:value={editValue}
-			onblur={commitText}
+			onblur={commitEdit}
 			onpointerdown={(e) => e.stopPropagation()}
 			ondblclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => {
 				if (e.key === 'Escape' || (e.key === 'Enter' && (e.ctrlKey || e.metaKey))) {
 					e.preventDefault();
-					commitText();
+					commitEdit();
 				}
 				e.stopPropagation();
 			}}

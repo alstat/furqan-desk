@@ -510,7 +510,7 @@ export const id: Record<string, string> = {
   "manuscript.fullscreen": 'Layar penuh',
   "manuscript.select": 'Pilih manuskrip untuk dilihat',
   "manuscript.downloading": 'Mengunduh…',
-  "manuscript.download": 'Unduh lengkap',
+  "manuscript.download": "Unduh",
   "manuscript.inserting": 'Menyisipkan…',
   "manuscript.insert": 'Sisipkan ke Lexical',
   "manuscript.insert_tooltip": 'Sisipkan gambar ke editor',

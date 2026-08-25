@@ -561,7 +561,7 @@ export const ja: Record<string, string> = {
   "manuscript.fullscreen": "フルスクリーン",
   "manuscript.select": "表示する写本を選択してください",
   "manuscript.downloading": "ダウンロード中…",
-  "manuscript.download": "全てダウンロード",
+  "manuscript.download": "ダウンロード",
   "manuscript.inserting": "挿入中…",
   "manuscript.insert": "エディタに挿入",
   "manuscript.insert_tooltip": "エディタに画像を挿入",

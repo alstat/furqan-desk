@@ -510,7 +510,7 @@ export const fa: Record<string, string> = {
   "manuscript.fullscreen": 'تمام‌صفحه',
   "manuscript.select": 'یک نسخه خطی برای مشاهده انتخاب کنید',
   "manuscript.downloading": 'در حال دانلود…',
-  "manuscript.download": 'دانلود کامل',
+  "manuscript.download": "دانلود",
   "manuscript.inserting": 'در حال درج…',
   "manuscript.insert": 'درج در ویرایشگر',
   "manuscript.insert_tooltip": 'درج تصویر در ویرایشگر',

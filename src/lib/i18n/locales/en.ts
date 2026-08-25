@@ -694,7 +694,7 @@ export const en: Record<string, string> = {
   "manuscript.fullscreen": "Fullscreen",
   "manuscript.select": "Select a manuscript to view",
   "manuscript.downloading": "Downloading…",
-  "manuscript.download": "Download full",
+  "manuscript.download": "Download",
   "manuscript.download_saved": "✓ Saved: {filename}",
   "manuscript.download_failed": "✗ Failed: {error}",
   "manuscript.inserting": "Inserting…",

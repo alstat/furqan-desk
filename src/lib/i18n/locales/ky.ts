@@ -556,7 +556,7 @@ export const ky: Record<string, string> = {
   "manuscript.fullscreen": "Толук экран",
   "manuscript.select": "Көрүү үчүн кол жазма тандаңыз",
   "manuscript.downloading": "Жүктөлүүдө…",
-  "manuscript.download": "Толук жүктөп алуу",
+  "manuscript.download": "Жүктөп алуу",
   "manuscript.inserting": "Кошулууда…",
   "manuscript.insert": "Lexical га кошуу",
   "manuscript.insert_tooltip": "Сүрөттү редакторго кошуу",

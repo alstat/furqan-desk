@@ -469,7 +469,7 @@ export const ta: Record<string, string> = {
   "manuscript.fullscreen": "முழுத்திரை",
   "manuscript.select": "பார்க்க கையெழுத்துப் பிரதியைத் தேர்ந்தெடுக்கவும்",
   "manuscript.downloading": "பதிவிறக்குகிறது…",
-  "manuscript.download": "பதிவிறக்கம் முழுமையாக",
+  "manuscript.download": "பதிவிறக்கு",
   "manuscript.inserting": "செருகுகிறது…",
   "manuscript.insert": "Lexical இல் செருகவும்",
   "manuscript.insert_tooltip": "எடிட்டரில் படத்தைச் செருகவும்",

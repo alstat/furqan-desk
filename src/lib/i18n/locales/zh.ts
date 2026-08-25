@@ -510,7 +510,7 @@ export const zh: Record<string, string> = {
   "manuscript.fullscreen": '全屏',
   "manuscript.select": '选择一份手稿查看',
   "manuscript.downloading": '正在下载…',
-  "manuscript.download": '完整下载',
+  "manuscript.download": "下载",
   "manuscript.inserting": '正在插入…',
   "manuscript.insert": '插入编辑器',
   "manuscript.insert_tooltip": '将图片插入编辑器',

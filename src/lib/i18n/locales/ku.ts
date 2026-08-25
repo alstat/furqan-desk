@@ -469,7 +469,7 @@ export const ku: Record<string, string> = {
   "manuscript.fullscreen": "شاشەی تەواو",
   "manuscript.select": "دەستنووسێک هەڵبژێرە بۆ بینین",
   "manuscript.downloading": "دابەزاندنی...",
-  "manuscript.download": "دابەزاندن تەواو",
+  "manuscript.download": "داگرتن",
   "manuscript.inserting": "دانانی...",
   "manuscript.insert": "دانان بۆ وشەیی",
   "manuscript.insert_tooltip": "وێنە بخەرە ناو دەستکاریکەرەوە",

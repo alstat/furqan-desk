@@ -556,7 +556,7 @@ export const uz: Record<string, string> = {
   "manuscript.fullscreen": "To'liq ekran",
   "manuscript.select": "Ko'rish uchun qo'lyozma tanlang",
   "manuscript.downloading": "Yuklanmoqda…",
-  "manuscript.download": "To'liq yuklab olish",
+  "manuscript.download": "Yuklab olish",
   "manuscript.inserting": "Qo'shilmoqda…",
   "manuscript.insert": "Lexical ga qo'shish",
   "manuscript.insert_tooltip": "Rasmni muharrirga qo'shish",

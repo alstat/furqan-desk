@@ -556,7 +556,7 @@ export const my: Record<string, string> = {
   "manuscript.fullscreen": "မျက်နှာပြင်အပြည့်",
   "manuscript.select": "ကြည့်ရန် မူရင်းစာမူ ရွေးပါ",
   "manuscript.downloading": "ဒေါင်းလုဒ်လုပ်နေသည်…",
-  "manuscript.download": "အပြည့် ဒေါင်းလုဒ်လုပ်ပါ",
+  "manuscript.download": "ဒေါင်းလုဒ်",
   "manuscript.inserting": "ထည့်သွင်းနေသည်…",
   "manuscript.insert": "Lexical တွင် ထည့်ပါ",
   "manuscript.insert_tooltip": "တည်းဖြတ်ကိရိယာတွင် ပုံ ထည့်ပါ",
