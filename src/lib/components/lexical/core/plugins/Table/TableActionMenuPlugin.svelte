@@ -105,11 +105,29 @@
       if (tableCellNodeDOM != null) {
         const tableCellRect = tableCellNodeDOM.getBoundingClientRect();
         const menuRect = menuButtonDOM.getBoundingClientRect();
-        const anchorRect = anchorElem.getBoundingClientRect();
 
-        const top = tableCellRect.top - anchorRect.top + 4;
-        const left =
-          tableCellRect.right - menuRect.width - 10 - anchorRect.left;
+        // The button is absolutely positioned at 0,0 and moved by transform,
+        // so those coordinates resolve against its *offset parent* — the
+        // nearest positioned ancestor — and not against `anchorElem`.
+        // Upstream the two are the same element, because there the button is
+        // portalled into the anchor; here it is rendered inline, one level in,
+        // so the anchor is the whole editor shell while the offset parent is
+        // the container below the toolbar. Measuring from the anchor therefore
+        // added the toolbar's height to every position, dropping the button
+        // about a row: it lined up with the row *under* the cell holding the
+        // cursor, which made it look like the menu acted on the wrong cell.
+        //
+        // `top`/`left` are offsets into the offset parent's padding box, so the
+        // origin has to include its border — that is what clientTop/clientLeft
+        // are. `anchorElem` stays the fallback for the case where there is no
+        // offset parent to measure.
+        const origin = menuButtonDOM.offsetParent ?? anchorElem;
+        const originRect = origin.getBoundingClientRect();
+        const originTop = originRect.top + origin.clientTop;
+        const originLeft = originRect.left + origin.clientLeft;
+
+        const top = tableCellRect.top - originTop + 4;
+        const left = tableCellRect.right - menuRect.width - 10 - originLeft;
 
         menuButtonDOM.style.opacity = '1';
         menuButtonDOM.style.transform = `translate(${left}px, ${top}px)`;
