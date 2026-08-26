@@ -79,6 +79,11 @@
         "w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#626880]";
     const labelClass =
         "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
+    // Group-level header: visually distinct from field labels (labelClass)
+    // via a filled pill, so a cluster of controls reads as one named group
+    // rather than blending into the field above/below it.
+    const sectionLabelClass =
+        "inline-block rounded-md bg-brand-gold-100 dark:bg-[#414559] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-gold-600 dark:text-[#e5c890]";
     const chipClass =
         "cursor-pointer rounded-lg border px-2 py-1 text-[11px] font-semibold transition-colors";
 
@@ -1556,111 +1561,63 @@
                         </div>
                     {:else if tab === "text"}
                         <div class="flex flex-col gap-3.5">
-                            <div>
-                                <label for="pc-afont" class={labelClass}
-                                    >{$t("postcard.arabic_font")}</label
+                            <div class="flex flex-col gap-3">
+                                <span class={sectionLabelClass}
+                                    >{$t("postcard.arabic_style")}</span
                                 >
-                                <div class="relative">
-                                    <select
-                                        id="pc-afont"
-                                        bind:value={arabicFont}
-                                        class={selectClass}
+                                <div>
+                                    <label for="pc-afont" class={labelClass}
+                                        >{$t("postcard.arabic_font")}</label
                                     >
-                                        {#each ARABIC_FONTS as f}
-                                            <option value={f}>{f}</option>
-                                        {/each}
-                                    </select>
-                                    <span
-                                        class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300"
-                                    >
-                                        <Icon
-                                            icon="charm:chevron-down"
-                                            width="0.75rem"
-                                        />
-                                    </span>
+                                    <div class="relative">
+                                        <select
+                                            id="pc-afont"
+                                            bind:value={arabicFont}
+                                            class={selectClass}
+                                        >
+                                            {#each ARABIC_FONTS as f}
+                                                <option value={f}>{f}</option>
+                                            {/each}
+                                        </select>
+                                        <span
+                                            class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300"
+                                        >
+                                            <Icon
+                                                icon="charm:chevron-down"
+                                                width="0.75rem"
+                                            />
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                            {@render slider(
-                                $t("postcard.arabic_size"),
-                                arabicSize,
-                                28,
-                                160,
-                                1,
-                                (v) => (arabicSize = v),
-                                "px",
-                            )}
-                            {@render slider(
-                                $t("postcard.line_spacing"),
-                                arabicLine,
-                                1.2,
-                                3,
-                                0.05,
-                                (v) => (arabicLine = v),
-                                "x",
-                            )}
-                            {@render colorField(
-                                $t("postcard.arabic_color"),
-                                arabicColor,
-                                (v) => (arabicColor = v),
-                            )}
-
-                            <div
-                                class="border-t border-brand-sand-100 dark:border-[#414559] pt-3 flex flex-col gap-3"
-                            >
-                                {@render toggleRow(
-                                    $t("postcard.drop_shadow"),
-                                    shadowOn,
-                                    () => (shadowOn = !shadowOn),
+                                {@render slider(
+                                    $t("postcard.arabic_size"),
+                                    arabicSize,
+                                    28,
+                                    160,
+                                    1,
+                                    (v) => (arabicSize = v),
+                                    "px",
                                 )}
-                                {#if shadowOn}
-                                    {@render slider(
-                                        $t("postcard.shadow_blur"),
-                                        shadowBlur,
-                                        0,
-                                        60,
-                                        1,
-                                        (v) => (shadowBlur = v),
-                                        "px",
-                                    )}
-                                    {@render slider(
-                                        $t("postcard.shadow_x"),
-                                        shadowDx,
-                                        -30,
-                                        30,
-                                        1,
-                                        (v) => (shadowDx = v),
-                                        "px",
-                                    )}
-                                    {@render slider(
-                                        $t("postcard.shadow_y"),
-                                        shadowDy,
-                                        -30,
-                                        30,
-                                        1,
-                                        (v) => (shadowDy = v),
-                                        "px",
-                                    )}
-                                    {@render slider(
-                                        $t("postcard.shadow_opacity"),
-                                        shadowOpacity,
-                                        0,
-                                        100,
-                                        1,
-                                        (v) => (shadowOpacity = v),
-                                        "%",
-                                    )}
-                                    {@render colorField(
-                                        $t("postcard.shadow_color"),
-                                        shadowColor,
-                                        (v) => (shadowColor = v),
-                                    )}
-                                {/if}
+                                {@render slider(
+                                    $t("postcard.line_spacing"),
+                                    arabicLine,
+                                    1.2,
+                                    3,
+                                    0.05,
+                                    (v) => (arabicLine = v),
+                                    "x",
+                                )}
+                                {@render colorField(
+                                    $t("postcard.arabic_color"),
+                                    arabicColor,
+                                    (v) => (arabicColor = v),
+                                )}
                             </div>
 
                             <div
                                 class="border-t border-brand-sand-100 dark:border-[#414559] pt-3 flex flex-col gap-3"
                             >
-                                <span class={labelClass + " mb-0"}
+                                <span class={sectionLabelClass}
                                     >{$t("postcard.translation_style")}</span
                                 >
                                 <div class="relative">
@@ -1719,6 +1676,62 @@
                                     (v) => (refColor = v),
                                 )}
                             </div>
+
+                            <div
+                                class="border-t border-brand-sand-100 dark:border-[#414559] pt-3 flex flex-col gap-3"
+                            >
+                                <span class={sectionLabelClass}
+                                    >{$t("postcard.text_effects")}</span
+                                >
+                                {@render toggleRow(
+                                    $t("postcard.drop_shadow"),
+                                    shadowOn,
+                                    () => (shadowOn = !shadowOn),
+                                )}
+                                {#if shadowOn}
+                                    {@render slider(
+                                        $t("postcard.shadow_blur"),
+                                        shadowBlur,
+                                        0,
+                                        60,
+                                        1,
+                                        (v) => (shadowBlur = v),
+                                        "px",
+                                    )}
+                                    {@render slider(
+                                        $t("postcard.shadow_x"),
+                                        shadowDx,
+                                        -30,
+                                        30,
+                                        1,
+                                        (v) => (shadowDx = v),
+                                        "px",
+                                    )}
+                                    {@render slider(
+                                        $t("postcard.shadow_y"),
+                                        shadowDy,
+                                        -30,
+                                        30,
+                                        1,
+                                        (v) => (shadowDy = v),
+                                        "px",
+                                    )}
+                                    {@render slider(
+                                        $t("postcard.shadow_opacity"),
+                                        shadowOpacity,
+                                        0,
+                                        100,
+                                        1,
+                                        (v) => (shadowOpacity = v),
+                                        "%",
+                                    )}
+                                    {@render colorField(
+                                        $t("postcard.shadow_color"),
+                                        shadowColor,
+                                        (v) => (shadowColor = v),
+                                    )}
+                                {/if}
+                            </div>
                         </div>
                     {:else if tab === "background"}
                         <div class="flex flex-col gap-3.5">
@@ -1748,8 +1761,11 @@
                             )}
 
                             {#if wantsPattern}
+                                <div
+                                    class="border-t border-brand-sand-100 dark:border-[#414559] pt-3 flex flex-col gap-3"
+                                >
                                 <div>
-                                    <span class={labelClass}
+                                    <span class={sectionLabelClass + " mb-1.5"}
                                         >{$t("postcard.pattern")}</span
                                     >
                                     <div class="grid grid-cols-3 gap-1.5">
@@ -1812,11 +1828,15 @@
                                     (v) => (patternStroke = v),
                                     "",
                                 )}
+                                </div>
                             {/if}
 
                             {#if wantsManuscript}
+                                <div
+                                    class="border-t border-brand-sand-100 dark:border-[#414559] pt-3 flex flex-col gap-3"
+                                >
                                 <div>
-                                    <span class={labelClass}
+                                    <span class={sectionLabelClass + " mb-1.5"}
                                         >{$t("postcard.manuscripts_for", {
                                             ref: `${surah}:${sortedSelection[0] ?? "-"}`,
                                         })}</span
@@ -1995,13 +2015,14 @@
                                         () => (bgGray = !bgGray),
                                     )}
                                 {/if}
+                                </div>
                             {/if}
 
                             <div
                                 class="border-t border-brand-sand-100 dark:border-[#414559] pt-3 flex flex-col gap-3"
                             >
                                 <div>
-                                    <span class={labelClass}
+                                    <span class={sectionLabelClass + " mb-1.5"}
                                         >{$t("postcard.gradient")}</span
                                     >
                                     <div class="grid grid-cols-4 gap-1.5">
