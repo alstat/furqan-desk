@@ -516,7 +516,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             {/if}
 
             <!-- Switch to a specific Julia version -->
-            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-[#414559]">
+            <div class="mt-3">
                 <div class="flex items-start justify-between gap-3 mb-1">
                     <div class="min-w-0">
                         <span class={rowLabel}>Switch version</span>
@@ -553,7 +553,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         </div>
 
             <!-- Lean 4 -->
-            <div>
+            <div class="pt-4 border-t border-slate-100 dark:border-[#414559]">
                 <p class={sectionLabel}>Lean 4</p>
                 <div class="flex items-center justify-between mb-2">
                 <span class={rowLabel}>
@@ -614,7 +614,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             {/if}
 
             <!-- Switch to a specific Lean toolchain -->
-            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-[#414559]">
+            <div class="mt-3">
                 <div class="flex items-start justify-between gap-3 mb-1">
                     <div class="min-w-0">
                         <span class={rowLabel}>Switch toolchain</span>
@@ -650,7 +650,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         </div>
 
             <!-- Typst Packages -->
-            <div>
+            <div class="pt-4 border-t border-slate-100 dark:border-[#414559]">
                 <p class={sectionLabel}>{$t('settings.typst')}</p>
             <p class="mb-2 text-xs text-brand-charcoal-300 dark:text-[#838ba7]">
                 Default packages for the Typst editor. Downloaded automatically on first use and cached locally.
