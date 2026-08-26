@@ -101,8 +101,124 @@ export function hexToRgba(hex: string, alpha: number): string {
     return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
+/**
+ * Fonts named after the chosen family, for the scripts it does not cover.
+ *
+ * The picker offers Latin faces (EB Garamond, Georgia, …) and Arabic ones
+ * (Amiri, Scheherazade, …). None of them carries Bengali, Devanagari, Tamil or
+ * Thai, so a translation in those scripts is drawn by whatever the generic
+ * `serif` keyword happens to resolve to — which is not required to be the same
+ * face the canvas measured with, and a line measured narrower than it paints
+ * overflows a centred line off both edges of the card.
+ *
+ * Naming real families closes that gap: measurement and painting agree because
+ * both resolve the same list. Each script gets the system face that covers it
+ * on macOS, on Windows, and from the Noto set that Linux usually carries. They
+ * are only ever reached for glyphs the chosen family lacks, so text in a script
+ * it does cover renders exactly as before.
+ */
+const SCRIPT_FALLBACKS = [
+    // Bengali · Devanagari · Tamil (Windows ships one face for all three)
+    "Nirmala UI",
+    "Bangla Sangam MN",
+    "Devanagari Sangam MN",
+    "Tamil Sangam MN",
+    "Noto Serif Bengali",
+    "Noto Serif Devanagari",
+    "Noto Serif Tamil",
+    // Thai
+    "Leelawadee UI",
+    "Thonburi",
+    "Noto Serif Thai",
+]
+    .map((f) => `"${f}"`)
+    .join(", ");
+
 export function fontSpec(size: number, family: string, weight = "400"): string {
-    return `${weight} ${size}px "${family}", serif`;
+    return `${weight} ${size}px "${family}", ${SCRIPT_FALLBACKS}, serif`;
+}
+
+/**
+ * Split `text` the way the reader's locale data says it divides.
+ *
+ * `word` granularity is what knows that Thai — like Lao, Khmer, and CJK —
+ * breaks between words that have no space between them. `grapheme` keeps a
+ * base letter together with the marks and conjuncts that belong to it, which
+ * matters for Bengali, Devanagari and Tamil, where cutting between code points
+ * would split a single written syllable in half.
+ */
+function segment(text: string, granularity: "word" | "grapheme"): string[] {
+    const Segmenter = (
+        Intl as unknown as {
+            Segmenter?: new (
+                locale?: string,
+                opts?: { granularity: string },
+            ) => { segment: (s: string) => Iterable<{ segment: string }> };
+        }
+    ).Segmenter;
+    if (typeof Segmenter !== "function") {
+        // Splitting by code point still beats not breaking at all; it can
+        // separate a combining mark from its base, which the segmenter above
+        // avoids wherever it exists.
+        return granularity === "grapheme" ? Array.from(text) : [text];
+    }
+    return Array.from(
+        new Segmenter(undefined, { granularity }).segment(text),
+        (s) => s.segment,
+    );
+}
+
+/**
+ * Break one token that is too wide to fit a line even on its own.
+ *
+ * Whitespace is the only wrap opportunity the greedy pass knows about, and not
+ * every script separates its words with it: a Thai clause is one whitespace
+ * token from end to end, and an agglutinative Tamil word gets long enough to
+ * pass the same limit at a large type size. Such a token used to be laid down
+ * whole and simply overflowed — and since the line is centred, it spilled off
+ * *both* edges of the card, which reads as text that starts mid-card and runs
+ * off the right.
+ *
+ * The pieces are rejoined with nothing between them, because the breaks these
+ * scripts use are not spaces.
+ */
+function breakToken(
+    ctx: CanvasRenderingContext2D,
+    token: string,
+    maxWidth: number,
+): string[] {
+    const out: string[] = [];
+    let cur = "";
+    const flush = () => {
+        if (cur) out.push(cur);
+        cur = "";
+    };
+
+    for (const piece of segment(token, "word")) {
+        if (cur && ctx.measureText(cur + piece).width <= maxWidth) {
+            cur += piece;
+            continue;
+        }
+        flush();
+        if (ctx.measureText(piece).width <= maxWidth) {
+            cur = piece;
+            continue;
+        }
+        // One indivisible word still wider than the line: cut it by written
+        // character. Nothing narrower is left to try, so a single cluster
+        // wider than the line is placed anyway rather than looping forever.
+        for (const g of segment(piece, "grapheme")) {
+            if (cur && ctx.measureText(cur + g).width <= maxWidth) {
+                cur += g;
+            } else {
+                flush();
+                cur = g;
+            }
+        }
+    }
+
+    flush();
+    return out;
 }
 
 /** Greedy word wrap against the current `ctx.font`. */
@@ -116,12 +232,23 @@ export function wrapText(
     let cur = "";
     for (const w of words) {
         const test = cur ? `${cur} ${w}` : w;
-        if (!cur || ctx.measureText(test).width <= maxWidth) {
+        if (ctx.measureText(test).width <= maxWidth) {
             cur = test;
-        } else {
-            lines.push(cur);
-            cur = w;
+            continue;
         }
+        if (cur) {
+            lines.push(cur);
+            cur = "";
+        }
+        if (ctx.measureText(w).width <= maxWidth) {
+            cur = w;
+            continue;
+        }
+        // Too wide to stand on its own line, so it has to be broken rather
+        // than left to run off the card.
+        const pieces = breakToken(ctx, w, maxWidth);
+        cur = pieces.pop() ?? "";
+        lines.push(...pieces);
     }
     if (cur) lines.push(cur);
     return lines;
