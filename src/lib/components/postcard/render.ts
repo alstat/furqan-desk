@@ -105,6 +105,125 @@ export function fontSpec(size: number, family: string, weight = "400"): string {
     return `${weight} ${size}px "${family}", serif`;
 }
 
+/**
+ * Split `text` the way the reader's locale data says it divides.
+ *
+ * `word` granularity is what knows that Thai — like Lao, Khmer, and CJK —
+ * breaks between words that have no space between them. `grapheme` keeps a
+ * base letter together with the marks and conjuncts that belong to it, which
+ * matters for Bengali, Devanagari and Tamil, where cutting between code points
+ * would split a single written syllable in half.
+ */
+function segment(text: string, granularity: "word" | "grapheme"): string[] {
+    const Segmenter = (
+        Intl as unknown as {
+            Segmenter?: new (
+                locale?: string,
+                opts?: { granularity: string },
+            ) => { segment: (s: string) => Iterable<{ segment: string }> };
+        }
+    ).Segmenter;
+    if (typeof Segmenter !== "function") {
+        // Splitting by code point still beats not breaking at all; it can
+        // separate a combining mark from its base, which the segmenter above
+        // avoids wherever it exists.
+        return granularity === "grapheme" ? Array.from(text) : [text];
+    }
+    return Array.from(
+        new Segmenter(undefined, { granularity }).segment(text),
+        (s) => s.segment,
+    );
+}
+
+/**
+ * Break one token that is too wide to fit a line even on its own.
+ *
+ * Whitespace is the only wrap opportunity the greedy pass knows about, and not
+ * every script separates its words with it: a Thai clause is one whitespace
+ * token from end to end, and an agglutinative Tamil word gets long enough to
+ * pass the same limit at a large type size. Such a token used to be laid down
+ * whole and simply overflowed — and since the line is centred, it spilled off
+ * *both* edges of the card, which reads as text that starts mid-card and runs
+ * off the right.
+ *
+ * The pieces are rejoined with nothing between them, because the breaks these
+ * scripts use are not spaces.
+ */
+function breakToken(
+    ctx: CanvasRenderingContext2D,
+    token: string,
+    maxWidth: number,
+): string[] {
+    const out: string[] = [];
+    let cur = "";
+    const flush = () => {
+        if (cur) out.push(cur);
+        cur = "";
+    };
+
+    for (const piece of segment(token, "word")) {
+        if (cur && ctx.measureText(cur + piece).width <= maxWidth) {
+            cur += piece;
+            continue;
+        }
+        flush();
+        if (ctx.measureText(piece).width <= maxWidth) {
+            cur = piece;
+            continue;
+        }
+        // One indivisible word still wider than the line: cut it by written
+        // character. Nothing narrower is left to try, so a single cluster
+        // wider than the line is placed anyway rather than looping forever.
+        for (const g of segment(piece, "grapheme")) {
+            if (cur && ctx.measureText(cur + g).width <= maxWidth) {
+                cur += g;
+            } else {
+                flush();
+                cur = g;
+            }
+        }
+    }
+
+    flush();
+    return out;
+}
+
+/**
+ * Draw `text` aligned against `anchorX`, doing the alignment arithmetic here
+ * rather than through `ctx.textAlign`.
+ *
+ * Canvas can align text itself, and on every engine but one it does. macOS runs
+ * the app on WebKit, and there `textAlign` is silently ignored for scripts that
+ * need complex shaping: Bengali, Devanagari, Tamil and Thai are drawn from the
+ * anchor as though left-aligned. A centred translation therefore began at the
+ * middle of the card and ran off the right edge — measured on that engine, a
+ * centred line landed 147-198px right of where it belonged and a right-aligned
+ * one 96px, while Latin and Arabic were placed correctly. Windows and Linux,
+ * both on Chromium, were never affected.
+ *
+ * `measureText` stays accurate on that engine even where `fillText` does not,
+ * so positioning from it and drawing left-aligned comes out right everywhere.
+ * Verified against Latin, Bengali, Devanagari, Tamil, Thai and right-to-left
+ * Arabic, at all three alignments, in both engines.
+ */
+function fillAligned(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    anchorX: number,
+    y: number,
+    align: "left" | "center" | "right",
+): void {
+    // "left" is the one case the engine never got wrong, and it needs no
+    // measurement: the anchor is already where the text starts.
+    ctx.textAlign = "left";
+    if (align === "left") {
+        ctx.fillText(text, anchorX, y);
+        return;
+    }
+    const width = ctx.measureText(text).width;
+    ctx.fillText(text, align === "center" ? anchorX - width / 2 : anchorX - width, y);
+}
+
 /** Greedy word wrap against the current `ctx.font`. */
 export function wrapText(
     ctx: CanvasRenderingContext2D,
@@ -116,12 +235,23 @@ export function wrapText(
     let cur = "";
     for (const w of words) {
         const test = cur ? `${cur} ${w}` : w;
-        if (!cur || ctx.measureText(test).width <= maxWidth) {
+        if (ctx.measureText(test).width <= maxWidth) {
             cur = test;
-        } else {
-            lines.push(cur);
-            cur = w;
+            continue;
         }
+        if (cur) {
+            lines.push(cur);
+            cur = "";
+        }
+        if (ctx.measureText(w).width <= maxWidth) {
+            cur = w;
+            continue;
+        }
+        // Too wide to stand on its own line, so it has to be broken rather
+        // than left to run off the card.
+        const pieces = breakToken(ctx, w, maxWidth);
+        cur = pieces.pop() ?? "";
+        lines.push(...pieces);
     }
     if (cur) lines.push(cur);
     return lines;
@@ -492,7 +622,6 @@ export function renderPostcard(
               ? W - pad
               : pad;
 
-    ctx.textAlign = o.textAlign;
     let cursorY = startY;
     for (const b of laid.blocks) {
         ctx.font = b.font;
@@ -511,7 +640,7 @@ export function renderPostcard(
             cursorY += lh;
             // Sit the baseline inside the line box rather than on its bottom
             // edge, so ascenders and descenders share the leading evenly.
-            ctx.fillText(line, anchorX, cursorY - lh * 0.25);
+            fillAligned(ctx, line, anchorX, cursorY - lh * 0.25, o.textAlign);
         }
         cursorY += b.gapAfter;
     }
@@ -576,11 +705,10 @@ export function renderPostcard(
                 "400",
             );
             if (fitted) {
-                ctx.textAlign = "right";
                 ctx.globalAlpha = 0.6;
                 ctx.fillStyle = o.arabicColor;
                 ctx.font = fitted.font;
-                ctx.fillText(fitted.text, W - pad, fy);
+                fillAligned(ctx, fitted.text, W - pad, fy, "right");
             }
         }
         ctx.restore();
