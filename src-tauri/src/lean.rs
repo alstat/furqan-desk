@@ -15,7 +15,7 @@
 //! compile in one never cancels or contaminates the other. This mirrors the
 //! two-kernel split in `julia.rs`.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -23,6 +23,12 @@ use tauri::{AppHandle, Emitter, Manager, State};
 
 /// Default kernel name when a command doesn't specify one.
 const DEFAULT_KERNEL: &str = "repl";
+
+/// How many lines of an installer's output to keep for its error message.
+///
+/// Enough to carry elan's error plus the context above it, without pasting a
+/// whole toolchain download into a toast.
+const TAIL_LINES: usize = 12;
 
 /// Upper bound on a single compile.
 ///
@@ -465,12 +471,18 @@ fn elan_target() -> Option<&'static str> {
     return None;
 }
 
-/// Download elan's portable archive and unpack the single binary it contains
-/// (named `elan-init` in every published archive) into `dest_dir`.
+/// The tool names elan puts in `ELAN_HOME/bin` beside `elan` itself.
+///
+/// Each is the same binary again: it looks at the name it was invoked under and
+/// forwards to that tool in the active toolchain. `lean` is the one the app
+/// itself resolves; the rest are what a Lake project expects on PATH.
+const ELAN_TOOLS: &[&str] = &["lean", "leanpkg", "leanchecker", "leanc", "leanmake", "lake"];
+
+/// Download elan's portable archive and return the single binary inside it.
 ///
 /// macOS/Linux ship `.tar.gz`, Windows ships `.zip`; both are unpacked in
-/// process, straight out of the bytes just downloaded.
-async fn fetch_elan_init(version: &str, dest_dir: &Path) -> Result<PathBuf, String> {
+/// memory, straight out of the bytes just downloaded.
+async fn fetch_elan_binary(version: &str) -> Result<Vec<u8>, String> {
     let target = elan_target().ok_or_else(|| {
         "Automatic install isn't available for this platform. Please install Lean \
          from https://lean-lang.org/install/ and set the path manually."
@@ -478,9 +490,9 @@ async fn fetch_elan_init(version: &str, dest_dir: &Path) -> Result<PathBuf, Stri
     })?;
 
     #[cfg(windows)]
-    let (ext, exe) = ("zip", ".exe");
+    let ext = "zip";
     #[cfg(not(windows))]
-    let (ext, exe) = ("tar.gz", "");
+    let ext = "tar.gz";
 
     let url = format!(
         "https://github.com/leanprover/elan/releases/download/v{version}/elan-{target}.{ext}"
@@ -497,20 +509,15 @@ async fn fetch_elan_init(version: &str, dest_dir: &Path) -> Result<PathBuf, Stri
         .await
         .map_err(|e| format!("Failed to read download: {e}"))?;
 
-    let elan_init = dest_dir.join(format!("elan-init{exe}"));
-
     // Unpacked here rather than by shelling out to PowerShell's Expand-Archive,
     // which this used to do. That cmdlet ships in a *script* module, so under a
     // Restricted execution policy — the default on Windows Server, and common
     // on managed machines — it cannot be auto-loaded at all and the install
-    // died with nothing to show but a non-zero exit code. Working from the
-    // bytes already in hand also drops the temporary .zip, which a virus
-    // scanner could hold open long enough to fail the extraction on its own.
+    // died with nothing to show but a non-zero exit code.
     #[cfg(windows)]
     {
         let mut archive = zip::ZipArchive::new(std::io::Cursor::new(&bytes[..]))
             .map_err(|e| format!("elan archive could not be opened: {e}"))?;
-        let mut found = false;
         for i in 0..archive.len() {
             let mut entry = archive
                 .by_index(i)
@@ -523,15 +530,10 @@ async fn fetch_elan_init(version: &str, dest_dir: &Path) -> Result<PathBuf, Stri
             if !matches!(name.as_deref(), Some("elan-init.exe") | Some("elan.exe")) {
                 continue;
             }
-            let mut out = std::fs::File::create(&elan_init)
-                .map_err(|e| format!("Failed to write elan binary: {e}"))?;
-            std::io::copy(&mut entry, &mut out)
+            let mut buf = Vec::new();
+            std::io::copy(&mut entry, &mut buf)
                 .map_err(|e| format!("Failed to unpack elan binary: {e}"))?;
-            found = true;
-            break;
-        }
-        if !found {
-            return Err("elan archive did not contain the expected binary".to_string());
+            return Ok(buf);
         }
     }
 
@@ -541,7 +543,6 @@ async fn fetch_elan_init(version: &str, dest_dir: &Path) -> Result<PathBuf, Stri
 
         let decoder = flate2::read::GzDecoder::new(std::io::Cursor::new(&bytes[..]));
         let mut archive = tar::Archive::new(decoder);
-        let mut found = false;
         for entry in archive.entries().map_err(|e| format!("Bad archive: {e}"))? {
             let mut entry = entry.map_err(|e| format!("Bad archive entry: {e}"))?;
             let name = entry
@@ -557,23 +558,78 @@ async fn fetch_elan_init(version: &str, dest_dir: &Path) -> Result<PathBuf, Stri
             entry
                 .read_to_end(&mut buf)
                 .map_err(|e| format!("Failed to read archive: {e}"))?;
-            std::fs::write(&elan_init, &buf)
-                .map_err(|e| format!("Failed to write elan binary: {e}"))?;
-            found = true;
-            break;
+            return Ok(buf);
         }
-        if !found {
-            return Err("elan archive did not contain the expected binary".to_string());
-        }
+    }
+
+    Err("elan archive did not contain the expected binary".to_string())
+}
+
+/// Lay out `ELAN_HOME/bin` from the downloaded binary, and return the path to
+/// `elan` itself.
+///
+/// This is the work `elan-init` would otherwise do for us, and it is done here
+/// because on Windows it did not work. elan-init's first act is to copy its own
+/// *running* executable into `ELAN_HOME/bin`, and on Windows that copy failed:
+///
+///   error: could not copy file from '…\elan\elan-init.exe' to '…\elan\bin\elan.exe'
+///   info: caused by: The system cannot find the file specified. (os error 2)
+///
+/// The destination directory was there and the process was plainly running, so
+/// what it could not open was its own image — the signature of a scanner having
+/// quarantined or renamed a freshly downloaded, unsigned executable out from
+/// under it. Writing `bin/elan` straight from the bytes in memory never reads a
+/// running executable at all, so that step cannot fail that way. Nothing is
+/// lost by skipping elan-init: it is the same binary, which decides what to be
+/// from the name it is invoked under, and everything else it would have set up
+/// (the default toolchain, `settings.toml`) is what `elan default` writes. We
+/// also never wanted its PATH edit, which is why it was always passed
+/// `--no-modify-path`.
+fn install_elan_bins(binary: &[u8], elan_home: &Path) -> Result<PathBuf, String> {
+    #[cfg(windows)]
+    let exe = ".exe";
+    #[cfg(not(windows))]
+    let exe = "";
+
+    let bin_dir = elan_home.join("bin");
+    std::fs::create_dir_all(&bin_dir)
+        .map_err(|e| format!("Could not create {}: {e}", bin_dir.display()))?;
+
+    // Earlier versions of this ran elan-init from here and deleted it
+    // afterwards; a run that failed in between left it behind. Nothing uses it
+    // now, so clear it rather than leaving a stray executable in app data.
+    let _ = std::fs::remove_file(elan_home.join(format!("elan-init{exe}")));
+
+    let elan_path = bin_dir.join(format!("elan{exe}"));
+    // A leftover from an earlier attempt would otherwise be written through,
+    // and on Windows an existing file cannot be opened for writing while
+    // anything still holds it.
+    let _ = std::fs::remove_file(&elan_path);
+    std::fs::write(&elan_path, binary)
+        .map_err(|e| format!("Could not write {}: {e}", elan_path.display()))?;
+
+    #[cfg(unix)]
+    {
         use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&elan_init, std::fs::Permissions::from_mode(0o755))
+        std::fs::set_permissions(&elan_path, std::fs::Permissions::from_mode(0o755))
             .map_err(|e| format!("chmod failed: {e}"))?;
     }
 
-    if !elan_init.exists() {
-        return Err("elan binary was not found after extraction".to_string());
+    for tool in ELAN_TOOLS {
+        let shim = bin_dir.join(format!("{tool}{exe}"));
+        let _ = std::fs::remove_file(&shim);
+        // A hard link keeps six names on one copy of a ~6 MB binary. It needs
+        // both names on one volume and a filesystem that supports links, so
+        // fall back to a plain copy rather than failing the install over disk
+        // space — elan itself falls back to a symlink here, which on Windows
+        // would need a privilege the app does not have.
+        if std::fs::hard_link(&elan_path, &shim).is_err() {
+            std::fs::copy(&elan_path, &shim)
+                .map_err(|e| format!("Could not create {}: {e}", shim.display()))?;
+        }
     }
-    Ok(elan_init)
+
+    Ok(elan_path)
 }
 
 /// Install Lean 4 by way of elan, into the app's own data directory.
@@ -626,6 +682,10 @@ async fn run_streaming(
     let mut cmd = tokio::process::Command::new(program);
     cmd.args(args)
         .env("ELAN_HOME", elan_home)
+        // elan writes into ELAN_HOME throughout; run it from there rather than
+        // inheriting whatever directory the app happened to be launched from,
+        // which on Windows can be a location the app cannot write to.
+        .current_dir(elan_home)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped());
@@ -642,24 +702,53 @@ async fn run_streaming(
     let mut stdout = child.stdout.take();
     let mut stderr = child.stderr.take();
 
+    // elan reports why it gave up on its own stderr and then exits non-zero
+    // (`report_error` + `process::exit(1)` in its installer). Those lines used
+    // to go out as progress events and nowhere else, so a failed install
+    // surfaced as nothing but "elan … failed" — true, and of no use to anyone
+    // trying to work out what went wrong on a machine we cannot see. Keep the
+    // tail of both streams so the error can carry it.
+    let tail: Arc<Mutex<VecDeque<String>>> = Arc::new(Mutex::new(VecDeque::new()));
+
     // Both streams are pumped concurrently: elan writes the progress bar to one
     // and diagnostics to the other, and letting either pipe fill would deadlock
     // the child.
     let pump = |mut reader: Option<tokio::process::ChildStdout>,
-                app: AppHandle| async move {
+                app: AppHandle,
+                tail: Arc<Mutex<VecDeque<String>>>| async move {
         let Some(reader) = reader.take() else { return };
-        emit_segments(reader, app).await;
+        emit_segments(reader, app, tail).await;
     };
     let pump_err = |mut reader: Option<tokio::process::ChildStderr>,
-                    app: AppHandle| async move {
+                    app: AppHandle,
+                    tail: Arc<Mutex<VecDeque<String>>>| async move {
         let Some(reader) = reader.take() else { return };
-        emit_segments(reader, app).await;
+        emit_segments(reader, app, tail).await;
     };
 
-    async fn emit_segments<R>(mut reader: R, app: AppHandle)
+    async fn emit_segments<R>(mut reader: R, app: AppHandle, tail: Arc<Mutex<VecDeque<String>>>)
     where
         R: tokio::io::AsyncRead + Unpin,
     {
+        let publish = |segment: String| {
+            if segment.is_empty() {
+                return;
+            }
+            if let Ok(mut tail) = tail.lock() {
+                // A redrawn progress bar arrives as thousands of segments; only
+                // the last few can matter, and the reason for a failure is
+                // always among them.
+                if tail.len() == TAIL_LINES {
+                    tail.pop_front();
+                }
+                tail.push_back(segment.clone());
+            }
+            let _ = app.emit(
+                "lean-install-progress",
+                InstallProgress { message: segment },
+            );
+        };
+
         let mut buf = [0u8; 4096];
         let mut pending = String::new();
         loop {
@@ -671,24 +760,22 @@ async fn run_streaming(
                     while let Some(idx) = pending.find(['\n', '\r']) {
                         let segment = pending[..idx].trim().to_string();
                         pending.drain(..=idx);
-                        if segment.is_empty() {
-                            continue;
-                        }
-                        let _ = app.emit(
-                            "lean-install-progress",
-                            InstallProgress { message: segment },
-                        );
+                        publish(segment);
                     }
                 }
             }
         }
+        // Whatever is left never got its newline. A process that dies partway
+        // through a line still said something, and on a failure that last line
+        // is the one worth having.
+        publish(pending.trim().to_string());
     }
 
     let app_out = app.clone();
     let app_err = app.clone();
     let (_, _, status) = tokio::join!(
-        pump(stdout.take(), app_out),
-        pump_err(stderr.take(), app_err),
+        pump(stdout.take(), app_out, Arc::clone(&tail)),
+        pump_err(stderr.take(), app_err, Arc::clone(&tail)),
         child.wait(),
     );
 
@@ -696,7 +783,34 @@ async fn run_streaming(
     if status.success() {
         Ok(())
     } else {
-        Err(format!("elan {} failed", args.join(" ")))
+        let detail = tail
+            .lock()
+            .map(|tail| {
+                tail.iter()
+                    .map(|line| {
+                        // One pathological line should not swallow the rest.
+                        if line.chars().count() > 300 {
+                            line.chars().take(300).collect::<String>() + "…"
+                        } else {
+                            line.clone()
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            })
+            .unwrap_or_default();
+        if detail.trim().is_empty() {
+            // No output at all usually means it never got as far as running:
+            // on Windows a missing runtime DLL fails the image load after the
+            // process is created, so spawn succeeds and the exit code is all
+            // there is.
+            Err(format!(
+                "elan {} failed with no output ({status})",
+                args.join(" ")
+            ))
+        } else {
+            Err(format!("elan {} failed:\n{detail}", args.join(" ")))
+        }
     }
 }
 
@@ -722,39 +836,33 @@ async fn install_toolchain(
     let elan_bin = elan_home.join("bin").join(format!("elan{exe}"));
     let lean_shim = elan_home.join("bin").join(format!("lean{exe}"));
 
-    // `elan-init` bootstraps elan itself *and* installs a default toolchain in
-    // one go, so it is only needed the first time. Afterwards the installed
-    // `elan` binary handles toolchain changes.
-    if !elan_bin.exists() {
+    // Fetch elan the first time, then drive it exactly as every later toolchain
+    // change does. Bootstrapping used to be a separate path through `elan-init`
+    // — see `install_elan_bins` for why it isn't any more.
+    // The shim is checked too, not just elan: an install interrupted partway
+    // through can leave one without the other, and that state used to survive
+    // every retry — elan looked present, so the layout was skipped, and the
+    // run then failed at the end for a missing launcher.
+    if !elan_bin.exists() || !lean_shim.exists() {
         emit("Downloading elan (Lean version manager)…");
         let elan_version = latest_stable_release("leanprover/elan")
             .await
             .unwrap_or_else(|_| "4.1.2".to_string());
-        let elan_init = fetch_elan_init(&elan_version, &elan_home).await?;
-
-        emit(&format!("Installing Lean {toolchain} (this may take a few minutes)…"));
-        run_streaming(
-            &app,
-            &elan_init,
-            &["-y", "--no-modify-path", "--default-toolchain", toolchain],
-            &elan_home,
-        )
-        .await
-        .map_err(|e| format!("elan-init failed to install Lean: {e}"))?;
-        let _ = std::fs::remove_file(&elan_init);
-    } else {
-        emit(&format!("Installing Lean {toolchain} (this may take a few minutes)…"));
-        run_streaming(
-            &app,
-            &elan_bin,
-            &["toolchain", "install", toolchain],
-            &elan_home,
-        )
-        .await?;
-        // Not fatal: the toolchain is installed either way, it just may not be
-        // the one a bare `lean` resolves to.
-        let _ = run_streaming(&app, &elan_bin, &["default", toolchain], &elan_home).await;
+        let binary = fetch_elan_binary(&elan_version).await?;
+        install_elan_bins(&binary, &elan_home)?;
     }
+
+    emit(&format!("Installing Lean {toolchain} (this may take a few minutes)…"));
+    run_streaming(
+        &app,
+        &elan_bin,
+        &["toolchain", "install", toolchain],
+        &elan_home,
+    )
+    .await?;
+    // Not fatal: the toolchain is installed either way, it just may not be
+    // the one a bare `lean` resolves to.
+    let _ = run_streaming(&app, &elan_bin, &["default", toolchain], &elan_home).await;
 
     if !lean_shim.exists() {
         return Err(
@@ -1220,6 +1328,46 @@ pub fn kill_all(state: &LeanState) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `install_elan_bins` stands in for what `elan-init` used to do, so the
+    /// layout it produces is what the rest of the app depends on: `elan`
+    /// itself, plus a shim per tool — `lean` above all, which is the path the
+    /// app persists and runs.
+    #[test]
+    fn install_elan_bins_lays_out_every_shim() {
+        #[cfg(windows)]
+        let exe = ".exe";
+        #[cfg(not(windows))]
+        let exe = "";
+
+        let home = std::env::temp_dir().join(format!("elan-bins-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&home);
+        let binary = b"#!/bin/sh\nexit 0\n";
+
+        let elan = install_elan_bins(binary, &home).expect("layout");
+        assert_eq!(elan, home.join("bin").join(format!("elan{exe}")));
+        assert_eq!(std::fs::read(&elan).unwrap(), binary);
+
+        for tool in ELAN_TOOLS {
+            let shim = home.join("bin").join(format!("{tool}{exe}"));
+            assert!(shim.exists(), "{tool} shim missing");
+            assert_eq!(std::fs::read(&shim).unwrap(), binary, "{tool} differs");
+        }
+        assert!(home.join("bin").join(format!("lean{exe}")).exists());
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = std::fs::metadata(&elan).unwrap().permissions().mode();
+            assert_eq!(mode & 0o111, 0o111, "elan is not executable: {mode:o}");
+        }
+
+        // Re-running must succeed over the top of an existing install rather
+        // than tripping over the files it wrote last time.
+        install_elan_bins(binary, &home).expect("second layout");
+
+        let _ = std::fs::remove_dir_all(&home);
+    }
 
     /// Verbatim `lean --json` output. Lean emits more fields than we read
     /// (`isSilent`, `keepFullRange`, `kind`), so the parser is checked against
