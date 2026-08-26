@@ -101,41 +101,8 @@ export function hexToRgba(hex: string, alpha: number): string {
     return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
-/**
- * Fonts named after the chosen family, for the scripts it does not cover.
- *
- * The picker offers Latin faces (EB Garamond, Georgia, …) and Arabic ones
- * (Amiri, Scheherazade, …). None of them carries Bengali, Devanagari, Tamil or
- * Thai, so a translation in those scripts is drawn by whatever the generic
- * `serif` keyword happens to resolve to — which is not required to be the same
- * face the canvas measured with, and a line measured narrower than it paints
- * overflows a centred line off both edges of the card.
- *
- * Naming real families closes that gap: measurement and painting agree because
- * both resolve the same list. Each script gets the system face that covers it
- * on macOS, on Windows, and from the Noto set that Linux usually carries. They
- * are only ever reached for glyphs the chosen family lacks, so text in a script
- * it does cover renders exactly as before.
- */
-const SCRIPT_FALLBACKS = [
-    // Bengali · Devanagari · Tamil (Windows ships one face for all three)
-    "Nirmala UI",
-    "Bangla Sangam MN",
-    "Devanagari Sangam MN",
-    "Tamil Sangam MN",
-    "Noto Serif Bengali",
-    "Noto Serif Devanagari",
-    "Noto Serif Tamil",
-    // Thai
-    "Leelawadee UI",
-    "Thonburi",
-    "Noto Serif Thai",
-]
-    .map((f) => `"${f}"`)
-    .join(", ");
-
 export function fontSpec(size: number, family: string, weight = "400"): string {
-    return `${weight} ${size}px "${family}", ${SCRIPT_FALLBACKS}, serif`;
+    return `${weight} ${size}px "${family}", serif`;
 }
 
 /**
@@ -219,6 +186,42 @@ function breakToken(
 
     flush();
     return out;
+}
+
+/**
+ * Draw `text` aligned against `anchorX`, doing the alignment arithmetic here
+ * rather than through `ctx.textAlign`.
+ *
+ * Canvas can align text itself, and on every engine but one it does. macOS runs
+ * the app on WebKit, and there `textAlign` is silently ignored for scripts that
+ * need complex shaping: Bengali, Devanagari, Tamil and Thai are drawn from the
+ * anchor as though left-aligned. A centred translation therefore began at the
+ * middle of the card and ran off the right edge — measured on that engine, a
+ * centred line landed 147-198px right of where it belonged and a right-aligned
+ * one 96px, while Latin and Arabic were placed correctly. Windows and Linux,
+ * both on Chromium, were never affected.
+ *
+ * `measureText` stays accurate on that engine even where `fillText` does not,
+ * so positioning from it and drawing left-aligned comes out right everywhere.
+ * Verified against Latin, Bengali, Devanagari, Tamil, Thai and right-to-left
+ * Arabic, at all three alignments, in both engines.
+ */
+function fillAligned(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    anchorX: number,
+    y: number,
+    align: "left" | "center" | "right",
+): void {
+    // "left" is the one case the engine never got wrong, and it needs no
+    // measurement: the anchor is already where the text starts.
+    ctx.textAlign = "left";
+    if (align === "left") {
+        ctx.fillText(text, anchorX, y);
+        return;
+    }
+    const width = ctx.measureText(text).width;
+    ctx.fillText(text, align === "center" ? anchorX - width / 2 : anchorX - width, y);
 }
 
 /** Greedy word wrap against the current `ctx.font`. */
@@ -619,7 +622,6 @@ export function renderPostcard(
               ? W - pad
               : pad;
 
-    ctx.textAlign = o.textAlign;
     let cursorY = startY;
     for (const b of laid.blocks) {
         ctx.font = b.font;
@@ -638,7 +640,7 @@ export function renderPostcard(
             cursorY += lh;
             // Sit the baseline inside the line box rather than on its bottom
             // edge, so ascenders and descenders share the leading evenly.
-            ctx.fillText(line, anchorX, cursorY - lh * 0.25);
+            fillAligned(ctx, line, anchorX, cursorY - lh * 0.25, o.textAlign);
         }
         cursorY += b.gapAfter;
     }
@@ -703,11 +705,10 @@ export function renderPostcard(
                 "400",
             );
             if (fitted) {
-                ctx.textAlign = "right";
                 ctx.globalAlpha = 0.6;
                 ctx.fillStyle = o.arabicColor;
                 ctx.font = fitted.font;
-                ctx.fillText(fitted.text, W - pad, fy);
+                fillAligned(ctx, fitted.text, W - pad, fy, "right");
             }
         }
         ctx.restore();
