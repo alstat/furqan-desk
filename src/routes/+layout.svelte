@@ -10,11 +10,16 @@
 	import JuliaInstallToast from '$lib/components/shared/JuliaInstallToast.svelte';
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
+	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import { tabs } from '$lib/stores/tabs.store';
 	import { t as i18n } from '$lib/i18n';
 	import { supabase, isSupabaseConfigured } from '$lib/supabase';
 	import { openFile, openFolder, saveFile, saveAs } from '$lib/actions/fileActions';
-	import { isLinuxCsd, csdRound as csdRoundStore } from '$lib/stores/window-state.store';
+	import {
+		CSD_SHADOW_MARGIN_PX,
+		isLinuxCsd,
+		csdRound as csdRoundStore
+	} from '$lib/stores/window-state.store';
 	import { page } from '$app/state';
 
 	let { children } = $props();
@@ -86,11 +91,8 @@
 		root.classList.toggle('csd-dialog', isLinuxCsd);
 	});
 
-	// The shadow margin (see `.app-shell` in app.css) sits outside the frame
-	// the user can actually see, so a handle sized to just that band would only
-	// catch a drag started in the band itself — missing clicks that land right
-	// on the visible border, which is where users actually aim. 16px, deeper
-	// than the margin, deliberately overlaps a few px of the visible frame too.
+	// Centre resize hit regions on the visible app-shell border rather than the
+	// outer edge of the transparent shadow band.
 	type ResizeDir =
 		| 'North'
 		| 'South'
@@ -101,26 +103,62 @@
 		| 'SouthEast'
 		| 'SouthWest';
 
-	const RESIZE_HANDLES: { dir: ResizeDir; cls: string }[] = [
-		{ dir: 'NorthWest', cls: 'left-0 top-0 h-4 w-4 cursor-nw-resize' },
-		{ dir: 'NorthEast', cls: 'right-0 top-0 h-4 w-4 cursor-ne-resize' },
-		{ dir: 'SouthWest', cls: 'bottom-0 left-0 h-4 w-4 cursor-sw-resize' },
-		{ dir: 'SouthEast', cls: 'bottom-0 right-0 h-4 w-4 cursor-se-resize' },
-		{ dir: 'North', cls: 'left-4 right-4 top-0 h-4 cursor-n-resize' },
-		{ dir: 'South', cls: 'bottom-0 left-4 right-4 h-4 cursor-s-resize' },
-		{ dir: 'West', cls: 'bottom-4 left-0 top-4 w-4 cursor-w-resize' },
-		{ dir: 'East', cls: 'bottom-4 right-0 top-4 w-4 cursor-e-resize' }
+	const EDGE_HIT_PX = 18;
+	const CORNER_HIT_PX = 26;
+	const edgeInset = CSD_SHADOW_MARGIN_PX - EDGE_HIT_PX / 2;
+	const cornerInset = CSD_SHADOW_MARGIN_PX - CORNER_HIT_PX / 2;
+	const edgeEnd = cornerInset + CORNER_HIT_PX;
+	const RESIZE_HANDLES: { dir: ResizeDir; cls: string; style: string }[] = [
+		{
+			dir: 'NorthWest',
+			cls: 'cursor-nw-resize',
+			style: `left:${cornerInset}px;top:${cornerInset}px;width:${CORNER_HIT_PX}px;height:${CORNER_HIT_PX}px;`
+		},
+		{
+			dir: 'NorthEast',
+			cls: 'cursor-ne-resize',
+			style: `right:${cornerInset}px;top:${cornerInset}px;width:${CORNER_HIT_PX}px;height:${CORNER_HIT_PX}px;`
+		},
+		{
+			dir: 'SouthWest',
+			cls: 'cursor-sw-resize',
+			style: `left:${cornerInset}px;bottom:${cornerInset}px;width:${CORNER_HIT_PX}px;height:${CORNER_HIT_PX}px;`
+		},
+		{
+			dir: 'SouthEast',
+			cls: 'cursor-se-resize',
+			style: `right:${cornerInset}px;bottom:${cornerInset}px;width:${CORNER_HIT_PX}px;height:${CORNER_HIT_PX}px;`
+		},
+		{
+			dir: 'North',
+			cls: 'cursor-n-resize',
+			style: `left:${edgeEnd}px;right:${edgeEnd}px;top:${edgeInset}px;height:${EDGE_HIT_PX}px;`
+		},
+		{
+			dir: 'South',
+			cls: 'cursor-s-resize',
+			style: `left:${edgeEnd}px;right:${edgeEnd}px;bottom:${edgeInset}px;height:${EDGE_HIT_PX}px;`
+		},
+		{
+			dir: 'West',
+			cls: 'cursor-w-resize',
+			style: `top:${edgeEnd}px;bottom:${edgeEnd}px;left:${edgeInset}px;width:${EDGE_HIT_PX}px;`
+		},
+		{
+			dir: 'East',
+			cls: 'cursor-e-resize',
+			style: `top:${edgeEnd}px;bottom:${edgeEnd}px;right:${edgeInset}px;width:${EDGE_HIT_PX}px;`
+		}
 	];
 
-	async function startResize(e: PointerEvent, dir: ResizeDir) {
+	function startResize(e: PointerEvent, dir: ResizeDir) {
 		if (e.button !== 0) return;
 		e.preventDefault();
-		try {
-			const { getCurrentWindow } = await import('@tauri-apps/api/window');
-			await getCurrentWindow().startResizeDragging(dir);
-		} catch {
-			// not running inside Tauri (e.g. browser dev)
-		}
+		// Invoke while the pointer is still down. Waiting on a dynamic import here
+		// can miss the compositor's active drag gesture on the first attempt.
+		void getCurrentWindow().startResizeDragging(dir).catch(() => {
+			/* not running inside Tauri (e.g. browser dev) */
+		});
 	}
 
 	$effect(() => {
@@ -143,7 +181,6 @@
 		if (typeof window === 'undefined') return;
 		if (isSecondaryWindow) return;
 		try {
-			const { getCurrentWindow } = await import('@tauri-apps/api/window');
 			const { ask } = await import('@tauri-apps/plugin-dialog');
 
 			// Native menu (File > Open File / Open Folder / Save / Save As) emits
@@ -258,11 +295,8 @@
 		<div
 			role="presentation"
 			class="fixed z-50 {handle.cls}"
+			style={handle.style}
 			onpointerdown={(e) => startResize(e, handle.dir)}
 		></div>
 	{/each}
 {/if}
-
-<style>
-
-</style>

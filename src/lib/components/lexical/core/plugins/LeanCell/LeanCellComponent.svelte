@@ -682,31 +682,31 @@
         {/if}
         <span class="flex items-center gap-1.5 select-none">
             <span
-                class="font-sans text-[10px] font-medium uppercase tracking-wide text-brand-charcoal-300 dark:text-[#626880]"
+                class="font-sans text-[0.625rem] font-medium uppercase tracking-wide text-brand-charcoal-300 dark:text-[#626880]"
                 >{$t("lean_cell.title")}</span
             >
             {#if hasRun}
                 <span
-                    class="font-mono text-[10px] text-brand-charcoal-300 dark:text-[#626880]"
+                    class="font-mono text-[0.625rem] text-brand-charcoal-300 dark:text-[#626880]"
                     >[{runCount}]</span
                 >
                 {#if counts.errors > 0}
                     <span
-                        class="flex items-center gap-0.5 font-mono text-[10px] text-red-600 dark:text-red-400"
+                        class="flex items-center gap-0.5 font-mono text-[0.625rem] text-red-600 dark:text-red-400"
                     >
                         <Icon icon="lucide:x-circle" width="0.6rem" />
                         {counts.errors}
                     </span>
                 {:else if liveOk}
                     <span
-                        class="flex items-center gap-0.5 font-mono text-[10px] text-green-600 dark:text-green-400"
+                        class="flex items-center gap-0.5 font-mono text-[0.625rem] text-green-600 dark:text-green-400"
                     >
                         <Icon icon="lucide:check" width="0.6rem" />
                     </span>
                 {/if}
                 {#if counts.warnings > 0}
                     <span
-                        class="flex items-center gap-0.5 font-mono text-[10px] text-amber-600 dark:text-amber-400"
+                        class="flex items-center gap-0.5 font-mono text-[0.625rem] text-amber-600 dark:text-amber-400"
                     >
                         <Icon icon="lucide:alert-triangle" width="0.6rem" />
                         {counts.warnings}
@@ -724,7 +724,7 @@
                     : $t("julia_cell.show_text_size_options")}
                 aria-pressed={showSizeOptions}
                 aria-label={$t("julia_cell.toggle_text_size_options")}
-                class="flex h-[22px] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 transition-colors dark:border-[#414559] {showSizeOptions
+                class="flex h-[1.375rem] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 transition-colors dark:border-[#414559] {showSizeOptions
                     ? 'bg-brand-gold-200 text-brand-charcoal-900 dark:bg-[#414559] dark:text-[#c6d0f5]'
                     : 'text-brand-charcoal-300 hover:bg-brand-sand-100 hover:text-brand-charcoal-900 dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]'}"
             >
@@ -734,26 +734,26 @@
             {#if showSizeOptions}
                 <!-- Code font size -->
                 <span
-                    class="flex h-[22px] items-center overflow-hidden rounded-md border border-brand-sand-200 dark:border-[#414559]"
+                    class="flex h-[1.375rem] items-center overflow-hidden rounded-md border border-brand-sand-200 dark:border-[#414559]"
                     title={$t("julia_cell.code_font_size")}
                 >
                     <button
                         onclick={() => adjustCodeFontSize(-1)}
                         disabled={$leanCellFontSize <= 9}
                         aria-label={$t("julia_cell.decrease_code_font_size")}
-                        class="flex h-full w-[22px] cursor-pointer items-center justify-center text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
+                        class="flex h-full w-[1.375rem] cursor-pointer items-center justify-center text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
                     >
                         <Icon icon="mdi:minus" width="0.7rem" />
                     </button>
                     <span
-                        class="flex h-full min-w-[1.6rem] items-center justify-center border-x border-brand-sand-200 font-mono text-[10px] tabular-nums text-brand-charcoal-400 select-none dark:border-[#414559] dark:text-[#a5adce]"
+                        class="flex h-full min-w-[1.6rem] items-center justify-center border-x border-brand-sand-200 font-mono text-[0.625rem] tabular-nums text-brand-charcoal-400 select-none dark:border-[#414559] dark:text-[#a5adce]"
                         >{$leanCellFontSize}</span
                     >
                     <button
                         onclick={() => adjustCodeFontSize(1)}
                         disabled={$leanCellFontSize >= 18}
                         aria-label={$t("julia_cell.increase_code_font_size")}
-                        class="flex h-full w-[22px] cursor-pointer items-center justify-center text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
+                        class="flex h-full w-[1.375rem] cursor-pointer items-center justify-center text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
                     >
                         <Icon icon="mdi:plus" width="0.7rem" />
                     </button>
@@ -761,14 +761,14 @@
 
                 <!-- Code line height -->
                 <span
-                    class="flex h-[22px] items-center overflow-hidden rounded-md border border-brand-sand-200 dark:border-[#414559]"
+                    class="flex h-[1.375rem] items-center overflow-hidden rounded-md border border-brand-sand-200 dark:border-[#414559]"
                     title={$t("julia_cell.code_line_height")}
                 >
                     <button
                         onclick={() => adjustCodeLineHeight(-0.1)}
                         disabled={$leanCellLineHeight <= 1}
                         aria-label={$t("julia_cell.decrease_code_line_height")}
-                        class="flex h-full w-[22px] cursor-pointer items-center justify-center text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
+                        class="flex h-full w-[1.375rem] cursor-pointer items-center justify-center text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
                     >
                         <Icon
                             icon="fluent:arrow-autofit-height-in-24-filled"
@@ -776,14 +776,14 @@
                         />
                     </button>
                     <span
-                        class="flex h-full min-w-[1.9rem] items-center justify-center border-x border-brand-sand-200 font-mono text-[10px] tabular-nums text-brand-charcoal-400 select-none dark:border-[#414559] dark:text-[#a5adce]"
+                        class="flex h-full min-w-[1.9rem] items-center justify-center border-x border-brand-sand-200 font-mono text-[0.625rem] tabular-nums text-brand-charcoal-400 select-none dark:border-[#414559] dark:text-[#a5adce]"
                         >{$leanCellLineHeight.toFixed(1)}</span
                     >
                     <button
                         onclick={() => adjustCodeLineHeight(0.1)}
                         disabled={$leanCellLineHeight >= 2.5}
                         aria-label={$t("julia_cell.increase_code_line_height")}
-                        class="flex h-full w-[22px] cursor-pointer items-center justify-center text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
+                        class="flex h-full w-[1.375rem] cursor-pointer items-center justify-center text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
                     >
                         <Icon
                             icon="fluent:arrow-autofit-height-24-filled"
@@ -802,7 +802,7 @@
                         ? "lean_cell.live_on_hint"
                         : "lean_cell.live_off_hint",
                 )}
-                class="flex h-[22px] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 transition-colors dark:border-[#414559] {$leanCellLiveCompile
+                class="flex h-[1.375rem] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 transition-colors dark:border-[#414559] {$leanCellLiveCompile
                     ? 'bg-brand-gold-200 text-brand-charcoal-900 dark:bg-[#414559] dark:text-[#c6d0f5]'
                     : 'text-brand-charcoal-300 hover:bg-brand-sand-100 hover:text-brand-charcoal-900 dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]'}"
             >
@@ -817,7 +817,7 @@
                 onclick={formatLean}
                 title={$t("lean_cell.format")}
                 aria-label={$t("lean_cell.format_code")}
-                class="flex h-[22px] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 dark:border-[#414559] dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
+                class="flex h-[1.375rem] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 text-brand-charcoal-300 transition-colors hover:bg-brand-sand-100 hover:text-brand-charcoal-900 dark:border-[#414559] dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]"
             >
                 <Icon icon="icon-park-twotone:format-brush" width="0.8rem" />
             </button>
@@ -829,7 +829,7 @@
                     ? $t("julia_cell.disable_wrap")
                     : $t("julia_cell.enable_wrap")}
                 aria-pressed={codeWrap}
-                class="flex h-[22px] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 transition-colors dark:border-[#414559] {codeWrap
+                class="flex h-[1.375rem] w-7 cursor-pointer items-center justify-center rounded-md border border-brand-sand-200 transition-colors dark:border-[#414559] {codeWrap
                     ? 'bg-brand-gold-200 text-brand-charcoal-900 dark:bg-[#414559] dark:text-[#c6d0f5]'
                     : 'text-brand-charcoal-300 hover:bg-brand-sand-100 hover:text-brand-charcoal-900 dark:text-[#626880] dark:hover:bg-[#414559] dark:hover:text-[#c6d0f5]'}"
             >
@@ -843,7 +843,7 @@
 
             <!-- Display-mode toggle -->
             <span
-                class="flex h-[22px] items-center overflow-hidden rounded-md border border-brand-sand-200 dark:border-[#414559]"
+                class="flex h-[1.375rem] items-center overflow-hidden rounded-md border border-brand-sand-200 dark:border-[#414559]"
             >
                 {#each MODES as m (m.id)}
                     <button
@@ -865,7 +865,7 @@
                 <button
                     onclick={stop}
                     title={$t("lean_cell.stop_running")}
-                    class="flex h-[22px] cursor-pointer items-center gap-1 rounded-md border border-red-200 px-2 font-sans text-[10px] font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-500/40 dark:text-red-400 dark:hover:bg-red-500/10"
+                    class="flex h-[1.375rem] cursor-pointer items-center gap-1 rounded-md border border-red-200 px-2 font-sans text-[0.625rem] font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-500/40 dark:text-red-400 dark:hover:bg-red-500/10"
                 >
                     <Icon icon="solar:stop-bold" width="0.7rem" />
                     {$t("julia_cell.stop")}
@@ -876,7 +876,7 @@
                     <button
                         onclick={() => run(true)}
                         title="{$t('lean_cell.compile')} (Ctrl/Cmd+Enter)"
-                        class="flex h-[22px] cursor-pointer items-center gap-1 rounded-l-md border border-r-0 border-brand-sand-200 px-2 font-sans text-[10px] font-semibold text-brand-gold-600 transition-colors hover:bg-brand-gold-100 disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent dark:border-[#414559] dark:text-brand-gold-400 dark:hover:bg-[#414559]"
+                        class="flex h-[1.375rem] cursor-pointer items-center gap-1 rounded-l-md border border-r-0 border-brand-sand-200 px-2 font-sans text-[0.625rem] font-semibold text-brand-gold-600 transition-colors hover:bg-brand-gold-100 disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent dark:border-[#414559] dark:text-brand-gold-400 dark:hover:bg-[#414559]"
                     >
                         <Icon icon="solar:play-bold" width="0.7rem" />
                         {$t("lean_cell.compile")}
@@ -886,7 +886,7 @@
                         title={$t("julia_cell.run_options")}
                         aria-label={$t("julia_cell.run_options")}
                         aria-expanded={showRunMenu}
-                        class="flex h-[22px] w-5 cursor-pointer items-center justify-center rounded-r-md border border-brand-sand-200 text-brand-gold-600 transition-colors hover:bg-brand-gold-100 dark:border-[#414559] dark:text-brand-gold-400 dark:hover:bg-[#414559]"
+                        class="flex h-[1.375rem] w-5 cursor-pointer items-center justify-center rounded-r-md border border-brand-sand-200 text-brand-gold-600 transition-colors hover:bg-brand-gold-100 dark:border-[#414559] dark:text-brand-gold-400 dark:hover:bg-[#414559]"
                     >
                         <Icon icon="tabler:chevron-down" width="0.65rem" />
                     </button>
@@ -907,14 +907,14 @@
                                     showRunMenu = false;
                                     void run(true);
                                 }}
-                                class="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-left font-sans text-[10px] text-brand-charcoal-700 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                                class="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-left font-sans text-[0.625rem] text-brand-charcoal-700 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
                             >
                                 <Icon icon="solar:play-bold" width="0.7rem" />
                                 {$t("lean_cell.compile_cell")}
                             </button>
                             <button
                                 onclick={runAll}
-                                class="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-left font-sans text-[10px] text-brand-charcoal-700 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                                class="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-left font-sans text-[0.625rem] text-brand-charcoal-700 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
                             >
                                 <Icon
                                     icon="solar:play-stream-bold"
@@ -927,14 +927,14 @@
                             ></div>
                             <button
                                 onclick={clearAllOutputs}
-                                class="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-left font-sans text-[10px] text-brand-charcoal-700 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                                class="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-left font-sans text-[0.625rem] text-brand-charcoal-700 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
                             >
                                 <Icon icon="lucide:x" width="0.7rem" />
                                 {$t("lean_cell.clear_all_outputs")}
                             </button>
                             <button
                                 onclick={openToolchainInfo}
-                                class="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-left font-sans text-[10px] text-brand-charcoal-700 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                                class="flex cursor-pointer items-center gap-1.5 px-2 py-1 text-left font-sans text-[0.625rem] text-brand-charcoal-700 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
                             >
                                 <Icon
                                     icon="solar:cpu-bolt-bold-duotone"
@@ -987,7 +987,7 @@
                         <Icon
                             icon={style.icon}
                             width="0.7rem"
-                            class="mt-[1px] shrink-0 self-start {style.text}"
+                            class="mt-[0.0625rem] shrink-0 self-start {style.text}"
                         />
                     {/if}
                     <!-- Position and message share one row, so the message —
@@ -1005,10 +1005,10 @@
                     <button
                         onclick={() => jumpTo(diag)}
                         title={$t("lean_infoview.jump_to")}
-                        class="shrink-0 cursor-pointer rounded font-mono text-[11px] leading-tight text-brand-charcoal-400 transition-colors hover:bg-black/5 hover:text-brand-charcoal-700 dark:text-[#838ba7] dark:hover:bg-white/10 dark:hover:text-[#c6d0f5]"
+                        class="shrink-0 cursor-pointer rounded font-mono text-[0.6875rem] leading-tight text-brand-charcoal-400 transition-colors hover:bg-black/5 hover:text-brand-charcoal-700 dark:text-[#838ba7] dark:hover:bg-white/10 dark:hover:text-[#c6d0f5]"
                     >{positionLabel(diag)}</button>
                     <pre
-                        class="m-0 min-w-0 flex-1 whitespace-pre-wrap break-words font-mono text-[11px] leading-tight {diag.severity ===
+                        class="m-0 min-w-0 flex-1 whitespace-pre-wrap break-words font-mono text-[0.6875rem] leading-tight {diag.severity ===
                         'error'
                             ? 'text-red-600 dark:text-red-400'
                             : 'text-brand-charcoal-800 dark:text-[#c6d0f5]'}">{diag.message}</pre>
@@ -1021,7 +1021,7 @@
                      long first line passes cleanly underneath instead of
                      colliding with it. -->
                 <div
-                    class="pointer-events-none absolute top-0.5 right-2 bg-brand-sand-50 pl-1 font-mono text-[9.5px] leading-none text-brand-charcoal-300 dark:bg-[#1e2030] dark:text-[#626880]"
+                    class="pointer-events-none absolute top-0.5 right-2 bg-brand-sand-50 pl-1 font-mono text-[0.59375rem] leading-none text-brand-charcoal-300 dark:bg-[#1e2030] dark:text-[#626880]"
                 >
                     {formatElapsed(liveElapsed)}
                 </div>
@@ -1072,7 +1072,7 @@
                     />
                     <span
                         id="lean-toolchain-title"
-                        class="text-[11px] py-2 font-semibold uppercase tracking-wide
+                        class="text-[0.6875rem] py-2 font-semibold uppercase tracking-wide
                                text-brand-charcoal-500 dark:text-[#838ba7]"
                     >
                         {$t("lean_cell.toolchain_info_title")}
@@ -1098,20 +1098,20 @@
             <div class="px-4 py-3 max-h-[60vh] overflow-y-auto">
                 {#if toolchainLoading}
                     <div
-                        class="flex items-center gap-2 text-[12px] text-brand-charcoal-600 dark:text-[#a5adcb]"
+                        class="flex items-center gap-2 text-[0.75rem] text-brand-charcoal-600 dark:text-[#a5adcb]"
                     >
                         <Icon icon="svg-spinners:180-ring" width="0.9rem" />
                         {$t("lean_cell.probing_toolchain")}
                     </div>
                 {:else if toolchainError}
                     <div
-                        class="rounded-md border border-red-200/80 dark:border-red-700/40 bg-red-50/90 dark:bg-red-900/15 px-3 py-2 text-[11.5px] text-red-700 dark:text-red-200 whitespace-pre-wrap break-words"
+                        class="rounded-md border border-red-200/80 dark:border-red-700/40 bg-red-50/90 dark:bg-red-900/15 px-3 py-2 text-[0.71875rem] text-red-700 dark:text-red-200 whitespace-pre-wrap break-words"
                     >
                         {toolchainError}
                     </div>
                 {:else if toolchainText}
                     <pre
-                        class="m-0 whitespace-pre-wrap break-words font-mono text-[11.5px] leading-snug text-brand-charcoal-800 dark:text-[#c6d0f5]">{toolchainText}</pre>
+                        class="m-0 whitespace-pre-wrap break-words font-mono text-[0.71875rem] leading-snug text-brand-charcoal-800 dark:text-[#c6d0f5]">{toolchainText}</pre>
                 {/if}
             </div>
         </div>

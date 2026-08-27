@@ -75,7 +75,7 @@ export const csdRound = derived(
  * .app-shell` in app.css — this is that same number, for the rare bit of
  * layout math (e.g. +page.svelte's JS-measured row height) that has to
  * account for app-shell being inset from the true window bounds by it. */
-export const CSD_SHADOW_MARGIN_PX = 8;
+export const CSD_SHADOW_MARGIN_PX = 16;
 
 /** 0 when the shell is full-bleed (maximised, or not Linux CSD at all);
  * otherwise the margin reserved on *each* side for the drop shadow. */

@@ -96,7 +96,7 @@
                 class="flex-1 overflow-y-auto bg-brand-sand-50 dark:bg-[#232634] px-5 py-4 flex flex-col gap-4"
             >
                 <p
-                    class="text-[12px] leading-relaxed text-brand-charcoal-500 dark:text-[#c6d0f5]"
+                    class="text-[0.75rem] leading-relaxed text-brand-charcoal-500 dark:text-[#c6d0f5]"
                 >
                     {$t("julia.prompt.desc")}
                 </p>
@@ -110,10 +110,10 @@
                     <Icon
                         icon="solar:download-bold-duotone"
                         width="0.9rem"
-                        class="mt-[1px] shrink-0 text-brand-gold-500 dark:text-[#e5c890]"
+                        class="mt-[0.0625rem] shrink-0 text-brand-gold-500 dark:text-[#e5c890]"
                     />
                     <span
-                        class="text-[11px] leading-relaxed text-brand-charcoal-400 dark:text-[#8087a2]"
+                        class="text-[0.6875rem] leading-relaxed text-brand-charcoal-400 dark:text-[#8087a2]"
                     >
                         {$t("julia.prompt.background_note")}
                     </span>
@@ -124,18 +124,18 @@
                         class="rounded-xl border border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 px-3 py-2"
                     >
                         <p
-                            class="text-[11px] font-semibold text-red-600 dark:text-red-400"
+                            class="text-[0.6875rem] font-semibold text-red-600 dark:text-red-400"
                         >
                             {$t("julia.prompt.error_title")}
                         </p>
                         <p
-                            class="mt-0.5 text-[11px] text-red-500 dark:text-red-300/90 break-words"
+                            class="mt-0.5 text-[0.6875rem] text-red-500 dark:text-red-300/90 break-words"
                         >
                             {$juliaInstallError}
                         </p>
                         <button
                             onclick={() => openUrl(JULIA_DOWNLOADS_URL)}
-                            class="mt-1.5 cursor-pointer text-[11px] font-medium text-brand-gold-600 dark:text-[#e5c890] hover:underline"
+                            class="mt-1.5 cursor-pointer text-[0.6875rem] font-medium text-brand-gold-600 dark:text-[#e5c890] hover:underline"
                         >
                             julialang.org/downloads
                         </button>
@@ -143,7 +143,7 @@
                 {/if}
 
                 <p
-                    class="text-[10.5px] text-brand-charcoal-300 dark:text-[#8087a2]"
+                    class="text-[0.65625rem] text-brand-charcoal-300 dark:text-[#8087a2]"
                 >
                     {$t("julia.prompt.settings_hint")}
                 </p>
@@ -155,13 +155,13 @@
             >
                 <button
                     onclick={handleClose}
-                    class="cursor-pointer rounded-full border border-brand-sand-200 dark:border-[#414559] px-4 py-1.5 text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#292c3c] transition-colors"
+                    class="cursor-pointer rounded-full border border-brand-sand-200 dark:border-[#414559] px-4 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#292c3c] transition-colors"
                 >
                     {$t("julia.prompt.cancel")}
                 </button>
                 <button
                     onclick={handleInstall}
-                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-5 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 transition-colors"
+                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-5 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 transition-colors"
                 >
                     <Icon icon="solar:download-bold-duotone" width="0.8rem" />
                     {$t("julia.prompt.install")}

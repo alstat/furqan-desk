@@ -75,7 +75,7 @@
         title={$t("typst.preview_source.title")}
         aria-haspopup="menu"
         aria-expanded={open}
-        class="flex max-w-[11rem] cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors
+        class="flex max-w-[11rem] cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[0.625rem] font-medium transition-colors
                {$typstPreviewMode === 'pinned'
             ? 'bg-brand-gold-100 dark:bg-[#e5c890]/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-[#e5c890]/25'
             : 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'}"
@@ -84,7 +84,7 @@
             icon={$typstPreviewMode === "pinned"
                 ? "solar:pin-bold"
                 : "solar:document-text-linear"}
-            width="11"
+            width="0.6875rem"
         />
         {#if !compact}
             <span class="truncate">{triggerLabel}</span>
@@ -92,11 +92,11 @@
         {#if pinnedMissing}
             <Icon
                 icon="solar:danger-triangle-bold"
-                width="11"
+                width="0.6875rem"
                 class="text-amber-500"
             />
         {/if}
-        <Icon icon="solar:alt-arrow-down-linear" width="9" class="opacity-70" />
+        <Icon icon="solar:alt-arrow-down-linear" width="0.5625rem" class="opacity-70" />
     </button>
 
     {#if open}
@@ -115,7 +115,7 @@
                     width="0.85rem"
                 />
                 <span
-                    class="text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+                    class="text-[0.625rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
                     {$t("typst.preview_source.title")}
                 </span>
@@ -142,12 +142,12 @@
                     />
                     <span class="min-w-0 flex-1">
                         <span
-                            class="block text-[13px] font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5]"
+                            class="block text-[0.8125rem] font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5]"
                         >
                             {$t("typst.preview_source.active")}
                         </span>
                         <span
-                            class="block text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                            class="block text-[0.625rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                         >
                             {$t("typst.preview_source.active_desc")}
                         </span>
@@ -163,14 +163,14 @@
 
                 <!-- Pin section sub-header -->
                 <div
-                    class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7] border-b border-stone-100 dark:border-[#363a4f] bg-brand-sand-50/60 dark:bg-[#232634]/60"
+                    class="px-3 py-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7] border-b border-stone-100 dark:border-[#363a4f] bg-brand-sand-50/60 dark:bg-[#232634]/60"
                 >
                     {$t("typst.preview_source.pin_heading")}
                 </div>
 
                 {#if pinnableTabs.length === 0}
                     <div
-                        class="px-3 py-4 text-center text-[11px] italic text-brand-charcoal-300 dark:text-[#838ba7]"
+                        class="px-3 py-4 text-center text-[0.6875rem] italic text-brand-charcoal-300 dark:text-[#838ba7]"
                     >
                         {$t("typst.preview_source.no_files")}
                     </div>
@@ -200,7 +200,7 @@
                                         : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
                                 />
                                 <span
-                                    class="min-w-0 flex-1 truncate text-[13px] {isPinned
+                                    class="min-w-0 flex-1 truncate text-[0.8125rem] {isPinned
                                         ? 'font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5]'
                                         : 'text-brand-charcoal-500 dark:text-[#a5adce]'}"
                                     title={tab.path}
@@ -221,7 +221,7 @@
 
                 {#if pinnedMissing}
                     <p
-                        class="flex items-center gap-1.5 px-3 py-2 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-900/10"
+                        class="flex items-center gap-1.5 px-3 py-2 text-[0.625rem] text-amber-600 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-900/10"
                     >
                         <Icon
                             icon="solar:danger-triangle-bold"

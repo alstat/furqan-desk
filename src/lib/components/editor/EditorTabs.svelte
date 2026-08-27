@@ -837,7 +837,7 @@
                     }
                 }}
                 ondblclick={() => promoteTabToPermanent(tab.id)}
-                class="group cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-[13px] whitespace-nowrap
+                class="group cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-[0.8125rem] whitespace-nowrap
                        border-r border-stone-200 dark:border-[#414559] transition-colors
                        {group
                     ? `border-b-2 ${color?.border} ${color?.bg} pr-6`
@@ -880,7 +880,7 @@
                             }
                         }}
                         class="min-w-0 w-28 bg-transparent border-b border-brand-gold-400
-                               outline-none text-[13px] text-brand-charcoal-800 dark:text-[#e5c890]"
+                               outline-none text-[0.8125rem] text-brand-charcoal-800 dark:text-[#e5c890]"
                     />
                 {:else}
                     <span class={tab.isPreview ? "italic" : ""}

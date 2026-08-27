@@ -49,7 +49,7 @@
     }: { tabId?: string | null; hideRepl?: boolean } = $props();
 
     const labelClass =
-        "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300";
+        "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300";
 
     let lineWrap = $state(false);
 
@@ -517,7 +517,7 @@
     <div class="flex-1 flex flex-col min-h-0" style="min-height: 120px">
         <div class="flex items-center justify-between px-2 pt-1 mb-1">
             <span
-                class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
+                class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300"
                 >{effectiveTab?.name ??
                     $t("julia_editor.fallback_name")}{#if effectiveTab?.isDirty}<span
                         class="text-brand-gold-500 dark:text-[#e5c890]"
@@ -539,27 +539,27 @@
                     onclick={formatJulia}
                     disabled={formatting}
                     title={$t("julia_cell.format")}
-                    class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
+                    class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[0.625rem] font-medium transition-colors
                            bg-brand-gold-100 dark:bg-[#e5c890]/15 text-brand-gold-600 dark:text-brand-gold-400
                            hover:bg-brand-gold-200 dark:hover:bg-[#e5c890]/25
                            disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <Icon icon="icon-park-twotone:format-brush" width="11" />
+                    <Icon icon="icon-park-twotone:format-brush" width="0.6875rem" />
                     {formatting ? $t("julia_editor.formatting") : $t("julia_editor.format")}
                 </button>
                 <!-- Line wrap toggle -->
                 <button
                     onclick={() => (lineWrap = !lineWrap)}
                     title={lineWrap ? $t("julia_cell.disable_wrap") : $t("julia_cell.enable_wrap")}
-                    class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
+                    class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[0.625rem] font-medium transition-colors
                        {lineWrap
                         ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'
                         : 'bg-brand-gold-100 dark:bg-[#e5c890]/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-[#e5c890]/25'}"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        width="11"
-                        height="11"
+                        width="0.6875rem"
+                        height="0.6875rem"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -589,7 +589,7 @@
                     : 'bg-red-50/90 dark:bg-red-900/15 border-red-200/80 dark:border-red-700/40'}"
             >
                 <span
-                    class="mt-[1px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full
+                    class="mt-[0.0625rem] flex h-4 w-4 shrink-0 items-center justify-center rounded-full
                            {isReplDown
                         ? 'bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-300'
                         : 'bg-red-100 dark:bg-red-800/40 text-red-600 dark:text-red-300'}"
@@ -604,7 +604,7 @@
                 </span>
                 <div class="min-w-0 flex-1 leading-tight">
                     <div
-                        class="text-[11px] font-semibold
+                        class="text-[0.6875rem] font-semibold
                                {isReplDown
                             ? 'text-amber-800 dark:text-amber-200'
                             : 'text-red-700 dark:text-red-200'}"
@@ -614,7 +614,7 @@
                             : $t("julia_editor.format_failed_file")}
                     </div>
                     <div
-                        class="mt-1.5 text-[10.5px] break-words
+                        class="mt-1.5 text-[0.65625rem] break-words
                                {isReplDown
                             ? 'text-amber-700/90 dark:text-amber-300/90'
                             : 'text-red-600/90 dark:text-red-300/90'}"
