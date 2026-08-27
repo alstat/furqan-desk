@@ -28,6 +28,18 @@
   let dragColWidths: number[] = [];
   let dragRowEl: HTMLTableRowElement | null = null;
 
+  // Linux's transformed app shell is a containing block for fixed descendants.
+  // Keep this viewport-positioned indicator outside it so DOMRect coordinates
+  // are not offset again by the client-side window frame.
+  function portalToBody(node: HTMLElement) {
+    document.body.appendChild(node);
+    return {
+      destroy() {
+        node.remove();
+      },
+    };
+  }
+
   /** Get the Lexical node key attached by the editor to a DOM element. */
   function getLexicalKey(el: HTMLElement): string | null {
     // Lexical stores key as __lexicalKey_EDITORKEY on every owned DOM element
@@ -270,6 +282,7 @@
 
 {#if showIndicator}
   <div
+    use:portalToBody
     style="position:fixed;z-index:9999;pointer-events:none;background:var(--color-brand-gold-400,#e8a844);top:{indicatorTop}px;left:{indicatorLeft}px;width:{indicatorWidth}px;height:{indicatorHeight}px;"
   ></div>
 {/if}

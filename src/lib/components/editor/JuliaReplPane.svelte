@@ -13,7 +13,7 @@
         juliaReplHistory,
         pushReplLines,
         juliaPlots,
-        cmFontSize,
+        uiFontScale,
         replFontSize,
         replLineSpacing,
         replInputHeights,
@@ -126,10 +126,15 @@
     // One line under an editor, seven in the right-hand column, unless the user
     // has dragged this slot to a height of their own.
     const inputSlot = $derived(embedded ? "embedded" : "panel");
-    const lineHeightPx = $derived($replFontSize * $replLineSpacing);
+    const lineHeightPx = $derived(
+        $replFontSize * $replLineSpacing * $uiFontScale,
+    );
+    const inputMinHeight = $derived(REPL_INPUT_MIN_HEIGHT * $uiFontScale);
+    const inputMaxHeight = $derived(REPL_INPUT_MAX_HEIGHT * $uiFontScale);
+    const inputPadding = $derived(REPL_INPUT_PADDING * $uiFontScale);
 
     function heightForLines(lines: number): number {
-        return Math.round(lines * lineHeightPx) + REPL_INPUT_PADDING;
+        return Math.round(lines * lineHeightPx) + inputPadding;
     }
 
     const defaultInputHeight = $derived(
@@ -140,10 +145,13 @@
     // its height came straight from the newline count.
     const inputHeight = $derived(
         Math.min(
-            REPL_INPUT_MAX_HEIGHT,
+            inputMaxHeight,
             Math.max(
-                $replInputHeights[inputSlot] ?? defaultInputHeight,
+                $replInputHeights[inputSlot] == null
+                    ? defaultInputHeight
+                    : $replInputHeights[inputSlot] * $uiFontScale,
                 heightForLines((replInput.match(/\n/g) ?? []).length + 1),
+                inputMinHeight,
             ),
         ),
     );
@@ -165,7 +173,8 @@
         // The seam is above the box, so dragging up makes it taller.
         replInputHeights.setHeight(
             inputSlot,
-            inputDragStartHeight + (inputDragStartY - e.clientY),
+            (inputDragStartHeight + (inputDragStartY - e.clientY)) /
+                $uiFontScale,
         );
     }
 
@@ -179,10 +188,16 @@
         const step = e.shiftKey ? 32 : 8;
         if (e.key === "ArrowUp") {
             e.preventDefault();
-            replInputHeights.setHeight(inputSlot, inputHeight + step);
+            replInputHeights.setHeight(
+                inputSlot,
+                inputHeight / $uiFontScale + step,
+            );
         } else if (e.key === "ArrowDown") {
             e.preventDefault();
-            replInputHeights.setHeight(inputSlot, inputHeight - step);
+            replInputHeights.setHeight(
+                inputSlot,
+                inputHeight / $uiFontScale - step,
+            );
         }
     }
 
@@ -856,7 +871,7 @@
     }
 
     const settingsLabelClass =
-        "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
+        "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
     const settingsAdjustBtnClass =
         "cursor-pointer w-7 h-7 flex items-center justify-center rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#363a4f] hover:bg-brand-sand-200 dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
 
@@ -864,7 +879,7 @@
     // palette: plain actions carry the gold accent the way Compile does, and
     // the two toggles flip between gold and sand the way Live does.
     const pillBase =
-        "flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors";
+        "flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[0.625rem] font-medium transition-colors";
     const pillIdle =
         "bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]";
     const pillAccent =
@@ -875,7 +890,7 @@
      the single border-x, so the pane adds no box of its own. -->
 <div
     class="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
-    style="--repl-font-size: {$replFontSize}px; --repl-line-height: {$replLineSpacing};"
+    style="--repl-font-size: {$replFontSize / 16}rem; --repl-line-height: {$replLineSpacing};"
 >
     <!-- Header: status on the left, actions on the right — LeanInfoviewPane's
          layout and spacing (px-4 py-1, gap-1.5 between controls). -->
@@ -907,7 +922,7 @@
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                         ></path>
                     </svg>
-                    <span class="text-[10px] italic"
+                    <span class="text-[0.625rem] italic"
                         >{$t("julia_repl.running")}</span
                     >
                 </span>
@@ -920,7 +935,7 @@
                 class="{pillBase} {pillAccent} select-none"
                 title={$t("julia_repl.clear_title")}
             >
-                <Icon icon="lucide:eraser" width="11" />
+                <Icon icon="lucide:eraser" width="0.6875rem" />
                 {$t("julia_repl.clear")}
             </button>
             <button
@@ -928,7 +943,7 @@
                 class="{pillBase} {pillAccent} select-none"
                 title={$t("julia_repl.restart_title")}
             >
-                <Icon icon="lucide:rotate-ccw" width="11" />
+                <Icon icon="lucide:rotate-ccw" width="0.6875rem" />
                 {$t("julia_repl.restart")}
             </button>
             <!-- Settings button -->
@@ -939,7 +954,7 @@
                     title={$t("julia_repl.display_settings")}
                     aria-expanded={showSettings}
                 >
-                    <Icon icon="solar:settings-bold-duotone" width="11" />
+                    <Icon icon="solar:settings-bold-duotone" width="0.6875rem" />
                     {$t("julia_repl.settings")}
                 </button>
                 {#if showSettings}
@@ -967,7 +982,7 @@
                                     {$t("terminal.display_options")}
                                 </p>
                                 <p
-                                    class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                    class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                                 >
                                     {$t("terminal.text_size_spacing")}
                                 </p>
@@ -989,8 +1004,8 @@
                                     class={settingsAdjustBtnClass}
                                 >
                                     <svg
-                                        width="10"
-                                        height="2"
+                                        width="0.625rem"
+                                        height="0.125rem"
                                         viewBox="0 0 10 2"
                                         fill="none"
                                     >
@@ -1020,8 +1035,8 @@
                                     class={settingsAdjustBtnClass}
                                 >
                                     <svg
-                                        width="10"
-                                        height="10"
+                                        width="0.625rem"
+                                        height="0.625rem"
                                         viewBox="0 0 10 10"
                                         fill="none"
                                     >
@@ -1074,8 +1089,8 @@
                                     class={settingsAdjustBtnClass}
                                 >
                                     <svg
-                                        width="10"
-                                        height="2"
+                                        width="0.625rem"
+                                        height="0.125rem"
                                         viewBox="0 0 10 2"
                                         fill="none"
                                     >
@@ -1105,8 +1120,8 @@
                                     class={settingsAdjustBtnClass}
                                 >
                                     <svg
-                                        width="10"
-                                        height="10"
+                                        width="0.625rem"
+                                        height="0.625rem"
                                         viewBox="0 0 10 10"
                                         fill="none"
                                     >
@@ -1155,7 +1170,7 @@
                     title={$t("julia_repl.search_repl")}
                     aria-expanded={showSearch}
                 >
-                    <Icon icon="solar:magnifer-bold-duotone" width="11" />
+                    <Icon icon="solar:magnifer-bold-duotone" width="0.6875rem" />
                     {$t("julia_repl.search")}
                 </button>
 
@@ -1173,7 +1188,7 @@
                             aria-label={$t("julia_repl.search_repl")}
                         />
                         <span
-                            class="min-w-11 text-center text-[10px] tabular-nums text-brand-charcoal-300 dark:text-[#838ba7]"
+                            class="min-w-11 text-center text-[0.625rem] tabular-nums text-brand-charcoal-300 dark:text-[#838ba7]"
                         >
                             {searchMatches.length > 0
                                 ? `${searchIndex + 1}/${searchMatches.length}`
@@ -1276,7 +1291,7 @@
                         >
                             <div class="flex items-center gap-2">
                                 <span
-                                    class="text-[10px] text-brand-charcoal-300 dark:text-[#626880]"
+                                    class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#626880]"
                                     >{$t("julia_repl.precompiling")}</span
                                 >
                                 <div
@@ -1312,7 +1327,7 @@
                                     {/if}
                                 </div>
                                 <span
-                                    class="text-[10px] text-brand-charcoal-300 dark:text-[#626880] shrink-0 tabular-nums"
+                                    class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#626880] shrink-0 tabular-nums"
                                 >
                                     {precompile.done}{precompile.total > 0
                                         ? `/${precompile.total}`
@@ -1328,7 +1343,7 @@
                                             spinnerFrame % SPINNER_FRAMES.length
                                         ]}</span
                                     >
-                                    <span class="text-[11px]">{pkg}</span>
+                                    <span class="text-[0.6875rem]">{pkg}</span>
                                 </div>
                             {/each}
                         </div>
@@ -1345,7 +1360,7 @@
                                 >{SPINNER_FRAMES[spinnerFrame]}</span
                             >
                             <span
-                                class="text-[11px] italic text-brand-charcoal-300 dark:text-[#626880]"
+                                class="text-[0.6875rem] italic text-brand-charcoal-300 dark:text-[#626880]"
                                 >{$t("julia_repl.running")}</span
                             >
                         </div>
@@ -1363,8 +1378,8 @@
                 aria-orientation="horizontal"
                 aria-label={$t("julia_repl.resize_input")}
                 aria-valuenow={inputHeight}
-                aria-valuemin={REPL_INPUT_MIN_HEIGHT}
-                aria-valuemax={REPL_INPUT_MAX_HEIGHT}
+                aria-valuemin={inputMinHeight}
+                aria-valuemax={inputMaxHeight}
                 tabindex="0"
                 title={$t("julia_repl.resize_input")}
                 onpointerdown={startInputDrag}
@@ -1472,7 +1487,7 @@
 
 <style>
     :global(.repl-mono) {
-        font-size: var(--repl-font-size, 13px);
+        font-size: var(--repl-font-size, 0.8125rem);
         line-height: var(--repl-line-height, 1.3);
     }
 

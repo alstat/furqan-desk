@@ -83,7 +83,7 @@
                     {$t("settings.julia.updating")}
                 </p>
                 <p
-                    class="text-[11px] text-brand-charcoal-400 dark:text-[#838ba7] mt-0.5 truncate"
+                    class="text-[0.6875rem] text-brand-charcoal-400 dark:text-[#838ba7] mt-0.5 truncate"
                 >
                     {$juliaInstallMessage || $t("settings.julia.updating")}
                 </p>
@@ -118,7 +118,7 @@
                     {$t("settings.julia.update_failed")}
                 </p>
                 <p
-                    class="text-[11px] text-red-500 dark:text-red-300/90 mt-0.5 break-words"
+                    class="text-[0.6875rem] text-red-500 dark:text-red-300/90 mt-0.5 break-words"
                 >
                     {$juliaInstallError}
                 </p>

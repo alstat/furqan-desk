@@ -112,13 +112,14 @@
     const title = $derived($activeTab?.name ?? "AyahLab");
     const dirty = $derived($activeTab?.isDirty ?? false);
 
-    // Zen mode dims every chrome element until it is hovered; the bar keeps its
-    // height either way so the page underneath never reflows.
+    // Zen mode dims the header chrome until the bar is hovered; Linux caption
+    // controls are excluded below because an undecorated window must always
+    // keep its minimise, maximise and close actions reachable.
     const zenFade = $derived(
         $zenMode
             ? $zenPeek
                 ? "opacity-50 transition-opacity duration-200"
-                : "opacity-0 hover:opacity-100 transition-opacity duration-200"
+                : "opacity-0 group-hover/header:opacity-100 transition-opacity duration-200"
             : "",
     );
 </script>
@@ -126,9 +127,9 @@
 <header
     data-tauri-drag-region
     bind:this={headerEl}
-    class="relative z-40 grid h-11 shrink-0 select-none grid-cols-[minmax(min-content,1fr)_minmax(0,32rem)_minmax(min-content,1fr)] items-center gap-3 px-2 {$zenMode
+    class="group/header relative z-40 grid h-11 shrink-0 select-none grid-cols-[minmax(min-content,1fr)_minmax(0,32rem)_minmax(min-content,1fr)] items-center gap-3 px-2 {$zenMode
         ? 'border-transparent bg-transparent'
-        : 'border-b border-brand-sand-200 bg-brand-sand-50/95 dark:bg-[#2b2b2b]/95'} {zenFade}"
+        : 'border-b border-brand-sand-200 bg-brand-sand-50/95 dark:bg-[#2b2b2b]/95'}"
 >
     <!-- Marked like the other two tracks, and for the same reason: a bare
          `data-tauri-drag-region` drags only when the click lands on *that*
@@ -140,7 +141,7 @@
          inside still block dragging on their own. -->
     <div
         data-tauri-drag-region
-        class="flex min-w-0 items-center"
+        class="flex min-w-0 items-center {zenFade}"
         style:padding-left={isMac ? "5rem" : undefined}
     >
         {#if $isSidebar}
@@ -150,7 +151,10 @@
 
     <!-- Capped so a long tab list scrolls inside the track instead of stretching
          across the bar; a short one shrinks the track and stays centred. -->
-    <div data-tauri-drag-region class="flex min-w-0 justify-center">
+    <div
+        data-tauri-drag-region
+        class="flex min-w-0 justify-center {zenFade}"
+    >
         {#if $isSidebar && $tabs.length}
             <EditorTabs variant="header" />
         {:else}
@@ -170,10 +174,17 @@
         class="flex min-w-0 items-center justify-end self-stretch"
     >
         {#if !$hideSurahPage()}
-            <ParchmentActionBar variant="header" />
+            <div data-tauri-drag-region class={zenFade}>
+                <ParchmentActionBar variant="header" />
+            </div>
         {/if}
         {#if isWindows || isLinux}
-            <WindowControls variant={isLinux ? "gnome" : "windows"} />
+            <div
+                data-tauri-drag-region
+                class="flex items-center self-stretch {isLinux ? '' : zenFade}"
+            >
+                <WindowControls variant={isLinux ? "gnome" : "windows"} />
+            </div>
         {/if}
     </div>
 </header>

@@ -87,23 +87,23 @@
     <button
         onclick={() => (open = !open)}
         title={$t("spellcheck.language")}
-        class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
+        class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[0.625rem] font-medium transition-colors
                {$spellCheckEnabled
             ? 'bg-brand-gold-100 dark:bg-[#e5c890]/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-[#e5c890]/25'
             : 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'}"
     >
-        <Icon icon="material-symbols:spellcheck-rounded" width="12" />
+        <Icon icon="material-symbols:spellcheck-rounded" width="0.75rem" />
         <span>{$spellCheckEnabled ? currentName || "—" : $t("spellcheck.off")}</span>
         <Icon
             icon="solar:alt-arrow-down-linear"
-            width="9"
+            width="0.5625rem"
             class={up ? "rotate-180" : ""}
         />
     </button>
 
     {#if open}
         <div
-            class="absolute right-0 z-[9999] w-56 max-h-72 flex flex-col overflow-hidden rounded-xl shadow-lg text-[12px]
+            class="absolute right-0 z-[9999] w-56 max-h-72 flex flex-col overflow-hidden rounded-xl shadow-lg text-[0.75rem]
                    bg-white dark:bg-[#292c3c] border border-stone-200 dark:border-[#414559]
                    text-brand-charcoal-600 dark:text-[#c6d0f5]
                    {up ? 'bottom-full mb-1' : 'top-full mt-1'}"
@@ -132,7 +132,7 @@
 
             <div class="my-1 border-t border-stone-200 dark:border-[#414559]"></div>
             <div
-                class="px-3 pb-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
+                class="px-3 pb-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-brand-charcoal-300"
             >
                 {$t("spellcheck.language")}
             </div>
@@ -150,7 +150,7 @@
                     {#if l.code === $spellLanguage && $spellCheckEnabled}
                         <Icon
                             icon="solar:check-circle-bold"
-                            width="13"
+                            width="0.8125rem"
                             class="text-brand-gold-500"
                         />
                     {/if}
@@ -162,7 +162,7 @@
                     class="my-1 border-t border-stone-200 dark:border-[#414559]"
                 ></div>
                 <div
-                    class="px-3 pb-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
+                    class="px-3 pb-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-brand-charcoal-300"
                 >
                     {$t("spellcheck.more_languages")}
                 </div>
@@ -179,13 +179,13 @@
                         {#if installing === l.code}
                             <Icon
                                 icon="solar:refresh-bold"
-                                width="12"
+                                width="0.75rem"
                                 class="animate-spin text-brand-charcoal-300"
                             />
                         {:else}
                             <Icon
                                 icon="solar:download-minimalistic-linear"
-                                width="12"
+                                width="0.75rem"
                                 class="text-brand-charcoal-300"
                             />
                         {/if}

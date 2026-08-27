@@ -88,7 +88,7 @@
                     {$t("settings.lean.updating")}
                 </p>
                 <p
-                    class="text-[11px] text-brand-charcoal-400 dark:text-[#838ba7] mt-0.5 truncate"
+                    class="text-[0.6875rem] text-brand-charcoal-400 dark:text-[#838ba7] mt-0.5 truncate"
                 >
                     {$leanInstallMessage || $t("settings.lean.updating")}
                 </p>
@@ -97,7 +97,7 @@
                     ariaLabel={$t("settings.lean.updating")}
                 />
                 <p
-                    class="text-[10.5px] text-brand-charcoal-300 dark:text-[#626880] mt-1.5"
+                    class="text-[0.65625rem] text-brand-charcoal-300 dark:text-[#626880] mt-1.5"
                 >
                     {$t("settings.lean.background_hint")}
                 </p>
@@ -115,7 +115,7 @@
                     {$t("settings.lean.update_done")}
                 </p>
                 <p
-                    class="text-[11px] text-brand-charcoal-400 dark:text-[#838ba7] mt-0.5"
+                    class="text-[0.6875rem] text-brand-charcoal-400 dark:text-[#838ba7] mt-0.5"
                 >
                     {$t("lean.prompt.success")}
                 </p>
@@ -133,7 +133,7 @@
                     {$t("settings.lean.update_failed")}
                 </p>
                 <p
-                    class="text-[11px] text-red-500 dark:text-red-300/90 mt-0.5 break-words"
+                    class="text-[0.6875rem] text-red-500 dark:text-red-300/90 mt-0.5 break-words"
                 >
                     {$leanInstallError}
                 </p>

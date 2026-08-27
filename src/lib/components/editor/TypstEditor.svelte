@@ -744,7 +744,7 @@
     <div class="flex-1 flex flex-col min-h-0">
         <div class="flex items-center justify-between px-2 pt-1 mb-1">
             <span
-                class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
+                class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300"
                 >{effectiveTab?.name ??
                     $t("typst.fallback_name")}{#if effectiveTab?.isDirty}<span
                         class="text-brand-gold-500 dark:text-[#e5c890]"
@@ -766,27 +766,27 @@
                     onclick={formatTypst}
                     disabled={formatting}
                     title={$t("typst.format_title")}
-                    class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
+                    class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[0.625rem] font-medium transition-colors
                            bg-brand-gold-100 dark:bg-[#e5c890]/15 text-brand-gold-600 dark:text-brand-gold-400
                            hover:bg-brand-gold-200 dark:hover:bg-[#e5c890]/25
                            disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <Icon icon="icon-park-twotone:format-brush" width="11" />
+                    <Icon icon="icon-park-twotone:format-brush" width="0.6875rem" />
                     {formatting ? $t("typst.formatting") : $t("typst.format")}
                 </button>
                 <!-- Line wrap toggle -->
                 <button
                     onclick={() => (lineWrap = !lineWrap)}
                     title={lineWrap ? $t("julia_cell.disable_wrap") : $t("julia_cell.enable_wrap")}
-                    class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors
+                    class="flex cursor-pointer items-center gap-1 px-1.5 py-0.5 rounded-full text-[0.625rem] font-medium transition-colors
                            {lineWrap
                         ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'
                         : 'bg-brand-gold-100 dark:bg-[#e5c890]/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-[#e5c890]/25'}"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        width="11"
-                        height="11"
+                        width="0.6875rem"
+                        height="0.6875rem"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -804,7 +804,7 @@
         </div>
         {#if formatError}
             <div
-                class="mx-2 mb-1 px-2 py-1 rounded-md text-[10px] text-red-500 dark:text-red-400
+                class="mx-2 mb-1 px-2 py-1 rounded-md text-[0.625rem] text-red-500 dark:text-red-400
                        bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40"
             >
                 {formatError}
@@ -863,14 +863,14 @@
         >
             <div class="mb-1.5 flex items-center justify-between gap-2">
                 <span
-                    class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300"
+                    class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300"
                     >{$t("typst.preview")}</span
                 >
                 <div class="flex items-center gap-1.5">
                     <button
                         onclick={exportPdf}
                         title={$t("typst.export_pdf")}
-                        class="flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors
+                        class="flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[0.625rem] font-medium transition-colors
                                bg-brand-gold-100 dark:bg-[#e5c890]/15 text-brand-gold-600 dark:text-brand-gold-400
                                hover:bg-brand-gold-200 dark:hover:bg-[#e5c890]/25
                                {$zenMode
@@ -879,7 +879,7 @@
                                 : 'opacity-0 hover:opacity-100 transition-opacity duration-200'
                             : ''}"
                     >
-                        <Icon icon="ph:file-pdf-bold" width="11" />
+                        <Icon icon="ph:file-pdf-bold" width="0.6875rem" />
                         {$t("typst.export_pdf")}
                     </button>
                     <TypstPreviewSourceSelector />
@@ -892,17 +892,17 @@
                     >
                         <!-- Zoom controls — revealed while hovering the preview body -->
                         <div
-                            class="pointer-events-auto flex items-center gap-0.5 rounded-full border border-stone-200/60 dark:border-[#414559]/60 bg-white/70 dark:bg-[#303446]/70 px-1 py-0.5 shadow-sm backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                            class="pointer-events-auto flex items-center gap-0.5 overflow-hidden rounded-full border border-stone-200/60 dark:border-[#414559]/60 bg-white/70 dark:bg-[#303446]/70 px-1 py-0.5 shadow-sm backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-150"
                         >
                             <button
                                 onclick={() => zoomEmbeddedBy(1 / PREVIEW_ZOOM_STEP)}
                                 title={$t("typst.zoom_out")}
                                 class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
                             >
-                                <Icon icon="solar:magnifer-zoom-out-linear" width="12" />
+                                <Icon icon="solar:magnifer-zoom-out-linear" width="0.75rem" />
                             </button>
                             <span
-                                class="min-w-8 text-center text-[10px] font-medium tabular-nums text-brand-charcoal-300"
+                                class="min-w-8 text-center text-[0.625rem] font-medium tabular-nums text-brand-charcoal-300"
                             >
                                 {Math.round($typstEmbeddedPreviewZoom * 100)}%
                             </span>
@@ -911,7 +911,7 @@
                                 title={$t("typst.zoom_in")}
                                 class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
                             >
-                                <Icon icon="solar:magnifer-zoom-in-linear" width="12" />
+                                <Icon icon="solar:magnifer-zoom-in-linear" width="0.75rem" />
                             </button>
                             <button
                                 onclick={() =>
@@ -923,11 +923,11 @@
                                 title={$t("typst.full_width")}
                                 class="cursor-pointer rounded-full p-1 text-brand-charcoal-300 hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
                             >
-                                <Icon icon="material-symbols:fit-width" width="13" />
+                                <Icon icon="material-symbols:fit-width" width="0.8125rem" />
                             </button>
                         </div>
                         <div
-                            class="rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none text-brand-charcoal-300 backdrop-blur-md"
+                            class="rounded-full px-2.5 py-1 text-[0.625rem] font-semibold leading-none text-brand-charcoal-300 backdrop-blur-md"
                             aria-label={$t("typst.page_of").replace("{current}", String(currentEmbeddedPreviewPage)).replace("{total}", String($typstSvgPages.length))}
                         >
                             {currentEmbeddedPreviewPage} / {$typstSvgPages.length}

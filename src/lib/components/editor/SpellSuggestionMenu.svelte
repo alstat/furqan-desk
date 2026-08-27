@@ -79,7 +79,7 @@
 
 <div
     bind:this={menuEl}
-    class="fixed z-[9999] min-w-[180px] max-w-[280px] py-1 rounded-md shadow-lg text-[13px]
+    class="fixed z-[9999] min-w-[11.25rem] max-w-[17.5rem] py-1 rounded-md shadow-lg text-[0.8125rem]
            bg-white dark:bg-[#292c3c] border border-stone-200 dark:border-[#414559]
            text-brand-charcoal-600 dark:text-[#c6d0f5]"
     style:left="{pos.left}px"

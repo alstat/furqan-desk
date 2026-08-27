@@ -354,7 +354,7 @@
                     class="text-brand-gold-500"
                 />
                 <span
-                    class="text-[11px] py-1 font-semibold uppercase tracking-wide
+                    class="text-[0.6875rem] py-1 font-semibold uppercase tracking-wide
 			             text-brand-charcoal-500 dark:text-[#838ba7]"
                 >
                     {$t("julia.plots")}
@@ -372,7 +372,7 @@
                 {#if hasPlots}
                     <button
                         onclick={removeCurrent}
-                        class="cursor-pointer text-[11px] font-semibold text-brand-charcoal-300
+                        class="cursor-pointer text-[0.6875rem] font-semibold text-brand-charcoal-300
 					       dark:text-[#838ba7] hover:text-red-500 dark:hover:text-red-400
 					       transition-colors"
                         title={$t("julia.remove_plot")}
@@ -384,7 +384,7 @@
                     </button>
                     <button
                         onclick={clearPlots}
-                        class="cursor-pointer text-[11px] font-semibold text-brand-charcoal-300
+                        class="cursor-pointer text-[0.6875rem] font-semibold text-brand-charcoal-300
 					       dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 					       transition-colors"
                         title={$t("julia.clear_all_plots")}
@@ -435,7 +435,7 @@
                         width="2rem"
                         class="opacity-30"
                     />
-                    <p class="text-[11px] italic text-center">
+                    <p class="text-[0.6875rem] italic text-center">
                         {$t("julia.empty_title")}<br />
                         {$t("julia.empty_desc")}
                     </p>
@@ -564,7 +564,7 @@
                     <!-- Zoom level badge (bottom-right) -->
                     {#if imgScale > 1}
                         <span
-                            class="absolute bottom-3 right-3 text-[9px] font-semibold px-1.5 py-0.5 rounded-full
+                            class="absolute bottom-3 right-3 text-[0.5625rem] font-semibold px-1.5 py-0.5 rounded-full
                                      bg-black/40 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100/90 backdrop-blur-sm select-none pointer-events-none"
                         >
                             {Math.round(imgScale * 100)}%
@@ -581,7 +581,7 @@
                         <button
                             onclick={prev}
                             disabled={currentIndex === 0}
-                            class="cursor-pointer flex items-center gap-0.5 text-[11px] font-semibold
+                            class="cursor-pointer flex items-center gap-0.5 text-[0.6875rem] font-semibold
 						       text-brand-charcoal-500 dark:text-[#838ba7]
 						       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 						       disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -611,7 +611,7 @@
                         <button
                             onclick={next}
                             disabled={currentIndex === plots.length - 1}
-                            class="cursor-pointer flex items-center mr-2 gap-0.5 text-[11px] font-semibold
+                            class="cursor-pointer flex items-center mr-2 gap-0.5 text-[0.6875rem] font-semibold
 						       text-brand-charcoal-500 dark:text-[#838ba7]
 						       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 						       disabled:opacity-30 disabled:cursor-not-allowed transition-colors"

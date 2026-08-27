@@ -12,9 +12,11 @@
 	interface Props {
 		tool: DrawTool;
 		style: StyleDefaults;
+		background: string;
 		selected: Shape | null;
 		setTool: (t: DrawTool) => void;
 		setStyle: (patch: Partial<StyleDefaults>) => void;
+		setBackground: (background: string) => void;
 		bringFront: () => void;
 		bringForward: () => void;
 		sendBackward: () => void;
@@ -31,9 +33,11 @@
 	let {
 		tool,
 		style,
+		background,
 		selected,
 		setTool,
 		setStyle,
+		setBackground,
 		bringFront,
 		bringForward,
 		sendBackward,
@@ -176,6 +180,19 @@
 			<Icon icon="mdi:image-outline" width="1.05rem" />
 		</button>
 	</div>
+
+	<div class="mx-1 h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></div>
+
+	<!-- Canvas background -->
+	<label class="flex items-center gap-1" title="Canvas background color">
+		<span class="text-[10px] font-semibold uppercase text-brand-charcoal-300">Canvas</span>
+		<input
+			type="color"
+			class="h-6 w-6 cursor-pointer rounded border border-brand-sand-200 dark:border-[#414559] bg-transparent p-0"
+			value={background === 'transparent' ? '#ffffff' : background}
+			onchange={(e) => setBackground(e.currentTarget.value)}
+		/>
+	</label>
 
 	<div class="mx-1 h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></div>
 

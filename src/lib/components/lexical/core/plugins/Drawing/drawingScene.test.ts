@@ -241,6 +241,12 @@ describe('sceneToSvg', () => {
         expect(svg).not.toContain('<c>');
     });
 
+    test('renders a customized canvas background', () => {
+        const scene = { ...emptyScene(200, 120), background: '#123456' };
+        const svg = sceneToSvg(scene);
+        expect(svg).toContain('<rect x="0" y="0" width="200" height="120" fill="#123456" />');
+    });
+
     test('sceneToDataUrl round-trips through parseScene', () => {
         const scene = emptyScene(300, 300);
         scene.shapes.push(createShapeFromBox('arrow', DEFAULT_STYLE, box)!);

@@ -223,6 +223,11 @@
 		zoom = z;
 		pan = p;
 	}
+	function setBackground(background: string) {
+		if (scene.background === background) return;
+		requestHistory();
+		scene = { ...scene, background };
+	}
 
 	// ── style / shape editing ─────────────────────────────────────────────────
 	function setStyle(patch: Partial<StyleDefaults>) {
@@ -694,9 +699,11 @@
 		<DrawingToolbar
 			{tool}
 			{style}
+			background={scene.background}
 			selected={selectedShape}
 			setTool={(t) => (tool = t)}
 			{setStyle}
+			{setBackground}
 			{bringFront}
 			{bringForward}
 			{sendBackward}
