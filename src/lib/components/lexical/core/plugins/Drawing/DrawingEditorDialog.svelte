@@ -18,6 +18,8 @@
 		createImageShape,
 		translateShape,
 		syncConnections,
+		fitTextShapeToContent,
+		isLabelableShape,
 		canGroupSelection,
 		selectionHasGroup,
 		expandSelection,
@@ -247,13 +249,21 @@
 			if (patch.align !== undefined) out.align = patch.align;
 			if (patch.bold !== undefined) out.bold = patch.bold;
 			if (patch.italic !== undefined) out.italic = patch.italic;
+		} else if (isLabelableShape(out) && out.label) {
+			out.label = {
+				...out.label,
+				fontSize: patch.fontSize ?? out.label.fontSize,
+				fontFamily: patch.fontFamily ?? out.label.fontFamily,
+				bold: patch.bold ?? out.label.bold,
+				italic: patch.italic ?? out.label.italic
+			};
 		}
 		// Tail arrowheads apply to line segments (line / elbow / curved connectors).
 		if (out.type === 'line') {
 			if (patch.startArrow !== undefined) out.startArrow = patch.startArrow;
 			if (patch.endArrow !== undefined) out.endArrow = patch.endArrow;
 		}
-		return out;
+		return out.type === 'text' ? fitTextShapeToContent(out) : out;
 	}
 
 	// Re-order the whole selection as a block. `fn` receives the shape array, the

@@ -14,6 +14,7 @@
     import { LeanCellNode } from "$lexical/core/plugins/LeanCell/LeanCellNode";
     import LeanCellPlugin from "$lexical/core/plugins/LeanCell/LeanCellPlugin.svelte";
     import AiSelectionPlugin from "$lexical/core/plugins/AiSelectionPlugin.svelte";
+    import TrailingParagraphPlugin from "$lexical/core/plugins/TrailingParagraphPlugin.svelte";
     // import {
     // 	Composer,
     // 	ContentEditable,
@@ -393,6 +394,7 @@
             <DrawingPlugin />
             <EquationPlugin />
             <AiSelectionPlugin />
+            <TrailingParagraphPlugin />
             <CodePlugin />
             <TablePlugin />
             <TableCellResizerPlugin />

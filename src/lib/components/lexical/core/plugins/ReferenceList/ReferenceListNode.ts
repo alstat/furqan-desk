@@ -117,6 +117,10 @@ export class ReferenceListNode extends DecoratorNode<DecoratorReferenceListType>
         return false;
     }
 
+    isInline(): false {
+        return false;
+    }
+
     // ── Data accessors ────────────────────────────────────────────────────
     getRefIds(): string[] {
         return [...this.__refIds];
