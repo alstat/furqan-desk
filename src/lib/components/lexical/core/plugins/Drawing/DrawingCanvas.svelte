@@ -14,12 +14,13 @@
 		elbowMidSegment,
 		isLabelableShape,
 		labelBounds,
+		textShapeBounds,
+		fitTextShapeToContent,
 		type Scene,
 		type Shape,
 		type Bounds,
 		type DrawTool,
 		type StyleDefaults,
-		type TextShape,
 		type LabelableShape,
 		type TextAlign,
 		type AnchorId,
@@ -621,13 +622,18 @@
 				onSceneChange({ ...scene, shapes: scene.shapes.filter((s) => s.id !== id) });
 				return;
 			}
-			if (editValue !== shape.text) {
+			const fitted = fitTextShapeToContent(shape, editValue);
+			if (
+				editValue !== shape.text ||
+				fitted.x !== shape.x ||
+				fitted.y !== shape.y ||
+				fitted.w !== shape.w ||
+				fitted.h !== shape.h
+			) {
 				requestHistory();
 				onSceneChange({
 					...scene,
-					shapes: scene.shapes.map((s) =>
-						s.id === id ? { ...(s as TextShape), text: editValue } : s
-					)
+					shapes: scene.shapes.map((s) => (s.id === id ? fitted : s))
 				});
 			}
 			return;
@@ -766,6 +772,10 @@
 	let editScreen = $derived.by(() => {
 		const v = editView();
 		if (!v) return null;
+		const shape = scene.shapes.find((s) => s.id === editingId);
+		if (shape?.type === 'text') {
+			return boundsToScreen(textShapeBounds(shape, editValue));
+		}
 		return boundsToScreen({ x: v.x, y: v.y, w: v.w, h: v.h });
 	});
 	let marqueeScreen = $derived(
@@ -895,6 +905,7 @@
 		{@const es = editView()}
 		<textarea
 			class="text-edit"
+			wrap="off"
 			use:focusOnMount
 			bind:value={editValue}
 			onblur={commitEdit}
@@ -1030,6 +1041,6 @@
 		margin: 0;
 		line-height: 1.25;
 		overflow: hidden;
-		box-sizing: border-box;
+		box-sizing: content-box;
 	}
 </style>
