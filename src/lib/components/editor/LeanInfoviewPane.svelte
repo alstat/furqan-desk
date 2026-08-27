@@ -107,14 +107,14 @@
     >
         <span class="flex min-w-0 items-center gap-1.5">
             <span
-                class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+                class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
             >
                 {$t("lean_infoview.title")}
             </span>
 
             {#if $status === "ok"}
                 <span
-                    class="flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400"
+                    class="flex items-center gap-1 text-[0.625rem] text-green-600 dark:text-green-400"
                 >
                     <Icon icon="lucide:check" width="0.7rem" />
                     {$t("lean_infoview.no_errors")}
@@ -140,7 +140,7 @@
                                 ? "lean_infoview.hide_severity"
                                 : "lean_infoview.show_severity",
                         )}
-                        class="flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] transition-colors
+                        class="flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[0.625rem] transition-colors
                                {SEVERITY_STYLE[severity].border} {show[severity]
                             ? `${SEVERITY_STYLE[severity].bg} ${SEVERITY_STYLE[severity].text}`
                             : 'bg-transparent text-brand-charcoal-300 dark:text-[#626880] opacity-60'}"
@@ -164,14 +164,14 @@
                             ? "lean_infoview.live_on_hint"
                             : "lean_infoview.live_off_hint",
                     )}
-                    class="flex cursor-pointer items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors
+                    class="flex cursor-pointer items-center gap-1 px-2 py-0.5 rounded-full text-[0.625rem] font-medium transition-colors
                        {$leanLiveCompile
                         ? 'bg-brand-gold-100 dark:bg-[#e5c890]/15 text-brand-gold-600 dark:text-brand-gold-400 hover:bg-brand-gold-200 dark:hover:bg-[#e5c890]/25'
                         : 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-400 dark:hover:bg-[#51566a]'}"
                 >
                     <Icon
                         icon={$leanLiveCompile ? "lucide:zap" : "lucide:zap-off"}
-                        width="11"
+                        width="0.6875rem"
                     />
                     {$leanLiveCompile
                         ? $t("lean_infoview.live")
@@ -184,7 +184,7 @@
                 onclick={compileNow}
                 disabled={isCompiling}
                 title="{$t('lean_infoview.compile')} (Ctrl/Cmd+Enter)"
-                class="flex cursor-pointer items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors
+                class="flex cursor-pointer items-center gap-1 px-2 py-0.5 rounded-full text-[0.625rem] font-medium transition-colors
                        bg-brand-gold-100 dark:bg-[#e5c890]/15 text-brand-gold-600 dark:text-brand-gold-400
                        hover:bg-brand-gold-200 dark:hover:bg-[#e5c890]/25
                        disabled:opacity-50 disabled:cursor-not-allowed"
@@ -193,7 +193,7 @@
                     icon={isCompiling
                         ? "svg-spinners:180-ring"
                         : "solar:play-bold"}
-                    width="11"
+                    width="0.6875rem"
                 />
                 {isCompiling
                     ? $t("lean_infoview.compiling")
@@ -212,16 +212,16 @@
                 <Icon
                     icon="lucide:plug-zap"
                     width="0.8rem"
-                    class="mt-[2px] shrink-0 text-amber-600 dark:text-amber-300"
+                    class="mt-[0.125rem] shrink-0 text-amber-600 dark:text-amber-300"
                 />
                 <div class="min-w-0 flex-1">
                     <div
-                        class="text-[11px] font-semibold text-amber-800 dark:text-amber-200"
+                        class="text-[0.6875rem] font-semibold text-amber-800 dark:text-amber-200"
                     >
                         {$t("lean_infoview.unavailable")}
                     </div>
                     <div
-                        class="mt-1 font-mono text-[10.5px] break-words text-amber-700/90 dark:text-amber-300/90"
+                        class="mt-1 font-mono text-[0.65625rem] break-words text-amber-700/90 dark:text-amber-300/90"
                     >
                         {$errorMessage}
                     </div>
@@ -237,12 +237,12 @@
                     class="text-brand-charcoal-200 dark:text-[#51576d]"
                 />
                 <p
-                    class="text-[11px] font-medium text-brand-charcoal-300 dark:text-[#838ba7]"
+                    class="text-[0.6875rem] font-medium text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
                     {$t("lean_infoview.empty_title")}
                 </p>
                 <p
-                    class="max-w-[22rem] text-[10px] text-brand-charcoal-200 dark:text-[#626880]"
+                    class="max-w-[22rem] text-[0.625rem] text-brand-charcoal-200 dark:text-[#626880]"
                 >
                     {$t("lean_infoview.empty_desc")}
                 </p>
@@ -250,7 +250,7 @@
         {:else}
             {#if $raw}
                 <pre
-                    class="mb-1.5 m-0 whitespace-pre-wrap break-words border border-brand-sand-200 bg-brand-sand-50 px-2 py-1.5 font-mono text-[11px] leading-tight text-brand-charcoal-700 dark:border-[#414559] dark:bg-[#232634] dark:text-[#c6d0f5]">{$raw}</pre>
+                    class="mb-1.5 m-0 whitespace-pre-wrap break-words border border-brand-sand-200 bg-brand-sand-50 px-2 py-1.5 font-mono text-[0.6875rem] leading-tight text-brand-charcoal-700 dark:border-[#414559] dark:bg-[#232634] dark:text-[#c6d0f5]">{$raw}</pre>
             {/if}
 
             {#each visible as diag, i (`${diag.severity}-${diag.line}-${diag.column}-${i}`)}
@@ -261,12 +261,12 @@
                     <Icon
                         icon={style.icon}
                         width="0.75rem"
-                        class="mt-[3px] shrink-0 {style.text}"
+                        class="mt-[0.1875rem] shrink-0 {style.text}"
                     />
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1.5">
                             <span
-                                class="text-[10px] font-semibold uppercase tracking-wide {style.text}"
+                                class="text-[0.625rem] font-semibold uppercase tracking-wide {style.text}"
                             >
                                 {$t(style.label)}
                             </span>
@@ -275,27 +275,27 @@
                                     onclick={() =>
                                         onJump?.(diag.line, diag.column)}
                                     title={$t("lean_infoview.jump_to")}
-                                    class="cursor-pointer rounded-full px-1 font-mono text-[10px] text-brand-charcoal-400 transition-colors hover:bg-black/5 hover:text-brand-charcoal-700 dark:text-[#838ba7] dark:hover:bg-white/10 dark:hover:text-[#c6d0f5]"
+                                    class="cursor-pointer rounded-full px-1 font-mono text-[0.625rem] text-brand-charcoal-400 transition-colors hover:bg-black/5 hover:text-brand-charcoal-700 dark:text-[#838ba7] dark:hover:bg-white/10 dark:hover:text-[#c6d0f5]"
                                 >
                                     {positionLabel(diag)}
                                 </button>
                             {:else}
                                 <span
-                                    class="font-mono text-[10px] text-brand-charcoal-400 dark:text-[#838ba7]"
+                                    class="font-mono text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]"
                                 >
                                     {positionLabel(diag)}
                                 </span>
                             {/if}
                         </div>
                         <pre
-                            class="m-0 mt-0.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-tight text-brand-charcoal-800 dark:text-[#c6d0f5]">{diag.message}</pre>
+                            class="m-0 mt-0.5 whitespace-pre-wrap break-words font-mono text-[0.6875rem] leading-tight text-brand-charcoal-800 dark:text-[#c6d0f5]">{diag.message}</pre>
                     </div>
                 </div>
             {/each}
 
             {#if visible.length === 0 && !$raw && !isCompiling}
                 <div
-                    class="flex items-center gap-1.5 py-3 text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                    class="flex items-center gap-1.5 py-3 text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
                     <Icon
                         icon="lucide:check-circle-2"
@@ -315,7 +315,7 @@
     <!-- Status line -->
     {#if $lastCompiledAt > 0}
         <div
-            class="flex shrink-0 items-center justify-between border-t border-brand-sand-200 px-4 py-0.5 font-mono text-[9.5px] text-brand-charcoal-300 dark:border-[#414559] dark:text-[#626880]"
+            class="flex shrink-0 items-center justify-between border-t border-brand-sand-200 px-4 py-0.5 font-mono text-[0.59375rem] text-brand-charcoal-300 dark:border-[#414559] dark:text-[#626880]"
         >
             <span>
                 {$t("lean_infoview.messages_count", {

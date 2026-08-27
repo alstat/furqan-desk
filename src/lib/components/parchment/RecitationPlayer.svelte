@@ -27,6 +27,7 @@
 
     import { t } from "$lib/i18n";
     import { bringToFront } from "$lib/stores/window-manager.store";
+    import { csdMarginPx } from "$lib/stores/window-state.store";
 
     let { scrollContainer }: { scrollContainer: HTMLElement | null } = $props();
 
@@ -474,6 +475,7 @@
 
     const MINI_W = 230;
     const MINI_H = 48;
+    let miniEl = $state<HTMLDivElement | null>(null);
     let miniX = $state(0);
     let miniY = $state(0);
     let miniInitialized = false;
@@ -498,8 +500,16 @@
         miniStartY = 0;
 
     function miniDefaultPosition() {
-        miniX = Math.max(8, window.innerWidth - MINI_W - 24);
-        miniY = Math.max(8, window.innerHeight - MINI_H - 48);
+        const miniWidth = miniEl?.offsetWidth ?? MINI_W;
+        const miniHeight = miniEl?.offsetHeight ?? MINI_H;
+        miniX = Math.max(
+            $csdMarginPx + 8,
+            window.innerWidth - $csdMarginPx - miniWidth - 24,
+        );
+        miniY = Math.max(
+            $csdMarginPx + 8,
+            window.innerHeight - $csdMarginPx - miniHeight - 48,
+        );
     }
 
     $effect(() => {
@@ -512,8 +522,22 @@
     function handleWindowResize() {
         if (!miniInitialized) return;
         if (miniUserMoved) {
-            miniX = Math.max(0, Math.min(window.innerWidth - MINI_W, miniX));
-            miniY = Math.max(0, Math.min(window.innerHeight - MINI_H, miniY));
+            const miniWidth = miniEl?.offsetWidth ?? MINI_W;
+            const miniHeight = miniEl?.offsetHeight ?? MINI_H;
+            miniX = Math.max(
+                $csdMarginPx,
+                Math.min(
+                    window.innerWidth - $csdMarginPx - miniWidth,
+                    miniX,
+                ),
+            );
+            miniY = Math.max(
+                $csdMarginPx,
+                Math.min(
+                    window.innerHeight - $csdMarginPx - miniHeight,
+                    miniY,
+                ),
+            );
         } else {
             miniDefaultPosition();
         }
@@ -532,17 +556,19 @@
     }
 
     function miniOnDrag(e: PointerEvent) {
+        const miniWidth = miniEl?.offsetWidth ?? MINI_W;
+        const miniHeight = miniEl?.offsetHeight ?? MINI_H;
         miniX = Math.max(
-            0,
+            $csdMarginPx,
             Math.min(
-                window.innerWidth - MINI_W,
+                window.innerWidth - $csdMarginPx - miniWidth,
                 miniStartX + (e.clientX - miniDragStartX),
             ),
         );
         miniY = Math.max(
-            0,
+            $csdMarginPx,
             Math.min(
-                window.innerHeight - MINI_H,
+                window.innerHeight - $csdMarginPx - miniHeight,
                 miniStartY + (e.clientY - miniDragStartY),
             ),
         );
@@ -804,6 +830,7 @@
 <!-- Floating mini player — shown while the surah page is hidden -->
 {#if $hideSurahPage() && !miniDismissed}
     <div
+        bind:this={miniEl}
         use:portal
         transition:fly={{ y: 8, duration: 180, opacity: 0 }}
         class="fixed flex items-center gap-1 px-2 py-1.5 font-sans
