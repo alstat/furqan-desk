@@ -4,6 +4,7 @@ import {
     createShapeFromBox,
     createPathShape,
     shapeBounds,
+    fitTextShapeToContent,
     translateShape,
     resizeShape,
     scaleShapeInFrame,
@@ -88,6 +89,34 @@ describe('geometry', () => {
     test('shapeBounds normalises negative extents', () => {
         const s = createShapeFromBox('rect', DEFAULT_STYLE, { x: 100, y: 100, w: -40, h: -20 })!;
         expect(shapeBounds(s)).toEqual({ x: 60, y: 80, w: 40, h: 20 });
+    });
+
+    test('text bounds grow to match rendered content', () => {
+        const text = createShapeFromBox('text', DEFAULT_STYLE, {
+            x: 10,
+            y: 20,
+            w: 40,
+            h: 28
+        }) as Extract<Shape, { type: 'text' }>;
+        text.text = 'A substantially longer line';
+
+        const bounds = shapeBounds(text);
+        expect(bounds.x).toBe(10);
+        expect(bounds.w).toBeGreaterThan(40);
+        expect(bounds.h).toBe(DEFAULT_STYLE.fontSize * 1.25);
+    });
+
+    test('fitting multiline centred text preserves its anchor', () => {
+        const text = createShapeFromBox('text', { ...DEFAULT_STYLE, align: 'center' }, {
+            x: 10,
+            y: 20,
+            w: 100,
+            h: 28
+        }) as Extract<Shape, { type: 'text' }>;
+        const fitted = fitTextShapeToContent(text, 'first line\nsecond line');
+
+        expect(fitted.x + fitted.w / 2).toBeCloseTo(60);
+        expect(fitted.h).toBe(DEFAULT_STYLE.fontSize * 2.5);
     });
 });
 

@@ -252,6 +252,9 @@ export function labelBounds(shape: LabelableShape): Bounds {
 // ── geometry ──────────────────────────────────────────────────────────────
 
 export function shapeBounds(shape: Shape): Bounds {
+    if (shape.type === 'text' && shape.text.length > 0) {
+        return textShapeBounds(shape);
+    }
     if (isBoxShape(shape)) {
         // Normalise negative extents so bounds are always positive-sized.
         const x = shape.w < 0 ? shape.x + shape.w : shape.x;
@@ -1114,6 +1117,42 @@ function textWidth(
         return ctx.measureText(text).width;
     }
     return text.length * fontSize * (bold ? 0.56 : 0.5);
+}
+
+/** Bounds occupied by standalone text, preserving its alignment anchor. */
+export function textShapeBounds(shape: TextShape, text = shape.text): Bounds {
+    if (text.length === 0) {
+        return {
+            x: shape.w < 0 ? shape.x + shape.w : shape.x,
+            y: shape.h < 0 ? shape.y + shape.h : shape.y,
+            w: Math.abs(shape.w),
+            h: Math.abs(shape.h),
+        };
+    }
+
+    const lines = text.split('\n');
+    const w = Math.max(
+        shape.fontSize * 0.5,
+        ...lines.map((line) =>
+            textWidth(line, shape.fontSize, shape.fontFamily, shape.bold, shape.italic),
+        ),
+    );
+    const h = Math.max(shape.fontSize * 1.25, lines.length * shape.fontSize * 1.25);
+    const anchorX =
+        shape.align === 'center'
+            ? shape.x + shape.w / 2
+            : shape.align === 'right'
+              ? shape.x + shape.w
+              : shape.x;
+    const x =
+        shape.align === 'center' ? anchorX - w / 2 : shape.align === 'right' ? anchorX - w : anchorX;
+    return { x, y: shape.y, w, h };
+}
+
+/** Persist measured text dimensions so rendering, selection, and hit-testing agree. */
+export function fitTextShapeToContent(shape: TextShape, text = shape.text): TextShape {
+    const bounds = textShapeBounds(shape, text);
+    return { ...shape, text, ...bounds };
 }
 
 /** Word-wrap `text` (respecting existing newlines) to fit within `maxWidth`. */

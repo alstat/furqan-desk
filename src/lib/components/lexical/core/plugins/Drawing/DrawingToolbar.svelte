@@ -2,7 +2,12 @@
 	import Icon from '@iconify/svelte';
 	import '$lib/icons/drawing-icons';
 	import { customFontFamilies } from '$lib/stores/editor.store';
-	import type { DrawTool, StyleDefaults, Shape } from './drawingScene.js';
+	import {
+		isLabelableShape,
+		type DrawTool,
+		type StyleDefaults,
+		type Shape
+	} from './drawingScene.js';
 
 	interface Props {
 		tool: DrawTool;
@@ -84,16 +89,29 @@
 	);
 	let endArrowVal = $derived(selected?.type === 'line' ? !!selected.endArrow : style.endArrow);
 
-	// Text properties — shown when the text tool is active or a text box selected.
+	// Closed-shape labels use the same typography controls as standalone text.
 	let isTextSel = $derived(selected?.type === 'text');
-	let showText = $derived(tool === 'text' || isTextSel);
-	let fontFamilyVal = $derived(
-		selected?.type === 'text' ? selected.fontFamily : style.fontFamily
+	let selectedLabel = $derived(
+		selected && isLabelableShape(selected) ? (selected.label ?? null) : null
 	);
-	let fontSizeVal = $derived(selected?.type === 'text' ? selected.fontSize : style.fontSize);
-	let boldVal = $derived(selected?.type === 'text' ? selected.bold : style.bold);
-	let italicVal = $derived(selected?.type === 'text' ? selected.italic : style.italic);
+	let isLabelableSel = $derived(!!selected && isLabelableShape(selected));
+	let showText = $derived(tool === 'text' || isTextSel || isLabelableSel);
+	let fontFamilyVal = $derived(
+		selected?.type === 'text'
+			? selected.fontFamily
+			: (selectedLabel?.fontFamily ?? style.fontFamily)
+	);
+	let fontSizeVal = $derived(
+		selected?.type === 'text' ? selected.fontSize : (selectedLabel?.fontSize ?? style.fontSize)
+	);
+	let boldVal = $derived(
+		selected?.type === 'text' ? selected.bold : (selectedLabel?.bold ?? style.bold)
+	);
+	let italicVal = $derived(
+		selected?.type === 'text' ? selected.italic : (selectedLabel?.italic ?? style.italic)
+	);
 	let alignVal = $derived(selected?.type === 'text' ? selected.align : style.align);
+	let showAlignment = $derived(tool === 'text' || isTextSel);
 
 	// Same base font list as the rich-text toolbar, plus any custom fonts.
 	const BASE_FONTS = [
@@ -282,30 +300,32 @@
 		>
 			<Icon icon="mdi:format-italic" width="1.05rem" />
 		</button>
-		<button
-			class="{btn} {alignVal === 'left' ? activeBtn : ''}"
-			title="Align left"
-			aria-label="Align left"
-			onclick={() => setStyle({ align: 'left' })}
-		>
-			<Icon icon="mdi:format-align-left" width="1.05rem" />
-		</button>
-		<button
-			class="{btn} {alignVal === 'center' ? activeBtn : ''}"
-			title="Align center"
-			aria-label="Align center"
-			onclick={() => setStyle({ align: 'center' })}
-		>
-			<Icon icon="mdi:format-align-center" width="1.05rem" />
-		</button>
-		<button
-			class="{btn} {alignVal === 'right' ? activeBtn : ''}"
-			title="Align right"
-			aria-label="Align right"
-			onclick={() => setStyle({ align: 'right' })}
-		>
-			<Icon icon="mdi:format-align-right" width="1.05rem" />
-		</button>
+		{#if showAlignment}
+			<button
+				class="{btn} {alignVal === 'left' ? activeBtn : ''}"
+				title="Align left"
+				aria-label="Align left"
+				onclick={() => setStyle({ align: 'left' })}
+			>
+				<Icon icon="mdi:format-align-left" width="1.05rem" />
+			</button>
+			<button
+				class="{btn} {alignVal === 'center' ? activeBtn : ''}"
+				title="Align center"
+				aria-label="Align center"
+				onclick={() => setStyle({ align: 'center' })}
+			>
+				<Icon icon="mdi:format-align-center" width="1.05rem" />
+			</button>
+			<button
+				class="{btn} {alignVal === 'right' ? activeBtn : ''}"
+				title="Align right"
+				aria-label="Align right"
+				onclick={() => setStyle({ align: 'right' })}
+			>
+				<Icon icon="mdi:format-align-right" width="1.05rem" />
+			</button>
+		{/if}
 	{/if}
 
 	<div class="mx-1 h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></div>
