@@ -13,7 +13,7 @@
         juliaReplHistory,
         pushReplLines,
         juliaPlots,
-        cmFontSize,
+        uiFontScale,
         replFontSize,
         replLineSpacing,
         replInputHeights,
@@ -126,10 +126,15 @@
     // One line under an editor, seven in the right-hand column, unless the user
     // has dragged this slot to a height of their own.
     const inputSlot = $derived(embedded ? "embedded" : "panel");
-    const lineHeightPx = $derived($replFontSize * $replLineSpacing);
+    const lineHeightPx = $derived(
+        $replFontSize * $replLineSpacing * $uiFontScale,
+    );
+    const inputMinHeight = $derived(REPL_INPUT_MIN_HEIGHT * $uiFontScale);
+    const inputMaxHeight = $derived(REPL_INPUT_MAX_HEIGHT * $uiFontScale);
+    const inputPadding = $derived(REPL_INPUT_PADDING * $uiFontScale);
 
     function heightForLines(lines: number): number {
-        return Math.round(lines * lineHeightPx) + REPL_INPUT_PADDING;
+        return Math.round(lines * lineHeightPx) + inputPadding;
     }
 
     const defaultInputHeight = $derived(
@@ -140,10 +145,13 @@
     // its height came straight from the newline count.
     const inputHeight = $derived(
         Math.min(
-            REPL_INPUT_MAX_HEIGHT,
+            inputMaxHeight,
             Math.max(
-                $replInputHeights[inputSlot] ?? defaultInputHeight,
+                $replInputHeights[inputSlot] == null
+                    ? defaultInputHeight
+                    : $replInputHeights[inputSlot] * $uiFontScale,
                 heightForLines((replInput.match(/\n/g) ?? []).length + 1),
+                inputMinHeight,
             ),
         ),
     );
@@ -165,7 +173,8 @@
         // The seam is above the box, so dragging up makes it taller.
         replInputHeights.setHeight(
             inputSlot,
-            inputDragStartHeight + (inputDragStartY - e.clientY),
+            (inputDragStartHeight + (inputDragStartY - e.clientY)) /
+                $uiFontScale,
         );
     }
 
@@ -179,10 +188,16 @@
         const step = e.shiftKey ? 32 : 8;
         if (e.key === "ArrowUp") {
             e.preventDefault();
-            replInputHeights.setHeight(inputSlot, inputHeight + step);
+            replInputHeights.setHeight(
+                inputSlot,
+                inputHeight / $uiFontScale + step,
+            );
         } else if (e.key === "ArrowDown") {
             e.preventDefault();
-            replInputHeights.setHeight(inputSlot, inputHeight - step);
+            replInputHeights.setHeight(
+                inputSlot,
+                inputHeight / $uiFontScale - step,
+            );
         }
     }
 
@@ -875,7 +890,7 @@
      the single border-x, so the pane adds no box of its own. -->
 <div
     class="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
-    style="--repl-font-size: {$replFontSize}px; --repl-line-height: {$replLineSpacing};"
+    style="--repl-font-size: {$replFontSize / 16}rem; --repl-line-height: {$replLineSpacing};"
 >
     <!-- Header: status on the left, actions on the right — LeanInfoviewPane's
          layout and spacing (px-4 py-1, gap-1.5 between controls). -->
@@ -1363,8 +1378,8 @@
                 aria-orientation="horizontal"
                 aria-label={$t("julia_repl.resize_input")}
                 aria-valuenow={inputHeight}
-                aria-valuemin={REPL_INPUT_MIN_HEIGHT}
-                aria-valuemax={REPL_INPUT_MAX_HEIGHT}
+                aria-valuemin={inputMinHeight}
+                aria-valuemax={inputMaxHeight}
                 tabindex="0"
                 title={$t("julia_repl.resize_input")}
                 onpointerdown={startInputDrag}
@@ -1472,7 +1487,7 @@
 
 <style>
     :global(.repl-mono) {
-        font-size: var(--repl-font-size, 13px);
+        font-size: var(--repl-font-size, 0.8125rem);
         line-height: var(--repl-line-height, 1.3);
     }
 
