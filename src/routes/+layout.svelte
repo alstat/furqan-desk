@@ -91,8 +91,9 @@
 		root.classList.toggle('csd-dialog', isLinuxCsd);
 	});
 
-	// Centre resize hit regions on the visible app-shell border rather than the
-	// outer edge of the transparent shadow band.
+	// Cover the full transparent shadow band and continue slightly inside the
+	// visible shell. This gives Linux a forgiving resize target without letting
+	// the handles swallow controls positioned close to the content edge.
 	type ResizeDir =
 		| 'North'
 		| 'South'
@@ -103,10 +104,10 @@
 		| 'SouthEast'
 		| 'SouthWest';
 
-	const EDGE_HIT_PX = 18;
-	const CORNER_HIT_PX = 26;
-	const edgeInset = CSD_SHADOW_MARGIN_PX - EDGE_HIT_PX / 2;
-	const cornerInset = CSD_SHADOW_MARGIN_PX - CORNER_HIT_PX / 2;
+	const EDGE_HIT_PX = CSD_SHADOW_MARGIN_PX + 9;
+	const CORNER_HIT_PX = CSD_SHADOW_MARGIN_PX + 13;
+	const edgeInset = 0;
+	const cornerInset = 0;
 	const edgeEnd = cornerInset + CORNER_HIT_PX;
 	const RESIZE_HANDLES: { dir: ResizeDir; cls: string; style: string }[] = [
 		{

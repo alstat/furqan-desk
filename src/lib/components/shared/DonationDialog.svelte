@@ -74,7 +74,7 @@
                                 {$t('donation.title')}
                             </h2>
                             <p
-                                class="text-[11px] text-brand-charcoal-300 dark:text-[#8087a2]"
+                                class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#8087a2]"
                             >
                                 {$t('donation.subtitle')}
                             </p>
@@ -106,12 +106,12 @@
                         />
                         <span class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">Ko-fi</span>
                     </div>
-                    <p class="text-[11px] text-brand-charcoal-300 dark:text-[#8087a2]">
+                    <p class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#8087a2]">
                         {$t('donation.kofi_methods')}
                     </p>
                     <button
                         onclick={handleKofi}
-                        class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-4 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+                        class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-4 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                     >
                         <Icon icon="solar:heart-bold" width="0.8rem" />
                         {$t('donation.kofi')}
@@ -121,7 +121,7 @@
                 <!-- PH Only section -->
                 <div class="flex flex-col gap-3">
                     <div class="flex items-center gap-1.5">
-                        <span class="text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#8087a2] flex items-center gap-1"><Icon icon="emojione:flag-for-philippines" width="1rem" /> PH Only</span>
+                        <span class="text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:text-[#8087a2] flex items-center gap-1"><Icon icon="emojione:flag-for-philippines" width="1rem" /> PH Only</span>
                     </div>
 
                     <!-- Segmented control -->
@@ -129,7 +129,7 @@
                         {#each (['gcash', 'maya', 'bpi'] as const) as tab}
                             <button
                                 onclick={() => { selectedQR = tab; }}
-                                class="flex-1 rounded-full py-1.5 text-[11px] font-semibold transition-colors cursor-pointer
+                                class="flex-1 rounded-full py-1.5 text-[0.6875rem] font-semibold transition-colors cursor-pointer
                                     {selectedQR === tab
                                         ? 'bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 shadow-sm'
                                         : 'text-brand-charcoal-500 dark:text-[#8087a2] hover:bg-brand-sand-200 dark:hover:bg-[#292c3c]'}"
@@ -147,7 +147,7 @@
                             style="max-width: 180px; max-height: 180px; width: 100%; border-radius: 12px;"
                             class="border border-brand-sand-200 dark:border-[#414559] shadow"
                         />
-                        <p class="text-[11px] text-brand-charcoal-300 dark:text-[#8087a2] text-center">
+                        <p class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#8087a2] text-center">
                             {$t('donation.scan', { app: qrLabels[selectedQR] })}
                         </p>
                     </div>
@@ -160,7 +160,7 @@
             >
                 <button
                     onclick={onClose}
-                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-5 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-5 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                 >
                     <Icon icon="solar:close-circle-bold-duotone" width="0.8rem" />
                     {$t('common.close')}

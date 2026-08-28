@@ -199,7 +199,7 @@
             <!-- Language selector -->
             <div class="flex flex-col gap-1.5">
                 <label
-                    class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                    class="text-[0.625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300"
                     >{$t("dialog.insert_code.language")}</label
                 >
                 <div class="relative">
@@ -221,7 +221,7 @@
             <!-- Code textarea -->
             <div class="flex flex-col gap-1.5">
                 <label
-                    class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                    class="text-[0.625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300"
                     >{$t("dialog.insert_code.code")}</label
                 >
                 <textarea
@@ -236,7 +236,7 @@
                     dir="ltr"
                     placeholder={$t("dialog.insert_code.placeholder")}
                     rows="8"
-                    class="w-full resize-y rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors font-mono"
+                    class="w-full resize-y rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors font-mono"
                 ></textarea>
             </div>
 
@@ -244,7 +244,7 @@
             <button
                 disabled={!code.trim()}
                 onclick={onConfirm}
-                class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
+                class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
             >
                 <Icon icon="solar:code-square-bold" width="0.8rem" />
                 {$t("dialog.insert_code")}

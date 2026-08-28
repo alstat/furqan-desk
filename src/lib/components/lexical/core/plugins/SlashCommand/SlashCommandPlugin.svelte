@@ -907,12 +907,12 @@
                 </span>
                 <span class="flex flex-col min-w-0">
                     <span
-                        class="text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                        class="text-[0.6875rem] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                     >
                         {cmd.label}
                     </span>
                     <span
-                        class="text-[10px] text-brand-charcoal-300 dark:text-[#626880] truncate"
+                        class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#626880] truncate"
                     >
                         {cmd.description}
                     </span>

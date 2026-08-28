@@ -157,7 +157,7 @@
                         />
                     </span>
                     <span
-                        class="font-sans text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                        class="font-sans text-[0.6875rem] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                         >{$t("editor.code.edit_title")}</span
                     >
                 </span>
@@ -166,7 +166,7 @@
                     <span class="relative">
                         <select
                             bind:value={editLanguage}
-                            class="appearance-none cursor-pointer rounded-xl border border-brand-gold-200 bg-brand-sand-50/80 pl-2 pr-6 py-1 text-[10px] font-sans text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#1e2030]/80 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100 dark:hover:bg-[#292c3c] dark:[color-scheme:dark]"
+                            class="appearance-none cursor-pointer rounded-xl border border-brand-gold-200 bg-brand-sand-50/80 pl-2 pr-6 py-1 text-[0.625rem] font-sans text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#1e2030]/80 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100 dark:hover:bg-[#292c3c] dark:[color-scheme:dark]"
                         >
                             {#each languages as lang}
                                 <option value={lang}>{lang}</option>
@@ -186,7 +186,7 @@
                     <button
                         onclick={handleSave}
                         title={$t("common.save")}
-                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 font-sans active:bg-brand-gold-600/90 transition-colors"
+                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 font-sans active:bg-brand-gold-600/90 transition-colors"
                     >
                         {$t("common.save")}
                     </button>
@@ -219,7 +219,7 @@
                     dir="ltr"
                     rows="10"
                     placeholder={$t("dialog.insert_code.placeholder")}
-                    class="w-full resize-y rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-2 font-mono text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                    class="w-full resize-y rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-2 font-mono text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                 ></textarea>
             </span>
         </div>

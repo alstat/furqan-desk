@@ -185,7 +185,7 @@
 
 	<!-- Canvas background -->
 	<label class="flex items-center gap-1" title="Canvas background color">
-		<span class="text-[10px] font-semibold uppercase text-brand-charcoal-300">Canvas</span>
+		<span class="text-[0.625rem] font-semibold uppercase text-brand-charcoal-300">Canvas</span>
 		<input
 			type="color"
 			class="h-6 w-6 cursor-pointer rounded border border-brand-sand-200 dark:border-[#414559] bg-transparent p-0"
@@ -198,7 +198,7 @@
 
 	<!-- Fill -->
 	<label class="flex items-center gap-1" title="Fill color">
-		<span class="text-[10px] font-semibold uppercase text-brand-charcoal-300">Fill</span>
+		<span class="text-[0.625rem] font-semibold uppercase text-brand-charcoal-300">Fill</span>
 		<input
 			type="color"
 			class="h-6 w-6 cursor-pointer rounded border border-brand-sand-200 dark:border-[#414559] bg-transparent p-0"
@@ -217,7 +217,7 @@
 
 	<!-- Outline -->
 	<label class="flex items-center gap-1" title="Outline color">
-		<span class="text-[10px] font-semibold uppercase text-brand-charcoal-300">Line</span>
+		<span class="text-[0.625rem] font-semibold uppercase text-brand-charcoal-300">Line</span>
 		<input
 			type="color"
 			class="h-6 w-6 cursor-pointer rounded border border-brand-sand-200 dark:border-[#414559] bg-transparent p-0"
@@ -238,12 +238,12 @@
 			class="outline-width-slider w-20"
 			oninput={(e) => setStyle({ strokeWidth: Number(e.currentTarget.value) })}
 		/>
-		<span class="w-4 text-[10px] text-brand-charcoal-400">{strokeWidthVal}</span>
+		<span class="w-4 text-[0.625rem] text-brand-charcoal-400">{strokeWidthVal}</span>
 	</label>
 
 	<!-- Dash -->
 	<select
-		class="h-6 rounded-md border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-1 text-[11px] text-brand-charcoal-700 dark:text-[#c6d0f5]"
+		class="h-6 rounded-md border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-1 text-[0.6875rem] text-brand-charcoal-700 dark:text-[#c6d0f5]"
 		title="Outline style"
 		value={dashVal}
 		onchange={(e) => setStyle({ strokeDash: e.currentTarget.value as StyleDefaults['strokeDash'] })}
@@ -280,7 +280,7 @@
 	{#if showText}
 		<div class="mx-1 h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></div>
 		<select
-			class="h-6 w-28 rounded-md border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-1 text-[11px] text-brand-charcoal-700 dark:text-[#c6d0f5]"
+			class="h-6 w-28 rounded-md border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-1 text-[0.6875rem] text-brand-charcoal-700 dark:text-[#c6d0f5]"
 			title="Font"
 			value={fontFamilyPrimary}
 			onchange={(e) => setStyle({ fontFamily: e.currentTarget.value })}
@@ -290,7 +290,7 @@
 			{/each}
 		</select>
 		<select
-			class="h-6 w-14 rounded-md border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-1 text-[11px] text-brand-charcoal-700 dark:text-[#c6d0f5]"
+			class="h-6 w-14 rounded-md border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-1 text-[0.6875rem] text-brand-charcoal-700 dark:text-[#c6d0f5]"
 			title="Font size"
 			value={Math.round(fontSizeVal)}
 			onchange={(e) => setStyle({ fontSize: Number(e.currentTarget.value) })}

@@ -1277,17 +1277,17 @@
                 />
                 {#if demoMode}
                     <span
-                        class="text-[11px] py-1 font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
+                        class="text-[0.6875rem] py-1 font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
                     >
                         {$t("manuscript.demo_title")}
                         <span
-                            class="ml-1 text-[11px] font-normal text-brand-gold-500 border border-brand-gold-300 dark:border-[#e5c890]/40 rounded-full px-1.5 py-0.5"
+                            class="ml-1 text-[0.6875rem] font-normal text-brand-gold-500 border border-brand-gold-300 dark:border-[#e5c890]/40 rounded-full px-1.5 py-0.5"
                             >{$t("manuscript.demo_badge")}</span
                         >
                     </span>
                 {:else if $manuscriptAyah}
                     <span
-                        class="text-[11px] font-semibold uppercase tracking-wide
+                        class="text-[0.6875rem] font-semibold uppercase tracking-wide
 			             text-brand-charcoal-500 dark:text-[#838ba7] py-2"
                     >
                         {$t("manuscript.title_ayah", {
@@ -1297,7 +1297,7 @@
                     </span>
                 {:else}
                     <span
-                        class="text-[11px] py-1 font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
+                        class="text-[0.6875rem] py-1 font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
                     >
                         {$t("manuscript.title")}
                     </span>
@@ -1360,7 +1360,7 @@
                 >
                     <label
                         for="manuscript-surah-input"
-                        class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+                        class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
                     >
                         {$t("manuscript.surah")}
                     </label>
@@ -1370,11 +1370,11 @@
                         min="1"
                         max="114"
                         bind:value={surahInput}
-                        class="w-16 rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-2 py-1 text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] outline-none focus:border-brand-gold-400 focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
+                        class="w-16 rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-2 py-1 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] outline-none focus:border-brand-gold-400 focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
                     />
                     <label
                         for="manuscript-ayah-input"
-                        class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+                        class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
                     >
                         {$t("manuscript.ayah")}
                     </label>
@@ -1383,11 +1383,11 @@
                         type="number"
                         min="1"
                         bind:value={ayahInput}
-                        class="w-16 rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-2 py-1 text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] outline-none focus:border-brand-gold-400 focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
+                        class="w-16 rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-2 py-1 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] outline-none focus:border-brand-gold-400 focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
                     />
                     <button
                         type="submit"
-                        class="cursor-pointer inline-flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+                        class="cursor-pointer inline-flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                     >
                         <Icon
                             icon="solar:refresh-bold-duotone"
@@ -1399,13 +1399,13 @@
                 <div class="flex items-center gap-2">
                     {#if referenceError}
                         <span
-                            class="text-[11px] font-medium text-red-500 dark:text-red-400"
+                            class="text-[0.6875rem] font-medium text-red-500 dark:text-red-400"
                         >
                             {referenceError}
                         </span>
                     {:else if $manuscriptAyah}{:else}
                         <span
-                            class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                            class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                         >
                             {$t("manuscript.reference_prompt")}
                         </span>
@@ -1416,7 +1416,7 @@
                             onclick={openAiPrompt}
                             title={$t("manuscript.ai_ask")}
                             aria-label={$t("manuscript.ai_ask")}
-                            class="cursor-pointer inline-flex items-center gap-1 rounded-full bg-brand-gold-200 dark:bg-[#414559] px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-300 dark:hover:bg-[#51576d] transition-colors"
+                            class="cursor-pointer inline-flex items-center gap-1 rounded-full bg-brand-gold-200 dark:bg-[#414559] px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-300 dark:hover:bg-[#51576d] transition-colors"
                         >
                             <Icon
                                 icon="ri:chat-smile-ai-fill"
@@ -1466,7 +1466,7 @@
                     {:else}
                         <div class="px-3 pb-1.5 pt-0.5">
                             <span
-                                class="text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+                                class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
                                 {results.length === 1
                                     ? $t("manuscript.count_one")
@@ -1508,7 +1508,7 @@
                                     </span>
                                     <div class="min-w-0 flex-1">
                                         <p
-                                            class="text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] leading-tight wrap-break-word flex items-center gap-1"
+                                            class="text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] leading-tight wrap-break-word flex items-center gap-1"
                                         >
                                             {ms.title}
                                             {#if loadedIds.has(ms.manuscript_id)}
@@ -1534,7 +1534,7 @@
                                         </p>
                                         {#if dateStr}
                                             <p
-                                                class="text-[11px] text-brand-gold-500 dark:text-[#e5c890] mt-0.5 font-medium"
+                                                class="text-[0.6875rem] text-brand-gold-500 dark:text-[#e5c890] mt-0.5 font-medium"
                                             >
                                                 {$t("manuscript.date_ce", {
                                                     date: dateStr,
@@ -1546,12 +1546,12 @@
                                             ></span>
                                         {/if}
                                         <p
-                                            class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] leading-tight"
+                                            class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7] leading-tight"
                                         >
                                             {ms.archive.name}
                                         </p>
                                         <p
-                                            class="text-[11px] text-brand-charcoal-200 dark:text-[#626880] leading-tight"
+                                            class="text-[0.6875rem] text-brand-charcoal-200 dark:text-[#626880] leading-tight"
                                         >
                                             {ms.archive.city}
                                         </p>
@@ -1574,7 +1574,7 @@
                             {#each selectedManuscript.pages as page, i}
                                 <button
                                     onclick={() => (folioIdx = i)}
-                                    class={`cursor-pointer px-2 py-0.5 text-[11px] font-semibold rounded-full border transition-colors
+                                    class={`cursor-pointer px-2 py-0.5 text-[0.6875rem] font-semibold rounded-full border transition-colors
                                     ${
                                         folioIdx === i
                                             ? "bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400"
@@ -1644,7 +1644,7 @@
                                         href={buildCorpusCoranicumUrl()}
                                         target="_blank"
                                         rel="noreferrer"
-                                        class="mt-1 inline-flex items-center gap-1 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100/70 dark:bg-[#292c3c] px-2 py-0.5 text-[10px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
+                                        class="mt-1 inline-flex items-center gap-1 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100/70 dark:bg-[#292c3c] px-2 py-0.5 text-[0.625rem] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
                                     >
                                         {$t("manuscript.corpus_coranicum")}
                                         <Icon
@@ -1749,7 +1749,7 @@
                             <!-- Zoom level badge -->
                             {#if imgScale > 1}
                                 <span
-                                    class="absolute bottom-3 right-3 text-[9px] font-semibold px-1.5 py-0.5 rounded-full
+                                    class="absolute bottom-3 right-3 text-[0.5625rem] font-semibold px-1.5 py-0.5 rounded-full
                                          bg-black/40 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100/90 backdrop-blur-sm select-none pointer-events-none"
                                 >
                                     {Math.round(imgScale * 100)}%
@@ -1773,7 +1773,7 @@
                                 class="mb-1.5 flex items-center justify-between gap-2"
                             >
                                 <span
-                                    class="text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+                                    class="text-[0.625rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
                                 >
                                     {$t("manuscript.metadata")}
                                 </span>
@@ -1782,7 +1782,7 @@
                                         `https://corpuscoranicum.de/en/manuscripts/${selectedManuscript.manuscript_id}`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    class="inline-flex items-center gap-1 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100/70 dark:bg-[#292c3c] px-2 py-0.5 text-[10px] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
+                                    class="inline-flex items-center gap-1 rounded-full border border-brand-gold-200 dark:border-[#414559] bg-brand-gold-100/70 dark:bg-[#292c3c] px-2 py-0.5 text-[0.625rem] font-semibold text-brand-gold-600 dark:text-[#e5c890] hover:bg-brand-gold-200/70 dark:hover:bg-[#414559] transition-colors"
                                 >
                                     {$t("manuscript.corpus_coranicum")}
                                     <Icon
@@ -1792,7 +1792,7 @@
                                 </a>
                             </div>
                             <div
-                                class="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[10.5px]"
+                                class="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[0.65625rem]"
                             >
                                 {#if selectedDetail.date?.trim()}
                                     <div class="flex gap-1.5">
@@ -1914,12 +1914,12 @@
                             {#if selectedDetail.catalogue_entry?.trim()}
                                 <details class="mt-2">
                                     <summary
-                                        class="text-[11px] font-semibold cursor-pointer text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-500 dark:hover:text-[#c6d0f5] select-none"
+                                        class="text-[0.6875rem] font-semibold cursor-pointer text-brand-charcoal-300 dark:text-[#838ba7] hover:text-brand-charcoal-500 dark:hover:text-[#c6d0f5] select-none"
                                     >
                                         {$t("manuscript.catalogue")}
                                     </summary>
                                     <div
-                                        class="mt-1 text-[10.5px] text-brand-charcoal-300 dark:text-[#a5adce] leading-relaxed
+                                        class="mt-1 text-[0.65625rem] text-brand-charcoal-300 dark:text-[#a5adce] leading-relaxed
                                             **:text-inherit [&_a]:text-brand-gold-600 dark:[&_a]:text-[#e5c890]
                                             [&_a:hover]:text-brand-gold-500 dark:[&_a:hover]:text-[#d4b57f]"
                                     >
@@ -1947,7 +1947,7 @@
                         class="shrink-0 flex items-center justify-between gap-1.5 px-3 py-3 mr-1 border-t border-slate-100 dark:border-[#414559]"
                     >
                         <span
-                            class="text-[11px] text-brand-charcoal-300 dark:text-[#626880] truncate min-w-0"
+                            class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#626880] truncate min-w-0"
                         >
                             {#if downloadMsg}
                                 <span
@@ -1965,7 +1965,7 @@
                             <button
                                 onclick={downloadFull}
                                 disabled={downloading || !imageSrc}
-                                class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full border
+                                class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[0.6875rem] font-semibold rounded-full border
                                border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
                                dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559]
                                text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors
@@ -1988,7 +1988,7 @@
                                 onclick={copyImage}
                                 disabled={copying || !imageSrc}
                                 title={$t("manuscript.copy_tooltip")}
-                                class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full border border-transparent
+                                class="cursor-pointer shrink-0 flex items-center gap-1 px-2 py-1 text-[0.6875rem] font-semibold rounded-full border border-transparent
                                bg-brand-gold-400 hover:bg-brand-gold-600 active:bg-brand-gold-600/90
                                text-gray-100 dark:text-gray-700 hover:dark:text-gray-100
                                transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -2107,7 +2107,7 @@
             bind:this={aiPromptInput}
             bind:value={aiPromptText}
             placeholder={$t("manuscript.ai_placeholder")}
-            class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
+            class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
             onkeydown={(e) => {
                 if (e.key === "Enter") {
                     e.preventDefault();

@@ -80,7 +80,7 @@
     }}
 >
     {#snippet children()}
-        <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] mb-2">
+        <p class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7] mb-2">
             {$t('settings.custom_fonts.desc')}
         </p>
 
@@ -94,16 +94,16 @@
         </div>
 
         {#if customFontErrorKey}
-            <p class="mb-2 text-[11px] text-red-500 dark:text-red-400">{$t(customFontErrorKey)}</p>
+            <p class="mb-2 text-[0.6875rem] text-red-500 dark:text-red-400">{$t(customFontErrorKey)}</p>
         {/if}
 
         <p class={sectionLabel}>{$t('settings.custom_fonts.available')}</p>
         {#if systemFontsLoading}
-            <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]">{$t('settings.custom_fonts.loading')}</p>
+            <p class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]">{$t('settings.custom_fonts.loading')}</p>
         {:else if systemFontsError}
-            <p class="text-[11px] text-red-500 dark:text-red-400">{systemFontsError}</p>
+            <p class="text-[0.6875rem] text-red-500 dark:text-red-400">{systemFontsError}</p>
         {:else if filteredSystemFonts.length === 0}
-            <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]">{$t('settings.custom_fonts.no_matches')}</p>
+            <p class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]">{$t('settings.custom_fonts.no_matches')}</p>
         {:else}
             <div class="max-h-48 overflow-y-auto default-scroll rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/60 dark:bg-[#292c3c] p-2 space-y-1">
                 {#each filteredSystemFonts as font}
@@ -123,7 +123,7 @@
         <div class="mt-3">
             <p class={sectionLabel}>{$t('settings.custom_fonts')}</p>
             {#if $customFontFamilies.length === 0}
-                <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]">{$t('settings.custom_fonts.empty')}</p>
+                <p class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]">{$t('settings.custom_fonts.empty')}</p>
             {:else}
                 <div class="flex flex-wrap gap-2">
                     {#each $customFontFamilies as font}

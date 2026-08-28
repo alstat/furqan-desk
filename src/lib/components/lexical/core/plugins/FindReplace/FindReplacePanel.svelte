@@ -104,7 +104,7 @@
     // shaped translucent card, fully rounded inputs, and borderless round
     // buttons that pick up a gold wash on hover.
     const inputClass =
-        "min-w-0 w-full rounded-xl border px-3 py-1.5 text-[11px] " +
+        "min-w-0 w-full rounded-xl border px-3 py-1.5 text-[0.6875rem] " +
         "border-brand-sand-200 dark:border-[#414559] " +
         "bg-brand-sand-50 dark:bg-[#1e2030] " +
         "text-brand-charcoal-900 dark:text-[#c6d0f5] " +
@@ -125,7 +125,7 @@
 
     const actionBtnClass =
         "cursor-pointer whitespace-nowrap rounded-full px-2.5 py-1 " +
-        "text-[11px] font-medium transition-colors " +
+        "text-[0.6875rem] font-medium transition-colors " +
         "text-brand-charcoal-700 dark:text-[#c6d0f5] " +
         "hover:bg-brand-gold-200 hover:text-brand-gold-600 " +
         "dark:hover:bg-[#4a4e5c] dark:hover:text-brand-gold-400 " +
@@ -183,7 +183,7 @@
                 aria-label={$t("find.find_placeholder")}
             />
             <span
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] tabular-nums
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-[0.625rem] tabular-nums
                        {total === 0 && query
                     ? 'text-red-500 dark:text-[#e78284]'
                     : 'text-brand-charcoal-300 dark:text-[#626880]'}"

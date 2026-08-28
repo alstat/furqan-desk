@@ -200,7 +200,7 @@
                     <button
                         onclick={() => (activeTab = "file")}
                         aria-pressed={activeTab === "file"}
-                        class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors
+                        class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[0.6875rem] font-semibold transition-colors
                             {activeTab === 'file'
                             ? 'bg-white dark:bg-[#51576d] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm'
                             : 'text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]'}"
@@ -211,7 +211,7 @@
                     <button
                         onclick={() => (activeTab = "url")}
                         aria-pressed={activeTab === "url"}
-                        class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors
+                        class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[0.6875rem] font-semibold transition-colors
                             {activeTab === 'url'
                             ? 'bg-white dark:bg-[#51576d] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm'
                             : 'text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]'}"
@@ -231,7 +231,7 @@
                 <!-- URL tab -->
                 <div class="flex flex-col gap-1.5">
                     <label
-                        class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                        class="text-[0.625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300"
                         >{$t('dialog.image_url')}</label
                     >
                     <input
@@ -239,12 +239,12 @@
                         placeholder="https://example.com/image.jpg"
                         bind:value={src}
                         data-test-id="image-modal-url-input"
-                        class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                        class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                     />
                 </div>
                 <div class="flex flex-col gap-1.5">
                     <label
-                        class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                        class="text-[0.625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300"
                         >{$t('dialog.alt_text')}</label
                     >
                     <input
@@ -252,20 +252,20 @@
                         placeholder={$t('dialog.alt_text_placeholder')}
                         bind:value={altText}
                         data-test-id="image-modal-alt-text-input"
-                        class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                        class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                     />
                 </div>
             {:else}
                 <!-- Local file tab -->
                 <div class="flex flex-col gap-1.5">
                     <label
-                        class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                        class="text-[0.625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300"
                         >{$t('dialog.image_file')}</label
                     >
                     <button
                         onclick={browseFile}
                         disabled={loadingFile}
-                        class="cursor-pointer flex items-center gap-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] transition-colors hover:border-brand-gold-400 hover:bg-brand-gold-50 dark:hover:bg-[#292c3c] disabled:opacity-50"
+                        class="cursor-pointer flex items-center gap-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[0.6875rem] transition-colors hover:border-brand-gold-400 hover:bg-brand-gold-50 dark:hover:bg-[#292c3c] disabled:opacity-50"
                     >
                         {#if loadingFile}
                             <Icon
@@ -321,7 +321,7 @@
 
                 {#if fileError}
                     <p
-                        class="flex items-center gap-1 text-[11px] text-red-500"
+                        class="flex items-center gap-1 text-[0.6875rem] text-red-500"
                     >
                         <Icon
                             icon="solar:danger-circle-bold"
@@ -332,7 +332,7 @@
 
                 <div class="flex flex-col gap-1.5">
                     <label
-                        class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                        class="text-[0.625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300"
                         >{$t('dialog.alt_text')}</label
                     >
                     <input
@@ -340,7 +340,7 @@
                         placeholder={$t('dialog.alt_text_placeholder')}
                         bind:value={fileAltText}
                         data-test-id="image-modal-file-alt-text-input"
-                        class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                        class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                     />
                 </div>
             {/if}
@@ -349,7 +349,7 @@
                 data-test-id="image-modal-confirm-btn"
                 disabled={isDisabled}
                 onclick={insertImage}
-                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors mt-1"
+                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors mt-1"
             >
                 <Icon icon="solar:gallery-add-bold" width="0.8rem" />
                 {$t('dialog.insert_image')}

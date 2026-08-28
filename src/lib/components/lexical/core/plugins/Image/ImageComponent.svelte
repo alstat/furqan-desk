@@ -338,7 +338,7 @@
 	/>
 	<button
 		onclick={() => { showCropDialog = true; }}
-		class="absolute shadow-xl dark:shadow-black/40 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 px-7 py-1 rounded-full text-[11px] font-sans font-semibold bg-brand-sand-50/70 dark:bg-[#292c3c]/70 border border-brand-sand-200 dark:border-[#414559] text-brand-charcoal-800 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] cursor-pointer transition-colors whitespace-nowrap backdrop-blur-sm"
+		class="absolute shadow-xl dark:shadow-black/40 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 px-7 py-1 rounded-full text-[0.6875rem] font-sans font-semibold bg-brand-sand-50/70 dark:bg-[#292c3c]/70 border border-brand-sand-200 dark:border-[#414559] text-brand-charcoal-800 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] cursor-pointer transition-colors whitespace-nowrap backdrop-blur-sm"
 	>
 		<Icon icon="solar:crop-bold" width="0.75rem" class="text-brand-gold-500" />
 		Crop

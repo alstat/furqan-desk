@@ -374,7 +374,7 @@
 		            bg-brand-sand-50 dark:bg-[#232634] flex items-center justify-between gap-2"
         >
             <span
-                class="text-[10px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+                class="text-[0.625rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
             >
                 {$t("search.title")}
             </span>
@@ -404,7 +404,7 @@
                     type="text"
                     placeholder={$t("search.placeholder")}
                     bind:value={query}
-                    class="flex-1 bg-transparent text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#838ba7] outline-none min-w-0"
+                    class="flex-1 bg-transparent text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#838ba7] outline-none min-w-0"
                 />
                 {#if isSearching}
                     <Icon
@@ -422,7 +422,7 @@
                 }}
                 aria-pressed={caseSensitive}
                 title={$t("search.case_sensitive")}
-                class="cursor-pointer p-1.5 rounded-md text-[10px] font-mono font-bold transition-colors
+                class="cursor-pointer p-1.5 rounded-md text-[0.625rem] font-mono font-bold transition-colors
 				       {caseSensitive
                     ? 'bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100'
                     : 'text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#363a4f]'}"
@@ -437,7 +437,7 @@
                 }}
                 aria-pressed={useRegex}
                 title={$t("search.use_regex")}
-                class="cursor-pointer p-1.5 rounded-md text-[10px] font-mono font-bold transition-colors
+                class="cursor-pointer p-1.5 rounded-md text-[0.625rem] font-mono font-bold transition-colors
 				       {useRegex
                     ? 'bg-brand-gold-400 dark:bg-brand-gold-600 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100'
                     : 'text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-200 dark:hover:bg-[#363a4f]'}"
@@ -450,26 +450,26 @@
         <div class="flex-1 min-h-0 overflow-y-auto bg-brand-sand-50 dark:bg-[#232634]">
             {#if !$openFolderPath}
                 <div
-                    class="px-3 py-4 text-center text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                    class="px-3 py-4 text-center text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
                     <i>{$t("search.open_folder")}</i>
                 </div>
             {:else if query.trim() === ""}
                 <div
-                    class="px-3 py-4 text-center text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                    class="px-3 py-4 text-center text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
                     {$t("search.type_to_search")}
                 </div>
             {:else if !isSearching && results.length === 0}
                 <div
-                    class="px-3 py-4 text-center text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                    class="px-3 py-4 text-center text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
                     {$t("search.no_results")}
                 </div>
             {:else}
                 {#if results.length > 0}
                     <div
-                        class="px-3 py-1.5 text-[10px] text-brand-charcoal-300 dark:text-[#838ba7] border-b border-stone-100 dark:border-[#363a4f]"
+                        class="px-3 py-1.5 text-[0.625rem] text-brand-charcoal-300 dark:text-[#838ba7] border-b border-stone-100 dark:border-[#363a4f]"
                     >
                         {$t("search.result_count", {
                             count: totalMatches,
@@ -498,12 +498,12 @@
                             width="0.75rem"
                         />
                         <span
-                            class="text-[13px] font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5] truncate flex-1"
+                            class="text-[0.8125rem] font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5] truncate flex-1"
                         >
                             {result.fileName}
                         </span>
                         <span
-                            class="shrink-0 text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                            class="shrink-0 text-[0.625rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                         >
                             {result.matches.length}
                         </span>
@@ -518,12 +518,12 @@
 								       hover:bg-brand-sand-50 dark:hover:bg-[#1e2030] transition-colors border-b border-stone-50 dark:border-[#363a4f]/50"
                             >
                                 <span
-                                    class="shrink-0 text-[12px] text-brand-charcoal-300 dark:text-[#838ba7] w-6 text-right mt-0.5 font-mono"
+                                    class="shrink-0 text-[0.75rem] text-brand-charcoal-300 dark:text-[#838ba7] w-6 text-right mt-0.5 font-mono"
                                 >
                                     {match.lineNumber}
                                 </span>
                                 <span
-                                    class="text-[13px] text-brand-charcoal-500 dark:text-[#a5adce] font-mono truncate"
+                                    class="text-[0.8125rem] text-brand-charcoal-500 dark:text-[#a5adce] font-mono truncate"
                                 >
                                     {match.lineText.slice(
                                         0,

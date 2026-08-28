@@ -63,7 +63,7 @@
                         >{$t("account.title")}</span
                     >
                     <span
-                        class="text-[11px] text-brand-charcoal-300"
+                        class="text-[0.6875rem] text-brand-charcoal-300"
                     >
                         {view === "login"
                             ? $t("account.subtitle.login")
