@@ -6,7 +6,7 @@
         type AiTextTone,
     } from "$lib/stores/ai-text-transform.store";
     import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
-    import { tick } from "svelte";
+    import { onMount, tick } from "svelte";
     import { t } from "$lib/i18n";
 
     interface Props {
@@ -44,6 +44,83 @@
     let busyAction = $state<AiTextAction | null>(null);
     let toneMenuAction = $state<Exclude<AiTextAction, "prompt"> | null>(null);
     let error = $state("");
+    let toolbarEl: HTMLDivElement | null = $state(null);
+    let toolbarPosition = $state({ left: 0, top: 0 });
+    let positionReady = $state(false);
+    let positionFrame: number | null = null;
+
+    const VIEWPORT_MARGIN = 8;
+    const BELOW_OFFSET = 32;
+
+    function updatePosition() {
+        positionFrame = null;
+        if (!toolbarEl) return;
+
+        const width = toolbarEl.offsetWidth;
+        const height = toolbarEl.offsetHeight;
+        const viewportWidth = document.documentElement.clientWidth;
+        const viewportHeight = document.documentElement.clientHeight;
+        const minLeft = VIEWPORT_MARGIN + width / 2;
+        const maxLeft = viewportWidth - VIEWPORT_MARGIN - width / 2;
+        const left =
+            minLeft <= maxLeft
+                ? Math.max(minLeft, Math.min(maxLeft, x))
+                : viewportWidth / 2;
+
+        const aboveTop = y - height;
+        const belowTop = y + BELOW_OFFSET;
+        const maxTop = Math.max(
+            VIEWPORT_MARGIN,
+            viewportHeight - VIEWPORT_MARGIN - height,
+        );
+        const preferredTop =
+            aboveTop >= VIEWPORT_MARGIN
+                ? aboveTop
+                : belowTop + height <= viewportHeight - VIEWPORT_MARGIN
+                  ? belowTop
+                  : aboveTop;
+        const top = Math.max(
+            VIEWPORT_MARGIN,
+            Math.min(maxTop, preferredTop),
+        );
+
+        if (
+            toolbarPosition.left !== left ||
+            toolbarPosition.top !== top
+        ) {
+            toolbarPosition = { left, top };
+        }
+        positionReady = true;
+    }
+
+    function schedulePositionUpdate() {
+        if (positionFrame === null) {
+            positionFrame = requestAnimationFrame(updatePosition);
+        }
+    }
+
+    $effect(() => {
+        x;
+        y;
+        toolbarEl;
+        schedulePositionUpdate();
+    });
+
+    onMount(() => {
+        const observer =
+            toolbarEl && typeof ResizeObserver !== "undefined"
+                ? new ResizeObserver(schedulePositionUpdate)
+                : null;
+        if (toolbarEl) observer?.observe(toolbarEl);
+        window.addEventListener("resize", schedulePositionUpdate);
+        schedulePositionUpdate();
+
+        return () => {
+            observer?.disconnect();
+            window.removeEventListener("resize", schedulePositionUpdate);
+            if (positionFrame !== null) cancelAnimationFrame(positionFrame);
+        };
+    });
 
     const actions: Array<{
         id: Exclude<AiTextAction, "prompt">;
@@ -171,13 +248,14 @@
 </script>
 
 <div
+    bind:this={toolbarEl}
     data-ai-selection-toolbar
     role="presentation"
-    class="fixed z-9999 flex flex-col items-center gap-2 font-sans"
-    style="left:{x}px; top:{y}px; transform: translate(-50%, -100%);"
+    class="fixed z-9999 flex max-w-[calc(100vw-1rem)] flex-col items-center gap-2 font-sans"
+    style="left:{toolbarPosition.left}px; top:{toolbarPosition.top}px; transform: translateX(-50%); visibility:{positionReady ? 'visible' : 'hidden'};"
     onpointerdown={handlePointerDown}
 >
-    <div class="flex items-center gap-2">
+    <div class="flex max-w-[calc(100vw-1rem)] flex-wrap items-center justify-center gap-2">
         {#if !askOnly}
             {#each actions as action (action.id)}
                 <button
@@ -240,7 +318,7 @@
 
     {#if toneMenuAction && !askOnly}
         <div
-            class="flex items-center gap-1 rounded-xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+            class="flex max-w-[calc(100vw-1rem)] flex-wrap items-center justify-center gap-1 rounded-xl border border-brand-sand-200 bg-white/95 p-1 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
         >
             {#each tones as tone (tone.id)}
                 <button
@@ -256,7 +334,7 @@
 
     {#if promptOpen}
         <div
-            class="relative flex w-80 items-center gap-1.5 rounded-xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+            class="relative flex w-80 max-w-[calc(100vw-1rem)] items-center gap-1.5 rounded-xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
         >
             {#if busyAction === "prompt"}
                 <span class="prompt-runborder" aria-hidden="true"></span>
@@ -284,7 +362,7 @@
 
     {#if askPromptOpen}
         <div
-            class="flex w-80 items-center gap-1.5 rounded-xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
+            class="flex w-80 max-w-[calc(100vw-1rem)] items-center gap-1.5 rounded-xl border border-brand-sand-200 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm dark:border-[#414559] dark:bg-[#363a4f]/95 dark:shadow-black/40"
         >
             <input
                 bind:this={askPromptInput}
