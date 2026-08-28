@@ -1,14 +1,12 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
+    import { openUrl } from "@tauri-apps/plugin-opener";
     import {
         tourActive,
         completeTour,
         donationOpen,
     } from "$lib/stores/tour.store";
     import { manuscriptDemoOpen } from "$lib/stores/manuscripts.store";
-
-    const MANUSCRIPT_STEP = 9; // index of the manuscript step
-    const AUTHOR_STEP = 11; // index of the author's note step
 
     const steps = [
         {
@@ -29,8 +27,22 @@
             targetId: "tour-action-bar",
             title: "Reader Actions",
             description:
-                "Bookmark ayahs, manage highlights, open the Manuscript Viewer, and search in Arabic or translation.",
+                "Bookmark ayahs, manage highlights, open the Manuscript Viewer, design a Post Card from the ayahs you are reading, and search in Arabic or translation.",
             position: "bottom" as const,
+        },
+        {
+            targetId: "tour-takehome-button",
+            title: "Take-Home Message",
+            description:
+                "The lightbulb on the reader's right edge turns the ayahs on screen into a personal-growth reflection: key lessons, practical steps, reflection prompts, daily-life applications, and a short take-home message — each point citing the ayahs it draws on. A Pro feature — sign in to unlock it.",
+            position: "left" as const,
+        },
+        {
+            targetId: "tour-verse-of-day-button",
+            title: "Daily Verse",
+            description:
+                "Just below it, the calendar icon opens the Verse of the Day — a fresh ayah each day, shown once when you launch the app. Read it in context with a click, or browse the history of past days and export it as CSV.",
+            position: "left" as const,
         },
         {
             targetId: "tour-recitation",
@@ -43,14 +55,14 @@
             targetId: "tour-surah-widget",
             title: "Surah, Translation & Tafsir",
             description:
-                "Select a surah, choose a translator and tafsir, toggle word-by-word and transliteration, and adjust the Arabic and translation fonts.",
+                "Select a surah, choose a translator and tafsir, toggle word-by-word and transliteration, and adjust the Arabic and translation fonts — and open the Post Card designer here too, to turn any set of ayahs into a shareable image.",
             position: "top" as const,
         },
         {
             targetId: "tour-sidebar",
             title: "The Editor Panel",
             description:
-                "Multi-tab workspace with three editor types: Lexical for quick rich-text notes, Typst for beautifully typeset documents and research papers, and Julia for interactive scientific computing — with built-in APIs like AL.surah and AL.ayah to programmatically control the Quran reader.",
+                "Multi-tab workspace with four editor types: Lexical for quick rich-text notes, Typst for beautifully typeset documents and research papers, Julia for interactive scientific computing, and Lean 4 for formal proofs — with a live infoview beside the editor. Julia and Lean come with built-in APIs like AL.surah and AL.ayah to programmatically control the Quran reader.",
             position: "left" as const,
         },
         {
@@ -64,7 +76,7 @@
             targetId: "tour-terminal-button",
             title: "Built-in Terminal",
             description:
-                "A full terminal right inside the workspace. Run shell commands and manage your Julia and Typst environments without ever leaving the app.",
+                "A full terminal right inside the workspace. Run shell commands and manage your Julia, Typst, and Lean 4 environments without ever leaving the app.",
             position: "left" as const,
         },
         {
@@ -85,7 +97,7 @@
             targetId: "tour-editor-toolbar",
             title: "Editor Tools",
             description:
-                "Create new tabs, browse local files, configure Julia & Typst packages, switch themes, and access settings.",
+                "Create new tabs — Lexical, Typst, Julia, or Lean 4 — browse local files, configure your Julia, Typst & Lean toolchains, switch themes, and access settings.",
             position: "top" as const,
         },
         {
@@ -98,10 +110,17 @@
             targetId: null,
             title: "You're all set!",
             description:
-                "For more, check the User Guide under the Settings panel. You can restart this tour anytime from the Settings panel in the Editor Tools.",
+                "For more, check the User Guide under the Settings panel or read it online at www.ayahlab.com/docs. You can restart this tour anytime from the Settings panel in the Editor Tools.",
             position: "center" as const,
         },
     ];
+
+    const MANUSCRIPT_STEP = steps.findIndex((s) =>
+        s.title.includes("Manuscript Viewer"),
+    );
+    const AUTHOR_STEP = steps.findIndex((s) =>
+        s.title.includes("A Note from the Author"),
+    );
 
     let currentStep = $state(0);
     let spotlightRect = $state<DOMRect | null>(null);
@@ -321,6 +340,15 @@
             >
                 {steps[currentStep].description}
             </p>
+            {#if currentStep === steps.length - 1}
+                <button
+                    onclick={() => openUrl("https://www.ayahlab.com/docs")}
+                    class="inline-flex items-center gap-1 mb-4 text-xs font-semibold underline text-brand-gold-500 dark:text-[#e5c890] hover:opacity-80 transition-opacity cursor-pointer"
+                >
+                    <Icon icon="solar:book-bookmark-bold-duotone" width="0.9rem" />
+                    Open the User Guide
+                </button>
+            {/if}
         {/if}
 
         <div class="flex items-center justify-between">
