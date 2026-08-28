@@ -250,7 +250,7 @@
                 onkeydown={handleInputKeydown}
                 type="text"
                 placeholder="Go to file…"
-                class="flex-1 bg-transparent text-[14px] text-brand-charcoal-900 dark:text-[#c6d0f5]
+                class="flex-1 bg-transparent text-[0.875rem] text-brand-charcoal-900 dark:text-[#c6d0f5]
                        placeholder-brand-charcoal-300 dark:placeholder-[#838ba7] outline-none min-w-0"
             />
             {#if isLoading}
@@ -261,7 +261,7 @@
                 />
             {/if}
             <kbd
-                class="shrink-0 text-[10px] font-semibold text-brand-charcoal-300 dark:text-[#838ba7]
+                class="shrink-0 text-[0.625rem] font-semibold text-brand-charcoal-300 dark:text-[#838ba7]
                        border border-stone-200 dark:border-[#414559] rounded px-1.5 py-0.5"
             >
                 {IS_APPLE ? "⌘P" : "Ctrl+P"}
@@ -272,13 +272,13 @@
         <div bind:this={listEl} class="max-h-[50vh] overflow-y-auto py-1">
             {#if !$openFolderPath}
                 <p
-                    class="px-4 py-4 text-center text-[12px] italic text-brand-charcoal-300 dark:text-[#838ba7]"
+                    class="px-4 py-4 text-center text-[0.75rem] italic text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
                     Open a folder to browse files.
                 </p>
             {:else if filtered.length === 0}
                 <p
-                    class="px-4 py-4 text-center text-[12px] italic text-brand-charcoal-300 dark:text-[#838ba7]"
+                    class="px-4 py-4 text-center text-[0.75rem] italic text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
                     {isLoading ? "Loading files…" : "No matching files."}
                 </p>
@@ -308,13 +308,13 @@
                             width="0.95rem"
                         />
                         <span
-                            class="shrink-0 text-[13px] text-brand-charcoal-700 dark:text-[#c6d0f5] font-medium truncate max-w-[16rem]"
+                            class="shrink-0 text-[0.8125rem] text-brand-charcoal-700 dark:text-[#c6d0f5] font-medium truncate max-w-[16rem]"
                         >
                             {item.file.name}
                         </span>
                         {#if dir}
                             <span
-                                class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] font-mono truncate"
+                                class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7] font-mono truncate"
                             >
                                 {dir}
                             </span>

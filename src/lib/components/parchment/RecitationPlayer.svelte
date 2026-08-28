@@ -645,7 +645,7 @@
                         style={`width: ${progressPct}%`}
                     ></div>
                 </div>
-                <span class="text-[10px] font-medium text-brand-gold-600 dark:text-[#e5c890]">
+                <span class="text-[0.625rem] font-medium text-brand-gold-600 dark:text-[#e5c890]">
                     {Math.round(progressPct)}%
                 </span>
             </button>
@@ -786,7 +786,7 @@
                 ></div>
 
                 <span
-                    class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] tabular-nums px-1 min-w-12 text-center"
+                    class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7] tabular-nums px-1 min-w-12 text-center"
                 >
                     {#if inPlaylist}
                         {$t("recitation.counter", {

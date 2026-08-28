@@ -146,7 +146,7 @@
         >
             {#snippet action()}
                 <span
-                    class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                    class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
                     {$t("highlight.n_saved", { n: $highlights.length })}
                 </span>
@@ -172,7 +172,7 @@
                         <p class="text-sm font-medium text-brand-charcoal-500">
                             {$t("highlight.empty_title")}
                         </p>
-                        <p class="mt-1 text-[11px] text-brand-charcoal-300">
+                        <p class="mt-1 text-[0.6875rem] text-brand-charcoal-300">
                             {$t("highlight.empty_desc")}
                         </p>
                     </div>
@@ -192,7 +192,7 @@
                             </p>
                             {#if hl.note}
                                 <p
-                                    class="mb-2 text-[11px] text-brand-charcoal-400 dark:text-[#838ba7] italic line-clamp-2"
+                                    class="mb-2 text-[0.6875rem] text-brand-charcoal-400 dark:text-[#838ba7] italic line-clamp-2"
                                 >
                                     {hl.note}
                                 </p>
@@ -203,7 +203,7 @@
                             >
                                 <div class="flex items-center gap-1.5 min-w-0">
                                     <span
-                                        class="inline-flex items-center gap-1 rounded-md bg-brand-gold-100 border border-brand-gold-200 px-2 py-0.5 text-[11px] font-medium text-brand-gold-600 shrink-0"
+                                        class="inline-flex items-center gap-1 rounded-md bg-brand-gold-100 border border-brand-gold-200 px-2 py-0.5 text-[0.6875rem] font-medium text-brand-gold-600 shrink-0"
                                     >
                                         <Icon
                                             icon="solar:book-bold"
@@ -212,7 +212,7 @@
                                         {surahName(hl.surah)} · {hl.ayah}
                                     </span>
                                     <span
-                                        class="text-[11px] text-brand-charcoal-300 truncate"
+                                        class="text-[0.6875rem] text-brand-charcoal-300 truncate"
                                         >{formatDate(
                                             hl.created_at,
                                             $locale,
@@ -223,7 +223,7 @@
                                     <button
                                         onclick={() =>
                                             navigate(hl.surah, hl.ayah)}
-                                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+                                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                                     >
                                         <Icon
                                             icon="solar:arrow-right-up-linear"
@@ -238,7 +238,7 @@
                                         title={!$lexicalEditorInstance
                                             ? $t("manuscript.no_editor")
                                             : $t("manuscript.insert_tooltip")}
-                                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
                                         <Icon
                                             icon="solar:pen-new-square-bold"

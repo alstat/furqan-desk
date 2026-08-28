@@ -760,7 +760,7 @@
     color: #fff;
     margin: 0;
     padding: 10px;
-    font-size: 12px;
+    font-size: 0.75rem;
     overflow: auto;
     max-height: 400px;
   }

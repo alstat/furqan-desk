@@ -221,7 +221,7 @@
         bind:this={inputRef}
         bind:value={editedLinkUrl}
         placeholder={$t('link.placeholder')}
-        class="floating-link-input min-w-0 flex-1 bg-transparent text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] outline-none"
+        class="floating-link-input min-w-0 flex-1 bg-transparent text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] outline-none"
         onfocus={() => {
           $isEditMode = true;
         }}
@@ -247,7 +247,7 @@
         onclick={openCurrentLink}
         onmousedown={(event) => event.preventDefault()}
         title={$t('link.open')}
-        class="floating-link-preview min-w-0 flex-1 cursor-pointer truncate text-left text-[11px] text-brand-gold-600 hover:underline dark:text-[#e5c890]"
+        class="floating-link-preview min-w-0 flex-1 cursor-pointer truncate text-left text-[0.6875rem] text-brand-gold-600 hover:underline dark:text-[#e5c890]"
       >
         {linkUrl}
       </button>

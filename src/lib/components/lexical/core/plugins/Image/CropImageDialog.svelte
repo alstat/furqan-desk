@@ -244,7 +244,7 @@
                     width="0.85rem"
                     class="text-amber-500 shrink-0 mt-0.5"
                 />
-                <p class="text-[11px] text-amber-700 dark:text-amber-400">
+                <p class="text-[0.6875rem] text-amber-700 dark:text-amber-400">
                     External URL images may not be croppable due to browser
                     security restrictions.
                 </p>
@@ -305,14 +305,14 @@
         <!-- Dimensions readout -->
         {#if imgLoaded}
             <p
-                class="text-center text-[11px] text-brand-charcoal-300 dark:text-[#626880]"
+                class="text-center text-[0.6875rem] text-brand-charcoal-300 dark:text-[#626880]"
             >
                 {naturalCropW} × {naturalCropH} px
             </p>
         {/if}
 
         {#if cropError}
-            <p class="flex items-center gap-1 text-[11px] text-red-500">
+            <p class="flex items-center gap-1 text-[0.6875rem] text-red-500">
                 <Icon
                     icon="solar:danger-circle-bold"
                     width="0.75rem"
@@ -324,14 +324,14 @@
         <div class="flex items-center gap-2 mt-1">
             <button
                 onclick={onClose}
-                class="cursor-pointer flex-1 flex items-center justify-center gap-1.5 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] py-1.5 text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
+                class="cursor-pointer flex-1 flex items-center justify-center gap-1.5 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#414559] transition-colors"
             >
                 Cancel
             </button>
             <button
                 onclick={applyCrop}
                 disabled={!imgLoaded}
-                class="cursor-pointer flex-1 flex items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
+                class="cursor-pointer flex-1 flex items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
             >
                 <Icon icon="solar:crop-bold" width="0.8rem" />
                 Apply Crop

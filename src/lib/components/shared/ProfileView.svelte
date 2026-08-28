@@ -194,7 +194,7 @@
     <!-- Avatar + identity -->
     <div class="flex items-center gap-3">
         <div
-            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 text-[14px] font-bold text-gray-100"
+            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-gold-400 text-[0.875rem] font-bold text-gray-100"
         >
             {initials}
         </div>
@@ -202,7 +202,7 @@
             <span class="truncate text-sm font-semibold text-brand-charcoal-900"
                 >{displayName}</span
             >
-            <span class="truncate text-[11px] text-brand-charcoal-300"
+            <span class="truncate text-[0.6875rem] text-brand-charcoal-300"
                 >{email}</span
             >
         </div>
@@ -210,14 +210,14 @@
             <div class="ml-auto flex shrink-0 items-center gap-2">
                 {#if isProPlus}
                     <span
-                        class="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-linear-to-r from-amber-500 via-brand-gold-500 to-amber-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-gray-100 shadow-sm shadow-amber-500/35 ring-1 ring-inset ring-white/20 dark:border-black/20 dark:from-[#f0d9a8] dark:via-[#e5c890] dark:to-[#d4b57f] dark:text-[#292c3c] dark:shadow-black/30 dark:ring-black/10"
+                        class="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-linear-to-r from-amber-500 via-brand-gold-500 to-amber-600 px-3 py-1 text-[0.6875rem] font-extrabold uppercase tracking-wide text-gray-100 shadow-sm shadow-amber-500/35 ring-1 ring-inset ring-white/20 dark:border-black/20 dark:from-[#f0d9a8] dark:via-[#e5c890] dark:to-[#d4b57f] dark:text-[#292c3c] dark:shadow-black/30 dark:ring-black/10"
                     >
                         <Icon icon="solar:crown-star-bold" width="0.85rem" />
                         {$t("billing.tier.pro_plus.name")}
                     </span>
                 {:else}
                     <span
-                        class="inline-flex items-center gap-1.5 rounded-full border bg-linear-to-r from-brand-gold-400 via-brand-gold-500 to-brand-gold-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-gray-100 shadow-sm shadow-brand-gold-400/25 dark:from-[#e5c890] dark:via-[#d4b57f] dark:to-[#c4a26e] dark:text-[#292c3c] dark:shadow-black/20"
+                        class="inline-flex items-center gap-1.5 rounded-full border bg-linear-to-r from-brand-gold-400 via-brand-gold-500 to-brand-gold-600 px-3 py-1 text-[0.6875rem] font-extrabold uppercase tracking-wide text-gray-100 shadow-sm shadow-brand-gold-400/25 dark:from-[#e5c890] dark:via-[#d4b57f] dark:to-[#c4a26e] dark:text-[#292c3c] dark:shadow-black/20"
                     >
                         <Icon
                             icon="solar:crown-star-bold-duotone"
@@ -374,7 +374,7 @@
     <!-- Sign out -->
     <button
         onclick={handleSignOut}
-        class="cursor-pointer flex w-full items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+        class="cursor-pointer flex w-full items-center justify-center rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
     >
         {$t("account.sign_out")}
     </button>

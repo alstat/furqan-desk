@@ -554,7 +554,7 @@
                         {$t("takehome.title")}
                     </h2>
                     <p
-                        class="truncate text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                        class="truncate text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                         title={sourceLabel}
                     >
                         {sourceLabel
@@ -620,7 +620,7 @@
                     <div class="flex items-center gap-2">
                         <button
                             onclick={generate}
-                            class="cursor-pointer rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 py-1 text-[11px] font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                            class="cursor-pointer rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 py-1 text-[0.6875rem] font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
                         >
                             {$t("takehome.try_again")}
                         </button>
@@ -649,14 +649,14 @@
                             width="0.95rem"
                         />
                         <span
-                            class="flex-1 text-[11px] leading-snug text-brand-charcoal-500 dark:text-[#c6d0f5]"
+                            class="flex-1 text-[0.6875rem] leading-snug text-brand-charcoal-500 dark:text-[#c6d0f5]"
                         >
                             {$t("takehome.stale")}
                         </span>
                         <button
                             onclick={generate}
                             disabled={loading}
-                            class="cursor-pointer shrink-0 rounded-full bg-brand-gold-400 px-2.5 py-1 text-[10px] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
+                            class="cursor-pointer shrink-0 rounded-full bg-brand-gold-400 px-2.5 py-1 text-[0.625rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
                         >
                             {$t("takehome.generate")}
                         </button>
@@ -696,7 +696,7 @@
                 </div>
                 {#if loading}
                     <div
-                        class="mt-3 flex items-center gap-1.5 text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                        class="mt-3 flex items-center gap-1.5 text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                     >
                         <Icon icon="svg-spinners:3-dots-fade" width="1rem" />
                         <span>{$t("takehome.generating")}</span>
@@ -715,7 +715,7 @@
                     </p>
                     <button
                         onclick={generate}
-                        class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 px-3 py-1.5 text-[11px] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
+                        class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
                     >
                         <Icon icon="solar:magic-stick-3-bold-duotone" width="0.85rem" />
                         {$t("takehome.generate")}
@@ -733,7 +733,7 @@
                     <!-- The Take-Home Message always runs on the Advanced
                          model (Pro and Pro+ alike) — static badge, no toggle. -->
                     <span
-                        class="flex items-center gap-1.5 rounded-full border border-brand-gold-400 bg-brand-gold-100 dark:bg-[#e5c890]/30 px-3 py-1 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890]"
+                        class="flex items-center gap-1.5 rounded-full border border-brand-gold-400 bg-brand-gold-100 dark:bg-[#e5c890]/30 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 dark:text-[#e5c890]"
                         title={$t("account.usage.advanced_takehome_note")}
                     >
                         <Icon icon="solar:bolt-bold-duotone" width="0.7rem" />
@@ -743,7 +743,7 @@
                         <button
                             onclick={generate}
                             disabled={loading}
-                            class="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-3 py-1.5 text-[11px] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
+                            class="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
                         >
                             <Icon icon="solar:refresh-bold" width="0.8rem" />
                             {$t("takehome.regenerate")}
@@ -752,7 +752,7 @@
                         <button
                             onclick={generate}
                             disabled={loading}
-                            class="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-3 py-1.5 text-[11px] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
+                            class="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
                         >
                             <Icon
                                 icon="solar:magic-stick-3-bold-duotone"
@@ -762,7 +762,7 @@
                         </button>
                     {/if}
                 </div>
-                <p class="text-[10px] text-brand-charcoal-300 dark:text-[#626880]">
+                <p class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#626880]">
                     {$t("takehome.disclaimer")}
                 </p>
             </div>
@@ -813,7 +813,7 @@
         color: #e5c890;
     }
     .th-card-title {
-        font-size: 11px;
+        font-size: 0.6875rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -826,7 +826,7 @@
 
     /* ── Rendered markdown body ────────────────────────────────────────── */
     .takehome-md {
-        font-size: 13px;
+        font-size: 0.8125rem;
         line-height: 1.6;
         color: var(--th-fg);
         --th-fg: #45475a;
@@ -904,7 +904,7 @@
     }
     /* The take-home paragraph is the emphasis — a touch larger. */
     .th-card-accent .takehome-md {
-        font-size: 13.5px;
+        font-size: 0.84375rem;
     }
 
     /* ── Clickable ayah reference chips (injected via {@html}) ─────────── */

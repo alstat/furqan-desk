@@ -160,7 +160,7 @@
                                 {$t("highlight.save")}
                             </h2>
                             <p
-                                class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
                                 {surahName($pendingHighlight.surah)} · {$t(
                                     "bookmark.ayah",
@@ -198,7 +198,7 @@
                     </p>
                     <div class="mt-2 flex items-center gap-1">
                         <span
-                            class="inline-flex items-center gap-1 rounded-md bg-brand-gold-100 dark:bg-[#414559] border border-brand-gold-200 dark:border-[#51576d] px-2 py-0.5 text-[11px] font-medium text-brand-gold-600 dark:text-[#e5c890]"
+                            class="inline-flex items-center gap-1 rounded-md bg-brand-gold-100 dark:bg-[#414559] border border-brand-gold-200 dark:border-[#51576d] px-2 py-0.5 text-[0.6875rem] font-medium text-brand-gold-600 dark:text-[#e5c890]"
                         >
                             <Icon icon="solar:book-bold" width="0.65rem" />
                             {surahName($pendingHighlight.surah)} · {$pendingHighlight.ayah}
@@ -216,12 +216,12 @@
                     onmouseup={updateAiSelection}
                     oninput={updateAiSelection}
                     rows="3"
-                    class="mb-3 w-full resize-none rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#51576d] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c] transition-all"
+                    class="mb-3 w-full resize-none rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-2.5 text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#51576d] hover:bg-brand-sand-100 dark:hover:bg-[#292c3c] transition-all"
                 ></textarea>
 
                 {#if saveError}
                     <p
-                        class="mb-2 flex items-center gap-1 text-[11px] text-red-500"
+                        class="mb-2 flex items-center gap-1 text-[0.6875rem] text-red-500"
                     >
                         <Icon
                             icon="solar:danger-circle-bold"
@@ -234,14 +234,14 @@
                 <div class="flex items-center gap-2">
                     <button
                         onclick={handleCancel}
-                        class="cursor-pointer flex-1 rounded-full border border-brand-sand-200 dark:border-[#414559] py-1.5 text-[11px] font-semibold text-brand-charcoal-400 dark:text-[#838ba7] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] hover:border-brand-sand-400 dark:hover:border-[#51576d] transition-colors"
+                        class="cursor-pointer flex-1 rounded-full border border-brand-sand-200 dark:border-[#414559] py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-400 dark:text-[#838ba7] hover:text-brand-charcoal-600 dark:hover:text-[#c6d0f5] hover:border-brand-sand-400 dark:hover:border-[#51576d] transition-colors"
                     >
                         {$t("common.cancel")}
                     </button>
                     <button
                         onclick={handleSave}
                         disabled={saving}
-                        class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
+                        class="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
                     >
                         <Icon
                             icon="solar:pen-new-square-bold-duotone"

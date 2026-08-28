@@ -67,7 +67,7 @@
     } | null>(null);
 
     const labelClass =
-        "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
+        "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
     const adjustButtonClass =
         "cursor-pointer w-7 h-7 flex items-center justify-center rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#363a4f] hover:bg-brand-sand-200 dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
 
@@ -772,7 +772,7 @@
         />
         <span
             data-tauri-drag-region={standalone ? true : undefined}
-            class="text-[11px] py-1 font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
+            class="text-[0.6875rem] py-1 font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
         >
             {$t("terminal.title")}
         </span>
@@ -831,7 +831,7 @@
                             aria-label="Search active terminal"
                         />
                         <span
-                            class="min-w-11 text-center text-[10px] tabular-nums text-brand-charcoal-300 dark:text-[#838ba7]"
+                            class="min-w-11 text-center text-[0.625rem] tabular-nums text-brand-charcoal-300 dark:text-[#838ba7]"
                         >
                             {searchMatches.length > 0
                                 ? `${searchIndex + 1}/${searchMatches.length}`
@@ -932,7 +932,7 @@
                                 {$t("terminal.display_options")}
                             </p>
                             <p
-                                class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
                                 {$t("terminal.text_size_spacing")}
                             </p>
@@ -1120,7 +1120,7 @@
             >
                 <button
                     onclick={() => (activeId = tab.id)}
-                    class="cursor-pointer px-3 py-1 text-[10px] font-semibold uppercase tracking-widest transition-colors select-none
+                    class="cursor-pointer px-3 py-1 text-[0.625rem] font-semibold uppercase tracking-widest transition-colors select-none
                             {activeId === tab.id
                         ? 'text-brand-charcoal-700 dark:text-[#c6d0f5]'
                         : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
@@ -1136,7 +1136,7 @@
                         e.stopPropagation();
                         closeTerminal(tab.id);
                     }}
-                    class="cursor-pointer pr-2 py-1.5 text-[12px] leading-none text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 transition-colors"
+                    class="cursor-pointer pr-2 py-1.5 text-[0.75rem] leading-none text-brand-charcoal-300 dark:text-[#838ba7] hover:text-red-400 transition-colors"
                     title={$t("terminal.close")}>×</button
                 >
             </div>

@@ -206,7 +206,7 @@
             <div class="flex flex-col gap-1.5">
                 <label
                     for="equation-input"
-                    class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                    class="text-[0.625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300"
                     >{$t("dialog.latex_equation")}</label
                 >
                 <textarea
@@ -223,7 +223,7 @@
                     onkeyup={updateAiSelection}
                     onmouseup={updateAiSelection}
                     data-test-id="equation-modal-input"
-                    class="w-full resize-y rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                    class="w-full resize-y rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2.5 text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                 ></textarea>
             </div>
 
@@ -237,14 +237,14 @@
                 ></div>
                 {#if !equation}
                     <span
-                        class="text-[11px] text-brand-charcoal-300 dark:text-[#626880]"
+                        class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#626880]"
                         >{$t("dialog.preview_placeholder")}</span
                     >
                 {/if}
             </div>
 
             {#if error}
-                <p class="flex items-center gap-1 text-[11px] text-red-500">
+                <p class="flex items-center gap-1 text-[0.6875rem] text-red-500">
                     <Icon
                         icon="solar:danger-circle-bold"
                         width="0.75rem"
@@ -284,7 +284,7 @@
                         equation = "";
                         error = "";
                     }}
-                    class="cursor-pointer flex px-5 items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
+                    class="cursor-pointer flex px-5 items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
                 >
                     <Icon icon={icons["math"]} width="0.8rem" />
                     {$t("dialog.insert_equation")}

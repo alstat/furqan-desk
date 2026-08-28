@@ -104,7 +104,7 @@
                                 {$t("editor_theme_select.title")}
                             </h2>
                             <p
-                                class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
                                 {$t("editor_theme_select.subtitle")}
                             </p>
@@ -132,14 +132,14 @@
                             onclick={() => {
                                 focusedSlot = slotIdx as 0 | 1;
                             }}
-                            class={`flex-1 cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors ${
+                            class={`flex-1 cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1 text-[0.6875rem] font-semibold transition-colors ${
                                 focusedSlot === slotIdx
                                     ? "bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm"
                                     : "text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
                             }`}
                         >
                             <span
-                                class="flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold
+                                class="flex h-4 w-4 items-center justify-center rounded-full text-[0.625rem] font-bold
                                        {focusedSlot === slotIdx
                                     ? 'bg-brand-gold-400 dark:bg-[#e5c890] text-white dark:text-[#292c3c]'
                                     : 'bg-brand-gold-200 dark:bg-[#51576d] text-brand-gold-600 dark:text-[#838ba7]'}"
@@ -188,7 +188,7 @@
                             </div>
                             <div class="min-w-0">
                                 <p
-                                    class="text-[11px] font-semibold truncate
+                                    class="text-[0.6875rem] font-semibold truncate
                                            {isSelected && !isOtherSlot
                                         ? 'text-brand-charcoal-900 dark:text-[#c6d0f5]'
                                         : 'text-brand-charcoal-500 dark:text-[#a5adce]'}"
@@ -201,7 +201,7 @@
                         <!-- Slot badge -->
                         {#if isSelected}
                             <span
-                                class="shrink-0 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold
+                                class="shrink-0 flex h-5 w-5 items-center justify-center rounded-full text-[0.625rem] font-bold
                                        {isOtherSlot
                                     ? 'bg-brand-sand-200 dark:bg-[#414559] text-brand-charcoal-300 dark:text-[#626880]'
                                     : 'bg-brand-gold-400 dark:bg-[#e5c890] text-white dark:text-[#292c3c]'}"
@@ -211,7 +211,7 @@
                             </span>
                         {:else}
                             <span
-                                class="shrink-0 flex h-5 w-5 items-center justify-center rounded-full border border-brand-sand-200 dark:border-[#414559] text-[10px] text-brand-charcoal-300 dark:text-[#626880]"
+                                class="shrink-0 flex h-5 w-5 items-center justify-center rounded-full border border-brand-sand-200 dark:border-[#414559] text-[0.625rem] text-brand-charcoal-300 dark:text-[#626880]"
                                 aria-hidden="true"
                             >
                                 {focusedSlot + 1}
@@ -222,7 +222,7 @@
 
                 {#snippet groupHeader(icon: string, label: string)}
                     <div
-                        class="flex items-center gap-1.5 px-1 pt-1 pb-2 text-[10px] font-bold uppercase tracking-wider text-brand-charcoal-300 dark:text-[#838ba7]"
+                        class="flex items-center gap-1.5 px-1 pt-1 pb-2 text-[0.625rem] font-bold uppercase tracking-wider text-brand-charcoal-300 dark:text-[#838ba7]"
                     >
                         <Icon {icon} width="0.85rem" />
                         <span>{label}</span>
@@ -263,7 +263,7 @@
             >
                 <button
                     onclick={handleDone}
-                    class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 transition-colors"
+                    class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full bg-brand-gold-400 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 transition-colors"
                 >
                     <Icon icon="solar:check-circle-bold" width="0.9rem" />
                     {$t("editor_theme_select.done")}

@@ -457,7 +457,7 @@
             <span class="font-scheherazade text-2xl py-1 leading-none text-slate-800/70 dark:text-[#c6d0f5]/70">
                 {word.combined_arabic}
             </span>
-            <span class="text-[10px] font-medium text-slate-400 dark:text-[#838ba7]">
+            <span class="text-[0.625rem] font-medium text-slate-400 dark:text-[#838ba7]">
                 {word.tokens.length} {word.tokens.length !== 1 ? $t('morphology.tokens') : $t('morphology.token')}
             </span>
         </div>
@@ -517,7 +517,7 @@
                     bind:this={aiPromptInput}
                     bind:value={aiPromptText}
                     placeholder={$t('morphology.ai_word_placeholder')}
-                    class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
+                    class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#1e2030] px-2 py-1.5 text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
                     onkeydown={(e) => {
                         if (e.key === 'Enter') { e.preventDefault(); submitAiPrompt(); }
                         else if (e.key === 'Escape') { aiPromptOpen = false; }
@@ -547,7 +547,7 @@
                     </div>
                     <div class="min-w-0 flex-1">
                         <div class="mb-1 flex items-center justify-between gap-2">
-                            <span class="text-[10px] font-semibold uppercase tracking-wide text-brand-gold-600/80 dark:text-[#e5c890]/80">
+                            <span class="text-[0.625rem] font-semibold uppercase tracking-wide text-brand-gold-600/80 dark:text-[#e5c890]/80">
                                 {$t('surah.word_by_word')}
                             </span>
                             <span dir="rtl" class="font-scheherazade text-lg leading-none text-brand-gold-600/80 dark:text-[#e5c890]/80">
@@ -571,7 +571,7 @@
 
                 <!-- Token header -->
                 <div class="flex items-start justify-between px-3 pt-2.5 pb-2">
-                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold {s.badge}">
+                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.6875rem] font-semibold {s.badge}">
                         <span class="h-1.5 w-1.5 rounded-full {s.dot}"></span>
                         {token.tag_name}
                     </span>
@@ -583,7 +583,7 @@
                             onclick={() => openUrl('https://www.ayahlab.com/docs')}
                             title={$t('morphology.buckwalter_help')}
                             aria-label={$t('morphology.buckwalter_help')}
-                            class="cursor-pointer rounded-md bg-slate-100 dark:bg-[#414559] px-1.5 py-0.5 font-mono text-[10px] text-slate-500 dark:text-[#949cbb] hover:underline hover:text-slate-700 dark:hover:text-[#c6d0f5] transition-colors"
+                            class="cursor-pointer rounded-md bg-slate-100 dark:bg-[#414559] px-1.5 py-0.5 font-mono text-[0.625rem] text-slate-500 dark:text-[#949cbb] hover:underline hover:text-slate-700 dark:hover:text-[#c6d0f5] transition-colors"
                             dir="ltr"
                         >{token.form_buckwalter}</button>
                     </div>
@@ -595,7 +595,7 @@
                         {#each FEATURES as { key, labelKey, arabic }}
                             {#if token.features[key]}
                                 <div class="flex items-center justify-between gap-3 py-1.5">
-                                    <span class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-[#838ba7]">
+                                    <span class="shrink-0 text-[0.625rem] font-semibold uppercase tracking-wide text-slate-400 dark:text-[#838ba7]">
                                         {$t(labelKey)}
                                     </span>
                                     {#if arabic}
@@ -603,7 +603,7 @@
                                             {buckwalterToArabic(token.features[key] as string)}
                                         </span>
                                     {:else}
-                                        <span class="text-[11px] font-medium text-slate-600 dark:text-[#a5adce]">
+                                        <span class="text-[0.6875rem] font-medium text-slate-600 dark:text-[#a5adce]">
                                             {translateFeatureValue($t, key, token.features[key] as string)}
                                         </span>
                                     {/if}

@@ -59,12 +59,12 @@
                 {$t("update.title")}
             </p>
             <p
-                class="text-[11px] text-brand-charcoal-400 dark:text-[#838ba7] mt-0.5"
+                class="text-[0.6875rem] text-brand-charcoal-400 dark:text-[#838ba7] mt-0.5"
             >
                 {$t("update.message", { version: latestVersion })}
             </p>
             <button
-                class="mt-2 text-[11px] cursor-pointer font-medium text-brand-gold-600 dark:text-[#e5c890]
+                class="mt-2 text-[0.6875rem] cursor-pointer font-medium text-brand-gold-600 dark:text-[#e5c890]
                        hover:underline"
                 onclick={() => openUrl("https://www.ayahlab.com/")}
             >

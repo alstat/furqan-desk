@@ -428,15 +428,15 @@
     }
 
     const tabBtn =
-        "cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors";
+        "cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[0.6875rem] font-semibold transition-colors";
     const tabActive =
         "bg-white dark:bg-[#51576d] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm";
     const tabIdle =
         "text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]";
     const toolBtn =
-        "cursor-pointer inline-flex items-center gap-1.5 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-1.5 text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors hover:bg-brand-sand-200 dark:hover:bg-[#292c3c] disabled:opacity-40 disabled:cursor-not-allowed";
+        "cursor-pointer inline-flex items-center gap-1.5 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors hover:bg-brand-sand-200 dark:hover:bg-[#292c3c] disabled:opacity-40 disabled:cursor-not-allowed";
     const primaryBtn =
-        "cursor-pointer inline-flex items-center justify-center gap-1.5 rounded-full border border-transparent bg-brand-gold-400 px-4 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-brand-gold-500 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-[#e5c890] dark:text-[#232634] dark:hover:bg-[#eed8a3]";
+        "cursor-pointer inline-flex items-center justify-center gap-1.5 rounded-full border border-transparent bg-brand-gold-400 px-4 py-1.5 text-[0.6875rem] font-semibold text-white transition-colors hover:bg-brand-gold-500 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-[#e5c890] dark:text-[#232634] dark:hover:bg-[#eed8a3]";
     const optionRow =
         "group flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-brand-sand-200 bg-brand-sand-100 px-3.5 py-3 text-left transition-colors hover:border-brand-gold-300 hover:bg-brand-sand-200 disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#414559] dark:bg-[#1e2030] dark:hover:border-[#e5c890]/40 dark:hover:bg-[#292c3c]";
     const textareaCls =
@@ -549,10 +549,10 @@
                                     <Icon icon="solar:file-text-bold-duotone" width="1.1rem" />
                                 </span>
                                 <span class="flex min-w-0 flex-col">
-                                    <span class="text-[12px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    <span class="text-[0.75rem] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
                                         {$t("references.import_files")}
                                     </span>
-                                    <span class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                                    <span class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#838ba7]">
                                         {$t("references.import_files_desc")}
                                     </span>
                                 </span>
@@ -569,10 +569,10 @@
                                     <Icon icon="solar:folder-with-files-bold-duotone" width="1.1rem" />
                                 </span>
                                 <span class="flex min-w-0 flex-col">
-                                    <span class="text-[12px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    <span class="text-[0.75rem] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
                                         {$t("references.import_folder")}
                                     </span>
-                                    <span class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                                    <span class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#838ba7]">
                                         {$t("references.import_folder_desc")}
                                     </span>
                                 </span>
@@ -595,7 +595,7 @@
                             class={textareaCls}
                         ></textarea>
                         <div class="flex items-center justify-between gap-2">
-                            <span class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]">
+                            <span class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#838ba7]">
                                 {$t("references.search_hint")}
                             </span>
                             <button
@@ -621,7 +621,7 @@
             {#if notice}
                 <div class="shrink-0 px-5 pt-2">
                     <p
-                        class="text-[11px] font-medium {notice.kind === 'ok'
+                        class="text-[0.6875rem] font-medium {notice.kind === 'ok'
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : 'text-red-500 dark:text-red-400'}"
                     >
@@ -634,7 +634,7 @@
             {#if $references.length}
                 <div class="flex shrink-0 items-center gap-2 px-5 pt-3 pb-0.5">
                     <span
-                        class="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#838ba7]"
+                        class="shrink-0 text-[0.625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#838ba7]"
                     >
                         {$t("references.count", {
                             n: filterText.trim()
@@ -652,7 +652,7 @@
                             bind:value={filterText}
                             spellcheck="false"
                             placeholder={$t("references.filter_placeholder")}
-                            class="w-full rounded-full border border-brand-sand-200 bg-brand-sand-100 py-1 pl-7 pr-7 text-[11px] text-brand-charcoal-900 placeholder-brand-charcoal-300 focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:border-[#414559] dark:bg-[#1e2030] dark:text-[#c6d0f5] dark:placeholder-[#626880] dark:focus:border-[#e5c890] dark:focus:ring-[#e5c890]/20"
+                            class="w-full rounded-full border border-brand-sand-200 bg-brand-sand-100 py-1 pl-7 pr-7 text-[0.6875rem] text-brand-charcoal-900 placeholder-brand-charcoal-300 focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:border-[#414559] dark:bg-[#1e2030] dark:text-[#c6d0f5] dark:placeholder-[#626880] dark:focus:border-[#e5c890] dark:focus:ring-[#e5c890]/20"
                         />
                         {#if filterText}
                             <button
@@ -704,10 +704,10 @@
                             >
                                 <div class="mb-1 flex items-start justify-between gap-2">
                                     <span
-                                        class="flex items-center gap-1.5 text-[12px] font-bold text-brand-gold-600 dark:text-[#e5c890]"
+                                        class="flex items-center gap-1.5 text-[0.75rem] font-bold text-brand-gold-600 dark:text-[#e5c890]"
                                     >
                                         <span
-                                            class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-gold-200/70 px-1 text-[9px] font-bold text-brand-gold-600 dark:bg-[#414559] dark:text-[#e5c890]"
+                                            class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-gold-200/70 px-1 text-[0.5625rem] font-bold text-brand-gold-600 dark:bg-[#414559] dark:text-[#e5c890]"
                                         >
                                             {i + 1}
                                         </span>
@@ -723,14 +723,14 @@
                                     </button>
                                 </div>
                                 <p
-                                    class="mb-1 line-clamp-2 text-[13px] font-semibold leading-snug text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                                    class="mb-1 line-clamp-2 text-[0.8125rem] font-semibold leading-snug text-brand-charcoal-900 dark:text-[#c6d0f5]"
                                     title={ref.title}
                                 >
                                     {ref.title || $t("references.untitled")}
                                 </p>
                                 {#if ref.container || identifierLabel(ref)}
                                     <p
-                                        class="mb-2.5 line-clamp-1 text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                        class="mb-2.5 line-clamp-1 text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                                     >
                                         {#if ref.container}<span class="italic">{ref.container}</span>{/if}
                                         {#if ref.container && identifierLabel(ref)} · {/if}
@@ -740,7 +740,7 @@
                                 <div class="mt-auto flex items-center gap-2">
                                     <button
                                         onclick={() => copyCitation(ref)}
-                                        class="cursor-pointer inline-flex items-center gap-1.5 rounded-full bg-brand-gold-100 px-3 py-1 text-[11px] font-semibold text-brand-gold-600 transition-colors hover:bg-brand-gold-200 dark:bg-[#414559] dark:text-[#e5c890] dark:hover:bg-[#51576d]"
+                                        class="cursor-pointer inline-flex items-center gap-1.5 rounded-full bg-brand-gold-100 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 transition-colors hover:bg-brand-gold-200 dark:bg-[#414559] dark:text-[#e5c890] dark:hover:bg-[#51576d]"
                                     >
                                         <Icon
                                             icon={copiedId === ref.id
@@ -757,7 +757,7 @@
                                             onclick={() => copyCodeName(ref)}
                                             title={$t("references.copy_code")}
                                             aria-label={$t("references.copy_code")}
-                                            class="ml-auto inline-flex cursor-pointer items-center gap-1 rounded-full bg-brand-sand-100 px-2 py-1 font-mono text-[10px] text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 dark:bg-[#363a4f] dark:text-[#b5bfe2] dark:hover:bg-[#414559]"
+                                            class="ml-auto inline-flex cursor-pointer items-center gap-1 rounded-full bg-brand-sand-100 px-2 py-1 font-mono text-[0.625rem] text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 dark:bg-[#363a4f] dark:text-[#b5bfe2] dark:hover:bg-[#414559]"
                                         >
                                             <Icon
                                                 icon={copiedKeyId === ref.id

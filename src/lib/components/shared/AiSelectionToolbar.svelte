@@ -275,7 +275,7 @@
                         width="1rem"
                     />
                     <span
-                        class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-brand-charcoal-900 px-2 py-1 text-[10px] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-[#1e2030] dark:text-[#c6d0f5]"
+                        class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-brand-charcoal-900 px-2 py-1 text-[0.625rem] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-[#1e2030] dark:text-[#c6d0f5]"
                     >
                         {$t(action.labelKey)}
                     </span>
@@ -295,7 +295,7 @@
                     width="1rem"
                 />
                 <span
-                    class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-brand-charcoal-900 px-2 py-1 text-[10px] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-[#1e2030] dark:text-[#c6d0f5]"
+                    class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-brand-charcoal-900 px-2 py-1 text-[0.625rem] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-[#1e2030] dark:text-[#c6d0f5]"
                 >
                     {$t("ai_selection.prompt")}
                 </span>
@@ -309,7 +309,7 @@
         >
             <Icon icon="ri:chat-smile-ai-fill" width="1rem" />
             <span
-                class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-brand-charcoal-900 px-2 py-1 text-[10px] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-[#1e2030] dark:text-[#c6d0f5]"
+                class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-brand-charcoal-900 px-2 py-1 text-[0.625rem] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-[#1e2030] dark:text-[#c6d0f5]"
             >
                 {$t("ai_selection.ask_ai")}
             </span>
@@ -322,7 +322,7 @@
         >
             {#each tones as tone (tone.id)}
                 <button
-                    class="cursor-pointer whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium text-brand-charcoal-700 transition-colors hover:bg-brand-gold-200 hover:text-brand-gold-600 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:text-[#c6d0f5] dark:hover:bg-[#4a4e5c] dark:hover:text-brand-gold-400 disabled:cursor-wait disabled:opacity-50"
+                    class="cursor-pointer whitespace-nowrap rounded-full px-2.5 py-1 text-[0.6875rem] font-medium text-brand-charcoal-700 transition-colors hover:bg-brand-gold-200 hover:text-brand-gold-600 focus:outline-none focus:ring-2 focus:ring-brand-gold-300 dark:text-[#c6d0f5] dark:hover:bg-[#4a4e5c] dark:hover:text-brand-gold-400 disabled:cursor-wait disabled:opacity-50"
                     disabled={busyAction !== null}
                     onclick={() => runWithTone(tone.id)}
                 >
@@ -343,7 +343,7 @@
                 bind:this={promptInput}
                 bind:value={promptText}
                 placeholder={$t("ai_selection.prompt_placeholder")}
-                class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
+                class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
                 onkeydown={(e) => {
                     if (e.key === "Enter") submitPrompt();
                     if (e.key === "Escape") promptOpen = false;
@@ -368,7 +368,7 @@
                 bind:this={askPromptInput}
                 bind:value={askPromptText}
                 placeholder={$t("ai_selection.ask_placeholder")}
-                class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
+                class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2.5 py-1.5 text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
                 onkeydown={(e) => {
                     if (e.key === "Enter") submitAskPrompt();
                     if (e.key === "Escape") askPromptOpen = false;
@@ -387,7 +387,7 @@
 
     {#if error}
         <div
-            class="max-w-80 px-1 text-[10px] leading-snug text-red-500 dark:text-red-400"
+            class="max-w-80 px-1 text-[0.625rem] leading-snug text-red-500 dark:text-red-400"
         >
             {error}
         </div>

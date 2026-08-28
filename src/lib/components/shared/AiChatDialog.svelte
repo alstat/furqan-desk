@@ -418,7 +418,7 @@
                 />
                 <span
                     data-tauri-drag-region={standalone ? true : undefined}
-                    class="truncate py-2 text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
+                    class="truncate py-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
                 >
                     {$t("ai_chat.title")}
                     <span class="font-normal normal-case"
@@ -527,7 +527,7 @@
                     <!-- Quota banners -->
                     {#if $quotaBlock}
                         <div
-                            class="shrink-0 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-900/40 px-4 py-2 text-[11px] text-red-600 dark:text-red-300 flex items-center gap-2"
+                            class="shrink-0 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-900/40 px-4 py-2 text-[0.6875rem] text-red-600 dark:text-red-300 flex items-center gap-2"
                         >
                             <Icon
                                 icon="solar:danger-circle-bold-duotone"
@@ -589,7 +589,7 @@
                                         : 'items-start'}"
                                 >
                                     <div
-                                        class="chat-bubble relative overflow-visible rounded-[20px] px-4 py-2.5 text-[13px] leading-relaxed max-w-full {isUser
+                                        class="chat-bubble relative overflow-visible rounded-[20px] px-4 py-2.5 text-[0.8125rem] leading-relaxed max-w-full {isUser
                                             ? 'chat-bubble-user rounded-br-[5px] bg-brand-gold-400 dark:bg-brand-gold-500 text-gray-100 dark:text-gray-700'
                                             : 'chat-bubble-assistant bg-white dark:bg-[#292c3c] text-brand-charcoal-900 dark:text-[#c6d0f5] border border-brand-sand-200 dark:border-[#414559]'}"
                                     >
@@ -604,7 +604,7 @@
                                                 </p>
                                             {:else if msg.content === "" && isStreamingLast}
                                                 <span
-                                                    class="flex items-center gap-1.5 text-[11px] text-brand-charcoal-300 dark:text-[#8087a2]"
+                                                    class="flex items-center gap-1.5 text-[0.6875rem] text-brand-charcoal-300 dark:text-[#8087a2]"
                                                 >
                                                     <Icon
                                                         icon="solar:refresh-circle-bold-duotone"
@@ -696,7 +696,7 @@
                                     : $t("ai_chat.model_standard")}
                             </button>
                             <span
-                                class="text-[11px] text-brand-charcoal-300 dark:text-[#626880] truncate"
+                                class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#626880] truncate"
                             >
                                 {$useAdvanced
                                     ? $t("ai_chat.advanced_hint")
@@ -748,7 +748,7 @@
 
                     <!-- AI accuracy disclaimer -->
                     <div
-                        class="flex-none flex items-center justify-center gap-1.5 bg-brand-sand-50 dark:bg-[#232634] px-3 pb-2 text-center text-[10px] leading-tight text-brand-charcoal-300 dark:text-[#626880]"
+                        class="flex-none flex items-center justify-center gap-1.5 bg-brand-sand-50 dark:bg-[#232634] px-3 pb-2 text-center text-[0.625rem] leading-tight text-brand-charcoal-300 dark:text-[#626880]"
                     >
                         <Icon
                             icon="solar:info-circle-bold-duotone"
@@ -974,7 +974,7 @@
     }
 
     :global(.markdown-body) {
-        font-size: 13px;
+        font-size: 0.8125rem;
         line-height: 1.55;
     }
     :global(.markdown-body p) {
@@ -1013,7 +1013,7 @@
         background: var(--hljs-bg) !important;
         color: var(--hljs-fg) !important;
         overflow-x: auto;
-        font-size: 12px;
+        font-size: 0.75rem;
         border: 1px solid var(--hljs-border);
     }
     :global(.markdown-body pre code),

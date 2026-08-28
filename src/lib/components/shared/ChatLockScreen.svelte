@@ -101,7 +101,7 @@
                     : $t("ai_chat.lock.unlock_title")}
             </h3>
             <p
-                class="text-[11px] leading-relaxed text-brand-charcoal-300 dark:text-[#8087a2]"
+                class="text-[0.6875rem] leading-relaxed text-brand-charcoal-300 dark:text-[#8087a2]"
             >
                 {isSetup
                     ? $t("ai_chat.lock.setup_desc")
@@ -117,7 +117,7 @@
                 disabled={busy}
                 autofocus
                 autocomplete="new-password"
-                class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#1e2030] px-3 py-2 text-[12px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
+                class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#1e2030] px-3 py-2 text-[0.75rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
             />
             {#if isSetup}
                 <PasswordInput
@@ -126,13 +126,13 @@
                     placeholder={$t("ai_chat.lock.confirm")}
                     disabled={busy}
                     autocomplete="new-password"
-                    class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#1e2030] px-3 py-2 text-[12px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
+                    class="w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#1e2030] px-3 py-2 text-[0.75rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
                 />
             {/if}
         </div>
 
         {#if localError || $keyError}
-            <p class="flex items-center gap-1.5 text-[11px] text-red-500">
+            <p class="flex items-center gap-1.5 text-[0.6875rem] text-red-500">
                 <Icon icon="solar:danger-circle-bold" width="0.75rem" />
                 {localError || $keyError}
             </p>
@@ -141,7 +141,7 @@
         <button
             onclick={isSetup ? handleSetup : handleUnlock}
             disabled={busy || passphrase.length === 0}
-            class="cursor-pointer w-full rounded-xl bg-brand-gold-400 dark:bg-brand-gold-500 px-4 py-2 text-[12px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="cursor-pointer w-full rounded-xl bg-brand-gold-400 dark:bg-brand-gold-500 px-4 py-2 text-[0.75rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
             {#if busy}
                 <Icon
@@ -159,7 +159,7 @@
             <button
                 onclick={handleReset}
                 disabled={busy}
-                class="cursor-pointer text-center text-[10px] text-brand-charcoal-300 dark:text-[#626880] hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                class="cursor-pointer text-center text-[0.625rem] text-brand-charcoal-300 dark:text-[#626880] hover:text-red-500 dark:hover:text-red-400 transition-colors"
             >
                 {$t("ai_chat.lock.forgot")}
             </button>
