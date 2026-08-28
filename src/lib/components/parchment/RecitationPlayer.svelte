@@ -1,7 +1,7 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
     import Icon from "@iconify/svelte";
-    import { onMount, onDestroy, tick } from "svelte";
+    import { onMount, tick } from "svelte";
     import { fly } from "svelte/transition";
     import { selectedSurahIdx, hideSurahPage } from "$lib/stores/quran.svelte";
     import {
@@ -26,8 +26,6 @@
     } from "$lib/stores/recitation.store";
 
     import { t } from "$lib/i18n";
-    import { bringToFront } from "$lib/stores/window-manager.store";
-    import { csdMarginPx } from "$lib/stores/window-state.store";
 
     let { scrollContainer }: { scrollContainer: HTMLElement | null } = $props();
 
@@ -460,12 +458,13 @@
         }
     });
 
-    // ── Floating mini player (visible while the surah page is hidden) ───────
-    // The parchment root gets display:none when the surah page is hidden, which
-    // hides the main pill but keeps this component (and its <audio>) alive. The
-    // mini player is portaled to <body> so it escapes the hidden subtree.
+    // The parchment root gets display:none when the surah page is hidden. Move
+    // this control to the app shell so it stays visible and shares the exact
+    // positioning context used by SurahWidget on every desktop platform.
     function portal(node: HTMLElement) {
-        document.body.appendChild(node);
+        (
+            document.querySelector<HTMLElement>(".app-shell") ?? document.body
+        ).appendChild(node);
         return {
             destroy() {
                 node.remove();
@@ -473,115 +472,10 @@
         };
     }
 
-    const MINI_W = 230;
-    const MINI_H = 48;
-    let miniEl = $state<HTMLDivElement | null>(null);
-    let miniX = $state(0);
-    let miniY = $state(0);
-    let miniInitialized = false;
-    // Once the user drags the pill we stop re-anchoring it to the bottom-right
-    // corner on resize and only clamp it back into the viewport.
-    let miniUserMoved = false;
-    // Dismissed via the close button; audio keeps playing. Resets when the
-    // surah page is shown again so the next hide brings the pill back.
-    let miniDismissed = $state(false);
+    let miniExpanded = $state(false);
 
     $effect(() => {
-        if (!$hideSurahPage()) miniDismissed = false;
-    });
-    let miniDragging = $state(false);
-    // Resting below the floating widgets (z-[60]). Bumped via the window
-    // manager while dragging so the pill rides above other draggable panels
-    // (e.g. JuliaPlotViewer) but stays under fixed modals (z-9999).
-    let miniZ = $state(50);
-    let miniDragStartX = 0,
-        miniDragStartY = 0,
-        miniStartX = 0,
-        miniStartY = 0;
-
-    function miniDefaultPosition() {
-        const miniWidth = miniEl?.offsetWidth ?? MINI_W;
-        const miniHeight = miniEl?.offsetHeight ?? MINI_H;
-        miniX = Math.max(
-            $csdMarginPx + 8,
-            window.innerWidth - $csdMarginPx - miniWidth - 24,
-        );
-        miniY = Math.max(
-            $csdMarginPx + 8,
-            window.innerHeight - $csdMarginPx - miniHeight - 48,
-        );
-    }
-
-    $effect(() => {
-        if ($hideSurahPage() && !miniInitialized) {
-            miniDefaultPosition();
-            miniInitialized = true;
-        }
-    });
-
-    function handleWindowResize() {
-        if (!miniInitialized) return;
-        if (miniUserMoved) {
-            const miniWidth = miniEl?.offsetWidth ?? MINI_W;
-            const miniHeight = miniEl?.offsetHeight ?? MINI_H;
-            miniX = Math.max(
-                $csdMarginPx,
-                Math.min(
-                    window.innerWidth - $csdMarginPx - miniWidth,
-                    miniX,
-                ),
-            );
-            miniY = Math.max(
-                $csdMarginPx,
-                Math.min(
-                    window.innerHeight - $csdMarginPx - miniHeight,
-                    miniY,
-                ),
-            );
-        } else {
-            miniDefaultPosition();
-        }
-    }
-
-    function miniStartDrag(e: PointerEvent) {
-        miniDragging = true;
-        miniUserMoved = true;
-        miniZ = bringToFront();
-        miniDragStartX = e.clientX;
-        miniDragStartY = e.clientY;
-        miniStartX = miniX;
-        miniStartY = miniY;
-        window.addEventListener("pointermove", miniOnDrag);
-        window.addEventListener("pointerup", miniStopDrag, { once: true });
-    }
-
-    function miniOnDrag(e: PointerEvent) {
-        const miniWidth = miniEl?.offsetWidth ?? MINI_W;
-        const miniHeight = miniEl?.offsetHeight ?? MINI_H;
-        miniX = Math.max(
-            $csdMarginPx,
-            Math.min(
-                window.innerWidth - $csdMarginPx - miniWidth,
-                miniStartX + (e.clientX - miniDragStartX),
-            ),
-        );
-        miniY = Math.max(
-            $csdMarginPx,
-            Math.min(
-                window.innerHeight - $csdMarginPx - miniHeight,
-                miniStartY + (e.clientY - miniDragStartY),
-            ),
-        );
-    }
-
-    function miniStopDrag() {
-        miniDragging = false;
-        window.removeEventListener("pointermove", miniOnDrag);
-    }
-
-    onDestroy(() => {
-        if (typeof window !== "undefined")
-            window.removeEventListener("pointermove", miniOnDrag);
+        if (!$hideSurahPage()) miniExpanded = false;
     });
 
     function setReciter(id: number) {
@@ -611,8 +505,6 @@
         }
     }
 </script>
-
-<svelte:window onresize={handleWindowResize} />
 
 <div id="tour-recitation" class="flex flex-col items-center gap-2 z-300">
     <!-- No internet toast -->
@@ -827,120 +719,151 @@
     preload="none"
 ></audio>
 
-<!-- Floating mini player — shown while the surah page is hidden -->
-{#if $hideSurahPage() && !miniDismissed}
+<!-- Collapsible mini player, aligned above the bottom-right SurahWidget. -->
+{#if $hideSurahPage()}
     <div
-        bind:this={miniEl}
         use:portal
-        transition:fly={{ y: 8, duration: 180, opacity: 0 }}
-        class="fixed flex items-center gap-1 px-2 py-1.5 font-sans
-               rounded-xl
-               glass-panel
-               bg-white/80 dark:bg-[#292c3c]/90
-               backdrop-blur-md
-               border border-stone-200/70 dark:border-[#414559]/60
-               shadow-lg shadow-stone-300/30 dark:shadow-black/30
-               text-sm select-none"
-        style="left:{miniX}px; top:{miniY}px; z-index: {miniZ};"
+        class="fixed right-2.5 bottom-[3.875rem] z-[50] h-10 w-10 font-sans"
     >
-        <!-- Drag handle -->
-        <div
-            onpointerdown={miniStartDrag}
-            role="presentation"
-            class="{miniDragging
-                ? 'cursor-grabbing'
-                : 'cursor-grab'} p-1 text-brand-gold-500 dark:text-[#e5c890]"
-        >
-            <Icon icon="solar:book-bold-duotone" width="1rem" />
-        </div>
+        {#if miniExpanded}
+            <div
+                transition:fly={{ y: 8, duration: 180, opacity: 0 }}
+                class="absolute right-0 bottom-0 flex items-center gap-1 px-2 py-1.5
+                       rounded-xl glass-panel bg-white/80 dark:bg-[#292c3c]/90
+                       backdrop-blur-md border border-stone-200/70 dark:border-[#414559]/60
+                       shadow-lg shadow-stone-300/30 dark:shadow-black/30
+                       text-sm select-none"
+            >
+                <button
+                    onclick={prevAyah}
+                    disabled={inPlaylist
+                        ? playlistIdx <= 0
+                        : !$currentPlayingAyah || $currentPlayingAyah <= 1}
+                    aria-label={$t("recitation.prev")}
+                    class="cursor-pointer p-1 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
+                           hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
+                           hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
+                           disabled:opacity-25 disabled:cursor-not-allowed transition-all"
+                >
+                    <Icon icon="solar:skip-previous-bold" width="0.9rem" />
+                </button>
 
-        <!-- Prev -->
-        <button
-            onclick={prevAyah}
-            disabled={inPlaylist
-                ? playlistIdx <= 0
-                : !$currentPlayingAyah || $currentPlayingAyah <= 1}
-            aria-label={$t("recitation.prev")}
-            class="cursor-pointer p-1 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
-                   hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
-                   hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
-                   disabled:opacity-25 disabled:cursor-not-allowed transition-all"
-        >
-            <Icon icon="solar:skip-previous-bold" width="0.9rem" />
-        </button>
+                <button
+                    onclick={togglePlay}
+                    aria-label={$isPlaying
+                        ? $t("recitation.pause")
+                        : $t("recitation.play")}
+                    class="cursor-pointer p-1 rounded-xl
+                           text-brand-gold-600 dark:text-[#e5c890]
+                           hover:bg-brand-gold-50 dark:hover:bg-[#3b3757]
+                           transition-all"
+                >
+                    <Icon
+                        icon={$isPlaying
+                            ? "solar:pause-circle-bold-duotone"
+                            : "solar:play-circle-bold-duotone"}
+                        width="1.35rem"
+                    />
+                </button>
 
-        <!-- Play/Pause -->
-        <button
-            onclick={togglePlay}
-            aria-label={$isPlaying
-                ? $t("recitation.pause")
-                : $t("recitation.play")}
-            class="cursor-pointer p-1 rounded-xl
-                   text-brand-gold-600 dark:text-[#e5c890]
-                   hover:bg-brand-gold-50 dark:hover:bg-[#3b3757]
-                   transition-all"
-        >
-            <Icon
-                icon={$isPlaying
-                    ? "solar:pause-circle-bold-duotone"
-                    : "solar:play-circle-bold-duotone"}
-                width="1.35rem"
-            />
-        </button>
+                <button
+                    onclick={nextAyah}
+                    disabled={inPlaylist
+                        ? playlistIdx >= playlistLen - 1
+                        : $currentPlayingAyah !== null &&
+                          $currentPlayingAyah >= $totalAyahsInSurah}
+                    aria-label={$t("recitation.next")}
+                    class="cursor-pointer p-1 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
+                           hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
+                           hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
+                           disabled:opacity-25 disabled:cursor-not-allowed transition-all"
+                >
+                    <Icon icon="solar:skip-next-bold" width="0.9rem" />
+                </button>
 
-        <!-- Next -->
-        <button
-            onclick={nextAyah}
-            disabled={inPlaylist
-                ? playlistIdx >= playlistLen - 1
-                : $currentPlayingAyah !== null &&
-                  $currentPlayingAyah >= $totalAyahsInSurah}
-            aria-label={$t("recitation.next")}
-            class="cursor-pointer p-1 rounded-xl text-brand-charcoal-500 dark:text-[#838ba7]
-                   hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
-                   hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
-                   disabled:opacity-25 disabled:cursor-not-allowed transition-all"
-        >
-            <Icon icon="solar:skip-next-bold" width="0.9rem" />
-        </button>
+                <div
+                    class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"
+                ></div>
 
-        <!-- Divider -->
-        <div
-            class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"
-        ></div>
+                <span
+                    class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] tabular-nums px-1 min-w-12 text-center"
+                >
+                    {#if inPlaylist}
+                        {$t("recitation.counter", {
+                            current: String(playlistIdx + 1),
+                            total: String(playlistLen),
+                        })}
+                    {:else}
+                        {$t("recitation.counter", {
+                            current: String($currentPlayingAyah ?? 1),
+                            total: String($totalAyahsInSurah),
+                        })}
+                    {/if}
+                </span>
 
-        <!-- Ayah counter -->
-        <span
-            class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7] tabular-nums px-1 min-w-12 text-center"
-        >
-            {#if inPlaylist}
-                {$t("recitation.counter", {
-                    current: String(playlistIdx + 1),
-                    total: String(playlistLen),
-                })}
-            {:else}
-                {$t("recitation.counter", {
-                    current: String($currentPlayingAyah ?? 1),
-                    total: String($totalAyahsInSurah),
-                })}
-            {/if}
-        </span>
+                <div
+                    class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"
+                ></div>
 
-        <!-- Divider -->
-        <div
-            class="w-px h-4 bg-stone-200 dark:bg-[#414559] mx-0.5 shrink-0"
-        ></div>
-
-        <!-- Close -->
-        <button
-            onclick={() => (miniDismissed = true)}
-            aria-label={$t("common.close")}
-            class="cursor-pointer p-1 rounded-xl text-brand-charcoal-300 dark:text-[#626880]
-                   hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
-                   hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
-                   transition-all"
-        >
-            <Icon icon="solar:close-circle-bold-duotone" width="0.9rem" />
-        </button>
+                <button
+                    onclick={() => (miniExpanded = false)}
+                    aria-label={$t("recitation.collapse_player")}
+                    aria-expanded="true"
+                    class="cursor-pointer p-1 rounded-xl text-brand-charcoal-300 dark:text-[#626880]
+                           hover:bg-brand-sand-100 dark:hover:bg-[#414559]/60
+                           hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]
+                           transition-all"
+                >
+                    <Icon icon="charm:chevron-down" width="0.9rem" />
+                </button>
+            </div>
+        {:else}
+            <button
+                transition:fly={{ y: 8, duration: 180, opacity: 0 }}
+                onclick={() => (miniExpanded = true)}
+                aria-label={$t("recitation.open_player")}
+                aria-expanded="false"
+                class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-2xl
+                       border border-brand-sand-200 bg-brand-sand-50/90 dark:bg-brand-sand-100
+                       text-brand-gold-600 shadow-lg backdrop-blur-sm
+                       hover:bg-brand-sand-100 hover:shadow-xl hover:scale-105 active:scale-95
+                       {$isPlaying ? 'mini-player-button-playing' : ''}"
+            >
+                <Icon
+                    icon="solar:headphones-round-sound-bold-duotone"
+                    width="1.5em"
+                />
+            </button>
+        {/if}
     </div>
 {/if}
+
+<style>
+    .mini-player-button-playing {
+        background-image: linear-gradient(
+            115deg,
+            var(--color-brand-sand-50) 15%,
+            var(--color-brand-gold-100) 45%,
+            var(--color-brand-sand-100) 75%
+        );
+        background-size: 220% 100%;
+        animation: mini-player-gradient 4s ease-in-out infinite;
+    }
+
+    @keyframes mini-player-gradient {
+        0%,
+        100% {
+            background-position: 100% 50%;
+        }
+        50% {
+            background-position: 0% 50%;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .mini-player-button-playing {
+            animation: none;
+            background-position: 50% 50%;
+        }
+    }
+</style>

@@ -516,6 +516,8 @@ export const en: Record<string, string> = {
   "recitation.prev": "Previous ayah",
   "recitation.pause": "Pause",
   "recitation.play": "Play",
+  "recitation.open_player": "Open recitation player",
+  "recitation.collapse_player": "Collapse recitation player",
   "recitation.next": "Next ayah",
   "recitation.downloading": "Downloading…",
   "recitation.download": "Download recitation",
