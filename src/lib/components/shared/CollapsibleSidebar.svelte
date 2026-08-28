@@ -273,7 +273,7 @@
                 <span
                     class="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center
 					       rounded-full bg-brand-gold-500 dark:bg-[#e5c890] text-gray-100 hover:dark:text-gray-100 dark:text-[#1a1d2e]
-					       text-[8px] font-bold leading-none"
+					       text-[0.5rem] font-bold leading-none"
                 >
                     {$juliaPlots.length > 9 ? "9+" : $juliaPlots.length}
                 </span>

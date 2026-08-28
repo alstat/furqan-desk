@@ -112,7 +112,7 @@
                         />
                     </span>
                     <span
-                        class="font-sans text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                        class="font-sans text-[0.6875rem] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                         >{$t("editor.citation.edit_title")}</span
                     >
                 </span>
@@ -120,7 +120,7 @@
                     <button
                         onclick={handleSave}
                         title="{$t('common.save')} (Enter)"
-                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-0.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 font-sans active:bg-brand-gold-600/90 transition-colors"
+                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-0.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 font-sans active:bg-brand-gold-600/90 transition-colors"
                     >
                         {$t("common.save")}
                     </button>
@@ -145,7 +145,7 @@
                 <!-- Editable citation text -->
                 <span class="flex flex-col gap-1">
                     <span
-                        class="text-[9px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#626880]"
+                        class="text-[0.5625rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#626880]"
                         >{$t("editor.citation.text_label")}</span
                     >
                     <!-- svelte-ignore a11y_autofocus -->
@@ -156,14 +156,14 @@
                         onkeydown={handleKeydown}
                         spellcheck="false"
                         placeholder={$t("editor.citation.text_placeholder")}
-                        class="w-full rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-1.5 text-[12px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 transition-colors"
+                        class="w-full rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-1.5 text-[0.75rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 transition-colors"
                     />
                 </span>
 
                 {#if styleOptions.length}
                     <span class="flex flex-col gap-1">
                         <span
-                            class="text-[9px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#626880]"
+                            class="text-[0.5625rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#626880]"
                             >{$t("editor.citation.style_label")}</span
                         >
                         {#each styleOptions as style (style.id)}
@@ -175,11 +175,11 @@
                                     : 'bg-brand-sand-100 dark:bg-[#1e2030] hover:bg-brand-gold-100 dark:hover:bg-[#292c3c]'}"
                             >
                                 <span
-                                    class="truncate text-[12px] text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                                    class="truncate text-[0.75rem] text-brand-charcoal-900 dark:text-[#c6d0f5]"
                                     >{style.text}</span
                                 >
                                 <span
-                                    class="shrink-0 text-[9px] uppercase tracking-wide text-brand-charcoal-300 dark:text-[#626880]"
+                                    class="shrink-0 text-[0.5625rem] uppercase tracking-wide text-brand-charcoal-300 dark:text-[#626880]"
                                     >{style.label}</span
                                 >
                             </button>
@@ -187,7 +187,7 @@
                     </span>
                 {:else}
                     <span
-                        class="text-[10px] italic text-brand-charcoal-300 dark:text-[#626880]"
+                        class="text-[0.625rem] italic text-brand-charcoal-300 dark:text-[#626880]"
                         >{$t("editor.citation.missing_ref")}</span
                     >
                 {/if}

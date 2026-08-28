@@ -1092,7 +1092,7 @@
             <div class="flex items-center gap-2 flex-1 min-w-0">
                 {#if $openFolderPath}
                     <span
-                        class="text-[10px] font-semibold uppercase tracking-wide
+                        class="text-[0.625rem] font-semibold uppercase tracking-wide
 						       text-brand-charcoal-300 dark:text-[#838ba7] truncate flex-1"
                         title={$openFolderPath}
                     >
@@ -1100,7 +1100,7 @@
                     </span>
                     <button
                         onclick={openFolder}
-                        class="cursor-pointer shrink-0 text-[10px] font-semibold text-brand-charcoal-300
+                        class="cursor-pointer shrink-0 text-[0.625rem] font-semibold text-brand-charcoal-300
 						       dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 						       transition-colors"
                     >
@@ -1109,7 +1109,7 @@
                 {:else}
                     <button
                         onclick={openFolder}
-                        class="cursor-pointer w-full px-3 py-1 text-[11px] font-semibold rounded-full
+                        class="cursor-pointer w-full px-3 py-1 text-[0.6875rem] font-semibold rounded-full
 						       border border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200
 						       dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559]
 						       text-brand-charcoal-500 dark:text-[#c6d0f5] transition-colors
@@ -1167,7 +1167,7 @@
                     class="shrink-0 text-red-400"
                 />
                 <span
-                    class="text-[10px] text-red-500 dark:text-red-400 flex-1 truncate"
+                    class="text-[0.625rem] text-red-500 dark:text-red-400 flex-1 truncate"
                 >
                     {$t("explorer.cannot_read")}
                 </span>
@@ -1176,7 +1176,7 @@
                         loadError = "";
                         openFolderPath.set(null);
                     }}
-                    class="cursor-pointer shrink-0 text-[10px] font-semibold text-brand-charcoal-400
+                    class="cursor-pointer shrink-0 text-[0.625rem] font-semibold text-brand-charcoal-400
 					       dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 					       transition-colors"
                     title="Clear folder and go back"
@@ -1185,7 +1185,7 @@
                 </button>
                 <button
                     onclick={() => $openFolderPath && loadRoot($openFolderPath)}
-                    class="cursor-pointer shrink-0 text-[10px] font-semibold text-brand-charcoal-400
+                    class="cursor-pointer shrink-0 text-[0.625rem] font-semibold text-brand-charcoal-400
 					       dark:text-[#838ba7] hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 					       transition-colors"
                     title="Retry loading folder"
@@ -1207,7 +1207,7 @@
                     class="shrink-0 text-red-400"
                 />
                 <span
-                    class="text-[10px] text-red-500 dark:text-red-400 flex-1 truncate"
+                    class="text-[0.625rem] text-red-500 dark:text-red-400 flex-1 truncate"
                     title={actionError}
                 >
                     {actionError}
@@ -1233,13 +1233,13 @@
         >
             {#if isLoadingRoot}
                 <p
-                    class="text-[10px] italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2"
+                    class="text-[0.625rem] italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2"
                 >
                     {$t("explorer.loading")}
                 </p>
             {:else if !$openFolderPath}
                 <p
-                    class="text-[11px] text-center italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2"
+                    class="text-[0.6875rem] text-center italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2"
                 >
                     {$t("explorer.no_folder")}
                 </p>
@@ -1247,7 +1247,7 @@
                 {@render createRow($openFolderPath ?? "", 0)}
                 {#if rootNodes.length === 0 && !creating}
                     <p
-                        class="text-[10px] italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2"
+                        class="text-[0.625rem] italic text-brand-charcoal-300 dark:text-[#838ba7] px-2 py-2"
                     >
                         {$t("explorer.no_files")}
                     </p>
@@ -1398,7 +1398,7 @@
                     }
                 }}
                 class="min-w-0 flex-1 bg-transparent border-b border-brand-gold-400 outline-none
-                       text-[13px] font-mono text-brand-charcoal-700 dark:text-[#c6d0f5]"
+                       text-[0.8125rem] font-mono text-brand-charcoal-700 dark:text-[#c6d0f5]"
             />
         </div>
     {/if}
@@ -1424,7 +1424,7 @@
                 }
             }}
             class="min-w-0 flex-1 bg-transparent border-b border-brand-gold-400 outline-none
-                   text-[13px] font-mono text-brand-charcoal-700 dark:text-[#c6d0f5]"
+                   text-[0.8125rem] font-mono text-brand-charcoal-700 dark:text-[#c6d0f5]"
         />
     {:else}
         <span class="truncate {extraClass}" title={node.name}>{node.name}</span>
@@ -1443,7 +1443,7 @@
                     toggleDirectory(node);
                 }}
                 oncontextmenu={(e) => openNodeContextMenu(e, node)}
-                class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[13px]
+                class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[0.8125rem]
 				       text-brand-charcoal-500 dark:text-[#c6d0f5]
 				       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
 				       rounded-full transition-colors font-mono text-left {draggingPath === node.path ? 'opacity-40' : ''} {dragOverDir === node.path ? 'ring-2 ring-inset ring-brand-gold-400 bg-brand-gold-50 dark:bg-[#363a4f]' : ''}"
@@ -1489,7 +1489,7 @@
                 {@render createRow(node.path, depth + 1)}
                 {#if node.children.length === 0 && !(creating && creating.parentPath === node.path)}
                     <p
-                        class="text-[10px] italic text-brand-charcoal-300 dark:text-[#838ba7]"
+                        class="text-[0.625rem] italic text-brand-charcoal-300 dark:text-[#838ba7]"
                         style="padding-left: {0.5 + (depth + 1) * 0.75}rem"
                     >
                         {$t("explorer.empty")}
@@ -1505,7 +1505,7 @@
                 onpointerdown={(e) => onNodePointerDown(e, node)}
                 ondblclick={() => openMedia(node)}
                 oncontextmenu={(e) => openNodeContextMenu(e, node)}
-                class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[13px]
+                class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[0.8125rem]
 				       text-brand-charcoal-500 dark:text-[#c6d0f5]
 				       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 				       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
@@ -1534,7 +1534,7 @@
                 }}
                 ondblclick={() => openFile(node)}
                 oncontextmenu={(e) => openNodeContextMenu(e, node)}
-                class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[13px]
+                class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[0.8125rem]
 				       text-brand-charcoal-500 dark:text-[#c6d0f5]
 				       hover:text-brand-gold-500 dark:hover:text-[#e5c890]
 				       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
@@ -1560,7 +1560,7 @@
                     warnUnsupported(node);
                 }}
                 oncontextmenu={(e) => openNodeContextMenu(e, node)}
-                class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[13px]
+                class="cursor-pointer flex w-full items-center gap-1 py-0.5 text-[0.8125rem]
 					       text-brand-charcoal-400 dark:text-[#838ba7] opacity-70
 					       hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]
 					       rounded-full transition-colors font-mono text-left {draggingPath === node.path ? 'opacity-40' : ''} {dragOverDir === node.path ? 'ring-2 ring-inset ring-brand-gold-400 bg-brand-gold-50 dark:bg-[#363a4f]' : ''}"

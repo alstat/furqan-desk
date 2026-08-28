@@ -167,7 +167,7 @@
                                 {$t("recitation_dl.title")}
                             </h2>
                             <p
-                                class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
                                 {$t("recitation_dl.subtitle")}
                             </p>
@@ -193,7 +193,7 @@
                         <button
                             onclick={() => (dialogReciterId = slotId)}
                             disabled={$isDownloading}
-                            class={`flex-1 cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-semibold transition-colors disabled:cursor-not-allowed ${
+                            class={`flex-1 cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1 text-[0.6875rem] font-semibold transition-colors disabled:cursor-not-allowed ${
                                 dialogReciterId === slotId
                                     ? "bg-white dark:bg-[#303446] text-brand-charcoal-900 dark:text-[#c6d0f5] shadow-sm"
                                     : "text-brand-gold-600 dark:text-[#838ba7] hover:text-brand-charcoal-900 dark:hover:text-[#c6d0f5]"
@@ -221,7 +221,7 @@
                                     $currentPlayingAyah ?? 1,
                                 )}
                             disabled={$isDownloading}
-                            class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] py-1.5 text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] hover:border-brand-gold-200 dark:hover:border-[#51576d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] hover:border-brand-gold-200 dark:hover:border-[#51576d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                         >
                             <Icon
                                 icon="solar:download-minimalistic-bold"
@@ -234,7 +234,7 @@
                     <button
                         onclick={() => startDownload($selectedSurahIdx, null)}
                         disabled={$isDownloading}
-                        class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] py-1.5 text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] hover:border-brand-gold-200 dark:hover:border-[#51576d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] hover:border-brand-gold-200 dark:hover:border-[#51576d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                         <Icon
                             icon="solar:download-minimalistic-bold"
@@ -246,7 +246,7 @@
                     <button
                         onclick={() => startDownload(null, null)}
                         disabled={$isDownloading}
-                        class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full bg-brand-gold-400 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full bg-brand-gold-400 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                         <Icon
                             icon="solar:download-twice-square-bold-duotone"
@@ -261,7 +261,7 @@
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
                             <p
-                                class="text-[11px] text-brand-charcoal-500 dark:text-[#838ba7]"
+                                class="text-[0.6875rem] text-brand-charcoal-500 dark:text-[#838ba7]"
                             >
                                 {#if $downloadProgress && !$downloadProgress.done}
                                     {#if isSeekReciter}
@@ -311,7 +311,7 @@
                                 {/if}
                             </p>
                             <p
-                                class="text-[11px] font-medium text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
+                                class="text-[0.6875rem] font-medium text-brand-charcoal-900 dark:text-[#c6d0f5] tabular-nums"
                             >
                                 {$downloadProgress
                                     ? `${$downloadProgress.downloaded}/${$downloadProgress.total}`
@@ -331,7 +331,7 @@
                         {#if $isDownloading}
                             <button
                                 onclick={cancelDownload}
-                                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 py-1.5 text-[11px] font-medium text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 py-1.5 text-[0.6875rem] font-medium text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                             >
                                 <Icon
                                     icon="solar:stop-circle-bold"

@@ -13,7 +13,7 @@
     let successMsg = $state("");
 
     const inputClass =
-        "w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-3 py-2 text-[12px] text-brand-charcoal-500 dark:text-[#c6d0f5] placeholder-brand-charcoal-200 dark:placeholder-[#626880] outline-none focus:border-brand-gold-400 focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 transition-colors";
+        "w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-3 py-2 text-[0.75rem] text-brand-charcoal-500 dark:text-[#c6d0f5] placeholder-brand-charcoal-200 dark:placeholder-[#626880] outline-none focus:border-brand-gold-400 focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 transition-colors";
 
     function clearMessages() {
         error = "";
@@ -87,7 +87,7 @@
         onclick={handleGoogleSignIn}
         disabled={loading}
         class="cursor-pointer flex w-full items-center justify-center gap-2 rounded-xl border border-brand-sand-200 dark:border-[#414559]
-               bg-white dark:bg-[#303446] py-2 text-[12px] font-medium text-brand-charcoal-500 dark:text-[#c6d0f5]
+               bg-white dark:bg-[#303446] py-2 text-[0.75rem] font-medium text-brand-charcoal-500 dark:text-[#c6d0f5]
                hover:bg-brand-sand-50 dark:hover:bg-[#414559] transition-colors
                disabled:opacity-50 disabled:cursor-not-allowed"
     >
@@ -97,7 +97,7 @@
 
     <div class="flex items-center gap-3">
         <span class="h-px flex-1 bg-brand-sand-200 dark:bg-[#414559]"></span>
-        <span class="text-[11px] text-brand-charcoal-200 dark:text-[#626880]"
+        <span class="text-[0.6875rem] text-brand-charcoal-200 dark:text-[#626880]"
             >{$t("auth.or")}</span
         >
         <span class="h-px flex-1 bg-brand-sand-200 dark:bg-[#414559]"></span>
@@ -125,7 +125,7 @@
             onclick={handleSignIn}
             disabled={loading}
             class="cursor-pointer mt-1 w-full rounded-full bg-brand-gold-400 dark:bg-brand-gold-500 py-1.5
-                   text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100
+                   text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100
                    hover:bg-brand-gold-600 dark:hover:bg-brand-gold-400 active:bg-brand-gold-600/90 transition-colors
                    disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
         >
@@ -136,19 +136,19 @@
         </button>
         <button
             onclick={handleForgotPassword}
-            class="cursor-pointer text-center text-[11px] text-brand-charcoal-400 dark:text-[#8087a2] hover:text-brand-gold-500 transition-colors"
+            class="cursor-pointer text-center text-[0.6875rem] text-brand-charcoal-400 dark:text-[#8087a2] hover:text-brand-gold-500 transition-colors"
         >
             {$t("auth.forgot_password")}
         </button>
     </div>
 
     {#if error}
-        <p class="text-[11px] text-red-500 dark:text-red-400 text-center">
+        <p class="text-[0.6875rem] text-red-500 dark:text-red-400 text-center">
             {error}
         </p>
     {/if}
     {#if successMsg}
-        <p class="text-[11px] text-green-600 dark:text-green-400 text-center">
+        <p class="text-[0.6875rem] text-green-600 dark:text-green-400 text-center">
             {successMsg}
         </p>
     {/if}
@@ -158,12 +158,12 @@
         class="rounded-2xl border border-brand-gold-200 dark:border-[#c4a26e]/40 bg-brand-gold-50 dark:bg-[#e5c890]/20 px-4 py-3 flex flex-col gap-1"
     >
         <p
-            class="text-[11px] font-semibold text-brand-gold-600 dark:text-brand-gold-400"
+            class="text-[0.6875rem] font-semibold text-brand-gold-600 dark:text-brand-gold-400"
         >
             {$t("auth.pro_callout_title")}
         </p>
         <p
-            class="text-[11px] text-brand-charcoal-400 dark:text-[#8087a2] leading-relaxed"
+            class="text-[0.6875rem] text-brand-charcoal-400 dark:text-[#8087a2] leading-relaxed"
         >
             {$t("auth.pro_callout_desc")}
         </p>

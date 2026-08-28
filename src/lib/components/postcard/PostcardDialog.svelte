@@ -78,14 +78,14 @@
     const selectClass =
         "w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#626880]";
     const labelClass =
-        "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
+        "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
     // Group-level header: visually distinct from field labels (labelClass)
     // via a filled pill, so a cluster of controls reads as one named group
     // rather than blending into the field above/below it.
     const sectionLabelClass =
-        "inline-block rounded-md bg-brand-gold-100 dark:bg-[#414559] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-gold-600 dark:text-[#e5c890]";
+        "inline-block rounded-md bg-brand-gold-100 dark:bg-[#414559] px-2 py-1 text-[0.625rem] font-bold uppercase tracking-wider text-brand-gold-600 dark:text-[#e5c890]";
     const chipClass =
-        "cursor-pointer rounded-lg border px-2 py-1 text-[11px] font-semibold transition-colors";
+        "cursor-pointer rounded-lg border px-2 py-1 text-[0.6875rem] font-semibold transition-colors";
 
     // ── Ayah selection ───────────────────────────────────────────────────────
     let surah = $state(1);
@@ -1162,7 +1162,7 @@
         <div class="mb-1 flex items-center justify-between">
             <span class={labelClass + " mb-0"}>{label}</span>
             <span
-                class="text-[11px] font-semibold tabular-nums text-brand-charcoal-500 dark:text-[#c6d0f5]"
+                class="text-[0.6875rem] font-semibold tabular-nums text-brand-charcoal-500 dark:text-[#c6d0f5]"
                 >{value}{suffix}</span
             >
         </div>
@@ -1192,7 +1192,7 @@
                 aria-label={label}
             />
             <span
-                class="text-[11px] font-mono uppercase text-brand-charcoal-400 dark:text-[#838ba7]"
+                class="text-[0.6875rem] font-mono uppercase text-brand-charcoal-400 dark:text-[#838ba7]"
                 >{value}</span
             >
         </div>
@@ -1265,7 +1265,7 @@
                     class="shrink-0 text-brand-gold-500"
                 />
                 <span
-                    class="truncate py-2 text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
+                    class="truncate py-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
                 >
                     {$t("postcard.title")}
                     {#if rangeLabel}
@@ -1278,7 +1278,7 @@
             <div class="ml-auto flex items-center gap-1 shrink-0">
                 {#if statusMsg}
                     <span
-                        class="mr-1 max-w-56 truncate text-[11px] font-medium text-brand-gold-600 dark:text-[#e5c890]"
+                        class="mr-1 max-w-56 truncate text-[0.6875rem] font-medium text-brand-gold-600 dark:text-[#e5c890]"
                         >{statusMsg}</span
                     >
                 {/if}
@@ -1295,7 +1295,7 @@
                     onclick={exportPng}
                     onpointerdown={(e) => e.stopPropagation()}
                     disabled={exporting || !arabicText}
-                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-2.5 py-1 text-[10px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 transition-colors hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-2.5 py-1 text-[0.625rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 transition-colors hover:bg-brand-gold-500 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Icon
                         icon={exporting
@@ -1373,7 +1373,7 @@
                         <button
                             onclick={() => (tab = tb.id)}
                             title={$t(`postcard.tab_${tb.id}`)}
-                            class="cursor-pointer flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg px-1 py-1.5 text-[10px] font-semibold tracking-tight transition-colors {tab ===
+                            class="cursor-pointer flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg px-1 py-1.5 text-[0.625rem] font-semibold tracking-tight transition-colors {tab ===
                             tb.id
                                 ? 'bg-brand-gold-200 dark:bg-[#414559] text-brand-gold-600 dark:text-[#e5c890]'
                                 : 'text-brand-charcoal-300 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]'}"
@@ -1431,13 +1431,13 @@
                                         >{$t("postcard.ayahs")}</span
                                     >
                                     <span
-                                        class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                        class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                                         >{$t("postcard.shift_hint")}</span
                                     >
                                 </div>
                                 {#if morphLoading}
                                     <p
-                                        class="py-4 text-center text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                        class="py-4 text-center text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                                     >
                                         {$t("postcard.loading")}
                                     </p>
@@ -1466,11 +1466,11 @@
                                                 selected = [];
                                                 anchorAyah = -1;
                                             }}
-                                            class="cursor-pointer flex-1 rounded-full border border-brand-sand-200 dark:border-[#414559] px-3 py-1 text-[11px] font-semibold text-brand-charcoal-400 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] transition-colors"
+                                            class="cursor-pointer flex-1 rounded-full border border-brand-sand-200 dark:border-[#414559] px-3 py-1 text-[0.6875rem] font-semibold text-brand-charcoal-400 dark:text-[#838ba7] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] transition-colors"
                                             >{$t("postcard.clear")}</button
                                         >
                                         <span
-                                            class="flex-1 rounded-full bg-brand-sand-100 dark:bg-[#292c3c] px-3 py-1 text-center text-[11px] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]"
+                                            class="flex-1 rounded-full bg-brand-sand-100 dark:bg-[#292c3c] px-3 py-1 text-center text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]"
                                             >{$t("postcard.selected_count", {
                                                 n: String(selected.length),
                                             })}</span
@@ -1744,7 +1744,7 @@
                                         <button
                                             onclick={() =>
                                                 (bgMode = mode as typeof bgMode)}
-                                            class="cursor-pointer flex min-h-10 items-center justify-center rounded-lg border px-2 py-1.5 text-center text-[10px] font-semibold uppercase tracking-wide leading-tight transition-colors {bgMode ===
+                                            class="cursor-pointer flex min-h-10 items-center justify-center rounded-lg border px-2 py-1.5 text-center text-[0.625rem] font-semibold uppercase tracking-wide leading-tight transition-colors {bgMode ===
                                             mode
                                                 ? 'border-brand-gold-400 bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-600 dark:text-[#e5c890]'
                                                 : 'border-brand-sand-200 dark:border-[#414559] text-brand-charcoal-300 dark:text-[#838ba7] hover:border-brand-gold-300'}"
@@ -1843,19 +1843,19 @@
                                     >
                                     {#if msLoading}
                                         <p
-                                            class="py-3 text-center text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                            class="py-3 text-center text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                                         >
                                             {$t("postcard.loading")}
                                         </p>
                                     {:else if msError}
                                         <p
-                                            class="py-3 text-center text-[11px] text-red-500"
+                                            class="py-3 text-center text-[0.6875rem] text-red-500"
                                         >
                                             {$t("postcard.manuscripts_failed")}
                                         </p>
                                     {:else if msList.length === 0}
                                         <p
-                                            class="py-3 text-center text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                            class="py-3 text-center text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                                         >
                                             {$t("postcard.manuscripts_empty")}
                                         </p>
@@ -1875,7 +1875,7 @@
                                                     title={hasImage
                                                         ? ms.title
                                                         : $t("postcard.no_image")}
-                                                    class="block w-full border-b border-brand-sand-100 dark:border-[#414559] px-2.5 py-2 text-left text-[11px] transition-colors last:border-b-0 {!hasImage
+                                                    class="block w-full border-b border-brand-sand-100 dark:border-[#414559] px-2.5 py-2 text-left text-[0.6875rem] transition-colors last:border-b-0 {!hasImage
                                                         ? 'cursor-not-allowed opacity-45 text-brand-charcoal-400 dark:text-[#838ba7]'
                                                         : msSelectedId ===
                                                             ms.manuscript_id
@@ -1898,13 +1898,13 @@
                                                         >
                                                         {#if date}
                                                             <span
-                                                                class="shrink-0 rounded-full bg-brand-sand-100 dark:bg-[#292c3c] px-1.5 py-0.5 text-[9px] font-semibold tabular-nums text-brand-charcoal-400 dark:text-[#838ba7]"
+                                                                class="shrink-0 rounded-full bg-brand-sand-100 dark:bg-[#292c3c] px-1.5 py-0.5 text-[0.5625rem] font-semibold tabular-nums text-brand-charcoal-400 dark:text-[#838ba7]"
                                                                 >{date}</span
                                                             >
                                                         {/if}
                                                     </span>
                                                     <span
-                                                        class="mt-0.5 block truncate text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                                        class="mt-0.5 block truncate text-[0.625rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                                                         >{!hasImage
                                                             ? $t("postcard.no_image")
                                                             : (ms.archive?.name ??
@@ -1925,12 +1925,12 @@
                                                         msFolioIdx - 1,
                                                     ))}
                                                 disabled={msFolioIdx === 0}
-                                                class="cursor-pointer rounded-full border border-brand-sand-200 dark:border-[#414559] px-2 py-1 text-[11px] disabled:opacity-40"
+                                                class="cursor-pointer rounded-full border border-brand-sand-200 dark:border-[#414559] px-2 py-1 text-[0.6875rem] disabled:opacity-40"
                                                 aria-label={$t("postcard.prev_folio")}
                                                 >‹</button
                                             >
                                             <span
-                                                class="text-[11px] text-brand-charcoal-400 dark:text-[#838ba7]"
+                                                class="text-[0.6875rem] text-brand-charcoal-400 dark:text-[#838ba7]"
                                                 >{$t("postcard.folio", {
                                                     folio: `${msPage?.folio ?? ""}${msPage?.side ?? ""}`,
                                                 })}</span
@@ -1943,7 +1943,7 @@
                                                     ))}
                                                 disabled={msFolioIdx >=
                                                     msSelected.pages.length - 1}
-                                                class="cursor-pointer rounded-full border border-brand-sand-200 dark:border-[#414559] px-2 py-1 text-[11px] disabled:opacity-40"
+                                                class="cursor-pointer rounded-full border border-brand-sand-200 dark:border-[#414559] px-2 py-1 text-[0.6875rem] disabled:opacity-40"
                                                 aria-label={$t("postcard.next_folio")}
                                                 >›</button
                                             >
@@ -1951,13 +1951,13 @@
                                     {/if}
                                     {#if msImageLoading}
                                         <p
-                                            class="mt-2 text-center text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                            class="mt-2 text-center text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                                         >
                                             {$t("postcard.loading_image")}
                                         </p>
                                     {:else if msImageError}
                                         <p
-                                            class="mt-2 text-center text-[11px] text-red-500"
+                                            class="mt-2 text-center text-[0.6875rem] text-red-500"
                                         >
                                             {$t("postcard.image_failed")}
                                         </p>
@@ -2041,7 +2041,7 @@
                                                     : 'border-brand-sand-200 dark:border-[#414559] hover:border-brand-gold-300'}"
                                             >
                                                 <span
-                                                    class="flex h-full w-full items-center justify-center text-[9px] font-semibold text-brand-charcoal-300"
+                                                    class="flex h-full w-full items-center justify-center text-[0.5625rem] font-semibold text-brand-charcoal-300"
                                                     style={g.stops.length
                                                         ? `background:linear-gradient(160deg, ${g.stops.join(", ")});`
                                                         : "background:repeating-linear-gradient(45deg,#ddd 0 4px,#fff 4px 8px);"}
@@ -2114,14 +2114,14 @@
                                     {#each CARD_SIZES as s}
                                         <button
                                             onclick={() => (sizeId = s.id)}
-                                            class="cursor-pointer rounded-lg border px-2 py-1.5 text-[10px] font-semibold transition-colors {sizeId ===
+                                            class="cursor-pointer rounded-lg border px-2 py-1.5 text-[0.625rem] font-semibold transition-colors {sizeId ===
                                             s.id
                                                 ? 'border-brand-gold-400 bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-600 dark:text-[#e5c890]'
                                                 : 'border-brand-sand-200 dark:border-[#414559] text-brand-charcoal-300 dark:text-[#838ba7] hover:border-brand-gold-300'}"
                                         >
                                             {$t(`postcard.size_${s.id}`)}
                                             <span
-                                                class="block text-[9px] font-normal opacity-70"
+                                                class="block text-[0.5625rem] font-normal opacity-70"
                                                 >{s.w}×{s.h}</span
                                             >
                                         </button>
@@ -2138,7 +2138,7 @@
                                         <button
                                             onclick={() =>
                                                 (textAlign = al as typeof textAlign)}
-                                            class="cursor-pointer rounded-lg border px-2 py-1.5 text-[10px] font-semibold uppercase transition-colors {textAlign ===
+                                            class="cursor-pointer rounded-lg border px-2 py-1.5 text-[0.625rem] font-semibold uppercase transition-colors {textAlign ===
                                             al
                                                 ? 'border-brand-gold-400 bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-600 dark:text-[#e5c890]'
                                                 : 'border-brand-sand-200 dark:border-[#414559] text-brand-charcoal-300 dark:text-[#838ba7] hover:border-brand-gold-300'}"
@@ -2177,7 +2177,7 @@
                                 () => (borderOn = !borderOn),
                             )}
                             <p
-                                class="text-[10px] leading-relaxed text-brand-charcoal-300 dark:text-[#838ba7]"
+                                class="text-[0.625rem] leading-relaxed text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
                                 {$t("postcard.signature_note")}
                             </p>

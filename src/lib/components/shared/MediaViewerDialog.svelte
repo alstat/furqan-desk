@@ -410,7 +410,7 @@
                     class="text-brand-gold-500 shrink-0"
                 />
                 <span
-                    class="text-[11px] py-2 font-semibold tracking-wide
+                    class="text-[0.6875rem] py-2 font-semibold tracking-wide
                            text-brand-charcoal-500 dark:text-[#838ba7] truncate"
                     title={path}
                 >
@@ -442,13 +442,13 @@
                    {panning ? 'cursor-grabbing' : zoom > 1 ? 'cursor-grab' : ''}"
         >
             {#if error}
-                <p class="text-[12px] text-red-500 dark:text-red-400">
+                <p class="text-[0.75rem] text-red-500 dark:text-red-400">
                     Cannot open file: {error}
                 </p>
             {:else}
                 {#if loading}
                     <p
-                        class="text-[12px] italic text-brand-charcoal-300 dark:text-[#838ba7]"
+                        class="text-[0.75rem] italic text-brand-charcoal-300 dark:text-[#838ba7]"
                     >
                         Loading…
                     </p>
@@ -528,7 +528,7 @@
             </div>
             {#if zoom !== 1}
                 <span
-                    class="absolute bottom-3 left-3 z-20 text-[9px] font-semibold px-1.5 py-0.5
+                    class="absolute bottom-3 left-3 z-20 text-[0.5625rem] font-semibold px-1.5 py-0.5
                            rounded-full bg-black/40 text-gray-100 backdrop-blur-sm
                            select-none pointer-events-none"
                 >

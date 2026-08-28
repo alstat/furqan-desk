@@ -147,7 +147,7 @@
                 class="shrink-0 text-brand-gold-500 dark:text-brand-gold-400"
             />
             <span
-                class="flex-1 text-[10px] font-bold uppercase tracking-widest
+                class="flex-1 text-[0.625rem] font-bold uppercase tracking-widest
 				       text-brand-gold-600 dark:text-brand-gold-400 select-none"
             >
                 {$t("toc.title")}
@@ -166,7 +166,7 @@
         <nav class="flex-1 overflow-y-auto flex flex-col py-2 px-1.5 gap-px">
             {#if headings.length === 0}
                 <p
-                    class="text-[11px] text-brand-charcoal-300 dark:text-[#626880]
+                    class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#626880]
 					       italic text-center px-2 py-4 select-none leading-relaxed"
                 >
                     {$t("toc.empty").split("\n")[0]}<br />{$t(
@@ -189,14 +189,14 @@
                         {#if tag === "h1"}
                             <span class="flex items-center gap-1.5 min-w-0">
                                 <span
-                                    class="shrink-0 text-[7px] leading-none
+                                    class="shrink-0 text-[0.4375rem] leading-none
 									       {isActive
                                         ? 'text-brand-gold-500 dark:text-brand-gold-400'
                                         : 'text-brand-gold-400 dark:text-brand-gold-600 group-hover:text-brand-gold-500 dark:group-hover:text-brand-gold-400'}"
                                     >◆</span
                                 >
                                 <span
-                                    class="text-[13px] font-semibold truncate transition-colors
+                                    class="text-[0.8125rem] font-semibold truncate transition-colors
 									       {isActive
                                         ? 'text-brand-gold-600 dark:text-brand-gold-400'
                                         : 'text-brand-charcoal-900 dark:text-[#c6d0f5] group-hover:text-brand-gold-600 dark:group-hover:text-brand-gold-400'}"
@@ -206,14 +206,14 @@
                         {:else if tag === "h2"}
                             <span class="flex items-center gap-1.5 min-w-0">
                                 <span
-                                    class="shrink-0 text-[12px] font-light leading-none
+                                    class="shrink-0 text-[0.75rem] font-light leading-none
 									       {isActive
                                         ? 'text-brand-gold-400 dark:text-brand-gold-500'
                                         : 'text-brand-charcoal-300 dark:text-[#626880] group-hover:text-brand-gold-400 dark:group-hover:text-brand-gold-500'}"
                                     >›</span
                                 >
                                 <span
-                                    class="text-[12px] font-medium truncate transition-colors
+                                    class="text-[0.75rem] font-medium truncate transition-colors
 									       {isActive
                                         ? 'text-brand-charcoal-900 dark:text-[#c6d0f5]'
                                         : 'text-brand-charcoal-500 dark:text-[#b5bfe2] group-hover:text-brand-charcoal-900 dark:group-hover:text-[#c6d0f5]'}"
@@ -223,14 +223,14 @@
                         {:else}
                             <span class="flex items-center gap-1.5 min-w-0">
                                 <span
-                                    class="shrink-0 text-[11px] leading-none
+                                    class="shrink-0 text-[0.6875rem] leading-none
 									       {isActive
                                         ? 'text-brand-charcoal-300 dark:text-[#838ba7]'
                                         : 'text-brand-charcoal-300 dark:text-[#626880] group-hover:text-brand-charcoal-300 dark:group-hover:text-[#838ba7]'}"
                                     >·</span
                                 >
                                 <span
-                                    class="text-[11px] font-normal truncate transition-colors
+                                    class="text-[0.6875rem] font-normal truncate transition-colors
 									       {isActive
                                         ? 'text-brand-charcoal-500 dark:text-[#b5bfe2]'
                                         : 'text-brand-charcoal-300 dark:text-[#838ba7] group-hover:text-brand-charcoal-500 dark:group-hover:text-[#b5bfe2]'}"

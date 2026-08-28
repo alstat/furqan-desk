@@ -286,10 +286,23 @@ export function isIncompleteJulia(code: string): boolean {
         .replace(/#[^\n]*/g, ' ')
         .replace(/"""[\s\S]*?"""/g, ' ')
         .replace(/"(?:[^"\\]|\\.)*"/g, ' ');
-    const startsRe = /\b(function|if|for|while|let|begin|do|try|module|quote|macro|struct)\b/g;
+    const blockTokenRe = /[()[\]{}]|\b(function|if|for|while|let|begin|do|try|module|quote|macro|struct|end)\b/g;
     let starts = 0;
-    while (startsRe.exec(stripped) !== null) starts++;
-    const ends = (stripped.match(/\bend\b/g) ?? []).length;
+    let ends = 0;
+    let blockParen = 0, blockBracket = 0, blockBrace = 0;
+    for (const match of stripped.matchAll(blockTokenRe)) {
+        const token = match[0];
+        if (token === '(') { blockParen++; continue; }
+        if (token === ')') { blockParen--; continue; }
+        if (token === '[') { blockBracket++; continue; }
+        if (token === ']') { blockBracket--; continue; }
+        if (token === '{') { blockBrace++; continue; }
+        if (token === '}') { blockBrace--; continue; }
+        if (token === 'end') { ends++; continue; }
+        // Comprehensions and generators use `for` without a matching `end`.
+        if (token === 'for' && (blockParen > 0 || blockBracket > 0 || blockBrace > 0)) continue;
+        starts++;
+    }
 
     if (inStr || inChar) return true;
     if (paren > 0 || bracket > 0 || brace > 0) return true;

@@ -53,7 +53,7 @@
         <button
             onclick={onNew}
             {disabled}
-            class="cursor-pointer w-full flex items-center justify-center gap-2 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="cursor-pointer w-full flex items-center justify-center gap-2 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
             <Icon icon="solar:add-circle-bold-duotone" width="0.95rem" />
             {$t("ai_chat.new_chat")}

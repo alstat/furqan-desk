@@ -227,7 +227,7 @@
                 title={spacing.label}
             >
                 <Icon icon={icons["lineSpacing"]} height="1rem" />
-                <span class="text-[10px]">{spacing.value}×</span>
+                <span class="text-[0.625rem]">{spacing.value}×</span>
             </button>
         {/each}
         <Divider />

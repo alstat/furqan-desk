@@ -332,10 +332,10 @@
                                 class="cursor-pointer block w-full text-left px-4 py-3"
                             >
                                 <div class="mb-1.5 flex items-center gap-2 pr-6">
-                                    <span class="shrink-0 text-[10px] font-semibold text-brand-gold-500">
+                                    <span class="shrink-0 text-[0.625rem] font-semibold text-brand-gold-500">
                                         {dayLabel(entry.day)}
                                     </span>
-                                    <span class="truncate text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    <span class="truncate text-[0.6875rem] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
                                         {name.en} · {$t("bookmark.ayah")} {entry.ayah}
                                     </span>
                                     {#if name.ar}
@@ -354,7 +354,7 @@
                                     {#if text.translation}
                                         <p
                                             dir={historyDir}
-                                            class="mt-1 text-[11px] leading-relaxed text-brand-charcoal-500 dark:text-[#a5adce] line-clamp-2"
+                                            class="mt-1 text-[0.6875rem] leading-relaxed text-brand-charcoal-500 dark:text-[#a5adce] line-clamp-2"
                                         >
                                             {text.translation}
                                         </p>
@@ -374,7 +374,7 @@
             {/if}
 
             <!-- Storage footprint + export confirmation -->
-            <div class="mt-3 flex flex-col items-center gap-1 text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]">
+            <div class="mt-3 flex flex-col items-center gap-1 text-[0.625rem] text-brand-charcoal-300 dark:text-[#838ba7]">
                 {#if storage}
                     <span>
                         {$t("verse_of_day.storage", {
@@ -418,7 +418,7 @@
                     width="1rem"
                 />
                 {#if verseDay}
-                    <span class="text-[11px] font-semibold text-brand-gold-500">
+                    <span class="text-[0.6875rem] font-semibold text-brand-gold-500">
                         {dayLabel(verseDay)}
                     </span>
                 {/if}
@@ -445,7 +445,7 @@
                     {#if line.translation}
                         <p
                             dir={translationDir}
-                            class="mt-0.5 text-[11px] leading-relaxed text-center text-brand-charcoal-300 dark:text-[#838ba7]"
+                            class="mt-0.5 text-[0.6875rem] leading-relaxed text-center text-brand-charcoal-300 dark:text-[#838ba7]"
                         >
                             {line.translation}
                         </p>
@@ -485,7 +485,7 @@
                     {#if line.translation}
                         <p
                             dir={translationDir}
-                            class="mt-0.5 text-[11px] leading-relaxed text-center text-brand-charcoal-300 dark:text-[#838ba7]"
+                            class="mt-0.5 text-[0.6875rem] leading-relaxed text-center text-brand-charcoal-300 dark:text-[#838ba7]"
                         >
                             {line.translation}
                         </p>
@@ -500,7 +500,7 @@
             <div class="flex items-center justify-between gap-2">
                 <button
                     onclick={() => (view = "verse")}
-                    class="cursor-pointer flex items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[11px] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
+                    class="cursor-pointer flex items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
                 >
                     <Icon icon="solar:arrow-left-linear" width="0.7rem" />
                     {$t("verse_of_day.back")}
@@ -509,7 +509,7 @@
                     <button
                         onclick={exportHistory}
                         disabled={!history.length}
-                        class="cursor-pointer flex items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[11px] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] disabled:opacity-50 transition-colors"
+                        class="cursor-pointer flex items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] disabled:opacity-50 transition-colors"
                     >
                         <Icon icon="solar:download-minimalistic-linear" width="0.7rem" />
                         {$t("verse_of_day.export")}
@@ -517,7 +517,7 @@
                     <button
                         onclick={clearAll}
                         disabled={!history.length}
-                        class="cursor-pointer flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-[11px] font-semibold disabled:opacity-50 transition-colors {confirmClear
+                        class="cursor-pointer flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-[0.6875rem] font-semibold disabled:opacity-50 transition-colors {confirmClear
                             ? 'border-red-400 bg-red-500 text-white hover:bg-red-600'
                             : 'border-brand-sand-200 bg-brand-sand-100 text-red-500 dark:border-[#414559] dark:bg-[#363a4f] hover:bg-brand-sand-200 dark:hover:bg-[#414559]'}"
                     >
@@ -533,7 +533,7 @@
                 <button
                     onclick={openHistory}
                     title={$t("verse_of_day.history")}
-                    class="cursor-pointer flex items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[11px] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
+                    class="cursor-pointer flex items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
                 >
                     <Icon icon="solar:history-bold-duotone" width="0.8rem" />
                     {$t("verse_of_day.history")}
@@ -541,14 +541,14 @@
                 <div class="flex items-center gap-2">
                     <button
                         onclick={onClose}
-                        class="cursor-pointer rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[11px] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
+                        class="cursor-pointer rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
                     >
                         {$t("common.close")}
                     </button>
                     <button
                         onclick={goToVerse}
                         disabled={loading || !target}
-                        class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-4 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
+                        class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-4 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
                     >
                         <Icon icon="solar:arrow-right-up-linear" width="0.7rem" />
                         {$t("verse_of_day.go")}

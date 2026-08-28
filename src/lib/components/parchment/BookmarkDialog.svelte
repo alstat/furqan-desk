@@ -256,7 +256,7 @@
         >
             {#snippet action()}
                 <span
-                    class="text-[10px] text-brand-charcoal-300 dark:text-[#838ba7]"
+                    class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
                     {$t("bookmark.n_saved", { n: $bookmarks.length })}
                 </span>
@@ -270,7 +270,7 @@
             <!-- Add bookmark -->
             <div class="px-5 py-4 border-b border-brand-sand-200">
                 <p
-                    class="mb-3 text-[11px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                    class="mb-3 text-[0.6875rem] font-semibold uppercase tracking-widest text-brand-charcoal-300"
                 >
                     {$t("bookmark.add")}
                 </p>
@@ -286,7 +286,7 @@
                             width="0.85rem"
                         />
                         <span
-                            class="text-[11px] font-medium text-brand-charcoal-900 truncate"
+                            class="text-[0.6875rem] font-medium text-brand-charcoal-900 truncate"
                             >{surahName($selectedSurahIdx)}</span
                         >
                     </div>
@@ -295,7 +295,7 @@
                     >
                         <label
                             for="bm-ayah"
-                            class="text-[11px] text-brand-charcoal-300 shrink-0"
+                            class="text-[0.6875rem] text-brand-charcoal-300 shrink-0"
                             >{$t("bookmark.ayah")}</label
                         >
                         <input
@@ -303,7 +303,7 @@
                             type="number"
                             min="1"
                             bind:value={ayahInput}
-                            class="w-14 bg-transparent text-[11px] font-semibold text-brand-charcoal-900 focus:outline-none"
+                            class="w-14 bg-transparent text-[0.6875rem] font-semibold text-brand-charcoal-900 focus:outline-none"
                         />
                     </div>
                 </div>
@@ -317,12 +317,12 @@
                     onmouseup={updateAiSelection}
                     oninput={updateAiSelection}
                     rows="2"
-                    class="mb-3 w-full resize-none rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 dark:bg-[#2b2b2b]/80 px-3 py-2.5 text-[11px] text-brand-charcoal-900 placeholder-brand-charcoal-300 focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100 transition-all"
+                    class="mb-3 w-full resize-none rounded-xl border border-brand-sand-200 bg-brand-sand-50/80 dark:bg-[#2b2b2b]/80 px-3 py-2.5 text-[0.6875rem] text-brand-charcoal-900 placeholder-brand-charcoal-300 focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 hover:border-brand-sand-400 hover:bg-brand-sand-100 transition-all"
                 ></textarea>
 
                 {#if saveError}
                     <p
-                        class="mb-2 flex items-center gap-1 text-[11px] text-red-500"
+                        class="mb-2 flex items-center gap-1 text-[0.6875rem] text-red-500"
                     >
                         <Icon
                             icon="solar:danger-circle-bold"
@@ -334,7 +334,7 @@
                 <button
                     onclick={handleAdd}
                     disabled={saving}
-                    class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
+                    class="cursor-pointer flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
                 >
                     <Icon icon="solar:bookmark-bold" width="0.8rem" />
                     {saving ? $t("bookmark.saving") : $t("bookmark.save")}
@@ -345,7 +345,7 @@
             {#if $lastRead}
                 <div class="px-5 py-4 border-b border-brand-sand-200">
                     <p
-                        class="mb-2.5 text-[11px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                        class="mb-2.5 text-[0.6875rem] font-semibold uppercase tracking-widest text-brand-charcoal-300"
                     >
                         {$t("bookmark.continue_reading")}
                     </p>
@@ -364,14 +364,14 @@
                             </div>
                             <div>
                                 <p
-                                    class="text-[11px] font-semibold text-brand-charcoal-900"
+                                    class="text-[0.6875rem] font-semibold text-brand-charcoal-900"
                                 >
                                     {surahName($lastRead.surah)} · {$t(
                                         "bookmark.ayah",
                                     )}
                                     {$lastRead.ayah}
                                 </p>
-                                <p class="text-[11px] text-brand-charcoal-300">
+                                <p class="text-[0.6875rem] text-brand-charcoal-300">
                                     {formatDate($lastRead.updated_at, $locale)}
                                 </p>
                             </div>
@@ -379,7 +379,7 @@
                         <button
                             onclick={() =>
                                 navigate($lastRead!.surah, $lastRead!.ayah)}
-                            class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+                            class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                         >
                             <Icon
                                 icon="solar:arrow-right-up-linear"
@@ -394,7 +394,7 @@
             <!-- Saved bookmarks -->
             <div class="px-5 py-4">
                 <p
-                    class="mb-3 text-[11px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                    class="mb-3 text-[0.6875rem] font-semibold uppercase tracking-widest text-brand-charcoal-300"
                 >
                     {$t("bookmark.saved_section")}{$bookmarks.length
                         ? ` · ${$bookmarks.length}`
@@ -414,7 +414,7 @@
                                 width="1.5rem"
                             />
                         </div>
-                        <p class="text-[11px] text-brand-charcoal-300">
+                        <p class="text-[0.6875rem] text-brand-charcoal-300">
                             {$t("bookmark.empty")}
                         </p>
                     </div>
@@ -426,7 +426,7 @@
                             >
                                 <div class="min-w-0 flex-1">
                                     <p
-                                        class="text-[11px] font-semibold text-brand-charcoal-500"
+                                        class="text-[0.6875rem] font-semibold text-brand-charcoal-500"
                                     >
                                         {surahName(bm.surah)} · {$t(
                                             "bookmark.ayah",
@@ -435,13 +435,13 @@
                                     </p>
                                     {#if bm.note}
                                         <p
-                                            class="mt-0.5 text-[11px] text-brand-charcoal-500 line-clamp-2"
+                                            class="mt-0.5 text-[0.6875rem] text-brand-charcoal-500 line-clamp-2"
                                         >
                                             {bm.note}
                                         </p>
                                     {/if}
                                     <p
-                                        class="mt-1 text-[11px] text-brand-charcoal-300"
+                                        class="mt-1 text-[0.6875rem] text-brand-charcoal-300"
                                     >
                                         {formatDate(bm.created_at, $locale)}
                                     </p>
@@ -452,7 +452,7 @@
                                     <button
                                         onclick={() =>
                                             navigate(bm.surah, bm.ayah)}
-                                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
+                                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                                     >
                                         <Icon
                                             icon="solar:arrow-right-up-linear"
@@ -468,7 +468,7 @@
                                         title={!$lexicalEditorInstance
                                             ? $t("manuscript.no_editor")
                                             : $t("manuscript.insert_tooltip")}
-                                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
                                         {#if insertingId === bm.id}
                                             <span

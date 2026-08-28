@@ -150,7 +150,7 @@
 		/>
 		<button
 			onclick={openEditor}
-			class="absolute shadow-xl dark:shadow-black/40 top-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-4 py-1 rounded-full text-[11px] font-sans font-semibold bg-brand-sand-50/80 dark:bg-[#292c3c]/80 border border-brand-sand-200 dark:border-[#414559] text-brand-charcoal-800 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] cursor-pointer transition-colors whitespace-nowrap backdrop-blur-sm z-10"
+			class="absolute shadow-xl dark:shadow-black/40 top-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-4 py-1 rounded-full text-[0.6875rem] font-sans font-semibold bg-brand-sand-50/80 dark:bg-[#292c3c]/80 border border-brand-sand-200 dark:border-[#414559] text-brand-charcoal-800 dark:text-[#c6d0f5] hover:bg-brand-gold-50 dark:hover:bg-[#3b3757] cursor-pointer transition-colors whitespace-nowrap backdrop-blur-sm z-10"
 		>
 			Edit drawing
 		</button>

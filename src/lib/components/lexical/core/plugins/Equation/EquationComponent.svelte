@@ -455,7 +455,7 @@
                         />
                     </span>
                     <span
-                        class="font-sans text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                        class="font-sans text-[0.6875rem] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                         >{$t("editor.equation.edit_title")}</span
                     >
                 </span>
@@ -464,7 +464,7 @@
                     <button
                         onclick={handleSave}
                         title="{$t('common.save')} (Enter)"
-                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-0.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 font-sans active:bg-brand-gold-600/90 transition-colors"
+                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-0.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 font-sans active:bg-brand-gold-600/90 transition-colors"
                     >
                         {$t("common.save")}
                     </button>
@@ -505,7 +505,7 @@
                     dir="ltr"
                     rows="2"
                     placeholder={$t("editor.equation.placeholder")}
-                    class="h-full w-full resize-none rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-2 font-mono text-[11px] leading-relaxed text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
+                    class="h-full w-full resize-none rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-2.5 py-2 font-mono text-[0.6875rem] leading-relaxed text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors"
                 ></textarea>
             </span>
 
@@ -521,7 +521,7 @@
                     ></span>
                 {:else}
                     <span
-                        class="text-[10px] text-brand-charcoal-300 dark:text-[#626880]"
+                        class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#626880]"
                         >{$t("editor.equation.preview_placeholder")}</span
                     >
                 {/if}
@@ -605,7 +605,7 @@
             onclick={resetScale}
             title="Reset equation font size (all equations)"
             aria-label="Reset equation font size"
-            class="cursor-pointer min-w-[2.25rem] px-1 text-[10px] font-sans font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] hover:text-brand-gold-600 dark:hover:text-[#e5c890] transition-colors"
+            class="cursor-pointer min-w-[2.25rem] px-1 text-[0.625rem] font-sans font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] hover:text-brand-gold-600 dark:hover:text-[#e5c890] transition-colors"
         >
             {Math.round(fontScale * 100)}%
         </button>

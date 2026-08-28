@@ -318,7 +318,7 @@
             </span>
         {:else}
             <span
-                class="inline-flex items-center gap-1 rounded-full px-1.5 py-1 text-[9px] font-semibold leading-none
+                class="inline-flex items-center gap-1 rounded-full px-1.5 py-1 text-[0.5625rem] font-semibold leading-none
                          bg-brand-sand-100/80 border border-brand-sand-200 backdrop-blur-sm
                          dark:bg-[#292c3c]/80 dark:border-[#414559] text-brand-gold-500 dark:text-[#e5c890]"
             >

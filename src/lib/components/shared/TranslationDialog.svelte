@@ -46,7 +46,7 @@
     const selectClass =
         "w-full appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#626880] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f]";
     const labelClass =
-        "mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
+        "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]";
     const adjustButtonClass =
         "cursor-pointer w-7 h-7 flex items-center justify-center rounded-full border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#363a4f] hover:bg-brand-sand-200 dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5] font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
 
@@ -375,7 +375,7 @@
                         class="shrink-0 text-brand-gold-500"
                     />
                     <span
-                        class="truncate py-2 text-[11px] font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
+                        class="truncate py-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
                     >
                         {$t("translation.dialog_title")}
                         {#if isMulti || surahName}
@@ -432,7 +432,7 @@
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-xs font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">{$t("dialog.display_options")}</p>
-                                    <p class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]">{$t("translation.reading_style")}</p>
+                                    <p class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]">{$t("translation.reading_style")}</p>
                                 </div>
                             </div>
 
@@ -467,7 +467,7 @@
                                     </select>
                                     <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300 dark:text-[#838ba7]"><Icon icon="charm:chevron-down" width="0.75rem" /></span>
                                 </div>
-                                <button onclick={() => { showOptions = false; openCustomFontDialog(); }} class="cursor-pointer mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#e5c890]/30 bg-brand-gold-100/80 dark:bg-[#414559] px-3 py-1.5 text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890] transition-all hover:bg-brand-gold-200 dark:hover:bg-[#51576d]">
+                                <button onclick={() => { showOptions = false; openCustomFontDialog(); }} class="cursor-pointer mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-gold-200 dark:border-[#e5c890]/30 bg-brand-gold-100/80 dark:bg-[#414559] px-3 py-1.5 text-[0.6875rem] font-semibold text-brand-gold-600 dark:text-[#e5c890] transition-all hover:bg-brand-gold-200 dark:hover:bg-[#51576d]">
                                     <Icon icon="solar:add-circle-linear" width="0.8rem" />
                                     {$t('settings.custom_fonts.add_custom')}
                                 </button>
@@ -494,21 +494,21 @@
                     {#if isMulti}
                         <div class="sticky top-0 z-[1] -mx-5 mb-1 px-5 py-2 bg-brand-gold-50 dark:bg-[#292c3c]/95 backdrop-blur border-y border-brand-gold-200 dark:border-[#414559] {sIdx > 0 ? 'mt-4' : '-mt-3'}">
                             <div class="flex items-center gap-2">
-                                <span class="inline-flex items-center justify-center h-6 px-2.5 rounded-full bg-brand-gold-200 dark:bg-[#414559] text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890]">{section.surah}</span>
-                                <span class="text-[12px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] truncate">{labelFor(section.surah)}</span>
-                                <span class="text-[11px] text-brand-charcoal-300 dark:text-[#838ba7]">· {section.entries.length}</span>
+                                <span class="inline-flex items-center justify-center h-6 px-2.5 rounded-full bg-brand-gold-200 dark:bg-[#414559] text-[0.6875rem] font-semibold text-brand-gold-600 dark:text-[#e5c890]">{section.surah}</span>
+                                <span class="text-[0.75rem] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5] truncate">{labelFor(section.surah)}</span>
+                                <span class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]">· {section.entries.length}</span>
                             </div>
                         </div>
                     {/if}
                     {#if section.entries.length === 0}
-                        <div class="py-3 text-[12px] text-brand-charcoal-300 dark:text-[#838ba7]">{$t("translation.empty")}</div>
+                        <div class="py-3 text-[0.75rem] text-brand-charcoal-300 dark:text-[#838ba7]">{$t("translation.empty")}</div>
                     {:else}
                         <div class="flex flex-col">
                             {#each section.entries as entry, i (entry.ayah)}
                                 {@const fnotes = parseFootnotes(entry)}
                                 <div class="py-3 {i > 0 ? 'border-t border-brand-sand-100 dark:border-[#414559]' : ''}">
                                     <div class="mb-1.5 flex items-center gap-2">
-                                        <span class="inline-flex items-center justify-center min-w-[1.75rem] h-6 px-2 rounded-full bg-brand-gold-100 dark:bg-[#414559] text-[11px] font-semibold text-brand-gold-600 dark:text-[#e5c890]">{entry.ayah}</span>
+                                        <span class="inline-flex items-center justify-center min-w-[1.75rem] h-6 px-2 rounded-full bg-brand-gold-100 dark:bg-[#414559] text-[0.6875rem] font-semibold text-brand-gold-600 dark:text-[#e5c890]">{entry.ayah}</span>
                                     </div>
                                     <div class="text-brand-charcoal-500 dark:text-[#b5bfe2]" dir={translationDir} style:font-family={translationFontStack} style:font-size={`${$translationFontSize}px`} style:line-height={$translationLineSpacing} style:text-align={translationDir === "ltr" ? "left" : "right"}>
                                         <p>{entry.text}</p>

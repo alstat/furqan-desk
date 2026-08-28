@@ -259,7 +259,7 @@
                 onclick={reset}
                 title="Reset font size"
                 aria-label="Reset font size"
-                class="cursor-pointer min-w-[2.25rem] px-1 text-[10px] font-sans font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] hover:text-brand-gold-600 dark:hover:text-[#e5c890] transition-colors"
+                class="cursor-pointer min-w-[2.25rem] px-1 text-[0.625rem] font-sans font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] hover:text-brand-gold-600 dark:hover:text-[#e5c890] transition-colors"
             >
                 {Math.round(fontScale * 100)}%
             </button>
@@ -306,7 +306,7 @@
                                     onclick={(e) => openAiPromptForAyah(e, v.surah, v.ayah, v.arabic)}
                                     title={$t("morphology.ai_ask_ayah", { ayah: String(v.ayah) })}
                                     aria-label={$t("morphology.ai_ask_ayah", { ayah: String(v.ayah) })}
-                                    class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
+                                    class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[0.625rem] leading-none whitespace-nowrap"
                                     ><Icon icon="ri:chat-smile-ai-fill" width="0.6rem" /></button
                                 >{/if}{#if $manuscriptsEnabled}<button
                                     type="button"
@@ -314,7 +314,7 @@
                                     onclick={(e) => viewManuscripts(e, v.surah, v.ayah)}
                                     title={$t("morphology.view_manuscripts", { ayah: String(v.ayah) })}
                                     aria-label={$t("morphology.view_manuscripts", { ayah: String(v.ayah) })}
-                                    class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
+                                    class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[0.625rem] leading-none whitespace-nowrap"
                                     ><Icon icon="streamline-plump:script-2-solid" width="0.6rem" /></button
                                 >{/if}<button
                                 type="button"
@@ -322,7 +322,7 @@
                                 onclick={(e) => playAyah(e, v.surah, v.ayah)}
                                 title={$t("morphology.play_ayah", { ayah: String(v.ayah) })}
                                 aria-label={$t("morphology.play_ayah", { ayah: String(v.ayah) })}
-                                class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
+                                class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[0.625rem] leading-none whitespace-nowrap"
                                 ><Icon icon="solar:play-bold" width="0.6rem" /></button
                             ><button
                                 type="button"
@@ -330,7 +330,7 @@
                                 onclick={(e) => viewInMorphology(e, v.surah, v.ayah)}
                                 title={$t("quran_block.view_in_quran", { ayah: String(v.ayah) })}
                                 aria-label={$t("quran_block.view_in_quran", { ayah: String(v.ayah) })}
-                                class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[10px] leading-none whitespace-nowrap"
+                                class="cursor-pointer flex items-center justify-center bg-white dark:bg-[#292c3c] border border-brand-gold-200/80 dark:border-[#414559] text-brand-gold-600 dark:text-[#e5c890] rounded-full p-1 shadow-md text-[0.625rem] leading-none whitespace-nowrap"
                                 ><Icon icon="ph:book-open-fill" width="0.6rem" /></button
                             ></span
                         ></span
@@ -368,7 +368,7 @@
             bind:this={aiPromptInput}
             bind:value={aiPromptText}
             placeholder={$t("morphology.ai_prompt_placeholder")}
-            class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
+            class="min-w-0 flex-1 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#1e2030] px-2 py-1.5 text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20"
             onkeydown={(e) => {
                 if (e.key === 'Enter') { e.preventDefault(); submitAiPrompt(); }
                 else if (e.key === 'Escape') { closeAiPrompt(); }

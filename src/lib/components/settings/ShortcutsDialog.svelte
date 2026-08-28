@@ -92,10 +92,10 @@
                                 <span class="flex items-center gap-1 shrink-0">
                                     {#each item.keys as key, i}
                                         {#if i > 0}
-                                            <span class="text-[10px] text-brand-charcoal-300 dark:text-[#626880]">+</span>
+                                            <span class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#626880]">+</span>
                                         {/if}
                                         <kbd
-                                            class="inline-flex items-center justify-center min-w-[1.5rem] px-1.5 py-0.5 rounded-md border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] text-[11px] font-mono font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5] shadow-sm"
+                                            class="inline-flex items-center justify-center min-w-[1.5rem] px-1.5 py-0.5 rounded-md border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50 dark:bg-[#292c3c] text-[0.6875rem] font-mono font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5] shadow-sm"
                                         >{key}</kbd>
                                     {/each}
                                 </span>

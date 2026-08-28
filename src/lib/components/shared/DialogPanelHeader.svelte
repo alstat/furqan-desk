@@ -76,7 +76,7 @@
             class="flex items-center gap-2"
         >
             <Icon {icon} width="1.1rem" class="text-brand-gold-500" />
-            <span class="text-[11px] font-semibold uppercase tracking-wide
+            <span class="text-[0.6875rem] font-semibold uppercase tracking-wide
                          text-brand-charcoal-500 dark:text-[#838ba7] py-2">
                 {title}
             </span>

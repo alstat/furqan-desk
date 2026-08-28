@@ -85,7 +85,7 @@
                         />
                     </span>
                     <span
-                        class="font-sans text-[11px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                        class="font-sans text-[0.6875rem] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                         >{$t("editor.reference_list.choose_style")}</span
                     >
                 </div>
@@ -116,7 +116,7 @@
                             : 'bg-brand-sand-100 dark:bg-[#1e2030] hover:bg-brand-gold-100 dark:hover:bg-[#292c3c]'}"
                     >
                         <span
-                            class="text-[11px] font-sans text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                            class="text-[0.6875rem] font-sans text-brand-charcoal-900 dark:text-[#c6d0f5]"
                             >{s.label}</span
                         >
                         {#if s.id === style}
@@ -144,12 +144,12 @@
             class="mb-2 flex items-center justify-between border-b border-brand-sand-200 pb-1 dark:border-[#414559]"
         >
             <span
-                class="text-[15px] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                class="text-[0.9375rem] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
             >
                 {$t("editor.reference_list.title")}
             </span>
             <span
-                class="flex items-center gap-1 text-[9px] uppercase tracking-wide text-brand-charcoal-300 dark:text-[#626880]"
+                class="flex items-center gap-1 text-[0.5625rem] uppercase tracking-wide text-brand-charcoal-300 dark:text-[#626880]"
             >
                 <Icon icon="fluent:text-quote-16-filled" width="0.7rem" />
                 {styleLabel}
@@ -158,7 +158,7 @@
 
         {#if entries.length === 0}
             <p
-                class="py-1 text-[12px] italic text-brand-charcoal-300 dark:text-[#626880]"
+                class="py-1 text-[0.75rem] italic text-brand-charcoal-300 dark:text-[#626880]"
             >
                 {$t("editor.reference_list.empty")}
             </p>
@@ -166,7 +166,7 @@
             <ol class="flex flex-col gap-1.5">
                 {#each entries as ref, i (ref.id)}
                     <li
-                        class="flex gap-2 text-[13px] leading-snug text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                        class="flex gap-2 text-[0.8125rem] leading-snug text-brand-charcoal-900 dark:text-[#c6d0f5]"
                     >
                         {#if numbered}
                             <span

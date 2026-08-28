@@ -122,7 +122,7 @@
             <!-- Rows -->
             <div class="flex flex-col gap-1.5">
                 <label
-                    class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                    class="text-[0.625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300"
                     >{$t('dialog.rows')}</label
                 >
                 <input
@@ -132,14 +132,14 @@
                     min="1"
                     max="500"
                     data-test-id="table-modal-rows"
-                    class="h-9 w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors dark:[color-scheme:dark]"
+                    class="h-9 w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors dark:[color-scheme:dark]"
                 />
             </div>
 
             <!-- Columns -->
             <div class="flex flex-col gap-1.5">
                 <label
-                    class="text-[10px] font-semibold uppercase tracking-widest text-brand-charcoal-300"
+                    class="text-[0.625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300"
                     >{$t('dialog.columns')}</label
                 >
                 <input
@@ -149,7 +149,7 @@
                     min="1"
                     max="50"
                     data-test-id="table-modal-columns"
-                    class="h-9 w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-[11px] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors dark:[color-scheme:dark]"
+                    class="h-9 w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-100 dark:bg-[#1e2030] px-3 py-2 text-[0.6875rem] text-brand-charcoal-900 dark:text-[#c6d0f5] placeholder-brand-charcoal-300 dark:placeholder-[#626880] focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-100 transition-colors dark:[color-scheme:dark]"
                 />
             </div>
 
@@ -158,7 +158,7 @@
                 disabled={isDisabled}
                 onclick={onConfirm}
                 data-test-id="table-model-confirm-insert"
-                class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1.5 text-[11px] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 bg-brand-gold-400 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
+                class="cursor-pointer flex items-center justify-center gap-1.5 rounded-full py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 bg-brand-gold-400 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 disabled:opacity-50 transition-colors"
             >
                 <Icon icon="tabler:table" width="0.8rem" />
                 {$t('dialog.insert_table')}
