@@ -566,12 +566,7 @@ export const uz: Record<string, string> = {
   "manuscript.select": "Ko'rish uchun qo'lyozma tanlang",
   "manuscript.downloading": "Yuklanmoqda…",
   "manuscript.download": "Yuklab olish",
-  "manuscript.inserting": "Qo'shilmoqda…",
-  "manuscript.insert": "Lexical ga qo'shish",
-  "manuscript.insert_tooltip": "Rasmni muharrirga qo'shish",
-  "manuscript.no_editor": "Avval Lexical hujjat yorlig'ini oching",
   // Morphology popover
-  "morphology.insert_to_lexical": "Morfologiyani Lexical muharrirga qo'shish",
   "morphology.buckwalter_help": "Buckwalter transliteratsiyasi haqida bilish",
   // Morphology — feature labels
   "morphology.feat.root":   "Ildiz",

@@ -569,12 +569,7 @@ export const ms: Record<string, string> = {
   "manuscript.select": "Pilih manuskrip untuk dilihat",
   "manuscript.downloading": "Memuat turun…",
   "manuscript.download": "Muat turun",
-  "manuscript.inserting": "Memasukkan…",
-  "manuscript.insert": "Masukkan ke Lexical",
-  "manuscript.insert_tooltip": "Masukkan imej ke editor",
-  "manuscript.no_editor": "Buka tab dokumen Lexical terlebih dahulu",
   // Morphology popover
-  "morphology.insert_to_lexical": "Masukkan morfologi ke editor Lexical",
   "morphology.buckwalter_help": "Ketahui tentang transliterasi Buckwalter",
   // Morphology — feature labels
   "morphology.feat.root":   "Akar kata",

@@ -573,12 +573,7 @@ export const de: Record<string, string> = {
   "manuscript.select": "Manuskript zum Anzeigen auswählen",
   "manuscript.downloading": "Wird heruntergeladen…",
   "manuscript.download": "Herunterladen",
-  "manuscript.inserting": "Wird eingefügt…",
-  "manuscript.insert": "In Editor einfügen",
-  "manuscript.insert_tooltip": "Bild in Editor einfügen",
-  "manuscript.no_editor": "Lexical-Dokument zuerst öffnen",
   // Morphology popover
-  "morphology.insert_to_lexical": "Morphologie in Lexical-Editor einfügen",
   "morphology.buckwalter_help": "Über die Buckwalter-Transliteration erfahren",
   // Morphology — feature labels
   "morphology.feat.root":   "Wurzel",

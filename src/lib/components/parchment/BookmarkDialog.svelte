@@ -22,12 +22,7 @@
     import { t, locale } from "$lib/i18n";
     import { get } from "svelte/store";
     import { invoke } from "@tauri-apps/api/core";
-    import { lexicalEditorInstance } from "$lib/stores/editor.store";
-    import {
-        $createParagraphNode as createParagraphNode,
-        $createTextNode as createTextNode,
-        $insertNodes as insertNodes,
-    } from "lexical";
+    import { copyToClipboard } from "$lib/utils/clipboard";
     import type { SurahMorphology } from "$lib/types/morphology";
     import { isPro } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
@@ -49,7 +44,10 @@
     let noteInput = $state("");
     let saving = $state(false);
     let saveError = $state("");
-    let insertingId = $state<number | null>(null);
+    // Id of the bookmark being copied (its ayah text is fetched first) and the
+    // one whose "copied" checkmark is currently showing.
+    let copyingId = $state<number | null>(null);
+    let copiedId = $state<number | null>(null);
     let textareaEl = $state<HTMLTextAreaElement | null>(null);
 
     // ── AI selection toolbar (pro users) ─────────────────────────────────────
@@ -154,10 +152,11 @@
         pendingJumpAyah.set(ayah);
     }
 
-    async function insertBookmarkToLexical(bm: (typeof $bookmarks)[0]) {
-        const editor = get(lexicalEditorInstance);
-        if (!editor) return;
-        insertingId = bm.id;
+    // Same shape the editor insert used to produce: the ayah's Arabic, then the
+    // reference line. The Arabic is not on the bookmark row, so it is resolved
+    // from the surah morphology first.
+    async function copyBookmark(bm: (typeof $bookmarks)[0]) {
+        copyingId = bm.id;
         try {
             const morph = await invoke<SurahMorphology>(
                 "get_surah_morphology",
@@ -167,15 +166,13 @@
             const arabicText =
                 ayahMorph?.words.map((w) => w.combined_arabic).join(" ") ?? "";
             const label = `${surahName(bm.surah)} · ${get(t)("bookmark.ayah")} ${bm.ayah}`;
-            editor.update(() => {
-                const arabicPara = createParagraphNode();
-                arabicPara.append(createTextNode(arabicText));
-                const attrPara = createParagraphNode();
-                attrPara.append(createTextNode(label));
-                insertNodes([arabicPara, attrPara]);
-            });
+            if (!(await copyToClipboard(`${arabicText}\n${label}`))) return;
+            copiedId = bm.id;
+            setTimeout(() => {
+                if (copiedId === bm.id) copiedId = null;
+            }, 1500);
         } finally {
-            insertingId = null;
+            copyingId = null;
         }
     }
 
@@ -461,26 +458,28 @@
                                         {$t("bookmark.go")}
                                     </button>
                                     <button
-                                        onclick={() =>
-                                            insertBookmarkToLexical(bm)}
-                                        disabled={insertingId === bm.id ||
-                                            !$lexicalEditorInstance}
-                                        title={!$lexicalEditorInstance
-                                            ? $t("manuscript.no_editor")
-                                            : $t("manuscript.insert_tooltip")}
+                                        onclick={() => copyBookmark(bm)}
+                                        disabled={copyingId === bm.id}
+                                        title={copiedId === bm.id
+                                            ? $t("verse_of_day.copied")
+                                            : $t("verse_of_day.copy_entry")}
                                         class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        {#if insertingId === bm.id}
+                                        {#if copyingId === bm.id}
                                             <span
                                                 class="w-3 h-3 rounded-full border border-gray-100 border-t-transparent animate-spin"
                                             ></span>
-                                            {$t("manuscript.inserting")}
+                                            {$t("verse_of_day.copy_entry")}
                                         {:else}
                                             <Icon
-                                                icon="solar:pen-new-square-bold"
+                                                icon={copiedId === bm.id
+                                                    ? "solar:check-circle-bold"
+                                                    : "solar:copy-bold-duotone"}
                                                 width="0.7rem"
                                             />
-                                            {$t("manuscript.insert")}
+                                            {copiedId === bm.id
+                                                ? $t("verse_of_day.copied")
+                                                : $t("verse_of_day.copy_entry")}
                                         {/if}
                                     </button>
                                     <button

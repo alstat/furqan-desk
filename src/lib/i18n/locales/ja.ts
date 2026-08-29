@@ -571,12 +571,7 @@ export const ja: Record<string, string> = {
   "manuscript.select": "表示する写本を選択してください",
   "manuscript.downloading": "ダウンロード中…",
   "manuscript.download": "ダウンロード",
-  "manuscript.inserting": "挿入中…",
-  "manuscript.insert": "エディタに挿入",
-  "manuscript.insert_tooltip": "エディタに画像を挿入",
-  "manuscript.no_editor": "先に Lexical ドキュメントを開いてください",
   // Morphology popover
-  "morphology.insert_to_lexical": "Lexicalエディタに形態論を挿入",
   "morphology.buckwalter_help": "バックウォルター転写について学ぶ",
   // Morphology — feature labels
   "morphology.feat.root":   "語根",

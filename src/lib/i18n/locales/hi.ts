@@ -570,12 +570,7 @@ export const hi: Record<string, string> = {
   "manuscript.select": "देखने के लिए एक पांडुलिपि चुनें",
   "manuscript.downloading": "डाउनलोड हो रहा है…",
   "manuscript.download": "डाउनलोड",
-  "manuscript.inserting": "सम्मिलित किया जा रहा है…",
-  "manuscript.insert": "Lexical में सम्मिलित करें",
-  "manuscript.insert_tooltip": "एडिटर में छवि सम्मिलित करें",
-  "manuscript.no_editor": "पहले एक Lexical दस्तावेज़ टैब खोलें",
   // Morphology popover
-  "morphology.insert_to_lexical": "Lexical एडिटर में रूपविज्ञान सम्मिलित करें",
   "morphology.buckwalter_help": "बकवाल्टर लिप्यंतरण के बारे में जानें",
   // Morphology — feature labels
   "morphology.feat.root":   "धातु",

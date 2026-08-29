@@ -566,12 +566,7 @@ export const ky: Record<string, string> = {
   "manuscript.select": "Көрүү үчүн кол жазма тандаңыз",
   "manuscript.downloading": "Жүктөлүүдө…",
   "manuscript.download": "Жүктөп алуу",
-  "manuscript.inserting": "Кошулууда…",
-  "manuscript.insert": "Lexical га кошуу",
-  "manuscript.insert_tooltip": "Сүрөттү редакторго кошуу",
-  "manuscript.no_editor": "Алгач Lexical документ өтмөгүн ачыңыз",
   // Morphology popover
-  "morphology.insert_to_lexical": "Морфологияны Lexical редакторуна кошуу",
   "morphology.buckwalter_help": "Buckwalter транслитерациясы жөнүндө билүү",
   // Morphology — feature labels
   "morphology.feat.root":   "Тамыр",
