@@ -275,10 +275,11 @@
         <div class="flex gap-1 mb-3">
             {#each steps as _, i}
                 <span
-                    class="h-1.5 rounded-full transition-all duration-200 {i ===
-                    currentStep
-                        ? 'w-4 bg-brand-gold-400'
-                        : 'w-1.5 bg-slate-200 dark:bg-[#414559]'}"
+                    class="essential-progress-determinate h-1.5 rounded-full transition-all duration-200 {i ===
+                     currentStep
+                         ? 'w-4 bg-brand-gold-400'
+                         : 'w-1.5 bg-slate-200 dark:bg-[#414559]'}"
+                    style="--progress-motion-duration: 200ms"
                 ></span>
             {/each}
         </div>

@@ -685,7 +685,7 @@ end
 
 <div
     bind:this={wrapperEl}
-    class="julia-cell my-0.5 flex flex-col overflow-hidden rounded-md {plotUnboxed
+    class="animation-exempt-all julia-cell my-0.5 flex flex-col overflow-hidden rounded-md {plotUnboxed
         ? ''
         : 'border border-brand-sand-200 dark:border-[#363a4f]'}"
     class:julia-cell-selected={$isSelected}
@@ -705,7 +705,10 @@ end
             {#if running}
                 <!-- Moving-gradient bar that overlays the header's bottom border
                      while the cell is executing. -->
-                <div class="julia-cell-runbar" aria-hidden="true"></div>
+                <div
+                    class="essential-progress-indeterminate julia-cell-runbar"
+                    aria-hidden="true"
+                ></div>
             {/if}
             <span class="flex items-center gap-1.5 select-none">
                 <span
@@ -1132,7 +1135,7 @@ end
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         transition:fade={{ duration: 150 }}
-        class="julia-kernel-info-backdrop fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+        class="animation-exempt-all julia-kernel-info-backdrop fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
         onclick={onKernelInfoBackdropClick}
         onkeydown={onKernelInfoKeydown}
         role="dialog"
@@ -1280,6 +1283,7 @@ end
        bottom border. Uses brand gold tones in light mode and a softened pastel
        palette in dark mode so it reads as activity, not an error. */
     .julia-cell-runbar {
+        --progress-motion-duration: 1.4s;
         position: absolute;
         left: 0;
         right: 0;

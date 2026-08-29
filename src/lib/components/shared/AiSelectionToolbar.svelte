@@ -251,7 +251,7 @@
     bind:this={toolbarEl}
     data-ai-selection-toolbar
     role="presentation"
-    class="fixed z-9999 flex max-w-[calc(100vw-1rem)] flex-col items-center gap-2 font-sans"
+    class="essential-ai-selection-toolbar fixed z-9999 flex max-w-[calc(100vw-1rem)] flex-col items-center gap-2 font-sans"
     style="left:{toolbarPosition.left}px; top:{toolbarPosition.top}px; transform: translateX(-50%); visibility:{positionReady ? 'visible' : 'hidden'};"
     onpointerdown={handlePointerDown}
 >

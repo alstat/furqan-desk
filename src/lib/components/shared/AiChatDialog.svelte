@@ -608,7 +608,7 @@
                                                 >
                                                     <Icon
                                                         icon="solar:refresh-circle-bold-duotone"
-                                                        class="animate-spin"
+                                                        class="essential-status-spinner animate-spin"
                                                         width="0.85rem"
                                                     />
                                                     {$t("ai_chat.thinking")}
@@ -765,7 +765,7 @@
             >
                 <Icon
                     icon="solar:refresh-circle-bold-duotone"
-                    class="animate-spin text-brand-gold-500"
+                    class="essential-status-spinner animate-spin text-brand-gold-500"
                     width="1.5rem"
                 />
             </div>
