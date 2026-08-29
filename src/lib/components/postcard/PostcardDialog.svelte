@@ -47,6 +47,10 @@
     } from "./render";
     import {
         PATTERNS,
+        PATTERN_GROUPS,
+        FRAME_STYLES,
+        swatchWeight,
+        framePreviewUrl,
         GRADIENTS,
         GRADIENT_DIRECTIONS,
         BLEND_MODES,
@@ -55,6 +59,7 @@
         patternPreviewUrl,
         type GradientDirection,
         type BlendMode,
+        type FrameStyle,
     } from "./patterns";
 
     interface Props {
@@ -151,7 +156,7 @@
     let refColor = $state("#e5cc90");
 
     let padPct = $state(9);
-    let borderOn = $state(true);
+    let frameStyle = $state<FrameStyle>("hairline");
 
     // ── Background ───────────────────────────────────────────────────────────
     let bgMode = $state<"plain" | "manuscript" | "pattern" | "combo">(
@@ -417,7 +422,10 @@
             refSize,
             refColor,
             padPct,
-            borderOn,
+            frameStyle,
+            // Written for builds that predate the frame styles: they only know
+            // the on/off flag.
+            borderOn: frameStyle !== "none",
             bgMode,
             baseColor,
             patternId,
@@ -475,10 +483,12 @@
         refSize = d.refSize ?? refSize;
         refColor = d.refColor ?? refColor;
         padPct = d.padPct ?? padPct;
-        borderOn = d.borderOn ?? borderOn;
+        // Designs saved before the frame styles carry only the flag.
+        frameStyle = d.frameStyle ?? (d.borderOn === false ? "none" : "hairline");
         bgMode = d.bgMode ?? bgMode;
         baseColor = d.baseColor ?? baseColor;
-        patternId = d.patternId ?? patternId;
+        if (d.patternId && PATTERNS.some((p) => p.id === d.patternId))
+            patternId = d.patternId;
         patternColor = d.patternColor ?? patternColor;
         patternOpacity = d.patternOpacity ?? patternOpacity;
         patternScale = d.patternScale ?? patternScale;
@@ -850,7 +860,7 @@
                 opacity: shadowOpacity,
             },
             padPct,
-            borderOn,
+            frameStyle,
             signatureText: "ayahlab.com",
             signatureIcon: markImage,
             creditText: usingManuscript
@@ -908,7 +918,7 @@
             refColor,
             refLang,
             padPct,
-            borderOn,
+            frameStyle,
             markImage,
             bgMode,
             baseColor,
@@ -1768,31 +1778,68 @@
                                     <span class={sectionLabelClass + " mb-1.5"}
                                         >{$t("postcard.pattern")}</span
                                     >
-                                    <div class="grid grid-cols-3 gap-1.5">
-                                        {#each PATTERNS as p}
-                                            <button
-                                                onclick={() => (patternId = p.id)}
-                                                title={$t(
-                                                    `postcard.pattern_${p.id}`,
-                                                )}
-                                                class="cursor-pointer overflow-hidden rounded-lg border transition-colors {patternId ===
-                                                p.id
-                                                    ? 'border-brand-gold-400 ring-2 ring-brand-gold-200 dark:ring-[#e5c890]/30'
-                                                    : 'border-brand-sand-200 dark:border-[#414559] hover:border-brand-gold-300'}"
-                                                aria-label={$t(
-                                                    `postcard.pattern_${p.id}`,
-                                                )}
-                                            >
+                                    <!-- Twenty-one tiles is too many for one
+                                         flat grid to scan, so they are shelved
+                                         by family — stars, tessellations,
+                                         screens, vegetal, textures — and each
+                                         swatch carries its name under it. -->
+                                    <div class="flex flex-col gap-2.5">
+                                        {#each PATTERN_GROUPS as group}
+                                            {@const inGroup = PATTERNS.filter(
+                                                (p) => p.group === group,
+                                            )}
+                                            <div>
                                                 <span
-                                                    class="block h-12 w-full"
-                                                    style="background-color:{baseColor}; background-image:url('{patternPreviewUrl(
-                                                        p,
-                                                        patternColor,
-                                                        p.filled ? 1 : 3,
-                                                        0.42,
-                                                    )}'); background-repeat:repeat;"
-                                                ></span>
-                                            </button>
+                                                    class="mb-1 block text-[0.5625rem] font-semibold uppercase tracking-[0.12em] text-brand-charcoal-300 dark:text-[#838ba7]"
+                                                    >{$t(
+                                                        `postcard.pattern_group_${group}`,
+                                                    )}</span
+                                                >
+                                                <div
+                                                    class="grid grid-cols-3 gap-1.5"
+                                                >
+                                                    {#each inGroup as p}
+                                                        <button
+                                                            onclick={() =>
+                                                                (patternId =
+                                                                    p.id)}
+                                                            title={$t(
+                                                                `postcard.pattern_${p.id}`,
+                                                            )}
+                                                            class="cursor-pointer overflow-hidden rounded-lg border text-left transition-colors {patternId ===
+                                                            p.id
+                                                                ? 'border-brand-gold-400 ring-2 ring-brand-gold-200 dark:ring-[#e5c890]/30'
+                                                                : 'border-brand-sand-200 dark:border-[#414559] hover:border-brand-gold-300'}"
+                                                            aria-label={$t(
+                                                                `postcard.pattern_${p.id}`,
+                                                            )}
+                                                            aria-pressed={patternId ===
+                                                                p.id}
+                                                        >
+                                                            <span
+                                                                class="block h-11 w-full"
+                                                                style="background-color:{baseColor}; background-image:url('{patternPreviewUrl(
+                                                                    p,
+                                                                    patternColor,
+                                                                    swatchWeight(
+                                                                        p,
+                                                                    ),
+                                                                    0.42,
+                                                                )}'); background-repeat:repeat;"
+                                                            ></span>
+                                                            <span
+                                                                class="block truncate px-1 py-[0.1875rem] text-[0.5625rem] font-medium leading-tight {patternId ===
+                                                                p.id
+                                                                    ? 'bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-600 dark:text-[#e5c890]'
+                                                                    : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
+                                                                >{$t(
+                                                                    `postcard.pattern_${p.id}`,
+                                                                )}</span
+                                                            >
+                                                        </button>
+                                                    {/each}
+                                                </div>
+                                            </div>
                                         {/each}
                                     </div>
                                 </div>
@@ -2171,11 +2218,53 @@
                                 autoFit,
                                 () => (autoFit = !autoFit),
                             )}
-                            {@render toggleRow(
-                                $t("postcard.border"),
-                                borderOn,
-                                () => (borderOn = !borderOn),
-                            )}
+                            <div>
+                                <span class={labelClass}
+                                    >{$t("postcard.border")}</span
+                                >
+                                <!-- Drawn by the renderer itself, over the
+                                     card's own base colour, so a swatch is the
+                                     frame the card will actually get. -->
+                                <div class="grid grid-cols-4 gap-1.5">
+                                    {#each FRAME_STYLES as style}
+                                        <button
+                                            onclick={() => (frameStyle = style)}
+                                            title={$t(
+                                                `postcard.frame_${style}`,
+                                            )}
+                                            aria-label={$t(
+                                                `postcard.frame_${style}`,
+                                            )}
+                                            aria-pressed={frameStyle === style}
+                                            class="cursor-pointer overflow-hidden rounded-lg border transition-colors {frameStyle ===
+                                            style
+                                                ? 'border-brand-gold-400 ring-2 ring-brand-gold-200 dark:ring-[#e5c890]/30'
+                                                : 'border-brand-sand-200 dark:border-[#414559] hover:border-brand-gold-300'}"
+                                        >
+                                            <img
+                                                class="block h-11 w-full"
+                                                alt=""
+                                                src={framePreviewUrl(
+                                                    style,
+                                                    64,
+                                                    44,
+                                                    arabicColor,
+                                                    baseColor,
+                                                )}
+                                            />
+                                            <span
+                                                class="block truncate px-1 py-[0.1875rem] text-[0.5625rem] font-medium leading-tight {frameStyle ===
+                                                style
+                                                    ? 'bg-brand-gold-100 dark:bg-[#414559] text-brand-gold-600 dark:text-[#e5c890]'
+                                                    : 'text-brand-charcoal-300 dark:text-[#838ba7]'}"
+                                                >{$t(
+                                                    `postcard.frame_${style}`,
+                                                )}</span
+                                            >
+                                        </button>
+                                    {/each}
+                                </div>
+                            </div>
                             <p
                                 class="text-[0.625rem] leading-relaxed text-brand-charcoal-300 dark:text-[#838ba7]"
                             >
