@@ -96,6 +96,13 @@ export const ms: Record<string, string> = {
   "settings.appearance": "Penampilan",
   "settings.appearance.glass": "Kesan kaca popover morfologi",
   "settings.appearance.glass.desc": "Nyahaktifkan untuk meningkatkan prestasi",
+  "settings.appearance.animations": "Animasi",
+  "settings.appearance.animations.desc": "Matikan pada komputer perlahan — panel dan dialog muncul serta-merta.",
+  "animation_prompt.title": "Animasi",
+  "animation_prompt.body": "AyahLab memaparkan panel dengan kesan pudar dan luncur. Pada mesin lama, tenaga itu lebih baik digunakan di tempat lain — apabila dimatikan, semuanya terus muncul.",
+  "animation_prompt.keep": "Kekalkan animasi",
+  "animation_prompt.disable": "Matikan",
+  "animation_prompt.note": "Anda boleh mengubahnya bila-bila masa di Tetapan → Penampilan.",
   "settings.appearance.typst_preview_dark": "Mod gelap pratonton Typst",
 
   "settings.appearance.typst_preview_dark.desc": "Apabila mod gelap aplikasi dihidupkan, halaman pratonton Typst juga digelapkan.",

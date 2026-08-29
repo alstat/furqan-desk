@@ -97,6 +97,13 @@ export const es: Record<string, string> = {
   "settings.appearance.glass":
     "Efecto cristal en la ventana emergente de morfología",
   "settings.appearance.glass.desc": "Desactivar para mejorar el rendimiento",
+  "settings.appearance.animations": "Animaciones",
+  "settings.appearance.animations.desc": "Desactívalas en equipos lentos: los paneles y diálogos aparecen de golpe en lugar de desvanecerse.",
+  "animation_prompt.title": "Animaciones",
+  "animation_prompt.body": "AyahLab muestra los paneles con desvanecidos y deslizamientos. En un equipo antiguo ese trabajo se aprovecha mejor en otra cosa: sin animaciones, todo aparece directamente.",
+  "animation_prompt.keep": "Mantener animaciones",
+  "animation_prompt.disable": "Desactivarlas",
+  "animation_prompt.note": "Puedes cambiarlo cuando quieras en Ajustes → Apariencia.",
   "settings.appearance.typst_preview_dark": "Modo oscuro de la vista previa de Typst",
 
   "settings.appearance.typst_preview_dark.desc": "Cuando el modo oscuro está activo, también se oscurecen las páginas de vista previa de Typst.",

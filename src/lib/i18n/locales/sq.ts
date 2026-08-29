@@ -95,6 +95,13 @@ export const sq: Record<string, string> = {
   "settings.appearance": "Pamja",
   "settings.appearance.glass": "Efekti i qelqit të popoverit të morfologjisë",
   "settings.appearance.glass.desc": "Çaktivizoni për të përmirësuar performancën",
+  "settings.appearance.animations": "Animacionet",
+  "settings.appearance.animations.desc": "Fikini në një kompjuter të ngadaltë — panelet dhe dialogët shfaqen menjëherë.",
+  "animation_prompt.title": "Animacionet",
+  "animation_prompt.body": "AyahLab i shfaq panelet me zbehje dhe rrëshqitje. Në një makinë të vjetër ajo punë kursehet më mirë — me animacionet të fikura, gjithçka shfaqet menjëherë.",
+  "animation_prompt.keep": "Mbaj animacionet",
+  "animation_prompt.disable": "Fiki",
+  "animation_prompt.note": "Mund ta ndryshoni në çdo kohë te Cilësimet → Pamja.",
   "settings.appearance.typst_preview_dark": "Modaliteti i errët i pamjes paraprake Typst",
 
   "settings.appearance.typst_preview_dark.desc": "Kur modaliteti i errët i aplikacionit është aktiv, faqet e pamjes paraprake Typst gjithashtu errësohen.",

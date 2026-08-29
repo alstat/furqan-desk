@@ -96,6 +96,13 @@ export const kk: Record<string, string> = {
   "settings.appearance": "Сыртқы көрініс",
   "settings.appearance.glass": "Морфология попап шыны эффектісі",
   "settings.appearance.glass.desc": "Өнімділікті арттыру үшін өшіру",
+  "settings.appearance.animations": "Анимациялар",
+  "settings.appearance.animations.desc": "Баяу компьютерде өшіріңіз — панельдер мен терезелер бірден шығады.",
+  "animation_prompt.title": "Анимациялар",
+  "animation_prompt.body": "AyahLab панельдерді біртіндеп және сырғытып көрсетеді. Ескі құрылғыда бұл жұмысты үнемдеген жөн — өшірулі кезде бәрі бірден шығады.",
+  "animation_prompt.keep": "Анимацияларды қалдыру",
+  "animation_prompt.disable": "Өшіру",
+  "animation_prompt.note": "Мұны Параметрлер → Сыртқы көрініс бөлімінен кез келген уақытта өзгертуге болады.",
   "settings.appearance.typst_preview_dark": "Typst алдын ала қарау қараңғы режимі",
 
   "settings.appearance.typst_preview_dark.desc": "Қолданбаның қараңғы режимі қосулы кезде Typst алдын ала қарау беттері де қараңғыланады.",

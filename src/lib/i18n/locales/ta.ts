@@ -95,6 +95,13 @@ export const ta: Record<string, string> = {
   "settings.appearance": "தோற்றம்",
   "settings.appearance.glass": "உருவியல் பாப்ஓவர் கண்ணாடி விளைவு",
   "settings.appearance.glass.desc": "செயல்திறனை மேம்படுத்த முடக்கவும்",
+  "settings.appearance.animations": "அசைவூட்டங்கள்",
+  "settings.appearance.animations.desc": "மெதுவான கணினியில் அணைக்கவும் — பலகைகளும் உரையாடல்களும் உடனே தோன்றும்.",
+  "animation_prompt.title": "அசைவூட்டங்கள்",
+  "animation_prompt.body": "AyahLab பலகைகளை மங்கலாகவும் நகர்த்தியும் காட்டுகிறது. பழைய கணினியில் அந்த வேலையைச் சேமிப்பதே நல்லது — அணைத்தால் அனைத்தும் உடனே தோன்றும்.",
+  "animation_prompt.keep": "அசைவூட்டங்களை வைத்திரு",
+  "animation_prompt.disable": "அணைக்கவும்",
+  "animation_prompt.note": "அமைப்புகள் → தோற்றம் என்பதில் எப்போது வேண்டுமானாலும் மாற்றலாம்.",
   "settings.appearance.typst_preview_dark": "Typst முன்னோட்ட இருண்ட பயன்முறை",
 
   "settings.appearance.typst_preview_dark.desc": "பயன்பாட்டின் இருண்ட பயன்முறை இயக்கத்தில் இருக்கும்போது Typst முன்னோட்டப் பக்கங்களும் இருளாக்கப்படும்.",

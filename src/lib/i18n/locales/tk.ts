@@ -96,6 +96,13 @@ export const tk: Record<string, string> = {
   "settings.appearance": "Görnüş",
   "settings.appearance.glass": "Morfologiýa popover aýna täsiri",
   "settings.appearance.glass.desc": "Öndürijiligi gowulaşdyrmak üçin öçürmek",
+  "settings.appearance.animations": "Animasiýalar",
+  "settings.appearance.animations.desc": "Haýal kompýuterde öçüriň — panellar we penjireler şobada görünýär.",
+  "animation_prompt.title": "Animasiýalar",
+  "animation_prompt.body": "AyahLab panelleri kem-kemden we süýşürip görkezýär. Köne enjamda bu işi tygşytlamak gowudyr — öçürilende hemme zat şobada görünýär.",
+  "animation_prompt.keep": "Animasiýalary galdyr",
+  "animation_prompt.disable": "Öçür",
+  "animation_prompt.note": "Muny islendik wagt Sazlamalar → Görnüş bölüminde üýtgedip bilersiňiz.",
   "settings.appearance.typst_preview_dark": "Typst öňünden seretmegiň garaňky režimi",
 
   "settings.appearance.typst_preview_dark.desc": "Programmanyň garaňky režimi açyk bolanda, Typst öňünden seretmek sahypalary hem garaňkylaşdyrylýar.",

@@ -96,6 +96,13 @@ export const pt: Record<string, string> = {
   "settings.appearance": "Aparência",
   "settings.appearance.glass": "Efeito de vidro no popover de morfologia",
   "settings.appearance.glass.desc": "Desative para melhorar o desempenho",
+  "settings.appearance.animations": "Animações",
+  "settings.appearance.animations.desc": "Desative em máquinas lentas — painéis e caixas de diálogo aparecem de uma vez.",
+  "animation_prompt.title": "Animações",
+  "animation_prompt.body": "O AyahLab exibe os painéis com esmaecimento e deslize. Numa máquina mais antiga esse trabalho rende mais em outro lugar — sem animações, tudo aparece de imediato.",
+  "animation_prompt.keep": "Manter animações",
+  "animation_prompt.disable": "Desativar",
+  "animation_prompt.note": "Você pode mudar isso quando quiser em Configurações → Aparência.",
   "settings.appearance.typst_preview_dark": "Modo escuro da pré-visualização do Typst",
 
   "settings.appearance.typst_preview_dark.desc": "Quando o modo escuro do app estiver ativo, as páginas de pré-visualização do Typst também ficam escuras.",

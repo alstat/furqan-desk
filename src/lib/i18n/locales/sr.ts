@@ -95,6 +95,13 @@ export const sr: Record<string, string> = {
   "settings.appearance": "Изглед",
   "settings.appearance.glass": "Стаклени ефекат искачућег прозора морфологије",
   "settings.appearance.glass.desc": "Онемогућите за побољшање перформанси",
+  "settings.appearance.animations": "Анимације",
+  "settings.appearance.animations.desc": "Искључите на споријем рачунару — панели и дијалози појављују се одмах.",
+  "animation_prompt.title": "Анимације",
+  "animation_prompt.body": "AyahLab приказује панеле уз постепено појављивање и клизање. На старијем рачунару тај посао боље је уштедети — без анимација све се појави одмах.",
+  "animation_prompt.keep": "Задржи анимације",
+  "animation_prompt.disable": "Искључи их",
+  "animation_prompt.note": "Ово можете променити било када у Подешавања → Изглед.",
   "settings.appearance.typst_preview_dark": "Тамни режим за Typst преглед",
 
   "settings.appearance.typst_preview_dark.desc": "Када је тамни режим апликације укључен, и стране Typst прегледа постају тамне.",

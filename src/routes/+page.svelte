@@ -13,6 +13,7 @@
     import EditorToolbar from "$lib/components/widgets/editor/EditorToolbar.svelte";
     import Sidebar from "$lib/components/sidebar/Sidebar.svelte";
     import TourOverlay from "$lib/components/tour/TourOverlay.svelte";
+    import AnimationChoiceDialog from "$lib/components/tour/AnimationChoiceDialog.svelte";
     import SplashScreen from "$lib/components/shared/SplashScreen.svelte";
     import UpdateToast from "$lib/components/shared/UpdateToast.svelte";
     import NewBlogToast from "$lib/components/shared/NewBlogToast.svelte";
@@ -474,6 +475,7 @@
 <SurahWidget />
 <EditorToolbar onOpenSettings={() => (showSettings = true)} />
 <TourOverlay />
+<AnimationChoiceDialog />
 <QuickOpen />
 <SettingsDialog
     open={showSettings}

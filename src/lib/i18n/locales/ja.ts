@@ -96,6 +96,13 @@ export const ja: Record<string, string> = {
   "settings.appearance": "外観",
   "settings.appearance.glass": "形態論ポップオーバーのグラス効果",
   "settings.appearance.glass.desc": "無効にすると性能が向上します",
+  "settings.appearance.animations": "アニメーション",
+  "settings.appearance.animations.desc": "動作の重い環境ではオフに——パネルやダイアログがフェードなしで即座に表示されます。",
+  "animation_prompt.title": "アニメーション",
+  "animation_prompt.body": "AyahLab はパネルをフェードやスライドで表示します。古い環境ではその処理を省いたほうがよく、オフにするとすべてが即座に表示されます。",
+  "animation_prompt.keep": "アニメーションを残す",
+  "animation_prompt.disable": "オフにする",
+  "animation_prompt.note": "設定 → 外観 でいつでも変更できます。",
   "settings.appearance.typst_preview_dark": "Typstプレビューのダークモード",
 
   "settings.appearance.typst_preview_dark.desc": "アプリのダークモードがオンのとき、Typstプレビューのページも暗くします。",

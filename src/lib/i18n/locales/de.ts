@@ -96,6 +96,13 @@ export const de: Record<string, string> = {
   "settings.appearance": "Erscheinungsbild",
   "settings.appearance.glass": "Glaseffekt für Morphologie-Popover",
   "settings.appearance.glass.desc": "Deaktivieren für bessere Leistung",
+  "settings.appearance.animations": "Animationen",
+  "settings.appearance.animations.desc": "Auf langsameren Rechnern ausschalten — Bereiche und Dialoge erscheinen sofort statt einzublenden.",
+  "animation_prompt.title": "Animationen",
+  "animation_prompt.body": "AyahLab blendet Bereiche ein und schiebt sie herein. Auf einem älteren Rechner ist diese Rechenzeit anderswo besser aufgehoben — ohne Animationen erscheint alles direkt.",
+  "animation_prompt.keep": "Animationen behalten",
+  "animation_prompt.disable": "Ausschalten",
+  "animation_prompt.note": "Sie können das jederzeit unter Einstellungen → Erscheinungsbild ändern.",
   "settings.appearance.typst_preview_dark": "Typst-Vorschau Dunkelmodus",
 
   "settings.appearance.typst_preview_dark.desc": "Wenn der App-Dunkelmodus aktiv ist, werden auch die Typst-Vorschauseiten abgedunkelt.",

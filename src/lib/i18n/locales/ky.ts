@@ -96,6 +96,13 @@ export const ky: Record<string, string> = {
   "settings.appearance": "Көрүнүш",
   "settings.appearance.glass": "Морфология попап айнек эффекти",
   "settings.appearance.glass.desc": "Иштешти жакшыртуу үчүн өчүрүү",
+  "settings.appearance.animations": "Анимациялар",
+  "settings.appearance.animations.desc": "Жай компьютерде өчүрүңүз — панелдер жана терезелер дароо чыгат.",
+  "animation_prompt.title": "Анимациялар",
+  "animation_prompt.body": "AyahLab панелдерди акырындык менен жана жылдырып көрсөтөт. Эски компьютерде бул жумушту үнөмдөгөн жакшы — өчүк болсо, баары дароо чыгат.",
+  "animation_prompt.keep": "Анимацияларды калтыруу",
+  "animation_prompt.disable": "Өчүрүү",
+  "animation_prompt.note": "Муну каалаган убакта Орнотуулар → Көрүнүш бөлүмүнөн өзгөртө аласыз.",
   "settings.appearance.typst_preview_dark": "Typst алдын ала көрүүнүн караңгы режими",
 
   "settings.appearance.typst_preview_dark.desc": "Колдонмонун караңгы режими күйүк болгондо Typst алдын ала көрүү барактары да караңгылайт.",

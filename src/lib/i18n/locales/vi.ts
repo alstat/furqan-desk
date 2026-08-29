@@ -96,6 +96,13 @@ export const vi: Record<string, string> = {
   "settings.appearance": "Giao diện",
   "settings.appearance.glass": "Hiệu ứng kính popover hình thái học",
   "settings.appearance.glass.desc": "Tắt để cải thiện hiệu suất",
+  "settings.appearance.animations": "Hiệu ứng chuyển động",
+  "settings.appearance.animations.desc": "Tắt trên máy chậm — bảng và hộp thoại hiện ra ngay lập tức.",
+  "animation_prompt.title": "Hiệu ứng chuyển động",
+  "animation_prompt.body": "AyahLab mở các bảng bằng hiệu ứng mờ dần và trượt. Trên máy cũ, nên dành sức xử lý cho việc khác — khi tắt, mọi thứ hiện ra ngay.",
+  "animation_prompt.keep": "Giữ hiệu ứng",
+  "animation_prompt.disable": "Tắt đi",
+  "animation_prompt.note": "Bạn có thể đổi bất cứ lúc nào trong Cài đặt → Giao diện.",
   "settings.appearance.typst_preview_dark": "Chế độ tối cho xem trước Typst",
 
   "settings.appearance.typst_preview_dark.desc": "Khi chế độ tối của ứng dụng đang bật, các trang xem trước Typst cũng được làm tối.",
