@@ -323,7 +323,7 @@
                             class="h-2 w-full overflow-hidden rounded-full bg-brand-sand-200 dark:bg-[#414559]"
                         >
                             <div
-                                class="h-full rounded-full bg-brand-gold-400 dark:bg-[#e5c890] transition-all duration-300"
+                                class="essential-progress-determinate h-full rounded-full bg-brand-gold-400 dark:bg-[#e5c890] transition-all duration-300"
                                 style="width: {progressPct}%"
                             ></div>
                         </div>

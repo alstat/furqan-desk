@@ -11,7 +11,7 @@
 </script>
 
 <div
-    class="flex gap-1.5 {className}"
+    class="essential-loading-dots flex gap-1.5 {className}"
     role="status"
     aria-live="polite"
     aria-label="Loading"
@@ -36,13 +36,16 @@
        already-running animation. One self-contained rule per dot can't go
        wrong that way. */
     .dot-1 {
-        animation: bounce 1.2s ease-in-out 0s infinite;
+        --loading-dot-delay: 0s;
+        animation: bounce 1.2s ease-in-out var(--loading-dot-delay) infinite;
     }
     .dot-2 {
-        animation: bounce 1.2s ease-in-out 0.15s infinite;
+        --loading-dot-delay: 0.15s;
+        animation: bounce 1.2s ease-in-out var(--loading-dot-delay) infinite;
     }
     .dot-3 {
-        animation: bounce 1.2s ease-in-out 0.3s infinite;
+        --loading-dot-delay: 0.3s;
+        animation: bounce 1.2s ease-in-out var(--loading-dot-delay) infinite;
     }
     @keyframes bounce {
         0%,

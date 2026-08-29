@@ -82,6 +82,8 @@ export function markAnimationChoiceMade(): void {
  * spec's notification timing; at 1ms the animation is plainly still running
  * when the handler lands, so the ordinary finish path runs. One frame is not
  * a perceptible animation, and the element still ends on its final keyframe.
+ * Components marked `.animation-exempt-all` keep their native timing unless
+ * the operating system requests reduced motion.
  */
 function installZeroDurationAnimations() {
     if (typeof Element === "undefined") return;
@@ -97,7 +99,13 @@ function installZeroDurationAnimations() {
         keyframes: Keyframe[] | PropertyIndexedKeyframes | null,
         options?: number | KeyframeAnimationOptions,
     ): Animation {
-        if (enabled) return native.call(this, keyframes, options);
+        const fullyExempt = this.closest(".animation-exempt-all") !== null;
+        const reducedMotion = window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+        ).matches;
+        if (enabled || (fullyExempt && !reducedMotion)) {
+            return native.call(this, keyframes, options);
+        }
         const opts: KeyframeAnimationOptions =
             typeof options === "number" ? {} : { ...(options ?? {}) };
         opts.duration = 1;

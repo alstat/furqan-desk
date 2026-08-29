@@ -501,7 +501,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                     class={actionBtn}
                 >
                     {#if $juliaInstallState === 'checking'}
-                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin" />
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="essential-status-spinner animate-spin" />
                         {$t('settings.julia.checking')}
                     {:else}
                         <Icon icon="solar:refresh-bold-duotone" width="0.85rem" />
@@ -513,7 +513,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             {#if $juliaInstallState === 'updating'}
                 <div class="mt-2 mb-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/70 dark:bg-[#292c3c] px-3 py-2.5">
                     <div class="flex items-center gap-2 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5]">
-                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin shrink-0 text-brand-gold-500 dark:text-[#e5c890]" />
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="essential-status-spinner animate-spin shrink-0 text-brand-gold-500 dark:text-[#e5c890]" />
                         <span class="truncate">{$juliaInstallMessage || $t('settings.julia.updating')}</span>
                     </div>
                     <IndeterminateProgress class="mt-2" ariaLabel={$t('settings.julia.updating')} />
@@ -599,7 +599,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                     class={actionBtn}
                 >
                     {#if $leanInstallState === 'checking'}
-                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin" />
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="essential-status-spinner animate-spin" />
                         {$t('settings.lean.checking')}
                     {:else}
                         <Icon icon="solar:refresh-bold-duotone" width="0.85rem" />
@@ -611,7 +611,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             {#if $leanInstallState === 'updating'}
                 <div class="mt-2 mb-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/70 dark:bg-[#292c3c] px-3 py-2.5">
                     <div class="flex items-center gap-2 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5]">
-                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin shrink-0 text-brand-gold-500 dark:text-[#e5c890]" />
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="essential-status-spinner animate-spin shrink-0 text-brand-gold-500 dark:text-[#e5c890]" />
                         <span class="truncate">{$leanInstallMessage || $t('settings.lean.updating')}</span>
                     </div>
                     <IndeterminateProgress class="mt-2" ariaLabel={$t('settings.lean.updating')} />
