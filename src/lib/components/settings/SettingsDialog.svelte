@@ -45,6 +45,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     } from '$lib/stores/lean-install.store';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { getVersion } from '@tauri-apps/api/app';
+    import { animationsEnabled } from '$lib/stores/animations.store';
     import { locale, LOCALE_NAMES, t, type Locale } from '$lib/i18n';
     import { aiTextDefaultModel } from '$lib/stores/ai-text-transform.store';
     import { isPro, isProPlus } from '$lib/stores/auth.store';
@@ -190,6 +191,34 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             <!-- Appearance -->
             <div>
                 <p class={sectionLabel}>{$t('settings.appearance')}</p>
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <span class={rowLabel}>{$t('settings.appearance.animations')}</span>
+                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                            {$t('settings.appearance.animations.desc')}
+                        </p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button
+                            onclick={() => animationsEnabled.set(false)}
+                            class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                                ${!$animationsEnabled
+                                    ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                    : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                        >
+                            {$t('common.disabled')}
+                        </button>
+                        <button
+                            onclick={() => animationsEnabled.set(true)}
+                            class={`cursor-pointer px-3 py-1 text-xs font-semibold rounded-full border transition-colors
+                                ${$animationsEnabled
+                                    ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
+                                    : 'border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
+                        >
+                            {$t('common.enabled')}
+                        </button>
+                    </div>
+                </div>
                 <div class="flex items-center justify-between">
                     <div>
                         <span class={rowLabel}>{$t('settings.appearance.glass')}</span>
@@ -472,7 +501,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                     class={actionBtn}
                 >
                     {#if $juliaInstallState === 'checking'}
-                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin" />
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="essential-status-spinner animate-spin" />
                         {$t('settings.julia.checking')}
                     {:else}
                         <Icon icon="solar:refresh-bold-duotone" width="0.85rem" />
@@ -484,7 +513,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             {#if $juliaInstallState === 'updating'}
                 <div class="mt-2 mb-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/70 dark:bg-[#292c3c] px-3 py-2.5">
                     <div class="flex items-center gap-2 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5]">
-                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin shrink-0 text-brand-gold-500 dark:text-[#e5c890]" />
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="essential-status-spinner animate-spin shrink-0 text-brand-gold-500 dark:text-[#e5c890]" />
                         <span class="truncate">{$juliaInstallMessage || $t('settings.julia.updating')}</span>
                     </div>
                     <IndeterminateProgress class="mt-2" ariaLabel={$t('settings.julia.updating')} />
@@ -570,7 +599,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                     class={actionBtn}
                 >
                     {#if $leanInstallState === 'checking'}
-                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin" />
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="essential-status-spinner animate-spin" />
                         {$t('settings.lean.checking')}
                     {:else}
                         <Icon icon="solar:refresh-bold-duotone" width="0.85rem" />
@@ -582,7 +611,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             {#if $leanInstallState === 'updating'}
                 <div class="mt-2 mb-2 rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/70 dark:bg-[#292c3c] px-3 py-2.5">
                     <div class="flex items-center gap-2 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5]">
-                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="animate-spin shrink-0 text-brand-gold-500 dark:text-[#e5c890]" />
+                        <Icon icon="solar:refresh-bold-duotone" width="0.85rem" class="essential-status-spinner animate-spin shrink-0 text-brand-gold-500 dark:text-[#e5c890]" />
                         <span class="truncate">{$leanInstallMessage || $t('settings.lean.updating')}</span>
                     </div>
                     <IndeterminateProgress class="mt-2" ariaLabel={$t('settings.lean.updating')} />

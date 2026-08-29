@@ -13,9 +13,11 @@
     import EditorToolbar from "$lib/components/widgets/editor/EditorToolbar.svelte";
     import Sidebar from "$lib/components/sidebar/Sidebar.svelte";
     import TourOverlay from "$lib/components/tour/TourOverlay.svelte";
+    import AnimationChoiceDialog from "$lib/components/tour/AnimationChoiceDialog.svelte";
     import SplashScreen from "$lib/components/shared/SplashScreen.svelte";
     import UpdateToast from "$lib/components/shared/UpdateToast.svelte";
     import NewBlogToast from "$lib/components/shared/NewBlogToast.svelte";
+    import TypstDarkModeToast from "$lib/components/shared/TypstDarkModeToast.svelte";
     import JuliaPlotViewer from "$lib/components/shared/JuliaPlotViewer.svelte";
     import { installPlotSync } from "$lib/stores/julia-plot-window";
     import { installReaderSnapshotHost } from "$lib/stores/reader-windows.store";
@@ -473,6 +475,7 @@
 <SurahWidget />
 <EditorToolbar onOpenSettings={() => (showSettings = true)} />
 <TourOverlay />
+<AnimationChoiceDialog />
 <QuickOpen />
 <SettingsDialog
     open={showSettings}
@@ -498,4 +501,5 @@
 <SplashScreen visible={isLoading} />
 <UpdateToast />
 <NewBlogToast />
+<TypstDarkModeToast onOpenSettings={() => (showSettings = true)} />
 <JuliaPlotViewer />

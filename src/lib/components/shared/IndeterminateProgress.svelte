@@ -15,7 +15,7 @@
     aria-label={ariaLabel}
     aria-busy="true"
 >
-    <div class="jip-bar"></div>
+    <div class="essential-progress-indeterminate jip-bar"></div>
 </div>
 
 <style>
@@ -31,6 +31,7 @@
         background-color: rgb(255 255 255 / 0.08);
     }
     .jip-bar {
+        --progress-motion-duration: 1.25s;
         position: absolute;
         top: 0;
         bottom: 0;

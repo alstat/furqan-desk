@@ -29,7 +29,7 @@
         </p>
 
         <!-- Subtle loading dots -->
-        <div class="mt-6 flex gap-1.5 dots-appear">
+        <div class="essential-loading-dots mt-6 flex gap-1.5 dots-appear">
             <span class="w-1.5 h-1.5 rounded-full bg-brand-gold-400 dark:bg-[#e5c890] dot dot-1"></span>
             <span class="w-1.5 h-1.5 rounded-full bg-brand-gold-400 dark:bg-[#e5c890] dot dot-2"></span>
             <span class="w-1.5 h-1.5 rounded-full bg-brand-gold-400 dark:bg-[#e5c890] dot dot-3"></span>
@@ -61,12 +61,19 @@
         animation: fade-up 0.5s 0.55s ease-out both;
     }
     .dot {
-        animation: bounce 1.2s 0.8s ease-in-out infinite;
+        --loading-dot-delay: 0.8s;
+        animation: bounce 1.2s var(--loading-dot-delay) ease-in-out infinite;
     }
-    .dot-2 { animation-delay: 0.95s; }
-    .dot-3 { animation-delay: 1.1s; }
+    .dot-2 { --loading-dot-delay: 0.95s; }
+    .dot-3 { --loading-dot-delay: 1.1s; }
     @keyframes bounce {
         0%, 80%, 100% { transform: translateY(0);    opacity: 0.5; }
         40%            { transform: translateY(-5px); opacity: 1;   }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .dot {
+            animation: none;
+            opacity: 0.6;
+        }
     }
 </style>

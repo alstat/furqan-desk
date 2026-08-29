@@ -2155,3 +2155,108 @@ html.linux-csd.csd-round.csd-dialog.dark .app-shell {
         0 0 6px 1px rgba(0, 0, 0, 0.26),
         0 0 16px 2px rgba(0, 0, 0, 0.36);
 }
+
+/*
+ * Animation switch (Settings › Appearance).
+ *
+ * Everything CSS-driven — Tailwind's `transition-*`, the keyframes below,
+ * `animate-spin` — stops here. Svelte's own transitions run through the Web
+ * Animations API, out of reach of any stylesheet; `animations.store.ts`
+ * collapses those to a single frame instead. Near-zero rather than `none` so
+ * `transitionend`/`animationend` listeners still fire.
+ */
+:root[data-animations="off"],
+:root[data-animations="off"]
+    *:not(:where(.animation-exempt-all, .animation-exempt-all *)),
+:root[data-animations="off"]
+    *:not(:where(.animation-exempt-all, .animation-exempt-all *))::before,
+:root[data-animations="off"]
+    *:not(:where(.animation-exempt-all, .animation-exempt-all *))::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+}
+
+/*
+ * Status-animation exemptions. The recitation mini player collapses to a single button,
+ * and its travelling gradient is the only thing on screen saying audio is
+ * playing — kill it and a paused player looks identical to a playing one. It
+ * is one small element animating a background position, which is not the cost
+ * this switch exists to avoid, so it keeps moving.
+ *
+ * Higher specificity than the blanket rule above, so it wins between two
+ * `!important` declarations. `prefers-reduced-motion` still stops it: that is
+ * a statement about motion itself, not about what the machine can afford.
+ */
+:root[data-animations="off"] .mini-player-button-playing {
+    animation-duration: 4s !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: infinite !important;
+}
+
+/* Loading dots communicate that startup or an in-progress request is alive.
+ * Keep their inexpensive bounce and original stagger for the same reason. */
+:root[data-animations="off"] .essential-loading-dots > span {
+    animation-duration: 1.2s !important;
+    animation-delay: var(--loading-dot-delay, 0s) !important;
+    animation-iteration-count: infinite !important;
+}
+
+/* Status spinners are the only visible indication that work is still
+ * progressing, so keep their lightweight rotation too. */
+:root[data-animations="off"] .essential-status-spinner,
+:root[data-animations="off"]
+    .essential-ai-selection-toolbar
+    .animate-spin {
+    animation-duration: 1s !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: infinite !important;
+}
+
+:root[data-animations="off"]
+    .essential-ai-selection-toolbar
+    .prompt-runborder {
+    animation-duration: 1.4s !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: infinite !important;
+}
+
+:root[data-animations="off"] .essential-progress-determinate {
+    transition-duration: var(--progress-motion-duration, 300ms) !important;
+    transition-delay: 0ms !important;
+}
+
+:root[data-animations="off"] .essential-progress-indeterminate {
+    animation-duration: var(--progress-motion-duration, 1.25s) !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: infinite !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animation-exempt-all,
+    .animation-exempt-all::before,
+    .animation-exempt-all::after,
+    .animation-exempt-all *,
+    .animation-exempt-all *::before,
+    .animation-exempt-all *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        transition-delay: 0ms !important;
+    }
+
+    .essential-status-spinner,
+    .essential-ai-selection-toolbar .animate-spin,
+    .essential-ai-selection-toolbar .prompt-runborder,
+    .essential-progress-indeterminate {
+        animation: none !important;
+    }
+
+    .essential-progress-determinate {
+        transition: none !important;
+    }
+}

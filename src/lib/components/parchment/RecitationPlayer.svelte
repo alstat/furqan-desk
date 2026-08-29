@@ -637,11 +637,11 @@
                 <Icon
                     icon="solar:refresh-bold-duotone"
                     width="0.875rem"
-                    class="animate-spin text-brand-gold-500 dark:text-[#e5c890]"
+                    class="essential-status-spinner animate-spin text-brand-gold-500 dark:text-[#e5c890]"
                 />
                 <div class="w-10 h-1 rounded-full bg-stone-200 dark:bg-[#414559] overflow-hidden">
                     <div
-                        class="h-full rounded-full bg-brand-gold-500 dark:bg-[#e5c890] transition-all duration-300"
+                        class="essential-progress-determinate h-full rounded-full bg-brand-gold-500 dark:bg-[#e5c890] transition-all duration-300"
                         style={`width: ${progressPct}%`}
                     ></div>
                 </div>
@@ -839,6 +839,9 @@
 {/if}
 
 <style>
+    /* Exempt from the app-wide animation switch — see the note beside the
+       `[data-animations="off"]` block in app.css. The class name is what that
+       exemption targets, so keep the two in step. */
     .mini-player-button-playing {
         background-image: linear-gradient(
             115deg,

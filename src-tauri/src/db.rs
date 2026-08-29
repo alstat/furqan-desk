@@ -77,7 +77,7 @@ fn android_err<E: std::fmt::Display>(e: E) -> rusqlite::Error {
 /// Every platform checks this against the dataset it actually opened (see
 /// `verify_static_version`); Android additionally uses it to decide when to
 /// refresh its local copy, since APK assets aren't attachable in place.
-const DB_VERSION: i64 = 15;
+const DB_VERSION: i64 = 16;
 
 /// Wrap a diagnostic message as a `rusqlite::Error` so it travels out through
 /// `Database::new` and into the startup crash report.

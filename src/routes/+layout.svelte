@@ -7,6 +7,7 @@
 	import JuliaInstallPrompt from '$lib/components/shared/JuliaInstallPrompt.svelte';
 	import LeanInstallPrompt from '$lib/components/shared/LeanInstallPrompt.svelte';
 	import LeanInstallToast from '$lib/components/shared/LeanInstallToast.svelte';
+	import { animationsEnabled } from '$lib/stores/animations.store';
 	import JuliaInstallToast from '$lib/components/shared/JuliaInstallToast.svelte';
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
@@ -161,6 +162,14 @@
 			/* not running inside Tauri (e.g. browser dev) */
 		});
 	}
+
+	// CSS half of the animation switch; the Web Animations half is installed by
+	// animations.store on import.
+	$effect(() => {
+		document.documentElement.dataset.animations = $animationsEnabled
+			? 'on'
+			: 'off';
+	});
 
 	$effect(() => {
 		if ($zenMode) {

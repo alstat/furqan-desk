@@ -1,6 +1,7 @@
 import { get, writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import { openAppWindow } from '$lib/utils/appWindow';
+import type { FrameStyle } from '$lib/components/postcard/patterns';
 
 /** Visibility of the postcard editor window. */
 export const postcardDialogOpen = writable(false);
@@ -47,7 +48,9 @@ export interface PostcardDesign {
     refColor: string;
 
     padPct: number;
+    /** Kept for designs saved before `frameStyle` existed. */
     borderOn: boolean;
+    frameStyle?: FrameStyle;
 
     bgMode: 'plain' | 'manuscript' | 'pattern' | 'combo';
     baseColor: string;

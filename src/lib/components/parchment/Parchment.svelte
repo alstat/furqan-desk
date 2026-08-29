@@ -368,6 +368,7 @@
             </div>
         {/if}
         <button
+            id="tour-takehome-button"
             bind:this={takeHomeBtnEl}
             class="cursor-pointer absolute -right-4 top-1/3 z-3 {actionBtnStyle} {showTakeHome
                 ? 'bg-brand-gold-400 dark:bg-[#363a4f]'
@@ -398,6 +399,7 @@
         </div>
     {/if}
     <button
+        id="tour-verse-of-day-button"
         class="cursor-pointer absolute -right-4 top-1/2 z-3 {actionBtnStyle} {$verseOfDayDialogOpen
             ? 'bg-brand-gold-400 dark:bg-[#363a4f]'
             : ''} {$zenMode

@@ -903,7 +903,7 @@
                     class="flex items-center gap-1 select-none text-brand-gold-400"
                 >
                     <svg
-                        class="animate-spin h-3 w-3 shrink-0"
+                        class="essential-status-spinner animate-spin h-3 w-3 shrink-0"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -1305,7 +1305,7 @@
                                 >
                                     {#if precompile.total > 0}
                                         <div
-                                            class="h-full bg-brand-gold-400 rounded-full transition-all duration-300"
+                                            class="essential-progress-determinate h-full bg-brand-gold-400 rounded-full transition-all duration-300"
                                             style="width: {Math.min(
                                                 100,
                                                 Math.round(
@@ -1322,7 +1322,7 @@
                                              clearly active rather than appearing
                                              stuck. -->
                                         <div
-                                            class="repl-indeterminate h-full w-1/3 bg-brand-gold-400 rounded-full"
+                                            class="essential-progress-indeterminate repl-indeterminate h-full w-1/3 bg-brand-gold-400 rounded-full"
                                         ></div>
                                     {/if}
                                 </div>
@@ -1494,6 +1494,7 @@
     /* Indeterminate precompile bar: slide left→right so it reads as "working"
        when the total package count isn't known. */
     .repl-indeterminate {
+        --progress-motion-duration: 1.1s;
         animation: repl-indeterminate 1.1s ease-in-out infinite;
         will-change: transform;
     }
