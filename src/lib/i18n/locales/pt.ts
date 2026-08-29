@@ -340,7 +340,7 @@ export const pt: Record<string, string> = {
   "insert.code_block": "Bloco",
   // Donation
   "donation.title": "Apoiar AyahLab",
-  "donation.subtitle": "Mantenha o aplicativo gratuito",
+  "donation.subtitle": "Grátis para sempre — ajude-o a crescer",
   "donation.kofi": "Doar no Ko-fi →",
   "donation.scan": "Escanear com o aplicativo {app}",
   "donation.kofi_methods": "Aceita PayPal, cartões de crédito e débito",

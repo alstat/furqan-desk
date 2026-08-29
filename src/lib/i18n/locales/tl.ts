@@ -342,7 +342,7 @@ export const tl: Record<string, string> = {
   "insert.code_block": "Bloke",
   // Donation
   "donation.title": "Suportahan ang AyahLab",
-  "donation.subtitle": "Panatilihing libre ang app",
+  "donation.subtitle": "Libre habambuhay — tulungan itong lumago",
   "donation.kofi": "Mag-donate sa Ko-fi →",
   "donation.scan": "I-scan gamit ang app na {app}",
   "donation.kofi_methods": "Sumusuporta sa PayPal, credit at debit cards",

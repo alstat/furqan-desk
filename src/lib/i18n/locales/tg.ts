@@ -334,7 +334,7 @@ export const tg: Record<string, string> = {
   "insert.code_block": "Блок",
   // Donation
   "donation.title": "Дастгирии AyahLab",
-  "donation.subtitle": "Барномаро ройгон нигоҳ доштан",
+  "donation.subtitle": "Ҳамеша ройгон — ба рушди он кӯмак кунед",
   "donation.kofi": "Хайр додан дар Ko-fi →",
   "donation.scan": "Бо барномаи {app} скан кардан",
   "donation.kofi_methods": "PayPal, карточкаҳои кредитӣ ва дебетиро дастгирӣ мекунад",

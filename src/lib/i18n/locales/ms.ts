@@ -339,7 +339,7 @@ export const ms: Record<string, string> = {
   "insert.code_block": "Blok",
   // Donation
   "donation.title": "Sokong AyahLab",
-  "donation.subtitle": "Jaga aplikasi tetap percuma",
+  "donation.subtitle": "Percuma selamanya — bantu ia terus berkembang",
   "donation.kofi": "Derma di Ko-fi →",
   "donation.scan": "Imbas dengan aplikasi {app}",
   "donation.kofi_methods": "Menyokong PayPal, kad kredit & debit",

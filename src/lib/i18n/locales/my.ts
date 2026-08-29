@@ -334,7 +334,7 @@ export const my: Record<string, string> = {
   "insert.code_block": "ဘလောက်",
   // Donation
   "donation.title": "AyahLab ကို ထောက်ပံ့ပါ",
-  "donation.subtitle": "အပ်ပ်ကို အခမဲ့ ထားရှိပါ",
+  "donation.subtitle": "အမြဲတမ်း အခမဲ့ — ဖွံ့ဖြိုးရေးကို ကူညီပါ",
   "donation.kofi": "Ko-fi တွင် လှူဒါန်းပါ →",
   "donation.scan": "{app} အပ်ပ်ဖြင့် စကင်ဖတ်ပါ",
   "donation.kofi_methods": "PayPal၊ ခရက်ဒစ်နှင့် ဒက်ဘစ်ကတ်များကို ပံ့ပိုးသည်",

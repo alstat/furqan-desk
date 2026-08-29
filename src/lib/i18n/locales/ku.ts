@@ -266,7 +266,7 @@ export const ku: Record<string, string> = {
   "insert.code_inline": "لە هێڵدا",
   "insert.code_block": "بلۆک",
   "donation.title": "پشتیوانی لە AyahLab بکە",
-  "donation.subtitle": "ئەپەکە بەخۆڕایی بهێڵەرەوە",
+  "donation.subtitle": "هەتاهەتایە بێبەرامبەر — یارمەتی گەشەکردنی بدە",
   "donation.kofi": "بەخشین بکە لەسەر Ko-fi →",
   "donation.scan": "سکانکردن بە ئەپی {app}",
   "donation.kofi_methods": "پشتیوانی لە پەیپاڵ، کارتی بانکیی و بانکی دەکات",

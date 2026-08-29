@@ -310,7 +310,7 @@ export const id: Record<string, string> = {
   "insert.code_inline": 'Inline',
   "insert.code_block": 'Blok',
   "donation.title": 'Dukung AyahLab',
-  "donation.subtitle": 'Jaga agar aplikasi tetap gratis',
+  "donation.subtitle": "Gratis selamanya — bantu terus berkembang",
   "donation.kofi": 'Donasi di Ko-fi →',
   "donation.scan": 'Pindai dengan aplikasi {app}',
   "donation.kofi_methods": 'Mendukung PayPal, kartu kredit & debit',

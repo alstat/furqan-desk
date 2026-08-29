@@ -334,7 +334,7 @@ export const ceb: Record<string, string> = {
   "insert.code_block": "Block",
   // Donation
   "donation.title": "Suportahan ang AyahLab",
-  "donation.subtitle": "Ipadayon nga libre ang app",
+  "donation.subtitle": "Libre hangtod sa hangtod — tabangi kini nga molambo",
   "donation.kofi": "Mag-donate sa Ko-fi →",
   "donation.scan": "I-scan gamit ang {app} app",
   "donation.kofi_methods": "Suportado ang PayPal, credit ug debit cards",

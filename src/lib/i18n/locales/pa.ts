@@ -266,7 +266,7 @@ export const pa: Record<string, string> = {
   "insert.code_inline": "ਇਨਲਾਈਨ",
   "insert.code_block": "ਬਲਾਕ ਕਰੋ",
   "donation.title": "AyahLab ਦਾ ਸਮਰਥਨ ਕਰੋ",
-  "donation.subtitle": "ਐਪ ਨੂੰ ਮੁਫਤ ਰੱਖੋ",
+  "donation.subtitle": "ਹਮੇਸ਼ਾ ਮੁਫ਼ਤ — ਇਸ ਨੂੰ ਵਧਣ ਵਿੱਚ ਮਦਦ ਕਰੋ",
   "donation.kofi": "Ko-fi 'ਤੇ ਦਾਨ ਕਰੋ →",
   "donation.scan": "{app} ਐਪ ਨਾਲ ਸਕੈਨ ਕਰੋ",
   "donation.kofi_methods": "PayPal, ਕ੍ਰੈਡਿਟ ਅਤੇ ਡੈਬਿਟ ਕਾਰਡਾਂ ਦਾ ਸਮਰਥਨ ਕਰਦਾ ਹੈ",

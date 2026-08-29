@@ -334,7 +334,7 @@ export const kk: Record<string, string> = {
   "insert.code_block": "Блок",
   // Donation
   "donation.title": "AyahLab-ты қолдау",
-  "donation.subtitle": "Қолданбаны тегін ұстау",
+  "donation.subtitle": "Мәңгі тегін — дамуына қолдау көрсетіңіз",
   "donation.kofi": "Ko-fi-де қайырымдылық жасау →",
   "donation.scan": "{app} қолданбасымен сканерлеу",
   "donation.kofi_methods": "PayPal, несие және дебет карталарын қолдайды",

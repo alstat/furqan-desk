@@ -334,7 +334,7 @@ export const vi: Record<string, string> = {
   "insert.code_block": "Khối",
   // Donation
   "donation.title": "Ủng hộ AyahLab",
-  "donation.subtitle": "Giữ ứng dụng miễn phí",
+  "donation.subtitle": "Miễn phí mãi mãi — giúp ứng dụng phát triển",
   "donation.kofi": "Quyên góp trên Ko-fi →",
   "donation.scan": "Quét bằng ứng dụng {app}",
   "donation.kofi_methods": "Hỗ trợ PayPal, thẻ tín dụng & ghi nợ",

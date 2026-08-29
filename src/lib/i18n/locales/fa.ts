@@ -310,7 +310,7 @@ export const fa: Record<string, string> = {
   "insert.code_inline": 'درخطی',
   "insert.code_block": 'بلوک',
   "donation.title": 'حمایت از AyahLab',
-  "donation.subtitle": 'برنامه را رایگان نگه دارید',
+  "donation.subtitle": "همیشه رایگان — به رشد آن کمک کنید",
   "donation.kofi": 'کمک مالی در Ko-fi →',
   "donation.scan": 'با برنامه {app} اسکن کنید',
   "donation.kofi_methods": 'پشتیبانی از PayPal، کارت‌های اعتباری و بدهکاری',

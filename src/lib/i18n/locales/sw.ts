@@ -266,7 +266,7 @@ export const sw: Record<string, string> = {
   "insert.code_inline": "Ndani ya mstari",
   "insert.code_block": "Zuia",
   "donation.title": "Msaada AyahLab",
-  "donation.subtitle": "Weka programu bila malipo",
+  "donation.subtitle": "Bure milele — saidia kuiendeleza",
   "donation.kofi": "Changia kwenye Ko-fi →",
   "donation.scan": "Changanua ukitumia programu {app}",
   "donation.kofi_methods": "Inaauni PayPal, kadi za mkopo na debit",

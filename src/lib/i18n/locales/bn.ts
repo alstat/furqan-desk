@@ -339,7 +339,7 @@ export const bn: Record<string, string> = {
   "insert.code_block": "ব্লক",
   // Donation
   "donation.title": "AyahLab সমর্থন করুন",
-  "donation.subtitle": "অ্যাপটি বিনামূল্যে রাখুন",
+  "donation.subtitle": "চিরকাল বিনামূল্যে — এর উন্নয়নে সহায়তা করুন",
   "donation.kofi": "Ko-fi-তে দান করুন →",
   "donation.scan": "{app} অ্যাপ দিয়ে স্ক্যান করুন",
   "donation.kofi_methods": "PayPal, ক্রেডিট ও ডেবিট কার্ড সমর্থিত",

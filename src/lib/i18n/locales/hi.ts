@@ -339,7 +339,7 @@ export const hi: Record<string, string> = {
   "insert.code_block": "ब्लॉक",
   // Donation
   "donation.title": "AyahLab का समर्थन करें",
-  "donation.subtitle": "ऐप को मुफ़्त रखें",
+  "donation.subtitle": "हमेशा मुफ़्त — इसे बढ़ने में मदद करें",
   "donation.kofi": "Ko-fi पर दान करें →",
   "donation.scan": "{app} ऐप से स्कैन करें",
   "donation.kofi_methods": "PayPal, क्रेडिट और डेबिट कार्ड का समर्थन करता है",

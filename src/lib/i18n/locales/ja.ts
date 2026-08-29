@@ -339,7 +339,7 @@ export const ja: Record<string, string> = {
   "insert.code_block": "ブロック",
   // Donation
   "donation.title": "AyahLab をサポート",
-  "donation.subtitle": "アプリを無料に保つ",
+  "donation.subtitle": "ずっと無料 — 開発を支えてください",
   "donation.kofi": "Ko-fi で寄付 →",
   "donation.scan": "{app} アプリでスキャン",
   "donation.kofi_methods": "PayPal、クレジット・デビットカード対応",

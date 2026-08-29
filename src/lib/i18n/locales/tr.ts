@@ -310,7 +310,7 @@ export const tr: Record<string, string> = {
   "insert.code_inline": 'Satır İçi',
   "insert.code_block": 'Blok',
   "donation.title": 'AyahLab\'ı Destekle',
-  "donation.subtitle": 'Uygulamayı ücretsiz tut',
+  "donation.subtitle": "Sonsuza dek ücretsiz — gelişmesine destek olun",
   "donation.kofi": 'Ko-fi\'de Bağış Yap →',
   "donation.scan": '{app} uygulamasıyla tara',
   "donation.kofi_methods": 'PayPal, kredi ve banka kartlarını destekler',

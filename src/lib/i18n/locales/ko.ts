@@ -310,7 +310,7 @@ export const ko: Record<string, string> = {
   "insert.code_inline": '인라인',
   "insert.code_block": '블록',
   "donation.title": 'AyahLab 지원',
-  "donation.subtitle": '앱을 무료로 유지',
+  "donation.subtitle": "영원히 무료 — 계속 발전하도록 도와주세요",
   "donation.kofi": 'Ko-fi에서 후원 →',
   "donation.scan": '{app} 앱으로 스캔',
   "donation.kofi_methods": 'PayPal, 신용카드 및 체크카드 지원',
