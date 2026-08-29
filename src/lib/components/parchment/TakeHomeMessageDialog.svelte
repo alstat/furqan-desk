@@ -75,6 +75,10 @@
     let storage = $state<TakeHomeMessageStorage | null>(null);
     let exportedPath = $state("");
     let confirmClear = $state(false);
+    // Id of the history entry whose delete button is armed: the first click
+    // arms it, a second one within the timeout actually deletes.
+    let confirmDeleteId = $state<number | null>(null);
+    let confirmDeleteTimer: ReturnType<typeof setTimeout> | null = null;
 
     const RTL_LOCALES = new Set(["ar", "fa", "ur", "ku"]);
     const contentDir = $derived(RTL_LOCALES.has($locale) ? "rtl" : "ltr");
@@ -480,6 +484,7 @@
         view = "history";
         exportedPath = "";
         confirmClear = false;
+        disarmDelete();
         historyLoading = true;
         try {
             [history, storage] = await Promise.all([
@@ -506,7 +511,20 @@
         view = "result";
     }
 
+    function disarmDelete() {
+        if (confirmDeleteTimer) clearTimeout(confirmDeleteTimer);
+        confirmDeleteTimer = null;
+        confirmDeleteId = null;
+    }
+
     async function removeHistoryEntry(id: number) {
+        if (confirmDeleteId !== id) {
+            if (confirmDeleteTimer) clearTimeout(confirmDeleteTimer);
+            confirmDeleteId = id;
+            confirmDeleteTimer = setTimeout(disarmDelete, 3000);
+            return;
+        }
+        disarmDelete();
         try {
             await deleteTakeHomeMessageEntry(id);
             history = history.filter((h) => h.id !== id);
@@ -558,6 +576,7 @@
             view = "result";
             exportedPath = "";
             confirmClear = false;
+            disarmDelete();
         }
     });
 
@@ -737,13 +756,24 @@
                     </p>
                 </div>
             </div>
-            <button
-                onclick={onClose}
-                aria-label={$t("common.close")}
-                class="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-brand-gold-200 text-brand-gold-600 transition-colors hover:bg-brand-gold-200/80 dark:bg-[#414559] dark:text-[#c6d0f5] dark:hover:bg-[#51576d]"
-            >
-                <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
-            </button>
+            <div class="flex shrink-0 items-center gap-1.5">
+                <!-- The Take-Home Message always runs on the Advanced model
+                     (Pro and Pro+ alike) — static badge, no toggle. -->
+                <span
+                    class="flex h-7 items-center gap-1 rounded-lg border border-brand-gold-400 bg-brand-gold-100 px-2.5 text-[0.625rem] font-semibold text-brand-gold-600 dark:bg-[#e5c890]/30 dark:text-[#e5c890]"
+                    title={$t("account.usage.advanced_takehome_note")}
+                >
+                    <Icon icon="solar:bolt-bold-duotone" width="0.65rem" />
+                    {$t("ai_chat.model_advanced")}
+                </span>
+                <button
+                    onclick={onClose}
+                    aria-label={$t("common.close")}
+                    class="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-brand-gold-200 text-brand-gold-600 transition-colors hover:bg-brand-gold-200/80 dark:bg-[#414559] dark:text-[#c6d0f5] dark:hover:bg-[#51576d]"
+                >
+                    <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
+                </button>
+            </div>
         </div>
 
         <!-- Body -->
@@ -786,7 +816,10 @@
                                     </p>
                                 </button>
                                 <div
-                                    class="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all"
+                                    class="absolute top-2 right-2 flex items-center gap-0.5 group-hover:opacity-100 transition-all {confirmDeleteId ===
+                                    entry.id
+                                        ? 'opacity-100'
+                                        : 'opacity-0'}"
                                 >
                                     <button
                                         onclick={() => copyHistoryEntry(entry)}
@@ -804,10 +837,20 @@
                                     </button>
                                     <button
                                         onclick={() => removeHistoryEntry(entry.id)}
-                                        title={$t("verse_of_day.delete_entry")}
-                                        class="cursor-pointer rounded-full p-1.5 text-brand-charcoal-300 hover:text-red-500 dark:text-[#838ba7] transition-colors"
+                                        title={confirmDeleteId === entry.id
+                                            ? $t("verse_of_day.confirm_clear")
+                                            : $t("verse_of_day.delete_entry")}
+                                        class="cursor-pointer rounded-full p-1.5 transition-colors {confirmDeleteId ===
+                                        entry.id
+                                            ? 'bg-red-500 text-white hover:bg-red-600'
+                                            : 'text-brand-charcoal-300 hover:text-red-500 dark:text-[#838ba7]'}"
                                     >
-                                        <Icon icon="solar:trash-bin-trash-linear" width="0.85rem" />
+                                        <Icon
+                                            icon={confirmDeleteId === entry.id
+                                                ? "solar:trash-bin-trash-bold"
+                                                : "solar:trash-bin-trash-linear"}
+                                            width="0.85rem"
+                                        />
                                     </button>
                                 </div>
                             </li>
@@ -996,7 +1039,7 @@
                 >
                     <button
                         onclick={() => (view = "result")}
-                        class="cursor-pointer flex items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
+                        class="cursor-pointer flex h-8 items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
                     >
                         <Icon icon="solar:arrow-left-linear" width="0.7rem" />
                         {$t("verse_of_day.back")}
@@ -1005,7 +1048,7 @@
                         <button
                             onclick={exportHistoryCsv}
                             disabled={!history.length}
-                            class="cursor-pointer flex items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] disabled:opacity-50 transition-colors"
+                            class="cursor-pointer flex h-8 items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] disabled:opacity-50 transition-colors"
                         >
                             <Icon icon="solar:download-minimalistic-linear" width="0.7rem" />
                             {$t("verse_of_day.export")}
@@ -1013,7 +1056,7 @@
                         <button
                             onclick={clearAllHistory}
                             disabled={!history.length}
-                            class="cursor-pointer flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-[0.6875rem] font-semibold disabled:opacity-50 transition-colors {confirmClear
+                            class="cursor-pointer flex h-8 items-center gap-1.5 rounded-full border px-3 text-[0.6875rem] font-semibold disabled:opacity-50 transition-colors {confirmClear
                                 ? 'border-red-400 bg-red-500 text-white hover:bg-red-600'
                                 : 'border-brand-sand-200 bg-brand-sand-100 text-red-500 dark:border-[#414559] dark:bg-[#363a4f] hover:bg-brand-sand-200 dark:hover:bg-[#414559]'}"
                         >
@@ -1028,66 +1071,53 @@
                 <div
                     class="flex shrink-0 flex-col gap-2 border-t border-brand-sand-200 px-5 py-3 dark:border-[#414559]"
                 >
+                    <!-- Secondary actions grouped on the left, the primary
+                         generate action alone on the right. -->
                     <div class="flex items-center justify-between gap-2">
-                        <button
-                            onclick={openHistory}
-                            title={$t("takehome.history")}
-                            class="cursor-pointer flex items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
-                        >
-                            <Icon icon="solar:history-bold-duotone" width="0.8rem" />
-                            {$t("takehome.history")}
-                        </button>
-                        <button
-                            onclick={copyCurrent}
-                            disabled={!result}
-                            title={copiedCurrent
-                                ? $t("verse_of_day.copied")
-                                : $t("verse_of_day.copy_entry")}
-                            class="cursor-pointer flex items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] disabled:opacity-50 transition-colors"
-                        >
-                            <Icon
-                                icon={copiedCurrent
-                                    ? "solar:check-circle-bold"
-                                    : "solar:copy-bold-duotone"}
-                                width="0.8rem"
-                            />
-                            {copiedCurrent
-                                ? $t("verse_of_day.copied")
-                                : $t("verse_of_day.copy_entry")}
-                        </button>
-                    </div>
-                    <div class="flex items-center justify-between gap-2">
-                        <!-- The Take-Home Message always runs on the Advanced
-                             model (Pro and Pro+ alike) — static badge, no toggle. -->
-                        <span
-                            class="flex items-center gap-1.5 rounded-full border border-brand-gold-400 bg-brand-gold-100 dark:bg-[#e5c890]/30 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 dark:text-[#e5c890]"
-                            title={$t("account.usage.advanced_takehome_note")}
-                        >
-                            <Icon icon="solar:bolt-bold-duotone" width="0.7rem" />
-                            {$t("ai_chat.model_advanced")}
-                        </span>
-                        {#if result && !isStale}
+                        <div class="flex items-center gap-1.5">
                             <button
-                                onclick={generate}
-                                disabled={loading}
-                                class="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
+                                onclick={openHistory}
+                                title={$t("takehome.history")}
+                                class="cursor-pointer flex h-8 items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
                             >
+                                <Icon icon="solar:history-bold-duotone" width="0.8rem" />
+                                {$t("takehome.history")}
+                            </button>
+                            <button
+                                onclick={copyCurrent}
+                                disabled={!result}
+                                title={copiedCurrent
+                                    ? $t("verse_of_day.copied")
+                                    : $t("verse_of_day.copy_entry")}
+                                class="cursor-pointer flex h-8 items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] disabled:opacity-50 transition-colors"
+                            >
+                                <Icon
+                                    icon={copiedCurrent
+                                        ? "solar:check-circle-bold"
+                                        : "solar:copy-bold-duotone"}
+                                    width="0.8rem"
+                                />
+                                {copiedCurrent
+                                    ? $t("verse_of_day.copied")
+                                    : $t("verse_of_day.copy_entry")}
+                            </button>
+                        </div>
+                        <button
+                            onclick={generate}
+                            disabled={loading}
+                            class="flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-3.5 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
+                        >
+                            {#if result && !isStale}
                                 <Icon icon="solar:refresh-bold" width="0.8rem" />
                                 {$t("takehome.regenerate")}
-                            </button>
-                        {:else}
-                            <button
-                                onclick={generate}
-                                disabled={loading}
-                                class="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
-                            >
+                            {:else}
                                 <Icon
                                     icon="solar:magic-stick-3-bold-duotone"
                                     width="0.85rem"
                                 />
                                 {$t("takehome.generate")}
-                            </button>
-                        {/if}
+                            {/if}
+                        </button>
                     </div>
                     <p class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#626880]">
                         {$t("takehome.disclaimer")}
