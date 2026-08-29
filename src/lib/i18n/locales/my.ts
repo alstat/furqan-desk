@@ -1078,6 +1078,8 @@ export const my: Record<string, string> = {
   "takehome.quota_advanced": "သင့်အဆင့်မြင့်မော်ဒယ်ခွဲတမ်း ကုန်သွားပါပြီ။ ဆက်လက်ရန် စံမော်ဒယ်သို့ ပြောင်းပါ။",
   "takehome.generate": "ဖန်တီးရန်",
   "takehome.stale": "ပြသထားသော အာယသ်များ ပြောင်းလဲသွားပါပြီ။ အဓိကသတင်းစကားအသစ် ဖန်တီးမလား။",
+  "takehome.history": "မှတ်တမ်း",
+  "takehome.history_empty": "မည်သည့်တွေးတောမှုမျှ မမှတ်တမ်းတင်ရသေးပါ။",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "ယနေ့ အာယသ်တော်",
   "verse_of_day.loading": "ယနေ့ အာယသ်တော်ကို ဖွင့်နေသည်…",
@@ -1092,6 +1094,8 @@ export const my: Record<string, string> = {
   "verse_of_day.clear": "အားလုံး ရှင်းလင်းရန်",
   "verse_of_day.confirm_clear": "အတည်ပြုရန် ထပ်နှိပ်ပါ",
   "verse_of_day.storage": "{count} ခု · သင့်ဒေတာဘေ့စ်တွင် ~{size}",
+  "verse_of_day.copy_entry": "ကူးယူရန်",
+  "verse_of_day.copied": "ကူးယူပြီးပါပြီ!",
   "insert.drawing": "ပုံဆွဲ",
   "lean.prompt.title": "Lean 4 ကို ထည့်သွင်းမထားပါ",
   "lean.prompt.desc": "Lean ကုဒ်ကို ပြုစုရန် Lean 4 ကိရိယာစုံ လိုအပ်သည်။ ယခု ထည့်သွင်းပါ — elan မှတစ်ဆင့် ဤအက်ပ်၏ ကိုယ်ပိုင်ဖိုဒါထဲသို့ ဒေါင်းလုဒ်လုပ်သည် — သို့မဟုတ် သင့်စနစ်တွင် ရှိပြီးဖြစ်ပါက ဆက်တင်များတွင် လမ်းကြောင်းကို သတ်မှတ်ပါ။",

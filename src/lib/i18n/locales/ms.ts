@@ -1081,6 +1081,8 @@ export const ms: Record<string, string> = {
   "takehome.quota_advanced": "Kuota model lanjutan anda telah habis. Tukar ke model standard untuk meneruskan.",
   "takehome.generate": "Jana",
   "takehome.stale": "Ayat yang dipaparkan telah berubah. Jana mesej utama baharu?",
+  "takehome.history": "Sejarah",
+  "takehome.history_empty": "Belum ada renungan direkodkan.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "Ayat Hari Ini",
   "verse_of_day.loading": "Memuatkan ayat hari ini…",
@@ -1095,6 +1097,8 @@ export const ms: Record<string, string> = {
   "verse_of_day.clear": "Kosongkan semua",
   "verse_of_day.confirm_clear": "Klik sekali lagi untuk mengesahkan",
   "verse_of_day.storage": "{count} entri · ~{size} dalam pangkalan data anda",
+  "verse_of_day.copy_entry": "Salin",
+  "verse_of_day.copied": "Disalin!",
   "insert.drawing": "Lukisan",
   "lean.prompt.title": "Lean 4 belum dipasang",
   "lean.prompt.desc": "Mengkompil kod Lean memerlukan rantaian alat Lean 4. Pasang sekarang — ia dimuat turun melalui elan ke dalam folder aplikasi ini sendiri — atau tetapkan laluan tersuai dalam Tetapan jika ia sudah ada pada sistem anda.",

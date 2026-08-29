@@ -1078,6 +1078,8 @@ export const th: Record<string, string> = {
   "takehome.quota_advanced": "โควตาโมเดลขั้นสูงของคุณหมดแล้ว สลับไปใช้โมเดลมาตรฐานเพื่อดำเนินการต่อ",
   "takehome.generate": "สร้าง",
   "takehome.stale": "อายะฮ์ที่แสดงมีการเปลี่ยนแปลง สร้างข้อคิดสำคัญใหม่หรือไม่?",
+  "takehome.history": "ประวัติ",
+  "takehome.history_empty": "ยังไม่มีการบันทึกข้อคิดใด ๆ",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "อายะฮ์ประจำวัน",
   "verse_of_day.loading": "กำลังโหลดอายะฮ์ประจำวัน…",
@@ -1092,6 +1094,8 @@ export const th: Record<string, string> = {
   "verse_of_day.clear": "ล้างทั้งหมด",
   "verse_of_day.confirm_clear": "คลิกอีกครั้งเพื่อยืนยัน",
   "verse_of_day.storage": "{count} รายการ · ~{size} ในฐานข้อมูลของคุณ",
+  "verse_of_day.copy_entry": "คัดลอก",
+  "verse_of_day.copied": "คัดลอกแล้ว!",
   "insert.drawing": "ภาพวาด",
   "lean.prompt.title": "ยังไม่ได้ติดตั้ง Lean 4",
   "lean.prompt.desc": "การคอมไพล์โค้ด Lean ต้องใช้ชุดเครื่องมือ Lean 4 ติดตั้งตอนนี้ — ระบบจะดาวน์โหลดผ่าน elan ไปยังโฟลเดอร์ของแอปนี้เอง — หรือกำหนดพาธเองในการตั้งค่าหากมีอยู่ในระบบแล้ว",

@@ -1078,6 +1078,8 @@ export const uz: Record<string, string> = {
   "takehome.quota_advanced": "Ilg'or model kvotangiz tugadi. Davom etish uchun standart modelga o'ting.",
   "takehome.generate": "Yaratish",
   "takehome.stale": "Ko'rsatilgan oyatlar o'zgardi. Yangi asosiy xabar yaratilsinmi?",
+  "takehome.history": "Tarix",
+  "takehome.history_empty": "Hozircha hech qanday mulohaza yozilmagan.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "Kun oyati",
   "verse_of_day.loading": "Bugungi oyat yuklanmoqda…",
@@ -1092,6 +1094,8 @@ export const uz: Record<string, string> = {
   "verse_of_day.clear": "Hammasini tozalash",
   "verse_of_day.confirm_clear": "Tasdiqlash uchun yana bosing",
   "verse_of_day.storage": "{count} ta yozuv · ma'lumotlar bazangizda ~{size}",
+  "verse_of_day.copy_entry": "Nusxalash",
+  "verse_of_day.copied": "Nusxalandi!",
   "insert.drawing": "Chizma",
   "lean.prompt.title": "Lean 4 o‘rnatilmagan",
   "lean.prompt.desc": "Lean kodini kompilyatsiya qilish uchun Lean 4 asboblar to‘plami kerak. Uni hozir o‘rnating — u elan orqali shu ilovaning o‘z papkasiga yuklab olinadi — yoki tizimingizda allaqachon bo‘lsa, Sozlamalarda o‘z yo‘lini ko‘rsating.",

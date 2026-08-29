@@ -18,6 +18,18 @@
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { renderMarkdown } from "$lib/utils/markdown";
     import { fetchTakeHomeMessage } from "$lib/stores/ai-takehome.store";
+    import { copyToClipboard } from "$lib/utils/clipboard";
+    import { formatBytes } from "$lib/data/verse-of-day";
+    import {
+        saveTakeHomeMessage,
+        fetchTakeHomeMessageHistory,
+        deleteTakeHomeMessageEntry,
+        clearTakeHomeMessageHistory,
+        fetchTakeHomeMessageStorage,
+        exportTakeHomeMessageHistory,
+        type TakeHomeMessageEntry,
+        type TakeHomeMessageStorage,
+    } from "$lib/data/take-home-message";
     import { t, locale } from "$lib/i18n";
     import {
         surahMorphology,
@@ -50,6 +62,24 @@
     let zIndex = $state(500);
     let panelEl = $state<HTMLElement | null>(null);
 
+    // View + history state, mirroring the Verse-of-the-Day dialog.
+    let view = $state<"result" | "history">("result");
+    // True while `result` shows a past entry picked from the history list
+    // (suppresses the "ayahs changed" stale banner).
+    let viewingHistoryEntry = $state(false);
+    let copiedCurrent = $state(false);
+    // Id of the history entry whose "copied" checkmark is currently showing.
+    let copiedId = $state<number | null>(null);
+    let history = $state<TakeHomeMessageEntry[]>([]);
+    let historyLoading = $state(false);
+    let storage = $state<TakeHomeMessageStorage | null>(null);
+    let exportedPath = $state("");
+    let confirmClear = $state(false);
+    // Id of the history entry whose delete button is armed: the first click
+    // arms it, a second one within the timeout actually deletes.
+    let confirmDeleteId = $state<number | null>(null);
+    let confirmDeleteTimer: ReturnType<typeof setTimeout> | null = null;
+
     const RTL_LOCALES = new Set(["ar", "fa", "ur", "ku"]);
     const contentDir = $derived(RTL_LOCALES.has($locale) ? "rtl" : "ltr");
 
@@ -70,7 +100,11 @@
 
     // True when there is a cached message but the displayed ayahs have changed.
     const isStale = $derived(
-        !!result && !!savedSig && !!currentSig && currentSig !== savedSig,
+        !viewingHistoryEntry &&
+            !!result &&
+            !!savedSig &&
+            !!currentSig &&
+            currentSig !== savedSig,
     );
 
     // ── Structured sections + clickable ayah references ──────────────────────
@@ -324,6 +358,9 @@
         const prevLabel = sourceLabel;
         error = "";
         quotaExceeded = false;
+        // A fresh generation is always for the currently displayed ayahs, not
+        // whatever history entry might have been on screen.
+        viewingHistoryEntry = false;
         const ctx = buildContext();
         if (!ctx) {
             error = get(t)("takehome.no_ayahs");
@@ -350,6 +387,14 @@
             if (!ac.signal.aborted) {
                 result = text;
                 savedSig = sig; // this message now matches the current ayahs
+                // Record it in the local history; failures here shouldn't
+                // disrupt the dialog since the message is already on screen.
+                void saveTakeHomeMessage({
+                    sourceLabel: ctx.label,
+                    context: ctx.body,
+                    result: text,
+                    locale: get(locale),
+                }).catch(() => {});
             }
         } catch (e) {
             if (!ac.signal.aborted) {
@@ -369,6 +414,150 @@
         }
     }
 
+    // ── Copy + history ───────────────────────────────────────────────────────
+
+    // Drop any still-streaming partial token, then swap {{surah:ayah}} /
+    // {{surah:start-end}} citation tokens for a plain "(surah:ayah)" form —
+    // readable once pasted somewhere that won't turn them into chips.
+    function refsToPlain(md: string): string {
+        return md
+            .replace(/\{\{[^}]*$/g, "")
+            .replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_, inner: string) => `(${inner})`);
+    }
+
+    // Plain text (Markdown bullets/bold kept as-is, so Lexical's markdown
+    // paste plugin renders them) built from a raw result, one section per
+    // paragraph, so it pastes cleanly into the Lexical editor or elsewhere.
+    function buildCopyText(rawResult: string, label: string): string {
+        const secs = parseSections(rawResult);
+        const parts: string[] = [];
+        if (label) parts.push(label);
+        if (secs.length) {
+            for (const s of secs) {
+                const meta = SECTION_META[s.id] ?? SECTION_META.key_lessons;
+                parts.push(`${s.title || meta.fallback}\n${refsToPlain(s.body.trim())}`);
+            }
+        } else {
+            parts.push(refsToPlain(rawResult.trim()));
+        }
+        return parts.join("\n\n");
+    }
+
+    async function copyCurrent() {
+        if (!result) return;
+        const ok = await copyToClipboard(buildCopyText(result, sourceLabel));
+        if (ok) {
+            copiedCurrent = true;
+            setTimeout(() => (copiedCurrent = false), 1500);
+        }
+    }
+
+    async function copyHistoryEntry(entry: TakeHomeMessageEntry) {
+        const ok = await copyToClipboard(buildCopyText(entry.result, entry.source_label));
+        if (ok) {
+            copiedId = entry.id;
+            setTimeout(() => {
+                if (copiedId === entry.id) copiedId = null;
+            }, 1500);
+        }
+    }
+
+    function historyDayLabel(createdAt: string): string {
+        try {
+            // SQLite's datetime('now') is UTC with no timezone suffix.
+            const iso = createdAt.includes("T")
+                ? createdAt
+                : `${createdAt.replace(" ", "T")}Z`;
+            return new Date(iso).toLocaleString(get(locale), {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+        } catch {
+            return createdAt;
+        }
+    }
+
+    async function openHistory() {
+        view = "history";
+        exportedPath = "";
+        confirmClear = false;
+        disarmDelete();
+        historyLoading = true;
+        try {
+            [history, storage] = await Promise.all([
+                fetchTakeHomeMessageHistory(),
+                fetchTakeHomeMessageStorage(),
+            ]);
+        } catch (e) {
+            error = e instanceof Error ? e.message : String(e);
+        } finally {
+            historyLoading = false;
+        }
+    }
+
+    function openHistoryEntry(entry: TakeHomeMessageEntry) {
+        controller?.abort();
+        controller = null;
+        loading = false;
+        error = "";
+        quotaExceeded = false;
+        result = entry.result;
+        sourceLabel = entry.source_label;
+        savedSig = currentSig;
+        viewingHistoryEntry = true;
+        view = "result";
+    }
+
+    function disarmDelete() {
+        if (confirmDeleteTimer) clearTimeout(confirmDeleteTimer);
+        confirmDeleteTimer = null;
+        confirmDeleteId = null;
+    }
+
+    async function removeHistoryEntry(id: number) {
+        if (confirmDeleteId !== id) {
+            if (confirmDeleteTimer) clearTimeout(confirmDeleteTimer);
+            confirmDeleteId = id;
+            confirmDeleteTimer = setTimeout(disarmDelete, 3000);
+            return;
+        }
+        disarmDelete();
+        try {
+            await deleteTakeHomeMessageEntry(id);
+            history = history.filter((h) => h.id !== id);
+            storage = await fetchTakeHomeMessageStorage();
+        } catch (e) {
+            error = e instanceof Error ? e.message : String(e);
+        }
+    }
+
+    async function clearAllHistory() {
+        if (!confirmClear) {
+            confirmClear = true;
+            setTimeout(() => (confirmClear = false), 3000);
+            return;
+        }
+        confirmClear = false;
+        try {
+            await clearTakeHomeMessageHistory();
+            history = [];
+            storage = await fetchTakeHomeMessageStorage();
+        } catch (e) {
+            error = e instanceof Error ? e.message : String(e);
+        }
+    }
+
+    async function exportHistoryCsv() {
+        try {
+            exportedPath = await exportTakeHomeMessageHistory();
+        } catch (e) {
+            error = e instanceof Error ? e.message : String(e);
+        }
+    }
+
     // Opening the dialog no longer auto-generates — it shows the last cached
     // message (kept in component state for the session) so re-opening is instant.
     // The user generates a fresh message for the current ayahs from the button.
@@ -384,6 +573,10 @@
             error = "";
             quotaExceeded = false;
             dragPos = null;
+            view = "result";
+            exportedPath = "";
+            confirmClear = false;
+            disarmDelete();
         }
     });
 
@@ -563,18 +756,132 @@
                     </p>
                 </div>
             </div>
-            <button
-                onclick={onClose}
-                aria-label={$t("common.close")}
-                class="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-brand-gold-200 text-brand-gold-600 transition-colors hover:bg-brand-gold-200/80 dark:bg-[#414559] dark:text-[#c6d0f5] dark:hover:bg-[#51576d]"
-            >
-                <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
-            </button>
+            <div class="flex shrink-0 items-center gap-1.5">
+                <!-- The Take-Home Message always runs on the Advanced model
+                     (Pro and Pro+ alike) — static badge, no toggle. -->
+                <span
+                    class="flex h-7 items-center gap-1 rounded-lg border border-brand-gold-400 bg-brand-gold-100 px-2.5 text-[0.625rem] font-semibold text-brand-gold-600 dark:bg-[#e5c890]/30 dark:text-[#e5c890]"
+                    title={$t("account.usage.advanced_takehome_note")}
+                >
+                    <Icon icon="solar:bolt-bold-duotone" width="0.65rem" />
+                    {$t("ai_chat.model_advanced")}
+                </span>
+                <button
+                    onclick={onClose}
+                    aria-label={$t("common.close")}
+                    class="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-brand-gold-200 text-brand-gold-600 transition-colors hover:bg-brand-gold-200/80 dark:bg-[#414559] dark:text-[#c6d0f5] dark:hover:bg-[#51576d]"
+                >
+                    <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
+                </button>
+            </div>
         </div>
 
         <!-- Body -->
         <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-            {#if !$isPro}
+            {#if view === "history"}
+                {#if historyLoading}
+                    <div class="flex items-center justify-center gap-2 py-12 text-brand-charcoal-300">
+                        <span
+                            class="h-4 w-4 rounded-full border-2 border-brand-gold-400 border-t-transparent animate-spin"
+                        ></span>
+                    </div>
+                {:else if !history.length}
+                    <div class="flex flex-col items-center gap-2 py-10 text-brand-charcoal-300 dark:text-[#838ba7]">
+                        <Icon icon="solar:history-bold-duotone" width="1.5rem" />
+                        <span class="text-xs">{$t("takehome.history_empty")}</span>
+                    </div>
+                {:else}
+                    <ul class="flex flex-col gap-2">
+                        {#each history as entry (entry.id)}
+                            {@const take = parseSections(entry.result).find(
+                                (s) => s.id === "take_home",
+                            )}
+                            <li
+                                class="group relative rounded-2xl border border-brand-sand-200 bg-brand-sand-50/50 dark:border-[#414559] dark:bg-[#292c3c] hover:border-brand-gold-300 dark:hover:border-[#e5c890]/40 transition-colors"
+                            >
+                                <button
+                                    onclick={() => openHistoryEntry(entry)}
+                                    class="cursor-pointer block w-full text-left px-4 py-3"
+                                >
+                                    <div class="mb-1.5 flex items-center gap-2 pr-11">
+                                        <span class="shrink-0 text-[0.625rem] font-semibold text-brand-gold-500">
+                                            {historyDayLabel(entry.created_at)}
+                                        </span>
+                                        <span class="truncate text-[0.6875rem] font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                            {entry.source_label}
+                                        </span>
+                                    </div>
+                                    <p class="text-[0.6875rem] leading-relaxed text-brand-charcoal-500 dark:text-[#a5adce] line-clamp-2">
+                                        {(take?.body || entry.result).trim()}
+                                    </p>
+                                </button>
+                                <div
+                                    class="absolute top-2 right-2 flex items-center gap-0.5 group-hover:opacity-100 transition-all {confirmDeleteId ===
+                                    entry.id
+                                        ? 'opacity-100'
+                                        : 'opacity-0'}"
+                                >
+                                    <button
+                                        onclick={() => copyHistoryEntry(entry)}
+                                        title={copiedId === entry.id
+                                            ? $t("verse_of_day.copied")
+                                            : $t("verse_of_day.copy_entry")}
+                                        class="cursor-pointer rounded-full p-1.5 text-brand-charcoal-300 hover:text-brand-gold-500 dark:text-[#838ba7] transition-colors"
+                                    >
+                                        <Icon
+                                            icon={copiedId === entry.id
+                                                ? "solar:check-circle-bold"
+                                                : "solar:copy-bold-duotone"}
+                                            width="0.85rem"
+                                        />
+                                    </button>
+                                    <button
+                                        onclick={() => removeHistoryEntry(entry.id)}
+                                        title={confirmDeleteId === entry.id
+                                            ? $t("verse_of_day.confirm_clear")
+                                            : $t("verse_of_day.delete_entry")}
+                                        class="cursor-pointer rounded-full p-1.5 transition-colors {confirmDeleteId ===
+                                        entry.id
+                                            ? 'bg-red-500 text-white hover:bg-red-600'
+                                            : 'text-brand-charcoal-300 hover:text-red-500 dark:text-[#838ba7]'}"
+                                    >
+                                        <Icon
+                                            icon={confirmDeleteId === entry.id
+                                                ? "solar:trash-bin-trash-bold"
+                                                : "solar:trash-bin-trash-linear"}
+                                            width="0.85rem"
+                                        />
+                                    </button>
+                                </div>
+                            </li>
+                        {/each}
+                    </ul>
+                {/if}
+
+                <!-- Storage footprint + export confirmation -->
+                <div class="mt-3 flex flex-col items-center gap-1 text-[0.625rem] text-brand-charcoal-300 dark:text-[#838ba7]">
+                    {#if storage}
+                        <span>
+                            {$t("verse_of_day.storage", {
+                                count: storage.entries,
+                                size: formatBytes(storage.bytes),
+                            })}
+                        </span>
+                    {/if}
+                    {#if exportedPath}
+                        <span class="flex items-center gap-1 text-brand-gold-500">
+                            <Icon icon="solar:check-circle-bold" width="0.8rem" />
+                            {$t("verse_of_day.exported_to", { path: exportedPath })}
+                        </span>
+                    {/if}
+                    {#if error}
+                        <span class="flex items-center gap-1 text-red-500">
+                            <Icon icon="solar:danger-circle-bold" width="0.8rem" />
+                            {error}
+                        </span>
+                    {/if}
+                </div>
+            {:else if !$isPro}
                 <!-- Pro upsell -->
                 <div class="flex flex-col items-center gap-3 py-8 text-center">
                     <div
@@ -726,46 +1033,97 @@
 
         <!-- Footer -->
         {#if $isPro}
-            <div
-                class="flex shrink-0 flex-col gap-2 border-t border-brand-sand-200 px-5 py-3 dark:border-[#414559]"
-            >
-                <div class="flex items-center justify-between gap-2">
-                    <!-- The Take-Home Message always runs on the Advanced
-                         model (Pro and Pro+ alike) — static badge, no toggle. -->
-                    <span
-                        class="flex items-center gap-1.5 rounded-full border border-brand-gold-400 bg-brand-gold-100 dark:bg-[#e5c890]/30 px-3 py-1 text-[0.6875rem] font-semibold text-brand-gold-600 dark:text-[#e5c890]"
-                        title={$t("account.usage.advanced_takehome_note")}
+            {#if view === "history"}
+                <div
+                    class="flex shrink-0 items-center justify-between gap-2 border-t border-brand-sand-200 px-5 py-3 dark:border-[#414559]"
+                >
+                    <button
+                        onclick={() => (view = "result")}
+                        class="cursor-pointer flex h-8 items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
                     >
-                        <Icon icon="solar:bolt-bold-duotone" width="0.7rem" />
-                        {$t("ai_chat.model_advanced")}
-                    </span>
-                    {#if result && !isStale}
+                        <Icon icon="solar:arrow-left-linear" width="0.7rem" />
+                        {$t("verse_of_day.back")}
+                    </button>
+                    <div class="flex items-center gap-2">
                         <button
-                            onclick={generate}
-                            disabled={loading}
-                            class="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
+                            onclick={exportHistoryCsv}
+                            disabled={!history.length}
+                            class="cursor-pointer flex h-8 items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] disabled:opacity-50 transition-colors"
                         >
-                            <Icon icon="solar:refresh-bold" width="0.8rem" />
-                            {$t("takehome.regenerate")}
+                            <Icon icon="solar:download-minimalistic-linear" width="0.7rem" />
+                            {$t("verse_of_day.export")}
                         </button>
-                    {:else}
                         <button
-                            onclick={generate}
-                            disabled={loading}
-                            class="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
+                            onclick={clearAllHistory}
+                            disabled={!history.length}
+                            class="cursor-pointer flex h-8 items-center gap-1.5 rounded-full border px-3 text-[0.6875rem] font-semibold disabled:opacity-50 transition-colors {confirmClear
+                                ? 'border-red-400 bg-red-500 text-white hover:bg-red-600'
+                                : 'border-brand-sand-200 bg-brand-sand-100 text-red-500 dark:border-[#414559] dark:bg-[#363a4f] hover:bg-brand-sand-200 dark:hover:bg-[#414559]'}"
                         >
-                            <Icon
-                                icon="solar:magic-stick-3-bold-duotone"
-                                width="0.85rem"
-                            />
-                            {$t("takehome.generate")}
+                            <Icon icon="solar:trash-bin-trash-linear" width="0.7rem" />
+                            {confirmClear
+                                ? $t("verse_of_day.confirm_clear")
+                                : $t("verse_of_day.clear")}
                         </button>
-                    {/if}
+                    </div>
                 </div>
-                <p class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#626880]">
-                    {$t("takehome.disclaimer")}
-                </p>
-            </div>
+            {:else}
+                <div
+                    class="flex shrink-0 flex-col gap-2 border-t border-brand-sand-200 px-5 py-3 dark:border-[#414559]"
+                >
+                    <!-- Secondary actions grouped on the left, the primary
+                         generate action alone on the right. -->
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5">
+                            <button
+                                onclick={openHistory}
+                                title={$t("takehome.history")}
+                                class="cursor-pointer flex h-8 items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
+                            >
+                                <Icon icon="solar:history-bold-duotone" width="0.8rem" />
+                                {$t("takehome.history")}
+                            </button>
+                            <button
+                                onclick={copyCurrent}
+                                disabled={!result}
+                                title={copiedCurrent
+                                    ? $t("verse_of_day.copied")
+                                    : $t("verse_of_day.copy_entry")}
+                                class="cursor-pointer flex h-8 items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] disabled:opacity-50 transition-colors"
+                            >
+                                <Icon
+                                    icon={copiedCurrent
+                                        ? "solar:check-circle-bold"
+                                        : "solar:copy-bold-duotone"}
+                                    width="0.8rem"
+                                />
+                                {copiedCurrent
+                                    ? $t("verse_of_day.copied")
+                                    : $t("verse_of_day.copy_entry")}
+                            </button>
+                        </div>
+                        <button
+                            onclick={generate}
+                            disabled={loading}
+                            class="flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-3.5 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
+                        >
+                            {#if result && !isStale}
+                                <Icon icon="solar:refresh-bold" width="0.8rem" />
+                                {$t("takehome.regenerate")}
+                            {:else}
+                                <Icon
+                                    icon="solar:magic-stick-3-bold-duotone"
+                                    width="0.85rem"
+                                />
+                                {$t("takehome.generate")}
+                            {/if}
+                        </button>
+                    </div>
+                    <p class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#626880]">
+                        {$t("takehome.disclaimer")}
+                    </p>
+                </div>
+            {/if}
         {/if}
     </div>
 {/if}

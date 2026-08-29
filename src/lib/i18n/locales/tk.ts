@@ -1078,6 +1078,8 @@ export const tk: Record<string, string> = {
   "takehome.quota_advanced": "Ösen modeliň kvotasy gutardy. Dowam etmek üçin standart modele geçiň.",
   "takehome.generate": "Döret",
   "takehome.stale": "Görkezilen aýatlar üýtgedi. Täze esasy habar döredilsinmi?",
+  "takehome.history": "Taryh",
+  "takehome.history_empty": "Entäk hiç bir düşünje ýazylmady.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "Günüň aýaty",
   "verse_of_day.loading": "Şu günki aýat ýüklenýär…",
@@ -1092,6 +1094,8 @@ export const tk: Record<string, string> = {
   "verse_of_day.clear": "Hemmesini arassalamak",
   "verse_of_day.confirm_clear": "Tassyklamak üçin ýene basyň",
   "verse_of_day.storage": "{count} ýazgy · maglumat bazaňyzda ~{size}",
+  "verse_of_day.copy_entry": "Göçürmek",
+  "verse_of_day.copied": "Göçürildi!",
   "insert.drawing": "Çyzgy",
   "lean.prompt.title": "Lean 4 gurnalmadyk",
   "lean.prompt.desc": "Lean kodyny kompilirlemek üçin Lean 4 gural toplumy gerek. Ony häzir gurnaň — ol elan arkaly şu programmanyň öz bukjasyna ýüklenýär — ýa-da ulgamyňyzda eýýäm bar bolsa, Sazlamalarda öz ýoluňyzy görkeziň.",

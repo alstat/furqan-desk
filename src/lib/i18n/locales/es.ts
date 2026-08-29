@@ -1086,6 +1086,8 @@ export const es: Record<string, string> = {
   "takehome.quota_advanced": "Tu cuota del modelo avanzado se ha agotado. Cambia al modelo estándar para continuar.",
   "takehome.generate": "Generar",
   "takehome.stale": "Los versículos mostrados han cambiado. ¿Generar un nuevo mensaje principal?",
+  "takehome.history": "Historial",
+  "takehome.history_empty": "Aún no se han registrado reflexiones.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "Versículo del día",
   "verse_of_day.loading": "Cargando el versículo de hoy…",
@@ -1100,6 +1102,8 @@ export const es: Record<string, string> = {
   "verse_of_day.clear": "Borrar todo",
   "verse_of_day.confirm_clear": "Haga clic de nuevo para confirmar",
   "verse_of_day.storage": "{count} entradas · ~{size} en su base de datos",
+  "verse_of_day.copy_entry": "Copiar",
+  "verse_of_day.copied": "¡Copiado!",
   "insert.drawing": "Dibujo",
   "lean.prompt.title": "Lean 4 no está instalado",
   "lean.prompt.desc": "Compilar código Lean requiere la cadena de herramientas de Lean 4. Instálela ahora — se descarga mediante elan en la carpeta propia de esta aplicación — o indique una ruta personalizada en Ajustes si ya la tiene en su sistema.",

@@ -1025,6 +1025,8 @@ export const pa: Record<string, string> = {
   "takehome.quota_advanced": "ਤੁਹਾਡੇ ਐਡਵਾਂਸਡ ਮਾਡਲ ਦਾ ਕੋਟਾ ਖਤਮ ਹੋ ਗਿਆ ਹੈ। ਜਾਰੀ ਰੱਖਣ ਲਈ ਸਟੈਂਡਰਡ ਮਾਡਲ 'ਤੇ ਸਵਿਚ ਕਰੋ।",
   "takehome.generate": "ਬਣਾਓ",
   "takehome.stale": "ਦਿਖਾਈਆਂ ਆਇਤਾਂ ਬਦਲ ਗਈਆਂ ਹਨ। ਨਵਾਂ ਮੁੱਖ ਸੁਨੇਹਾ ਬਣਾਈਏ?",
+  "takehome.history": "ਇਤਿਹਾਸ",
+  "takehome.history_empty": "ਅਜੇ ਤੱਕ ਕੋਈ ਪ੍ਰਤੀਬਿੰਬ ਦਰਜ ਨਹੀਂ ਕੀਤਾ ਗਿਆ।",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "ਅੱਜ ਦੀ ਆਇਤ",
   "verse_of_day.loading": "ਅੱਜ ਦੀ ਆਇਤ ਲੋਡ ਹੋ ਰਹੀ ਹੈ…",
@@ -1039,6 +1041,8 @@ export const pa: Record<string, string> = {
   "verse_of_day.clear": "ਸਭ ਮਿਟਾਓ",
   "verse_of_day.confirm_clear": "ਪੁਸ਼ਟੀ ਲਈ ਦੁਬਾਰਾ ਕਲਿੱਕ ਕਰੋ",
   "verse_of_day.storage": "{count} ਐਂਟਰੀਆਂ · ਤੁਹਾਡੇ ਡਾਟਾਬੇਸ ਵਿੱਚ ~{size}",
+  "verse_of_day.copy_entry": "ਕਾਪੀ ਕਰੋ",
+  "verse_of_day.copied": "ਕਾਪੀ ਹੋ ਗਿਆ!",
   "insert.drawing": "ਡਰਾਇੰਗ",
   "lean.prompt.title": "Lean 4 ਇੰਸਟਾਲ ਨਹੀਂ ਹੈ",
   "lean.prompt.desc": "Lean ਕੋਡ ਕੰਪਾਈਲ ਕਰਨ ਲਈ Lean 4 ਟੂਲਚੇਨ ਚਾਹੀਦੀ ਹੈ। ਇਸਨੂੰ ਹੁਣੇ ਇੰਸਟਾਲ ਕਰੋ — ਇਹ elan ਰਾਹੀਂ ਇਸ ਐਪ ਦੇ ਆਪਣੇ ਫੋਲਡਰ ਵਿੱਚ ਡਾਊਨਲੋਡ ਹੁੰਦੀ ਹੈ — ਜਾਂ ਜੇ ਇਹ ਪਹਿਲਾਂ ਹੀ ਤੁਹਾਡੇ ਸਿਸਟਮ ’ਤੇ ਹੈ ਤਾਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਆਪਣਾ ਰਾਹ ਦੱਸੋ।",
