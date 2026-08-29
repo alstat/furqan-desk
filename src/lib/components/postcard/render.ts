@@ -10,7 +10,8 @@
  * strip.
  */
 
-import type { BlendMode, GradientDirection } from "./patterns";
+import { drawCardFrame } from "./patterns";
+import type { BlendMode, FrameStyle, GradientDirection } from "./patterns";
 
 export interface ShadowOptions {
     on: boolean;
@@ -55,7 +56,7 @@ export interface PostcardOptions {
 
     /** Margin as a percentage of the card's shorter edge. */
     padPct: number;
-    borderOn: boolean;
+    frameStyle: FrameStyle;
     signatureText: string;
     /** The AyahLab mark; falls back to a drawn star while it is still loading. */
     signatureIcon: CanvasImageSource | null;
@@ -413,52 +414,6 @@ function paintGradient(
  * the `star8` tile is built from, which keeps the frame in the same visual
  * family as the patterns offered for the background.
  */
-function drawFrame(
-    ctx: CanvasRenderingContext2D,
-    x0: number,
-    y0: number,
-    x1: number,
-    y1: number,
-    r: number,
-    lineWidth: number,
-    color: string,
-) {
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = lineWidth;
-    ctx.lineJoin = "miter";
-
-    ctx.beginPath();
-    ctx.moveTo(x0 + r, y0);
-    ctx.lineTo(x1 - r, y0);
-    ctx.moveTo(x1, y0 + r);
-    ctx.lineTo(x1, y1 - r);
-    ctx.moveTo(x1 - r, y1);
-    ctx.lineTo(x0 + r, y1);
-    ctx.moveTo(x0, y1 - r);
-    ctx.lineTo(x0, y0 + r);
-    ctx.stroke();
-
-    const corners: Array<[number, number]> = [
-        [x0, y0],
-        [x1, y0],
-        [x1, y1],
-        [x0, y1],
-    ];
-    for (const [cx, cy] of corners) {
-        for (const rr of [r, r * 0.5]) {
-            ctx.beginPath();
-            ctx.moveTo(cx, cy - rr);
-            ctx.lineTo(cx + rr, cy);
-            ctx.lineTo(cx, cy + rr);
-            ctx.lineTo(cx - rr, cy);
-            ctx.closePath();
-            ctx.stroke();
-        }
-    }
-    ctx.restore();
-}
-
 /** Fallback signature mark while the app icon is still loading. */
 function drawMark(
     ctx: CanvasRenderingContext2D,
@@ -646,10 +601,10 @@ export function renderPostcard(
     }
     clearShadow(ctx);
 
-    // 5 — hairline frame with ornamented corners
-    if (o.borderOn) {
+    // 5 — the card frame
+    if (o.frameStyle !== "none") {
         const inset = pad * 0.5;
-        // Keep the medallion inside the canvas at tight margins, and small
+        // Keep the corner motif inside the canvas at tight margins, and small
         // enough that the four of them never crowd out the edge between them.
         const r = Math.min(
             Math.min(W, H) * 0.022,
@@ -657,15 +612,16 @@ export function renderPostcard(
             (W - inset * 2) / 6,
             (H - inset * 2) / 6,
         );
-        drawFrame(
+        drawCardFrame(
             ctx,
+            o.frameStyle,
             inset,
             inset,
             W - inset,
             H - inset,
-            r,
             Math.max(1.5, Math.min(W, H) * 0.0018),
             hexToRgba(o.arabicColor, 0.32),
+            r,
         );
     }
 
