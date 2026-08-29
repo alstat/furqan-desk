@@ -130,7 +130,7 @@
         {
             id: "paraphrase",
             labelKey: "ai_selection.paraphrase",
-            icon: "fa:refresh",
+            icon: "reicon:refresh-square-duotone",
         },
         {
             id: "elaborate",
