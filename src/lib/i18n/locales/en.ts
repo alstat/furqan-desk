@@ -438,7 +438,7 @@ export const en: Record<string, string> = {
   "insert.code_block": "Block",
   // Donation
   "donation.title": "Support AyahLab",
-  "donation.subtitle": "Keep the app free",
+  "donation.subtitle": "Free forever — help keep it growing",
   "donation.kofi": "Donate on Ko-fi →",
   "donation.scan": "Scan with {app} app",
   "donation.kofi_methods": "Supports PayPal, credit & debit cards",

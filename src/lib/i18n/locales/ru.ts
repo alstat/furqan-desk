@@ -310,7 +310,7 @@ export const ru: Record<string, string> = {
   "insert.code_inline": 'Строчный',
   "insert.code_block": 'Блок',
   "donation.title": 'Поддержать AyahLab',
-  "donation.subtitle": 'Сохранить приложение бесплатным',
+  "donation.subtitle": "Навсегда бесплатно — поддержите развитие",
   "donation.kofi": 'Пожертвовать на Ko-fi →',
   "donation.scan": 'Сканировать приложением {app}',
   "donation.kofi_methods": 'Поддерживает PayPal, кредитные и дебетовые карты',

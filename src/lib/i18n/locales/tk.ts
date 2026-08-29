@@ -334,7 +334,7 @@ export const tk: Record<string, string> = {
   "insert.code_block": "Blok",
   // Donation
   "donation.title": "AyahLab-y goldamak",
-  "donation.subtitle": "Programmany mugt saklamak",
+  "donation.subtitle": "Hemişe mugt — ösmegine kömek ediň",
   "donation.kofi": "Ko-fi-de bagyş etmek →",
   "donation.scan": "{app} programmasy bilen skanirlemek",
   "donation.kofi_methods": "PayPal, kredit we debit kartlaryny goldaýar",

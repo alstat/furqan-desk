@@ -334,7 +334,7 @@ export const uz: Record<string, string> = {
   "insert.code_block": "Blok",
   // Donation
   "donation.title": "AyahLabni qo'llab-quvvatlash",
-  "donation.subtitle": "Ilovani bepul saqlash",
+  "donation.subtitle": "Abadiy bepul — rivojlanishiga yordam bering",
   "donation.kofi": "Ko-fi da xayriya qilish →",
   "donation.scan": "{app} ilovasi bilan skanerlash",
   "donation.kofi_methods": "PayPal, kredit va debit kartalarni qo'llab-quvvatlaydi",

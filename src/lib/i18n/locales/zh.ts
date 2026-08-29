@@ -310,7 +310,7 @@ export const zh: Record<string, string> = {
   "insert.code_inline": '行内',
   "insert.code_block": '块',
   "donation.title": '支持 AyahLab',
-  "donation.subtitle": '让应用保持免费',
+  "donation.subtitle": "永久免费 — 助它持续成长",
   "donation.kofi": '在 Ko-fi 上捐款 →',
   "donation.scan": '用 {app} 扫描',
   "donation.kofi_methods": '支持 PayPal、信用卡和借记卡',

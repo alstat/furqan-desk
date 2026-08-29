@@ -266,7 +266,7 @@ export const sq: Record<string, string> = {
   "insert.code_inline": "Inline",
   "insert.code_block": "Blloko",
   "donation.title": "Mbështetni AyahLab",
-  "donation.subtitle": "Mbajeni aplikacionin falas",
+  "donation.subtitle": "Falas përgjithmonë — ndihmoni ta rritet",
   "donation.kofi": "Dhuroni në Ko-fi →",
   "donation.scan": "Skanoni me aplikacionin {app}",
   "donation.kofi_methods": "Mbështet PayPal, kartat e kreditit dhe të debitit",

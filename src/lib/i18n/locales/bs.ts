@@ -266,7 +266,7 @@ export const bs: Record<string, string> = {
   "insert.code_inline": "Inline",
   "insert.code_block": "Blokiraj",
   "donation.title": "Podržite AyahLab",
-  "donation.subtitle": "Neka aplikacija bude besplatna",
+  "donation.subtitle": "Zauvijek besplatan — pomozite mu da raste",
   "donation.kofi": "Donirajte na Ko-fi →",
   "donation.scan": "Skenirajte pomoću aplikacije {app}",
   "donation.kofi_methods": "Podržava PayPal, kreditne i debitne kartice",

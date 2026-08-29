@@ -310,7 +310,7 @@ export const ur: Record<string, string> = {
   "insert.code_inline": 'ان لائن',
   "insert.code_block": 'بلاک',
   "donation.title": 'AyahLab کی مدد کریں',
-  "donation.subtitle": 'ایپ کو مفت رکھیں',
+  "donation.subtitle": "ہمیشہ مفت — اسے بڑھنے میں مدد کریں",
   "donation.kofi": 'Ko-fi پر عطیہ دیں →',
   "donation.scan": '{app} ایپ سے اسکین کریں',
   "donation.kofi_methods": 'PayPal، کریڈٹ اور ڈیبٹ کارڈز کو سپورٹ کرتا ہے',

@@ -334,7 +334,7 @@ export const th: Record<string, string> = {
   "insert.code_block": "บล็อก",
   // Donation
   "donation.title": "สนับสนุน AyahLab",
-  "donation.subtitle": "ช่วยให้แอปฟรี",
+  "donation.subtitle": "ฟรีตลอดไป — ช่วยให้เติบโตต่อไป",
   "donation.kofi": "บริจาคบน Ko-fi →",
   "donation.scan": "สแกนด้วยแอป {app}",
   "donation.kofi_methods": "รองรับ PayPal บัตรเครดิต & บัตรเดบิต",

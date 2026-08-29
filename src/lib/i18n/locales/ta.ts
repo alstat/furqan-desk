@@ -266,7 +266,7 @@ export const ta: Record<string, string> = {
   "insert.code_inline": "இன்லைன்",
   "insert.code_block": "தடு",
   "donation.title": "AyahLab ஐ ஆதரிக்கவும்",
-  "donation.subtitle": "ஆப்ஸை இலவசமாக வைத்திருங்கள்",
+  "donation.subtitle": "எப்போதும் இலவசம் — வளர உதவுங்கள்",
   "donation.kofi": "Ko-fi → இல் நன்கொடை அளியுங்கள்",
   "donation.scan": "{app} ஆப் மூலம் ஸ்கேன் செய்யவும்",
   "donation.kofi_methods": "பேபால், கிரெடிட் & டெபிட் கார்டுகளை ஆதரிக்கிறது",
