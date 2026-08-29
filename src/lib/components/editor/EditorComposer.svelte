@@ -149,6 +149,72 @@
             if (frame !== null) cancelAnimationFrame(frame);
         };
     });
+
+    // The spelling dock's `bottom-0 right-4` used to be relative to
+    // `.editor-shell` itself, which has no height cap of its own — nothing
+    // stops its content (toolbar + document) from rendering taller than the
+    // space its flex-1 parent (Sidebar.svelte) actually granted it. On Linux
+    // that happens routinely: the CSD font stack (`html.linux-csd`, see
+    // app.css) swaps in "Ubuntu", whose metrics run a little taller than the
+    // system fonts Windows/macOS use, so editor-shell overflows its pane by a
+    // few px — more as the UI scale grows the mismatch. `.app-shell`'s
+    // `overflow-hidden` then clips whatever crosses its edge, dock included,
+    // since the dock is pinned to editor-shell's own (now out-of-bounds)
+    // bottom edge. Measuring against `.app-shell`'s own rect instead — and
+    // switching to `fixed`, which already anchors to that rect via its
+    // `translateZ(0)` containing-block trick on Linux CSD (see app.css) —
+    // keeps the dock inside the visible frame regardless of why editor-shell
+    // overflowed. Off Linux .app-shell has no transform, so `fixed` there
+    // resolves against the real viewport, which is exactly what app-shell's
+    // own rect equals there (no CSD margin) — same formula, no branching.
+    let dockRight = $state(16);
+    let dockBottom = $state(0);
+
+    $effect(() => {
+        const el = editorShell;
+        if (!el || typeof ResizeObserver === "undefined") return;
+
+        let frame: number | null = null;
+        const measure = () => {
+            frame = null;
+            const shellRect = el.getBoundingClientRect();
+            const clip = el
+                .closest<HTMLElement>(".app-shell")
+                ?.getBoundingClientRect();
+            const cbRight = clip?.right ?? window.innerWidth;
+            const cbBottom = clip?.bottom ?? window.innerHeight;
+            const remPx =
+                parseFloat(getComputedStyle(document.documentElement).fontSize) ||
+                16;
+            // Half a rem mirrors editor-shell's own `p-2`: CSS positions an
+            // absolutely-positioned child against its containing block's
+            // *padding* box, so the original `bottom-0` never actually sat
+            // flush against editor-shell's outer edge either. Reapplying that
+            // same gap against the clamp boundary keeps the clamped case
+            // visually consistent with the normal one, instead of the dock
+            // jumping to sit flush against .app-shell's rounded corner.
+            const bottomInset = remPx * 0.5;
+            const rightEdge = shellRect.right - remPx;
+            const naturalBottomY = shellRect.bottom - bottomInset;
+            const safeBottomY = cbBottom - bottomInset;
+            const bottomY = Math.min(naturalBottomY, safeBottomY);
+            dockRight = Math.max(remPx, cbRight - rightEdge);
+            dockBottom = Math.max(bottomInset, cbBottom - bottomY);
+        };
+        const observer = new ResizeObserver(() => {
+            if (frame === null) frame = requestAnimationFrame(measure);
+        });
+        observer.observe(el);
+        const shell = el.closest<HTMLElement>(".app-shell");
+        if (shell) observer.observe(shell);
+        measure();
+
+        return () => {
+            observer.disconnect();
+            if (frame !== null) cancelAnimationFrame(frame);
+        };
+    });
+
     let contentScroller: HTMLElement | null = null;
     let scrollCleanup: (() => void) | null = null;
 
@@ -426,11 +492,12 @@
              the pointer has usually left the dock by then (that is what opening
              a menu and reaching for it does). -->
         <div
-            class="absolute bottom-0 right-4 z-20 transition-opacity duration-200 hover:opacity-100 {spellMenuOpen
+            class="fixed z-20 transition-opacity duration-200 hover:opacity-100 {spellMenuOpen
                 ? 'opacity-100'
                 : $zenMode
                   ? 'opacity-0'
                   : 'opacity-35'}"
+            style="right: {dockRight}px; bottom: {dockBottom}px;"
         >
             <SpellLanguageSelector up={true} bind:open={spellMenuOpen} />
         </div>
