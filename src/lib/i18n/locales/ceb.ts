@@ -566,12 +566,7 @@ export const ceb: Record<string, string> = {
   "manuscript.select": "Pagpili og manuskrito aron tan-awon",
   "manuscript.downloading": "Nagda-download…",
   "manuscript.download": "I-download",
-  "manuscript.inserting": "Nagsal-ot…",
-  "manuscript.insert": "Isal-ot sa Lexical",
-  "manuscript.insert_tooltip": "Isal-ot ang imahe sa editor",
-  "manuscript.no_editor": "Ablihi una ang Lexical document tab",
   // Morphology popover
-  "morphology.insert_to_lexical": "Isal-ot ang morphology sa Lexical editor",
   "morphology.buckwalter_help": "Hibal-i ang Buckwalter transliteration",
   // Morphology — feature labels
   "morphology.feat.root":   "Gamot",

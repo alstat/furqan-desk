@@ -13,13 +13,8 @@
     import { headerBottom } from "$lib/stores/header.store";
     import { t, locale } from "$lib/i18n";
     import { get } from "svelte/store";
-    import { lexicalEditorInstance } from "$lib/stores/editor.store";
+    import { copyToClipboard } from "$lib/utils/clipboard";
     import DialogPanelHeader from "$lib/components/shared/DialogPanelHeader.svelte";
-    import {
-        $createParagraphNode as createParagraphNode,
-        $createTextNode as createTextNode,
-        $insertNodes as insertNodes,
-    } from "lexical";
 
     interface Props {
         open: boolean;
@@ -33,7 +28,8 @@
     }
     let { open, onClose, anchor = null }: Props = $props();
 
-    let insertingId = $state<number | null>(null);
+    // Id of the highlight whose "copied" checkmark is currently showing.
+    let copiedId = $state<number | null>(null);
 
     $effect(() => {
         if (open) loadHighlights();
@@ -48,25 +44,18 @@
         pendingJumpAyah.set(ayah);
     }
 
-    function insertHighlightToLexical(hl: (typeof $highlights)[0]) {
-        const editor = get(lexicalEditorInstance);
-        if (!editor) return;
-        insertingId = hl.id;
+    // Same shape the editor insert used to produce: Arabic, the note when there
+    // is one, then the reference line.
+    async function copyHighlight(hl: (typeof $highlights)[0]) {
         const label = `${surahName(hl.surah)} · ${get(t)("bookmark.ayah")} ${hl.ayah}`;
-        editor.update(() => {
-            const arabicPara = createParagraphNode();
-            arabicPara.append(createTextNode(hl.text));
-            const attrPara = createParagraphNode();
-            attrPara.append(createTextNode(label));
-            if (hl.note) {
-                const notePara = createParagraphNode();
-                notePara.append(createTextNode(hl.note));
-                insertNodes([arabicPara, notePara, attrPara]);
-            } else {
-                insertNodes([arabicPara, attrPara]);
-            }
-        });
-        insertingId = null;
+        const lines = [hl.text];
+        if (hl.note) lines.push(hl.note);
+        lines.push(label);
+        if (!(await copyToClipboard(lines.join("\n")))) return;
+        copiedId = hl.id;
+        setTimeout(() => {
+            if (copiedId === hl.id) copiedId = null;
+        }, 1500);
     }
 
     // ── Drag ────────────────────────────────────────────────────────────────
@@ -232,19 +221,21 @@
                                         {$t("bookmark.go")}
                                     </button>
                                     <button
-                                        onclick={() =>
-                                            insertHighlightToLexical(hl)}
-                                        disabled={!$lexicalEditorInstance}
-                                        title={!$lexicalEditorInstance
-                                            ? $t("manuscript.no_editor")
-                                            : $t("manuscript.insert_tooltip")}
-                                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        onclick={() => copyHighlight(hl)}
+                                        title={copiedId === hl.id
+                                            ? $t("verse_of_day.copied")
+                                            : $t("verse_of_day.copy_entry")}
+                                        class="cursor-pointer flex items-center gap-1 rounded-full bg-brand-gold-400 dark:bg-brand-gold-600 px-3 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 dark:hover:bg-brand-gold-500 active:bg-brand-gold-600/90 transition-colors"
                                     >
                                         <Icon
-                                            icon="solar:pen-new-square-bold"
+                                            icon={copiedId === hl.id
+                                                ? "solar:check-circle-bold"
+                                                : "solar:copy-bold-duotone"}
                                             width="0.7rem"
                                         />
-                                        {$t("manuscript.insert")}
+                                        {copiedId === hl.id
+                                            ? $t("verse_of_day.copied")
+                                            : $t("verse_of_day.copy_entry")}
                                     </button>
                                     <button
                                         onclick={() => deleteHighlight(hl.id)}

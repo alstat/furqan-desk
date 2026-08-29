@@ -25,7 +25,6 @@
     import {
         zenMode,
         zenPeek,
-        lexicalEditorInstance,
         tafsirFontFamily,
         tafsirFontSize,
         tafsirLineSpacing,
@@ -33,8 +32,6 @@
         translationFontSize,
         translationLineSpacing,
     } from "$lib/stores/editor.store";
-    import { get } from 'svelte/store';
-    import { $createParagraphNode as createParagraphNode, $createTextNode as createTextNode, $insertNodes as insertNodes } from 'lexical';
     import { getSurahNameTashkeel } from '$lib/data/surah-names-tashkeel';
     import { cachedSurahText } from '$lib/stores/surah-cache';
 
@@ -273,26 +270,39 @@
         return () => { if (renderRafId !== null) { cancelAnimationFrame(renderRafId); renderRafId = null; } };
     });
 
+    // Every word's class attribute calls this, and each of those is its own
+    // effect subscribed to `selectedWord` — so one click re-runs it for every
+    // word on screen (al-Baqarah is ~6,000). The table is hoisted out of the
+    // function so a render pass stops allocating one object per word, and the
+    // answer is memoized per word: token lists come from the read-only cached
+    // morphology and never change, so a word's colour is computed once.
+    const WORD_COLORS: Record<string, string> = {
+        N: "hover:bg-blue-100 dark:hover:bg-blue-800/40",
+        V: "hover:bg-green-100 dark:hover:bg-green-800/40",
+        P: "hover:bg-purple-100 dark:hover:bg-purple-800/40",
+        PN: "hover:bg-indigo-100 dark:hover:bg-indigo-800/40",
+        ADJ: "hover:bg-yellow-100 dark:hover:bg-yellow-800/40",
+        DET: "hover:bg-gray-100 dark:hover:bg-gray-600/40",
+        PRON: "hover:bg-pink-100 dark:hover:bg-pink-800/40",
+        REL: "hover:bg-pink-100 dark:hover:bg-pink-800/40",
+        DEM: "hover:bg-pink-100 dark:hover:bg-pink-800/40",
+        CONJ: "hover:bg-orange-100 dark:hover:bg-orange-800/40",
+        NEG: "hover:bg-red-100 dark:hover:bg-red-800/40",
+    };
+    const DEFAULT_WORD_COLOR = "hover:bg-slate-100 dark:hover:bg-slate-600/40";
+    const wordColorCache = new WeakMap<MorphWord, string>();
+
     function getWordColor(word: MorphWord): string {
+        const cached = wordColorCache.get(word);
+        if (cached !== undefined) return cached;
+
         const stemToken = word.tokens.find(
             (t) => !t.features.prefix_type && !t.features.suffix_type,
         );
         const tag = stemToken?.tag || word.tokens[0]?.tag || "N";
-
-        const colors: Record<string, string> = {
-            N: "hover:bg-blue-100 dark:hover:bg-blue-800/40",
-            V: "hover:bg-green-100 dark:hover:bg-green-800/40",
-            P: "hover:bg-purple-100 dark:hover:bg-purple-800/40",
-            PN: "hover:bg-indigo-100 dark:hover:bg-indigo-800/40",
-            ADJ: "hover:bg-yellow-100 dark:hover:bg-yellow-800/40",
-            DET: "hover:bg-gray-100 dark:hover:bg-gray-600/40",
-            PRON: "hover:bg-pink-100 dark:hover:bg-pink-800/40",
-            REL: "hover:bg-pink-100 dark:hover:bg-pink-800/40",
-            DEM: "hover:bg-pink-100 dark:hover:bg-pink-800/40",
-            CONJ: "hover:bg-orange-100 dark:hover:bg-orange-800/40",
-            NEG: "hover:bg-red-100 dark:hover:bg-red-800/40",
-        };
-        return colors[tag] || "hover:bg-slate-100 dark:hover:bg-slate-600/40";
+        const color = WORD_COLORS[tag] || DEFAULT_WORD_COLOR;
+        wordColorCache.set(word, color);
+        return color;
     }
 
     const POPOVER_WIDTH = 352;  // w-[22rem]
@@ -343,60 +353,6 @@
         if (aiPromptOpen && !clickedElement.closest('[data-ai-ayah-prompt]')) {
             closeAiPrompt();
         }
-    }
-
-    function insertAyahToLexical(
-        surah: number,
-        ayahNum: number,
-        words: MorphWord[],
-        translitMap: Map<number, string> | null | undefined,
-        transMap: Map<number, AyahTranslation> | null | undefined,
-        wbwMap: Map<string, string> | null | undefined,
-    ) {
-        const editor = get(lexicalEditorInstance);
-        if (!editor) return;
-
-        const arabicText = words.map(w => w.combined_arabic).join(' ');
-        const surahNameText = getSurahNameTashkeel(surah) || ($surahLabels[surah - 1]?.en ?? `Surah ${surah}`);
-        const label = `${surahNameText} · Ayah ${ayahNum}`;
-
-        editor.update(() => {
-            const paras = [];
-
-            const arabicPara = createParagraphNode();
-            arabicPara.append(createTextNode(arabicText));
-            paras.push(arabicPara);
-
-            if (translitMap?.has(ayahNum)) {
-                const p = createParagraphNode();
-                p.append(createTextNode(translitMap.get(ayahNum)!));
-                paras.push(p);
-            }
-
-            if (transMap?.has(ayahNum)) {
-                const p = createParagraphNode();
-                p.append(createTextNode(transMap.get(ayahNum)!.text));
-                paras.push(p);
-            }
-
-            if (wbwMap) {
-                const wbwText = words
-                    .map(w => {
-                        const tr = wbwMap.get(`${ayahNum}:${w.word}`);
-                        return tr ? `${w.combined_arabic} (${tr})` : w.combined_arabic;
-                    })
-                    .join(' · ');
-                const p = createParagraphNode();
-                p.append(createTextNode(wbwText));
-                paras.push(p);
-            }
-
-            const labelPara = createParagraphNode();
-            labelPara.append(createTextNode(label));
-            paras.push(labelPara);
-
-            insertNodes(paras);
-        });
     }
 
     // --- AI prompt for an ayah (Pro) ---

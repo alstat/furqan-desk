@@ -566,12 +566,7 @@ export const vi: Record<string, string> = {
   "manuscript.select": "Chọn bản thảo để xem",
   "manuscript.downloading": "Đang tải xuống…",
   "manuscript.download": "Tải xuống",
-  "manuscript.inserting": "Đang chèn…",
-  "manuscript.insert": "Chèn vào Lexical",
-  "manuscript.insert_tooltip": "Chèn hình ảnh vào trình soạn thảo",
-  "manuscript.no_editor": "Mở một tab tài liệu Lexical trước",
   // Morphology popover
-  "morphology.insert_to_lexical": "Chèn hình thái học vào trình soạn thảo Lexical",
   "morphology.buckwalter_help": "Tìm hiểu về phiên âm Buckwalter",
   // Morphology — feature labels
   "morphology.feat.root":   "Gốc từ",

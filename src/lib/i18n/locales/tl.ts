@@ -575,12 +575,7 @@ export const tl: Record<string, string> = {
   "manuscript.select": "Pumili ng manuskrito upang tingnan",
   "manuscript.downloading": "Dina-download…",
   "manuscript.download": "I-download",
-  "manuscript.inserting": "Ipinapasok…",
-  "manuscript.insert": "Ipasok sa Lexical",
-  "manuscript.insert_tooltip": "Ipasok ang larawan sa editor",
-  "manuscript.no_editor": "Buksan muna ang tab ng dokumento ng Lexical",
   // Morphology popover
-  "morphology.insert_to_lexical": "Ipasok ang morpolohiya sa Lexical editor",
   "morphology.buckwalter_help": "Alamin ang tungkol sa Buckwalter transliteration",
   // Morphology — feature labels
   "morphology.feat.root":   "Ugat",
