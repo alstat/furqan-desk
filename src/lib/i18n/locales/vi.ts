@@ -1078,6 +1078,8 @@ export const vi: Record<string, string> = {
   "takehome.quota_advanced": "Hạn mức mô hình nâng cao của bạn đã hết. Chuyển sang mô hình tiêu chuẩn để tiếp tục.",
   "takehome.generate": "Tạo",
   "takehome.stale": "Các câu hiển thị đã thay đổi. Tạo thông điệp cốt lõi mới?",
+  "takehome.history": "Lịch sử",
+  "takehome.history_empty": "Chưa có suy ngẫm nào được ghi lại.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "Câu kinh trong ngày",
   "verse_of_day.loading": "Đang tải câu kinh hôm nay…",
@@ -1092,6 +1094,8 @@ export const vi: Record<string, string> = {
   "verse_of_day.clear": "Xóa tất cả",
   "verse_of_day.confirm_clear": "Nhấp lại để xác nhận",
   "verse_of_day.storage": "{count} mục · ~{size} trong cơ sở dữ liệu của bạn",
+  "verse_of_day.copy_entry": "Sao chép",
+  "verse_of_day.copied": "Đã sao chép!",
   "insert.drawing": "Bản vẽ",
   "lean.prompt.title": "Lean 4 chưa được cài đặt",
   "lean.prompt.desc": "Việc biên dịch mã Lean cần bộ công cụ Lean 4. Hãy cài đặt ngay — nó được tải qua elan vào thư mục riêng của ứng dụng này — hoặc đặt đường dẫn tùy chỉnh trong Cài đặt nếu máy bạn đã có.",

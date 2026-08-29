@@ -1087,6 +1087,8 @@ export const tl: Record<string, string> = {
   "takehome.quota_advanced": "Naubos na ang iyong quota para sa advanced na modelo. Lumipat sa standard na modelo para magpatuloy.",
   "takehome.generate": "Bumuo",
   "takehome.stale": "Nagbago ang mga ipinapakitang talata. Bumuo ng bagong pangunahing mensahe?",
+  "takehome.history": "Kasaysayan",
+  "takehome.history_empty": "Wala pang naitalang mga pagninilay.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "Talata ng Araw",
   "verse_of_day.loading": "Nilo-load ang talata ngayong araw…",
@@ -1101,6 +1103,8 @@ export const tl: Record<string, string> = {
   "verse_of_day.clear": "Burahin lahat",
   "verse_of_day.confirm_clear": "I-click ulit para kumpirmahin",
   "verse_of_day.storage": "{count} entry · ~{size} sa iyong database",
+  "verse_of_day.copy_entry": "Kopyahin",
+  "verse_of_day.copied": "Nakopya!",
   "insert.drawing": "Drowing",
   "lean.prompt.title": "Hindi naka-install ang Lean 4",
   "lean.prompt.desc": "Kailangan ng Lean 4 toolchain upang mag-compile ng Lean code. I-install ito ngayon — dina-download ito sa pamamagitan ng elan papunta sa sariling folder ng app na ito — o magtakda ng custom na path sa Mga Setting kung nasa sistema mo na ito.",

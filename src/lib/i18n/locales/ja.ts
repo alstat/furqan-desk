@@ -1083,6 +1083,8 @@ export const ja: Record<string, string> = {
   "takehome.quota_advanced": "高度なモデルの利用枠を使い切りました。続けるには標準モデルに切り替えてください。",
   "takehome.generate": "生成",
   "takehome.stale": "表示中の章句が変わりました。新しいメッセージを生成しますか？",
+  "takehome.history": "履歴",
+  "takehome.history_empty": "まだ記録された振り返りはありません。",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "今日の一節",
   "verse_of_day.loading": "今日の一節を読み込み中…",
@@ -1097,6 +1099,8 @@ export const ja: Record<string, string> = {
   "verse_of_day.clear": "すべて消去",
   "verse_of_day.confirm_clear": "確認するにはもう一度クリックしてください",
   "verse_of_day.storage": "{count} 件 · データベース内 約 {size}",
+  "verse_of_day.copy_entry": "コピー",
+  "verse_of_day.copied": "コピーしました！",
   "insert.drawing": "図形",
   "lean.prompt.title": "Lean 4 がインストールされていません",
   "lean.prompt.desc": "Lean コードのコンパイルには Lean 4 ツールチェーンが必要です。今すぐインストールしてください（elan 経由でこのアプリ専用のフォルダーにダウンロードされます）。すでにシステムにある場合は設定でパスを指定してください。",

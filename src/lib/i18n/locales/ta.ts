@@ -1025,6 +1025,8 @@ export const ta: Record<string, string> = {
   "takehome.quota_advanced": "உங்கள் மேம்பட்ட மாதிரியின் ஒதுக்கீடு தீர்ந்துவிட்டது. தொடர நிலையான மாதிரிக்கு மாறவும்.",
   "takehome.generate": "உருவாக்கு",
   "takehome.stale": "காட்டப்படும் வசனங்கள் மாறிவிட்டன. புதிய முக்கிய செய்தியை உருவாக்கவா?",
+  "takehome.history": "வரலாறு",
+  "takehome.history_empty": "இதுவரை எந்த சிந்தனையும் பதிவு செய்யப்படவில்லை.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "இன்றைய வசனம்",
   "verse_of_day.loading": "இன்றைய வசனம் ஏற்றப்படுகிறது…",
@@ -1039,6 +1041,8 @@ export const ta: Record<string, string> = {
   "verse_of_day.clear": "அனைத்தையும் அழி",
   "verse_of_day.confirm_clear": "உறுதிப்படுத்த மீண்டும் கிளிக் செய்யவும்",
   "verse_of_day.storage": "{count} உள்ளீடுகள் · உங்கள் தரவுத்தளத்தில் ~{size}",
+  "verse_of_day.copy_entry": "நகலெடு",
+  "verse_of_day.copied": "நகலெடுக்கப்பட்டது!",
   "insert.drawing": "வரைபடம்",
   "lean.prompt.title": "Lean 4 நிறுவப்படவில்லை",
   "lean.prompt.desc": "Lean நிரலைத் தொகுக்க Lean 4 கருவித்தொகுப்பு தேவை. இப்போது நிறுவுங்கள் — இது elan வழியாக இந்த செயலியின் சொந்தக் கோப்புறையில் பதிவிறக்கப்படும் — அல்லது உங்கள் கணினியில் ஏற்கனவே இருந்தால் அமைப்புகளில் தனிப்பாதையை அமைக்கவும்.",

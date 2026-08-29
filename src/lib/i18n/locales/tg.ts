@@ -1078,6 +1078,8 @@ export const tg: Record<string, string> = {
   "takehome.quota_advanced": "Квотаи модели пешрафтаи шумо ба охир расид. Барои идома ба модели стандартӣ гузаред.",
   "takehome.generate": "Эҷод",
   "takehome.stale": "Оятҳои намоишдодашуда тағйир ёфтанд. Паёми асосии нав эҷод карда шавад?",
+  "takehome.history": "Таърих",
+  "takehome.history_empty": "Ҳанӯз ягон андеша сабт нашудааст.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "Ояти рӯз",
   "verse_of_day.loading": "Ояти имрӯз бор мешавад…",
@@ -1092,6 +1094,8 @@ export const tg: Record<string, string> = {
   "verse_of_day.clear": "Ҳамаро тоза кардан",
   "verse_of_day.confirm_clear": "Барои тасдиқ дубора зер кунед",
   "verse_of_day.storage": "{count} навишта · дар пойгоҳи додаҳои шумо ~{size}",
+  "verse_of_day.copy_entry": "Нусхабардорӣ",
+  "verse_of_day.copied": "Нусха бардошта шуд!",
   "insert.drawing": "Расм",
   "lean.prompt.title": "Lean 4 насб нашудааст",
   "lean.prompt.desc": "Барои компилятсияи коди Lean маҷмӯаи асбобҳои Lean 4 лозим аст. Онро ҳозир насб кунед — он тавассути elan ба ҷузвдони худи ин барнома боргирӣ мешавад — ё агар аллакай дар низоми шумо бошад, дар Танзимот роҳи худро нишон диҳед.",

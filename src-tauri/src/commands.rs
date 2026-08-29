@@ -1651,6 +1651,162 @@ pub fn get_verse_texts(
     Ok(out)
 }
 
+// ── Take-Home Message history ──────────────────────────────────────────────
+//
+// Every generated take-home message (source label, the ayah-reference context
+// sent to the model, and the raw structured result) is recorded so users can
+// browse, copy, export, or delete their past reflections.
+
+#[derive(Serialize)]
+pub struct TakeHomeMessageEntry {
+    pub id: i64,
+    pub source_label: String,
+    pub context: String,
+    pub result: String,
+    pub locale: String,
+    pub created_at: String,
+}
+
+fn thm_row(r: &rusqlite::Row) -> rusqlite::Result<TakeHomeMessageEntry> {
+    Ok(TakeHomeMessageEntry {
+        id: r.get(0)?,
+        source_label: r.get(1)?,
+        context: r.get(2)?,
+        result: r.get(3)?,
+        locale: r.get(4)?,
+        created_at: r.get(5)?,
+    })
+}
+
+/// Record a freshly generated take-home message and return it (with its
+/// assigned id and timestamp).
+#[tauri::command]
+pub fn save_take_home_message(
+    db: State<Database>,
+    source_label: String,
+    context: String,
+    result: String,
+    locale: String,
+) -> Result<TakeHomeMessageEntry, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO take_home_messages (source_label, context, result, locale) VALUES (?1, ?2, ?3, ?4)",
+        rusqlite::params![source_label, context, result, locale],
+    )
+    .map_err(|e| e.to_string())?;
+    let id = conn.last_insert_rowid();
+    conn.query_row(
+        "SELECT id, source_label, context, result, locale, created_at FROM take_home_messages WHERE id = ?1",
+        [id],
+        |r| thm_row(r),
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_take_home_message_history(
+    db: State<Database>,
+) -> Result<Vec<TakeHomeMessageEntry>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, source_label, context, result, locale, created_at
+             FROM take_home_messages ORDER BY id DESC",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |r| thm_row(r))
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string());
+    rows
+}
+
+#[tauri::command]
+pub fn delete_take_home_message(db: State<Database>, id: i64) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM take_home_messages WHERE id = ?1", [id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn clear_take_home_message_history(db: State<Database>) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM take_home_messages", [])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[derive(Serialize)]
+pub struct TakeHomeMessageStorage {
+    pub entries: i64,
+    pub bytes: i64,
+}
+
+/// Approximate on-disk footprint of the history table: stored payload plus
+/// SQLite's per-row/b-tree overhead (~16 bytes a row).
+#[tauri::command]
+pub fn get_take_home_message_storage(
+    db: State<Database>,
+) -> Result<TakeHomeMessageStorage, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.query_row(
+        "SELECT COUNT(*),
+                COALESCE(SUM(LENGTH(source_label) + LENGTH(context) + LENGTH(result)
+                             + LENGTH(locale) + LENGTH(created_at) + 16), 0)
+         FROM take_home_messages",
+        [],
+        |r| {
+            Ok(TakeHomeMessageStorage {
+                entries: r.get(0)?,
+                bytes: r.get(1)?,
+            })
+        },
+    )
+    .map_err(|e| e.to_string())
+}
+
+/// Export the history as CSV into the user's Downloads folder and return the
+/// saved path.
+#[tauri::command]
+pub fn export_take_home_message_history(db: State<Database>) -> Result<String, String> {
+    let rows = {
+        let conn = db.0.lock().map_err(|e| e.to_string())?;
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, source_label, context, result, locale, created_at
+                 FROM take_home_messages ORDER BY id",
+            )
+            .map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map([], |r| thm_row(r))
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        rows
+    };
+
+    let csv_escape = |s: &str| format!("\"{}\"", s.replace('"', "\"\""));
+    let mut csv = String::from("id,source_label,result,locale,created_at\n");
+    for row in &rows {
+        csv.push_str(&format!(
+            "{},{},{},{},{}\n",
+            row.id,
+            csv_escape(&row.source_label),
+            csv_escape(&row.result),
+            row.locale,
+            row.created_at,
+        ));
+    }
+
+    let downloads_dir = dirs::download_dir()
+        .ok_or_else(|| "Cannot locate Downloads folder".to_string())?;
+    let save_path = downloads_dir.join("ayahlab-take-home-message-history.csv");
+    std::fs::write(&save_path, csv).map_err(|e| e.to_string())?;
+    Ok(save_path.to_string_lossy().into_owned())
+}
+
 #[cfg(test)]
 mod votd_tests {
     use super::*;

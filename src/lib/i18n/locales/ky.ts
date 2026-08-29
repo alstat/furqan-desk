@@ -1078,6 +1078,8 @@ export const ky: Record<string, string> = {
   "takehome.quota_advanced": "Өркүндөтүлгөн моделдин квотасы бүттү. Улантуу үчүн стандарттык моделге өтүңүз.",
   "takehome.generate": "Түзүү",
   "takehome.stale": "Көрсөтүлгөн аяттар өзгөрдү. Жаңы негизги ой түзүлсүнбү?",
+  "takehome.history": "Тарых",
+  "takehome.history_empty": "Азырынча эч кандай ой жазылган жок.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "Күндүн аяты",
   "verse_of_day.loading": "Бүгүнкү аят жүктөлүүдө…",
@@ -1092,6 +1094,8 @@ export const ky: Record<string, string> = {
   "verse_of_day.clear": "Баарын тазалоо",
   "verse_of_day.confirm_clear": "Ырастоо үчүн кайра басыңыз",
   "verse_of_day.storage": "{count} жазуу · маалымат базаңызда ~{size}",
+  "verse_of_day.copy_entry": "Көчүрүү",
+  "verse_of_day.copied": "Көчүрүлдү!",
   "insert.drawing": "Сүрөт",
   "lean.prompt.title": "Lean 4 орнотулган эмес",
   "lean.prompt.desc": "Lean кодун компиляциялоо үчүн Lean 4 куралдар тизмеги керек. Аны азыр орнотуңуз — ал elan аркылуу бул колдонмонун өз папкасына жүктөлөт — же тутумуңузда мурдатан бар болсо, Жөндөөлөрдө өз жолуңузду көрсөтүңүз.",

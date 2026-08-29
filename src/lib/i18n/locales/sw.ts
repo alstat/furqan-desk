@@ -1025,6 +1025,8 @@ export const sw: Record<string, string> = {
   "takehome.quota_advanced": "Kiasi chako cha modeli ya kina kimeisha. Badilisha hadi modeli ya kawaida ili kuendelea.",
   "takehome.generate": "Tengeneza",
   "takehome.stale": "Aya zinazoonyeshwa zimebadilika. Tengeneza ujumbe mpya muhimu?",
+  "takehome.history": "Historia",
+  "takehome.history_empty": "Bado hakuna tafakari zilizorekodiwa.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "Aya ya Siku",
   "verse_of_day.loading": "Inapakia aya ya leo…",
@@ -1039,6 +1041,8 @@ export const sw: Record<string, string> = {
   "verse_of_day.clear": "Futa zote",
   "verse_of_day.confirm_clear": "Bofya tena ili kuthibitisha",
   "verse_of_day.storage": "Vipengele {count} · ~{size} katika hifadhidata yako",
+  "verse_of_day.copy_entry": "Nakili",
+  "verse_of_day.copied": "Imenakiliwa!",
   "insert.drawing": "Mchoro",
   "lean.prompt.title": "Lean 4 haijasakinishwa",
   "lean.prompt.desc": "Kukusanya msimbo wa Lean kunahitaji zana za Lean 4. Sakinisha sasa — hupakuliwa kupitia elan hadi kwenye folda ya programu hii — au weka njia yako mwenyewe katika Mipangilio ikiwa tayari ipo kwenye mfumo wako.",

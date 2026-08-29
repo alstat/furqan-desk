@@ -1025,6 +1025,8 @@ export const ku: Record<string, string> = {
   "takehome.quota_advanced": "بەشە پێشکەوتووەکەت تەواو بووە. بۆ بەردەوامبوون بگۆڕە بۆ مۆدێلی ستاندارد.",
   "takehome.generate": "دروستکردن",
   "takehome.stale": "ئایەتە نیشاندراوەکان گۆڕان. پەیامێکی سەرەکی نوێ دروست بکرێت؟",
+  "takehome.history": "مێژوو",
+  "takehome.history_empty": "هێشتا هیچ لێکدانەوەیەک تۆمار نەکراوە.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "ئایەتی ڕۆژ",
   "verse_of_day.loading": "ئایەتی ئەمڕۆ باردەکرێت…",
@@ -1039,6 +1041,8 @@ export const ku: Record<string, string> = {
   "verse_of_day.clear": "سڕینەوەی هەموو",
   "verse_of_day.confirm_clear": "بۆ دڵنیابوونەوە دووبارە کلیک بکە",
   "verse_of_day.storage": "{count} تۆمار · نزیکەی {size} لە بنکەدراوەکەت",
+  "verse_of_day.copy_entry": "کۆپی",
+  "verse_of_day.copied": "کۆپی کرا!",
   "insert.drawing": "وێنەکێشان",
   "lean.prompt.title": "Lean 4 nehatiye sazkirin",
   "lean.prompt.desc": "Berhevkirina koda Lean pêdiviya zincîra amûrên Lean 4 heye. Niha wê saz bike — bi rêya elan tê daxistin nav peldanka vê sepanê — an jî heke berê li ser pergala te hebe, di Mîhengan de rêyeke taybet diyar bike.",

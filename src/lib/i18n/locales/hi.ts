@@ -1082,6 +1082,8 @@ export const hi: Record<string, string> = {
   "takehome.quota_advanced": "आपके एडवांस्ड मॉडल का कोटा समाप्त हो गया है। जारी रखने के लिए स्टैंडर्ड मॉडल पर स्विच करें।",
   "takehome.generate": "बनाएँ",
   "takehome.stale": "प्रदर्शित आयतें बदल गई हैं। नया मुख्य संदेश बनाएँ?",
+  "takehome.history": "इतिहास",
+  "takehome.history_empty": "अभी तक कोई चिंतन दर्ज नहीं किया गया।",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "आज की आयत",
   "verse_of_day.loading": "आज की आयत लोड हो रही है…",
@@ -1096,6 +1098,8 @@ export const hi: Record<string, string> = {
   "verse_of_day.clear": "सब हटाएँ",
   "verse_of_day.confirm_clear": "पुष्टि के लिए फिर से क्लिक करें",
   "verse_of_day.storage": "{count} प्रविष्टियाँ · आपके डेटाबेस में ~{size}",
+  "verse_of_day.copy_entry": "कॉपी करें",
+  "verse_of_day.copied": "कॉपी हो गया!",
   "insert.drawing": "रेखाचित्र",
   "lean.prompt.title": "Lean 4 इंस्टॉल नहीं है",
   "lean.prompt.desc": "Lean कोड कंपाइल करने के लिए Lean 4 टूलचेन चाहिए। इसे अभी इंस्टॉल करें — यह elan के ज़रिए इस ऐप के अपने फ़ोल्डर में डाउनलोड होता है — या अगर यह पहले से आपके सिस्टम पर है तो सेटिंग्स में अपना पथ दें।",

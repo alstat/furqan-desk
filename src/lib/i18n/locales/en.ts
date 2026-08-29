@@ -257,6 +257,8 @@ export const en: Record<string, string> = {
   "verse_of_day.clear": "Clear all",
   "verse_of_day.confirm_clear": "Click again to confirm",
   "verse_of_day.storage": "{count} entries · ~{size} in your database",
+  "verse_of_day.copy_entry": "Copy",
+  "verse_of_day.copied": "Copied!",
   // Terminal
   "terminal.title": "Terminal",
   "terminal.tab_label": "Terminal {count}",
@@ -1196,6 +1198,8 @@ export const en: Record<string, string> = {
   "takehome.quota_advanced": "Your advanced-model quota is used up. Switch to the standard model to continue.",
   "takehome.generate": "Generate",
   "takehome.stale": "The displayed ayahs have changed. Generate a new take-home message?",
+  "takehome.history": "History",
+  "takehome.history_empty": "No reflections recorded yet.",
   // Postcard editor
   "postcard.open": "Create Post Card",
   "parchment.open_postcard": "Create a post card",

@@ -301,6 +301,14 @@ impl Database {
                 surah    INTEGER NOT NULL,
                 ayah     INTEGER NOT NULL,
                 shown_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE TABLE IF NOT EXISTS take_home_messages (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                source_label TEXT NOT NULL,
+                context      TEXT NOT NULL,
+                result       TEXT NOT NULL,
+                locale       TEXT NOT NULL DEFAULT 'en',
+                created_at   TEXT NOT NULL DEFAULT (datetime('now'))
             );",
         )?;
         // Idempotent column migration — ignored if column already exists
@@ -407,6 +415,26 @@ impl Database {
             Vec::new()
         };
 
+        let take_home_messages = if has_table("take_home_messages") {
+            let mut stmt = conn.prepare(
+                "SELECT source_label, context, result, locale, created_at FROM take_home_messages ORDER BY id",
+            )?;
+            let rows: Vec<_> = stmt.query_map([], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
+                    row.get::<_, String>(3)?,
+                    row.get::<_, String>(4)?,
+                ))
+            })?
+            .filter_map(|r| r.ok())
+            .collect();
+            rows
+        } else {
+            Vec::new()
+        };
+
         let app_meta = if has_table("app_meta") {
             let mut stmt = conn.prepare("SELECT key, value FROM app_meta")?;
             let rows: Vec<_> = stmt.query_map([], |row| {
@@ -424,6 +452,7 @@ impl Database {
             last_read,
             highlights,
             verse_of_day,
+            take_home_messages,
             app_meta,
         })
     }
@@ -462,6 +491,14 @@ impl Database {
         }
         {
             let mut stmt = conn.prepare(
+                "INSERT INTO take_home_messages (source_label, context, result, locale, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
+            )?;
+            for (source_label, context, result, locale, created_at) in &data.take_home_messages {
+                stmt.execute(rusqlite::params![source_label, context, result, locale, created_at])?;
+            }
+        }
+        {
+            let mut stmt = conn.prepare(
                 "INSERT OR REPLACE INTO app_meta (key, value) VALUES (?1, ?2)",
             )?;
             for (key, value) in &data.app_meta {
@@ -478,6 +515,7 @@ struct UserData {
     last_read: Option<(i64, i64, String)>,
     highlights: Vec<(i64, i64, String, Option<String>, String)>,
     verse_of_day: Vec<(String, i64, i64, String)>,
+    take_home_messages: Vec<(String, String, String, String, String)>,
     app_meta: Vec<(String, String)>,
 }
 
