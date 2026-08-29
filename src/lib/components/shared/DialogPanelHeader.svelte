@@ -56,7 +56,7 @@
 <div
     data-tauri-drag-region={standalone ? true : undefined}
     class="flex flex-col shrink-0 select-none {sheet
-        ? 'bg-brand-sand-50/95 border-b border-brand-sand-200 dark:border-[#414559]'
+        ? 'bg-brand-sand-50/95 dark:bg-[#2b2b2b]/95 border-b border-brand-sand-200 dark:border-[#414559]'
         : 'bg-brand-gold-100 dark:bg-[#292c3c] border-b border-brand-gold-200 dark:border-[#414559]'} {standalone ||
     sheet
         ? ''
