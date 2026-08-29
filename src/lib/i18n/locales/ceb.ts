@@ -1078,6 +1078,8 @@ export const ceb: Record<string, string> = {
   "takehome.quota_advanced": "Nahurot na ang imong quota sa advanced nga modelo. Balhin sa standard nga modelo aron makapadayon.",
   "takehome.generate": "Paghimo",
   "takehome.stale": "Nabag-o ang gipakitang mga bersikulo. Maghimo bag-ong pangunang mensahe?",
+  "takehome.history": "Kasaysayan",
+  "takehome.history_empty": "Wala pay narekord nga mga pagpamalandong.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "Bersikulo sa Adlaw",
   "verse_of_day.loading": "Gikarga ang bersikulo karong adlawa…",
@@ -1092,6 +1094,8 @@ export const ceb: Record<string, string> = {
   "verse_of_day.clear": "Limpyohi tanan",
   "verse_of_day.confirm_clear": "I-klik pag-usab aron kumpirmahon",
   "verse_of_day.storage": "{count} ka entry · ~{size} sa imong database",
+  "verse_of_day.copy_entry": "Kopyaha",
+  "verse_of_day.copied": "Nakopya!",
   "insert.drawing": "Drowing",
   "lean.prompt.title": "Wala pa ma-install ang Lean 4",
   "lean.prompt.desc": "Ang pag-compile sa Lean code nagkinahanglan sa Lean 4 toolchain. I-install kini karon — gi-download kini pinaagi sa elan ngadto sa kaugalingong folder niining app — o pagbutang ug kaugalingong path sa Mga Setting kung anaa na kini sa imong sistema.",

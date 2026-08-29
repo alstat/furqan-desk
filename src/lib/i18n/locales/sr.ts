@@ -1025,6 +1025,8 @@ export const sr: Record<string, string> = {
   "takehome.quota_advanced": "Ваша квота за напредни модел је потрошена. Пређите на стандардни модел да наставите.",
   "takehome.generate": "Генериши",
   "takehome.stale": "Приказани ајети су се променили. Генерисати нову кључну поруку?",
+  "takehome.history": "Историја",
+  "takehome.history_empty": "Још нема забележених размишљања.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "Ајет дана",
   "verse_of_day.loading": "Учитавање данашњег ајета…",
@@ -1039,6 +1041,8 @@ export const sr: Record<string, string> = {
   "verse_of_day.clear": "Обриши све",
   "verse_of_day.confirm_clear": "Кликните поново за потврду",
   "verse_of_day.storage": "{count} уноса · ~{size} у вашој бази података",
+  "verse_of_day.copy_entry": "Копирај",
+  "verse_of_day.copied": "Копирано!",
   "insert.drawing": "Цртеж",
   "lean.prompt.title": "Lean 4 није инсталиран",
   "lean.prompt.desc": "Компајлирање Lean кода захтева Lean 4 алатни ланац. Инсталирајте га сада — преузима се преко elan-а у сопствену фасциклу ове апликације — или подесите сопствену путању у Подешавањима ако га већ имате на систему.",

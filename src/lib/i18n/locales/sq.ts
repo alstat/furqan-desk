@@ -1025,6 +1025,8 @@ export const sq: Record<string, string> = {
   "takehome.quota_advanced": "Kuota juaj për modelin e avancuar ka mbaruar. Kaloni te modeli standard për të vazhduar.",
   "takehome.generate": "Gjenero",
   "takehome.stale": "Ajetet e shfaqura kanë ndryshuar. Të gjenerohet një mesazh i ri kryesor?",
+  "takehome.history": "Historia",
+  "takehome.history_empty": "Ende nuk është regjistruar asnjë reflektim.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "Ajeti i ditës",
   "verse_of_day.loading": "Po ngarkohet ajeti i sotëm…",
@@ -1039,6 +1041,8 @@ export const sq: Record<string, string> = {
   "verse_of_day.clear": "Pastro të gjitha",
   "verse_of_day.confirm_clear": "Klikoni sërish për të konfirmuar",
   "verse_of_day.storage": "{count} hyrje · ~{size} në bazën tuaj të të dhënave",
+  "verse_of_day.copy_entry": "Kopjo",
+  "verse_of_day.copied": "U kopjua!",
   "insert.drawing": "Vizatim",
   "lean.prompt.title": "Lean 4 nuk është i instaluar",
   "lean.prompt.desc": "Përpilimi i kodit Lean kërkon zinxhirin e veglave Lean 4. Instalojeni tani — shkarkohet përmes elan në dosjen e vetë këtij aplikacioni — ose vendosni një shteg të posaçëm te Cilësimet nëse e keni tashmë në sistem.",

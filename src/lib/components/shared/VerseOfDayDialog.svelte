@@ -9,6 +9,7 @@
         surahLabels,
     } from "$lib/stores/quran.svelte";
     import { pendingJumpAyah } from "$lib/stores/bookmarks.store";
+    import { copyToClipboard } from "$lib/utils/clipboard";
     import {
         availableTranslators,
         type TranslatorInfo,
@@ -69,6 +70,10 @@
     // Arabic + translation per history entry, keyed "surah:ayah".
     let historyTexts = $state<Map<string, VerseText>>(new Map());
     let historyDir = $state<"rtl" | "ltr">("ltr");
+    // Day of the entry whose "copied" checkmark is currently showing.
+    let copiedDay = $state<string | null>(null);
+    // True while the "copied" checkmark shows on the currently displayed verse.
+    let copiedCurrent = $state(false);
 
     function surahName(n: number): { en: string; ar: string } {
         const label = get(surahLabels)[n - 1];
@@ -274,6 +279,42 @@
         }
     }
 
+    // Plain text so it pastes cleanly into the Lexical editor or any other
+    // text field: reference line, Arabic, then translation (when available).
+    async function copyEntry(entry: VerseOfDayEntry) {
+        const name = surahName(entry.surah);
+        const text = historyTexts.get(`${entry.surah}:${entry.ayah}`);
+        const lines = [`${name.en} · ${get(t)("bookmark.ayah")} ${entry.ayah}`];
+        if (text?.arabic) lines.push(text.arabic);
+        if (text?.translation) lines.push(text.translation);
+        const ok = await copyToClipboard(lines.join("\n"));
+        if (ok) {
+            copiedDay = entry.day;
+            setTimeout(() => {
+                if (copiedDay === entry.day) copiedDay = null;
+            }, 1500);
+        }
+    }
+
+    // Copies the verse currently on screen along with its surrounding context
+    // (the preceding/following ayahs shown as hints), not just the target line.
+    async function copyCurrentVerse() {
+        if (!verse || !target) return;
+        const name = surahName(verse.surah);
+        const ayahLabel = get(t)("bookmark.ayah");
+        const lines = [name.en];
+        for (const line of [...before, target, ...after]) {
+            lines.push(`${ayahLabel} ${line.ayah}`);
+            lines.push(line.arabic);
+            if (line.translation) lines.push(line.translation);
+        }
+        const ok = await copyToClipboard(lines.join("\n"));
+        if (ok) {
+            copiedCurrent = true;
+            setTimeout(() => (copiedCurrent = false), 1500);
+        }
+    }
+
     async function clearAll() {
         if (!confirmClear) {
             confirmClear = true;
@@ -331,7 +372,7 @@
                                 onclick={() => openEntry(entry)}
                                 class="cursor-pointer block w-full text-left px-4 py-3"
                             >
-                                <div class="mb-1.5 flex items-center gap-2 pr-6">
+                                <div class="mb-1.5 flex items-center gap-2 pr-11">
                                     <span class="shrink-0 text-[0.625rem] font-semibold text-brand-gold-500">
                                         {dayLabel(entry.day)}
                                     </span>
@@ -361,13 +402,31 @@
                                     {/if}
                                 {/if}
                             </button>
-                            <button
-                                onclick={() => removeEntry(entry.day)}
-                                title={$t("verse_of_day.delete_entry")}
-                                class="cursor-pointer absolute top-2 right-2 rounded-full p-1.5 text-brand-charcoal-300 opacity-0 group-hover:opacity-100 hover:text-red-500 dark:text-[#838ba7] transition-all"
+                            <div
+                                class="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all"
                             >
-                                <Icon icon="solar:trash-bin-trash-linear" width="0.85rem" />
-                            </button>
+                                <button
+                                    onclick={() => copyEntry(entry)}
+                                    title={copiedDay === entry.day
+                                        ? $t("verse_of_day.copied")
+                                        : $t("verse_of_day.copy_entry")}
+                                    class="cursor-pointer rounded-full p-1.5 text-brand-charcoal-300 hover:text-brand-gold-500 dark:text-[#838ba7] transition-colors"
+                                >
+                                    <Icon
+                                        icon={copiedDay === entry.day
+                                            ? "solar:check-circle-bold"
+                                            : "solar:copy-bold-duotone"}
+                                        width="0.85rem"
+                                    />
+                                </button>
+                                <button
+                                    onclick={() => removeEntry(entry.day)}
+                                    title={$t("verse_of_day.delete_entry")}
+                                    class="cursor-pointer rounded-full p-1.5 text-brand-charcoal-300 hover:text-red-500 dark:text-[#838ba7] transition-colors"
+                                >
+                                    <Icon icon="solar:trash-bin-trash-linear" width="0.85rem" />
+                                </button>
+                            </div>
                         </li>
                     {/each}
                 </ul>
@@ -530,14 +589,34 @@
             </div>
         {:else}
             <div class="flex items-center justify-between gap-2">
-                <button
-                    onclick={openHistory}
-                    title={$t("verse_of_day.history")}
-                    class="cursor-pointer flex items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
-                >
-                    <Icon icon="solar:history-bold-duotone" width="0.8rem" />
-                    {$t("verse_of_day.history")}
-                </button>
+                <div class="flex items-center gap-2">
+                    <button
+                        onclick={openHistory}
+                        title={$t("verse_of_day.history")}
+                        class="cursor-pointer flex items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
+                    >
+                        <Icon icon="solar:history-bold-duotone" width="0.8rem" />
+                        {$t("verse_of_day.history")}
+                    </button>
+                    <button
+                        onclick={copyCurrentVerse}
+                        disabled={loading || !target}
+                        title={copiedCurrent
+                            ? $t("verse_of_day.copied")
+                            : $t("verse_of_day.copy_entry")}
+                        class="cursor-pointer flex items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-4 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] disabled:opacity-50 transition-colors"
+                    >
+                        <Icon
+                            icon={copiedCurrent
+                                ? "solar:check-circle-bold"
+                                : "solar:copy-bold-duotone"}
+                            width="0.8rem"
+                        />
+                        {copiedCurrent
+                            ? $t("verse_of_day.copied")
+                            : $t("verse_of_day.copy_entry")}
+                    </button>
+                </div>
                 <div class="flex items-center gap-2">
                     <button
                         onclick={onClose}

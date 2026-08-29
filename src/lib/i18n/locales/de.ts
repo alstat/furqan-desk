@@ -1085,6 +1085,8 @@ export const de: Record<string, string> = {
   "takehome.quota_advanced": "Dein Kontingent für das erweiterte Modell ist aufgebraucht. Wechsle zum Standardmodell, um fortzufahren.",
   "takehome.generate": "Erstellen",
   "takehome.stale": "Die angezeigten Verse haben sich geändert. Neue Kernbotschaft erstellen?",
+  "takehome.history": "Verlauf",
+  "takehome.history_empty": "Noch keine Reflexionen aufgezeichnet.",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "Vers des Tages",
   "verse_of_day.loading": "Der heutige Vers wird geladen…",
@@ -1099,6 +1101,8 @@ export const de: Record<string, string> = {
   "verse_of_day.clear": "Alle löschen",
   "verse_of_day.confirm_clear": "Zum Bestätigen erneut klicken",
   "verse_of_day.storage": "{count} Einträge · ~{size} in Ihrer Datenbank",
+  "verse_of_day.copy_entry": "Kopieren",
+  "verse_of_day.copied": "Kopiert!",
   "insert.drawing": "Zeichnung",
   "lean.prompt.title": "Lean 4 ist nicht installiert",
   "lean.prompt.desc": "Zum Kompilieren von Lean-Code wird die Lean-4-Toolchain benötigt. Installieren Sie sie jetzt — sie wird über elan in den eigenen Ordner dieser App geladen — oder legen Sie in den Einstellungen einen eigenen Pfad fest, falls sie bereits vorhanden ist.",

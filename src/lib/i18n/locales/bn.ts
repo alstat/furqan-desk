@@ -1084,6 +1084,8 @@ export const bn: Record<string, string> = {
   "takehome.quota_advanced": "আপনার অ্যাডভান্সড মডেলের কোটা শেষ হয়ে গেছে। চালিয়ে যেতে স্ট্যান্ডার্ড মডেলে স্যুইচ করুন।",
   "takehome.generate": "তৈরি করুন",
   "takehome.stale": "প্রদর্শিত আয়াত পরিবর্তিত হয়েছে। নতুন মূল বার্তা তৈরি করবেন?",
+  "takehome.history": "ইতিহাস",
+  "takehome.history_empty": "এখনও কোনো প্রতিফলন রেকর্ড করা হয়নি।",
   // Verse of the Day + drawing insert
   "verse_of_day.title": "আজকের আয়াত",
   "verse_of_day.loading": "আজকের আয়াত লোড হচ্ছে…",
@@ -1098,6 +1100,8 @@ export const bn: Record<string, string> = {
   "verse_of_day.clear": "সব মুছুন",
   "verse_of_day.confirm_clear": "নিশ্চিত করতে আবার ক্লিক করুন",
   "verse_of_day.storage": "{count}টি এন্ট্রি · আপনার ডেটাবেসে ~{size}",
+  "verse_of_day.copy_entry": "কপি",
+  "verse_of_day.copied": "কপি হয়েছে!",
   "insert.drawing": "অঙ্কন",
   "lean.prompt.title": "Lean 4 ইনস্টল করা নেই",
   "lean.prompt.desc": "Lean কোড কম্পাইল করতে Lean 4 টুলচেইন প্রয়োজন। এখনই ইনস্টল করুন — এটি elan-এর মাধ্যমে এই অ্যাপের নিজস্ব ফোল্ডারে ডাউনলোড হয় — অথবা আপনার সিস্টেমে আগে থেকেই থাকলে সেটিংসে নিজস্ব পথ নির্ধারণ করুন।",
