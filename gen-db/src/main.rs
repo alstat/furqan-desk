@@ -23,7 +23,7 @@ use std::path::{Path, PathBuf};
 
 /// Increment this whenever the schema or data changes.
 /// Must match DB_VERSION in db.rs.
-const DB_VERSION: i64 = 15;
+const DB_VERSION: i64 = 16;
 
 fn main() {
     // Works whether invoked from the workspace root (`cargo run -p gen-db`) or
