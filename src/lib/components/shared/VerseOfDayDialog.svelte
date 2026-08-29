@@ -67,6 +67,10 @@
     let storage = $state<VerseOfDayStorage | null>(null);
     let exportedPath = $state("");
     let confirmClear = $state(false);
+    // Day of the entry whose delete button is armed: the first click arms it,
+    // a second one within the timeout actually deletes.
+    let confirmDeleteDay = $state<string | null>(null);
+    let confirmDeleteTimer: ReturnType<typeof setTimeout> | null = null;
     // Arabic + translation per history entry, keyed "surah:ayah".
     let historyTexts = $state<Map<string, VerseText>>(new Map());
     let historyDir = $state<"rtl" | "ltr">("ltr");
@@ -227,6 +231,7 @@
             viewingEntry = false;
             exportedPath = "";
             confirmClear = false;
+            disarmDelete();
         }
     });
 
@@ -234,6 +239,7 @@
         view = "history";
         exportedPath = "";
         confirmClear = false;
+        disarmDelete();
         historyLoading = true;
         try {
             [history, storage] = await Promise.all([
@@ -267,9 +273,22 @@
         showVerse({ surah: entry.surah, ayah: entry.ayah }, entry.day);
     }
 
+    function disarmDelete() {
+        if (confirmDeleteTimer) clearTimeout(confirmDeleteTimer);
+        confirmDeleteTimer = null;
+        confirmDeleteDay = null;
+    }
+
     // Deleting rows is harmless for today's pick: it is seeded, so the
     // backend re-records the same verse next time it is requested.
     async function removeEntry(day: string) {
+        if (confirmDeleteDay !== day) {
+            if (confirmDeleteTimer) clearTimeout(confirmDeleteTimer);
+            confirmDeleteDay = day;
+            confirmDeleteTimer = setTimeout(disarmDelete, 3000);
+            return;
+        }
+        disarmDelete();
         try {
             await deleteVerseOfDayEntry(day);
             history = history.filter((h) => h.day !== day);
@@ -403,7 +422,10 @@
                                 {/if}
                             </button>
                             <div
-                                class="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all"
+                                class="absolute top-2 right-2 flex items-center gap-0.5 group-hover:opacity-100 transition-all {confirmDeleteDay ===
+                                entry.day
+                                    ? 'opacity-100'
+                                    : 'opacity-0'}"
                             >
                                 <button
                                     onclick={() => copyEntry(entry)}
@@ -421,10 +443,20 @@
                                 </button>
                                 <button
                                     onclick={() => removeEntry(entry.day)}
-                                    title={$t("verse_of_day.delete_entry")}
-                                    class="cursor-pointer rounded-full p-1.5 text-brand-charcoal-300 hover:text-red-500 dark:text-[#838ba7] transition-colors"
+                                    title={confirmDeleteDay === entry.day
+                                        ? $t("verse_of_day.confirm_clear")
+                                        : $t("verse_of_day.delete_entry")}
+                                    class="cursor-pointer rounded-full p-1.5 transition-colors {confirmDeleteDay ===
+                                    entry.day
+                                        ? 'bg-red-500 text-white hover:bg-red-600'
+                                        : 'text-brand-charcoal-300 hover:text-red-500 dark:text-[#838ba7]'}"
                                 >
-                                    <Icon icon="solar:trash-bin-trash-linear" width="0.85rem" />
+                                    <Icon
+                                        icon={confirmDeleteDay === entry.day
+                                            ? "solar:trash-bin-trash-bold"
+                                            : "solar:trash-bin-trash-linear"}
+                                        width="0.85rem"
+                                    />
                                 </button>
                             </div>
                         </li>
