@@ -65,12 +65,30 @@
 		);
 	}
 
+	/**
+	 * Only paths no directory watcher covers. `watchImmediate` already reports
+	 * changes for the rest, so polling those too meant one `stat` IPC round trip
+	 * per open tab every second, for as long as any file-backed tab was open,
+	 * duplicating work the watcher had already done. What is left is the genuine
+	 * fallback: a file at the filesystem root (no parent to watch), or one whose
+	 * directory `ensureDirectoryWatch` could not watch.
+	 */
+	function unwatchedPaths(): string[] {
+		const out: string[] = [];
+		for (const tab of $tabs) {
+			const path = tab.path;
+			if (typeof path !== 'string' || path.length === 0) continue;
+			const directory = dirname(path);
+			if (directory && watchByDirectory.has(directory)) continue;
+			out.push(path);
+		}
+		return out;
+	}
+
 	function ensurePolling(): void {
 		if (pollTimer) return;
 		pollTimer = setInterval(() => {
-			const paths = $tabs
-				.map((tab) => tab.path)
-				.filter((path): path is string => typeof path === 'string' && path.length > 0);
+			const paths = unwatchedPaths();
 			if (paths.length === 0) return;
 			void pollPaths(paths);
 		}, POLL_INTERVAL_MS);

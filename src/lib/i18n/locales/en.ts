@@ -715,15 +715,11 @@ export const en: Record<string, string> = {
   "manuscript.download": "Download",
   "manuscript.download_saved": "✓ Saved: {filename}",
   "manuscript.download_failed": "✗ Failed: {error}",
-  "manuscript.inserting": "Inserting…",
-  "manuscript.insert": "Insert to Lexical",
   "manuscript.inserted": "✓ Inserted",
   "manuscript.copy": "Copy",
   "manuscript.copy_tooltip": "Copy image to clipboard",
   "manuscript.copied": "✓ Copied",
   "manuscript.copy_failed": "Copy failed: {error}",
-  "manuscript.insert_tooltip": "Insert image into editor",
-  "manuscript.no_editor": "Open a Lexical document tab first",
   "manuscript.insert_failed_title": "Insert Failed",
   "manuscript.insert_failed_message":
     "Could not fetch the manuscript image.\n\n{error}",
@@ -740,7 +736,6 @@ export const en: Record<string, string> = {
   "manuscript.date_ce": "{date} CE",
   "manuscript.size_mm": "{size} mm",
   // Morphology popover
-  "morphology.insert_to_lexical": "Insert morphology into Lexical editor",
   "morphology.buckwalter_help": "Learn about Buckwalter transliteration",
   // Morphology — feature labels
   "morphology.feat.root": "Root",

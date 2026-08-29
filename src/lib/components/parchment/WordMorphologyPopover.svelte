@@ -58,20 +58,9 @@
     import { locale, t } from '$lib/i18n';
     import { get } from 'svelte/store';
     import { openUrl } from '@tauri-apps/plugin-opener';
-    import { lexicalEditorInstance } from '$lib/stores/editor.store';
     import { isPro } from '$lib/stores/auth.store';
     import { askAiAboutSelection } from '$lib/stores/ai-chat.store';
-    import {
-        $createTableNode as createTableNode,
-        $createTableRowNode as createTableRowNode,
-        $createTableCellNode as createTableCellNode,
-        TableCellHeaderStates,
-    } from '@lexical/table';
-    import {
-        $createParagraphNode as createParagraphNode,
-        $createTextNode as createTextNode,
-    } from 'lexical';
-    import { $insertNodeToNearestRoot as insertNodeToNearestRoot } from '@lexical/utils';
+    import { copyToClipboard } from '$lib/utils/clipboard';
 
     interface Props {
         word: MorphWord;
@@ -146,6 +135,7 @@
 
     onDestroy(() => {
         window.removeEventListener('pointermove', onDragMove);
+        if (copiedTimer) clearTimeout(copiedTimer);
     });
 
     function isInBorderZone(e: PointerEvent, el: HTMLElement): boolean {
@@ -335,56 +325,6 @@
         }
     }
 
-    function insertToLexical(): void {
-        const editor = get(lexicalEditorInstance);
-        if (!editor) return;
-
-        editor.update(() => {
-            const titlePara = createParagraphNode();
-            titlePara.append(createTextNode(word.combined_arabic));
-            insertNodeToNearestRoot(titlePara);
-
-            for (const token of word.tokens) {
-                const table = createTableNode();
-
-                // Header row: tag name | arabic form + buckwalter
-                const headerRow = createTableRowNode();
-                const hCell1 = createTableCellNode(TableCellHeaderStates.ROW);
-                hCell1.append(createParagraphNode().append(createTextNode(token.tag_name)));
-                const hCell2 = createTableCellNode(TableCellHeaderStates.ROW);
-                hCell2.append(createParagraphNode().append(createTextNode(token.form_arabic + '  ' + token.form_buckwalter)));
-                headerRow.append(hCell1, hCell2);
-                table.append(headerRow);
-
-                // Feature rows (non-null only)
-                const tFn = get(t);
-                for (const { key, labelKey, arabic } of FEATURES) {
-                    const val = token.features[key];
-                    if (!val) continue;
-                    const row = createTableRowNode();
-
-                    const labelCell = createTableCellNode(TableCellHeaderStates.NO_STATUS);
-                    labelCell.append(createParagraphNode().append(createTextNode(tFn(labelKey))));
-
-                    const rawVal = val as string;
-                    const displayVal = arabic
-                        ? buckwalterToArabic(rawVal)
-                        : translateFeatureValue(tFn, key, rawVal);
-                    const valueCell = createTableCellNode(TableCellHeaderStates.NO_STATUS);
-                    valueCell.append(createParagraphNode().append(createTextNode(displayVal)));
-
-                    row.append(labelCell, valueCell);
-                    table.append(row);
-                }
-
-                insertNodeToNearestRoot(table);
-            }
-
-            // Trailing paragraph so cursor lands after inserted content
-            insertNodeToNearestRoot(createParagraphNode());
-        });
-    }
-
     // --- AI prompt about this word (Pro) ---
     let aiPromptOpen = $state(false);
     let aiPromptText = $state('');
@@ -410,6 +350,17 @@
             }
         }
         return lines.join('\n');
+    }
+
+    // --- Copy the whole breakdown as plain text ---
+    let copied = $state(false);
+    let copiedTimer: ReturnType<typeof setTimeout> | null = null;
+
+    async function copyMorphology() {
+        if (!(await copyToClipboard(buildWordMorphologyContext()))) return;
+        copied = true;
+        if (copiedTimer) clearTimeout(copiedTimer);
+        copiedTimer = setTimeout(() => (copied = false), 1500);
     }
 
     async function toggleAiPrompt() {
@@ -463,13 +414,17 @@
         </div>
         <div class="flex items-center gap-1">
             <button
-                onclick={insertToLexical}
-                disabled={!$lexicalEditorInstance}
-                aria-label={$t('morphology.insert_to_lexical')}
-                title={$t('morphology.insert_to_lexical')}
-                class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full text-slate-400 dark:text-[#838ba7] transition-all hover:bg-slate-100 dark:hover:bg-[#414559] hover:text-slate-600 dark:hover:text-[#c6d0f5] active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                onclick={copyMorphology}
+                aria-label={copied ? $t('verse_of_day.copied') : $t('verse_of_day.copy_entry')}
+                title={copied ? $t('verse_of_day.copied') : $t('verse_of_day.copy_entry')}
+                class="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full transition-all hover:bg-slate-100 dark:hover:bg-[#414559] active:scale-95 {copied
+                    ? 'text-brand-gold-500 dark:text-[#e5c890]'
+                    : 'text-slate-400 dark:text-[#838ba7] hover:text-slate-600 dark:hover:text-[#c6d0f5]'}"
             >
-                <Icon icon="solar:add-square-bold-duotone" width="15" />
+                <Icon
+                    icon={copied ? 'solar:check-circle-bold' : 'solar:copy-bold-duotone'}
+                    width="14"
+                />
             </button>
             {#if onHighlight}
                 <button

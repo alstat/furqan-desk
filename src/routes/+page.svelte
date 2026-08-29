@@ -275,7 +275,7 @@
             const parsed = JSON.parse(partnerTab.content || emptyLexicalState);
             const stateData = parsed.editorState ?? parsed;
             editor.setEditorState(
-                editor.parseEditorState(JSON.stringify(stateData)),
+                editor.parseEditorState(stateData),
                 { tag: 'history-merge' },
             );
         } catch {

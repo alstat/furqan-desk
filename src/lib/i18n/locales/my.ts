@@ -566,12 +566,7 @@ export const my: Record<string, string> = {
   "manuscript.select": "ကြည့်ရန် မူရင်းစာမူ ရွေးပါ",
   "manuscript.downloading": "ဒေါင်းလုဒ်လုပ်နေသည်…",
   "manuscript.download": "ဒေါင်းလုဒ်",
-  "manuscript.inserting": "ထည့်သွင်းနေသည်…",
-  "manuscript.insert": "Lexical တွင် ထည့်ပါ",
-  "manuscript.insert_tooltip": "တည်းဖြတ်ကိရိယာတွင် ပုံ ထည့်ပါ",
-  "manuscript.no_editor": "အရင် Lexical စာမူ တဘ် ဖွင့်ပါ",
   // Morphology popover
-  "morphology.insert_to_lexical": "Lexical တည်းဖြတ်ကိရိယာတွင် ရုပ်ဗေဒ ထည့်ပါ",
   "morphology.buckwalter_help": "Buckwalter အသံဖော်ပြချက် လေ့လာပါ",
   // Morphology — feature labels
   "morphology.feat.root":   "ရင်းမြစ်",
