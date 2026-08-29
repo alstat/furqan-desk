@@ -96,6 +96,13 @@ export const tl: Record<string, string> = {
   "settings.appearance": "Hitsura",
   "settings.appearance.glass": "Epektong salamin ng morphology popover",
   "settings.appearance.glass.desc": "I-disable upang mapabuti ang pagganap",
+  "settings.appearance.animations": "Mga animation",
+  "settings.appearance.animations.desc": "I-off sa mabagal na kompyuter — agad lumilitaw ang mga panel at dialog.",
+  "animation_prompt.title": "Mga animation",
+  "animation_prompt.body": "Ipinapakita ng AyahLab ang mga panel nang may fade at slide. Sa lumang makina, mas mabuting itipid ang gawaing iyon — kapag naka-off, agad lumilitaw ang lahat.",
+  "animation_prompt.keep": "Panatilihin ang animation",
+  "animation_prompt.disable": "I-off",
+  "animation_prompt.note": "Mababago mo ito anumang oras sa Mga Setting → Hitsura.",
   "settings.appearance.typst_preview_dark": "Dark mode ng Typst preview",
 
   "settings.appearance.typst_preview_dark.desc": "Kapag naka-on ang dark mode ng app, padidilimin din ang mga pahina ng Typst preview.",

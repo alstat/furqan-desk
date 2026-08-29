@@ -95,6 +95,13 @@ export const sw: Record<string, string> = {
   "settings.appearance": "Muonekano",
   "settings.appearance.glass": "Athari ya kioo ya popover ya mofolojia",
   "settings.appearance.glass.desc": "Zima ili kuboresha utendaji",
+  "settings.appearance.animations": "Uhuishaji",
+  "settings.appearance.animations.desc": "Zima kwenye kompyuta ya polepole — paneli na madirisha huonekana mara moja.",
+  "animation_prompt.title": "Uhuishaji",
+  "animation_prompt.body": "AyahLab huonyesha paneli kwa kufifia na kuteleza. Kwenye mashine ya zamani ni bora kuhifadhi kazi hiyo — ukiuzima, kila kitu huonekana mara moja.",
+  "animation_prompt.keep": "Weka uhuishaji",
+  "animation_prompt.disable": "Uzime",
+  "animation_prompt.note": "Unaweza kubadilisha hili wakati wowote katika Mipangilio → Muonekano.",
   "settings.appearance.typst_preview_dark": "Hali ya giza ya hakikisho la Typst",
 
   "settings.appearance.typst_preview_dark.desc": "Wakati hali ya giza ya programu imewashwa, kurasa za hakikisho la Typst pia hutiwa giza.",

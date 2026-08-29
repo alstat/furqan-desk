@@ -96,6 +96,13 @@ export const uz: Record<string, string> = {
   "settings.appearance": "Ko'rinish",
   "settings.appearance.glass": "Morfologiya popover shisha effekti",
   "settings.appearance.glass.desc": "Ishlashni yaxshilash uchun o'chirish",
+  "settings.appearance.animations": "Animatsiyalar",
+  "settings.appearance.animations.desc": "Sekin kompyuterda o'chiring — panellar va oynalar darhol paydo bo'ladi.",
+  "animation_prompt.title": "Animatsiyalar",
+  "animation_prompt.body": "AyahLab panellarni asta-sekin va sirg'alib ko'rsatadi. Eski qurilmada bu ishni tejagan ma'qul — o'chirilganda hammasi darhol paydo bo'ladi.",
+  "animation_prompt.keep": "Animatsiyalar qolsin",
+  "animation_prompt.disable": "O'chirish",
+  "animation_prompt.note": "Buni istalgan vaqtda Sozlamalar → Ko'rinish bo'limida o'zgartirishingiz mumkin.",
   "settings.appearance.typst_preview_dark": "Typst oldindan ko'rish qorong'i rejimi",
 
   "settings.appearance.typst_preview_dark.desc": "Ilova qorong'i rejimi yoqilganda, Typst oldindan ko'rish sahifalari ham qorong'ilashadi.",

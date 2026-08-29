@@ -96,6 +96,13 @@ export const ceb: Record<string, string> = {
   "settings.appearance": "Hitsura",
   "settings.appearance.glass": "Morphology popover glass effect",
   "settings.appearance.glass.desc": "I-disable aron mapabuti ang pasundayag",
+  "settings.appearance.animations": "Mga animasyon",
+  "settings.appearance.animations.desc": "Palonga sa hinay nga kompyuter — dihadiha makita ang mga panel ug dialog.",
+  "animation_prompt.title": "Mga animasyon",
+  "animation_prompt.body": "Ang AyahLab mo-fade ug mo-slide sa mga panel. Sa hinay nga makina, mas maayo nga itipig kana nga trabaho — kon gipalong, mogawas dayon ang tanan.",
+  "animation_prompt.keep": "Ipabilin ang animasyon",
+  "animation_prompt.disable": "Palonga",
+  "animation_prompt.note": "Mausab kini bisan kanus-a sa Mga Setting → Hitsura.",
   "settings.appearance.typst_preview_dark": "Dark mode sa Typst preview",
 
   "settings.appearance.typst_preview_dark.desc": "Kung naka-on ang dark mode sa app, padilima usab ang mga panid sa Typst preview.",

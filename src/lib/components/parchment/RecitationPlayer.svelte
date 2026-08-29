@@ -839,6 +839,9 @@
 {/if}
 
 <style>
+    /* Exempt from the app-wide animation switch — see the note beside the
+       `[data-animations="off"]` block in app.css. The class name is what that
+       exemption targets, so keep the two in step. */
     .mini-player-button-playing {
         background-image: linear-gradient(
             115deg,

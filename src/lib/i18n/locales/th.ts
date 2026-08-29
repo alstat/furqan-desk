@@ -96,6 +96,13 @@ export const th: Record<string, string> = {
   "settings.appearance": "รูปลักษณ์",
   "settings.appearance.glass": "เอฟเฟกต์กระจก popover สัณฐานวิทยา",
   "settings.appearance.glass.desc": "ปิดเพื่อปรับปรุงประสิทธิภาพ",
+  "settings.appearance.animations": "แอนิเมชัน",
+  "settings.appearance.animations.desc": "ปิดบนเครื่องที่ช้า — แผงและกล่องโต้ตอบจะปรากฏทันทีโดยไม่ค่อย ๆ จาง",
+  "animation_prompt.title": "แอนิเมชัน",
+  "animation_prompt.body": "AyahLab แสดงแผงด้วยการจางและเลื่อน บนเครื่องที่เก่าหรือช้า ควรสงวนแรงประมวลผลไว้ — เมื่อปิด ทุกอย่างจะปรากฏทันที",
+  "animation_prompt.keep": "คงแอนิเมชันไว้",
+  "animation_prompt.disable": "ปิด",
+  "animation_prompt.note": "เปลี่ยนได้ทุกเมื่อที่ การตั้งค่า → รูปลักษณ์",
   "settings.appearance.typst_preview_dark": "โหมดมืดสำหรับตัวอย่าง Typst",
 
   "settings.appearance.typst_preview_dark.desc": "เมื่อเปิดโหมดมืดของแอป จะทำให้หน้าตัวอย่าง Typst เข้มขึ้นด้วย",

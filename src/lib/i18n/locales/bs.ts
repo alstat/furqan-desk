@@ -95,6 +95,13 @@ export const bs: Record<string, string> = {
   "settings.appearance": "Izgled",
   "settings.appearance.glass": "Stakleni efekt morfologijskog popovera",
   "settings.appearance.glass.desc": "Onemogućite za poboljšanje performansi",
+  "settings.appearance.animations": "Animacije",
+  "settings.appearance.animations.desc": "Isključite na sporijem računaru — paneli i dijalozi pojavljuju se odmah, bez postepenog pojavljivanja.",
+  "animation_prompt.title": "Animacije",
+  "animation_prompt.body": "AyahLab paneli se pojavljuju uz postepeno pojavljivanje i klizanje. Na starijem računaru taj posao bolje je uštedjeti — bez animacija sve se pojavi odmah.",
+  "animation_prompt.keep": "Zadrži animacije",
+  "animation_prompt.disable": "Isključi ih",
+  "animation_prompt.note": "Ovo možete promijeniti bilo kada u Postavke → Izgled.",
   "settings.appearance.typst_preview_dark": "Tamni način za Typst pregled",
 
   "settings.appearance.typst_preview_dark.desc": "Kada je tamni način aplikacije uključen, zatamni i stranice Typst pregleda.",

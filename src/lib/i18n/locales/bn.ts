@@ -96,6 +96,13 @@ export const bn: Record<string, string> = {
   "settings.appearance": "চেহারা",
   "settings.appearance.glass": "মরফোলজি পপওভার গ্লাস ইফেক্ট",
   "settings.appearance.glass.desc": "পারফরম্যান্স উন্নত করতে নিষ্ক্রিয় করুন",
+  "settings.appearance.animations": "অ্যানিমেশন",
+  "settings.appearance.animations.desc": "ধীর কম্পিউটারে বন্ধ রাখুন — প্যানেল ও ডায়ালগ ফেড ছাড়াই সঙ্গে সঙ্গে দেখাবে।",
+  "animation_prompt.title": "অ্যানিমেশন",
+  "animation_prompt.body": "AyahLab প্যানেলগুলো ফেড ও স্লাইড করে দেখায়। পুরনো বা ধীর মেশিনে এই কাজটুকু বাঁচানোই ভালো — বন্ধ থাকলে সবকিছু সরাসরি দেখা যাবে।",
+  "animation_prompt.keep": "অ্যানিমেশন রাখুন",
+  "animation_prompt.disable": "বন্ধ করুন",
+  "animation_prompt.note": "আপনি যেকোনো সময় সেটিংস → চেহারা থেকে এটি বদলাতে পারেন।",
   "settings.appearance.typst_preview_dark": "Typst প্রিভিউ ডার্ক মোড",
 
   "settings.appearance.typst_preview_dark.desc": "অ্যাপ ডার্ক মোড চালু থাকলে, Typst প্রিভিউ পৃষ্ঠাগুলিও গাঢ় করুন।",

@@ -95,6 +95,13 @@ export const pa: Record<string, string> = {
   "settings.appearance": "ਦਿੱਖ",
   "settings.appearance.glass": "ਰੂਪ ਵਿਗਿਆਨ ਪੌਪਓਵਰ ਕੱਚ ਪ੍ਰਭਾਵ",
   "settings.appearance.glass.desc": "ਪ੍ਰਦਰਸ਼ਨ ਸੁਧਾਰਨ ਲਈ ਬੰਦ ਕਰੋ",
+  "settings.appearance.animations": "ਐਨੀਮੇਸ਼ਨ",
+  "settings.appearance.animations.desc": "ਹੌਲੀ ਕੰਪਿਊਟਰ ਉੱਤੇ ਬੰਦ ਕਰੋ — ਪੈਨਲ ਤੇ ਡਾਇਲਾਗ ਸਿੱਧੇ ਦਿਸਣਗੇ।",
+  "animation_prompt.title": "ਐਨੀਮੇਸ਼ਨ",
+  "animation_prompt.body": "AyahLab ਪੈਨਲਾਂ ਨੂੰ ਫੇਡ ਤੇ ਸਲਾਈਡ ਕਰਕੇ ਦਿਖਾਉਂਦਾ ਹੈ। ਪੁਰਾਣੇ ਕੰਪਿਊਟਰ ਉੱਤੇ ਇਹ ਮਿਹਨਤ ਬਚਾਉਣੀ ਬਿਹਤਰ ਹੈ — ਬੰਦ ਹੋਣ ਉੱਤੇ ਸਭ ਕੁਝ ਸਿੱਧਾ ਦਿਸਦਾ ਹੈ।",
+  "animation_prompt.keep": "ਐਨੀਮੇਸ਼ਨ ਰੱਖੋ",
+  "animation_prompt.disable": "ਬੰਦ ਕਰੋ",
+  "animation_prompt.note": "ਤੁਸੀਂ ਇਹ ਕਦੇ ਵੀ ਸੈਟਿੰਗਾਂ → ਦਿੱਖ ਵਿੱਚ ਬਦਲ ਸਕਦੇ ਹੋ।",
   "settings.appearance.typst_preview_dark": "Typst ਪ੍ਰੀਵਿਊ ਡਾਰਕ ਮੋਡ",
 
   "settings.appearance.typst_preview_dark.desc": "ਜਦੋਂ ਐਪ ਡਾਰਕ ਮੋਡ ਚਾਲੂ ਹੋਵੇ, ਤਾਂ Typst ਪ੍ਰੀਵਿਊ ਪੰਨੇ ਵੀ ਗੂੜ੍ਹੇ ਕਰੋ।",

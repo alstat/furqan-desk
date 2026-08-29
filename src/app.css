@@ -2155,3 +2155,41 @@ html.linux-csd.csd-round.csd-dialog.dark .app-shell {
         0 0 6px 1px rgba(0, 0, 0, 0.26),
         0 0 16px 2px rgba(0, 0, 0, 0.36);
 }
+
+/*
+ * Animation switch (Settings › Appearance).
+ *
+ * Everything CSS-driven — Tailwind's `transition-*`, the keyframes below,
+ * `animate-spin` — stops here. Svelte's own transitions run through the Web
+ * Animations API, out of reach of any stylesheet; `animations.store.ts`
+ * collapses those to a single frame instead. Near-zero rather than `none` so
+ * `transitionend`/`animationend` listeners still fire.
+ */
+:root[data-animations="off"],
+:root[data-animations="off"] *,
+:root[data-animations="off"] *::before,
+:root[data-animations="off"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+}
+
+/*
+ * The one exemption. The recitation mini player collapses to a single button,
+ * and its travelling gradient is the only thing on screen saying audio is
+ * playing — kill it and a paused player looks identical to a playing one. It
+ * is one small element animating a background position, which is not the cost
+ * this switch exists to avoid, so it keeps moving.
+ *
+ * Higher specificity than the blanket rule above, so it wins between two
+ * `!important` declarations. `prefers-reduced-motion` still stops it: that is
+ * a statement about motion itself, not about what the machine can afford.
+ */
+:root[data-animations="off"] .mini-player-button-playing {
+    animation-duration: 4s !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: infinite !important;
+}

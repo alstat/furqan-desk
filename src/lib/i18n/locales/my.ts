@@ -96,6 +96,13 @@ export const my: Record<string, string> = {
   "settings.appearance": "အသွင်အပြင်",
   "settings.appearance.glass": "ရုပ်ဗေဒ popover မှန် အကျိုးသက်ရောက်မှု",
   "settings.appearance.glass.desc": "စွမ်းဆောင်ရည် တိုးတက်ရန် ပိတ်ပါ",
+  "settings.appearance.animations": "အန်နီမေးရှင်းများ",
+  "settings.appearance.animations.desc": "စက်နှေးပါက ပိတ်ပါ — အကန့်များနှင့် ဒိုင်ယာလော့များ ချက်ချင်းပေါ်လာမည်။",
+  "animation_prompt.title": "အန်နီမေးရှင်းများ",
+  "animation_prompt.body": "AyahLab သည် အကန့်များကို မှိန်ဝင်ကာ ရွှေ့ပြသည်။ စက်ဟောင်းများတွင် ထိုအလုပ်ကို ချွေတာသင့်သည် — ပိတ်ထားပါက အားလုံး ချက်ချင်းပေါ်လာမည်။",
+  "animation_prompt.keep": "အန်နီမေးရှင်း ဆက်သုံးမည်",
+  "animation_prompt.disable": "ပိတ်မည်",
+  "animation_prompt.note": "ဆက်တင်များ → အသွင်အပြင် တွင် အချိန်မရွေး ပြောင်းနိုင်ပါသည်။",
   "settings.appearance.typst_preview_dark": "Typst အစမ်းကြည့် မှောင်မိုက်မုဒ်",
 
   "settings.appearance.typst_preview_dark.desc": "အက်ပ်မှောင်မိုက်မုဒ်ဖွင့်ထားသည့်အခါ Typst အစမ်းကြည့်စာမျက်နှာများကိုလည်း မှောင်စေပါ။",

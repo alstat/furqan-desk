@@ -81,6 +81,13 @@ export const en: Record<string, string> = {
   "settings.appearance": "Appearance",
   "settings.appearance.glass": "Morphology popover glass effect",
   "settings.appearance.glass.desc": "Disable to improve performance",
+  "settings.appearance.animations": "Animations",
+  "settings.appearance.animations.desc": "Turn off on a slower machine — panels and dialogs appear at once instead of fading in.",
+  "animation_prompt.title": "Animations",
+  "animation_prompt.body": "AyahLab fades and slides panels as they open. On an older or slower machine that work is better spent elsewhere — with animations off, everything simply appears.",
+  "animation_prompt.keep": "Keep animations",
+  "animation_prompt.disable": "Turn them off",
+  "animation_prompt.note": "You can change this any time in Settings → Appearance.",
   "settings.appearance.typst_preview_dark": "Typst preview dark mode",
 
   "settings.appearance.typst_preview_dark.desc":

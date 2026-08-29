@@ -96,6 +96,13 @@ export const hi: Record<string, string> = {
   "settings.appearance": "दिखावट",
   "settings.appearance.glass": "मॉर्फोलॉजी पॉपओवर ग्लास इफेक्ट",
   "settings.appearance.glass.desc": "प्रदर्शन सुधारने के लिए अक्षम करें",
+  "settings.appearance.animations": "एनिमेशन",
+  "settings.appearance.animations.desc": "धीमे कंप्यूटर पर बंद रखें — पैनल और डायलॉग फ़ेड हुए बिना तुरंत दिखते हैं।",
+  "animation_prompt.title": "एनिमेशन",
+  "animation_prompt.body": "AyahLab पैनल को फ़ेड और स्लाइड करके दिखाता है। पुराने या धीमे कंप्यूटर पर यह मेहनत कहीं और बेहतर लगती है — बंद होने पर सब कुछ सीधे दिखेगा।",
+  "animation_prompt.keep": "एनिमेशन रखें",
+  "animation_prompt.disable": "बंद करें",
+  "animation_prompt.note": "आप इसे कभी भी सेटिंग्स → दिखावट में बदल सकते हैं।",
   "settings.appearance.typst_preview_dark": "Typst प्रीव्यू डार्क मोड",
 
   "settings.appearance.typst_preview_dark.desc": "जब ऐप डार्क मोड चालू हो, तो Typst प्रीव्यू पृष्ठ भी गहरे करें।",

@@ -96,6 +96,13 @@ export const tg: Record<string, string> = {
   "settings.appearance": "Намуд",
   "settings.appearance.glass": "Таъсири шишаи попавери морфология",
   "settings.appearance.glass.desc": "Барои беҳтар кардани иҷро хомӯш кунед",
+  "settings.appearance.animations": "Аниматсияҳо",
+  "settings.appearance.animations.desc": "Дар компютери суст хомӯш кунед — панелҳо ва равзанаҳо фавран пайдо мешаванд.",
+  "animation_prompt.title": "Аниматсияҳо",
+  "animation_prompt.body": "AyahLab панелҳоро бо камшавӣ ва лағжиш нишон медиҳад. Дар дастгоҳи кӯҳна ин корро сарфа кардан беҳтар аст — ҳангоми хомӯшӣ ҳама чиз фавран пайдо мешавад.",
+  "animation_prompt.keep": "Аниматсияҳо монанд",
+  "animation_prompt.disable": "Хомӯш кардан",
+  "animation_prompt.note": "Инро ҳар вақт дар Танзимот → Намуд иваз карда метавонед.",
   "settings.appearance.typst_preview_dark": "Реҷаи торикии пешнамоиши Typst",
 
   "settings.appearance.typst_preview_dark.desc": "Вақте ки реҷаи торикии барнома фаъол аст, саҳифаҳои пешнамоиши Typst низ торик мешаванд.",

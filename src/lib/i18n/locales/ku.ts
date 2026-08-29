@@ -95,6 +95,13 @@ export const ku: Record<string, string> = {
   "settings.appearance": "دیمەن",
   "settings.appearance.glass": "کاریگەری شووشەی پەنجەرەی مۆرفۆلۆجی",
   "settings.appearance.glass.desc": "بۆ باشکردنی کارایی ناچالاک بکە",
+  "settings.appearance.animations": "جوڵانەوەکان",
+  "settings.appearance.animations.desc": "لەسەر کۆمپیوتەری خاو بیکوژێنەوە — پانێڵ و دیالۆگەکان دەستبەجێ دەردەکەون.",
+  "animation_prompt.title": "جوڵانەوەکان",
+  "animation_prompt.body": "ئەیەلاب پانێڵەکان بە کاڵبوونەوە و خلیسکان پیشان دەدات. لەسەر ئامێری کۆنتر باشترە ئەو کارە نەکرێت — بە کوژاندنەوەی، هەموو شتێک ڕاستەوخۆ دەردەکەوێت.",
+  "animation_prompt.keep": "جوڵانەوەکان بمێننەوە",
+  "animation_prompt.disable": "بیانکوژێنەوە",
+  "animation_prompt.note": "هەر کاتێک لە ڕێکخستنەکان ← دیمەن دەتوانیت بیگۆڕیت.",
   "settings.appearance.typst_preview_dark": "Moda tarî ya pêşdîtina Typst",
 
   "settings.appearance.typst_preview_dark.desc": "Dema moda tarî ya sepanê vekirî be, rûpelên pêşdîtina Typst jî tarî dibin.",
