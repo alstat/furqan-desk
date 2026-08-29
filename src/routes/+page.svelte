@@ -402,7 +402,7 @@
                     />
                 {/if}
                 <div
-                    class="mb-5 w-full flex-1 flex flex-col min-h-0 overflow-hidden"
+                    class="mb-2.5 w-full flex-1 flex flex-col min-h-0 overflow-hidden"
                 >
                     <LeanInfoviewPane
                         runtime={leanEditorRuntime}

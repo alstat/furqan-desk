@@ -140,7 +140,7 @@
                                 ? "lean_infoview.hide_severity"
                                 : "lean_infoview.show_severity",
                         )}
-                        class="flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[0.625rem] transition-colors
+                        class="flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[0.625rem] transition-colors
                                {SEVERITY_STYLE[severity].border} {show[severity]
                             ? `${SEVERITY_STYLE[severity].bg} ${SEVERITY_STYLE[severity].text}`
                             : 'bg-transparent text-brand-charcoal-300 dark:text-[#626880] opacity-60'}"
