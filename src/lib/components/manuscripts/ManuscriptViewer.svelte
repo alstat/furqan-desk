@@ -9,7 +9,7 @@
     import { bringToFront } from "$lib/stores/window-manager.store";
     import WindowControls from "$lib/components/shared/WindowControls.svelte";
     import { isPro } from "$lib/stores/auth.store";
-    import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
+    import { askAiAboutSelection, AI_FEATURE_TAGS } from "$lib/stores/ai-chat.store";
     import { t } from "$lib/i18n";
 
     interface Props {
@@ -836,7 +836,12 @@
         const selectedText =
             selectedManuscript?.title ??
             (ref ? `Qur'an ${ref.surah}:${ref.ayah}` : "manuscript");
-        askAiAboutSelection({ prompt, selectedText, contextPrompt });
+        askAiAboutSelection({
+            prompt,
+            selectedText,
+            contextPrompt,
+            feature: AI_FEATURE_TAGS.manuscriptAiPrompt,
+        });
         closeAiPrompt();
     }
 

@@ -42,6 +42,7 @@ export const pendingSelectionQuestion = writable<{
     prompt: string;
     selectedText: string;
     contextPrompt?: string;
+    feature: string;
 } | null>(null);
 // When true, the next message uses the advanced (premium) model instead of the
 // cheap default. Persisted across the session via localStorage so the user's
@@ -81,7 +82,29 @@ export interface PendingSelectionQuestion {
     prompt: string;
     selectedText: string;
     contextPrompt?: string;
+    /**
+     * Which AI surface this question originated from — tagged all the way
+     * through to token_usage.feature so the admin dashboard can report usage
+     * per surface (AiSelectionToolbar, TafsirDialog, etc.) even though they
+     * all end up as a chat-completion request. See AI_FEATURE_TAGS below for
+     * the accepted values.
+     */
+    feature: string;
 }
+
+// AI surfaces that route through the chat window ("Ask AI"). Kept as a
+// single source of truth so every askAiAboutSelection() caller uses an
+// agreed tag — see supabase's token_usage.feature (added in
+// ayahlab-website's 20260830000003_token_usage_feature_tracking.sql) and the
+// admin dashboard's featureLabel() in ayahlab-website.
+export const AI_FEATURE_TAGS = {
+    selectionToolbar: "selection_toolbar",
+    tafsirDialog: "tafsir_dialog",
+    morphologyViewer: "morphology_viewer",
+    wordMorphologyPopup: "word_morphology_popup",
+    manuscriptAiPrompt: "manuscript_ai_prompt",
+    editorQuranBlockPrompt: "editor_quran_block_prompt",
+} as const;
 
 /**
  * The chat runs in a window of its own so it behaves like a native companion
@@ -113,18 +136,19 @@ export function askAiAboutSelection({
     prompt,
     selectedText,
     contextPrompt,
+    feature,
 }: PendingSelectionQuestion): void {
     // Written before the window opens so it is already waiting, however long
     // the window takes to boot.
     try {
         localStorage.setItem(
             PENDING_KEY,
-            JSON.stringify({ prompt, selectedText, contextPrompt }),
+            JSON.stringify({ prompt, selectedText, contextPrompt, feature }),
         );
     } catch {
         // Storage full or disabled — the in-app fallback still works below.
     }
-    pendingSelectionQuestion.set({ prompt, selectedText, contextPrompt });
+    pendingSelectionQuestion.set({ prompt, selectedText, contextPrompt, feature });
     void openAiChat();
 }
 
@@ -194,7 +218,10 @@ export function stopStreaming(): void {
     abortController?.abort();
 }
 
-export async function sendMessage(prompt: string): Promise<void> {
+export async function sendMessage(
+    prompt: string,
+    feature: string = "ai_chat",
+): Promise<void> {
     const text = prompt.trim();
     if (!text) return;
     if (get(streaming)) return;
@@ -263,6 +290,7 @@ export async function sendMessage(prompt: string): Promise<void> {
                 messages: history,
                 // Advanced model is available to every Pro account.
                 advanced: get(useAdvanced) && get(isPro),
+                feature,
             }),
             signal: abortController.signal,
         });

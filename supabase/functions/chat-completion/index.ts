@@ -70,6 +70,15 @@ interface ChatMessage {
 interface RequestBody {
     messages: ChatMessage[];
     advanced?: boolean;
+    // Which AI surface fired this request (e.g. "ai_chat",
+    // "selection_toolbar", "take_home_message", "tafsir_dialog",
+    // "morphology_viewer", "word_morphology_popup", "manuscript_ai_prompt",
+    // "editor_quran_block_prompt"). Free-form — not validated against a
+    // fixed list here, since the client is the source of truth for what
+    // surfaces exist (see AI_FEATURE_TAGS in ai-chat.store.ts). Recorded to
+    // token_usage.feature purely for admin-side reporting; never affects
+    // quota, pricing, or the OpenAI call itself.
+    feature?: string;
 }
 
 type ModelClass = "standard" | "advanced";
@@ -224,6 +233,10 @@ Deno.serve(async (req) => {
     }
 
     const modelClass: ModelClass = body.advanced === true ? "advanced" : "standard";
+    const feature =
+        typeof body.feature === "string" && body.feature.trim()
+            ? body.feature.trim().slice(0, 64)
+            : "unknown";
 
     // Resolve the model id. Backwards compatible with legacy OPENAI_MODEL.
     const standardModel =
@@ -396,6 +409,7 @@ Deno.serve(async (req) => {
                 completion_tokens: completionTokens,
                 model,
                 model_class: modelClass,
+                feature,
             });
         } catch (e) {
             console.error("token_usage insert failed", e);

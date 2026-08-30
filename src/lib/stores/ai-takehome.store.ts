@@ -121,6 +121,7 @@ export async function fetchTakeHomeMessage({
         },
         body: JSON.stringify({
             advanced,
+            feature: "take_home_message",
             messages: [
                 { role: "system", content: systemPrompt },
                 {

@@ -275,7 +275,7 @@
 
         pendingSelectionQuestion.set(null);
         newChat();
-        void sendMessage(formatSelectionQuestion(pending));
+        void sendMessage(formatSelectionQuestion(pending), pending.feature);
     });
 
     // Auto-scroll on message updates while open.

@@ -5,7 +5,7 @@
         type AiTextAction,
         type AiTextTone,
     } from "$lib/stores/ai-text-transform.store";
-    import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
+    import { askAiAboutSelection, AI_FEATURE_TAGS } from "$lib/stores/ai-chat.store";
     import { onMount, tick } from "svelte";
     import { t } from "$lib/i18n";
 
@@ -218,6 +218,7 @@
             prompt,
             selectedText,
             contextPrompt: askAiContextPrompt ?? contextPrompt,
+            feature: AI_FEATURE_TAGS.selectionToolbar,
         });
         onClose?.();
     }

@@ -6,7 +6,7 @@
     import { requestPlayBlock } from "$lib/stores/recitation.store";
     import { manuscriptsEnabled, openManuscriptViewer } from "$lib/stores/manuscripts.store";
     import { isPro } from "$lib/stores/auth.store";
-    import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
+    import { askAiAboutSelection, AI_FEATURE_TAGS } from "$lib/stores/ai-chat.store";
     import { t } from "$lib/i18n";
     import { getEditor } from "$lexical/core/composerContext.js";
     import { $getNodeByKey as getNodeByKey } from "lexical";
@@ -184,6 +184,7 @@
             prompt,
             selectedText: ctx.arabic,
             contextPrompt,
+            feature: AI_FEATURE_TAGS.editorQuranBlockPrompt,
         });
         closeAiPrompt();
     }

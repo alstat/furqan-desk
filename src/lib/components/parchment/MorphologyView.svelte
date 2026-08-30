@@ -20,7 +20,7 @@
     import type { AyahTranslation, AyahTafsir } from '$lib/stores/translation.store';
     import { manuscriptsEnabled, openManuscriptViewer } from '$lib/stores/manuscripts.store';
     import { isPro } from '$lib/stores/auth.store';
-    import { askAiAboutSelection } from '$lib/stores/ai-chat.store';
+    import { askAiAboutSelection, AI_FEATURE_TAGS } from '$lib/stores/ai-chat.store';
     import { t } from '$lib/i18n';
     import {
         zenMode,
@@ -470,7 +470,12 @@
         if (ctx.wbw) lines.push(`Word-by-word: ${ctx.wbw}`);
         if (ctx.tafsir) lines.push(`Tafsir:\n${ctx.tafsir}`);
         const contextPrompt = lines.join('\n');
-        askAiAboutSelection({ prompt, selectedText: ctx.arabic, contextPrompt });
+        askAiAboutSelection({
+            prompt,
+            selectedText: ctx.arabic,
+            contextPrompt,
+            feature: AI_FEATURE_TAGS.morphologyViewer,
+        });
         closeAiPrompt();
     }
 </script>

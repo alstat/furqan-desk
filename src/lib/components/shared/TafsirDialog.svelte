@@ -19,7 +19,7 @@
     import LoadingDots from "./LoadingDots.svelte";
     import type { TafsirSnapshot } from "$lib/stores/reader-windows.store";
     import { isPro } from "$lib/stores/auth.store";
-    import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
+    import { askAiAboutSelection, AI_FEATURE_TAGS } from "$lib/stores/ai-chat.store";
     import { getSurahNameTashkeel } from "$lib/data/surah-names-tashkeel";
     import {
         customFontFamilies,
@@ -452,6 +452,7 @@
             prompt,
             selectedText: ctx.arabic || `${surahName} ${ctx.ayah}`,
             contextPrompt,
+            feature: AI_FEATURE_TAGS.tafsirDialog,
         });
         closeAiPrompt();
     }

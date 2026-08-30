@@ -59,7 +59,7 @@
     import { get } from 'svelte/store';
     import { openUrl } from '@tauri-apps/plugin-opener';
     import { isPro } from '$lib/stores/auth.store';
-    import { askAiAboutSelection } from '$lib/stores/ai-chat.store';
+    import { askAiAboutSelection, AI_FEATURE_TAGS } from '$lib/stores/ai-chat.store';
     import { copyToClipboard } from '$lib/utils/clipboard';
 
     interface Props {
@@ -378,6 +378,7 @@
             prompt,
             selectedText: word.combined_arabic,
             contextPrompt: buildWordMorphologyContext(),
+            feature: AI_FEATURE_TAGS.wordMorphologyPopup,
         });
         aiPromptOpen = false;
         aiPromptText = '';

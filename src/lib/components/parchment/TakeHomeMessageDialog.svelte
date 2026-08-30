@@ -589,7 +589,10 @@
     let winH = $state(0);
     let reflowTick = $state(0);
 
-    const PANEL_W = 440;
+    // Base/minimum width; the panel grows with the window up to PANEL_W_MAX
+    // (see `pos` below) instead of staying pinned to this value.
+    const PANEL_W = 480;
+    const PANEL_W_MAX = 640;
     // Shared with the other anchored panels so every one sits the same
     // distance from its trigger.
     const GAP = PANEL_GAP;
@@ -620,7 +623,12 @@
         if (!open) return null;
         const vw = winW || (typeof window !== "undefined" ? window.innerWidth : 1024);
         const vh = winH || (typeof window !== "undefined" ? window.innerHeight : 768);
-        const w = Math.min(Math.max(vw - 16, 200), PANEL_W);
+        // Scale with the window: a third of its width, floored at PANEL_W and
+        // ceilinged at PANEL_W_MAX (but never wider than the viewport itself).
+        const w = Math.min(
+            Math.max(vw * 0.34, PANEL_W),
+            Math.min(vw - 16, PANEL_W_MAX),
+        );
 
         const r = anchorEl?.getBoundingClientRect();
         // No anchor yet (button not mounted / measured) → centre on screen.
@@ -719,10 +727,10 @@
         tabindex="-1"
         aria-modal="false"
         aria-label={$t("takehome.title")}
-        class="fixed flex w-[min(92vw,440px)] flex-col overflow-hidden rounded-xl border border-brand-sand-200 bg-white shadow-xl dark:border-[#414559] dark:bg-[#303446] dark:shadow-black/40"
+        class="fixed flex w-[min(92vw,480px)] flex-col overflow-hidden rounded-xl border border-brand-sand-200 bg-white shadow-xl dark:border-[#414559] dark:bg-[#303446] dark:shadow-black/40"
         style="left:{dragPos ? dragPos.x : (pos?.x ?? 0)}px; top:{dragPos
             ? dragPos.y
-            : (pos?.y ?? 0)}px; width:{pos?.w ?? 440}px; max-height:{pos?.maxH ??
+            : (pos?.y ?? 0)}px; width:{pos?.w ?? 480}px; max-height:{pos?.maxH ??
             640}px; {dragPos ? '' : 'transform:translateY(-50%);'} z-index:{zIndex};"
         onpointerdown={() => (zIndex = bringToFront())}
     >

@@ -161,6 +161,7 @@ Deno.serve(async (req) => {
             completion_tokens: completionTokens,
             model,
             model_class: "standard",
+            feature: "chat_title_summary",
         });
     } catch (e) {
         console.error("token_usage insert failed", e);

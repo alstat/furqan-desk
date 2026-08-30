@@ -124,6 +124,9 @@ export async function runAiTextTransform({
         body: JSON.stringify({
             // Advanced model is available to every Pro account.
             advanced: get(_aiTextDefaultModel) === "advanced" && get(isPro),
+            // This function is only ever called from AiSelectionToolbar's
+            // Paraphrase/Elaborate/Shorten/Prompt actions.
+            feature: "selection_toolbar",
             messages: [
                 {
                     role: "system",
