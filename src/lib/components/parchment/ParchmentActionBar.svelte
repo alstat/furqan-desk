@@ -137,7 +137,7 @@
             title={$t("arabicStudy.open")}
             aria-label={$t("arabicStudy.open")}
         >
-            <Icon icon="solar:square-academic-cap-2-bold-duotone" width="1rem" />
+            <Icon icon="solar:square-academic-cap-bold-duotone" width="1rem" />
         </button>
     {/if}
 

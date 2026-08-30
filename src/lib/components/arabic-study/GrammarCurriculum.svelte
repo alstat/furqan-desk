@@ -7,12 +7,13 @@
     import { get } from "svelte/store";
     import Icon from "@iconify/svelte";
     import { t, locale } from "$lib/i18n";
-    import { isPro } from "$lib/stores/auth.store";
+    import { isPro, isProPlus } from "$lib/stores/auth.store";
     import { askAiAboutSelection, AI_FEATURE_TAGS } from "$lib/stores/ai-chat.store";
     import { renderMarkdown } from "$lib/utils/markdown";
     import { topicsForLevel, type GrammarTopic } from "$lib/data/arabic-grammar-topics";
     import { fetchTopicContent, saveTopicContent } from "$lib/stores/arabic-study.store";
-    import { fetchGrammarTopic } from "$lib/stores/ai-grammar-topic.store";
+    import { fetchGrammarTopic, grammarModel } from "$lib/stores/ai-grammar-topic.store";
+    import VerseRefBadge from "./VerseRefBadge.svelte";
 
     interface Props {
         level: "intermediate" | "advanced";
@@ -131,6 +132,7 @@
                 topicTitle: topic.label,
                 level,
                 locale: get(locale),
+                advanced: get(grammarModel) === "advanced" && get(isProPlus),
                 signal: ac.signal,
                 onPartial: (partial) => {
                     if (!ac.signal.aborted) rawContent = partial;
@@ -175,44 +177,56 @@
 <div class="flex min-h-0 flex-1 overflow-hidden bg-white dark:bg-[#303446]">
     <!-- Topic sidebar -->
     <div
-        class="flex w-56 shrink-0 flex-col gap-1 overflow-y-auto border-r border-brand-sand-200 bg-brand-sand-50 p-4 dark:border-[#414559] dark:bg-[#232634]"
+        class="flex w-56 shrink-0 flex-col border-r border-brand-sand-200 bg-brand-sand-50 dark:border-[#414559] dark:bg-[#232634]"
     >
-        <h4
-            class="mb-1 text-[0.625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
-        >
-            {$t("arabicStudy.grammar.path")}
-        </h4>
-        {#each topics as tp (tp.id)}
-            {@const done = cachedIds.has(tp.id)}
-            {@const current = tp.id === selectedId}
-            <button
-                onclick={() => (selectedId = tp.id)}
-                class="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors {current
-                    ? 'bg-white shadow-sm ring-1 ring-brand-gold-300 dark:bg-[#292c3c] dark:ring-[#e5c890]/40'
-                    : 'hover:bg-white/60 dark:hover:bg-[#292c3c]/60'}"
+        <div class="default-scroll flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-4">
+            <h4
+                class="mb-1 text-[0.625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
             >
-                <span
-                    class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[0.5625rem] font-bold {done
-                        ? 'bg-brand-emerald-400 text-white'
-                        : current
-                          ? 'bg-brand-gold-400 text-white'
-                          : 'bg-brand-sand-200 text-brand-charcoal-400 dark:bg-[#414559] dark:text-[#838ba7]'}"
+                {$t("arabicStudy.grammar.path")}
+            </h4>
+            {#each topics as tp (tp.id)}
+                {@const done = cachedIds.has(tp.id)}
+                {@const current = tp.id === selectedId}
+                <button
+                    onclick={() => (selectedId = tp.id)}
+                    class="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors {current
+                        ? 'bg-white shadow-sm ring-1 ring-brand-gold-300 dark:bg-[#292c3c] dark:ring-[#e5c890]/40'
+                        : 'hover:bg-white/60 dark:hover:bg-[#292c3c]/60'}"
                 >
-                    {#if done}
-                        <Icon icon="solar:check-bold" width="0.5rem" />
-                    {:else}
-                        {topics.indexOf(tp) + 1}
-                    {/if}
-                </span>
-                <span
-                    class="text-[0.71875rem] font-semibold leading-snug {current
-                        ? 'text-brand-charcoal-900 dark:text-[#c6d0f5]'
-                        : 'text-brand-charcoal-500 dark:text-[#a5adce]'}"
-                >
-                    {tp.label}
-                </span>
+                    <span
+                        class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[0.5625rem] font-bold {done
+                            ? 'bg-brand-emerald-400 text-white'
+                            : current
+                              ? 'bg-brand-gold-400 text-white'
+                              : 'bg-brand-sand-200 text-brand-charcoal-400 dark:bg-[#414559] dark:text-[#838ba7]'}"
+                    >
+                        {#if done}
+                            <Icon icon="solar:check-bold" width="0.5rem" />
+                        {:else}
+                            {topics.indexOf(tp) + 1}
+                        {/if}
+                    </span>
+                    <span
+                        class="text-[0.71875rem] font-semibold leading-snug {current
+                            ? 'text-brand-charcoal-900 dark:text-[#c6d0f5]'
+                            : 'text-brand-charcoal-500 dark:text-[#a5adce]'}"
+                    >
+                        {tp.label}
+                    </span>
+                </button>
+            {/each}
+        </div>
+
+        <div class="shrink-0 border-t border-brand-sand-200 px-4 py-3 dark:border-[#414559]">
+            <button
+                onclick={onBack}
+                class="flex cursor-pointer items-center gap-1.5 text-[0.75rem] font-semibold text-brand-charcoal-400 hover:text-brand-charcoal-600 dark:text-[#838ba7] dark:hover:text-[#c6d0f5]"
+            >
+                <Icon icon="solar:arrow-left-linear" width="0.8rem" />
+                {$t("arabicStudy.grammar.back")}
             </button>
-        {/each}
+        </div>
     </div>
 
     <!-- Lesson -->
@@ -246,31 +260,47 @@
                             {$t("takehome.try_again")}
                         </button>
                     </div>
-                {:else if !rawContent && loading}
-                    <div class="flex flex-col items-center gap-3 py-16 text-center">
-                        <Icon
-                            icon="svg-spinners:3-dots-fade"
-                            class="text-brand-gold-500 dark:text-[#e5c890]"
-                            width="1.6rem"
-                        />
-                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7]">
-                            {$t("arabicStudy.grammar.loading")}
-                        </p>
-                    </div>
-                {:else if rawContent}
+                {:else}
+                    {@const notStarted = !rawContent && !loading}
+                    <!-- AI Explanation — always shown, filled in as it streams -->
                     <div
                         class="rounded-2xl border border-[#e6cf96] bg-linear-to-b from-[#fdf6e6] to-white p-5 dark:border-[#6b5b37] dark:from-[#34302a] dark:to-[#292c3c]"
                     >
-                        <span
-                            class="inline-flex items-center gap-1.5 rounded-lg border border-brand-gold-400 bg-brand-gold-100 px-2.5 py-1 text-[0.625rem] font-semibold text-brand-gold-600 dark:bg-[#e5c890]/30 dark:text-[#e5c890]"
-                        >
-                            <Icon icon="solar:bolt-bold-duotone" width="0.65rem" />
-                            {$t("arabicStudy.grammar.ai_badge")}
-                        </span>
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-brand-gold-400 bg-brand-gold-100 px-2.5 py-1 text-[0.625rem] font-semibold text-brand-gold-600 dark:bg-[#e5c890]/30 dark:text-[#e5c890]"
+                            >
+                                <Icon icon="solar:bolt-bold-duotone" width="0.65rem" />
+                                {$t("arabicStudy.grammar.ai_badge")}
+                            </span>
+                            {#if $isProPlus}
+                                <button
+                                    onclick={() =>
+                                        grammarModel.set($grammarModel === "advanced" ? "standard" : "advanced")}
+                                    title={$grammarModel === "advanced"
+                                        ? $t("arabicStudy.grammar.model_advanced_hint")
+                                        : $t("arabicStudy.grammar.model_standard_hint")}
+                                    class="flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-[0.625rem] font-semibold transition-colors {$grammarModel ===
+                                    'advanced'
+                                        ? 'border-brand-gold-400 bg-brand-gold-100 text-brand-gold-600 dark:bg-[#e5c890]/30 dark:text-[#e5c890]'
+                                        : 'border-brand-sand-200 text-brand-charcoal-400 hover:bg-brand-sand-100 dark:border-[#414559] dark:text-[#8087a2] dark:hover:bg-[#292c3c]'}"
+                                >
+                                    <Icon
+                                        icon={$grammarModel === "advanced" ? "solar:bolt-bold-duotone" : "solar:bolt-linear"}
+                                        width="0.65rem"
+                                    />
+                                    {$grammarModel === "advanced"
+                                        ? $t("arabicStudy.grammar.model_advanced")
+                                        : $t("arabicStudy.grammar.model_standard")}
+                                </button>
+                            {/if}
+                        </div>
                         {#if parsed.title}
-                            <div dir="rtl" class="mt-2.5 font-scheherazade text-2xl text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                            <div dir="rtl" class="mt-2.5 pb-2 font-scheherazade text-2xl text-brand-charcoal-900 dark:text-[#c6d0f5]">
                                 {parsed.title}
                             </div>
+                        {:else}
+                            <div class="mt-3 h-6 w-2/3 animate-pulse rounded bg-[#f0e2bb] dark:bg-[#4a4331]"></div>
                         {/if}
                         {#if parsed.subtitle}
                             <div class="mt-0.5 text-[0.71875rem] italic text-brand-gold-500 dark:text-[#e5c890]">
@@ -283,62 +313,76 @@
                             >
                                 {@html renderMarkdown(parsed.explanation)}
                             </div>
+                        {:else}
+                            <div class="mt-3 flex flex-col gap-1.5">
+                                <div class="h-3 w-full animate-pulse rounded bg-[#f0e2bb] dark:bg-[#4a4331]"></div>
+                                <div class="h-3 w-11/12 animate-pulse rounded bg-[#f0e2bb] dark:bg-[#4a4331]"></div>
+                                <div class="h-3 w-2/3 animate-pulse rounded bg-[#f0e2bb] dark:bg-[#4a4331]"></div>
+                            </div>
                         {/if}
                     </div>
 
-                    {#if parsed.quranWord || parsed.everydayWord}
-                        <div class="flex gap-3">
+                    <!-- From the Qur'an / Everyday Arabic — always shown -->
+                    <div class="flex gap-3">
+                        <div
+                            class="flex-1 rounded-2xl border border-brand-emerald-200 bg-brand-emerald-50 p-3 dark:border-[#414559] dark:bg-[#292c3c]"
+                        >
+                            <span
+                                class="rounded-full bg-brand-emerald-100 px-2 py-0.5 text-[0.5625rem] font-bold uppercase tracking-wide text-brand-emerald-600 dark:bg-[#414559] dark:text-[#9dd4c8]"
+                            >
+                                {$t("arabicStudy.alphabet.from_quran")}
+                            </span>
                             {#if parsed.quranWord}
-                                <div
-                                    class="flex-1 rounded-2xl border border-brand-emerald-200 bg-brand-emerald-50 p-3 dark:border-[#414559] dark:bg-[#292c3c]"
-                                >
-                                    <span
-                                        class="rounded-full bg-brand-emerald-100 px-2 py-0.5 text-[0.5625rem] font-bold uppercase tracking-wide text-brand-emerald-600 dark:bg-[#414559] dark:text-[#9dd4c8]"
-                                    >
-                                        {$t("arabicStudy.alphabet.from_quran")}
-                                    </span>
-                                    <div dir="rtl" class="mt-2 font-scheherazade text-lg text-brand-charcoal-900 dark:text-[#c6d0f5]">
-                                        {parsed.quranWord}
-                                    </div>
-                                    {#if parsed.quranGloss}
-                                        <p class="mt-1 text-[0.65625rem] text-brand-charcoal-400 dark:text-[#a5adce]">{parsed.quranGloss}</p>
-                                    {/if}
-                                    {#if parsed.quranRef}
-                                        <span
-                                            class="mt-1.5 inline-flex items-center rounded-full border border-[#ecd9a6] bg-[#f7ebcf] px-2 font-scheherazade text-[0.75rem] text-[#b07d28]"
-                                        >
-                                            ﴾{parsed.quranRef}﴿
-                                        </span>
-                                    {/if}
+                                <div dir="rtl" class="mt-2 pb-2 font-scheherazade text-lg text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    {parsed.quranWord}
                                 </div>
-                            {/if}
-                            {#if parsed.everydayWord}
-                                <div
-                                    class="flex-1 rounded-2xl border border-brand-teal-200 bg-brand-teal-50 p-3 dark:border-[#414559] dark:bg-[#292c3c]"
-                                >
-                                    <span
-                                        class="rounded-full bg-brand-teal-100 px-2 py-0.5 text-[0.5625rem] font-bold uppercase tracking-wide text-brand-teal-600 dark:bg-[#414559] dark:text-[#92cccc]"
-                                    >
-                                        {$t("arabicStudy.alphabet.everyday")}
-                                    </span>
-                                    <div dir="rtl" class="mt-2 font-scheherazade text-lg text-brand-charcoal-900 dark:text-[#c6d0f5]">
-                                        {parsed.everydayWord}
+                                {#if parsed.quranGloss}
+                                    <p class="mt-1 text-[0.65625rem] text-brand-charcoal-400 dark:text-[#a5adce]">{parsed.quranGloss}</p>
+                                {/if}
+                                {#if parsed.quranRef}
+                                    <div class="mt-1.5">
+                                        <VerseRefBadge verseRef={parsed.quranRef} />
                                     </div>
-                                    {#if parsed.everydayGloss}
-                                        <p class="mt-1 text-[0.65625rem] text-brand-charcoal-400 dark:text-[#a5adce]">{parsed.everydayGloss}</p>
-                                    {/if}
+                                {/if}
+                            {:else}
+                                <div class="mt-2 flex flex-col gap-1.5">
+                                    <div class="h-5 w-2/3 animate-pulse rounded bg-brand-emerald-100 dark:bg-[#414559]"></div>
+                                    <div class="h-2.5 w-full animate-pulse rounded bg-brand-emerald-100 dark:bg-[#414559]"></div>
                                 </div>
                             {/if}
                         </div>
-                    {/if}
-
-                    {#if parsed.quizSentence && parsed.quizChoices.length}
                         <div
-                            class="rounded-2xl border border-brand-sand-200 bg-white p-4 dark:border-[#414559] dark:bg-[#292c3c]"
+                            class="flex-1 rounded-2xl border border-brand-teal-200 bg-brand-teal-50 p-3 dark:border-[#414559] dark:bg-[#292c3c]"
                         >
-                            <div class="text-[0.625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]">
-                                {$t("arabicStudy.grammar.try_it")}
-                            </div>
+                            <span
+                                class="rounded-full bg-brand-teal-100 px-2 py-0.5 text-[0.5625rem] font-bold uppercase tracking-wide text-brand-teal-600 dark:bg-[#414559] dark:text-[#92cccc]"
+                            >
+                                {$t("arabicStudy.alphabet.everyday")}
+                            </span>
+                            {#if parsed.everydayWord}
+                                <div dir="rtl" class="mt-2 pb-2 font-scheherazade text-lg text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    {parsed.everydayWord}
+                                </div>
+                                {#if parsed.everydayGloss}
+                                    <p class="mt-1 text-[0.65625rem] text-brand-charcoal-400 dark:text-[#a5adce]">{parsed.everydayGloss}</p>
+                                {/if}
+                            {:else}
+                                <div class="mt-2 flex flex-col gap-1.5">
+                                    <div class="h-5 w-2/3 animate-pulse rounded bg-brand-teal-100 dark:bg-[#414559]"></div>
+                                    <div class="h-2.5 w-full animate-pulse rounded bg-brand-teal-100 dark:bg-[#414559]"></div>
+                                </div>
+                            {/if}
+                        </div>
+                    </div>
+
+                    <!-- Try It — always shown -->
+                    <div
+                        class="rounded-2xl border border-brand-sand-200 bg-white p-4 dark:border-[#414559] dark:bg-[#292c3c]"
+                    >
+                        <div class="text-[0.625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]">
+                            {$t("arabicStudy.grammar.try_it")}
+                        </div>
+                        {#if parsed.quizSentence && parsed.quizChoices.length}
                             <div dir="rtl" class="mt-2 text-center font-scheherazade text-xl text-brand-charcoal-900 dark:text-[#c6d0f5]">
                                 {parsed.quizSentence}
                             </div>
@@ -363,10 +407,19 @@
                                     {parsed.quizWhy}
                                 </p>
                             {/if}
-                        </div>
-                    {/if}
+                        {:else}
+                            <div class="mt-2.5 flex flex-col items-center gap-2">
+                                <div class="h-5 w-1/2 animate-pulse rounded bg-brand-sand-100 dark:bg-[#414559]"></div>
+                                <div class="flex gap-2">
+                                    <div class="h-6 w-14 animate-pulse rounded-full bg-brand-sand-100 dark:bg-[#414559]"></div>
+                                    <div class="h-6 w-14 animate-pulse rounded-full bg-brand-sand-100 dark:bg-[#414559]"></div>
+                                    <div class="h-6 w-14 animate-pulse rounded-full bg-brand-sand-100 dark:bg-[#414559]"></div>
+                                </div>
+                            </div>
+                        {/if}
+                    </div>
 
-                    {#if moreTopics.length}
+                    {#if moreTopics.length && rawContent}
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="text-[0.625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]">
                                 {$t("arabicStudy.grammar.more_like_this")}
@@ -382,32 +435,24 @@
                         </div>
                     {/if}
 
-                    <button
-                        onclick={generate}
-                        disabled={loading}
-                        class="flex w-fit cursor-pointer items-center gap-1.5 self-center rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 py-1 text-[0.625rem] font-semibold text-brand-charcoal-500 hover:bg-brand-sand-200 disabled:opacity-50 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
-                    >
-                        <Icon icon="solar:refresh-bold" width="0.7rem" />
-                        {$t("arabicStudy.grammar.regenerate")}
-                    </button>
-                {:else}
-                    <div class="flex flex-col items-center gap-3 py-16 text-center">
-                        <Icon
-                            icon="solar:lightbulb-bolt-bold-duotone"
-                            class="text-brand-gold-500 dark:text-[#e5c890]"
-                            width="1.5rem"
-                        />
-                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7]">
-                            {selectedTopic?.label}
-                        </p>
+                    {#if notStarted}
                         <button
                             onclick={generate}
-                            class="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-3.5 py-1.5 text-[0.75rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400"
+                            class="flex w-fit cursor-pointer items-center gap-1.5 self-center rounded-full bg-brand-gold-400 px-3.5 py-1.5 text-[0.75rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400"
                         >
                             <Icon icon="solar:magic-stick-3-bold-duotone" width="0.8rem" />
                             {$t("arabicStudy.grammar.generate")}
                         </button>
-                    </div>
+                    {:else}
+                        <button
+                            onclick={generate}
+                            disabled={loading}
+                            class="flex w-fit cursor-pointer items-center gap-1.5 self-center rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 py-1 text-[0.625rem] font-semibold text-brand-charcoal-500 hover:bg-brand-sand-200 disabled:opacity-50 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                        >
+                            <Icon icon={loading ? "svg-spinners:3-dots-fade" : "solar:refresh-bold"} width="0.7rem" />
+                            {$t(loading ? "arabicStudy.grammar.loading" : "arabicStudy.grammar.regenerate")}
+                        </button>
+                    {/if}
                 {/if}
             </div>
         </div>
@@ -436,16 +481,6 @@
                 </div>
             </div>
         {/if}
-
-        <div class="flex shrink-0 items-center border-t border-brand-sand-200 px-5 py-3 dark:border-[#414559]">
-            <button
-                onclick={onBack}
-                class="flex cursor-pointer items-center gap-1.5 text-[0.75rem] font-semibold text-brand-charcoal-400 hover:text-brand-charcoal-600 dark:text-[#838ba7] dark:hover:text-[#c6d0f5]"
-            >
-                <Icon icon="solar:arrow-left-linear" width="0.8rem" />
-                {$t("arabicStudy.grammar.back")}
-            </button>
-        </div>
     </div>
 </div>
 

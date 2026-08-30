@@ -4,6 +4,9 @@
  * the consonant plus the correct Unicode combining mark, so this stays
  * correct for any consonant without needing 4×N hand-typed strings. */
 
+import { ARABIC_ALPHABET } from "./arabic-alphabet";
+
+const TATWEEL = "ـ";
 const FATHA = "َ"; // ـَ
 const KASRA = "ِ"; // ـِ
 const DAMMA = "ُ"; // ـُ
@@ -34,18 +37,39 @@ export function harakahFor(glyph: string, rom: string): HarakahSet {
     };
 }
 
-/** The 9 "normal" consonants used for pairing practice — the six
- * non-connecting/weak letters (ا د ذ ر ز و) are introduced separately since
- * they behave differently with vowels (Alif and Wāw double as long-vowel
- * letters rather than plain consonant+ḥarakah pairs). */
-export const PAIRING_CONSONANTS: { id: string; glyph: string; name: string; rom: string }[] = [
-    { id: "ba", glyph: "ب", name: "Bāʾ", rom: "b" },
-    { id: "ta", glyph: "ت", name: "Tāʾ", rom: "t" },
-    { id: "tha", glyph: "ث", name: "Thāʾ", rom: "th" },
-    { id: "jim", glyph: "ج", name: "Jīm", rom: "j" },
-    { id: "sin", glyph: "س", name: "Sīn", rom: "s" },
-    { id: "lam", glyph: "ل", name: "Lām", rom: "l" },
-    { id: "mim", glyph: "م", name: "Mīm", rom: "m" },
-    { id: "nun", glyph: "ن", name: "Nūn", rom: "n" },
-    { id: "ha", glyph: "ه", name: "Hāʾ", rom: "h" },
+/** Bare-consonant romanization for every letter, used only to spell out
+ * ḥarakah syllables (rom + "a"/"i"/"u"). Alif has none of its own — a
+ * fatḥah on Alif already spells the "a" sound by itself. */
+const ROM_BY_ID: Record<string, string> = {
+    alif: "", ba: "b", ta: "t", tha: "th", jim: "j", ha2: "ḥ", kha: "kh",
+    dal: "d", dhal: "dh", ra: "r", zay: "z", sin: "s", shin: "sh", sad: "ṣ",
+    dad: "ḍ", ta2: "ṭ", za: "ẓ", ayn: "ʿ", ghayn: "gh", fa: "f", qaf: "q",
+    kaf: "k", lam: "l", mim: "m", nun: "n", ha: "h", waw: "w", ya: "y",
+};
+
+/** Every letter of the alphabet, for the vowel-pairing lesson — so the
+ * learner can pair any consonant with a ḥarakah, not just a curated subset. */
+export const PAIRING_CONSONANTS: { id: string; glyph: string; name: string; rom: string }[] =
+    ARABIC_ALPHABET.map((l) => ({ id: l.id, glyph: l.glyph, name: l.name, rom: ROM_BY_ID[l.id] ?? "" }));
+
+/** Alif and Wāw double as long-vowel letters far more often than they act as
+ * plain consonants — the pairing lesson still shows them for completeness,
+ * but flags that with a note. */
+export const LONG_VOWEL_LETTER_IDS = ["alif", "waw"];
+
+export interface HarakahLegendEntry {
+    id: "fatha" | "kasra" | "damma" | "sukun";
+    /** The mark alone, shown on a tatweel placeholder rather than a real letter. */
+    mark: string;
+    nameKey: string;
+    descKey: string;
+}
+
+/** The four ḥarakāt on their own, detached from any specific consonant —
+ * shown once as a reference before the per-letter pairing below. */
+export const HARAKAT_LEGEND: HarakahLegendEntry[] = [
+    { id: "fatha", mark: TATWEEL + FATHA, nameKey: "arabicStudy.pairing.fatha", descKey: "arabicStudy.pairing.fatha_desc" },
+    { id: "kasra", mark: TATWEEL + KASRA, nameKey: "arabicStudy.pairing.kasra", descKey: "arabicStudy.pairing.kasra_desc" },
+    { id: "damma", mark: TATWEEL + DAMMA, nameKey: "arabicStudy.pairing.damma", descKey: "arabicStudy.pairing.damma_desc" },
+    { id: "sukun", mark: TATWEEL + SUKUN, nameKey: "arabicStudy.pairing.sukun", descKey: "arabicStudy.pairing.sukun_desc" },
 ];

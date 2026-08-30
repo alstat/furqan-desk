@@ -5,8 +5,12 @@
     import Icon from "@iconify/svelte";
     import { t } from "$lib/i18n";
     import WindowControls from "$lib/components/shared/WindowControls.svelte";
+    import RecitationPlayer from "$lib/components/parchment/RecitationPlayer.svelte";
     import AlphabetLesson from "./AlphabetLesson.svelte";
     import PairingLesson from "./PairingLesson.svelte";
+    import ThreeLetterWords from "./ThreeLetterWords.svelte";
+    import AlifFormsLesson from "./AlifFormsLesson.svelte";
+    import TajweedLesson from "./TajweedLesson.svelte";
     import GrammarCurriculum from "./GrammarCurriculum.svelte";
     import {
         proficiencyLevel,
@@ -33,7 +37,9 @@
     let changing = $state(false);
     // "beginner" ("New to Arabic") gets the alphabet/pairing curriculum;
     // intermediate/advanced get the AI-generated grammar curriculum.
-    let lesson = $state<"alphabet" | "pairing" | "grammar" | null>(null);
+    let lesson = $state<
+        "alphabet" | "pairing" | "words" | "alifForms" | "tajweed" | "grammar" | null
+    >(null);
 
     async function pick(level: ProficiencyLevel) {
         saving = true;
@@ -80,7 +86,7 @@
         >
             <div class="flex items-center gap-2" data-tauri-drag-region={standalone ? true : undefined}>
                 <Icon
-                    icon="solar:square-academic-cap-2-bold-duotone"
+                    icon="solar:square-academic-cap-bold-duotone"
                     width="1.1rem"
                     class="text-brand-gold-500"
                 />
@@ -114,6 +120,21 @@
         {:else if lesson === "pairing"}
             <PairingLesson
                 onBack={() => (lesson = "alphabet")}
+                onContinue={() => (lesson = "words")}
+            />
+        {:else if lesson === "words"}
+            <ThreeLetterWords
+                onBack={() => (lesson = "pairing")}
+                onContinue={() => (lesson = "alifForms")}
+            />
+        {:else if lesson === "alifForms"}
+            <AlifFormsLesson
+                onBack={() => (lesson = "words")}
+                onContinue={() => (lesson = "tajweed")}
+            />
+        {:else if lesson === "tajweed"}
+            <TajweedLesson
+                onBack={() => (lesson = "alifForms")}
                 onDone={() => (lesson = null)}
             />
         {:else if lesson === "grammar" && ($proficiencyLevel === "intermediate" || $proficiencyLevel === "advanced")}
@@ -203,6 +224,9 @@
                 </div>
             {/if}
         </div>
+        {/if}
+        {#if standalone}
+            <RecitationPlayer scrollContainer={null} showControls={false} />
         {/if}
     </div>
 {/if}

@@ -118,7 +118,7 @@
         >
             <div class="flex items-center gap-2" data-tauri-drag-region={standalone ? true : undefined}>
                 <Icon
-                    icon="solar:square-academic-cap-2-bold-duotone"
+                    icon="solar:square-academic-cap-bold-duotone"
                     width="1.1rem"
                     class="text-brand-gold-500"
                 />
@@ -196,7 +196,7 @@
                             </div>
                             <div
                                 dir="rtl"
-                                class="mt-2 font-scheherazade text-3xl leading-relaxed text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                                class="mt-2 pb-2 font-scheherazade text-3xl leading-relaxed text-brand-charcoal-900 dark:text-[#c6d0f5]"
                             >
                                 {verseText?.arabic}
                             </div>

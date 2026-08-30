@@ -1,5 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { AyahMorphology } from "$lib/types/morphology";
+import type { AyahMorphology, SurahMorphology } from "$lib/types/morphology";
+import { cachedMorphology } from "$lib/stores/surah-cache";
+
+/** Cached morphology for a complete surah, used by local verse pickers. */
+export function fetchSurahMorphology(surah: number): Promise<SurahMorphology> {
+    return cachedMorphology(surah, () =>
+        invoke<SurahMorphology>("get_surah_morphology", { surahNumber: surah }),
+    );
+}
 
 /** Word-by-word morphology for one ayah — used by the Verse Study canvas. */
 export function fetchAyahMorphology(surah: number, ayah: number): Promise<AyahMorphology> {

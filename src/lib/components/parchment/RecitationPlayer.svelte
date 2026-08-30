@@ -27,7 +27,12 @@
 
     import { t } from "$lib/i18n";
 
-    let { scrollContainer }: { scrollContainer: HTMLElement | null } = $props();
+    interface Props {
+        scrollContainer: HTMLElement | null;
+        showControls?: boolean;
+    }
+
+    let { scrollContainer, showControls = true }: Props = $props();
 
     let audioEl = $state<HTMLAudioElement | null>(null);
     let noInternetToast = $state(false);
@@ -506,6 +511,7 @@
     }
 </script>
 
+{#if showControls}
 <div id="tour-recitation" class="flex flex-col items-center gap-2 z-300">
     <!-- No internet toast -->
     {#if noInternetToast && !allSurahsDownloaded}
@@ -709,6 +715,7 @@
         </button>
     </div>
 </div>
+{/if}
 
 <!-- Hidden audio element -->
 <audio
@@ -720,7 +727,7 @@
 ></audio>
 
 <!-- Collapsible mini player, aligned above the bottom-right SurahWidget. -->
-{#if $hideSurahPage()}
+{#if showControls && $hideSurahPage()}
     <div
         use:portal
         class="fixed right-2.5 bottom-[3.875rem] z-[50] h-10 w-10 font-sans"

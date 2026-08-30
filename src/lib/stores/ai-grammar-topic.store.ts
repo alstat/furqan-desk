@@ -1,5 +1,6 @@
+import { writable } from "svelte/store";
 import { supabase } from "$lib/supabase";
-import { readSseText, safeReadJson } from "$lib/stores/ai-text-transform.store";
+import { readSseText, safeReadJson, type AiModelClass } from "$lib/stores/ai-text-transform.store";
 
 // The intermediate/advanced grammar curriculum: an AI-generated lesson for
 // one named topic (not one specific ayah — see ai-verse-grammar.store.ts for
@@ -11,6 +12,36 @@ import { readSseText, safeReadJson } from "$lib/stores/ai-text-transform.store";
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-completion`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+/** The learner's chosen model tier for this feature specifically — separate
+ * from `aiTextDefaultModel` (that one's scoped to the text-transform
+ * actions), persisted the same way. Advanced is Pro+-gated by the caller,
+ * same as `useAdvanced` in ai-chat.store.ts. */
+const GRAMMAR_MODEL_KEY = "arabic-grammar-model";
+
+function loadGrammarModel(): AiModelClass {
+    try {
+        const stored = localStorage.getItem(GRAMMAR_MODEL_KEY);
+        if (stored === "advanced" || stored === "standard") return stored;
+    } catch {
+        /* ignore */
+    }
+    return "standard";
+}
+
+const _grammarModel = writable<AiModelClass>(loadGrammarModel());
+
+export const grammarModel = {
+    subscribe: _grammarModel.subscribe,
+    set(value: AiModelClass) {
+        try {
+            localStorage.setItem(GRAMMAR_MODEL_KEY, value);
+        } catch {
+            /* ignore */
+        }
+        _grammarModel.set(value);
+    },
+};
 
 const SYSTEM_PROMPT =
     "You are an Arabic grammar (naḥw/ṣarf) and rhetoric (balāgha) teacher, writing one " +
@@ -54,6 +85,7 @@ export async function fetchGrammarTopic({
     topicTitle,
     level,
     locale,
+    advanced = false,
     signal,
     onPartial,
 }: {
@@ -61,6 +93,8 @@ export async function fetchGrammarTopic({
     topicTitle: string;
     level: "intermediate" | "advanced";
     locale?: string;
+    /** Model tier — the caller is responsible for Pro+-gating this. */
+    advanced?: boolean;
     signal?: AbortSignal;
     onPartial?: (textSoFar: string) => void;
 }): Promise<string> {
@@ -68,12 +102,16 @@ export async function fetchGrammarTopic({
     const token = data.session?.access_token;
     if (!token) throw new Error("You must be signed in.");
 
+    // Always state the output language explicitly — left to infer it, the
+    // model tends to answer in Arabic by default since the whole topic is
+    // Arabic grammar, even for readers whose app language is English.
+    const responseLanguage =
+        locale && locale !== "en" ? `the reader's display language (locale: ${locale})` : "English";
     const systemPrompt =
-        locale && locale !== "en"
-            ? `${SYSTEM_PROMPT}\n\nWrite your ENTIRE response — including the title and subtitle — ` +
-              `in the reader's display language (locale: ${locale}), except the Arabic-script fields ` +
-              `and marker ids, which stay as specified. Do not answer in English.`
-            : SYSTEM_PROMPT;
+        `${SYSTEM_PROMPT}\n\nWrite your ENTIRE response — including the title and subtitle — ` +
+        `in ${responseLanguage}, except the Arabic-script fields and marker ids, which stay as ` +
+        `specified. Do not answer in Arabic (or any other language) unless that is the language ` +
+        `specified above.`;
 
     const res = await fetch(FUNCTION_URL, {
         method: "POST",
@@ -84,7 +122,7 @@ export async function fetchGrammarTopic({
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            advanced: true,
+            advanced,
             messages: [
                 { role: "system", content: systemPrompt },
                 {
