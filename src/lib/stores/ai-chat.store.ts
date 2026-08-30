@@ -105,6 +105,7 @@ export const AI_FEATURE_TAGS = {
     manuscriptAiPrompt: "manuscript_ai_prompt",
     editorQuranBlockPrompt: "editor_quran_block_prompt",
     arabicStudyAsk: "arabic_study_ask",
+    arabicStudyGrammarTopic: "arabic_study_grammar_topic",
 } as const;
 
 /**

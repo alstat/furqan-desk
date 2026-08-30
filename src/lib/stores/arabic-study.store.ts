@@ -90,20 +90,60 @@ function openHomeWindow(): Promise<boolean> {
         label: ARABIC_STUDY_HOME_WINDOW,
         url: `/arabic-study-home/`,
         title: 'Arabic Language Study',
-        width: 720,
-        height: 620,
-        minWidth: 600,
-        minHeight: 520,
+        // Sized for the alphabet/pairing lessons, not just the onboarding card.
+        width: 1180,
+        height: 820,
+        minWidth: 900,
+        minHeight: 640,
     });
 }
 
 /**
  * The toolbar button's entry point: no specific ayah, just the feature's
  * home. The route itself decides what to render — the proficiency picker on
- * first run, or a short "you're set" summary once a level is saved (Phase
- * 2's full dashboard/curriculum replaces that summary later).
+ * first run, then routes into the curriculum (see ArabicStudyHome.svelte).
  */
 export async function openArabicStudyHome(): Promise<void> {
     if (await openHomeWindow()) return;
     onboardingOpen.set(true);
+}
+
+// ── Letter progress (alphabet curriculum) ────────────────────────────────
+
+export interface LetterProgress {
+    letter: string;
+    practiced_at: string | null;
+    mastered: boolean;
+    mastered_at: string | null;
+}
+
+/** All rows — used to drive the letter grid's checkmarks and the "N of 28" counter. */
+export function fetchLetterProgress(): Promise<LetterProgress[]> {
+    return invoke<LetterProgress[]>('get_letter_progress');
+}
+
+export function markLetterPracticed(letter: string): Promise<LetterProgress> {
+    return invoke<LetterProgress>('mark_letter_practiced', { letter });
+}
+
+export function setLetterMastered(letter: string, mastered: boolean): Promise<LetterProgress> {
+    return invoke<LetterProgress>('set_letter_mastered', { letter, mastered });
+}
+
+// ── Grammar-topic content (intermediate/advanced curriculum) ────────────────
+
+export interface TopicContent {
+    topic_id: string;
+    content: string;
+    locale: string;
+    generated_at: string;
+}
+
+/** All cached topics — a row's presence is the "viewed" signal for the sidebar. */
+export function fetchTopicContent(): Promise<TopicContent[]> {
+    return invoke<TopicContent[]>('get_topic_content');
+}
+
+export function saveTopicContent(topicId: string, content: string, locale: string): Promise<TopicContent> {
+    return invoke<TopicContent>('save_topic_content', { topicId, content, locale });
 }

@@ -5,6 +5,9 @@
     import Icon from "@iconify/svelte";
     import { t } from "$lib/i18n";
     import WindowControls from "$lib/components/shared/WindowControls.svelte";
+    import AlphabetLesson from "./AlphabetLesson.svelte";
+    import PairingLesson from "./PairingLesson.svelte";
+    import GrammarCurriculum from "./GrammarCurriculum.svelte";
     import {
         proficiencyLevel,
         saveProficiencyLevel,
@@ -28,6 +31,9 @@
 
     let saving = $state(false);
     let changing = $state(false);
+    // "beginner" ("New to Arabic") gets the alphabet/pairing curriculum;
+    // intermediate/advanced get the AI-generated grammar curriculum.
+    let lesson = $state<"alphabet" | "pairing" | "grammar" | null>(null);
 
     async function pick(level: ProficiencyLevel) {
         saving = true;
@@ -37,6 +43,10 @@
         } finally {
             saving = false;
         }
+    }
+
+    function startLearning() {
+        lesson = $proficiencyLevel === "beginner" ? "alphabet" : "grammar";
     }
 
     const LEVELS: { id: ProficiencyLevel; icon: string; titleKey: string; descKey: string }[] = [
@@ -96,6 +106,19 @@
             {/if}
         </div>
 
+        {#if lesson === "alphabet"}
+            <AlphabetLesson
+                onBack={() => (lesson = null)}
+                onContinue={() => (lesson = "pairing")}
+            />
+        {:else if lesson === "pairing"}
+            <PairingLesson
+                onBack={() => (lesson = "alphabet")}
+                onDone={() => (lesson = null)}
+            />
+        {:else if lesson === "grammar" && ($proficiencyLevel === "intermediate" || $proficiencyLevel === "advanced")}
+            <GrammarCurriculum level={$proficiencyLevel} onBack={() => (lesson = null)} />
+        {:else}
         <div class="flex flex-1 flex-col items-center justify-center gap-6 px-8 py-8 text-center">
             {#if $proficiencyLevel === undefined}
                 <Icon
@@ -158,16 +181,28 @@
                         })}
                     </h1>
                     <p class="max-w-sm text-[0.75rem] text-brand-charcoal-400 dark:text-[#838ba7]">
-                        {$t("arabicStudy.onboarding.set_hint")}
+                        {$proficiencyLevel === "beginner"
+                            ? $t("arabicStudy.onboarding.set_hint_beginner")
+                            : $t("arabicStudy.onboarding.set_hint_grammar")}
                     </p>
-                    <button
-                        onclick={() => (changing = true)}
-                        class="mt-2 cursor-pointer rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3.5 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
-                    >
-                        {$t("arabicStudy.onboarding.change_level")}
-                    </button>
+                    <div class="mt-2 flex items-center gap-2">
+                        <button
+                            onclick={startLearning}
+                            class="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-4 py-1.5 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400"
+                        >
+                            <Icon icon="solar:magic-stick-3-bold-duotone" width="0.8rem" />
+                            {$t("arabicStudy.onboarding.start_learning")}
+                        </button>
+                        <button
+                            onclick={() => (changing = true)}
+                            class="cursor-pointer rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3.5 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                        >
+                            {$t("arabicStudy.onboarding.change_level")}
+                        </button>
+                    </div>
                 </div>
             {/if}
         </div>
+        {/if}
     </div>
 {/if}

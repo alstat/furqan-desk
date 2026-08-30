@@ -11,7 +11,9 @@
     "julia-plots",
     "translation",
     "tafsir",
-    "drawing"
+    "drawing",
+    "arabic-study",
+    "arabic-study-home"
   ],
   "permissions": [
     "core:default",

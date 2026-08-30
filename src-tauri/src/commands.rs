@@ -1480,6 +1480,143 @@ pub fn save_arabic_study_profile(
     .map_err(|e| e.to_string())
 }
 
+// ── Arabic Study letter progress ─────────────────────────────────────────────
+//
+// One row per letter a learner has practiced or marked mastered, same shape
+// as `verse_of_day` (multi-row, primary key is the natural key).
+
+#[derive(Serialize)]
+pub struct LetterProgress {
+    pub letter: String,
+    pub practiced_at: Option<String>,
+    pub mastered: bool,
+    pub mastered_at: Option<String>,
+}
+
+fn letter_progress_row(r: &rusqlite::Row) -> rusqlite::Result<LetterProgress> {
+    Ok(LetterProgress {
+        letter: r.get(0)?,
+        practiced_at: r.get(1)?,
+        mastered: r.get::<_, i64>(2)? != 0,
+        mastered_at: r.get(3)?,
+    })
+}
+
+#[tauri::command]
+pub fn get_letter_progress(db: State<Database>) -> Result<Vec<LetterProgress>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT letter, practiced_at, mastered, mastered_at FROM arabic_study_letter_progress",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |r| letter_progress_row(r))
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+#[tauri::command]
+pub fn mark_letter_practiced(db: State<Database>, letter: String) -> Result<LetterProgress, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO arabic_study_letter_progress (letter, practiced_at) VALUES (?1, datetime('now'))
+         ON CONFLICT(letter) DO UPDATE SET practiced_at = datetime('now')",
+        rusqlite::params![letter],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.query_row(
+        "SELECT letter, practiced_at, mastered, mastered_at FROM arabic_study_letter_progress WHERE letter = ?1",
+        [&letter],
+        |r| letter_progress_row(r),
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_letter_mastered(
+    db: State<Database>,
+    letter: String,
+    mastered: bool,
+) -> Result<LetterProgress, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mastered_int = mastered as i64;
+    conn.execute(
+        "INSERT INTO arabic_study_letter_progress (letter, mastered, mastered_at) VALUES (?1, ?2, CASE WHEN ?2 = 1 THEN datetime('now') ELSE NULL END)
+         ON CONFLICT(letter) DO UPDATE SET mastered = ?2, mastered_at = CASE WHEN ?2 = 1 THEN datetime('now') ELSE NULL END",
+        rusqlite::params![letter, mastered_int],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.query_row(
+        "SELECT letter, practiced_at, mastered, mastered_at FROM arabic_study_letter_progress WHERE letter = ?1",
+        [&letter],
+        |r| letter_progress_row(r),
+    )
+    .map_err(|e| e.to_string())
+}
+
+// ── Arabic Study grammar-topic content ───────────────────────────────────────
+//
+// AI-generated explanations for the intermediate/advanced grammar curriculum,
+// one row per topic (upsert on regenerate). A row's presence doubles as the
+// "viewed" signal the sidebar uses for its done/now/next dots, same as
+// `take_home_messages` caches Take-Home Message output.
+
+#[derive(Serialize)]
+pub struct TopicContent {
+    pub topic_id: String,
+    pub content: String,
+    pub locale: String,
+    pub generated_at: String,
+}
+
+fn topic_content_row(r: &rusqlite::Row) -> rusqlite::Result<TopicContent> {
+    Ok(TopicContent {
+        topic_id: r.get(0)?,
+        content: r.get(1)?,
+        locale: r.get(2)?,
+        generated_at: r.get(3)?,
+    })
+}
+
+#[tauri::command]
+pub fn get_topic_content(db: State<Database>) -> Result<Vec<TopicContent>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare("SELECT topic_id, content, locale, generated_at FROM arabic_study_topic_content")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |r| topic_content_row(r))
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+#[tauri::command]
+pub fn save_topic_content(
+    db: State<Database>,
+    topic_id: String,
+    content: String,
+    locale: String,
+) -> Result<TopicContent, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO arabic_study_topic_content (topic_id, content, locale, generated_at) VALUES (?1, ?2, ?3, datetime('now'))
+         ON CONFLICT(topic_id) DO UPDATE SET content = ?2, locale = ?3, generated_at = datetime('now')",
+        rusqlite::params![topic_id, content, locale],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.query_row(
+        "SELECT topic_id, content, locale, generated_at FROM arabic_study_topic_content WHERE topic_id = ?1",
+        [&topic_id],
+        |r| topic_content_row(r),
+    )
+    .map_err(|e| e.to_string())
+}
+
 // ── Highlight commands ───────────────────────────────────────────────────────
 
 #[tauri::command]

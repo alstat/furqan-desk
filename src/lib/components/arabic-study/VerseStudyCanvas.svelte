@@ -151,8 +151,9 @@
             {/if}
         </div>
 
-        <!-- Body -->
-        <div class="default-scroll min-h-0 flex-1 overflow-y-auto px-5 py-5">
+        <!-- Body: a dotted whiteboard-style canvas so the ayah reads as the
+             hub of a mind map, with its five cards arranged around it. -->
+        <div class="hub-canvas default-scroll min-h-0 flex-1 overflow-y-auto px-6 py-8">
             {#if loading && !morphology}
                 <div class="flex flex-col items-center gap-3 py-16 text-center">
                     <Icon
@@ -171,54 +172,112 @@
                     <p class="text-xs text-red-500 dark:text-red-400">{error}</p>
                 </div>
             {:else if morphology && $verseStudyAyah}
-                <div class="mx-auto flex max-w-3xl flex-col gap-5">
-                    <!-- Center: the ayah itself -->
-                    <div
-                        class="rounded-2xl border border-[#e6cf96] bg-linear-to-b from-[#fdf6e6] to-white p-5 text-center dark:border-[#6b5b37] dark:from-[#34302a] dark:to-[#292c3c]"
-                    >
-                        <div
-                            class="text-[0.625rem] font-bold uppercase tracking-wide text-brand-gold-500 dark:text-[#e5c890]"
-                        >
-                            {surahName($verseStudyAyah.surah)} · {$verseStudyAyah.surah}:{$verseStudyAyah.ayah}
-                        </div>
-                        <div
-                            dir="rtl"
-                            class="mt-2 font-scheherazade text-3xl leading-relaxed text-brand-charcoal-900 dark:text-[#c6d0f5]"
-                        >
-                            {verseText?.arabic}
-                        </div>
-                        {#if verseText?.translation}
-                            <p
-                                class="mx-auto mt-2 max-w-xl text-[0.75rem] italic text-brand-charcoal-400 dark:text-[#a5adce]"
-                            >
-                                {verseText.translation}
-                            </p>
-                        {/if}
-                    </div>
-
-                    <!-- Spokes -->
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="hub-grid mx-auto max-w-4xl">
+                    <div class="area-morph">
                         <MorphologyNode words={morphology.words} />
+                    </div>
+                    <div class="area-root">
                         <RootLemmaNode
                             words={morphology.words}
                             {selection}
                             onSelect={(sel) => (selection = sel)}
                         />
+                    </div>
+
+                    <!-- Hub: the ayah itself -->
+                    <div class="area-ayah hub-center">
+                        <div
+                            class="rounded-2xl border border-[#e6cf96] bg-linear-to-b from-[#fdf6e6] to-white p-5 text-center dark:border-[#6b5b37] dark:from-[#34302a] dark:to-[#292c3c]"
+                        >
+                            <div
+                                class="text-[0.625rem] font-bold uppercase tracking-wide text-brand-gold-500 dark:text-[#e5c890]"
+                            >
+                                {surahName($verseStudyAyah.surah)} · {$verseStudyAyah.surah}:{$verseStudyAyah.ayah}
+                            </div>
+                            <div
+                                dir="rtl"
+                                class="mt-2 font-scheherazade text-3xl leading-relaxed text-brand-charcoal-900 dark:text-[#c6d0f5]"
+                            >
+                                {verseText?.arabic}
+                            </div>
+                            {#if verseText?.translation}
+                                <p
+                                    class="mx-auto mt-2 max-w-xl text-[0.75rem] italic text-brand-charcoal-400 dark:text-[#a5adce]"
+                                >
+                                    {verseText.translation}
+                                </p>
+                            {/if}
+                        </div>
+                    </div>
+
+                    <div class="area-grammar">
+                        <GrammarNode context={grammarContext} />
+                    </div>
+                    <div class="area-related">
                         <RelatedVersesNode
                             {selection}
                             surah={$verseStudyAyah.surah}
                             ayah={$verseStudyAyah.ayah}
                         />
-                        <GrammarNode context={grammarContext} />
-                        <div class="sm:col-span-2">
-                            <AskAiNode
-                                arabic={verseText?.arabic ?? ""}
-                                contextPrompt={grammarContext}
-                            />
-                        </div>
+                    </div>
+
+                    <div class="area-ask">
+                        <AskAiNode
+                            arabic={verseText?.arabic ?? ""}
+                            contextPrompt={grammarContext}
+                        />
                     </div>
                 </div>
             {/if}
         </div>
     </div>
 {/if}
+
+<style>
+    .hub-canvas {
+        background-color: #fdfcfa;
+        background-image: radial-gradient(circle, #e8e0cf 1.4px, transparent 1.4px);
+        background-size: 24px 24px;
+    }
+    :global(.dark) .hub-canvas {
+        background-color: #232634;
+        background-image: radial-gradient(circle, #363a4f 1.4px, transparent 1.4px);
+    }
+
+    .hub-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 1.1fr) minmax(0, 1fr);
+        grid-template-areas:
+            "morph  ayah    grammar"
+            "root   ayah    related"
+            ".      ask     .";
+        gap: 18px;
+        align-items: start;
+    }
+    .area-morph { grid-area: morph; }
+    .area-root { grid-area: root; }
+    .area-ayah { grid-area: ayah; }
+    .area-grammar { grid-area: grammar; }
+    .area-related { grid-area: related; }
+    .area-ask { grid-area: ask; }
+
+    /* A soft halo behind the ayah card reads as "the hub everything radiates
+       from" without needing measured connector lines that would break on
+       resize. */
+    .hub-center {
+        filter: drop-shadow(0 12px 26px rgba(47, 47, 47, 0.12));
+    }
+
+    @media (max-width: 840px) {
+        .hub-grid {
+            grid-template-columns: 1fr;
+            grid-template-areas:
+                "ayah"
+                "morph"
+                "root"
+                "grammar"
+                "related"
+                "ask";
+        }
+    }
+</style>

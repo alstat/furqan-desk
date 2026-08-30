@@ -38,7 +38,9 @@
 		'/julia-plots',
 		'/translation',
 		'/tafsir',
-		'/drawing'
+		'/drawing',
+		// Prefix match also covers '/arabic-study-home'.
+		'/arabic-study'
 	];
 	const isSecondaryWindow = $derived(
 		SECONDARY_ROUTES.some((route) => page.url.pathname.startsWith(route))

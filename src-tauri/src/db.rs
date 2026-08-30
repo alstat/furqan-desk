@@ -315,6 +315,18 @@ impl Database {
                 proficiency_level  TEXT NOT NULL,
                 onboarded_at       TEXT NOT NULL DEFAULT (datetime('now')),
                 updated_at         TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE TABLE IF NOT EXISTS arabic_study_letter_progress (
+                letter        TEXT PRIMARY KEY,
+                practiced_at  TEXT,
+                mastered      INTEGER NOT NULL DEFAULT 0,
+                mastered_at   TEXT
+            );
+            CREATE TABLE IF NOT EXISTS arabic_study_topic_content (
+                topic_id      TEXT PRIMARY KEY,
+                content       TEXT NOT NULL,
+                locale        TEXT NOT NULL DEFAULT 'en',
+                generated_at  TEXT NOT NULL DEFAULT (datetime('now'))
             );",
         )?;
         // Idempotent column migration — ignored if column already exists
@@ -458,6 +470,44 @@ impl Database {
             None
         };
 
+        let arabic_study_letter_progress = if has_table("arabic_study_letter_progress") {
+            let mut stmt = conn.prepare(
+                "SELECT letter, practiced_at, mastered, mastered_at FROM arabic_study_letter_progress",
+            )?;
+            let rows: Vec<_> = stmt.query_map([], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, Option<String>>(1)?,
+                    row.get::<_, i64>(2)?,
+                    row.get::<_, Option<String>>(3)?,
+                ))
+            })?
+            .filter_map(|r| r.ok())
+            .collect();
+            rows
+        } else {
+            Vec::new()
+        };
+
+        let arabic_study_topic_content = if has_table("arabic_study_topic_content") {
+            let mut stmt = conn.prepare(
+                "SELECT topic_id, content, locale, generated_at FROM arabic_study_topic_content",
+            )?;
+            let rows: Vec<_> = stmt.query_map([], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
+                    row.get::<_, String>(3)?,
+                ))
+            })?
+            .filter_map(|r| r.ok())
+            .collect();
+            rows
+        } else {
+            Vec::new()
+        };
+
         let app_meta = if has_table("app_meta") {
             let mut stmt = conn.prepare("SELECT key, value FROM app_meta")?;
             let rows: Vec<_> = stmt.query_map([], |row| {
@@ -477,6 +527,8 @@ impl Database {
             verse_of_day,
             take_home_messages,
             arabic_study_profile,
+            arabic_study_letter_progress,
+            arabic_study_topic_content,
             app_meta,
         })
     }
@@ -529,6 +581,22 @@ impl Database {
         }
         {
             let mut stmt = conn.prepare(
+                "INSERT OR REPLACE INTO arabic_study_letter_progress (letter, practiced_at, mastered, mastered_at) VALUES (?1, ?2, ?3, ?4)",
+            )?;
+            for (letter, practiced_at, mastered, mastered_at) in &data.arabic_study_letter_progress {
+                stmt.execute(rusqlite::params![letter, practiced_at, mastered, mastered_at])?;
+            }
+        }
+        {
+            let mut stmt = conn.prepare(
+                "INSERT OR REPLACE INTO arabic_study_topic_content (topic_id, content, locale, generated_at) VALUES (?1, ?2, ?3, ?4)",
+            )?;
+            for (topic_id, content, locale, generated_at) in &data.arabic_study_topic_content {
+                stmt.execute(rusqlite::params![topic_id, content, locale, generated_at])?;
+            }
+        }
+        {
+            let mut stmt = conn.prepare(
                 "INSERT OR REPLACE INTO app_meta (key, value) VALUES (?1, ?2)",
             )?;
             for (key, value) in &data.app_meta {
@@ -547,6 +615,8 @@ struct UserData {
     verse_of_day: Vec<(String, i64, i64, String)>,
     take_home_messages: Vec<(String, String, String, String, String)>,
     arabic_study_profile: Option<(String, String, String)>,
+    arabic_study_letter_progress: Vec<(String, Option<String>, i64, Option<String>)>,
+    arabic_study_topic_content: Vec<(String, String, String, String)>,
     app_meta: Vec<(String, String)>,
 }
 
