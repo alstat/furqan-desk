@@ -74,6 +74,20 @@ export async function fetchVerseGrammar({
             typeof body?.error === "string" ? body.error : "Token limit reached.",
         );
         (err as Error & { status?: number }).status = 429;
+        // The standard and advanced classes are metered separately; the caller
+        // needs to know which one was refused or its message will name the
+        // wrong quota.
+        const detail = err as Error & {
+            modelClass?: string;
+            scope?: string;
+            retryAfterSeconds?: number;
+        };
+        detail.modelClass = typeof body?.model_class === "string" ? body.model_class : undefined;
+        detail.scope = typeof body?.scope === "string" ? body.scope : undefined;
+        detail.retryAfterSeconds =
+            typeof body?.retry_after_seconds === "number"
+                ? body.retry_after_seconds
+                : undefined;
         throw err;
     }
     if (!res.ok) {

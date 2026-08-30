@@ -149,3 +149,25 @@ export function renderMarkdown(md: string): string {
         ADD_ATTR: ["style", "tabindex", "role"],
     });
 }
+
+/**
+ * The inline slice of Markdown — bold, italic and code — for short single-line
+ * strings that are not documents: an AI-written example, a gloss, a heading
+ * pulled out of a structured reply. Running those through `renderMarkdown`
+ * would wrap them in block elements; leaving them as text prints the `**` marks
+ * literally, which is what the model actually writes.
+ *
+ * The input is escaped before any markup is added, so nothing the model emits
+ * can reach the DOM as HTML.
+ */
+export function renderInlineMarkdown(text: string): string {
+    const escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    return escaped
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
+        .replace(/`([^`\n]+)`/g, "<code>$1</code>");
+}

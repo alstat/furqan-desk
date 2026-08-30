@@ -6,6 +6,11 @@
     import Icon from "@iconify/svelte";
     import { t } from "$lib/i18n";
     import {
+        glossOverrides,
+        glossText,
+        registerGlosses,
+    } from "$lib/stores/arabic-study-gloss.store";
+    import {
         PAIRING_CONSONANTS,
         HARAKAT_LEGEND,
         LONG_VOWEL_LETTER_IDS,
@@ -14,7 +19,6 @@
     import { getLetterExamples, type WordExample } from "$lib/data/letter-examples";
     import { LETTER_HARAKAH_EXAMPLES } from "$lib/data/letter-harakah-examples";
     import { highlightLetter } from "$lib/utils/arabic-highlight";
-    import DictationPractice from "./DictationPractice.svelte";
     import VerseRefBadge from "./VerseRefBadge.svelte";
 
     interface Props {
@@ -51,6 +55,13 @@
             ];
         })(),
     );
+    $effect(() => {
+        registerGlosses([
+            ...quranExamples,
+            ...everydayExamples,
+            ...harakahEntries.map((entry) => entry.example),
+        ]);
+    });
 </script>
 
 <div class="flex min-h-0 flex-1 flex-col overflow-hidden bg-white dark:bg-[#303446]">
@@ -91,7 +102,7 @@
             </div>
         </div>
 
-        <div class="flex min-h-0 flex-1 gap-5">
+        <div class="flex shrink-0 gap-5">
             <!-- Consonant picker -->
             <div class="w-52 shrink-0">
                 <h4
@@ -175,13 +186,8 @@
                                     <div dir="ltr" class="mt-0.5 text-left text-[0.625rem]">
                                         <span class="italic text-brand-charcoal-400 dark:text-[#a5adce]">{ex.translit}</span>
                                         <span class="text-brand-charcoal-300 dark:text-[#5b6078]"> — </span>
-                                        <span class="font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">{ex.meaning}</span>
+                                        <span class="font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">{glossText(ex.word, ex.meaning, $glossOverrides)}</span>{#if ex.ref}<span class="ml-1.5 align-middle"><VerseRefBadge verseRef={ex.ref} size="sm" /></span>{/if}
                                     </div>
-                                    {#if ex.ref}
-                                        <div class="mt-1">
-                                            <VerseRefBadge verseRef={ex.ref} size="sm" />
-                                        </div>
-                                    {/if}
                                 </div>
                             {/each}
                         </div>
@@ -205,13 +211,8 @@
                                     <div dir="ltr" class="mt-0.5 text-left text-[0.6875rem]">
                                         <span class="italic text-brand-charcoal-400 dark:text-[#a5adce]">{q.translit}</span>
                                         <span class="text-brand-charcoal-300 dark:text-[#5b6078]"> — </span>
-                                        <span class="font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">{q.meaning}</span>
+                                        <span class="font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">{glossText(q.word, q.meaning, $glossOverrides)}</span>{#if q.ref}<span class="ml-1.5 align-middle"><VerseRefBadge verseRef={q.ref} /></span>{/if}
                                     </div>
-                                    {#if q.ref}
-                                        <div class="mt-1.5">
-                                            <VerseRefBadge verseRef={q.ref} />
-                                        </div>
-                                    {/if}
                                 </div>
                             {/each}
                         </div>
@@ -231,24 +232,19 @@
                                     <div dir="ltr" class="mt-0.5 text-left text-[0.6875rem]">
                                         <span class="italic text-brand-charcoal-400 dark:text-[#a5adce]">{w.translit}</span>
                                         <span class="text-brand-charcoal-300 dark:text-[#5b6078]"> — </span>
-                                        <span class="font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">{w.meaning}</span>
+                                        <span class="font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">{glossText(w.word, w.meaning, $glossOverrides)}</span>
                                     </div>
                                 </div>
                             {/each}
                         </div>
                     </div>
                 </div>
-
-                <DictationPractice
-                    target={harakat.fatha}
-                    label={$t("arabicStudy.dictation.recite_letter", { letter: harakat.fatha })}
-                />
             </div>
         </div>
         <!-- Spacer — padding-bottom on a scrolling flex container isn't
              reliably honored by every WebView engine, so a real element
              guarantees breathing room above the footer once scrolled. -->
-        <div class="h-4 shrink-0" aria-hidden="true"></div>
+        <div class="h-2 shrink-0" aria-hidden="true"></div>
     </div>
 
     <div

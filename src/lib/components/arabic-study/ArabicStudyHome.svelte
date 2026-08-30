@@ -3,7 +3,7 @@
      that. Window chrome matches VerseStudyCanvas/ManuscriptViewer. -->
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import { t } from "$lib/i18n";
+    import { LOCALE_NAMES, t } from "$lib/i18n";
     import WindowControls from "$lib/components/shared/WindowControls.svelte";
     import RecitationPlayer from "$lib/components/parchment/RecitationPlayer.svelte";
     import AlphabetLesson from "./AlphabetLesson.svelte";
@@ -12,7 +12,19 @@
     import AlifFormsLesson from "./AlifFormsLesson.svelte";
     import TajweedLesson from "./TajweedLesson.svelte";
     import GrammarCurriculum from "./GrammarCurriculum.svelte";
+    import { isPro } from "$lib/stores/auth.store";
     import {
+        GLOSS_LANGUAGES,
+        OTHER_GLOSS,
+        customGlossLanguage,
+        glossFailed,
+        glossLanguage,
+        glossModel,
+        glossTranslating,
+        requestGlossTranslation,
+    } from "$lib/stores/arabic-study-gloss.store";
+    import {
+        grammarLanguage,
         proficiencyLevel,
         saveProficiencyLevel,
         hydrateProficiencyLevel,
@@ -55,6 +67,17 @@
         lesson = $proficiencyLevel === "beginner" ? "alphabet" : "grammar";
     }
 
+    // Word-by-word language, shown in the header while a lesson is open so the
+    // one choice covers every lesson in the wizard.
+    let modelMenuOpen = $state(false);
+    const glossSelectClass =
+        "cursor-pointer appearance-none rounded-lg border border-brand-gold-200 bg-white/70 py-0.5 pl-2 pr-6 text-[0.625rem] font-semibold text-brand-charcoal-500 outline-none focus:border-brand-gold-400 dark:border-[#5a5030] dark:bg-[#292c3c] dark:text-[#c6d0f5]";
+
+    // Same list Settings offers for the app's own language, ordered the same way.
+    const LESSON_LANGUAGES = Object.entries(LOCALE_NAMES).sort(([, a], [, b]) =>
+        a.localeCompare(b),
+    );
+
     const LEVELS: { id: ProficiencyLevel; icon: string; titleKey: string; descKey: string }[] = [
         {
             id: "beginner",
@@ -96,6 +119,153 @@
                     {$t("arabicStudy.open")}
                 </span>
             </div>
+            <div class="ml-auto flex min-w-0 items-center gap-1.5">
+                {#if lesson !== null && lesson !== "grammar"}
+                    <span
+                        class="hidden text-[0.5625rem] font-bold uppercase tracking-wide text-brand-charcoal-400 sm:block dark:text-[#838ba7]"
+                    >
+                        {$t("arabicStudy.words.gloss_language")}
+                    </span>
+                    <div class="relative flex">
+                        <select
+                            bind:value={$glossLanguage}
+                            aria-label={$t("arabicStudy.words.gloss_language")}
+                            class={glossSelectClass}
+                        >
+                            {#each GLOSS_LANGUAGES as [value, labelKey] (value)}
+                                <option {value}>{$t(labelKey)}</option>
+                            {/each}
+                            <option value={OTHER_GLOSS}>{$t("arabicStudy.words.gloss_other")}</option>
+                        </select>
+                        <span
+                            class="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-brand-charcoal-300"
+                        >
+                            <Icon icon="charm:chevron-down" width="0.65rem" />
+                        </span>
+                    </div>
+                    {#if $glossLanguage === OTHER_GLOSS}
+                        {#if $isPro}
+                            <input
+                                bind:value={$customGlossLanguage}
+                                placeholder={$t("arabicStudy.words.gloss_other_placeholder")}
+                                onkeydown={(event) => {
+                                    if (event.key === "Enter") requestGlossTranslation();
+                                }}
+                                class="w-28 rounded-lg border border-brand-gold-200 bg-white/70 px-2 py-0.5 text-[0.625rem] text-brand-charcoal-600 outline-none focus:border-brand-gold-400 dark:border-[#5a5030] dark:bg-[#292c3c] dark:text-[#c6d0f5]"
+                            />
+                            <!-- The model rides with the button that spends it. -->
+                            <div class="relative flex">
+                                <button
+                                    onclick={requestGlossTranslation}
+                                    disabled={$customGlossLanguage.trim() === "" || $glossTranslating}
+                                    class="flex cursor-pointer items-center gap-1 rounded-l-lg border border-brand-gold-200 bg-brand-gold-100 px-2 py-0.5 text-[0.625rem] font-semibold text-brand-gold-600 transition-colors hover:bg-brand-gold-200/70 disabled:cursor-default disabled:opacity-50 dark:border-[#5a5030] dark:bg-[#34302a] dark:text-[#e5c890]"
+                                >
+                                    {#if $glossTranslating}
+                                        <Icon icon="svg-spinners:180-ring-with-bg" width="0.7rem" />
+                                    {/if}
+                                    {$t("arabicStudy.words.gloss_other_apply")}
+                                </button>
+                                <button
+                                    onclick={() => (modelMenuOpen = !modelMenuOpen)}
+                                    disabled={$glossTranslating}
+                                    title={$glossModel === "advanced"
+                                        ? $t("arabicStudy.grammar.model_advanced_hint")
+                                        : $t("arabicStudy.grammar.model_standard_hint")}
+                                    aria-label={$glossModel === "advanced"
+                                        ? $t("arabicStudy.grammar.model_advanced")
+                                        : $t("arabicStudy.grammar.model_standard")}
+                                    class="flex cursor-pointer items-center gap-0.5 rounded-r-lg border border-l-0 border-brand-gold-200 bg-brand-gold-100 pl-1 pr-1.5 text-brand-gold-600 transition-colors hover:bg-brand-gold-200/70 disabled:cursor-default disabled:opacity-50 dark:border-[#5a5030] dark:bg-[#34302a] dark:text-[#e5c890]"
+                                >
+                                    <Icon
+                                        icon={$glossModel === "advanced"
+                                            ? "solar:bolt-bold-duotone"
+                                            : "solar:bolt-linear"}
+                                        width="0.7rem"
+                                    />
+                                    <Icon
+                                        icon="solar:alt-arrow-down-bold"
+                                        width="0.55rem"
+                                        class={modelMenuOpen ? "rotate-180" : ""}
+                                    />
+                                </button>
+                                {#if modelMenuOpen}
+                                    <!-- svelte-ignore a11y_no_redundant_roles -->
+                                    <button
+                                        type="button"
+                                        tabindex="-1"
+                                        aria-label={$t("common.close")}
+                                        class="fixed inset-0 z-10 cursor-default"
+                                        onclick={() => (modelMenuOpen = false)}
+                                    ></button>
+                                    <div
+                                        class="absolute right-0 top-full z-20 mt-1 w-32 overflow-hidden rounded-xl border border-brand-sand-200 bg-white py-1 shadow-lg dark:border-[#414559] dark:bg-[#303446]"
+                                    >
+                                        {#each ["standard", "advanced"] as const as option (option)}
+                                            <button
+                                                onclick={() => {
+                                                    glossModel.set(option);
+                                                    modelMenuOpen = false;
+                                                }}
+                                                class="flex w-full cursor-pointer items-center gap-1.5 px-2.5 py-1.5 text-left text-[0.625rem] font-semibold transition-colors hover:bg-brand-sand-100 dark:hover:bg-[#414559] {$glossModel ===
+                                                option
+                                                    ? 'text-brand-gold-600 dark:text-[#e5c890]'
+                                                    : 'text-brand-charcoal-500 dark:text-[#c6d0f5]'}"
+                                            >
+                                                <Icon
+                                                    icon={option === "advanced"
+                                                        ? "solar:bolt-bold-duotone"
+                                                        : "solar:bolt-linear"}
+                                                    width="0.65rem"
+                                                />
+                                                {option === "advanced"
+                                                    ? $t("arabicStudy.grammar.model_advanced")
+                                                    : $t("arabicStudy.grammar.model_standard")}
+                                            </button>
+                                        {/each}
+                                    </div>
+                                {/if}
+                            </div>
+                            {#if $glossFailed}
+                                <span
+                                    class="whitespace-nowrap text-[0.625rem] text-red-500 dark:text-red-400"
+                                    title={$t("arabicStudy.words.gloss_error")}
+                                >
+                                    {$t("arabicStudy.words.gloss_error_short")}
+                                </span>
+                            {/if}
+                        {:else}
+                            <span
+                                class="whitespace-nowrap text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]"
+                                title={$t("arabicStudy.words.gloss_ai_required")}
+                            >
+                                {$t("arabicStudy.words.gloss_ai_required_short")}
+                            </span>
+                        {/if}
+                    {/if}
+                {:else if lesson === "grammar"}
+                    <span
+                        class="hidden text-[0.5625rem] font-bold uppercase tracking-wide text-brand-charcoal-400 sm:block dark:text-[#838ba7]"
+                    >
+                        {$t("arabicStudy.grammar.language")}
+                    </span>
+                    <div class="relative flex">
+                        <select
+                            bind:value={$grammarLanguage}
+                            aria-label={$t("arabicStudy.grammar.language")}
+                            class={glossSelectClass}
+                        >
+                            {#each LESSON_LANGUAGES as [code, name] (code)}
+                                <option value={code}>{name}</option>
+                            {/each}
+                        </select>
+                        <span
+                            class="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-brand-charcoal-300"
+                        >
+                            <Icon icon="charm:chevron-down" width="0.65rem" />
+                        </span>
+                    </div>
+                {/if}
+            </div>
             {#if !standalone}
                 <button
                     onclick={onClose}
@@ -111,6 +281,18 @@
                 </div>
             {/if}
         </div>
+
+        <!-- AI is in play on every beginner page once meanings are translated by
+             it, and on every page of the grammar curriculum, which is written by
+             it — so the caveat belongs in the chrome all of them share. -->
+        {#if lesson !== null && (lesson === "grammar" || $glossLanguage === OTHER_GLOSS)}
+            <div
+                class="flex shrink-0 items-center justify-center gap-1.5 border-b border-brand-sand-200 bg-brand-sand-50 px-4 py-1 text-[0.625rem] text-brand-charcoal-400 dark:border-[#414559] dark:bg-[#232634] dark:text-[#838ba7]"
+            >
+                <Icon icon="solar:info-circle-linear" width="0.7rem" class="shrink-0" />
+                {$t("arabicStudy.ai_disclaimer")}
+            </div>
+        {/if}
 
         {#if lesson === "alphabet"}
             <AlphabetLesson

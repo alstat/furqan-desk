@@ -8,6 +8,12 @@
     import { isPro } from "$lib/stores/auth.store";
     import { fetchVerseGrammar } from "$lib/stores/ai-verse-grammar.store";
     import { renderMarkdown } from "$lib/utils/markdown";
+    import {
+        formatRetryWindow,
+        quotaFailure,
+        quotaMessageKey,
+        type QuotaFailure,
+    } from "$lib/utils/ai-quota";
 
     interface Props {
         /** e.g. "Surah 112 (Al-Ikhlas), ayah 1: قُلْ هُوَ اللَّهُ أَحَدٌ" */
@@ -18,13 +24,14 @@
     let result = $state("");
     let loading = $state(false);
     let error = $state("");
-    let quotaExceeded = $state(false);
+    // What the server said when it refused, or null if it didn't.
+    let quota = $state<QuotaFailure | null>(null);
     let controller: AbortController | null = null;
 
     async function generate() {
         controller?.abort();
         error = "";
-        quotaExceeded = false;
+        quota = null;
         result = "";
         loading = true;
         const ac = new AbortController();
@@ -42,7 +49,7 @@
         } catch (e) {
             if (!ac.signal.aborted) {
                 error = e instanceof Error ? e.message : String(e);
-                quotaExceeded = (e as { status?: number } | null)?.status === 429;
+                quota = quotaFailure(e);
             }
         } finally {
             if (controller === ac) {
@@ -78,14 +85,19 @@
                 {$t("arabicStudy.node.grammar_pro")}
             </p>
         </div>
-    {:else if error || quotaExceeded}
+    {:else if error || quota}
         <div class="flex flex-col items-center gap-2 py-3 text-center">
             <p
-                class="text-[0.6875rem] {quotaExceeded
+                class="text-[0.6875rem] {quota
                     ? 'text-brand-charcoal-500 dark:text-[#c6d0f5]'
                     : 'text-red-500 dark:text-red-400'}"
             >
-                {quotaExceeded ? $t("takehome.quota_advanced") : error}
+                {quota
+                    ? $t(quotaMessageKey(quota), {
+                          detail: quota.message,
+                          time: formatRetryWindow(quota.retryAfterSeconds),
+                      })
+                    : error}
             </p>
             <button
                 onclick={generate}

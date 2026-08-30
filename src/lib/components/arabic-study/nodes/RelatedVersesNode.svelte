@@ -106,9 +106,9 @@
                         </span>
                         <span
                             dir="ltr"
-                            class="shrink-0 rounded-full border border-[#ecd9a6] bg-[#f7ebcf] px-2 py-0.5 font-scheherazade text-[0.6875rem] text-[#b07d28]"
+                            class="ayah-ref inline-flex shrink-0 items-center gap-[2px] rounded-full leading-[1.55] border border-[#ecd9a6] bg-[#f7ebcf] px-2 py-0.5 text-[0.6875rem] font-semibold text-[#b07d28]"
                         >
-                            ﴾{v.surah}:{v.ayah}﴿
+                            {v.surah}:{v.ayah}
                         </span>
                     </div>
                     {#if v.translation}
@@ -123,3 +123,30 @@
         </div>
     {/if}
 </div>
+
+<style>
+    /* Ornate ayah brackets, matching TakeHomeMessageDialog's `.ayah-ref` chip:
+       U+FD3E/U+FD3F only render as the mushaf-style flourish in an Arabic font,
+       so the pseudo-elements name one instead of inheriting the Latin UI font.
+       Weight 400 keeps them delicate against the chip's 600. `top` corrects
+       the flourish riding ~0.13em low: as a flex item it is centred by box,
+       but Scheherazade's ascent (1.34em) dwarfs its descent (0.70em). */
+    .ayah-ref::before,
+    .ayah-ref::after {
+        position: relative;
+        top: -0.13em;
+        font-family:
+            "Scheherazade New", "Amiri", "Traditional Arabic",
+            "Arabic Typesetting", "Geeza Pro", "Noto Naskh Arabic", serif;
+        font-weight: 400;
+        font-size: 1.05em;
+        line-height: 1;
+        opacity: 0.7;
+    }
+    .ayah-ref::before {
+        content: "\FD3E";
+    }
+    .ayah-ref::after {
+        content: "\FD3F";
+    }
+</style>

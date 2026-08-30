@@ -175,9 +175,22 @@ export async function safeReadJson(res: Response): Promise<Record<string, unknow
     }
 }
 
+/**
+ * What the stream said about itself, filled in as it is read. A run that ends
+ * with no text at all is otherwise indistinguishable from a silent failure:
+ * `finishReason: "length"` means the model spent its whole completion budget
+ * (reasoning tokens included) before writing anything, and `error` carries a
+ * failure the upstream reported mid-stream instead of as an HTTP status.
+ */
+export interface SseMeta {
+    finishReason?: string;
+    error?: string;
+}
+
 export async function readSseText(
     body: ReadableStream<Uint8Array>,
     onAccum?: (textSoFar: string) => void,
+    meta?: SseMeta,
 ): Promise<string> {
     const reader = body.getReader();
     const decoder = new TextDecoder();
@@ -199,6 +212,12 @@ export async function readSseText(
             if (!payload || payload === "[DONE]") continue;
             try {
                 const json = JSON.parse(payload);
+                if (meta) {
+                    if (typeof json.error === "string") meta.error = json.error;
+                    else if (typeof json.error?.message === "string") meta.error = json.error.message;
+                    const reason = json.choices?.[0]?.finish_reason;
+                    if (typeof reason === "string") meta.finishReason = reason;
+                }
                 const delta = json.choices?.[0]?.delta?.content;
                 if (typeof delta === "string") {
                     output += delta;

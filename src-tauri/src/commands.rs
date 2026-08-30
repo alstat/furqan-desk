@@ -1557,6 +1557,293 @@ pub fn set_letter_mastered(
     .map_err(|e| e.to_string())
 }
 
+// ── Arabic Study: random words for the "build a word" lesson ─────────────────
+
+/// One sampled Qur'anic word: the mushaf spelling with its diacritics, where it
+/// sits, and its word-by-word English gloss.
+#[derive(Serialize)]
+pub struct StudyWord {
+    pub surah: i64,
+    pub ayah: i64,
+    pub word: i64,
+    pub arabic: String,
+    pub gloss: String,
+}
+
+/// Counts base letters, i.e. everything that is not a combining mark. The
+/// lesson builds a word one letter at a time, so its length is measured in
+/// letters, not in code points — `بَيْت` is three letters carried by six chars.
+fn base_letter_count(word: &str) -> usize {
+    word.chars().filter(|c| !is_arabic_mark(*c)).count()
+}
+
+fn is_arabic_mark(c: char) -> bool {
+    let code = c as u32;
+    (0x0610..=0x061A).contains(&code)
+        || (0x064B..=0x065F).contains(&code)
+        || code == 0x0670
+        || (0x06D6..=0x06ED).contains(&code)
+}
+
+/// Word-by-word meanings for a set of words, in one of the bundled languages.
+///
+/// The curriculum's example words are hand-written with English meanings; when
+/// a learner switches the wizard to another language, those have to come from
+/// somewhere. The bundled `word_by_word` table is that somewhere: every entry
+/// is looked up by its bare letters (diacritics stripped, since the curriculum
+/// spells words in isolation while the muṣḥaf carries case endings), and the
+/// gloss the corpus uses most often for that spelling wins.
+///
+/// Returns one entry per word it could resolve, keyed by the word as it was
+/// asked for; the caller keeps its own English text for anything missing.
+#[tauri::command]
+pub fn get_word_glosses(
+    db: State<Database>,
+    words: Vec<String>,
+    lang: String,
+) -> Result<HashMap<String, String>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    if words.is_empty() {
+        return Ok(HashMap::new());
+    }
+
+    let lang = lang.trim().to_lowercase();
+    let known: bool = conn
+        .query_row(
+            "SELECT EXISTS(SELECT 1 FROM word_by_word WHERE lang = ?1)",
+            [&lang],
+            |r| r.get::<_, i64>(0),
+        )
+        .map_err(|e| e.to_string())?
+        != 0;
+    if !known {
+        return Ok(HashMap::new());
+    }
+
+    // Bare spelling -> the words the caller asked for that reduce to it.
+    let mut wanted: HashMap<String, Vec<String>> = HashMap::new();
+    for word in &words {
+        wanted
+            .entry(strip_arabic_marks(word))
+            .or_default()
+            .push(word.clone());
+    }
+
+    // Walk the corpus once, composing each word from its tokens, and note where
+    // the spellings we are after occur.
+    let mut occurrences: HashMap<String, Vec<(i64, i64, i64)>> = HashMap::new();
+    {
+        let mut stmt = conn
+            .prepare(
+                "SELECT surah, ayah, word, form_arabic FROM morphology
+                 ORDER BY surah, ayah, word, token",
+            )
+            .map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map([], |r| {
+                Ok((
+                    r.get::<_, i64>(0)?,
+                    r.get::<_, i64>(1)?,
+                    r.get::<_, i64>(2)?,
+                    r.get::<_, String>(3)?,
+                ))
+            })
+            .map_err(|e| e.to_string())?;
+
+        let mut current: Option<(i64, i64, i64)> = None;
+        let mut composed = String::new();
+        let flush = |key: Option<(i64, i64, i64)>, text: &str,
+                         occurrences: &mut HashMap<String, Vec<(i64, i64, i64)>>| {
+            if let Some(position) = key {
+                let bare = strip_arabic_marks(text);
+                if wanted.contains_key(&bare) {
+                    occurrences.entry(bare).or_default().push(position);
+                }
+            }
+        };
+        for row in rows {
+            let (surah, ayah, word, form) = row.map_err(|e| e.to_string())?;
+            let position = (surah, ayah, word);
+            if current != Some(position) {
+                flush(current, &composed, &mut occurrences);
+                current = Some(position);
+                composed.clear();
+            }
+            composed.push_str(&form);
+        }
+        flush(current, &composed, &mut occurrences);
+    }
+
+    let mut gloss_stmt = conn
+        .prepare(
+            "SELECT text FROM word_by_word
+             WHERE surah = ?1 AND ayah = ?2 AND word = ?3 AND lang = ?4",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let mut out = HashMap::new();
+    for (bare, positions) in occurrences {
+        // The same spelling is glossed slightly differently across the corpus;
+        // the most frequent reading is the one a learner should see.
+        let mut tally: HashMap<String, usize> = HashMap::new();
+        for (surah, ayah, word) in positions.iter().take(60) {
+            let gloss: Option<String> = gloss_stmt
+                .query_row(rusqlite::params![surah, ayah, word, &lang], |r| r.get(0))
+                .ok();
+            let Some(gloss) = gloss else { continue };
+            let gloss = gloss.trim();
+            if gloss.is_empty() || gloss.contains('(') || gloss.chars().count() > 24 {
+                continue;
+            }
+            *tally.entry(gloss.to_string()).or_default() += 1;
+        }
+        let best = tally
+            .into_iter()
+            .max_by_key(|(gloss, count)| (*count, std::cmp::Reverse(gloss.chars().count())))
+            .map(|(gloss, _)| gloss);
+        if let (Some(best), Some(asked)) = (best, wanted.get(&bare)) {
+            for word in asked {
+                out.insert(word.clone(), best.clone());
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// Drops every combining mark, leaving the bare letters.
+fn strip_arabic_marks(word: &str) -> String {
+    word.chars().filter(|c| !is_arabic_mark(*c)).collect()
+}
+
+/// A fresh random selection of short Qur'anic words for the word picker.
+///
+/// Sampling happens over ayahs rather than over words: one `ORDER BY RANDOM()`
+/// pass over the distinct ayah list, then the words of those ayahs are composed
+/// from their morphology tokens (the same composition `get_surah_morphology`
+/// does) and filtered down to ones of the requested letter count that carry an
+/// English gloss. Picking random ayahs keeps the query cheap and still spreads
+/// the results across the whole muṣḥaf.
+#[tauri::command]
+pub fn get_random_study_words(
+    db: State<Database>,
+    count: i64,
+    letters: i64,
+    lang: String,
+) -> Result<Vec<StudyWord>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let wanted = count.clamp(1, 50) as usize;
+    let letters = letters.clamp(2, 8) as usize;
+
+    // Enough ayahs that the letter filter still leaves `wanted` words over.
+    let mut ayah_stmt = conn
+        .prepare(
+            "SELECT surah, ayah FROM (SELECT DISTINCT surah, ayah FROM morphology)
+             ORDER BY RANDOM() LIMIT ?1",
+        )
+        .map_err(|e| e.to_string())?;
+    let ayah_keys = ayah_stmt
+        .query_map([(wanted as i64) * 12], |r| {
+            Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?))
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+
+    let mut token_stmt = conn
+        .prepare(
+            "SELECT word, form_arabic FROM morphology
+             WHERE surah = ?1 AND ayah = ?2 ORDER BY word, token",
+        )
+        .map_err(|e| e.to_string())?;
+    // The caller picks the gloss language (the same list the reader's
+    // word-by-word setting offers); anything unknown falls back to English
+    // rather than returning a list of words with no meanings at all.
+    let lang = match lang.trim() {
+        "" => "english".to_string(),
+        other => other.to_lowercase(),
+    };
+    let has_lang: bool = conn
+        .query_row(
+            "SELECT EXISTS(SELECT 1 FROM word_by_word WHERE lang = ?1)",
+            [&lang],
+            |r| r.get::<_, i64>(0),
+        )
+        .map_err(|e| e.to_string())?
+        != 0;
+    let lang = if has_lang { lang } else { "english".to_string() };
+
+    let mut gloss_stmt = conn
+        .prepare(
+            "SELECT word, text FROM word_by_word
+             WHERE surah = ?1 AND ayah = ?2 AND lang = ?3",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let mut words: Vec<StudyWord> = Vec::new();
+    for (surah, ayah) in ayah_keys {
+        if words.len() >= wanted {
+            break;
+        }
+
+        let mut composed: BTreeMap<i64, String> = BTreeMap::new();
+        let rows = token_stmt
+            .query_map([surah, ayah], |r| {
+                Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?))
+            })
+            .map_err(|e| e.to_string())?;
+        for row in rows {
+            let (word, form) = row.map_err(|e| e.to_string())?;
+            composed.entry(word).or_default().push_str(&form);
+        }
+
+        let mut glosses: BTreeMap<i64, String> = BTreeMap::new();
+        let rows = gloss_stmt
+            .query_map(rusqlite::params![surah, ayah, &lang], |r| {
+                Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?))
+            })
+            .map_err(|e| e.to_string())?;
+        for row in rows {
+            let (word, text) = row.map_err(|e| e.to_string())?;
+            glosses.insert(word, text);
+        }
+
+        // At most two words from any one ayah, so a draw spreads across the
+        // muṣḥaf instead of walking one verse from the start.
+        let mut from_this_ayah = 0;
+        for (word, arabic) in composed {
+            if words.len() >= wanted || from_this_ayah >= 2 {
+                break;
+            }
+            if base_letter_count(&arabic) != letters || arabic.contains(' ') {
+                continue;
+            }
+            // A leading shaddah means the word was merged into from the one
+            // before it; on its own in the picker it reads as a typo.
+            if arabic.chars().nth(1) == Some('\u{0651}') {
+                continue;
+            }
+            let gloss = match glosses.get(&word) {
+                // A gloss with brackets is a fragment of a longer phrase and
+                // reads badly on its own in the picker.
+                Some(g) if !g.trim().is_empty() && !g.contains('(') && g.chars().count() <= 24 => {
+                    g.trim().to_string()
+                }
+                _ => continue,
+            };
+            from_this_ayah += 1;
+            words.push(StudyWord {
+                surah,
+                ayah,
+                word,
+                arabic,
+                gloss,
+            });
+        }
+    }
+
+    Ok(words)
+}
+
 // ── Arabic Study grammar-topic content ───────────────────────────────────────
 //
 // AI-generated explanations for the intermediate/advanced grammar curriculum,

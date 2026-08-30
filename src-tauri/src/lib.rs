@@ -281,6 +281,8 @@ pub fn run() {
             commands::get_arabic_study_profile,
             commands::save_arabic_study_profile,
             commands::get_letter_progress,
+            commands::get_random_study_words,
+            commands::get_word_glosses,
             commands::mark_letter_practiced,
             commands::set_letter_mastered,
             commands::get_topic_content,

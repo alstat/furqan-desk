@@ -9,6 +9,29 @@ export function fetchSurahMorphology(surah: number): Promise<SurahMorphology> {
     );
 }
 
+/** One randomly sampled Qur'anic word, with its muṣḥaf spelling and gloss. */
+export interface StudyWord {
+    surah: number;
+    ayah: number;
+    word: number;
+    arabic: string;
+    gloss: string;
+}
+
+/**
+ * A fresh random selection of short Qur'anic words for the "build a word"
+ * picker. `letters` counts base letters, not characters, and `lang` names one
+ * of the bundled word-by-word gloss languages (unknown ones fall back to
+ * English).
+ */
+export function fetchRandomStudyWords(
+    count: number,
+    letters: number,
+    lang: string,
+): Promise<StudyWord[]> {
+    return invoke<StudyWord[]>("get_random_study_words", { count, letters, lang });
+}
+
 /** Word-by-word morphology for one ayah — used by the Verse Study canvas. */
 export function fetchAyahMorphology(surah: number, ayah: number): Promise<AyahMorphology> {
     return invoke<AyahMorphology>("get_ayah_morphology", { surah, ayah });

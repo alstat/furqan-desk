@@ -46,6 +46,9 @@ export const ALIF_FORMS: AlifForm[] = [
             { word: "كِتَاب", translit: "kitāb", meaning: "book", ref: "2:2", highlightGlyph: "ا" },
             { word: "نُور", translit: "nūr", meaning: "light", ref: "24:35", highlightGlyph: "و" },
             { word: "دِين", translit: "dīn", meaning: "religion", ref: "1:4", highlightGlyph: "ي" },
+            { word: "كَانَ", translit: "kāna", meaning: "he was", ref: "2:97", highlightGlyph: "ا" },
+            { word: "دُونِ", translit: "dūni", meaning: "other than", ref: "2:23", highlightGlyph: "و" },
+            { word: "قِيلَ", translit: "qīla", meaning: "it was said", ref: "2:11", highlightGlyph: "ي" },
         ],
     },
     {
@@ -61,6 +64,9 @@ export const ALIF_FORMS: AlifForm[] = [
             { word: "عَلَى", translit: "ʿalā", meaning: "on, upon", ref: "2:5", highlightGlyph: "ى" },
             { word: "إِلَى", translit: "ilā", meaning: "to, towards", ref: "2:29", highlightGlyph: "ى" },
             { word: "مُوسَى", translit: "Mūsā", meaning: "Moses", ref: "2:53", highlightGlyph: "ى" },
+            { word: "هُدًى", translit: "hudan", meaning: "guidance", ref: "2:2", highlightGlyph: "ى" },
+            { word: "عِيسَى", translit: "ʿĪsā", meaning: "Jesus", ref: "2:87", highlightGlyph: "ى" },
+            { word: "نَرَى", translit: "narā", meaning: "we see", ref: "2:55", highlightGlyph: "ى" },
         ],
     },
     {
@@ -77,6 +83,9 @@ export const ALIF_FORMS: AlifForm[] = [
             { word: "هَٰذَا", translit: "hādhā", meaning: "this", ref: "2:25", highlightMark: DAGGER_ALIF },
             { word: "ذَٰلِكَ", translit: "dhālika", meaning: "that", ref: "2:2", highlightMark: DAGGER_ALIF },
             { word: "رَحْمَٰن", translit: "raḥmān", meaning: "Most Gracious", ref: "1:1", highlightMark: DAGGER_ALIF },
+            { word: "مَٰلِكِ", translit: "māliki", meaning: "master, owner", ref: "1:4", highlightMark: DAGGER_ALIF },
+            { word: "سَلَٰمٌ", translit: "salāmun", meaning: "peace", ref: "6:54", highlightMark: DAGGER_ALIF },
+            { word: "ضَلَٰلٍ", translit: "ḍalālin", meaning: "error, straying", ref: "6:74", highlightMark: DAGGER_ALIF },
         ],
     },
     {
@@ -92,6 +101,9 @@ export const ALIF_FORMS: AlifForm[] = [
             { word: "أَحَد", translit: "aḥad", meaning: "one", ref: "112:1", highlightGlyph: "ا" },
             { word: "إِنَّ", translit: "inna", meaning: "indeed", ref: "2:6", highlightGlyph: "ا" },
             { word: "أُمّ", translit: "umm", meaning: "mother", highlightGlyph: "ا" },
+            { word: "أَنتَ", translit: "anta", meaning: "you", ref: "2:32", highlightGlyph: "ا" },
+            { word: "وَإِن", translit: "wa-in", meaning: "and if", ref: "2:23", highlightGlyph: "ا" },
+            { word: "إِذًا", translit: "idhan", meaning: "then, in that case", ref: "4:140", highlightGlyph: "ا" },
         ],
     },
     {
@@ -108,6 +120,9 @@ export const ALIF_FORMS: AlifForm[] = [
             { word: "اِسْم", translit: "ism", meaning: "name", highlightGlyph: "ا" },
             { word: "الَّذِينَ", translit: "alladhīna", meaning: "those who", ref: "2:6", highlightGlyph: "ا" },
             { word: "ادْخُلُوا", translit: "udkhulū", meaning: "enter!", ref: "2:58", highlightGlyph: "ا" },
+            { word: "ٱهْدِنَا", translit: "ihdinā", meaning: "guide us", ref: "1:6", highlightGlyph: "ا" },
+            { word: "ٱدْعُ", translit: "udʿu", meaning: "call, pray", ref: "2:68", highlightGlyph: "ا" },
+            { word: "ٱتْلُ", translit: "utlu", meaning: "recite!", ref: "29:45", highlightGlyph: "ا" },
         ],
     },
 ];

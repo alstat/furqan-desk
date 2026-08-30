@@ -22,6 +22,7 @@
     import JuliaPlotViewer from "$lib/components/shared/JuliaPlotViewer.svelte";
     import { installPlotSync } from "$lib/stores/julia-plot-window";
     import { installReaderSnapshotHost } from "$lib/stores/reader-windows.store";
+    import { installVerseJumpHost } from "$lib/utils/verse-nav";
     import { installManuscriptInsertHost } from "$lib/stores/manuscripts.store";
     import { installDrawingSaveHost } from "$lexical/core/plugins/Drawing/drawingEditorStore";
     import { installTerminalCwdHost } from "$lib/stores/terminal-window.store";
@@ -109,6 +110,9 @@
         // The translation and tafsir readers render a view only this window can
         // derive; broadcast it so their windows can show it.
         void installReaderSnapshotHost();
+        // "Go to this verse" chips in the Arabic Study window can't reach the
+        // parchment's stores from their own JS context; they ask us instead.
+        void installVerseJumpHost();
         // The manuscript viewer's own window has no Lexical editor to insert
         // into; it asks this window to do it.
         void installManuscriptInsertHost();

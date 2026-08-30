@@ -17,6 +17,12 @@
     import { PANEL_GAP } from "$lib/utils/anchoredPanel";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { renderMarkdown } from "$lib/utils/markdown";
+    import {
+        formatRetryWindow,
+        quotaFailure,
+        quotaMessageKey,
+        type QuotaFailure,
+    } from "$lib/utils/ai-quota";
     import { fetchTakeHomeMessage } from "$lib/stores/ai-takehome.store";
     import { copyToClipboard } from "$lib/utils/clipboard";
     import { formatBytes } from "$lib/data/verse-of-day";
@@ -53,7 +59,8 @@
     let result = $state("");
     let loading = $state(false);
     let error = $state("");
-    let quotaExceeded = $state(false);
+    // What the server said when it refused, or null if it didn't.
+    let quota = $state<QuotaFailure | null>(null);
     let sourceLabel = $state("");
     // Model used for generation, switchable from the dropdown on the
     // Generate button. Defaults to Advanced (the Take-Home Message's
@@ -362,7 +369,7 @@
         const prevSig = savedSig;
         const prevLabel = sourceLabel;
         error = "";
-        quotaExceeded = false;
+        quota = null;
         // A fresh generation is always for the currently displayed ayahs, not
         // whatever history entry might have been on screen.
         viewingHistoryEntry = false;
@@ -402,8 +409,7 @@
         } catch (e) {
             if (!ac.signal.aborted) {
                 error = e instanceof Error ? e.message : String(e);
-                quotaExceeded =
-                    (e as { status?: number } | null)?.status === 429;
+                quota = quotaFailure(e);
                 // Restore the prior cached message (shown once the error clears).
                 result = prevResult;
                 savedSig = prevSig;
@@ -506,7 +512,7 @@
         controller = null;
         loading = false;
         error = "";
-        quotaExceeded = false;
+        quota = null;
         result = entry.result;
         sourceLabel = entry.source_label;
         savedSig = currentSig;
@@ -574,7 +580,7 @@
             // Clear transient error so re-opening shows the cached result/idle,
             // not a stale error. Reset any manual drag position.
             error = "";
-            quotaExceeded = false;
+            quota = null;
             dragPos = null;
             view = "result";
             exportedPath = "";
@@ -907,25 +913,30 @@
                         {$t("takehome.pro_desc")}
                     </p>
                 </div>
-            {:else if error || quotaExceeded}
+            {:else if error || quota}
                 <div class="flex flex-col items-center gap-3 py-8 text-center">
                     <Icon
-                        icon={quotaExceeded
+                        icon={quota
                             ? "solar:bolt-circle-bold-duotone"
                             : "solar:danger-triangle-bold-duotone"}
-                        class={quotaExceeded
+                        class={quota
                             ? "text-brand-gold-500 dark:text-[#e5c890]"
                             : "text-red-400"}
                         width="1.5rem"
                     />
                     <p
-                        class="max-w-xs text-xs leading-relaxed {quotaExceeded
+                        class="max-w-xs text-xs leading-relaxed {quota
                             ? 'text-brand-charcoal-500 dark:text-[#c6d0f5]'
                             : 'text-red-500 dark:text-red-400'}"
                     >
-                        {quotaExceeded
-                            ? $t("takehome.quota_advanced")
-                            : error || $t("takehome.quota_advanced")}
+                        {#if quota}
+                            {$t(quotaMessageKey(quota), {
+                                detail: quota.message,
+                                time: formatRetryWindow(quota.retryAfterSeconds),
+                            })}
+                        {:else}
+                            {error || $t("takehome.error")}
+                        {/if}
                     </p>
                     <div class="flex items-center gap-2">
                         <button

@@ -6,12 +6,22 @@
 <script lang="ts">
     import { get } from "svelte/store";
     import Icon from "@iconify/svelte";
-    import { t, locale } from "$lib/i18n";
-    import { isPro, isProPlus } from "$lib/stores/auth.store";
+    import { t } from "$lib/i18n";
+    import { isPro } from "$lib/stores/auth.store";
     import { askAiAboutSelection, AI_FEATURE_TAGS } from "$lib/stores/ai-chat.store";
-    import { renderMarkdown } from "$lib/utils/markdown";
+    import { renderInlineMarkdown, renderMarkdown } from "$lib/utils/markdown";
+    import {
+        formatRetryWindow,
+        quotaFailure,
+        quotaMessageKey,
+        type QuotaFailure,
+    } from "$lib/utils/ai-quota";
     import { topicsForLevel, type GrammarTopic } from "$lib/data/arabic-grammar-topics";
-    import { fetchTopicContent, saveTopicContent } from "$lib/stores/arabic-study.store";
+    import {
+        fetchTopicContent,
+        grammarLanguage,
+        saveTopicContent,
+    } from "$lib/stores/arabic-study.store";
     import { fetchGrammarTopic, grammarModel } from "$lib/stores/ai-grammar-topic.store";
     import VerseRefBadge from "./VerseRefBadge.svelte";
 
@@ -35,8 +45,12 @@
     let rawContent = $state("");
     let loading = $state(false);
     let error = $state("");
-    let quotaExceeded = $state(false);
-    let quizPicked = $state<string | null>(null);
+    // What the server said when it refused: which class, which window, and how
+    // long until it frees up. Null unless the last attempt was refused.
+    let quota = $state<QuotaFailure | null>(null);
+    let modelMenuOpen = $state(false);
+    let modelFellBack = $state(false);
+    let quizPicked = $state<Record<number, string>>({});
     let controller: AbortController | null = null;
 
     $effect(() => {
@@ -52,32 +66,52 @@
         controller = null;
         loading = false;
         error = "";
-        quotaExceeded = false;
-        quizPicked = null;
+        quota = null;
+        modelFellBack = false;
+        quizPicked = {};
         rawContent = "";
         if (!id) return;
+        const language = $grammarLanguage;
         void fetchTopicContent()
             .then((rows) => {
-                const hit = rows.find((r) => r.topic_id === id);
+                // One cached lesson per topic, in whatever language it was last
+                // generated in — showing it under a different language would be
+                // a lie, so leave the panel empty and let Generate refill it.
+                const hit = rows.find((r) => r.topic_id === id && r.locale === language);
                 if (hit && selectedId === id) rawContent = hit.content;
             })
             .catch(() => {});
     });
 
+    interface TopicExample {
+        word: string;
+        gloss: string;
+        ref?: string;
+    }
+    interface TopicExercise {
+        sentence: string;
+        choices: string[];
+        answer: string;
+        why: string;
+    }
     interface ParsedTopic {
         title: string;
         subtitle: string;
         explanation: string;
-        quranWord: string;
-        quranGloss: string;
-        quranRef: string;
-        everydayWord: string;
-        everydayGloss: string;
-        quizSentence: string;
-        quizChoices: string[];
-        quizAnswer: string;
-        quizWhy: string;
+        quran: TopicExample[];
+        everyday: TopicExample[];
+        exercises: TopicExercise[];
     }
+
+    // Upper bounds, not quotas: a lesson is generated with three of each, but
+    // lessons cached when it asked for six and five still render in full.
+    const QURAN_EXAMPLES = 6;
+    const EVERYDAY_EXAMPLES = 6;
+    const EXERCISES = 5;
+
+    const splitFields = (value: string) => value.split("::").map((part) => part.trim());
+    const splitChoices = (value: string) =>
+        value.split("|").map((part) => part.trim()).filter(Boolean);
 
     // Most fields are single-line ("@@id@@ value"); only @@explanation@@
     // spans lines until the next marker. Tolerant of a partial trailing
@@ -87,7 +121,7 @@
         const fields: Record<string, string> = {};
         let currentKey: string | null = null;
         for (const line of raw.split("\n")) {
-            const m = line.match(/^\s*@@\s*([a-z_]+)\s*@@\s*(.*)$/i);
+            const m = line.match(/^\s*@@\s*([a-z_0-9]+)\s*@@\s*(.*)$/i);
             if (m) {
                 currentKey = m[1].toLowerCase();
                 fields[currentKey] = m[2] ?? "";
@@ -95,22 +129,58 @@
                 fields.explanation = (fields.explanation ?? "") + "\n" + line;
             }
         }
+
+        const quran: TopicExample[] = [];
+        for (let i = 1; i <= QURAN_EXAMPLES; i++) {
+            const [word = "", gloss = "", ref = ""] = splitFields(fields[`quran_${i}`] ?? "");
+            if (word) quran.push({ word, gloss, ref });
+        }
+        const everyday: TopicExample[] = [];
+        for (let i = 1; i <= EVERYDAY_EXAMPLES; i++) {
+            const [word = "", gloss = ""] = splitFields(fields[`everyday_${i}`] ?? "");
+            if (word) everyday.push({ word, gloss });
+        }
+        const exercises: TopicExercise[] = [];
+        for (let i = 1; i <= EXERCISES; i++) {
+            const [sentence = "", choices = "", answer = "", why = ""] = splitFields(
+                fields[`exercise_${i}`] ?? "",
+            );
+            if (sentence) {
+                exercises.push({ sentence, choices: splitChoices(choices), answer, why });
+            }
+        }
+
+        // Lessons cached before this lesson grew to six examples and five
+        // exercises still hold the single-field shape; show what they have.
+        if (quran.length === 0 && (fields.quran_word ?? "").trim()) {
+            quran.push({
+                word: (fields.quran_word ?? "").trim(),
+                gloss: (fields.quran_gloss ?? "").trim(),
+                ref: (fields.quran_ref ?? "").trim(),
+            });
+        }
+        if (everyday.length === 0 && (fields.everyday_word ?? "").trim()) {
+            everyday.push({
+                word: (fields.everyday_word ?? "").trim(),
+                gloss: (fields.everyday_gloss ?? "").trim(),
+            });
+        }
+        if (exercises.length === 0 && (fields.quiz_sentence ?? "").trim()) {
+            exercises.push({
+                sentence: (fields.quiz_sentence ?? "").trim(),
+                choices: splitChoices(fields.quiz_choices ?? ""),
+                answer: (fields.quiz_answer ?? "").trim(),
+                why: (fields.quiz_why ?? "").trim(),
+            });
+        }
+
         return {
             title: (fields.title ?? "").trim(),
             subtitle: (fields.subtitle ?? "").trim(),
             explanation: (fields.explanation ?? "").trim(),
-            quranWord: (fields.quran_word ?? "").trim(),
-            quranGloss: (fields.quran_gloss ?? "").trim(),
-            quranRef: (fields.quran_ref ?? "").trim(),
-            everydayWord: (fields.everyday_word ?? "").trim(),
-            everydayGloss: (fields.everyday_gloss ?? "").trim(),
-            quizSentence: (fields.quiz_sentence ?? "").trim(),
-            quizChoices: (fields.quiz_choices ?? "")
-                .split("|")
-                .map((s) => s.trim())
-                .filter(Boolean),
-            quizAnswer: (fields.quiz_answer ?? "").trim(),
-            quizWhy: (fields.quiz_why ?? "").trim(),
+            quran,
+            everyday,
+            exercises,
         };
     }
 
@@ -121,18 +191,21 @@
         if (!topic) return;
         controller?.abort();
         error = "";
-        quotaExceeded = false;
+        quota = null;
+        modelFellBack = false;
         rawContent = "";
-        quizPicked = null;
+        quizPicked = {};
         loading = true;
         const ac = new AbortController();
         controller = ac;
         try {
+            const language = get(grammarLanguage);
             const text = await fetchGrammarTopic({
                 topicTitle: topic.label,
                 level,
-                locale: get(locale),
-                advanced: get(grammarModel) === "advanced" && get(isProPlus),
+                locale: language,
+                advanced: get(grammarModel) === "advanced" && get(isPro),
+                onModelFallback: () => (modelFellBack = true),
                 signal: ac.signal,
                 onPartial: (partial) => {
                     if (!ac.signal.aborted) rawContent = partial;
@@ -140,13 +213,13 @@
             });
             if (!ac.signal.aborted) {
                 rawContent = text;
-                await saveTopicContent(topic.id, text, get(locale));
+                await saveTopicContent(topic.id, text, language);
                 cachedIds = new Set([...cachedIds, topic.id]);
             }
         } catch (e) {
             if (!ac.signal.aborted) {
                 error = e instanceof Error ? e.message : String(e);
-                quotaExceeded = (e as { status?: number } | null)?.status === 429;
+                quota = quotaFailure(e);
             }
         } finally {
             if (controller === ac) {
@@ -244,14 +317,19 @@
                             {$t("arabicStudy.grammar.pro_desc")}
                         </p>
                     </div>
-                {:else if error || quotaExceeded}
+                {:else if error || quota}
                     <div class="flex flex-col items-center gap-2 py-16 text-center">
                         <p
-                            class="text-xs {quotaExceeded
+                            class="text-xs {quota
                                 ? 'text-brand-charcoal-500 dark:text-[#c6d0f5]'
                                 : 'text-red-500 dark:text-red-400'}"
                         >
-                            {quotaExceeded ? $t("takehome.quota_advanced") : error}
+                            {quota
+                                ? $t(quotaMessageKey(quota), {
+                                      detail: quota.message,
+                                      time: formatRetryWindow(quota.retryAfterSeconds),
+                                  })
+                                : error}
                         </p>
                         <button
                             onclick={generate}
@@ -273,38 +351,25 @@
                                 <Icon icon="solar:bolt-bold-duotone" width="0.65rem" />
                                 {$t("arabicStudy.grammar.ai_badge")}
                             </span>
-                            {#if $isProPlus}
-                                <button
-                                    onclick={() =>
-                                        grammarModel.set($grammarModel === "advanced" ? "standard" : "advanced")}
-                                    title={$grammarModel === "advanced"
-                                        ? $t("arabicStudy.grammar.model_advanced_hint")
-                                        : $t("arabicStudy.grammar.model_standard_hint")}
-                                    class="flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-[0.625rem] font-semibold transition-colors {$grammarModel ===
-                                    'advanced'
-                                        ? 'border-brand-gold-400 bg-brand-gold-100 text-brand-gold-600 dark:bg-[#e5c890]/30 dark:text-[#e5c890]'
-                                        : 'border-brand-sand-200 text-brand-charcoal-400 hover:bg-brand-sand-100 dark:border-[#414559] dark:text-[#8087a2] dark:hover:bg-[#292c3c]'}"
+                            {#if modelFellBack}
+                                <span
+                                    class="text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]"
+                                    title={$t("arabicStudy.grammar.model_fallback")}
                                 >
-                                    <Icon
-                                        icon={$grammarModel === "advanced" ? "solar:bolt-bold-duotone" : "solar:bolt-linear"}
-                                        width="0.65rem"
-                                    />
-                                    {$grammarModel === "advanced"
-                                        ? $t("arabicStudy.grammar.model_advanced")
-                                        : $t("arabicStudy.grammar.model_standard")}
-                                </button>
+                                    {$t("arabicStudy.grammar.model_fallback")}
+                                </span>
                             {/if}
                         </div>
                         {#if parsed.title}
                             <div dir="rtl" class="mt-2.5 pb-2 font-scheherazade text-2xl text-brand-charcoal-900 dark:text-[#c6d0f5]">
-                                {parsed.title}
+                                {@html renderInlineMarkdown(parsed.title)}
                             </div>
                         {:else}
                             <div class="mt-3 h-6 w-2/3 animate-pulse rounded bg-[#f0e2bb] dark:bg-[#4a4331]"></div>
                         {/if}
                         {#if parsed.subtitle}
                             <div class="mt-0.5 text-[0.71875rem] italic text-brand-gold-500 dark:text-[#e5c890]">
-                                {parsed.subtitle}
+                                {@html renderInlineMarkdown(parsed.subtitle)}
                             </div>
                         {/if}
                         {#if parsed.explanation}
@@ -332,18 +397,24 @@
                             >
                                 {$t("arabicStudy.alphabet.from_quran")}
                             </span>
-                            {#if parsed.quranWord}
-                                <div dir="rtl" class="mt-2 pb-2 font-scheherazade text-lg text-brand-charcoal-900 dark:text-[#c6d0f5]">
-                                    {parsed.quranWord}
+                            {#if parsed.quran.length}
+                                <div class="mt-2 flex flex-col gap-3">
+                                    {#each parsed.quran as example, i (i)}
+                                        <div class={i > 0 ? "border-t border-brand-emerald-200/60 pt-3 dark:border-[#414559]" : ""}>
+                                            <div dir="rtl" class="pb-2 font-scheherazade text-lg leading-loose text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                                {@html renderInlineMarkdown(example.word)}
+                                            </div>
+                                            {#if example.gloss}
+                                                <p class="mt-1 text-[0.65625rem] text-brand-charcoal-400 dark:text-[#a5adce]">{@html renderInlineMarkdown(example.gloss)}</p>
+                                            {/if}
+                                            {#if example.ref}
+                                                <div class="mt-1.5">
+                                                    <VerseRefBadge verseRef={example.ref} />
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    {/each}
                                 </div>
-                                {#if parsed.quranGloss}
-                                    <p class="mt-1 text-[0.65625rem] text-brand-charcoal-400 dark:text-[#a5adce]">{parsed.quranGloss}</p>
-                                {/if}
-                                {#if parsed.quranRef}
-                                    <div class="mt-1.5">
-                                        <VerseRefBadge verseRef={parsed.quranRef} />
-                                    </div>
-                                {/if}
                             {:else}
                                 <div class="mt-2 flex flex-col gap-1.5">
                                     <div class="h-5 w-2/3 animate-pulse rounded bg-brand-emerald-100 dark:bg-[#414559]"></div>
@@ -359,13 +430,19 @@
                             >
                                 {$t("arabicStudy.alphabet.everyday")}
                             </span>
-                            {#if parsed.everydayWord}
-                                <div dir="rtl" class="mt-2 pb-2 font-scheherazade text-lg text-brand-charcoal-900 dark:text-[#c6d0f5]">
-                                    {parsed.everydayWord}
+                            {#if parsed.everyday.length}
+                                <div class="mt-2 flex flex-col gap-3">
+                                    {#each parsed.everyday as example, i (i)}
+                                        <div class={i > 0 ? "border-t border-brand-teal-200/60 pt-3 dark:border-[#414559]" : ""}>
+                                            <div dir="rtl" class="pb-2 font-scheherazade text-lg leading-loose text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                                {@html renderInlineMarkdown(example.word)}
+                                            </div>
+                                            {#if example.gloss}
+                                                <p class="mt-1 text-[0.65625rem] text-brand-charcoal-400 dark:text-[#a5adce]">{@html renderInlineMarkdown(example.gloss)}</p>
+                                            {/if}
+                                        </div>
+                                    {/each}
                                 </div>
-                                {#if parsed.everydayGloss}
-                                    <p class="mt-1 text-[0.65625rem] text-brand-charcoal-400 dark:text-[#a5adce]">{parsed.everydayGloss}</p>
-                                {/if}
                             {:else}
                                 <div class="mt-2 flex flex-col gap-1.5">
                                     <div class="h-5 w-2/3 animate-pulse rounded bg-brand-teal-100 dark:bg-[#414559]"></div>
@@ -382,31 +459,46 @@
                         <div class="text-[0.625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]">
                             {$t("arabicStudy.grammar.try_it")}
                         </div>
-                        {#if parsed.quizSentence && parsed.quizChoices.length}
-                            <div dir="rtl" class="mt-2 text-center font-scheherazade text-xl text-brand-charcoal-900 dark:text-[#c6d0f5]">
-                                {parsed.quizSentence}
-                            </div>
-                            <div class="mt-2.5 flex flex-wrap items-center justify-center gap-2">
-                                {#each parsed.quizChoices as choice (choice)}
-                                    {@const isAnswer = choice === parsed.quizAnswer}
-                                    {@const revealed = quizPicked !== null}
-                                    <button
-                                        onclick={() => (quizPicked = choice)}
-                                        class="cursor-pointer rounded-full border px-4 py-1 font-scheherazade text-base transition-colors {revealed && isAnswer
-                                            ? 'border-brand-emerald-400 bg-brand-emerald-50 font-bold text-brand-emerald-600 dark:border-[#3d9b86] dark:bg-[#292c3c] dark:text-[#9dd4c8]'
-                                            : revealed && quizPicked === choice
-                                              ? 'border-red-300 bg-red-50 text-red-500 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300'
-                                              : 'border-brand-sand-200 text-brand-charcoal-500 hover:bg-brand-sand-50 dark:border-[#414559] dark:text-[#a5adce] dark:hover:bg-[#363a4f]'}"
-                                    >
-                                        {choice}
-                                    </button>
+                        {#if parsed.exercises.length}
+                            <div class="mt-2 flex flex-col gap-3">
+                                {#each parsed.exercises as exercise, index (index)}
+                                    {@const picked = quizPicked[index]}
+                                    <div class={index > 0 ? "border-t border-brand-sand-200 pt-3 dark:border-[#414559]" : ""}>
+                                        <div class="flex items-baseline gap-2">
+                                            <span
+                                                class="shrink-0 text-[0.5625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
+                                            >
+                                                {index + 1}
+                                            </span>
+                                            <div dir="rtl" class="flex-1 pb-2 text-center font-scheherazade text-xl leading-loose text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                                {@html renderInlineMarkdown(exercise.sentence)}
+                                            </div>
+                                        </div>
+                                        <div class="mt-1 flex flex-wrap items-center justify-center gap-2">
+                                            {#each exercise.choices as choice (choice)}
+                                                {@const isAnswer = choice === exercise.answer}
+                                                {@const revealed = picked !== undefined}
+                                                <button
+                                                    onclick={() =>
+                                                        (quizPicked = { ...quizPicked, [index]: choice })}
+                                                    class="cursor-pointer rounded-full border px-4 py-1 font-scheherazade text-base transition-colors {revealed && isAnswer
+                                                        ? 'border-brand-emerald-400 bg-brand-emerald-50 font-bold text-brand-emerald-600 dark:border-[#3d9b86] dark:bg-[#292c3c] dark:text-[#9dd4c8]'
+                                                        : revealed && picked === choice
+                                                          ? 'border-red-300 bg-red-50 text-red-500 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300'
+                                                          : 'border-brand-sand-200 text-brand-charcoal-500 hover:bg-brand-sand-50 dark:border-[#414559] dark:text-[#a5adce] dark:hover:bg-[#363a4f]'}"
+                                                >
+                                                    {choice}
+                                                </button>
+                                            {/each}
+                                        </div>
+                                        {#if picked !== undefined && exercise.why}
+                                            <p class="mt-2 text-center text-[0.6875rem] text-brand-charcoal-400 dark:text-[#a5adce]">
+                                                {@html renderInlineMarkdown(exercise.why)}
+                                            </p>
+                                        {/if}
+                                    </div>
                                 {/each}
                             </div>
-                            {#if quizPicked && parsed.quizWhy}
-                                <p class="mt-2.5 text-center text-[0.6875rem] text-brand-charcoal-400 dark:text-[#a5adce]">
-                                    {parsed.quizWhy}
-                                </p>
-                            {/if}
                         {:else}
                             <div class="mt-2.5 flex flex-col items-center gap-2">
                                 <div class="h-5 w-1/2 animate-pulse rounded bg-brand-sand-100 dark:bg-[#414559]"></div>
@@ -435,23 +527,147 @@
                         </div>
                     {/if}
 
+                    <!-- The model rides with the button that spends it, same as
+                         the take-home message's generate control. -->
                     {#if notStarted}
-                        <button
-                            onclick={generate}
-                            class="flex w-fit cursor-pointer items-center gap-1.5 self-center rounded-full bg-brand-gold-400 px-3.5 py-1.5 text-[0.75rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400"
-                        >
-                            <Icon icon="solar:magic-stick-3-bold-duotone" width="0.8rem" />
-                            {$t("arabicStudy.grammar.generate")}
-                        </button>
+                        <div class="relative flex self-center">
+                            <button
+                                onclick={generate}
+                                class="flex cursor-pointer items-center gap-1.5 rounded-l-full bg-brand-gold-400 py-1.5 pl-3.5 pr-2.5 text-[0.75rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400"
+                            >
+                                <Icon icon="solar:magic-stick-3-bold-duotone" width="0.8rem" />
+                                {$t("arabicStudy.grammar.generate")}
+                            </button>
+                            <button
+                                onclick={() => (modelMenuOpen = !modelMenuOpen)}
+                                disabled={loading}
+                                title={$grammarModel === "advanced"
+                                    ? $t("arabicStudy.grammar.model_advanced_hint")
+                                    : $t("arabicStudy.grammar.model_standard_hint")}
+                                aria-label={$grammarModel === "advanced"
+                                    ? $t("arabicStudy.grammar.model_advanced")
+                                    : $t("arabicStudy.grammar.model_standard")}
+                                class="flex cursor-pointer items-center gap-1 rounded-r-full border-l border-white/25 bg-brand-gold-400 pl-2 pr-2.5 text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400"
+                            >
+                                <Icon
+                                    icon={$grammarModel === "advanced"
+                                        ? "solar:bolt-bold-duotone"
+                                        : "solar:bolt-linear"}
+                                    width="0.75rem"
+                                />
+                                <Icon
+                                    icon="solar:alt-arrow-down-bold"
+                                    width="0.6rem"
+                                    class={modelMenuOpen ? "rotate-180" : ""}
+                                />
+                            </button>
+                            {#if modelMenuOpen}
+                                <!-- svelte-ignore a11y_no_redundant_roles -->
+                                <button
+                                    type="button"
+                                    tabindex="-1"
+                                    aria-label={$t("common.close")}
+                                    class="fixed inset-0 z-10 cursor-default"
+                                    onclick={() => (modelMenuOpen = false)}
+                                ></button>
+                                <div
+                                    class="absolute right-0 top-full z-20 mt-1.5 w-36 overflow-hidden rounded-xl border border-brand-sand-200 bg-white py-1 shadow-lg dark:border-[#414559] dark:bg-[#303446]"
+                                >
+                                    {#each ["standard", "advanced"] as const as option (option)}
+                                        <button
+                                            onclick={() => {
+                                                grammarModel.set(option);
+                                                modelMenuOpen = false;
+                                            }}
+                                            class="flex w-full cursor-pointer items-center gap-1.5 px-3 py-1.5 text-left text-[0.6875rem] font-semibold transition-colors hover:bg-brand-sand-100 dark:hover:bg-[#414559] {$grammarModel ===
+                                            option
+                                                ? 'text-brand-gold-600 dark:text-[#e5c890]'
+                                                : 'text-brand-charcoal-500 dark:text-[#c6d0f5]'}"
+                                        >
+                                            <Icon
+                                                icon={option === "advanced"
+                                                    ? "solar:bolt-bold-duotone"
+                                                    : "solar:bolt-linear"}
+                                                width="0.7rem"
+                                            />
+                                            {option === "advanced"
+                                                ? $t("arabicStudy.grammar.model_advanced")
+                                                : $t("arabicStudy.grammar.model_standard")}
+                                        </button>
+                                    {/each}
+                                </div>
+                            {/if}
+                        </div>
                     {:else}
-                        <button
-                            onclick={generate}
-                            disabled={loading}
-                            class="flex w-fit cursor-pointer items-center gap-1.5 self-center rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 py-1 text-[0.625rem] font-semibold text-brand-charcoal-500 hover:bg-brand-sand-200 disabled:opacity-50 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
-                        >
-                            <Icon icon={loading ? "svg-spinners:3-dots-fade" : "solar:refresh-bold"} width="0.7rem" />
-                            {$t(loading ? "arabicStudy.grammar.loading" : "arabicStudy.grammar.regenerate")}
-                        </button>
+                        <div class="relative flex self-center">
+                            <button
+                                onclick={generate}
+                                disabled={loading}
+                                class="flex cursor-pointer items-center gap-1.5 rounded-l-full border border-r-0 border-brand-sand-200 bg-brand-sand-100 py-1 pl-3 pr-2 text-[0.625rem] font-semibold text-brand-charcoal-500 hover:bg-brand-sand-200 disabled:opacity-50 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                            >
+                                <Icon icon={loading ? "svg-spinners:3-dots-fade" : "solar:refresh-bold"} width="0.7rem" />
+                                {$t(loading ? "arabicStudy.grammar.loading" : "arabicStudy.grammar.regenerate")}
+                            </button>
+                            <button
+                                onclick={() => (modelMenuOpen = !modelMenuOpen)}
+                                disabled={loading}
+                                title={$grammarModel === "advanced"
+                                    ? $t("arabicStudy.grammar.model_advanced_hint")
+                                    : $t("arabicStudy.grammar.model_standard_hint")}
+                                aria-label={$grammarModel === "advanced"
+                                    ? $t("arabicStudy.grammar.model_advanced")
+                                    : $t("arabicStudy.grammar.model_standard")}
+                                class="flex cursor-pointer items-center gap-1 rounded-r-full border border-brand-sand-200 bg-brand-sand-100 pl-1.5 pr-2 text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                            >
+                                <Icon
+                                    icon={$grammarModel === "advanced"
+                                        ? "solar:bolt-bold-duotone"
+                                        : "solar:bolt-linear"}
+                                    width="0.7rem"
+                                />
+                                <Icon
+                                    icon="solar:alt-arrow-down-bold"
+                                    width="0.55rem"
+                                    class={modelMenuOpen ? "rotate-180" : ""}
+                                />
+                            </button>
+                            {#if modelMenuOpen}
+                                <!-- svelte-ignore a11y_no_redundant_roles -->
+                                <button
+                                    type="button"
+                                    tabindex="-1"
+                                    aria-label={$t("common.close")}
+                                    class="fixed inset-0 z-10 cursor-default"
+                                    onclick={() => (modelMenuOpen = false)}
+                                ></button>
+                                <div
+                                    class="absolute right-0 top-full z-20 mt-1.5 w-36 overflow-hidden rounded-xl border border-brand-sand-200 bg-white py-1 shadow-lg dark:border-[#414559] dark:bg-[#303446]"
+                                >
+                                    {#each ["standard", "advanced"] as const as option (option)}
+                                        <button
+                                            onclick={() => {
+                                                grammarModel.set(option);
+                                                modelMenuOpen = false;
+                                            }}
+                                            class="flex w-full cursor-pointer items-center gap-1.5 px-3 py-1.5 text-left text-[0.6875rem] font-semibold transition-colors hover:bg-brand-sand-100 dark:hover:bg-[#414559] {$grammarModel ===
+                                            option
+                                                ? 'text-brand-gold-600 dark:text-[#e5c890]'
+                                                : 'text-brand-charcoal-500 dark:text-[#c6d0f5]'}"
+                                        >
+                                            <Icon
+                                                icon={option === "advanced"
+                                                    ? "solar:bolt-bold-duotone"
+                                                    : "solar:bolt-linear"}
+                                                width="0.7rem"
+                                            />
+                                            {option === "advanced"
+                                                ? $t("arabicStudy.grammar.model_advanced")
+                                                : $t("arabicStudy.grammar.model_standard")}
+                                        </button>
+                                    {/each}
+                                </div>
+                            {/if}
+                        </div>
                     {/if}
                 {/if}
             </div>

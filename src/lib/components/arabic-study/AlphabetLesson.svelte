@@ -1,10 +1,15 @@
 <!-- The beginner alphabet lesson: letter picker, positional forms, one
-     Qur'anic + one everyday example word, and dictation practice. Renders as
+     Qur'anic + one everyday example word. Renders as
      the BODY of ArabicStudyHome's window (which already supplies the window
      chrome) — no header of its own. -->
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { t } from "$lib/i18n";
+    import {
+        glossOverrides,
+        glossText,
+        registerGlosses,
+    } from "$lib/stores/arabic-study-gloss.store";
     import {
         ARABIC_ALPHABET,
         letterForms,
@@ -21,7 +26,6 @@
         setLetterMastered,
         type LetterProgress,
     } from "$lib/stores/arabic-study.store";
-    import DictationPractice from "./DictationPractice.svelte";
 
     interface Props {
         onBack: () => void;
@@ -59,6 +63,16 @@
                   { key: "final", labelKey: "arabicStudy.alphabet.form_final", example: positionExamples.final },
               ],
     );
+    // Hand the words on screen to the gloss store, so the header's language
+    // choice reaches this lesson's meanings too.
+    $effect(() => {
+        registerGlosses([
+            ...quranExamples,
+            ...everydayExamples,
+            ...positionEntries.flatMap((entry) => (entry.example ? [entry.example] : [])),
+        ]);
+    });
+
     const practicedCount = $derived(progress.filter((p) => p.practiced_at).length);
     const isMastered = $derived(
         progress.find((p) => p.letter === selected.id)?.mastered ?? false,
@@ -85,7 +99,7 @@
 <div class="flex min-h-0 flex-1 flex-col overflow-hidden bg-white dark:bg-[#303446]">
     <!-- Progress sub-bar -->
     <div
-        class="flex shrink-0 items-center justify-between gap-3 border-b border-brand-sand-200 bg-brand-sand-50 px-5 py-2 dark:border-[#414559] dark:bg-[#232634]"
+        class="flex shrink-0 items-center gap-3 border-b border-brand-sand-200 bg-brand-sand-50 px-5 py-2 dark:border-[#414559] dark:bg-[#232634]"
     >
         <div class="flex items-center gap-2">
             <span class="text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">
@@ -101,9 +115,6 @@
                 ></div>
             </div>
         </div>
-        <span class="text-[0.6875rem] font-semibold text-brand-gold-500 dark:text-[#e5c890]">
-            {$t("arabicStudy.alphabet.hint")}
-        </span>
     </div>
 
     <div class="default-scroll flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
@@ -126,7 +137,7 @@
             </p>
         </div>
 
-        <div class="flex min-h-0 flex-1 gap-5">
+        <div class="flex shrink-0 gap-5">
             <!-- Letter grid -->
             <div class="w-52 shrink-0">
                 <h4
@@ -264,13 +275,8 @@
                                         <div dir="ltr" class="mt-0.5 text-left text-[0.625rem]">
                                             <span class="italic text-brand-charcoal-400 dark:text-[#a5adce]">{ex.translit}</span>
                                             <span class="text-brand-charcoal-300 dark:text-[#5b6078]"> — </span>
-                                            <span class="font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">{ex.meaning}</span>
+                                            <span class="font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">{glossText(ex.word, ex.meaning, $glossOverrides)}</span>{#if ex.ref}<span class="ml-1.5 align-middle"><VerseRefBadge verseRef={ex.ref} size="sm" /></span>{/if}
                                         </div>
-                                        {#if ex.ref}
-                                            <div class="mt-1">
-                                                <VerseRefBadge verseRef={ex.ref} size="sm" />
-                                            </div>
-                                        {/if}
                                     </div>
                                 {/if}
                             {/each}
@@ -299,13 +305,8 @@
                                     <div dir="ltr" class="mt-0.5 text-left text-[0.6875rem]">
                                         <span class="italic text-brand-charcoal-400 dark:text-[#a5adce]">{q.translit}</span>
                                         <span class="text-brand-charcoal-300 dark:text-[#5b6078]"> — </span>
-                                        <span class="font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">{q.meaning}</span>
+                                        <span class="font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">{glossText(q.word, q.meaning, $glossOverrides)}</span>{#if q.ref}<span class="ml-1.5 align-middle"><VerseRefBadge verseRef={q.ref} /></span>{/if}
                                     </div>
-                                    {#if q.ref}
-                                        <div class="mt-1.5">
-                                            <VerseRefBadge verseRef={q.ref} />
-                                        </div>
-                                    {/if}
                                 </div>
                             {/each}
                         </div>
@@ -325,7 +326,7 @@
                                     <div dir="ltr" class="mt-0.5 text-left text-[0.6875rem]">
                                         <span class="italic text-brand-charcoal-400 dark:text-[#a5adce]">{w.translit}</span>
                                         <span class="text-brand-charcoal-300 dark:text-[#5b6078]"> — </span>
-                                        <span class="font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">{w.meaning}</span>
+                                        <span class="font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">{glossText(w.word, w.meaning, $glossOverrides)}</span>
                                     </div>
                                 </div>
                             {/each}
@@ -333,17 +334,11 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    <div class="flex-1">
-                        <DictationPractice
-                            target={selected.glyph}
-                            label={$t("arabicStudy.dictation.recite_letter", { letter: selected.glyph })}
-                        />
-                    </div>
+                <div class="flex items-center justify-end gap-3">
                     <button
                         onclick={gotIt}
                         disabled={marking || isMastered}
-                        class="flex h-full shrink-0 cursor-pointer items-center gap-1.5 self-stretch rounded-2xl border px-4 text-[0.75rem] font-semibold transition-colors disabled:cursor-default {isMastered
+                        class="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-2xl border px-4 py-2.5 text-[0.75rem] font-semibold transition-colors disabled:cursor-default {isMastered
                             ? 'border-brand-emerald-200 bg-brand-emerald-50 text-brand-emerald-600 dark:border-[#414559] dark:bg-[#292c3c] dark:text-[#9dd4c8]'
                             : 'border-brand-sand-200 bg-white text-brand-charcoal-500 hover:border-brand-gold-300 hover:bg-brand-gold-50 dark:border-[#414559] dark:bg-[#292c3c] dark:text-[#c6d0f5] dark:hover:border-[#e5c890]/40'}"
                     >
@@ -361,7 +356,7 @@
         <!-- Spacer — padding-bottom on a scrolling flex container isn't
              reliably honored by every WebView engine, so a real element
              guarantees breathing room above the footer once scrolled. -->
-        <div class="h-4 shrink-0" aria-hidden="true"></div>
+        <div class="h-2 shrink-0" aria-hidden="true"></div>
     </div>
 
     <!-- Footer nav -->

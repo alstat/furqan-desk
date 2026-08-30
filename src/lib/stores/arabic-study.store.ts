@@ -132,6 +132,33 @@ export function setLetterMastered(letter: string, mastered: boolean): Promise<Le
 
 // ── Grammar-topic content (intermediate/advanced curriculum) ────────────────
 
+/**
+ * Which language the AI writes the grammar lesson in. Picked in the wizard's
+ * header from the same list Settings offers for the app itself, and remembered
+ * separately: a reader may run the app in English and still want the
+ * explanation in their mother tongue.
+ */
+const GRAMMAR_LANGUAGE_KEY = 'arabicStudyGrammarLanguage';
+
+function initialGrammarLanguage(): string {
+    if (typeof localStorage === 'undefined') return 'en';
+    try {
+        return localStorage.getItem(GRAMMAR_LANGUAGE_KEY) ?? localStorage.getItem('app-locale') ?? 'en';
+    } catch {
+        return 'en';
+    }
+}
+
+export const grammarLanguage = writable<string>(initialGrammarLanguage());
+grammarLanguage.subscribe((value) => {
+    try {
+        localStorage.setItem(GRAMMAR_LANGUAGE_KEY, value);
+    } catch {
+        /* ignore */
+    }
+});
+
+
 export interface TopicContent {
     topic_id: string;
     content: string;
