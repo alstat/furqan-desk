@@ -282,18 +282,6 @@
             {/if}
         </div>
 
-        <!-- AI is in play on every beginner page once meanings are translated by
-             it, and on every page of the grammar curriculum, which is written by
-             it — so the caveat belongs in the chrome all of them share. -->
-        {#if lesson !== null && (lesson === "grammar" || $glossLanguage === OTHER_GLOSS)}
-            <div
-                class="flex shrink-0 items-center justify-center gap-1.5 border-b border-brand-sand-200 bg-brand-sand-50 px-4 py-1 text-[0.625rem] text-brand-charcoal-400 dark:border-[#414559] dark:bg-[#232634] dark:text-[#838ba7]"
-            >
-                <Icon icon="solar:info-circle-linear" width="0.7rem" class="shrink-0" />
-                {$t("arabicStudy.ai_disclaimer")}
-            </div>
-        {/if}
-
         {#if lesson === "alphabet"}
             <AlphabetLesson
                 onBack={() => (lesson = null)}
@@ -406,6 +394,18 @@
                 </div>
             {/if}
         </div>
+        {/if}
+        <!-- AI is in play on every beginner page once meanings are translated by
+             it, and on every page of the grammar curriculum, which is written by
+             it — so the caveat sits in the chrome all of them share, under
+             whichever footer the current lesson draws. -->
+        {#if lesson !== null && (lesson === "grammar" || $glossLanguage === OTHER_GLOSS)}
+            <div
+                class="flex shrink-0 items-center justify-center gap-1.5 border-t border-brand-sand-200 bg-brand-sand-50 px-4 py-1 text-[0.625rem] text-brand-charcoal-400 dark:border-[#414559] dark:bg-[#232634] dark:text-[#838ba7]"
+            >
+                <Icon icon="solar:info-circle-linear" width="0.7rem" class="shrink-0" />
+                {$t("arabicStudy.ai_disclaimer")}
+            </div>
         {/if}
         {#if standalone}
             <RecitationPlayer scrollContainer={null} showControls={false} />

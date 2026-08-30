@@ -98,13 +98,16 @@ const PART_TWO_SPEC =
     "@@exercise_1@@ <short Arabic sentence testing this topic, with the tested word " +
     "replaced by ___> :: <exactly three short Arabic choices separated by ' | ', only ONE " +
     "correct> :: <the correct choice, copied EXACTLY as written in the choices> :: <one " +
-    "short line explaining why it is correct>\n" +
+    "short line explaining why it is correct> :: <a translation of the sentence with the " +
+    "blank still blank, e.g. \"Indeed ___ is diligent\">\n" +
     "…the same shape for @@exercise_2@@ and @@exercise_3@@: three exercises, rising " +
     "gently in difficulty.\n\n" +
     "All three everyday examples and all three exercises are required — write every marker " +
     "out in full. Each exercise's answer MUST be copied verbatim from its own choices so " +
-    "the app can match it programmatically. Do not repeat the title, explanation or the " +
-    "Qur'anic examples.";
+    "the app can match it programmatically. The translation covers the words already in " +
+    "the sentence ONLY — never translate the choices or fill the blank in it, or the " +
+    "exercise answers itself. Do not repeat the title, explanation or the Qur'anic " +
+    "examples.";
 
 /**
  * Ask the chat-completion edge function for a structured grammar lesson on one

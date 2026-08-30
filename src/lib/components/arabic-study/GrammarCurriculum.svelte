@@ -93,6 +93,9 @@
         choices: string[];
         answer: string;
         why: string;
+        /** The sentence in the lesson's language, blank still blank. Absent on
+         *  lessons cached before the field existed. */
+        translation: string;
     }
     interface ParsedTopic {
         title: string;
@@ -142,11 +145,18 @@
         }
         const exercises: TopicExercise[] = [];
         for (let i = 1; i <= EXERCISES; i++) {
-            const [sentence = "", choices = "", answer = "", why = ""] = splitFields(
-                fields[`exercise_${i}`] ?? "",
-            );
+            // Translation is last so a lesson cached with four fields still
+            // reads correctly — it simply has none.
+            const [sentence = "", choices = "", answer = "", why = "", translation = ""] =
+                splitFields(fields[`exercise_${i}`] ?? "");
             if (sentence) {
-                exercises.push({ sentence, choices: splitChoices(choices), answer, why });
+                exercises.push({
+                    sentence,
+                    choices: splitChoices(choices),
+                    answer,
+                    why,
+                    translation,
+                });
             }
         }
 
@@ -171,6 +181,7 @@
                 choices: splitChoices(fields.quiz_choices ?? ""),
                 answer: (fields.quiz_answer ?? "").trim(),
                 why: (fields.quiz_why ?? "").trim(),
+                translation: "",
             });
         }
 
@@ -470,8 +481,15 @@
                                             >
                                                 {index + 1}
                                             </span>
-                                            <div dir="rtl" class="flex-1 pb-2 text-center font-scheherazade text-xl leading-loose text-brand-charcoal-900 dark:text-[#c6d0f5]">
-                                                {@html renderInlineMarkdown(exercise.sentence)}
+                                            <div class="flex-1">
+                                                <div dir="rtl" class="pb-2 text-center font-scheherazade text-xl leading-loose text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                                    {@html renderInlineMarkdown(exercise.sentence)}
+                                                </div>
+                                                {#if exercise.translation}
+                                                    <p class="mt-0.5 text-center text-[0.625rem] italic text-brand-charcoal-400 dark:text-[#838ba7]">
+                                                        {@html renderInlineMarkdown(exercise.translation)}
+                                                    </p>
+                                                {/if}
                                             </div>
                                         </div>
                                         <div class="mt-1 flex flex-wrap items-center justify-center gap-2">
