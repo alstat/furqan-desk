@@ -104,6 +104,7 @@ export const AI_FEATURE_TAGS = {
     wordMorphologyPopup: "word_morphology_popup",
     manuscriptAiPrompt: "manuscript_ai_prompt",
     editorQuranBlockPrompt: "editor_quran_block_prompt",
+    arabicStudyAsk: "arabic_study_ask",
 } as const;
 
 /**

@@ -36,6 +36,9 @@
         manuscriptViewerOpen,
         manuscriptDemoOpen,
     } from "$lib/stores/manuscripts.store";
+    import VerseStudyCanvas from "$lib/components/arabic-study/VerseStudyCanvas.svelte";
+    import ArabicStudyHome from "$lib/components/arabic-study/ArabicStudyHome.svelte";
+    import { verseStudyOpen, onboardingOpen } from "$lib/stores/arabic-study.store";
     import {
         isSidebar,
         surahOrientation,
@@ -498,6 +501,14 @@
     open={$manuscriptDemoOpen}
     onClose={() => manuscriptDemoOpen.set(false)}
     demoMode={true}
+/>
+<VerseStudyCanvas
+    open={$verseStudyOpen}
+    onClose={() => verseStudyOpen.set(false)}
+/>
+<ArabicStudyHome
+    open={$onboardingOpen}
+    onClose={() => onboardingOpen.set(false)}
 />
 <SplashScreen visible={isLoading} />
 <UpdateToast />

@@ -10,6 +10,10 @@
         openManuscriptViewer,
     } from "$lib/stores/manuscripts.store";
     import {
+        arabicStudyEnabled,
+        openArabicStudyHome,
+    } from "$lib/stores/arabic-study.store";
+    import {
         openPostcard,
         savedPostcardDesign,
     } from "$lib/stores/postcard.store";
@@ -125,6 +129,17 @@
     >
         <Icon icon="solar:pen-new-square-bold-duotone" width="1rem" />
     </button>
+
+    {#if $arabicStudyEnabled}
+        <button
+            onclick={() => openArabicStudyHome()}
+            class={btn}
+            title={$t("arabicStudy.open")}
+            aria-label={$t("arabicStudy.open")}
+        >
+            <Icon icon="solar:square-academic-cap-2-bold-duotone" width="1rem" />
+        </button>
+    {/if}
 
     {#if $manuscriptsEnabled}
         <button

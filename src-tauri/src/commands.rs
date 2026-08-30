@@ -1205,6 +1205,146 @@ pub fn get_word_morphology(
     })
 }
 
+/// Word-by-word morphology for one ayah — used by the Arabic Study Verse
+/// Study canvas, which studies a single ayah at a time and would otherwise
+/// have to pull (and discard) a whole surah's worth of data just to show it.
+#[tauri::command]
+pub fn get_ayah_morphology(
+    db: State<Database>,
+    surah: i64,
+    ayah: i64,
+) -> Result<AyahMorphology, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT word, token, form_buckwalter, form_arabic, tag, features
+             FROM morphology
+             WHERE surah = ?1 AND ayah = ?2
+             ORDER BY word, token",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map(rusqlite::params![surah, ayah], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, i64>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, String>(3)?,
+                row.get::<_, String>(4)?,
+                row.get::<_, String>(5)?,
+            ))
+        })
+        .map_err(|e| e.to_string())?;
+
+    let mut words_map: BTreeMap<i64, Vec<MorphToken>> = BTreeMap::new();
+    for row_result in rows {
+        let (word, token, form_bw, form_ar, tag, features) =
+            row_result.map_err(|e| e.to_string())?;
+        let parsed = parse_features(&features);
+        let tag_name = get_tag_name(&tag);
+        words_map.entry(word).or_default().push(MorphToken {
+            token,
+            form_buckwalter: form_bw,
+            form_arabic: form_ar,
+            tag,
+            tag_name,
+            features: parsed,
+        });
+    }
+
+    let words: Vec<MorphWord> = words_map
+        .into_iter()
+        .map(|(word, tokens)| {
+            let combined_arabic: String = tokens.iter().map(|t| t.form_arabic.as_str()).collect();
+            MorphWord {
+                word,
+                tokens,
+                combined_arabic,
+            }
+        })
+        .collect();
+
+    Ok(AyahMorphology { ayah, words })
+}
+
+// ── Arabic Study: related-verses search ─────────────────────────────────────
+//
+// Finds other ayahs that share a word's root or lemma — used by the Verse
+// Study canvas's Related Verses node. This is an exact-match search, not an
+// AI-ranked one: it SQL-prefilters on `features` (which carries no index, so
+// this is a full scan of the morphology table — acceptable at Qur'an-corpus
+// scale, ~77k rows) and then verifies the match in Rust via `parse_features`
+// to avoid substring false positives (e.g. `ROOT:كتب` matching `ROOT:كتبة`).
+// Deliberately returns an unordered, capped list rather than a ranked one —
+// a future AI-reranking pass sits in front of this, not inside it.
+
+#[derive(Serialize)]
+pub struct RelatedVerseMatch {
+    pub surah: i64,
+    pub ayah: i64,
+    pub word: i64,
+}
+
+#[tauri::command]
+pub fn find_verses_by_root_or_lemma(
+    db: State<Database>,
+    root: Option<String>,
+    lemma: Option<String>,
+    exclude_surah: i64,
+    exclude_ayah: i64,
+) -> Result<Vec<RelatedVerseMatch>, String> {
+    if root.is_none() && lemma.is_none() {
+        return Ok(vec![]);
+    }
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT surah, ayah, word, features FROM morphology
+             WHERE (?1 IS NOT NULL AND features LIKE '%ROOT:' || ?1 || '%')
+                OR (?2 IS NOT NULL AND features LIKE '%LEM:' || ?2 || '%')
+             ORDER BY surah, ayah, word",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map(rusqlite::params![root, lemma], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, i64>(1)?,
+                row.get::<_, i64>(2)?,
+                row.get::<_, String>(3)?,
+            ))
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+
+    let mut seen = std::collections::HashSet::new();
+    let mut out = Vec::new();
+    for (surah, ayah, word, features) in rows {
+        if surah == exclude_surah && ayah == exclude_ayah {
+            continue;
+        }
+        let pf = parse_features(&features);
+        let root_hit = root.is_some() && pf.root == root;
+        let lemma_hit = lemma.is_some() && pf.lemma == lemma;
+        if !root_hit && !lemma_hit {
+            continue;
+        }
+        if !seen.insert((surah, ayah)) {
+            continue; // one match per ayah is enough for the related-verses list
+        }
+        out.push(RelatedVerseMatch { surah, ayah, word });
+        if out.len() >= 30 {
+            break;
+        }
+    }
+    Ok(out)
+}
+
 // ── Bookmark commands ────────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -1278,6 +1418,66 @@ pub fn get_last_read(db: State<Database>) -> Result<Option<LastRead>, String> {
         Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
         Err(e) => Err(e.to_string()),
     }
+}
+
+// ── Arabic Study profile ─────────────────────────────────────────────────────
+//
+// A single-row proficiency-level record, same shape as `last_read` — set once
+// at onboarding, read on every Arabic Study window open so onboarding only
+// ever shows once.
+
+#[derive(Serialize)]
+pub struct ArabicStudyProfile {
+    pub proficiency_level: String,
+    pub onboarded_at: String,
+    pub updated_at: String,
+}
+
+#[tauri::command]
+pub fn get_arabic_study_profile(db: State<Database>) -> Result<Option<ArabicStudyProfile>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    match conn.query_row(
+        "SELECT proficiency_level, onboarded_at, updated_at FROM arabic_study_profile WHERE id = 1",
+        [],
+        |r| {
+            Ok(ArabicStudyProfile {
+                proficiency_level: r.get(0)?,
+                onboarded_at: r.get(1)?,
+                updated_at: r.get(2)?,
+            })
+        },
+    ) {
+        Ok(p) => Ok(Some(p)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+pub fn save_arabic_study_profile(
+    db: State<Database>,
+    proficiency_level: String,
+) -> Result<ArabicStudyProfile, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO arabic_study_profile (id, proficiency_level, onboarded_at, updated_at)
+         VALUES (1, ?1, datetime('now'), datetime('now'))
+         ON CONFLICT(id) DO UPDATE SET proficiency_level = ?1, updated_at = datetime('now')",
+        rusqlite::params![proficiency_level],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.query_row(
+        "SELECT proficiency_level, onboarded_at, updated_at FROM arabic_study_profile WHERE id = 1",
+        [],
+        |r| {
+            Ok(ArabicStudyProfile {
+                proficiency_level: r.get(0)?,
+                onboarded_at: r.get(1)?,
+                updated_at: r.get(2)?,
+            })
+        },
+    )
+    .map_err(|e| e.to_string())
 }
 
 // ── Highlight commands ───────────────────────────────────────────────────────

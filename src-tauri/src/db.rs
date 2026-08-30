@@ -309,6 +309,12 @@ impl Database {
                 result       TEXT NOT NULL,
                 locale       TEXT NOT NULL DEFAULT 'en',
                 created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE TABLE IF NOT EXISTS arabic_study_profile (
+                id                 INTEGER PRIMARY KEY CHECK (id = 1),
+                proficiency_level  TEXT NOT NULL,
+                onboarded_at       TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at         TEXT NOT NULL DEFAULT (datetime('now'))
             );",
         )?;
         // Idempotent column migration — ignored if column already exists
@@ -435,6 +441,23 @@ impl Database {
             Vec::new()
         };
 
+        let arabic_study_profile = if has_table("arabic_study_profile") {
+            conn.query_row(
+                "SELECT proficiency_level, onboarded_at, updated_at FROM arabic_study_profile WHERE id = 1",
+                [],
+                |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, String>(2)?,
+                    ))
+                },
+            )
+            .ok()
+        } else {
+            None
+        };
+
         let app_meta = if has_table("app_meta") {
             let mut stmt = conn.prepare("SELECT key, value FROM app_meta")?;
             let rows: Vec<_> = stmt.query_map([], |row| {
@@ -453,6 +476,7 @@ impl Database {
             highlights,
             verse_of_day,
             take_home_messages,
+            arabic_study_profile,
             app_meta,
         })
     }
@@ -497,6 +521,12 @@ impl Database {
                 stmt.execute(rusqlite::params![source_label, context, result, locale, created_at])?;
             }
         }
+        if let Some((proficiency_level, onboarded_at, updated_at)) = &data.arabic_study_profile {
+            conn.execute(
+                "INSERT OR REPLACE INTO arabic_study_profile (id, proficiency_level, onboarded_at, updated_at) VALUES (1, ?1, ?2, ?3)",
+                rusqlite::params![proficiency_level, onboarded_at, updated_at],
+            )?;
+        }
         {
             let mut stmt = conn.prepare(
                 "INSERT OR REPLACE INTO app_meta (key, value) VALUES (?1, ?2)",
@@ -516,6 +546,7 @@ struct UserData {
     highlights: Vec<(i64, i64, String, Option<String>, String)>,
     verse_of_day: Vec<(String, i64, i64, String)>,
     take_home_messages: Vec<(String, String, String, String, String)>,
+    arabic_study_profile: Option<(String, String, String)>,
     app_meta: Vec<(String, String)>,
 }
 
