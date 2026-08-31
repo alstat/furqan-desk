@@ -30,7 +30,13 @@
         saveTopicContent,
         saveTopicSection,
         STUDY_AREA,
+        activeVersionId,
+        fetchTopicVersions,
+        lessonVersions,
+        saveTopicVersion,
+        type TopicVersion,
     } from "$lib/stores/arabic-study.store";
+    import { PREMADE_LESSONS, PREMADE_LOCALE } from "$lib/data/grammar-premade";
     import {
         askLessonFollowUp,
         fetchGrammarTopic,
@@ -75,6 +81,42 @@
             .catch((e) => console.error("Failed to load topic progress", e));
     });
 
+    /**
+     * Loads the versions for the topic and language on screen and shows the
+     * newest. The English lessons that ship with the app are seeded here as the
+     * first version the first time a topic is opened, so a reader without an AI
+     * subscription still has a lesson to study — and a regeneration adds to the
+     * history rather than replacing it.
+     */
+    async function loadVersions(topicId: string, locale: string) {
+        try {
+            let versions = await fetchTopicVersions(topicId, locale);
+            if (versions.length === 0 && locale === PREMADE_LOCALE && PREMADE_LESSONS[topicId]) {
+                await saveTopicVersion(topicId, locale, PREMADE_LESSONS[topicId], "premade");
+                versions = await fetchTopicVersions(topicId, locale);
+            }
+            if (selectedTopic?.id !== topicId || $grammarLanguage !== locale) return;
+            lessonVersions.set(versions);
+            const newest = versions.at(-1) ?? null;
+            activeVersionId.set(newest?.id ?? null);
+            rawContent = newest?.content ?? "";
+        } catch {
+            // No database here (browser dev): fall back to the shipped lesson
+            // in memory so the panel is not empty.
+            const premade = locale === PREMADE_LOCALE ? PREMADE_LESSONS[topicId] : undefined;
+            lessonVersions.set([]);
+            activeVersionId.set(null);
+            rawContent = premade ?? "";
+        }
+    }
+
+    // Show whichever version the header selects.
+    $effect(() => {
+        const id = $activeVersionId;
+        const version = $lessonVersions.find((v: TopicVersion) => v.id === id);
+        if (version) rawContent = version.content;
+    });
+
     // Load cached content (or clear) whenever the selected topic changes.
     $effect(() => {
         const id = selectedId;
@@ -96,17 +138,10 @@
         followUpPending = "";
         followUpError = "";
         followUpText = "";
+        lessonVersions.set([]);
+        activeVersionId.set(null);
         if (!id) return;
-        const language = $grammarLanguage;
-        void fetchTopicContent()
-            .then((rows) => {
-                // One cached lesson per topic, in whatever language it was last
-                // generated in — showing it under a different language would be
-                // a lie, so leave the panel empty and let Generate refill it.
-                const hit = rows.find((r) => r.topic_id === id && r.locale === language);
-                if (hit && selectedId === id) rawContent = hit.content;
-            })
-            .catch(() => {});
+        void loadVersions(id, $grammarLanguage);
     });
 
     interface TopicExample {
@@ -453,7 +488,11 @@
             });
             if (!ac.signal.aborted) {
                 rawContent = text;
+                // Keep the single-row cache in step for the progress panel, and
+                // record the generation as a version of its own.
                 await saveTopicContent(topic.id, text, language);
+                await saveTopicVersion(topic.id, language, text, "ai").catch(() => {});
+                await loadVersions(topic.id, language);
                 cachedIds = new Set([...cachedIds, topic.id]);
                 // A reader's own sections are part of the lesson now: a
                 // regeneration refills them from their own title and brief,
@@ -1238,7 +1277,9 @@
                              the take-home message's generate control. -->
                         {#if !$isPro}
                             <p class="self-center text-center text-[0.6875rem] leading-relaxed text-brand-charcoal-400 dark:text-[#838ba7]">
-                                {$t("arabicStudy.grammar.saved_locally")}
+                                {rawContent
+                                    ? $t("arabicStudy.grammar.saved_locally")
+                                    : $t("arabicStudy.grammar.premade_only_en")}
                             </p>
                         {:else if notStarted}
                             <div class="relative flex self-center">

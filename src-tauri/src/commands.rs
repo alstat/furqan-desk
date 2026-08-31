@@ -2012,6 +2012,97 @@ pub fn save_topic_content(
     .map_err(|e| e.to_string())
 }
 
+// ── Grammar-lesson versions ──────────────────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct TopicVersion {
+    pub id: i64,
+    pub topic_id: String,
+    pub locale: String,
+    pub content: String,
+    /// "premade" for the lesson that ships with the app, "ai" for a generation.
+    pub source: String,
+    pub created_at: String,
+}
+
+/// Every version of one topic in one language, oldest first — the shipped
+/// lesson, then each regeneration after it.
+#[tauri::command]
+pub fn get_topic_versions(
+    db: State<Database>,
+    topic_id: String,
+    locale: String,
+) -> Result<Vec<TopicVersion>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, topic_id, locale, content, source, created_at
+             FROM arabic_study_topic_versions
+             WHERE topic_id = ?1 AND locale = ?2
+             ORDER BY id",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![topic_id, locale], |r| {
+            Ok(TopicVersion {
+                id: r.get(0)?,
+                topic_id: r.get(1)?,
+                locale: r.get(2)?,
+                content: r.get(3)?,
+                source: r.get(4)?,
+                created_at: r.get(5)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+/// Record a new version. Nothing is overwritten: a regeneration adds to the
+/// history so the reader can go back to a lesson they preferred.
+#[tauri::command]
+pub fn save_topic_version(
+    db: State<Database>,
+    topic_id: String,
+    locale: String,
+    content: String,
+    source: String,
+) -> Result<TopicVersion, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO arabic_study_topic_versions (topic_id, locale, content, source, created_at)
+         VALUES (?1, ?2, ?3, ?4, datetime('now'))",
+        rusqlite::params![topic_id, locale, content, source],
+    )
+    .map_err(|e| e.to_string())?;
+    let id = conn.last_insert_rowid();
+    conn.query_row(
+        "SELECT id, topic_id, locale, content, source, created_at
+         FROM arabic_study_topic_versions WHERE id = ?1",
+        [id],
+        |r| {
+            Ok(TopicVersion {
+                id: r.get(0)?,
+                topic_id: r.get(1)?,
+                locale: r.get(2)?,
+                content: r.get(3)?,
+                source: r.get(4)?,
+                created_at: r.get(5)?,
+            })
+        },
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn delete_topic_version(db: State<Database>, id: i64) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM arabic_study_topic_versions WHERE id = ?1", [id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 // ── What the reader has worked through ───────────────────────────────────────
 
 #[derive(Serialize)]

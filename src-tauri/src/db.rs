@@ -329,6 +329,20 @@ impl Database {
                 generated_at  TEXT NOT NULL DEFAULT (datetime('now')),
                 PRIMARY KEY (topic_id, locale)
             );
+            -- Every version of a grammar lesson: the shipped English one and
+            -- each AI regeneration after it. The lesson on screen is a choice
+            -- among these, so regenerating never destroys what came before.
+            CREATE TABLE IF NOT EXISTS arabic_study_topic_versions (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                topic_id      TEXT NOT NULL,
+                locale        TEXT NOT NULL DEFAULT 'en',
+                content       TEXT NOT NULL,
+                -- 'premade' (ships with the app) or 'ai' (generated here)
+                source        TEXT NOT NULL DEFAULT 'ai',
+                created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE INDEX IF NOT EXISTS idx_topic_versions_topic
+                ON arabic_study_topic_versions (topic_id, locale, id);
             -- What the reader has actually worked through, one row per item:
             -- a letter+vowel pair, a tajwīd rule, an Alif form, a built word.
             -- The lessons write here as they are used, so progress reporting
@@ -615,6 +629,28 @@ impl Database {
             Vec::new()
         };
 
+        let arabic_study_topic_versions = if has_table("arabic_study_topic_versions") {
+            let mut stmt = conn.prepare(
+                "SELECT topic_id, locale, content, source, created_at
+                 FROM arabic_study_topic_versions",
+            )?;
+            let rows: Vec<_> = stmt
+                .query_map([], |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, String>(2)?,
+                        row.get::<_, String>(3)?,
+                        row.get::<_, String>(4)?,
+                    ))
+                })?
+                .filter_map(|r| r.ok())
+                .collect();
+            rows
+        } else {
+            Vec::new()
+        };
+
         let arabic_study_activity = if has_table("arabic_study_activity") {
             let mut stmt = conn.prepare(
                 "SELECT area, item, seen_count, first_seen, last_seen FROM arabic_study_activity",
@@ -646,6 +682,7 @@ impl Database {
             arabic_study_letter_progress,
             arabic_study_topic_content,
             arabic_study_topic_sections,
+            arabic_study_topic_versions,
             arabic_study_activity,
             app_meta,
         })
@@ -729,6 +766,17 @@ impl Database {
         }
         {
             let mut stmt = conn.prepare(
+                "INSERT INTO arabic_study_topic_versions
+                 (topic_id, locale, content, source, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
+            )?;
+            for (topic_id, locale, content, source, created_at) in
+                &data.arabic_study_topic_versions
+            {
+                stmt.execute(rusqlite::params![topic_id, locale, content, source, created_at])?;
+            }
+        }
+        {
+            let mut stmt = conn.prepare(
                 "INSERT OR REPLACE INTO arabic_study_activity
                  (area, item, seen_count, first_seen, last_seen) VALUES (?1, ?2, ?3, ?4, ?5)",
             )?;
@@ -759,6 +807,7 @@ struct UserData {
     arabic_study_letter_progress: Vec<(String, Option<String>, i64, Option<String>)>,
     arabic_study_topic_content: Vec<(String, String, String, String)>,
     arabic_study_topic_sections: Vec<(String, String, i64, String, String, String, i64, String)>,
+    arabic_study_topic_versions: Vec<(String, String, String, String, String)>,
     arabic_study_activity: Vec<(String, String, i64, String, String)>,
     app_meta: Vec<(String, String)>,
 }

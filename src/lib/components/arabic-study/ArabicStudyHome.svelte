@@ -38,6 +38,8 @@
         grammarLanguage,
         proficiencyLevel,
         STUDY_AREA,
+        activeVersionId,
+        lessonVersions,
         type LetterProgress,
         type StudyActivity,
         type TopicContent,
@@ -430,6 +432,41 @@
                         {/if}
                     {/if}
                 {:else if lesson === "grammar"}
+                    <!-- Every regeneration is kept, so the reader can go back to
+                         a lesson they preferred. The shipped English lesson is
+                         version 1. -->
+                    {#if $lessonVersions.length > 0}
+                        <span
+                            class="hidden text-[0.5625rem] font-bold uppercase tracking-wide text-brand-charcoal-400 sm:block dark:text-[#838ba7]"
+                        >
+                            {$t("arabicStudy.version.label")}
+                        </span>
+                        <div class="relative flex">
+                            <select
+                                value={$activeVersionId}
+                                onchange={(event) =>
+                                    activeVersionId.set(Number(event.currentTarget.value))}
+                                aria-label={$t("arabicStudy.version.label")}
+                                class={glossSelectClass}
+                            >
+                                {#each $lessonVersions as version, i (version.id)}
+                                    <option value={version.id}>
+                                        {version.source === "premade"
+                                            ? $t("arabicStudy.version.premade")
+                                            : $t("arabicStudy.version.numbered", {
+                                                  n: String(i + 1),
+                                              })}
+                                        · {version.created_at.slice(0, 10)}
+                                    </option>
+                                {/each}
+                            </select>
+                            <span
+                                class="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-brand-charcoal-300"
+                            >
+                                <Icon icon="charm:chevron-down" width="0.65rem" />
+                            </span>
+                        </div>
+                    {/if}
                     <span
                         class="hidden text-[0.5625rem] font-bold uppercase tracking-wide text-brand-charcoal-400 sm:block dark:text-[#838ba7]"
                     >

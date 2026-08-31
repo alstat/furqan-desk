@@ -1643,4 +1643,8 @@ export const en: Record<string, string> = {
   "workbook.flow.contains": "contains…",
   "workbook.flow.zone": "Zone",
   "workbook.add_card": "Add card",
+  "arabicStudy.version.label": "Version",
+  "arabicStudy.version.premade": "Included lesson",
+  "arabicStudy.version.numbered": "Version {n}",
+  "arabicStudy.grammar.premade_only_en": "The included lessons are in English. Choose English above to read one without generating, or generate this topic in your language.",
 };

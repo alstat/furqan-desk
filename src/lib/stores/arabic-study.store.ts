@@ -212,6 +212,42 @@ export function fetchTopicContent(): Promise<TopicContent[]> {
     return invoke<TopicContent[]>('get_topic_content');
 }
 
+/** One version of a lesson: the shipped English one, or an AI generation. */
+export interface TopicVersion {
+    id: number;
+    topic_id: string;
+    locale: string;
+    content: string;
+    /** 'premade' ships with the app; 'ai' was generated here. */
+    source: string;
+    created_at: string;
+}
+
+export function fetchTopicVersions(topicId: string, locale: string): Promise<TopicVersion[]> {
+    return invoke<TopicVersion[]>('get_topic_versions', { topicId, locale });
+}
+
+/** Adds a version. Nothing is overwritten — history is the point. */
+export function saveTopicVersion(
+    topicId: string,
+    locale: string,
+    content: string,
+    source: 'premade' | 'ai',
+): Promise<TopicVersion> {
+    return invoke<TopicVersion>('save_topic_version', { topicId, locale, content, source });
+}
+
+export function deleteTopicVersion(id: number): Promise<void> {
+    return invoke<void>('delete_topic_version', { id });
+}
+
+/**
+ * The lesson versions on screen, published by the grammar curriculum so the
+ * wizard's header can offer them — the header owns no lesson state of its own.
+ */
+export const lessonVersions = writable<TopicVersion[]>([]);
+export const activeVersionId = writable<number | null>(null);
+
 /** A section the reader added to a lesson, stored per topic and language. */
 export interface TopicSection {
     id: number;

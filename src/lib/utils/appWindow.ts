@@ -71,6 +71,17 @@ export interface AppWindowSpec {
     onDestroyed?: () => void;
 }
 
+/** What the app is currently themed as, for a window that is about to open. */
+function currentTheme(): 'dark' | 'light' {
+    try {
+        if (localStorage.getItem('app-dark-mode') === 'true') return 'dark';
+        if (localStorage.getItem('app-dark-mode') === 'false') return 'light';
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } catch {
+        return 'light';
+    }
+}
+
 /** Open a secondary window, or focus it if it is already open. */
 export async function openAppWindow(spec: AppWindowSpec): Promise<boolean> {
     if (typeof window === 'undefined') return false;
@@ -88,8 +99,16 @@ export async function openAppWindow(spec: AppWindowSpec): Promise<boolean> {
             return true;
         }
 
+        // Carry the theme in the URL. A secondary webview reads it before its
+        // first paint, which both avoids a flash of the wrong theme and keeps
+        // these windows correct on older macOS WebKit, where localStorage is
+        // not always shared between webviews.
+        const themed = spec.url.includes('?')
+            ? `${spec.url}&theme=${currentTheme()}`
+            : `${spec.url}?theme=${currentTheme()}`;
+
         const win = new WebviewWindow(spec.label, {
-            url: spec.url,
+            url: themed,
             title: spec.title,
             width: spec.width,
             height: spec.height,

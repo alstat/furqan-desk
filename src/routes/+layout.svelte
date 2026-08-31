@@ -78,12 +78,54 @@
 		}
 	}
 
+	// A window opened by another one is told the theme in its URL: older macOS
+	// WebKit does not reliably share localStorage between webviews, so a
+	// secondary window could otherwise boot light while the app is dark.
+	onMount(() => {
+		const theme = new URLSearchParams(window.location.search).get('theme');
+		if (theme === 'dark' || theme === 'light') appDarkMode.set(theme === 'dark');
+	});
+
 	$effect(() => {
 		if ($appDarkMode) {
 			document.documentElement.classList.add('dark');
 		} else {
 			document.documentElement.classList.remove('dark');
 		}
+	});
+
+	// Live changes reach the other windows the same way. The storage event does
+	// this where localStorage is shared; the Tauri event covers where it is not.
+	let broadcastTheme: boolean | null = null;
+	$effect(() => {
+		const dark = $appDarkMode;
+		if (broadcastTheme === dark) return;
+		broadcastTheme = dark;
+		void (async () => {
+			try {
+				const { emit } = await import('@tauri-apps/api/event');
+				await emit('app-theme-changed', { dark });
+			} catch {
+				/* not running inside Tauri */
+			}
+		})();
+	});
+
+	onMount(() => {
+		let stop: (() => void) | undefined;
+		void (async () => {
+			try {
+				const { listen } = await import('@tauri-apps/api/event');
+				stop = await listen<{ dark: boolean }>('app-theme-changed', (event) => {
+					// Record it as already broadcast, so receiving does not echo.
+					broadcastTheme = event.payload.dark;
+					appDarkMode.set(event.payload.dark);
+				});
+			} catch {
+				/* not running inside Tauri */
+			}
+		})();
+		return () => stop?.();
 	});
 
 	// Corners (and the shadow margin) only while the window floats; flush
