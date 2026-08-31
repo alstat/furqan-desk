@@ -19,7 +19,7 @@
 //   OPENAI_MODEL_ADVANCED_PROPLUS — advanced-class model for Pro+ (tier="pro_plus").
 //                                 Falls back to OPENAI_MODEL_ADVANCED if not set.
 //   OPENAI_MAX_COMPLETION_TOKENS — hard ceiling on output tokens per response.
-//                                 Defaults to 4000. Bounds worst-case output cost
+//                                 Defaults to 8000. Bounds worst-case output cost
 //                                 per request and prevents runaway essays. Set
 //                                 lower for tighter margins, higher for longer
 //                                 free-form generations. NOTE: for reasoning models
@@ -317,7 +317,7 @@ Deno.serve(async (req) => {
     }
 
     const maxCompletionTokens = parseInt(
-        Deno.env.get("OPENAI_MAX_COMPLETION_TOKENS") ?? "4000",
+        Deno.env.get("OPENAI_MAX_COMPLETION_TOKENS") ?? "8000",
         10,
     );
 

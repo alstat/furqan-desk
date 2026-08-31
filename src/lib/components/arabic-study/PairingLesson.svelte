@@ -5,6 +5,7 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { t } from "$lib/i18n";
+    import { recordStudyActivity, STUDY_AREA } from "$lib/stores/arabic-study.store";
     import {
         glossOverrides,
         glossText,
@@ -55,6 +56,15 @@
             ];
         })(),
     );
+    // The four vowels are shown together for the chosen consonant, so opening a
+    // letter is exactly when those four pairs have been worked through.
+    $effect(() => {
+        const letter = selected.id;
+        for (const entry of harakahEntries) {
+            recordStudyActivity(STUDY_AREA.pairing, `${letter}:${entry.key}`);
+        }
+    });
+
     $effect(() => {
         registerGlosses([
             ...quranExamples,

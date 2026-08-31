@@ -146,3 +146,27 @@ export const t = derived([_locale, _dictionariesLoaded], ([$locale]) => {
         return str;
     };
 });
+
+/**
+ * Count-aware lookup: `plural('x.exercises', 1)` reads `x.exercises.one`,
+ * `plural('x.exercises', 3)` reads `x.exercises.other`.
+ *
+ * The category comes from `Intl.PluralRules` for the active locale, so a
+ * language with `few`/`many` forms gets them as soon as its dictionary defines
+ * those keys; anything undefined falls back to `.other`, and `{count}` is
+ * substituted like any other variable.
+ */
+export const plural = derived([t, _locale], ([$t, $locale]) => {
+    return (key: string, count: number, vars?: Record<string, string | number>): string => {
+        let category = "other";
+        try {
+            category = new Intl.PluralRules($locale).select(count);
+        } catch {
+            // Unknown locale tag — "other" is the safe form everywhere.
+        }
+        const withCount = { count, ...vars };
+        const candidate = $t(`${key}.${category}`, withCount);
+        // `t` echoes the key back when it has no entry.
+        return candidate === `${key}.${category}` ? $t(`${key}.other`, withCount) : candidate;
+    };
+});

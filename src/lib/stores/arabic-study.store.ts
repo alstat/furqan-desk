@@ -130,6 +130,47 @@ export function setLetterMastered(letter: string, mastered: boolean): Promise<Le
     return invoke<LetterProgress>('set_letter_mastered', { letter, mastered });
 }
 
+// ── What the reader has worked through ──────────────────────────────────────
+
+export interface StudyActivity {
+    area: string;
+    item: string;
+    seen_count: number;
+    first_seen: string;
+    last_seen: string;
+}
+
+/** Areas the lessons report against. */
+export const STUDY_AREA = {
+    /** item = "<letterId>:<harakah>" — one letter paired with one vowel. */
+    pairing: 'pairing',
+    /** item = tajwīd rule id. */
+    tajweed: 'tajweed',
+    /** item = long-vowel / special-form id. */
+    alifForms: 'alif_forms',
+    /** item = the built word's id. */
+    words: 'words',
+    /** item = grammar topic id — opened and read. */
+    topics: 'topics',
+    /** item = "<topicId>:<exercise index>" — an answer was chosen. */
+    exercises: 'exercises',
+    /** item = topic id — one follow-up question asked about it. */
+    followUps: 'follow_ups',
+} as const;
+
+/**
+ * Note that an item has just been worked through. Fire-and-forget: progress
+ * reporting is not worth interrupting a lesson for, and outside Tauri there is
+ * nowhere to write.
+ */
+export function recordStudyActivity(area: string, item: string): void {
+    void invoke('record_study_activity', { area, item }).catch(() => {});
+}
+
+export function fetchStudyActivity(): Promise<StudyActivity[]> {
+    return invoke<StudyActivity[]>('get_study_activity');
+}
+
 // ── Grammar-topic content (intermediate/advanced curriculum) ────────────────
 
 /**
@@ -169,6 +210,50 @@ export interface TopicContent {
 /** All cached topics — a row's presence is the "viewed" signal for the sidebar. */
 export function fetchTopicContent(): Promise<TopicContent[]> {
     return invoke<TopicContent[]>('get_topic_content');
+}
+
+/** A section the reader added to a lesson, stored per topic and language. */
+export interface TopicSection {
+    id: number;
+    topic_id: string;
+    locale: string;
+    position: number;
+    title: string;
+    brief: string;
+    content: string;
+    expanded: boolean;
+    updated_at: string;
+}
+
+export function fetchTopicSections(topicId: string, locale: string): Promise<TopicSection[]> {
+    return invoke<TopicSection[]>('get_topic_sections', { topicId, locale });
+}
+
+/** Insert (no `id`) or update one section; returns the stored row. */
+export function saveTopicSection(section: {
+    id?: number;
+    topicId: string;
+    locale: string;
+    position: number;
+    title: string;
+    brief: string;
+    content: string;
+    expanded: boolean;
+}): Promise<TopicSection> {
+    return invoke<TopicSection>('save_topic_section', {
+        id: section.id ?? null,
+        topicId: section.topicId,
+        locale: section.locale,
+        position: section.position,
+        title: section.title,
+        brief: section.brief,
+        content: section.content,
+        expanded: section.expanded,
+    });
+}
+
+export function deleteTopicSection(id: number): Promise<void> {
+    return invoke<void>('delete_topic_section', { id });
 }
 
 export function saveTopicContent(topicId: string, content: string, locale: string): Promise<TopicContent> {

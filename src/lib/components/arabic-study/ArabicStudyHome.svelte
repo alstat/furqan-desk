@@ -3,7 +3,7 @@
      that. Window chrome matches VerseStudyCanvas/ManuscriptViewer. -->
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import { LOCALE_NAMES, t } from "$lib/i18n";
+    import { LOCALE_NAMES, plural, t } from "$lib/i18n";
     import WindowControls from "$lib/components/shared/WindowControls.svelte";
     import RecitationPlayer from "$lib/components/parchment/RecitationPlayer.svelte";
     import AlphabetLesson from "./AlphabetLesson.svelte";
@@ -12,7 +12,14 @@
     import AlifFormsLesson from "./AlifFormsLesson.svelte";
     import TajweedLesson from "./TajweedLesson.svelte";
     import GrammarCurriculum from "./GrammarCurriculum.svelte";
+    import { untrack } from "svelte";
+    import { get } from "svelte/store";
     import { isPro } from "$lib/stores/auth.store";
+    import { ARABIC_ALPHABET } from "$lib/data/arabic-alphabet";
+    import { ALIF_FORMS } from "$lib/data/alif-forms";
+    import { TAJWEED_RULES } from "$lib/data/tajweed-rules";
+    import { THREE_LETTER_WORDS } from "$lib/data/three-letter-words";
+    import { topicsForLevel } from "$lib/data/arabic-grammar-topics";
     import {
         GLOSS_LANGUAGES,
         OTHER_GLOSS,
@@ -24,8 +31,16 @@
         requestGlossTranslation,
     } from "$lib/stores/arabic-study-gloss.store";
     import {
+        fetchLetterProgress,
+        fetchStudyActivity,
+        fetchTopicContent,
+        fetchTopicSections,
         grammarLanguage,
         proficiencyLevel,
+        STUDY_AREA,
+        type LetterProgress,
+        type StudyActivity,
+        type TopicContent,
         saveProficiencyLevel,
         hydrateProficiencyLevel,
         type ProficiencyLevel,
@@ -43,6 +58,178 @@
 
     $effect(() => {
         if ($proficiencyLevel === undefined) void hydrateProficiencyLevel();
+    });
+
+    // ── Progress, per level ─────────────────────────────────────────────────
+    //
+    // Everything here is read from what the app already records: the letter
+    // table the alphabet lesson writes to, and the cached-lesson and
+    // reader-section tables the grammar curriculum writes to. Nothing new is
+    // tracked, so the numbers can't drift from what actually happened.
+    let letterProgress = $state<LetterProgress[]>([]);
+    let activity = $state<StudyActivity[]>([]);
+    let generatedTopics = $state<TopicContent[]>([]);
+    let sectionCount = $state(0);
+
+    const beginnerStats = $derived.by(() => {
+        const practised = letterProgress.filter((row) => row.practiced_at).length;
+        const mastered = letterProgress.filter((row) => row.mastered).length;
+        return { practised, mastered, total: ARABIC_ALPHABET.length };
+    });
+
+    /** The four vowels the pairing lesson drills, in the order it shows them. */
+    const HARAKAT = [
+        { key: "fatha", labelKey: "arabicStudy.pairing.fatha" },
+        { key: "kasra", labelKey: "arabicStudy.pairing.kasra" },
+        { key: "damma", labelKey: "arabicStudy.pairing.damma" },
+        { key: "sukun", labelKey: "arabicStudy.pairing.sukun" },
+    ] as const;
+
+    /** area -> item -> times worked through. */
+    const activityIndex = $derived.by(() => {
+        const index = new Map<string, Map<string, number>>();
+        for (const row of activity) {
+            const area = index.get(row.area) ?? new Map<string, number>();
+            area.set(row.item, row.seen_count);
+            index.set(row.area, area);
+        }
+        return index;
+    });
+
+    const countFor = (area: string, item: string) =>
+        activityIndex.get(area)?.get(item) ?? 0;
+
+    /** Coverage of each beginner area: how much of it has been opened. */
+    const coverage = $derived.by(() => {
+        const pairs = activityIndex.get(STUDY_AREA.pairing)?.size ?? 0;
+        return [
+            {
+                labelKey: "arabicStudy.stats.pairs_seen",
+                done: pairs,
+                total: ARABIC_ALPHABET.length * HARAKAT.length,
+            },
+            {
+                labelKey: "arabicStudy.stats.tajweed_seen",
+                done: activityIndex.get(STUDY_AREA.tajweed)?.size ?? 0,
+                total: TAJWEED_RULES.length,
+            },
+            {
+                labelKey: "arabicStudy.stats.forms_seen",
+                done: activityIndex.get(STUDY_AREA.alifForms)?.size ?? 0,
+                total: ALIF_FORMS.length,
+            },
+            {
+                labelKey: "arabicStudy.stats.words_seen",
+                done: activityIndex.get(STUDY_AREA.words)?.size ?? 0,
+                total: THREE_LETTER_WORDS.length,
+            },
+        ];
+    });
+
+    /**
+     * One hue, four steps, light to dark — the grid encodes how often a pair
+     * has been studied, which is magnitude, not identity. The unstudied step is
+     * the surface's own neutral so absence reads as empty rather than as a
+     * colour with meaning.
+     */
+    function pairShade(count: number): string {
+        if (count === 0) return "bg-brand-sand-200 dark:bg-[#414559]";
+        if (count === 1) return "bg-brand-gold-200 dark:bg-[#5a5030]";
+        if (count < 4) return "bg-brand-gold-400 dark:bg-[#a58a4a]";
+        return "bg-brand-gold-600 dark:bg-[#e5c890]";
+    }
+
+    const grammarStats = $derived.by(() => {
+        const level = $proficiencyLevel;
+        if (level !== "intermediate" && level !== "advanced") {
+            return { generated: 0, total: 0, languages: 0, opened: 0, exercises: 0, followUps: 0 };
+        }
+        const topics = topicsForLevel(level);
+        const ids = new Set(topics.map((topic) => topic.id));
+        const mine = generatedTopics.filter((row) => ids.has(row.topic_id));
+        const opened = activityIndex.get(STUDY_AREA.topics);
+        const exercises = activityIndex.get(STUDY_AREA.exercises);
+        const followUps = activityIndex.get(STUDY_AREA.followUps);
+        const sumFor = (map: Map<string, number> | undefined, matches: (item: string) => boolean) => {
+            let total = 0;
+            for (const [item, count] of map ?? []) if (matches(item)) total += count;
+            return total;
+        };
+        return {
+            generated: new Set(mine.map((row) => row.topic_id)).size,
+            total: ids.size,
+            languages: new Set(mine.map((row) => row.locale)).size,
+            opened: [...(opened?.keys() ?? [])].filter((id) => ids.has(id)).length,
+            exercises: sumFor(exercises, (item) => ids.has(item.split(":")[0])),
+            followUps: sumFor(followUps, (item) => ids.has(item)),
+        };
+    });
+
+    /** The tooltip a topic cell carries, counts agreeing with their nouns. */
+    function topicCellLabel(cell: {
+        topic: { label: string };
+        opened: number;
+        exercises: number;
+        followUps: number;
+        work: number;
+    }): string {
+        if (!cell.work) {
+            return $t("arabicStudy.stats.topic_cell_none", { topic: cell.topic.label });
+        }
+        return $t("arabicStudy.stats.topic_cell", {
+            topic: cell.topic.label,
+            opened: String(cell.opened),
+            exercises: $plural("arabicStudy.stats.count_exercises", cell.exercises),
+            followUps: $plural("arabicStudy.stats.count_follow_ups", cell.followUps),
+        });
+    }
+
+    /** One cell per topic of the current level, shaded by how much work it has had. */
+    const topicCells = $derived.by(() => {
+        const level = $proficiencyLevel;
+        if (level !== "intermediate" && level !== "advanced") return [];
+        return topicsForLevel(level).map((topic) => {
+            const opened = countFor(STUDY_AREA.topics, topic.id);
+            const followUps = countFor(STUDY_AREA.followUps, topic.id);
+            let exercises = 0;
+            for (const [item, count] of activityIndex.get(STUDY_AREA.exercises) ?? []) {
+                if (item.split(":")[0] === topic.id) exercises += count;
+            }
+            return { topic, opened, exercises, followUps, work: opened + exercises + followUps };
+        });
+    });
+
+    // Reload whenever the summary is on screen: coming back from a lesson is
+    // exactly when these numbers have changed.
+    $effect(() => {
+        if (lesson !== null || $proficiencyLevel == null) return;
+        const level = $proficiencyLevel;
+        void untrack(async () => {
+            try {
+                if (level === "beginner") {
+                    [letterProgress, activity] = await Promise.all([
+                        fetchLetterProgress(),
+                        fetchStudyActivity(),
+                    ]);
+                    return;
+                }
+                const [rows, activityRows] = await Promise.all([
+                    fetchTopicContent(),
+                    fetchStudyActivity(),
+                ]);
+                generatedTopics = rows;
+                activity = activityRows;
+                const ids = topicsForLevel(level).map((topic) => topic.id);
+                const perTopic = await Promise.all(
+                    ids.map((id) =>
+                        fetchTopicSections(id, get(grammarLanguage)).catch(() => []),
+                    ),
+                );
+                sectionCount = perTopic.reduce((sum, list) => sum + list.length, 0);
+            } catch {
+                // No database here (browser dev) — leave the panel empty.
+            }
+        });
     });
 
     let saving = $state(false);
@@ -376,6 +563,229 @@
                             ? $t("arabicStudy.onboarding.set_hint_beginner")
                             : $t("arabicStudy.onboarding.set_hint_grammar")}
                     </p>
+                    <!-- Progress, read from what the lessons already record -->
+                    <div
+                        class="mt-3 w-full max-w-lg rounded-2xl border border-brand-sand-200 bg-brand-sand-50 p-3 text-left dark:border-[#414559] dark:bg-[#232634]"
+                    >
+                        <div class="text-[0.5625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]">
+                            {$t("arabicStudy.stats.title")}
+                        </div>
+                        {#if $proficiencyLevel === "beginner"}
+                            {@const stats = beginnerStats}
+                            <div class="mt-2 flex items-baseline justify-between gap-2">
+                                <span class="text-[0.6875rem] text-brand-charcoal-500 dark:text-[#a5adce]">
+                                    {$t("arabicStudy.stats.letters_practiced")}
+                                </span>
+                                <span class="text-[0.75rem] font-bold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    {stats.practised} / {stats.total}
+                                </span>
+                            </div>
+                            <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-brand-sand-200 dark:bg-[#414559]">
+                                <div
+                                    class="h-full bg-brand-gold-400 dark:bg-brand-gold-500"
+                                    style:width="{(stats.practised / stats.total) * 100}%"
+                                ></div>
+                            </div>
+                            <div class="mt-2 flex items-baseline justify-between gap-2">
+                                <span class="text-[0.6875rem] text-brand-charcoal-500 dark:text-[#a5adce]">
+                                    {$t("arabicStudy.stats.letters_mastered")}
+                                </span>
+                                <span class="text-[0.75rem] font-bold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    {stats.mastered} / {stats.total}
+                                </span>
+                            </div>
+                            <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-brand-sand-200 dark:bg-[#414559]">
+                                <div
+                                    class="h-full bg-brand-emerald-400 dark:bg-[#9dd4c8]"
+                                    style:width="{(stats.mastered / stats.total) * 100}%"
+                                ></div>
+                            </div>
+                            <!-- Coverage of each area: single-series magnitude,
+                                 so a labelled bar each and no legend. -->
+                            <div class="mt-3 flex flex-col gap-2">
+                                {#each coverage as row (row.labelKey)}
+                                    <div>
+                                        <div class="flex items-baseline justify-between gap-2">
+                                            <span class="text-[0.6875rem] text-brand-charcoal-500 dark:text-[#a5adce]">
+                                                {$t(row.labelKey)}
+                                            </span>
+                                            <span class="text-[0.75rem] font-bold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                                {row.done} / {row.total}
+                                            </span>
+                                        </div>
+                                        <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-brand-sand-200 dark:bg-[#414559]">
+                                            <div
+                                                class="h-full rounded-full bg-brand-gold-400 dark:bg-brand-gold-500"
+                                                style:width="{row.total ? (row.done / row.total) * 100 : 0}%"
+                                            ></div>
+                                        </div>
+                                    </div>
+                                {/each}
+                            </div>
+
+                            <!-- Every consonant against every vowel. Magnitude
+                                 on one hue, light to dark; each cell says what
+                                 it is on hover. -->
+                            <div class="mt-3">
+                                <div class="text-[0.5625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]">
+                                    {$t("arabicStudy.stats.pair_grid")}
+                                </div>
+                                <div class="mt-1.5 flex flex-col gap-1">
+                                    {#each HARAKAT as harakah (harakah.key)}
+                                        <div class="flex items-center gap-1.5">
+                                            <span
+                                                class="w-12 shrink-0 truncate text-[0.5625rem] text-brand-charcoal-400 dark:text-[#838ba7]"
+                                            >
+                                                {$t(harakah.labelKey)}
+                                            </span>
+                                            <div class="flex flex-1 gap-px">
+                                                {#each ARABIC_ALPHABET as letter (letter.id)}
+                                                    {@const count = countFor(
+                                                        STUDY_AREA.pairing,
+                                                        `${letter.id}:${harakah.key}`,
+                                                    )}
+                                                    <div
+                                                        class="h-3 flex-1 rounded-[2px] {pairShade(count)}"
+                                                        title={count
+                                                            ? $t("arabicStudy.stats.pair_cell", {
+                                                                  letter: letter.glyph,
+                                                                  vowel: $t(harakah.labelKey),
+                                                                  count: String(count),
+                                                              })
+                                                            : $t("arabicStudy.stats.pair_cell_none", {
+                                                                  letter: letter.glyph,
+                                                                  vowel: $t(harakah.labelKey),
+                                                              })}
+                                                        aria-label={count
+                                                            ? $t("arabicStudy.stats.pair_cell", {
+                                                                  letter: letter.glyph,
+                                                                  vowel: $t(harakah.labelKey),
+                                                                  count: String(count),
+                                                              })
+                                                            : $t("arabicStudy.stats.pair_cell_none", {
+                                                                  letter: letter.glyph,
+                                                                  vowel: $t(harakah.labelKey),
+                                                              })}
+                                                    ></div>
+                                                {/each}
+                                            </div>
+                                        </div>
+                                    {/each}
+                                </div>
+                                <!-- Scale: colour here means "how often", so it
+                                     needs saying. -->
+                                <div class="mt-2 flex items-center gap-2.5">
+                                    {#each [["arabicStudy.stats.scale_none", 0], ["arabicStudy.stats.scale_once", 1], ["arabicStudy.stats.scale_few", 2], ["arabicStudy.stats.scale_many", 4]] as const as [labelKey, sample] (labelKey)}
+                                        <span class="flex items-center gap-1 text-[0.5625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
+                                            <span class="h-2 w-2 rounded-[2px] {pairShade(sample)}"></span>
+                                            {$t(labelKey)}
+                                        </span>
+                                    {/each}
+                                </div>
+                            </div>
+                            {#if stats.practised === 0 && coverage.every((row) => row.done === 0)}
+                                <p class="mt-2 text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
+                                    {$t("arabicStudy.stats.empty_beginner")}
+                                </p>
+                            {/if}
+                        {:else}
+                            {@const stats = grammarStats}
+                            <div class="mt-2 flex items-baseline justify-between gap-2">
+                                <span class="text-[0.6875rem] text-brand-charcoal-500 dark:text-[#a5adce]">
+                                    {$t("arabicStudy.stats.lessons_generated")}
+                                </span>
+                                <span class="text-[0.75rem] font-bold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    {stats.generated} / {stats.total}
+                                </span>
+                            </div>
+                            <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-brand-sand-200 dark:bg-[#414559]">
+                                <div
+                                    class="h-full bg-brand-gold-400 dark:bg-brand-gold-500"
+                                    style:width="{stats.total
+                                        ? (stats.generated / stats.total) * 100
+                                        : 0}%"
+                                ></div>
+                            </div>
+                            <div class="mt-2 flex items-baseline justify-between gap-2">
+                                <span class="text-[0.6875rem] text-brand-charcoal-500 dark:text-[#a5adce]">
+                                    {$t("arabicStudy.stats.sections_added")}
+                                </span>
+                                <span class="text-[0.75rem] font-bold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    {sectionCount}
+                                </span>
+                            </div>
+                            <div class="mt-1 flex items-baseline justify-between gap-2">
+                                <span class="text-[0.6875rem] text-brand-charcoal-500 dark:text-[#a5adce]">
+                                    {$t("arabicStudy.stats.languages")}
+                                </span>
+                                <span class="text-[0.75rem] font-bold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    {stats.languages}
+                                </span>
+                            </div>
+                            <div class="mt-2 flex items-baseline justify-between gap-2">
+                                <span class="text-[0.6875rem] text-brand-charcoal-500 dark:text-[#a5adce]">
+                                    {$t("arabicStudy.stats.topics_opened")}
+                                </span>
+                                <span class="text-[0.75rem] font-bold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    {stats.opened} / {stats.total}
+                                </span>
+                            </div>
+                            <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-brand-sand-200 dark:bg-[#414559]">
+                                <div
+                                    class="h-full rounded-full bg-brand-gold-400 dark:bg-brand-gold-500"
+                                    style:width="{stats.total ? (stats.opened / stats.total) * 100 : 0}%"
+                                ></div>
+                            </div>
+                            <div class="mt-2 flex items-baseline justify-between gap-2">
+                                <span class="text-[0.6875rem] text-brand-charcoal-500 dark:text-[#a5adce]">
+                                    {$t("arabicStudy.stats.exercises_attempted")}
+                                </span>
+                                <span class="text-[0.75rem] font-bold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    {stats.exercises}
+                                </span>
+                            </div>
+                            <div class="mt-1 flex items-baseline justify-between gap-2">
+                                <span class="text-[0.6875rem] text-brand-charcoal-500 dark:text-[#a5adce]">
+                                    {$t("arabicStudy.stats.follow_ups")}
+                                </span>
+                                <span class="text-[0.75rem] font-bold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                    {stats.followUps}
+                                </span>
+                            </div>
+
+                            <!-- One cell per topic, shaded by how much work it
+                                 has had — magnitude on one hue, as in the
+                                 beginner grid. -->
+                            <div class="mt-3">
+                                <div class="text-[0.5625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]">
+                                    {$t("arabicStudy.stats.topic_grid")}
+                                </div>
+                                <div class="mt-1.5 flex flex-wrap gap-1">
+                                    {#each topicCells as cell (cell.topic.id)}
+                                        <div
+                                            class="h-4 w-4 rounded-[3px] {pairShade(cell.work)}"
+                                            title={topicCellLabel(cell)}
+                                            aria-label={topicCellLabel(cell)}
+                                        ></div>
+                                    {/each}
+                                </div>
+                                <div class="mt-2 flex items-center gap-2.5">
+                                    {#each [["arabicStudy.stats.scale_none", 0], ["arabicStudy.stats.scale_once", 1], ["arabicStudy.stats.scale_few", 2], ["arabicStudy.stats.scale_many", 4]] as const as [labelKey, sample] (labelKey)}
+                                        <span class="flex items-center gap-1 text-[0.5625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
+                                            <span class="h-2 w-2 rounded-[2px] {pairShade(sample)}"></span>
+                                            {$t(labelKey)}
+                                        </span>
+                                    {/each}
+                                </div>
+                            </div>
+                            {#if stats.generated === 0 && stats.opened === 0}
+                                <p class="mt-2 text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
+                                    {$t("arabicStudy.stats.empty_grammar")}
+                                </p>
+                            {/if}
+                        {/if}
+                    </div>
+
                     <div class="mt-2 flex items-center gap-2">
                         <button
                             onclick={startLearning}

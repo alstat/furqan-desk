@@ -1,4 +1,4 @@
-use rusqlite::{Connection, Result};
+use rusqlite::{Connection, OptionalExtension, Result};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
@@ -323,14 +323,84 @@ impl Database {
                 mastered_at   TEXT
             );
             CREATE TABLE IF NOT EXISTS arabic_study_topic_content (
-                topic_id      TEXT PRIMARY KEY,
+                topic_id      TEXT NOT NULL,
                 content       TEXT NOT NULL,
                 locale        TEXT NOT NULL DEFAULT 'en',
-                generated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-            );",
+                generated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+                PRIMARY KEY (topic_id, locale)
+            );
+            -- What the reader has actually worked through, one row per item:
+            -- a letter+vowel pair, a tajwīd rule, an Alif form, a built word.
+            -- The lessons write here as they are used, so progress reporting
+            -- describes real activity rather than an inferred score.
+            CREATE TABLE IF NOT EXISTS arabic_study_activity (
+                area          TEXT NOT NULL,
+                item          TEXT NOT NULL,
+                seen_count    INTEGER NOT NULL DEFAULT 1,
+                first_seen    TEXT NOT NULL DEFAULT (datetime('now')),
+                last_seen     TEXT NOT NULL DEFAULT (datetime('now')),
+                PRIMARY KEY (area, item)
+            );
+            -- Sections a reader adds to a lesson themselves: their own title
+            -- and brief, and whatever the AI wrote from them. Separate from
+            -- arabic_study_topic_content, which holds one AI-authored lesson
+            -- per topic — these are the reader's, and there can be several.
+            CREATE TABLE IF NOT EXISTS arabic_study_topic_sections (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                topic_id      TEXT NOT NULL,
+                locale        TEXT NOT NULL DEFAULT 'en',
+                position      INTEGER NOT NULL DEFAULT 0,
+                title         TEXT NOT NULL DEFAULT '',
+                brief         TEXT NOT NULL DEFAULT '',
+                content       TEXT NOT NULL DEFAULT '',
+                expanded      INTEGER NOT NULL DEFAULT 0,
+                updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE INDEX IF NOT EXISTS idx_topic_sections_topic
+                ON arabic_study_topic_sections (topic_id, locale, position);",
         )?;
         // Idempotent column migration — ignored if column already exists
         conn.execute("ALTER TABLE highlights ADD COLUMN note TEXT", []).ok();
+        Self::widen_topic_content_key(conn)?;
+        Ok(())
+    }
+
+    /// Older builds keyed `arabic_study_topic_content` by topic alone, so
+    /// generating a lesson in a second language overwrote the first and the
+    /// reader lost work they had already paid for. Rebuild the table with the
+    /// composite key, keeping every row that is already there.
+    fn widen_topic_content_key(conn: &Connection) -> Result<()> {
+        let ddl: Option<String> = conn
+            .query_row(
+                "SELECT sql FROM sqlite_master WHERE type = 'table'
+                 AND name = 'arabic_study_topic_content'",
+                [],
+                |row| row.get(0),
+            )
+            .optional()?;
+        let Some(ddl) = ddl else { return Ok(()) };
+        if ddl.contains("PRIMARY KEY (topic_id, locale)") {
+            return Ok(());
+        }
+
+        conn.execute_batch(
+            "BEGIN;
+             CREATE TABLE arabic_study_topic_content_new (
+                topic_id      TEXT NOT NULL,
+                content       TEXT NOT NULL,
+                locale        TEXT NOT NULL DEFAULT 'en',
+                generated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+                PRIMARY KEY (topic_id, locale)
+             );
+             INSERT OR REPLACE INTO arabic_study_topic_content_new
+                (topic_id, content, locale, generated_at)
+                SELECT topic_id, content, locale, generated_at
+                FROM arabic_study_topic_content;
+             DROP TABLE arabic_study_topic_content;
+             ALTER TABLE arabic_study_topic_content_new
+                RENAME TO arabic_study_topic_content;
+             COMMIT;",
+        )?;
         Ok(())
     }
 
@@ -520,6 +590,52 @@ impl Database {
             Vec::new()
         };
 
+        let arabic_study_topic_sections = if has_table("arabic_study_topic_sections") {
+            let mut stmt = conn.prepare(
+                "SELECT topic_id, locale, position, title, brief, content, expanded, updated_at
+                 FROM arabic_study_topic_sections",
+            )?;
+            let rows: Vec<_> = stmt
+                .query_map([], |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, i64>(2)?,
+                        row.get::<_, String>(3)?,
+                        row.get::<_, String>(4)?,
+                        row.get::<_, String>(5)?,
+                        row.get::<_, i64>(6)?,
+                        row.get::<_, String>(7)?,
+                    ))
+                })?
+                .filter_map(|r| r.ok())
+                .collect();
+            rows
+        } else {
+            Vec::new()
+        };
+
+        let arabic_study_activity = if has_table("arabic_study_activity") {
+            let mut stmt = conn.prepare(
+                "SELECT area, item, seen_count, first_seen, last_seen FROM arabic_study_activity",
+            )?;
+            let rows: Vec<_> = stmt
+                .query_map([], |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, i64>(2)?,
+                        row.get::<_, String>(3)?,
+                        row.get::<_, String>(4)?,
+                    ))
+                })?
+                .filter_map(|r| r.ok())
+                .collect();
+            rows
+        } else {
+            Vec::new()
+        };
+
         Ok(UserData {
             bookmarks,
             last_read,
@@ -529,6 +645,8 @@ impl Database {
             arabic_study_profile,
             arabic_study_letter_progress,
             arabic_study_topic_content,
+            arabic_study_topic_sections,
+            arabic_study_activity,
             app_meta,
         })
     }
@@ -597,6 +715,29 @@ impl Database {
         }
         {
             let mut stmt = conn.prepare(
+                "INSERT INTO arabic_study_topic_sections
+                 (topic_id, locale, position, title, brief, content, expanded, updated_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            )?;
+            for (topic_id, locale, position, title, brief, content, expanded, updated_at) in
+                &data.arabic_study_topic_sections
+            {
+                stmt.execute(rusqlite::params![
+                    topic_id, locale, position, title, brief, content, expanded, updated_at
+                ])?;
+            }
+        }
+        {
+            let mut stmt = conn.prepare(
+                "INSERT OR REPLACE INTO arabic_study_activity
+                 (area, item, seen_count, first_seen, last_seen) VALUES (?1, ?2, ?3, ?4, ?5)",
+            )?;
+            for (area, item, seen_count, first_seen, last_seen) in &data.arabic_study_activity {
+                stmt.execute(rusqlite::params![area, item, seen_count, first_seen, last_seen])?;
+            }
+        }
+        {
+            let mut stmt = conn.prepare(
                 "INSERT OR REPLACE INTO app_meta (key, value) VALUES (?1, ?2)",
             )?;
             for (key, value) in &data.app_meta {
@@ -617,6 +758,8 @@ struct UserData {
     arabic_study_profile: Option<(String, String, String)>,
     arabic_study_letter_progress: Vec<(String, Option<String>, i64, Option<String>)>,
     arabic_study_topic_content: Vec<(String, String, String, String)>,
+    arabic_study_topic_sections: Vec<(String, String, i64, String, String, String, i64, String)>,
+    arabic_study_activity: Vec<(String, String, i64, String, String)>,
     app_meta: Vec<(String, String)>,
 }
 

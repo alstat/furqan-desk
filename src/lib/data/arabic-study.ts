@@ -32,6 +32,31 @@ export function fetchRandomStudyWords(
     return invoke<StudyWord[]>("get_random_study_words", { count, letters, lang });
 }
 
+/** One real occurrence of a grammatical pattern in the muṣḥaf. */
+export interface MorphologyExample {
+    surah: number;
+    ayah: number;
+    word: number;
+    arabic: string;
+    tag: string;
+    features: string;
+}
+
+/**
+ * Verified occurrences of a grammatical pattern, for the grammar curriculum to
+ * explain. `features` atoms must all be present on the matched token.
+ */
+export function findMorphologyExamples(
+    query: { tag?: string; features?: string[] },
+    limit: number,
+): Promise<MorphologyExample[]> {
+    return invoke<MorphologyExample[]>("find_morphology_examples", {
+        tag: query.tag ?? null,
+        features: query.features ?? [],
+        limit,
+    });
+}
+
 /** Word-by-word morphology for one ayah — used by the Verse Study canvas. */
 export function fetchAyahMorphology(surah: number, ayah: number): Promise<AyahMorphology> {
     return invoke<AyahMorphology>("get_ayah_morphology", { surah, ayah });

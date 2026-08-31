@@ -6,6 +6,7 @@
     import Icon from "@iconify/svelte";
     import { onMount, untrack } from "svelte";
     import { t } from "$lib/i18n";
+    import { recordStudyActivity, STUDY_AREA } from "$lib/stores/arabic-study.store";
     import {
         THREE_LETTER_WORDS,
         type ThreeLetterWord,
@@ -154,6 +155,10 @@
         if (language === appliedLanguage) return;
         appliedLanguage = language;
         if (language !== OTHER_GLOSS) untrack(() => void refreshWords());
+    });
+
+    $effect(() => {
+        if (selected) recordStudyActivity(STUDY_AREA.words, selected.id);
     });
 
     // Everything on show goes to the gloss store, which resolves the meanings

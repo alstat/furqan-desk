@@ -4,6 +4,7 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
     import { t } from "$lib/i18n";
+    import { recordStudyActivity, STUDY_AREA } from "$lib/stores/arabic-study.store";
     import {
         glossOverrides,
         glossText,
@@ -25,6 +26,10 @@
     let explorerFocus = $state<{ surah: number; ayah: number } | null>(null);
     let selectedId = $state(TAJWEED_RULES[0].id);
     const selected = $derived(TAJWEED_RULES.find((r) => r.id === selectedId) ?? TAJWEED_RULES[0]);
+    $effect(() => {
+        recordStudyActivity(STUDY_AREA.tajweed, selected.id);
+    });
+
     $effect(() => {
         registerGlosses(selected.examples);
     });

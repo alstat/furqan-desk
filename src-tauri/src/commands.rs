@@ -1585,6 +1585,113 @@ fn is_arabic_mark(c: char) -> bool {
         || (0x06D6..=0x06ED).contains(&code)
 }
 
+// ── Arabic Study: corpus examples for the grammar curriculum ─────────────────
+
+/// One real occurrence of a grammatical feature in the muṣḥaf.
+#[derive(Serialize)]
+pub struct MorphologyExample {
+    pub surah: i64,
+    pub ayah: i64,
+    pub word: i64,
+    /// The word itself, composed from its tokens.
+    pub arabic: String,
+    /// The matched token's tag and features, so the lesson can say what it is.
+    pub tag: String,
+    pub features: String,
+}
+
+/// Real occurrences of a grammatical pattern, drawn from the morphology table.
+///
+/// The grammar curriculum used to let the model supply its own Qur'anic
+/// examples, which is exactly the kind of work a language model should not be
+/// doing: the corpus knows where every accusative particle and jussive verb
+/// actually stands. This hands the lesson a verified sample to explain.
+///
+/// `tag` matches the token's part-of-speech tag ("ACC" for إنّ and her
+/// sisters, say); `features` are atoms that must all appear in the token's
+/// feature string ("POS:N", "GEN", "MOOD:JUS", "Al+"). Both are optional, but
+/// at least one is required — an unfiltered sample would teach nothing.
+#[tauri::command]
+pub fn find_morphology_examples(
+    db: State<Database>,
+    tag: Option<String>,
+    features: Vec<String>,
+    limit: i64,
+) -> Result<Vec<MorphologyExample>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    if tag.is_none() && features.is_empty() {
+        return Ok(Vec::new());
+    }
+    let limit = limit.clamp(1, 24);
+
+    let mut sql = String::from(
+        "SELECT surah, ayah, word, tag, features FROM morphology WHERE 1 = 1",
+    );
+    let mut params: Vec<String> = Vec::new();
+    if let Some(t) = &tag {
+        sql.push_str(" AND tag = ?");
+        params.push(t.clone());
+    }
+    for feature in &features {
+        // Atoms sit between pipes in the feature string; padding both sides
+        // keeps "GEN" from matching "GEN" inside a longer atom.
+        sql.push_str(" AND ('|' || features || '|') LIKE ?");
+        params.push(format!("%|{}|%", feature));
+    }
+    sql.push_str(" ORDER BY RANDOM() LIMIT ?");
+
+    let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
+    let mut bound: Vec<&dyn rusqlite::ToSql> = params
+        .iter()
+        .map(|p| p as &dyn rusqlite::ToSql)
+        .collect();
+    bound.push(&limit);
+    let matches = stmt
+        .query_map(bound.as_slice(), |r| {
+            Ok((
+                r.get::<_, i64>(0)?,
+                r.get::<_, i64>(1)?,
+                r.get::<_, i64>(2)?,
+                r.get::<_, String>(3)?,
+                r.get::<_, String>(4)?,
+            ))
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+
+    let mut word_stmt = conn
+        .prepare(
+            "SELECT form_arabic FROM morphology
+             WHERE surah = ?1 AND ayah = ?2 AND word = ?3 ORDER BY token",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let mut out = Vec::with_capacity(matches.len());
+    for (surah, ayah, word, tag, features) in matches {
+        let arabic: String = word_stmt
+            .query_map(rusqlite::params![surah, ayah, word], |r| {
+                r.get::<_, String>(0)
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?
+            .concat();
+        if arabic.is_empty() {
+            continue;
+        }
+        out.push(MorphologyExample {
+            surah,
+            ayah,
+            word,
+            arabic,
+            tag,
+            features,
+        });
+    }
+    Ok(out)
+}
+
 /// Word-by-word meanings for a set of words, in one of the bundled languages.
 ///
 /// The curriculum's example words are hand-written with English meanings; when
@@ -1892,16 +1999,193 @@ pub fn save_topic_content(
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
         "INSERT INTO arabic_study_topic_content (topic_id, content, locale, generated_at) VALUES (?1, ?2, ?3, datetime('now'))
-         ON CONFLICT(topic_id) DO UPDATE SET content = ?2, locale = ?3, generated_at = datetime('now')",
+         ON CONFLICT(topic_id, locale) DO UPDATE SET content = ?2, generated_at = datetime('now')",
         rusqlite::params![topic_id, content, locale],
     )
     .map_err(|e| e.to_string())?;
     conn.query_row(
-        "SELECT topic_id, content, locale, generated_at FROM arabic_study_topic_content WHERE topic_id = ?1",
-        [&topic_id],
+        "SELECT topic_id, content, locale, generated_at FROM arabic_study_topic_content
+         WHERE topic_id = ?1 AND locale = ?2",
+        rusqlite::params![&topic_id, &locale],
         |r| topic_content_row(r),
     )
     .map_err(|e| e.to_string())
+}
+
+// ── What the reader has worked through ───────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct StudyActivity {
+    pub area: String,
+    pub item: String,
+    pub seen_count: i64,
+    pub first_seen: String,
+    pub last_seen: String,
+}
+
+/// Note that the reader has just worked through one item — a letter+vowel pair,
+/// a tajwīd rule, an Alif form, a built word. Repeat visits bump the count, so
+/// the reports can tell "opened once" from "kept coming back".
+#[tauri::command]
+pub fn record_study_activity(
+    db: State<Database>,
+    area: String,
+    item: String,
+) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "INSERT INTO arabic_study_activity (area, item, seen_count, first_seen, last_seen)
+         VALUES (?1, ?2, 1, datetime('now'), datetime('now'))
+         ON CONFLICT(area, item) DO UPDATE
+            SET seen_count = seen_count + 1, last_seen = datetime('now')",
+        rusqlite::params![area, item],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_study_activity(db: State<Database>) -> Result<Vec<StudyActivity>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT area, item, seen_count, first_seen, last_seen FROM arabic_study_activity",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |r| {
+            Ok(StudyActivity {
+                area: r.get(0)?,
+                item: r.get(1)?,
+                seen_count: r.get(2)?,
+                first_seen: r.get(3)?,
+                last_seen: r.get(4)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+// ── Reader-defined lesson sections ───────────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct TopicSection {
+    pub id: i64,
+    pub topic_id: String,
+    pub locale: String,
+    pub position: i64,
+    pub title: String,
+    pub brief: String,
+    pub content: String,
+    pub expanded: bool,
+    pub updated_at: String,
+}
+
+fn topic_section_row(r: &rusqlite::Row) -> rusqlite::Result<TopicSection> {
+    Ok(TopicSection {
+        id: r.get(0)?,
+        topic_id: r.get(1)?,
+        locale: r.get(2)?,
+        position: r.get(3)?,
+        title: r.get(4)?,
+        brief: r.get(5)?,
+        content: r.get(6)?,
+        expanded: r.get::<_, i64>(7)? != 0,
+        updated_at: r.get(8)?,
+    })
+}
+
+/// The reader's own sections for one topic, in the language they were written
+/// in — a section written for the Hindi lesson has no business appearing under
+/// the English one.
+#[tauri::command]
+pub fn get_topic_sections(
+    db: State<Database>,
+    topic_id: String,
+    locale: String,
+) -> Result<Vec<TopicSection>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, topic_id, locale, position, title, brief, content, expanded, updated_at
+             FROM arabic_study_topic_sections
+             WHERE topic_id = ?1 AND locale = ?2
+             ORDER BY position, id",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![topic_id, locale], |r| topic_section_row(r))
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+/// Insert a section (`id` omitted) or update one in place. Returns the stored
+/// row so the caller learns the id a new section was given.
+#[tauri::command]
+#[allow(clippy::too_many_arguments)]
+pub fn save_topic_section(
+    db: State<Database>,
+    id: Option<i64>,
+    topic_id: String,
+    locale: String,
+    position: i64,
+    title: String,
+    brief: String,
+    content: String,
+    expanded: bool,
+) -> Result<TopicSection, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let expanded_int = expanded as i64;
+    let row_id = match id {
+        Some(existing) => {
+            conn.execute(
+                "UPDATE arabic_study_topic_sections
+                 SET position = ?2, title = ?3, brief = ?4, content = ?5, expanded = ?6,
+                     updated_at = datetime('now')
+                 WHERE id = ?1",
+                rusqlite::params![existing, position, title, brief, content, expanded_int],
+            )
+            .map_err(|e| e.to_string())?;
+            existing
+        }
+        None => {
+            conn.execute(
+                "INSERT INTO arabic_study_topic_sections
+                 (topic_id, locale, position, title, brief, content, expanded, updated_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, datetime('now'))",
+                rusqlite::params![
+                    topic_id,
+                    locale,
+                    position,
+                    title,
+                    brief,
+                    content,
+                    expanded_int
+                ],
+            )
+            .map_err(|e| e.to_string())?;
+            conn.last_insert_rowid()
+        }
+    };
+    conn.query_row(
+        "SELECT id, topic_id, locale, position, title, brief, content, expanded, updated_at
+         FROM arabic_study_topic_sections WHERE id = ?1",
+        [row_id],
+        |r| topic_section_row(r),
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn delete_topic_section(db: State<Database>, id: i64) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM arabic_study_topic_sections WHERE id = ?1", [id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 // ── Highlight commands ───────────────────────────────────────────────────────
