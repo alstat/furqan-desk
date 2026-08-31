@@ -17,6 +17,7 @@ import {
     markTabSaved,
 } from "$lib/stores/tabs.store";
 import type { EditorTab } from "$lib/stores/tabs.store";
+import { openWorkbookWindow, workbookFromSvg } from "$lib/stores/workbook.store";
 
 /**
  * Resolve the tab an action targets. Split layouts render one action bar per
@@ -28,20 +29,40 @@ function resolveTab(tabId?: string | null): EditorTab | null {
     return get(tabs).find((t) => t.id === tabId) ?? null;
 }
 
-/** Open a single file via the OS dialog and load it into a tab. */
+/**
+ * Open a single file via the OS dialog.
+ *
+ * A workbook is saved as an SVG carrying its own document inside it, so an SVG
+ * is offered here too: if it turns out to be one of ours it opens on the
+ * workbook board rather than as text in a tab, and any other SVG falls through
+ * to the editor as before.
+ */
 export async function openFile(): Promise<void> {
     const result = await openDialog({
         multiple: false,
         filters: [
             {
                 name: "All Supported Files",
-                extensions: ["typ", "bib", "txt", "md", "lexical", "json", "jl", "lean"],
+                extensions: ["typ", "bib", "txt", "md", "lexical", "json", "jl", "lean", "svg"],
             },
         ],
     });
     if (!result || Array.isArray(result)) return;
-    const content = await readTextFile(result as string);
-    openOrFocusTab(result as string, content);
+    const path = result as string;
+    const content = await readTextFile(path);
+    if (await openAsWorkbook(path, content)) return;
+    openOrFocusTab(path, content);
+}
+
+/**
+ * Opens `path` on the workbook board when its contents are a workbook, and
+ * reports whether it did — so callers can fall through to their normal
+ * handling for every other file.
+ */
+export async function openAsWorkbook(path: string, content: string): Promise<boolean> {
+    if (!path.toLowerCase().endsWith(".svg")) return false;
+    if (!workbookFromSvg(content)) return false;
+    return await openWorkbookWindow(path);
 }
 
 /** Open a folder via the OS dialog and set it as the active explorer root. */

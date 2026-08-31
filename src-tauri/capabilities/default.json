@@ -13,7 +13,8 @@
     "tafsir",
     "drawing",
     "arabic-study",
-    "arabic-study-home"
+    "arabic-study-home",
+    "workbook"
   ],
   "permissions": [
     "core:default",

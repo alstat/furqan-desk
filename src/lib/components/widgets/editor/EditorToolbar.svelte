@@ -16,6 +16,7 @@
     import { rotateSpring } from "$lib/stores/animation";
     import { t } from '$lib/i18n';
     import { crossGroups } from "$lib/stores/julia-terminal.store";
+    import { openWorkbookWindow, workbookOpen } from "$lib/stores/workbook.store";
 
     // ── create new tab ─────────────────────────────────────────────────────────
     let showNewOptions = $state(false);
@@ -34,6 +35,16 @@
                 $surahOrientation() === "flex-row-reverse" ? 180 : 0,
             );
         }
+    }
+
+    /**
+     * A workbook is not an editor tab: it is a board in a window of its own,
+     * like the Verse Study canvas. Falls back to the in-app panel when there is
+     * no Tauri window to open.
+     */
+    async function createWorkbook() {
+        showNewOptions = false;
+        if (!(await openWorkbookWindow())) workbookOpen.set(true);
     }
 
     const labelClass =
@@ -299,6 +310,14 @@
                         Lean
                     </button>
                 </div>
+                <button
+                    onclick={createWorkbook}
+                    class="cursor-pointer mt-1.5 w-full px-3 py-1 text-[0.6875rem] font-semibold rounded-full
+                           border border-brand-gold-300 bg-brand-gold-50 hover:bg-brand-gold-100
+                           text-brand-gold-600 transition-colors dark:border-[#5a5030] dark:bg-[#34302a] dark:text-[#e5c890]"
+                >
+                    {$t('editor.new_workbook')}
+                </button>
             {:else}
                 <button
                     onclick={() => (showNewOptions = true)}

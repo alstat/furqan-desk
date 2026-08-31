@@ -39,6 +39,7 @@
 		'/translation',
 		'/tafsir',
 		'/drawing',
+		'/workbook',
 		// Prefix match also covers '/arabic-study-home'.
 		'/arabic-study'
 	];

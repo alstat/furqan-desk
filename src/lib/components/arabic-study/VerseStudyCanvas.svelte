@@ -28,6 +28,8 @@
     import RelatedVersesNode from "./nodes/RelatedVersesNode.svelte";
     import GrammarNode from "./nodes/GrammarNode.svelte";
     import AskAiNode from "./nodes/AskAiNode.svelte";
+    import WorkbookBoard from "$lib/components/workbook/WorkbookBoard.svelte";
+    import { emptyWorkbook, makeNode, type WorkbookDoc } from "$lib/stores/workbook.store";
 
     interface Props {
         open: boolean;
@@ -92,6 +94,39 @@
         if (open) zIndex = bringToFront();
     });
 
+    // ── Board mode ──────────────────────────────────────────────────────────
+    //
+    // The same canvas, opened as a workbook: the ayah's cards laid out on a
+    // board the reader can rearrange, add to, and save as a file. The fixed
+    // hub-and-spoke view stays the default — it is the quicker read — and this
+    // is the door out of it when the reader wants to work on the ayah.
+    let boardMode = $state(false);
+    let boardDoc = $state<WorkbookDoc>(emptyWorkbook());
+    let board = $state<WorkbookBoard | null>(null);
+
+    function seedBoard() {
+        const ref = $verseStudyAyah;
+        if (!ref) return;
+        const at = `${ref.surah}:${ref.ayah}`;
+        const doc = emptyWorkbook(
+            $t("arabicStudy.canvas.title_ayah", {
+                surah: String(ref.surah),
+                ayah: String(ref.ayah),
+            }),
+        );
+        const kinds = ["ayah", "translation", "tafsir", "related"] as const;
+        doc.nodes = kinds.map((kind, i) => ({
+            ...makeNode(kind, 60 + (i % 2) * 380, 60 + Math.floor(i / 2) * 260),
+            ref: at,
+        }));
+        boardDoc = doc;
+    }
+
+    function toggleBoard() {
+        if (!boardMode) seedBoard();
+        boardMode = !boardMode;
+    }
+
     const grammarContext = $derived(
         $verseStudyAyah && verseText
             ? `${surahName($verseStudyAyah.surah)} (${$verseStudyAyah.surah}), ayah ${$verseStudyAyah.ayah}: ${verseText.arabic}`
@@ -134,6 +169,37 @@
                 </span>
             </div>
             <div class="ml-auto flex items-center gap-1">
+                <button
+                    onclick={toggleBoard}
+                    title={$t(boardMode ? "arabicStudy.canvas.view_cards" : "arabicStudy.canvas.view_board")}
+                    class="flex cursor-pointer items-center gap-1 rounded-full border border-brand-gold-200 bg-white/70 px-2 py-0.5 text-[0.625rem] font-semibold text-brand-charcoal-500 transition-colors hover:bg-white dark:border-[#5a5030] dark:bg-[#232634] dark:text-[#c6d0f5]"
+                >
+                    <Icon icon={boardMode ? "solar:widget-4-linear" : "solar:widget-5-bold-duotone"} width="0.7rem" />
+                    {$t(boardMode ? "arabicStudy.canvas.view_cards" : "arabicStudy.canvas.view_board")}
+                </button>
+                {#if boardMode}
+                    <button
+                        onclick={() => board?.saveSvg()}
+                        class="flex cursor-pointer items-center gap-1 rounded-full border border-brand-gold-200 bg-white/70 px-2 py-0.5 text-[0.625rem] font-semibold text-brand-charcoal-500 transition-colors hover:bg-white dark:border-[#5a5030] dark:bg-[#232634] dark:text-[#c6d0f5]"
+                    >
+                        <Icon icon="solar:diskette-linear" width="0.7rem" />
+                        {$t("workbook.save")}
+                    </button>
+                    <button
+                        onclick={() => board?.exportPng()}
+                        class="flex cursor-pointer items-center gap-1 rounded-full border border-brand-gold-200 bg-white/70 px-2 py-0.5 text-[0.625rem] font-semibold text-brand-charcoal-500 transition-colors hover:bg-white dark:border-[#5a5030] dark:bg-[#232634] dark:text-[#c6d0f5]"
+                    >
+                        <Icon icon="solar:gallery-send-linear" width="0.7rem" />
+                        {$t("workbook.export_png")}
+                    </button>
+                    <button
+                        onclick={() => board?.exportPdf()}
+                        class="flex cursor-pointer items-center gap-1 rounded-full border border-brand-gold-200 bg-white/70 px-2 py-0.5 text-[0.625rem] font-semibold text-brand-charcoal-500 transition-colors hover:bg-white dark:border-[#5a5030] dark:bg-[#232634] dark:text-[#c6d0f5]"
+                    >
+                        <Icon icon="solar:file-download-linear" width="0.7rem" />
+                        {$t("workbook.export_pdf")}
+                    </button>
+                {/if}
                 {#if !standalone}
                     <button
                         onclick={onClose}
@@ -153,6 +219,9 @@
 
         <!-- Body: a dotted whiteboard-style canvas so the ayah reads as the
              hub of a mind map, with its five cards arranged around it. -->
+        {#if boardMode}
+            <WorkbookBoard bind:this={board} doc={boardDoc} onDocChange={(next) => (boardDoc = next)} />
+        {:else}
         <div class="hub-canvas default-scroll min-h-0 flex-1 overflow-y-auto px-6 py-8">
             {#if loading && !morphology}
                 <div class="flex flex-col items-center gap-3 py-16 text-center">
@@ -230,6 +299,7 @@
                 </div>
             {/if}
         </div>
+        {/if}
     </div>
 {/if}
 

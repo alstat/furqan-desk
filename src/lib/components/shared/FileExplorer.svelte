@@ -32,6 +32,7 @@
         copyPathInto,
         cutPathInto,
     } from "$lib/stores/tabs.store";
+    import { openAsWorkbook } from "$lib/actions/fileActions";
     import MediaViewerDialog from "./MediaViewerDialog.svelte";
     import { surahOrientation } from "$lib/stores/quran.svelte";
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
@@ -541,6 +542,9 @@
         try {
             const content = await readTextFile(node.path);
             actionError = "";
+            // A workbook is an SVG with its document inside it — that belongs on
+            // the board, not in a text tab.
+            if (await openAsWorkbook(node.path, content)) return;
             openOrFocusTab(node.path, content);
         } catch (e) {
             actionError = `Cannot open "${node.name}": ${e}`;
