@@ -57,7 +57,7 @@
         { kind: "tafsir", icon: "solar:notebook-bold-duotone" },
         { kind: "related", icon: "solar:link-circle-bold-duotone" },
         { kind: "pipeline", icon: "solar:flow-bold-duotone" },
-        { kind: "title", icon: "solar:text-bold-duotone" },
+        { kind: "title", icon: "solar:text-square-bold-duotone" },
         { kind: "note", icon: "solar:notes-bold-duotone" },
         { kind: "image", icon: "solar:gallery-bold-duotone" },
     ];
@@ -120,8 +120,12 @@
         const node = board.nodes.find((n) => n.id === id);
         if (!node) return;
         event.preventDefault();
-        (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
         drag = { id, startX: event.clientX, startY: event.clientY, nodeX: node.x, nodeY: node.y };
+        try {
+            (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
+        } catch {
+            /* see startStepDrag: capture is an optimisation, not a prerequisite */
+        }
     }
 
     function startResize(event: PointerEvent, id: string) {
@@ -129,7 +133,11 @@
         if (!node) return;
         event.preventDefault();
         event.stopPropagation();
-        (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
+        try {
+            (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
+        } catch {
+            /* ditto */
+        }
         resize = {
             id,
             startX: event.clientX,
@@ -349,26 +357,29 @@
 <div class="flex min-h-0 flex-1 flex-col">
     <!-- Toolbar -->
     <div
-        class="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-brand-sand-200 bg-brand-sand-50 px-3 py-1.5 dark:border-[#414559] dark:bg-[#232634]"
+        class="flex shrink-0 flex-wrap items-center gap-2 border-b border-brand-sand-200 bg-brand-sand-50/80 px-3 py-2 backdrop-blur-md dark:border-[#414559] dark:bg-[#232634]/80"
     >
         <input
             value={board.title}
             oninput={(e) => commit({ ...board, title: e.currentTarget.value })}
-            class="w-40 rounded-lg border border-brand-sand-200 bg-white px-2 py-0.5 text-[0.6875rem] font-semibold text-brand-charcoal-600 outline-none dark:border-[#414559] dark:bg-[#292c3c] dark:text-[#c6d0f5]"
+            class="w-44 rounded-lg border border-brand-sand-200 bg-white px-2.5 py-1 text-xs font-semibold tracking-tight text-brand-charcoal-900 outline-none transition-colors focus:border-brand-gold-400 dark:border-[#414559] dark:bg-[#292c3c] dark:text-[#c6d0f5]"
         />
-        <span class="mx-1 h-4 w-px bg-brand-sand-200 dark:bg-[#414559]"></span>
+        <span class="h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></span>
+        <span class="text-[0.625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#838ba7]">
+            {$t("workbook.add_card")}
+        </span>
         {#each ADDABLE as item (item.kind)}
             <button
                 onclick={() => addNode(item.kind)}
                 title={$t(`workbook.add.${item.kind}`)}
-                class="flex cursor-pointer items-center gap-1 rounded-full border border-brand-sand-200 bg-white px-2 py-0.5 text-[0.625rem] font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-100 dark:border-[#414559] dark:bg-[#292c3c] dark:text-[#c6d0f5] dark:hover:bg-[#363a4f]"
+                class="flex cursor-pointer items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 py-1 text-xs font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
             >
-                <Icon icon={item.icon} width="0.7rem" />
+                <Icon icon={item.icon} width="0.75rem" />
                 {$t(`workbook.node.${item.kind}`)}
             </button>
         {/each}
         {#if status}
-            <span class="ml-auto text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
+            <span class="ml-auto text-[0.6875rem] text-brand-charcoal-400 dark:text-[#838ba7]">
                 {status}
             </span>
         {/if}

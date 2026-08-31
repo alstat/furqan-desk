@@ -1634,4 +1634,13 @@ export const en: Record<string, string> = {
   "workbook.tool.hand": "Pan the board",
   "workbook.reset_view": "Reset the view",
   "workbook.fit": "Fit everything on screen",
+  "workbook.step.filter": "Filter",
+  "workbook.step.limit": "Limit",
+  "workbook.step.dedupe": "Dedupe",
+  "workbook.flow.add": "Add step",
+  "workbook.flow.output": "Output",
+  "workbook.flow.settings": "Step settings",
+  "workbook.flow.contains": "contains…",
+  "workbook.flow.zone": "Zone",
+  "workbook.add_card": "Add card",
 };

@@ -25,18 +25,59 @@ export type WorkbookNodeKind =
     | 'note'
     | 'image';
 
-/** The steps a pipeline can run, in the order they transform their input. */
-export type PipelineStepKind = 'ayah' | 'translation' | 'tafsir' | 'related' | 'view';
+/** The steps a pipeline can run. */
+export type PipelineStepKind =
+    | 'ayah'
+    | 'translation'
+    | 'tafsir'
+    | 'related'
+    | 'filter'
+    | 'limit'
+    | 'dedupe'
+    | 'view';
 
 export interface PipelineStep {
     id: string;
     kind: PipelineStepKind;
+    /**
+     * Where the step sits on the pipeline's own canvas. Left-to-right position
+     * *is* the running order — what the flow shows is what the flow does, so
+     * there is no hidden ordering to disagree with the picture.
+     */
+    x: number;
+    y: number;
+    /** Optional zone label; steps sharing one are drawn inside it together. */
+    group?: string;
     /** `ayah` step: the refs it starts from, e.g. ["1:2", "112:1"]. */
     refs?: string[];
-    /** `related` step: how many matches to keep per input verse. */
+    /** `related`/`limit`: how many rows to keep. */
     limit?: number;
+    /** `filter` step: rows must contain this text somewhere. */
+    query?: string;
     /** `view` step: how the result is laid out. */
     layout?: 'list' | 'columns';
+}
+
+/** What each step does, for the palette and the flow's own labels. */
+export const STEP_META: Record<
+    PipelineStepKind,
+    { icon: string; kind: 'source' | 'enrich' | 'shape' | 'output' }
+> = {
+    ayah: { icon: 'solar:book-2-bold-duotone', kind: 'source' },
+    translation: { icon: 'solar:translation-2-bold-duotone', kind: 'enrich' },
+    tafsir: { icon: 'solar:notebook-bold-duotone', kind: 'enrich' },
+    related: { icon: 'solar:link-circle-bold-duotone', kind: 'enrich' },
+    filter: { icon: 'solar:filter-bold-duotone', kind: 'shape' },
+    limit: { icon: 'solar:sort-vertical-bold-duotone', kind: 'shape' },
+    dedupe: { icon: 'solar:copy-bold-duotone', kind: 'shape' },
+    view: { icon: 'solar:eye-bold-duotone', kind: 'output' },
+};
+
+export const STEP_KINDS = Object.keys(STEP_META) as PipelineStepKind[];
+
+/** Steps run left to right, so the flow reads the way it runs. */
+export function orderedSteps(steps: PipelineStep[]): PipelineStep[] {
+    return [...steps].sort((a, b) => a.x - b.x || a.y - b.y);
 }
 
 export interface WorkbookNode {
@@ -94,9 +135,16 @@ export function makeNode(kind: WorkbookNodeKind, x: number, y: number): Workbook
         steps:
             kind === 'pipeline'
                 ? [
-                      { id: crypto.randomUUID(), kind: 'ayah', refs: ['1:2', '112:1'] },
-                      { id: crypto.randomUUID(), kind: 'translation' },
-                      { id: crypto.randomUUID(), kind: 'view', layout: 'list' },
+                      {
+                          id: crypto.randomUUID(),
+                          kind: 'ayah',
+                          refs: ['1:2', '112:1'],
+                          x: 16,
+                          y: 24,
+                          group: 'Source',
+                      },
+                      { id: crypto.randomUUID(), kind: 'translation', x: 160, y: 24 },
+                      { id: crypto.randomUUID(), kind: 'view', layout: 'list', x: 304, y: 24 },
                   ]
                 : undefined,
     };
@@ -206,7 +254,7 @@ export async function runPipeline(steps: PipelineStep[]): Promise<PipelineResult
     let layout: 'list' | 'columns' = 'list';
     const trace: string[] = [];
 
-    for (const step of steps) {
+    for (const step of orderedSteps(steps)) {
         switch (step.kind) {
             case 'ayah': {
                 rows = await loadVerses(step.refs ?? []);
@@ -241,6 +289,34 @@ export async function runPipeline(steps: PipelineStep[]): Promise<PipelineResult
             case 'related': {
                 rows = await relatedTo(rows, step.limit ?? 3);
                 trace.push(`Related verses → ${rows.length} verse(s)`);
+                break;
+            }
+            case 'filter': {
+                const needle = (step.query ?? '').trim().toLowerCase();
+                if (needle) {
+                    rows = rows.filter((row) =>
+                        [row.arabic, row.translation, row.tafsir]
+                            .filter(Boolean)
+                            .some((text) => String(text).toLowerCase().includes(needle)),
+                    );
+                }
+                trace.push(`Filter → ${rows.length} row(s)`);
+                break;
+            }
+            case 'limit': {
+                rows = rows.slice(0, Math.max(1, step.limit ?? 5));
+                trace.push(`Limit → ${rows.length} row(s)`);
+                break;
+            }
+            case 'dedupe': {
+                const seen = new Set<string>();
+                rows = rows.filter((row) => {
+                    const key = `${row.surah}:${row.ayah}`;
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+                trace.push(`Dedupe → ${rows.length} row(s)`);
                 break;
             }
             case 'view': {
