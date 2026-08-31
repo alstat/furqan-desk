@@ -48,7 +48,7 @@
     import VerseRefBadge from "./VerseRefBadge.svelte";
 
     interface Props {
-        level: "intermediate" | "advanced";
+        level: "beginner" | "intermediate" | "advanced";
         onBack: () => void;
     }
     let { level, onBack }: Props = $props();
@@ -109,6 +109,11 @@
             rawContent = premade ?? "";
         }
     }
+
+    /** 'premade' while a shipped lesson is on screen, 'ai' for a generation. */
+    const activeSource = $derived(
+        $lessonVersions.find((v: TopicVersion) => v.id === $activeVersionId)?.source ?? "ai",
+    );
 
     // Show whichever version the header selects.
     $effect(() => {
@@ -899,11 +904,21 @@
                             class="rounded-2xl border border-[#e6cf96] bg-linear-to-b from-[#fdf6e6] to-white p-5 dark:border-[#6b5b37] dark:from-[#34302a] dark:to-[#292c3c]"
                         >
                             <div class="flex flex-wrap items-center justify-between gap-2">
+                                <!-- The shipped English lessons were written for
+                                     the app, not by the model on this machine —
+                                     so the badge says which one you are reading. -->
                                 <span
                                     class="inline-flex items-center gap-1.5 rounded-lg border border-brand-gold-400 bg-brand-gold-100 px-2.5 py-1 text-[0.625rem] font-semibold text-brand-gold-600 dark:bg-[#e5c890]/30 dark:text-[#e5c890]"
                                 >
-                                    <Icon icon="solar:bolt-bold-duotone" width="0.65rem" />
-                                    {$t("arabicStudy.grammar.ai_badge")}
+                                    <Icon
+                                        icon={activeSource === "premade"
+                                            ? "solar:book-bookmark-bold-duotone"
+                                            : "solar:bolt-bold-duotone"}
+                                        width="0.65rem"
+                                    />
+                                    {activeSource === "premade"
+                                        ? $t("arabicStudy.grammar.premade_badge")
+                                        : $t("arabicStudy.grammar.ai_badge")}
                                 </span>
                                 {#if modelFellBack}
                                     <span

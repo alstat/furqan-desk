@@ -171,7 +171,7 @@ export function fetchStudyActivity(): Promise<StudyActivity[]> {
     return invoke<StudyActivity[]>('get_study_activity');
 }
 
-// ── Grammar-topic content (intermediate/advanced curriculum) ────────────────
+// ── Topic content (the beginner, intermediate and advanced curricula) ──────
 
 /**
  * Which language the AI writes the grammar lesson in. Picked in the wizard's

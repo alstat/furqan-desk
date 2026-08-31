@@ -18,8 +18,11 @@
     interface Props {
         onBack: () => void;
         onDone: () => void;
+        /** Where the wizard goes next — the reading topics. Absent when there
+         *  is nothing after this lesson, in which case only "Done" is shown. */
+        onContinue?: () => void;
     }
-    let { onBack, onDone }: Props = $props();
+    let { onBack, onDone, onContinue }: Props = $props();
 
     // A verse chip on an example card loads that verse in the explorer below
     // rather than jumping the reader — the explorer's own button does that.
@@ -125,11 +128,22 @@
             <Icon icon="solar:arrow-left-linear" width="0.8rem" />
             {$t("arabicStudy.tajweed.back")}
         </button>
-        <button
-            onclick={onDone}
-            class="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-4 py-1.5 text-[0.75rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400"
-        >
-            {$t("arabicStudy.tajweed.done")}
-        </button>
+        <div class="flex items-center gap-2">
+            <button
+                onclick={onDone}
+                class="cursor-pointer rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3.5 py-1.5 text-[0.75rem] font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+            >
+                {$t("arabicStudy.tajweed.done")}
+            </button>
+            {#if onContinue}
+                <button
+                    onclick={onContinue}
+                    class="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-4 py-1.5 text-[0.75rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400"
+                >
+                    {$t("arabicStudy.tajweed.continue")}
+                    <Icon icon="solar:arrow-right-linear" width="0.8rem" />
+                </button>
+            {/if}
+        </div>
     </div>
 </div>

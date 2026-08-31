@@ -1,9 +1,16 @@
-/** Static topic lists for the intermediate/advanced grammar curriculum.
+/** Static topic lists for the beginner reading curriculum and the
+ * intermediate/advanced grammar curriculum.
  *
- * Only ids + sidebar labels live here — every topic's actual explanation,
- * examples, and quiz are generated on demand by `ai-grammar-topic.store.ts`
- * and cached, not hand-authored, per the original brief's instruction to use
- * AI for tailored grammar explanations at these levels. */
+ * Only ids + sidebar labels live here. Every topic ships with an English
+ * lesson in `grammar-premade.ts`, so a reader without an AI subscription has
+ * something to study from the first time they open it; a reader with one
+ * regenerates the lesson — in any language — through
+ * `ai-grammar-topic.store.ts`, which adds a version rather than replacing one.
+ *
+ * The beginner list is about *reading*: the script, the vowel signs, the stops
+ * in the muṣḥaf, and the few sentence patterns a first reader meets. The
+ * hands-on lessons (alphabet, pairing, three-letter words, long vowels,
+ * tajwīd) come first in the wizard; these topics are what follows them. */
 
 /** One morphology query: a token tag and/or feature atoms that must all be
  * present. Matches the `find_morphology_examples` command. */
@@ -29,6 +36,69 @@ export interface GrammarTopic {
      */
     corpus?: CorpusQuery[];
 }
+
+export const BEGINNER_TOPICS: GrammarTopic[] = [
+    { id: "letter_shapes", label: "How letters join: the four shapes" },
+    { id: "sukun_basics", label: "Sukūn — a letter with no vowel" },
+    { id: "shaddah_basics", label: "Shaddah — the doubled letter" },
+    {
+        id: "tanween_basics",
+        label: "Tanwīn — the indefinite ending",
+        corpus: [{ label: "indefinite noun", features: ["POS:N", "INDEF"] }],
+    },
+    { id: "madd_basics", label: "Long vowels and how long to hold them" },
+    {
+        id: "sun_moon_letters",
+        label: "ال with sun and moon letters",
+        corpus: [{ label: "word carrying the definite article", features: ["Al+"] }],
+    },
+    { id: "hamzat_wasl", label: "Hamzat al-waṣl and hamzat al-qaṭʿ" },
+    {
+        id: "taa_marbuta",
+        label: "Tāʾ marbūṭah and the feminine ending",
+        corpus: [{ label: "feminine noun", features: ["POS:N", "F"] }],
+    },
+    { id: "waqf_signs", label: "Stopping signs in the muṣḥaf" },
+    {
+        id: "pronouns_beginner",
+        label: "Personal pronouns",
+        corpus: [{ label: "pronoun", tag: "PRON" }],
+    },
+    {
+        id: "demonstratives_beginner",
+        label: "This and that — demonstratives",
+        corpus: [{ label: "demonstrative", tag: "DEM" }],
+    },
+    {
+        id: "prepositions_beginner",
+        label: "The common prepositions",
+        corpus: [{ label: "preposition", tag: "P" }],
+    },
+    {
+        id: "question_words",
+        label: "Question words",
+        corpus: [{ label: "interrogative", tag: "INTG" }],
+    },
+    {
+        id: "gender_number_basics",
+        label: "Masculine and feminine, one, two and many",
+        corpus: [
+            { label: "feminine singular noun", features: ["POS:N", "FS"] },
+            { label: "masculine plural noun", features: ["POS:N", "MP"] },
+        ],
+    },
+    {
+        id: "nominal_sentence",
+        label: "The nominal sentence — mubtadaʾ and khabar",
+        corpus: [{ label: "nominative noun (marfūʿ)", features: ["POS:N", "NOM"] }],
+    },
+    {
+        id: "verbal_sentence",
+        label: "The verbal sentence — verb, doer, object",
+        corpus: [{ label: "verb", tag: "V" }],
+    },
+    { id: "frequent_quran_words", label: "The words you meet most in the Qur'an" },
+];
 
 export const INTERMEDIATE_TOPICS: GrammarTopic[] = [
     {
@@ -185,6 +255,9 @@ export const ADVANCED_TOPICS: GrammarTopic[] = [
     { id: "saj", label: "Sajʿ — rhythmic prose in early Meccan sūrahs" },
 ];
 
-export function topicsForLevel(level: "intermediate" | "advanced"): GrammarTopic[] {
+export function topicsForLevel(
+    level: "beginner" | "intermediate" | "advanced",
+): GrammarTopic[] {
+    if (level === "beginner") return BEGINNER_TOPICS;
     return level === "intermediate" ? INTERMEDIATE_TOPICS : ADVANCED_TOPICS;
 }

@@ -1,6 +1,7 @@
 /**
- * Lessons that ship with the app, in English, for the intermediate and advanced
- * curriculum.
+ * Lessons that ship with the app, in English, for every level of the Arabic
+ * study curriculum — the beginner reading topics as well as the intermediate
+ * and advanced grammar ones.
  *
  * WHY THIS FILE IS NOT IN THE i18n DICTIONARY. These are whole lessons, not
  * interface strings: a screenful of prose each, in one language on purpose.
@@ -24,6 +25,299 @@ export const PREMADE_LOCALE = 'en';
 
 /** topic id -> the lesson that ships for it. Topics absent here have none. */
 export const PREMADE_LESSONS: Record<string, string> = {
+    // ── Beginner: reading the script, and the first sentence patterns ──
+
+    letter_shapes: `@@title@@ أَشْكَالُ الحُرُوفِ
+@@subtitle@@ ashkāl al-ḥurūf — the four shapes of one letter
+@@explanation@@ Arabic is written in one running line, so most letters change shape according to where they stand: **initial** (start of a joined piece), **medial** (between two letters), **final** (end of a piece), and **isolated** (standing alone).
+
+Only the joining strokes change. The skeleton — a tooth, a bowl, a loop, the dots — stays the same, and so does the sound. Once you can see the skeleton you can read a letter in any of its four dresses.
+
+Six letters behave differently: **ا د ذ ر ز و**. They join to the letter before them but never to the letter after. Wherever one of them falls, the word breaks into a new piece and the next letter begins again in its initial shape. That is why a single word can look like two or three separate clumps on the page — it is one word still.
+@@quran_1@@ بِسْمِ :: every letter joins forward here, so the sīn stands in its medial shape between bāʾ and mīm :: 1:1
+@@quran_2@@ ٱلرَّحْمَـٰنِ :: rāʾ never joins forward, so the ḥāʾ after it starts a fresh piece in its initial shape :: 1:1
+@@quran_3@@ أَحَدٌ :: alif does not join forward either, so حد is written as a piece of its own :: 112:1
+@@everyday_1@@ بَابٌ :: A door — the bāʾ joins forward, the alif does not
+@@everyday_2@@ وَرْدَةٌ :: A flower — wāw and rāʾ each break the word into a new piece
+@@everyday_3@@ مَدْرَسَةٌ :: A school — four pieces, one word
+@@exercise_1@@ أَيُّ حَرْفٍ لَا يَتَّصِلُ بِمَا بَعْدَهُ؟ :: د | س | م :: د :: dāl is one of the six letters that never join forward :: Which letter never joins to the one after it?
+@@exercise_2@@ كَمْ شَكْلًا لِلْحَرْفِ العَرَبِيِّ؟ :: شَكْلَانِ | ثَلَاثَةٌ | أَرْبَعَةٌ :: أَرْبَعَةٌ :: initial, medial, final and isolated :: How many shapes does an Arabic letter have?
+@@exercise_3@@ الأَلِفُ فِي كَلِمَةِ بَابٌ ___ :: تَتَّصِلُ بِمَا بَعْدَهَا | لَا تَتَّصِلُ بِمَا بَعْدَهَا | لَا تَتَّصِلُ بِمَا قَبْلَهَا :: لَا تَتَّصِلُ بِمَا بَعْدَهَا :: alif joins backwards only :: In the word bāb, the alif ___`,
+
+    sukun_basics: `@@title@@ السُّكُونُ
+@@subtitle@@ as-sukūn — the letter with no vowel
+@@explanation@@ A **sukūn** is the small circle written above a letter to say: no vowel here. The letter is pronounced and the voice stops on it, closing the syllable.
+
+Compare **قُ** (qu) with **قُلْ** (qul). The qāf carries a ḍammah and is read *qu*; the lām carries a sukūn, so it is sounded and shut — *qul*, never *qulu*. Every Arabic syllable is a consonant with a vowel, optionally closed by a consonant with sukūn; there is no third possibility, which is why the vowel signs alone tell you how a word is read.
+
+A word never begins with a sukūn. If a reading would start with one, an alif of connection is placed in front of it to carry a vowel — which is what the **ٱ** at the start of many Qur'anic words is doing.
+@@quran_1@@ قُلْ هُوَ ٱللَّهُ أَحَدٌ :: the lām of قُلْ is closed with a sukūn — qul, in one syllable :: 112:1
+@@quran_2@@ لَمْ يَلِدْ وَلَمْ يُولَدْ :: four closed syllables in a row: lam ya-lid wa-lam yū-lad :: 112:3
+@@quran_3@@ ٱلْحَمْدُ لِلَّهِ :: the lām of the article and the mīm both take sukūn — al-ḥam-du :: 1:2
+@@everyday_1@@ قُمْ :: Stand up — the mīm is closed with a sukūn
+@@everyday_2@@ بِنْتٌ :: A girl — the nūn is silent of vowel: bint
+@@everyday_3@@ كَمْ عُمْرُكَ :: How old are you — kam, with a closed mīm
+@@exercise_1@@ عَلَامَةُ السُّكُونِ هِيَ ___ :: دَائِرَةٌ صَغِيرَةٌ | خَطٌّ مَائِلٌ | نُقْطَتَانِ :: دَائِرَةٌ صَغِيرَةٌ :: the sukūn is written as a small circle above the letter :: The sign of the sukūn is ___
+@@exercise_2@@ كَلِمَةُ مِنْ تُقْرَأُ ___ :: مِنْ | مِنَ | مِنُ :: مِنْ :: the nūn carries a sukūn, so no vowel follows it :: The word min is read ___
+@@exercise_3@@ الحَرْفُ السَّاكِنُ ___ :: يَبْدَأُ الكَلِمَةَ | يُغْلِقُ المَقْطَعَ | يُمَدُّ :: يُغْلِقُ المَقْطَعَ :: a vowelless letter closes the syllable, and a word never starts with one :: A letter with sukūn ___`,
+
+    shaddah_basics: `@@title@@ الشَّدَّةُ
+@@subtitle@@ ash-shaddah — the doubled letter
+@@explanation@@ The **shaddah** is the small ش-shaped mark written above a letter. It means the letter is written once but read twice: the first sounded with a sukūn, the second with the vowel written beside the shaddah.
+
+So **رَبِّ** is *rab-bi*, and **إِنَّ** is *in-na*. In recitation the doubled letter is held — you can hear the extra weight, and with a doubled **نّ** or **مّ** the sound is hummed through the nose for two counts.
+
+The shaddah is never decoration. It changes the word: **دَرَسَ** (he studied) and **دَرَّسَ** (he taught) differ by nothing else. It also appears when the lām of the article assimilates into a sun letter, which is why **الشَّمْس** is read *ash-shams*.
+@@quran_1@@ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ :: the rāʾ is doubled in both names — ar-raḥmān, ar-raḥīm :: 1:3
+@@quran_2@@ إِنَّ ٱلْإِنسَـٰنَ لَفِى خُسْرٍ :: the nūn of إِنَّ is doubled and hummed :: 103:2
+@@quran_3@@ وَٱلشَّمْسِ وَضُحَىٰهَا :: the shīn is doubled because the article's lām has assimilated into it :: 91:1
+@@everyday_1@@ مُدَرِّسٌ :: A teacher — the rāʾ is doubled
+@@everyday_2@@ جَدِّي :: My grandfather — the dāl is doubled
+@@everyday_3@@ تَعَلَّمْتُ العَرَبِيَّةَ :: I learned Arabic — two doubled letters in one sentence
+@@exercise_1@@ الشَّدَّةُ تَعْنِي أَنَّ الحَرْفَ ___ :: يُنْطَقُ مَرَّتَيْنِ | يُحْذَفُ | يُمَدُّ :: يُنْطَقُ مَرَّتَيْنِ :: a shaddah is a silent letter plus a voiced one written as a single letter :: A shaddah means the letter is ___
+@@exercise_2@@ أَيُّ كَلِمَةٍ مَعْنَاهَا عَلَّمَ غَيْرَهُ؟ :: دَرَسَ | دَرَّسَ | دَارَسَ :: دَرَّسَ :: the shaddah alone turns studying into teaching :: Which word means to teach?
+@@exercise_3@@ كَلِمَةُ الشَّمْسِ تُقْرَأُ ___ :: أَشْ شَمْس | أَلْ شَمْس | أَشْ سَمْس :: أَشْ شَمْس :: the lām assimilates and the shīn doubles :: The word ash-shams is read ___`,
+
+    tanween_basics: `@@title@@ التَّنْوِينُ
+@@subtitle@@ at-tanwīn — the ending of an indefinite noun
+@@explanation@@ **Tanwīn** is a doubled vowel sign at the end of a noun, read as if a silent **n** were attached: **ـٌ** *-un*, **ـً** *-an*, **ـٍ** *-in*. It is the Arabic equivalent of saying *a book* rather than *the book*.
+
+The three forms are the three cases: *-un* where the noun is the subject, *-an* where it is an object, *-in* after a preposition or as the second term of a possessive phrase. Tanwīn fatḥ is usually written on an added alif — **يُسْرًا** — which is a seat for the sign, not a long vowel.
+
+Definite and indefinite are exclusive: a noun carrying **ال** never carries tanwīn, and neither does the first term of a possessive phrase. Seeing tanwīn, you already know the noun is indefinite.
+@@quran_1@@ قُلْ هُوَ ٱللَّهُ أَحَدٌ :: أَحَدٌ ends in tanwīn ḍamm — aḥadun, indefinite :: 112:1
+@@quran_2@@ إِنَّ مَعَ ٱلْعُسْرِ يُسْرًا :: يُسْرًا carries tanwīn fatḥ, written over an added alif :: 94:6
+@@quran_3@@ خَلَقَ ٱلْإِنسَـٰنَ مِنْ عَلَقٍ :: عَلَقٍ takes tanwīn kasr after the preposition مِنْ :: 96:2
+@@everyday_1@@ هَذَا كِتَابٌ جَدِيدٌ :: This is a new book
+@@everyday_2@@ شَرِبْتُ مَاءً بَارِدًا :: I drank cold water
+@@everyday_3@@ ذَهَبْتُ إِلَى بَيْتٍ قَدِيمٍ :: I went to an old house
+@@exercise_1@@ التَّنْوِينُ يُنْطَقُ ___ :: نُونًا سَاكِنَةً | مِيمًا | أَلِفًا :: نُونًا سَاكِنَةً :: the doubled vowel is read with a silent n at the end :: Tanwīn is pronounced as ___
+@@exercise_2@@ أَيُّ كَلِمَةٍ لَا تَقْبَلُ التَّنْوِينَ؟ :: كِتَابٌ | الكِتَابُ | بَيْتٌ :: الكِتَابُ :: a noun with the article is definite, and never carries tanwīn :: Which word cannot take tanwīn?
+@@exercise_3@@ قَرَأْتُ ___ :: كِتَابٌ | كِتَابًا | كِتَابٍ :: كِتَابًا :: the object of a verb takes the -an ending :: I read ___`,
+
+    madd_basics: `@@title@@ المَدُّ الطَّبِيعِيُّ
+@@subtitle@@ al-madd aṭ-ṭabīʿī — the natural long vowel
+@@explanation@@ Every short vowel has a long partner, made by adding a letter of prolongation: fatḥah plus **ا** gives *ā*, ḍammah plus **و** gives *ū*, kasrah plus **ي** gives *ī*. The three letters carry no vowel sign of their own — that is how you recognise them.
+
+A natural madd is held for **two counts**: about twice the length of the short vowel, steady, with no swell. Say *qāla* against *qala* and you can hear that vowel length alone changes the word.
+
+In the muṣḥaf a long *ā* is sometimes written as a small vertical stroke above the letter — a **dagger alif** — instead of a full alif: **ٱلرَّحْمَـٰنِ** is read *ar-raḥmān* even though no alif is written. It is the same two counts.
+@@quran_1@@ ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ :: two natural madds — the dagger alif in ٱلْعَـٰلَمِينَ and the long ī before its final nūn :: 1:2
+@@quran_2@@ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ :: the yāʾ in نَسْتَعِينُ is a long ī, two counts, no more :: 1:5
+@@quran_3@@ قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ :: the wāw in أَعُوذُ carries no vowel of its own — it is the long ū :: 113:1
+@@everyday_1@@ بَابٌ :: A door — a long ā between two consonants
+@@everyday_2@@ نُورٌ :: Light — a long ū
+@@everyday_3@@ كَبِيرٌ :: Big — a long ī
+@@exercise_1@@ حُرُوفُ المَدِّ هِيَ ___ :: ا و ي | ا ل م | ب ت ث :: ا و ي :: alif, wāw and yāʾ are the three letters of prolongation :: The letters of prolongation are ___
+@@exercise_2@@ المَدُّ الطَّبِيعِيُّ مِقْدَارُهُ ___ :: حَرَكَةٌ وَاحِدَةٌ | حَرَكَتَانِ | سِتُّ حَرَكَاتٍ :: حَرَكَتَانِ :: a natural madd is held for two counts :: A natural madd is held for ___
+@@exercise_3@@ حَرْفُ المَدِّ ___ :: يَحْمِلُ حَرَكَةً | لَا يَحْمِلُ حَرَكَةً | يَحْمِلُ شَدَّةً :: لَا يَحْمِلُ حَرَكَةً :: a letter of prolongation never carries a vowel sign of its own :: A letter of prolongation ___`,
+
+    sun_moon_letters: `@@title@@ الحُرُوفُ الشَّمْسِيَّةُ وَالقَمَرِيَّةُ
+@@subtitle@@ al-ḥurūf ash-shamsiyyah wa-l-qamariyyah — the article and its two readings
+@@explanation@@ The definite article **ال** — English *the* — is written the same way in front of every noun, and read in two ways.
+
+Before a **moon letter** (ا ب ج ح خ ع غ ف ق ك م ه و ي) the lām is pronounced: *al-qamar*, "the moon", which is where the name comes from. Before a **sun letter** — the other fourteen: ت ث د ذ ر ز س ش ص ض ط ظ ل ن — the lām is not pronounced at all. The following letter doubles instead, and the muṣḥaf marks that doubling with a **shaddah**: *ash-shams*, never *al-shams*.
+
+The spelling never changes; only the reading does. The shaddah on the letter after the article is the sign telling you which reading applies — and a lām with a sukūn is the sign of the other.
+@@quran_1@@ ٱلْحَمْدُ لِلَّهِ :: ḥāʾ is a moon letter, so the lām is heard: al-ḥamdu :: 1:2
+@@quran_2@@ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ :: rāʾ is a sun letter — the lām is silent and the rāʾ doubles :: 1:3
+@@quran_3@@ وَٱلشَّمْسِ وَضُحَىٰهَا :: shīn is a sun letter, and the shaddah shows the assimilation :: 91:1
+@@everyday_1@@ القَمَرُ جَمِيلٌ :: The moon is beautiful — al-qamar, a moon letter
+@@everyday_2@@ الشَّمْسُ سَاطِعَةٌ :: The sun is shining — ash-shams, the lām assimilated
+@@everyday_3@@ فَتَحْتُ البَابَ وَالنَّافِذَةَ :: I opened the door and the window — al-bāb, an-nāfidhah
+@@exercise_1@@ أَيُّ كَلِمَةٍ تُقْرَأُ بِلَامٍ سَاكِنَةٍ؟ :: الطَّرِيقُ | القَلَمُ | النَّهْرُ :: القَلَمُ :: qāf is a moon letter, so the lām is pronounced :: Which word is read with an audible lām?
+@@exercise_2@@ عَدَدُ الحُرُوفِ الشَّمْسِيَّةِ ___ :: أَرْبَعَةَ عَشَرَ | سَبْعَةٌ | ثَمَانِيَةٌ :: أَرْبَعَةَ عَشَرَ :: fourteen sun letters, fourteen moon letters :: The number of sun letters is ___
+@@exercise_3@@ الشَّدَّةُ بَعْدَ ال تَدُلُّ عَلَى ___ :: حَرْفٍ شَمْسِيٍّ | حَرْفٍ قَمَرِيٍّ | حَرْفِ مَدٍّ :: حَرْفٍ شَمْسِيٍّ :: a shaddah right after the article marks an assimilated sun letter :: A shaddah after al- marks ___`,
+
+    hamzat_wasl: `@@title@@ هَمْزَةُ الوَصْلِ وَهَمْزَةُ القَطْعِ
+@@subtitle@@ hamzat al-waṣl wa-hamzat al-qaṭʿ — the alif that speaks and the alif that is skipped
+@@explanation@@ Two different alifs stand at the beginning of Arabic words, and they are read differently.
+
+**Hamzat al-qaṭʿ** is written with a hamzah — **أ** or **إ** — and is always pronounced, whether you begin at that word or arrive at it from the word before: **أَنْعَمْتَ**, **إِنَّ**.
+
+**Hamzat al-waṣl** is written as a bare alif, marked in the muṣḥaf with a small **ٱ** sign. It is pronounced only when you *start* reading there; if a word precedes it, the alif is skipped and the reading runs straight on. So **بِسْمِ ٱللَّهِ** is *bismi-llāhi*, not *bismi al-lāhi*. It appears on the definite article, on the imperative of many verbs, and on a handful of nouns such as **ٱسْم** and **ٱبْن**.
+@@quran_1@@ بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ :: three connecting alifs, all skipped in the flow — bismi-llāhi-r-raḥmāni-r-raḥīm :: 1:1
+@@quran_2@@ ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ :: beginning here, the first alif is pronounced: ihdinā :: 1:6
+@@quran_3@@ صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ :: the hamzah of أَنْعَمْتَ is a cutting hamzah — always sounded :: 1:7
+@@everyday_1@@ اِسْمِي أَحْمَدُ :: My name is Ahmad — the alif of ism is sounded at the start
+@@everyday_2@@ ذَهَبَ اِبْنُ الجَارِ :: The neighbour's son left — here the alif is skipped
+@@everyday_3@@ أَنَا أُرِيدُ المَاءَ :: I want water — a cutting hamzah, always heard
+@@exercise_1@@ هَمْزَةُ الوَصْلِ تُنْطَقُ ___ :: دَائِمًا | فِي البَدْءِ فَقَطْ | أَبَدًا :: فِي البَدْءِ فَقَطْ :: it is heard only when the reading begins at that word :: Hamzat al-waṣl is pronounced ___
+@@exercise_2@@ أَيُّ كَلِمَةٍ تَبْدَأُ بِهَمْزَةِ قَطْعٍ؟ :: اِسْمٌ | أَحَدٌ | اِبْنٌ :: أَحَدٌ :: a written hamzah marks the cutting kind :: Which word begins with hamzat al-qaṭʿ?
+@@exercise_3@@ بِسْمِ اللَّهِ تُقْرَأُ ___ :: بِسْمِ اللَّهِ | بِسْمِ أَللَّهِ | بِسْمِ اِللَّهِ :: بِسْمِ اللَّهِ :: the connecting alif is skipped inside the flow :: Bismillāh is read ___`,
+
+    taa_marbuta: `@@title@@ التَّاءُ المَرْبُوطَةُ
+@@subtitle@@ at-tāʾ al-marbūṭah — the tied tāʾ and the feminine ending
+@@explanation@@ The letter **ة** — a hāʾ with two dots — is the ordinary mark of the feminine. Add it to a masculine noun or adjective and you get its feminine partner: **مُعَلِّم** becomes **مُعَلِّمَة**, **كَبِير** becomes **كَبِيرَة**.
+
+It is read two ways. Continuing into the next word, it sounds as a **t**: *raḥmatan li-l-ʿālamīn*. Stopping on it, it softens to a plain **h**: *raḥmah*. Both are correct; which one you use depends only on whether you pause.
+
+Do not confuse it with the open **ت**, which is always a t, nor with a plain **ه**. In a possessive phrase the tied tāʾ is always sounded as t, because the phrase is never broken at that point.
+@@quran_1@@ وَمَآ أَرْسَلْنَـٰكَ إِلَّا رَحْمَةً لِّلْعَـٰلَمِينَ :: رَحْمَةً is read with a t because the reading runs on :: 21:107
+@@quran_2@@ هَلْ أَتَىٰكَ حَدِيثُ ٱلْغَـٰشِيَةِ :: stopping at the end of the ayah, ٱلْغَـٰشِيَةِ ends in a soft h :: 88:1
+@@quran_3@@ فَهُوَ فِى عِيشَةٍ رَّاضِيَةٍ :: two tied tāʾs, both feminine endings :: 101:7
+@@everyday_1@@ مُعَلِّمَةٌ جَدِيدَةٌ :: A new teacher (feminine) — the ending agrees on both words
+@@everyday_2@@ مَدِينَةٌ كَبِيرَةٌ :: A big city
+@@everyday_3@@ سَيَّارَةُ أَخِي :: My brother's car — sounded as t inside the phrase
+@@exercise_1@@ التَّاءُ المَرْبُوطَةُ عِنْدَ الوَقْفِ تُنْطَقُ ___ :: تَاءً | هَاءً | أَلِفًا :: هَاءً :: stopping on it softens the sound to h :: When you stop on it, tāʾ marbūṭah is read as ___
+@@exercise_2@@ مُؤَنَّثُ كَلِمَةِ كَبِيرٌ هُوَ ___ :: كَبِيرَةٌ | كَبِيرُونَ | كِبَارٌ :: كَبِيرَةٌ :: the tied tāʾ makes the feminine :: The feminine of kabīr is ___
+@@exercise_3@@ فِي الإِضَافَةِ تُنْطَقُ التَّاءُ المَرْبُوطَةُ ___ :: تَاءً | هَاءً | لَا تُنْطَقُ :: تَاءً :: the phrase is not broken there, so the t is heard :: In a possessive phrase, tāʾ marbūṭah is read as ___`,
+
+    waqf_signs: `@@title@@ عَلَامَاتُ الوَقْفِ
+@@subtitle@@ ʿalāmāt al-waqf — the stopping signs in the muṣḥaf
+@@explanation@@ The small letters printed above the line of the muṣḥaf are not part of the words. They are advice about where to breathe, placed by scholars so that a stop never cuts a meaning in half.
+
+They are known by the letter used to write them. **Mīm** marks a compulsory stop. **Jīm** marks a stop that is simply permitted. **Ṣād-lām-yā** says a stop is allowed but continuing is better, and **qāf-lām-yā** says the opposite — stopping is better. **Lā** warns you not to stop there at all. And the **embracing pair**, two identical marks a few words apart, means: stop at one of them or the other, never at both.
+
+Where no sign appears and your breath runs out, stop at the end of a complete meaning and begin again from a word that starts the sense cleanly, not from the middle of a phrase. That habit alone keeps a beginner's recitation intelligible.
+@@quran_1@@ ذَٰلِكَ ٱلْكِتَـٰبُ لَا رَيْبَ ۛ فِيهِ ۛ هُدًى لِّلْمُتَّقِينَ :: the embracing pair — stop either before or after فِيهِ, never at both :: 2:2
+@@quran_2@@ وَإِلَـٰهُكُمْ إِلَـٰهٌ وَٰحِدٌ ۖ :: the sign says a stop is allowed, though continuing is better :: 2:163
+@@quran_3@@ ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ :: an even choice: stop or continue as your breath allows :: 2:255
+@@everyday_1@@ قَرَأْتُ الآيَةَ ثُمَّ وَقَفْتُ :: I read the ayah, then I stopped
+@@everyday_2@@ خُذْ نَفَسًا عِنْدَ نِهَايَةِ المَعْنَى :: Take a breath at the end of a meaning
+@@everyday_3@@ لَا تَقِفْ فِي وَسَطِ الجُمْلَةِ :: Do not stop in the middle of a sentence
+@@exercise_1@@ عَلَامَةُ ۛ ۛ تَعْنِي ___ :: قِفْ عِنْدَ الأُولَى أَوِ الثَّانِيَةِ | قِفْ عِنْدَهُمَا | لَا تَقِفْ :: قِفْ عِنْدَ الأُولَى أَوِ الثَّانِيَةِ :: the embracing pair allows one stop, not two :: The mark ۛ ۛ means ___
+@@exercise_2@@ عَلَامَةُ ۙ تَعْنِي ___ :: الوَقْفُ لَازِمٌ | لَا تَقِفْ | الوَقْفُ أَوْلَى :: لَا تَقِفْ :: this sign warns against stopping there :: The mark ۙ means ___
+@@exercise_3@@ إِذَا انْقَطَعَ النَّفَسُ فَقِفْ ___ :: عِنْدَ تَمَامِ المَعْنَى | فِي أَيِّ مَوْضِعٍ | بَعْدَ حَرْفِ الجَرِّ :: عِنْدَ تَمَامِ المَعْنَى :: stop where the sense is complete and resume cleanly :: If your breath runs out, stop ___`,
+
+    pronouns_beginner: `@@title@@ الضَّمَائِرُ
+@@subtitle@@ aḍ-ḍamāʾir — the personal pronouns
+@@explanation@@ Arabic pronouns come in two kinds. **Separate** pronouns stand as words of their own: **أَنَا** I, **أَنْتَ** you (m.), **أَنْتِ** you (f.), **هُوَ** he, **هِيَ** she, **نَحْنُ** we, **هُمْ** they.
+
+**Attached** pronouns are suffixes. On a noun they mean *my, your, his*: **رَبّ** a lord, **رَبِّي** my Lord, **رَبُّكَ** your Lord. On a verb they are the object: **عَلَّمَهُ** he taught him. One short syllable does what English needs a whole word for.
+
+Arabic also marks the doer inside the verb itself, so a separate pronoun before a verb is emphasis rather than necessity: **نَعْبُدُ** already says *we worship*. Notice too that Arabic distinguishes masculine from feminine in the second and third person, where English does not.
+@@quran_1@@ قُلْ هُوَ ٱللَّهُ أَحَدٌ :: هُوَ is a separate pronoun standing as the subject :: 112:1
+@@quran_2@@ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ :: إِيَّاكَ is the object pronoun, and the نَـ of نَعْبُدُ is the we inside the verb :: 1:5
+@@quran_3@@ أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَـٰبِ ٱلْفِيلِ :: the كَ attached to رَبُّ means your :: 105:1
+@@everyday_1@@ أَنَا طَالِبٌ :: I am a student
+@@everyday_2@@ هِيَ مُعَلِّمَةٌ :: She is a teacher
+@@everyday_3@@ كِتَابِي عَلَى المَكْتَبِ :: My book is on the desk
+@@exercise_1@@ ضَمِيرُ المُتَكَلِّمِ لِلْجَمْعِ هُوَ ___ :: أَنَا | نَحْنُ | هُمْ :: نَحْنُ :: naḥnu is we :: The first-person plural pronoun is ___
+@@exercise_2@@ فِي كَلِمَةِ رَبُّكَ الكَافُ تَعْنِي ___ :: لِي | لَكَ | لَهُ :: لَكَ :: the attached kāf means your :: In rabbuka, the kāf means ___
+@@exercise_3@@ أَيُّ ضَمِيرٍ لِلْمُؤَنَّثِ المُخَاطَبِ؟ :: أَنْتَ | أَنْتِ | هُوَ :: أَنْتِ :: anti addresses a woman :: Which pronoun addresses a female listener?`,
+
+    demonstratives_beginner: `@@title@@ أَسْمَاءُ الإِشَارَةِ
+@@subtitle@@ asmāʾ al-ishārah — this and that
+@@explanation@@ Pointing words in Arabic agree with what they point at. For something near: **هَذَا** this (m.), **هَذِهِ** this (f.). For something far: **ذَلِكَ** that (m.), **تِلْكَ** that (f.). For two: **هَذَانِ**, **هَاتَانِ**; for a group: **هَؤُلَاءِ** these, **أُولَـٰئِكَ** those.
+
+Followed by a noun with the article, the demonstrative and the noun together are one phrase: **هَذَا الكِتَابُ** *this book*. Followed by a noun without the article, it is a whole sentence: **هَذَا كِتَابٌ** *this is a book*. The article is the only difference, and it changes everything.
+
+In the muṣḥaf these words are often written with a dagger alif — **هَـٰذَا**, **ذَٰلِكَ** — and read with a long ā all the same.
+@@quran_1@@ ذَٰلِكَ ٱلْكِتَـٰبُ لَا رَيْبَ :: ذَٰلِكَ with a definite noun — that Book, one phrase :: 2:2
+@@quran_2@@ لَآ أُقْسِمُ بِهَـٰذَا ٱلْبَلَدِ :: هَـٰذَا points at something near, and the noun after it keeps the article :: 90:1
+@@quran_3@@ فَلْيَعْبُدُوا۟ رَبَّ هَـٰذَا ٱلْبَيْتِ :: the demonstrative sits inside a possessive phrase — the Lord of this House :: 106:3
+@@everyday_1@@ هَذَا كِتَابٌ :: This is a book
+@@everyday_2@@ هَذِهِ مَدْرَسَتِي :: This is my school
+@@everyday_3@@ ذَلِكَ الرَّجُلُ طَبِيبٌ :: That man is a doctor
+@@exercise_1@@ اسْمُ الإِشَارَةِ لِلْمُؤَنَّثِ القَرِيبِ هُوَ ___ :: هَذَا | هَذِهِ | تِلْكَ :: هَذِهِ :: hādhihi points at something near and feminine :: The demonstrative for a nearby feminine thing is ___
+@@exercise_2@@ جُمْلَةُ هَذَا بَيْتٌ مَعْنَاهَا ___ :: هَذَا البَيْتُ | هَذَا بَيْتٌ | البَيْتُ هَذَا :: هَذَا بَيْتٌ :: without the article it is a complete sentence: this is a house :: The sentence hādhā baytun means ___
+@@exercise_3@@ أَيُّ كَلِمَةٍ لِلْبَعِيدِ؟ :: هَؤُلَاءِ | أُولَـٰئِكَ | هَذَانِ :: أُولَـٰئِكَ :: ulāʾika points at a distant group :: Which word points at something far?`,
+
+    prepositions_beginner: `@@title@@ حُرُوفُ الجَرِّ
+@@subtitle@@ ḥurūf al-jarr — the common prepositions
+@@explanation@@ A preposition puts the noun after it into the genitive — the **-i** ending, or **-in** if the noun is indefinite. That is the whole rule, and it never varies.
+
+The everyday ones: **فِي** in, **مِنْ** from, **إِلَى** to, **عَلَى** on, **عَنْ** about, **مَعَ** with, and two that attach directly to the word: **بِـ** with or by, and **لِـ** for or belonging to. Because they attach, **بِسْمِ** is one written word doing the work of two.
+
+A preposition can also complete a verb's meaning in a way English does not predict, so it is worth learning verb and preposition together — **آمَنَ بِـ** to believe in, **رَغِبَ عَنْ** to turn away from.
+@@quran_1@@ بِسْمِ ٱللَّهِ :: the attached بِـ pulls ٱللَّهِ into the genitive :: 1:1
+@@quran_2@@ خَلَقَ ٱلْإِنسَـٰنَ مِنْ عَلَقٍ :: after مِنْ the indefinite noun ends in -in :: 96:2
+@@quran_3@@ إِنَّآ أَنزَلْنَـٰهُ فِى لَيْلَةِ ٱلْقَدْرِ :: فِى governs لَيْلَةِ, which itself heads a possessive phrase :: 97:1
+@@everyday_1@@ الكِتَابُ عَلَى الطَّاوِلَةِ :: The book is on the table
+@@everyday_2@@ ذَهَبْتُ إِلَى المَدْرَسَةِ :: I went to the school
+@@everyday_3@@ خَرَجْتُ مِنَ البَيْتِ مَعَ أَبِي :: I left the house with my father
+@@exercise_1@@ الاسْمُ بَعْدَ حَرْفِ الجَرِّ يَكُونُ ___ :: مَرْفُوعًا | مَنْصُوبًا | مَجْرُورًا :: مَجْرُورًا :: a noun after a preposition is always genitive :: A noun after a preposition is ___
+@@exercise_2@@ سَافَرْتُ ___ القَاهِرَةِ :: إِلَى | عَلَى | عَنْ :: إِلَى :: ilā marks the destination :: I travelled ___ Cairo
+@@exercise_3@@ أَيُّ حَرْفٍ يَتَّصِلُ بِالكَلِمَةِ؟ :: فِي | بِـ | مَعَ :: بِـ :: bi- is written joined to the noun it governs :: Which preposition attaches to the word?`,
+
+    question_words: `@@title@@ أَدَوَاتُ الاسْتِفْهَامِ
+@@subtitle@@ adawāt al-istifhām — asking a question
+@@explanation@@ Arabic asks a question by putting one word in front of a statement. Nothing else moves: no auxiliary verb, no change of order.
+
+**هَلْ** and **أَ** turn a statement into a yes-or-no question. The rest ask for information: **مَا** what (of things), **مَنْ** who, **أَيْنَ** where, **مَتَى** when, **كَيْفَ** how, **كَمْ** how many, **لِمَاذَا** why, **أَيُّ** which.
+
+**مَا** before a verb usually means *not* rather than *what*, so read on before deciding which it is. And a question in the Qur'an is often not a request for information at all but a way of drawing attention — **أَلَمْ تَرَ**, "have you not seen", invites the listener to look, not to answer.
+@@quran_1@@ هَلْ أَتَىٰكَ حَدِيثُ ٱلْغَـٰشِيَةِ :: هَلْ opens a yes-or-no question :: 88:1
+@@quran_2@@ مَا ٱلْقَارِعَةُ :: مَا asks what — here to magnify the thing asked about :: 101:2
+@@quran_3@@ أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَـٰبِ ٱلْفِيلِ :: two at once: the questioning أَ and كَيْفَ, how :: 105:1
+@@everyday_1@@ مَا اسْمُكَ :: What is your name
+@@everyday_2@@ أَيْنَ البَيْتُ :: Where is the house
+@@everyday_3@@ كَيْفَ حَالُكَ :: How are you
+@@exercise_1@@ ___ تَذْهَبُ؟ :: مَتَى | مَا | مَنْ :: مَتَى :: matā asks about time :: ___ are you going?
+@@exercise_2@@ أَدَاةُ السُّؤَالِ عَنِ العَاقِلِ هِيَ ___ :: مَا | مَنْ | أَيْنَ :: مَنْ :: man asks about a person :: The word that asks about a person is ___
+@@exercise_3@@ هَلْ تُسْتَعْمَلُ لِـ ___ :: سُؤَالٍ بِنَعَمْ أَوْ لَا | سُؤَالٍ عَنِ المَكَانِ | النَّفْيِ :: سُؤَالٍ بِنَعَمْ أَوْ لَا :: hal opens a yes-or-no question :: Hal is used for ___`,
+
+    gender_number_basics: `@@title@@ التَّذْكِيرُ وَالتَّأْنِيثُ وَالعَدَدُ
+@@subtitle@@ at-tadhkīr wa-t-taʾnīth wa-l-ʿadad — gender, and one, two or many
+@@explanation@@ Every Arabic noun is either masculine or feminine. Most feminines are marked by the tied **ة**; a few are feminine without any mark, among them **شَمْس** sun, **أَرْض** earth, **نَار** fire, and the parts of the body that come in pairs.
+
+Number has three values, not two. **Singular**, **dual** — formed with **ـَانِ** or **ـَيْنِ**, as in **وَلَدَانِ** two boys — and **plural**. A sound masculine plural ends **ـُونَ** or **ـِينَ**; a sound feminine plural ends **ـَاتٌ**; and a great many nouns instead take a **broken plural**, which reshapes the word itself: **كِتَاب** becomes **كُتُب**.
+
+Adjectives follow their noun in gender, number and case: **مُعَلِّمَةٌ جَدِيدَةٌ**. That agreement is what tells you which adjective belongs to which noun in a long sentence.
+@@quran_1@@ خَلَقَكُم مِّن نَّفْسٍ وَٰحِدَةٍ :: نَّفْسٍ is feminine, and its adjective وَٰحِدَةٍ carries the tied tāʾ to agree :: 4:1
+@@quran_2@@ تَبَّتْ يَدَآ أَبِى لَهَبٍ :: يَدَآ is a dual — two hands, marked by the alif ending :: 111:1
+@@quran_3@@ ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ :: ٱلْعَـٰلَمِينَ is a sound masculine plural in the genitive :: 1:2
+@@everyday_1@@ مُعَلِّمٌ وَمُعَلِّمَةٌ :: A male teacher and a female teacher
+@@everyday_2@@ عِنْدِي كِتَابَانِ :: I have two books
+@@everyday_3@@ المُسْلِمُونَ فِي المَسْجِدِ :: The Muslims are in the mosque
+@@exercise_1@@ مُثَنَّى كَلِمَةِ وَلَدٌ هُوَ ___ :: وَلَدَانِ | أَوْلَادٌ | وَلَدَاتٌ :: وَلَدَانِ :: the dual ending is -āni :: The dual of walad is ___
+@@exercise_2@@ أَيُّ كَلِمَةٍ مُؤَنَّثَةٌ بِلَا عَلَامَةٍ؟ :: شَمْسٌ | مَدْرَسَةٌ | سَيَّارَةٌ :: شَمْسٌ :: shams is feminine although it carries no tied tāʾ :: Which word is feminine without a marker?
+@@exercise_3@@ جَمْعُ كَلِمَةِ كِتَابٌ هُوَ ___ :: كِتَابُونَ | كُتُبٌ | كِتَابَاتٌ :: كُتُبٌ :: kitāb takes a broken plural :: The plural of kitāb is ___`,
+
+    nominal_sentence: `@@title@@ الجُمْلَةُ الاسْمِيَّةُ
+@@subtitle@@ al-jumlah al-ismiyyah — a sentence that begins with a noun
+@@explanation@@ A nominal sentence has two parts and no verb: the **mubtadaʾ**, the thing spoken about, and the **khabar**, what is said about it. **البَيْتُ كَبِيرٌ** — *the house is big*. Arabic simply places them side by side; the *is* is understood.
+
+Both parts are **marfūʿ** (nominative, the -u ending). The mubtadaʾ is normally definite and the khabar indefinite, which is how you tell them apart when both are nouns: **الجَوُّ جَمِيلٌ**, the weather is lovely.
+
+The khabar need not be a single word. It can be a prepositional phrase — **ٱلْحَمْدُ لِلَّهِ** — or a whole sentence of its own. And when **إِنَّ** or one of her sisters opens the sentence, the mubtadaʾ turns **manṣūb** (accusative) while the khabar stays nominative.
+@@quran_1@@ ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ :: ٱلْحَمْدُ is the mubtadaʾ, and the phrase لِلَّهِ is its khabar :: 1:2
+@@quran_2@@ ٱللَّهُ ٱلصَّمَدُ :: two definite nouns side by side — God is the Eternal Refuge :: 112:2
+@@quran_3@@ إِنَّ ٱلْإِنسَـٰنَ لَفِى خُسْرٍ :: after إِنَّ the mubtadaʾ becomes accusative, and the khabar is the phrase لَفِى خُسْرٍ :: 103:2
+@@everyday_1@@ البَيْتُ كَبِيرٌ :: The house is big
+@@everyday_2@@ الطَّالِبُ فِي الصَّفِّ :: The student is in the classroom
+@@everyday_3@@ الجَوُّ جَمِيلٌ اليَوْمَ :: The weather is lovely today
+@@exercise_1@@ الجُمْلَةُ الاسْمِيَّةُ تَبْدَأُ بِـ ___ :: فِعْلٍ | اسْمٍ | حَرْفِ جَرٍّ :: اسْمٍ :: it opens with a noun, not a verb :: A nominal sentence begins with ___
+@@exercise_2@@ فِي جُمْلَةِ البَيْتُ كَبِيرٌ كَلِمَةُ كَبِيرٌ هِيَ ___ :: المُبْتَدَأُ | الخَبَرُ | الفَاعِلُ :: الخَبَرُ :: it is what is said about the house :: In al-baytu kabīrun, kabīrun is ___
+@@exercise_3@@ حَرَكَةُ المُبْتَدَأِ وَالخَبَرِ هِيَ ___ :: الضَّمَّةُ | الفَتْحَةُ | الكَسْرَةُ :: الضَّمَّةُ :: both are nominative :: The mubtadaʾ and khabar both carry ___`,
+
+    verbal_sentence: `@@title@@ الجُمْلَةُ الفِعْلِيَّةُ
+@@subtitle@@ al-jumlah al-fiʿliyyah — verb, doer, object
+@@explanation@@ A verbal sentence begins with the verb: **كَتَبَ الوَلَدُ الدَّرْسَ** — literally *wrote the boy the lesson*. The **fāʿil** (doer) follows the verb and is **marfūʿ**; the **mafʿūl bihi** (object) follows and is **manṣūb**. The endings, not the order, tell you who did what.
+
+The doer is often not written at all, because the verb's own shape carries it: **نَعْبُدُ** is *we worship*, **خَلَقَ** is *he created*. A pronoun added in front of such a verb is emphasis.
+
+The past tense is the bare form — **كَتَبَ** he wrote — and the present adds a prefix: **يَكْتُبُ** he writes, **تَكْتُبُ** she writes, **أَكْتُبُ** I write, **نَكْتُبُ** we write. Learning those four prefixes unlocks most of the verbs in a page of the Qur'an.
+@@quran_1@@ خَلَقَ ٱلْإِنسَـٰنَ مِنْ عَلَقٍ :: the doer is inside the verb — He created — and ٱلْإِنسَـٰنَ is the accusative object :: 96:2
+@@quran_2@@ إِذَا جَآءَ نَصْرُ ٱللَّهِ وَٱلْفَتْحُ :: the verb comes first and نَصْرُ is its nominative doer :: 110:1
+@@quran_3@@ إِيَّاكَ نَعْبُدُ :: a present-tense verb whose نَـ prefix already means we :: 1:5
+@@everyday_1@@ كَتَبَ الوَلَدُ الدَّرْسَ :: The boy wrote the lesson
+@@everyday_2@@ شَرِبَتِ البِنْتُ الحَلِيبَ :: The girl drank the milk
+@@everyday_3@@ يَذْهَبُ أَبِي إِلَى السُّوقِ :: My father goes to the market
+@@exercise_1@@ الفَاعِلُ يَكُونُ دَائِمًا ___ :: مَرْفُوعًا | مَنْصُوبًا | مَجْرُورًا :: مَرْفُوعًا :: the doer is nominative :: The doer is always ___
+@@exercise_2@@ قَرَأَ الطَّالِبُ ___ :: الكِتَابُ | الكِتَابَ | الكِتَابِ :: الكِتَابَ :: the object of the verb is accusative :: The student read ___
+@@exercise_3@@ فِعْلُ نَكْتُبُ مَعْنَاهُ ___ :: أَكْتُبُ | نَكْتُبُ نَحْنُ | يَكْتُبُ هُوَ :: نَكْتُبُ نَحْنُ :: the n- prefix means we :: The verb naktubu means ___`,
+
+    frequent_quran_words: `@@title@@ الكَلِمَاتُ الأَكْثَرُ وُرُودًا
+@@subtitle@@ al-kalimāt al-akthar wurūdan — the words you meet most
+@@explanation@@ The Qur'an has about 77,000 words, but a small handful of them account for a large share of the text. Learning those first means that even early on, most of what your eye meets on a page is already familiar.
+
+Among the most frequent: **ٱللَّه** God, **رَبّ** Lord, **قَالَ** he said, **مِنْ** from, **فِي** in, **عَلَى** on, **ٱلَّذِينَ** those who, **كَانَ** he was, **يَوْم** day, **ٱلنَّاس** the people, **كِتَاب** book, **آمَنَ** he believed, **عَمِلَ** he did, **عَلِيم** all-knowing.
+
+Learn them as they behave, not as isolated glosses: **رَبّ** almost always heads a possessive phrase (**رَبُّكَ**, **رَبِّ ٱلْعَـٰلَمِينَ**), and **ٱلَّذِينَ** almost always introduces a description of a group. Recognising the pattern is faster than translating word by word.
+@@quran_1@@ ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ :: three of the commonest words in one line — ٱللَّه, رَبّ and ٱلْعَـٰلَمِين :: 1:2
+@@quran_2@@ ٱلَّذِينَ يُؤْمِنُونَ بِٱلْغَيْبِ :: ٱلَّذِينَ introducing a description, as it almost always does :: 2:3
+@@quran_3@@ قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ :: قُلْ, رَبّ and ٱلنَّاس, all among the most frequent :: 114:1
+@@everyday_1@@ قَالَ لِي صَدِيقِي :: My friend said to me
+@@everyday_2@@ فِي يَوْمٍ جَمِيلٍ :: On a beautiful day
+@@everyday_3@@ النَّاسُ فِي السُّوقِ :: The people are in the market
+@@exercise_1@@ كَلِمَةُ رَبّ تَأْتِي غَالِبًا ___ :: مُضَافَةً | مَجْرُورَةً بِحَرْفٍ | وَحْدَهَا :: مُضَافَةً :: rabb almost always heads a possessive phrase :: The word rabb usually appears ___
+@@exercise_2@@ كَلِمَةُ الَّذِينَ تَدُلُّ عَلَى ___ :: جَمَاعَةٍ | وَاحِدٍ | مُؤَنَّثَةٍ :: جَمَاعَةٍ :: alladhīna refers to a group :: The word alladhīna refers to ___
+@@exercise_3@@ أَيُّ كَلِمَةٍ حَرْفُ جَرٍّ؟ :: قَالَ | مِنْ | يَوْمٌ :: مِنْ :: min is a preposition :: Which of these is a preposition?`,
+
+    // ── Intermediate ──────────────────────────────────────────────────
+
     noun_cases: `@@title@@ أَحْوَالُ الإِعْرَابِ
 @@subtitle@@ aḥwāl al-iʿrāb — the three cases of the noun
 @@explanation@@ Arabic marks a noun's job in the sentence on its ending rather than by its position, which is why word order can move so freely without confusion.

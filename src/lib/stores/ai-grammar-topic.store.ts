@@ -158,7 +158,7 @@ export async function fetchGrammarTopic({
      * its explanation re-establishing the definition.
      */
     topicBrief?: string;
-    level: "intermediate" | "advanced";
+    level: "beginner" | "intermediate" | "advanced";
     locale?: string;
     /**
      * Verified occurrences pulled from the morphology corpus, already
@@ -312,6 +312,16 @@ export async function fetchGrammarTopic({
 
     const lessonTopic =
         `Topic: "${topicTitle}"\nLearner level: ${level}` +
+        // A beginner is still learning to read: the lesson has to earn its
+        // grammar in plain words, and its examples have to be short enough to
+        // sound out.
+        (level === "beginner"
+            ? `\n\nThis reader has just learned the alphabet and the vowel signs. Write for ` +
+              `someone reading Arabic for the first time: plain words, no grammatical ` +
+              `terminology without an immediate gloss, short quotations they can sound out, ` +
+              `and everyday examples of three or four words. Transliterate any Arabic term ` +
+              `you must use.`
+            : "") +
         (topicBrief
             ? `\n\nThe reader has already been given this definition of the topic, in their ` +
               `own language, and it is on screen above your explanation:\n"${topicBrief}"\n` +

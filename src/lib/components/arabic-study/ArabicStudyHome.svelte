@@ -143,7 +143,7 @@
 
     const grammarStats = $derived.by(() => {
         const level = $proficiencyLevel;
-        if (level !== "intermediate" && level !== "advanced") {
+        if (level == null) {
             return { generated: 0, total: 0, languages: 0, opened: 0, exercises: 0, followUps: 0 };
         }
         const topics = topicsForLevel(level);
@@ -189,7 +189,7 @@
     /** One cell per topic of the current level, shaded by how much work it has had. */
     const topicCells = $derived.by(() => {
         const level = $proficiencyLevel;
-        if (level !== "intermediate" && level !== "advanced") return [];
+        if (level == null) return [];
         return topicsForLevel(level).map((topic) => {
             const opened = countFor(STUDY_AREA.topics, topic.id);
             const followUps = countFor(STUDY_AREA.followUps, topic.id);
@@ -208,19 +208,14 @@
         const level = $proficiencyLevel;
         void untrack(async () => {
             try {
-                if (level === "beginner") {
-                    [letterProgress, activity] = await Promise.all([
-                        fetchLetterProgress(),
-                        fetchStudyActivity(),
-                    ]);
-                    return;
-                }
-                const [rows, activityRows] = await Promise.all([
+                const [rows, activityRows, letters] = await Promise.all([
                     fetchTopicContent(),
                     fetchStudyActivity(),
+                    level === "beginner" ? fetchLetterProgress() : Promise.resolve([]),
                 ]);
                 generatedTopics = rows;
                 activity = activityRows;
+                letterProgress = letters;
                 const ids = topicsForLevel(level).map((topic) => topic.id);
                 const perTopic = await Promise.all(
                     ids.map((id) =>
@@ -529,9 +524,10 @@
         {:else if lesson === "tajweed"}
             <TajweedLesson
                 onBack={() => (lesson = "alifForms")}
+                onContinue={() => (lesson = "grammar")}
                 onDone={() => (lesson = null)}
             />
-        {:else if lesson === "grammar" && ($proficiencyLevel === "intermediate" || $proficiencyLevel === "advanced")}
+        {:else if lesson === "grammar" && $proficiencyLevel != null}
             <GrammarCurriculum level={$proficiencyLevel} onBack={() => (lesson = null)} />
         {:else}
         <div class="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-8 py-8 text-center">
@@ -720,6 +716,55 @@
                                     {/each}
                                 </div>
                             </div>
+                            <!-- The reading topics that follow the hands-on
+                                 lessons, counted the same way as at the other
+                                 levels — one cell per topic, shaded by work. -->
+                            <div class="mt-3">
+                                <div class="text-[0.5625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]">
+                                    {$t("arabicStudy.stats.topic_grid")}
+                                </div>
+                                <div class="mt-1.5 flex items-baseline justify-between gap-2">
+                                    <span class="text-[0.6875rem] text-brand-charcoal-500 dark:text-[#a5adce]">
+                                        {$t("arabicStudy.stats.topics_opened")}
+                                    </span>
+                                    <span class="text-[0.75rem] font-bold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                        {grammarStats.opened} / {grammarStats.total}
+                                    </span>
+                                </div>
+                                <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-brand-sand-200 dark:bg-[#414559]">
+                                    <div
+                                        class="h-full rounded-full bg-brand-gold-400 dark:bg-brand-gold-500"
+                                        style:width="{grammarStats.total
+                                            ? (grammarStats.opened / grammarStats.total) * 100
+                                            : 0}%"
+                                    ></div>
+                                </div>
+                                <div class="mt-2 flex items-baseline justify-between gap-2">
+                                    <span class="text-[0.6875rem] text-brand-charcoal-500 dark:text-[#a5adce]">
+                                        {$t("arabicStudy.stats.exercises_attempted")}
+                                    </span>
+                                    <span class="text-[0.75rem] font-bold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                        {grammarStats.exercises}
+                                    </span>
+                                </div>
+                                <div class="mt-1 flex items-baseline justify-between gap-2">
+                                    <span class="text-[0.6875rem] text-brand-charcoal-500 dark:text-[#a5adce]">
+                                        {$t("arabicStudy.stats.sections_added")}
+                                    </span>
+                                    <span class="text-[0.75rem] font-bold text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                                        {sectionCount}
+                                    </span>
+                                </div>
+                                <div class="mt-2 flex flex-wrap gap-1">
+                                    {#each topicCells as cell (cell.topic.id)}
+                                        <div
+                                            class="h-4 w-4 rounded-[3px] {pairShade(cell.work)}"
+                                            title={topicCellLabel(cell)}
+                                            aria-label={topicCellLabel(cell)}
+                                        ></div>
+                                    {/each}
+                                </div>
+                            </div>
                             {#if stats.practised === 0 && coverage.every((row) => row.done === 0)}
                                 <p class="mt-2 text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
                                     {$t("arabicStudy.stats.empty_beginner")}
@@ -831,6 +876,15 @@
                             <Icon icon="solar:magic-stick-3-bold-duotone" width="0.8rem" />
                             {$t("arabicStudy.onboarding.start_learning")}
                         </button>
+                        {#if $proficiencyLevel === "beginner"}
+                            <button
+                                onclick={() => (lesson = "grammar")}
+                                class="flex cursor-pointer items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3.5 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                            >
+                                <Icon icon="solar:notebook-bold-duotone" width="0.8rem" />
+                                {$t("arabicStudy.onboarding.study_topics")}
+                            </button>
+                        {/if}
                         <button
                             onclick={() => (changing = true)}
                             class="cursor-pointer rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3.5 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
