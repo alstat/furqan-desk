@@ -52,8 +52,6 @@
 	}: Props = $props();
 
 	const tools: Array<{ id: DrawTool; icon: string; label: string }> = [
-		{ id: 'select', icon: 'ph:cursor-bold', label: 'Select / move' },
-		{ id: 'pan', icon: 'mdi:hand-back-right-outline', label: 'Pan (or drag empty space / hold Space)' },
 		{ id: 'rect', icon: 'mdi:rectangle-outline', label: 'Rectangle' },
 		{ id: 'roundRect', icon: 'mdi:rounded-corner', label: 'Rounded rectangle' },
 		{ id: 'ellipse', icon: 'mdi:ellipse-outline', label: 'Ellipse' },

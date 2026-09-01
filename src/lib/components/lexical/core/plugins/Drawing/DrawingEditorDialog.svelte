@@ -678,20 +678,6 @@
 					>
 						<Icon icon="mdi:redo" width="1rem" />
 					</button>
-					<div class="mx-1 h-4 w-px bg-brand-gold-300/60 dark:bg-[#51576d]"></div>
-					<button class={headerBtn} title="Zoom out" aria-label="Zoom out" onclick={zoomOut}>
-						<Icon icon="mdi:minus" width="1rem" />
-					</button>
-					<button
-						class="min-w-11 rounded-md px-1 py-1 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] hover:bg-brand-gold-200 dark:hover:bg-[#51576d] cursor-pointer"
-						title="Reset zoom"
-						onclick={zoomReset}
-					>
-						{Math.round(zoom * 100)}%
-					</button>
-					<button class={headerBtn} title="Zoom in" aria-label="Zoom in" onclick={zoomIn}>
-						<Icon icon="mdi:plus" width="1rem" />
-					</button>
 				</div>
 			{/snippet}
 		</DialogPanelHeader>
@@ -732,6 +718,79 @@
 				{onViewChange}
 				onEditingChange={(v) => (isEditingText = v)}
 			/>
+
+			<!-- Select, zoom & pan controls (overlay, fixed over the canvas) -->
+			<div class="absolute top-3 right-3 z-20 flex flex-col gap-1">
+				<button
+					onclick={() => (tool = 'select')}
+					title="Select / move"
+					aria-label="Select"
+					aria-pressed={tool === 'select'}
+					class="cursor-pointer p-1.5 rounded-full border shadow-sm transition-colors
+					       {tool === 'select'
+							? 'bg-brand-gold-400 border-brand-gold-400 text-gray-100 dark:bg-brand-gold-500 dark:text-gray-800'
+							: 'bg-white/90 dark:bg-[#292c3c]/90 border-slate-200 dark:border-[#414559] text-brand-charcoal-400 dark:text-[#8caaee] hover:bg-white dark:hover:bg-[#292c3c]'}"
+				>
+					<Icon icon="ph:cursor-bold" width="0.85rem" />
+				</button>
+				<button
+					onclick={() => (tool = tool === 'pan' ? 'select' : 'pan')}
+					title="Pan (or drag empty space / hold Space)"
+					aria-label="Pan"
+					aria-pressed={tool === 'pan'}
+					class="cursor-pointer p-1.5 rounded-full border shadow-sm transition-colors
+					       {tool === 'pan'
+							? 'bg-brand-gold-400 border-brand-gold-400 text-gray-100 dark:bg-brand-gold-500 dark:text-gray-800'
+							: 'bg-white/90 dark:bg-[#292c3c]/90 border-slate-200 dark:border-[#414559] text-brand-charcoal-400 dark:text-[#8caaee] hover:bg-white dark:hover:bg-[#292c3c]'}"
+				>
+					<Icon icon="mdi:hand-back-right-outline" width="0.85rem" />
+				</button>
+				<div class="my-0.5 h-px w-full bg-slate-200 dark:bg-[#414559]"></div>
+				<button
+					onclick={zoomIn}
+					title="Zoom in"
+					aria-label="Zoom in"
+					class="cursor-pointer p-1.5 rounded-full bg-white/90 dark:bg-[#292c3c]/90
+					       border border-slate-200 dark:border-[#414559]
+					       text-brand-charcoal-400 dark:text-[#8caaee]
+					       hover:bg-white dark:hover:bg-[#292c3c] transition-colors shadow-sm"
+				>
+					<Icon icon="mdi:plus" width="0.85rem" />
+				</button>
+				<button
+					onclick={zoomOut}
+					title="Zoom out"
+					aria-label="Zoom out"
+					class="cursor-pointer p-1.5 rounded-full bg-white/90 dark:bg-[#292c3c]/90
+					       border border-slate-200 dark:border-[#414559]
+					       text-brand-charcoal-400 dark:text-[#8caaee]
+					       hover:bg-white dark:hover:bg-[#292c3c] transition-colors shadow-sm"
+				>
+					<Icon icon="mdi:minus" width="0.85rem" />
+				</button>
+				{#if zoom !== 1}
+					<button
+						onclick={zoomReset}
+						title="Reset zoom"
+						aria-label="Reset zoom"
+						class="cursor-pointer p-1.5 rounded-full bg-white/90 dark:bg-[#292c3c]/90
+						       border border-slate-200 dark:border-[#414559]
+						       text-brand-charcoal-400 dark:text-[#8caaee]
+						       hover:bg-white dark:hover:bg-[#292c3c] transition-colors shadow-sm"
+					>
+						<Icon icon="mdi:fit-to-page-outline" width="0.85rem" />
+					</button>
+				{/if}
+			</div>
+			{#if zoom !== 1}
+				<span
+					class="absolute bottom-3 left-3 z-20 text-[0.5625rem] font-semibold px-1.5 py-0.5
+					       rounded-full bg-black/40 text-gray-100 backdrop-blur-sm
+					       select-none pointer-events-none"
+				>
+					{Math.round(zoom * 100)}%
+				</span>
+			{/if}
 		</div>
 
 		<div

@@ -497,7 +497,7 @@
         {:else if lesson === "grammar" && ($proficiencyLevel === "intermediate" || $proficiencyLevel === "advanced")}
             <GrammarCurriculum level={$proficiencyLevel} onBack={() => (lesson = null)} />
         {:else}
-        <div class="flex flex-1 flex-col items-center justify-center gap-6 px-8 py-8 text-center">
+        <div class="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-8 py-8 text-center">
             {#if $proficiencyLevel === undefined}
                 <Icon
                     icon="svg-spinners:3-dots-fade"
