@@ -1,5 +1,6 @@
 import { supabase } from "$lib/supabase";
 import { readSseText, safeReadJson } from "$lib/stores/ai-text-transform.store";
+import { AI_FEATURE_TAGS } from "$lib/stores/ai-chat.store";
 
 // Word-by-word meanings in a language the app doesn't ship. The bundled
 // `word_by_word` table covers nine languages; when a learner picks "Other" and
@@ -84,6 +85,7 @@ export async function translateGlosses({
         },
         body: JSON.stringify({
             advanced,
+            feature: AI_FEATURE_TAGS.arabicStudyGlossTranslate,
             messages: [
                 { role: "system", content: SYSTEM_PROMPT },
                 { role: "user", content: `Target language: ${target}\n\n${list}` },

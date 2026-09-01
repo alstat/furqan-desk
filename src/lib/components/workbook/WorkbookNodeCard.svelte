@@ -1,26 +1,29 @@
 <!-- One card on the workbook board.
      Every kind shares the same frame — a ControlCard-style shell with a quiet
-     header strip — and differs only in what it puts inside, so adding a kind is
-     a case in one switch rather than another component with its own idea of
-     what a card looks like. The pipeline's body is a flow canvas of its own:
-     steps are dragged into place, their connectors follow them live, and
-     left-to-right order is the running order. -->
+     header strip — and differs only in what it puts inside, so adding a kind
+     is a case in one switch rather than another component with its own idea
+     of what a card looks like. Every data kind always carries a pair of
+     ports (see `hasPort`) so a wire can be started the moment it is on the
+     board; the board draws the wire between two ports and resolves what
+     flows through them. Only `view` renders that as verses — every other
+     kind shows just its own settings, so a chain reads as source → shaping
+     → the one place its result actually appears. -->
 <script lang="ts">
+    import { onMount } from "svelte";
     import Icon from "@iconify/svelte";
     import { t } from "$lib/i18n";
     import VerseRefBadge from "$lib/components/arabic-study/VerseRefBadge.svelte";
+    import { surahLabels, ensureSurahLabels } from "$lib/stores/quran.svelte";
     import {
-        attachTafsir,
-        loadVerses,
-        orderedSteps,
-        parseRef,
-        relatedTo,
-        runPipeline,
-        STEP_KINDS,
-        STEP_META,
-        type PipelineResult,
-        type PipelineStep,
-        type PipelineStepKind,
+        availableTranslators,
+        ensureTranslators,
+        availableTafsirAuthors,
+        ensureTafsirAuthors,
+    } from "$lib/stores/translation.store";
+    import {
+        nodeRefs,
+        SURAH_AYAH_COUNTS,
+        transformNode,
         type VerseRow,
         type WorkbookNode,
     } from "$lib/stores/workbook.store";
@@ -28,22 +31,68 @@
     interface Props {
         node: WorkbookNode;
         selected: boolean;
+        /** True for every data kind — it always carries input/output ports. */
+        hasPort: boolean;
+        /** The upstream node's resolved rows, or `null` when nothing feeds this card. */
+        inputRows: VerseRow[] | null;
         onChange: (patch: Partial<WorkbookNode>) => void;
         onRemove: () => void;
-        onSelect: () => void;
+        onSelect: (event: PointerEvent) => void;
         onDragStart: (event: PointerEvent) => void;
         onResizeStart: (event: PointerEvent) => void;
+        onPortDragStart: (event: PointerEvent, side: "in" | "out") => void;
     }
-    let { node, selected, onChange, onRemove, onSelect, onDragStart, onResizeStart }: Props =
-        $props();
+    let {
+        node,
+        selected,
+        hasPort,
+        inputRows,
+        onChange,
+        onRemove,
+        onSelect,
+        onDragStart,
+        onResizeStart,
+        onPortDragStart,
+    }: Props = $props();
 
     let rows = $state<VerseRow[]>([]);
-    let pipeline = $state<PipelineResult | null>(null);
     let loading = $state(false);
     let error = $state("");
-    let editingStep = $state<string | null>(null);
 
-    /** Header accent per kind — a tint on the strip, not a wash over the card. */
+    onMount(() => {
+        void ensureSurahLabels();
+        void ensureTranslators();
+        void ensureTafsirAuthors();
+    });
+
+    /** The verses an ayah/related card is pointed at. */
+    const refs = $derived(nodeRefs(node));
+
+    // The surah/ayah picker that adds to `refs` — its own local pick, not
+    // committed until "Add" so browsing surahs doesn't touch the node.
+    let pickerSurah = $state(1);
+    let pickerAyah = $state(1);
+
+    function addRef() {
+        const ref = `${pickerSurah}:${pickerAyah}`;
+        if (refs.includes(ref)) return;
+        onChange({ refs: [...refs, ref], ref: undefined });
+    }
+
+    function removeRef(ref: string) {
+        onChange({ refs: refs.filter((r) => r !== ref) });
+    }
+
+    // Translate's "Other" language — buffered locally so an AI request only
+    // fires on Apply/Enter, not on every keystroke. This component's
+    // lifetime is one node (the board keys each card by node id), so an
+    // initial read is all the syncing this needs.
+    let localOtherLanguage = $state(node.otherLanguage ?? "");
+    function applyOtherLanguage() {
+        onChange({ otherLanguage: localOtherLanguage.trim() });
+    }
+
+    /** Header accent per kind — a tint on the strip, a colour for the ports. */
     const ACCENT: Record<string, { strip: string; icon: string; dot: string }> = {
         ayah: {
             strip: "bg-brand-gold-50 dark:bg-[#34302a]",
@@ -65,10 +114,25 @@
             icon: "solar:link-circle-bold-duotone",
             dot: "bg-brand-emerald-400",
         },
-        pipeline: {
-            strip: "bg-brand-sand-50 dark:bg-[#232634]",
-            icon: "solar:flow-bold-duotone",
-            dot: "bg-brand-charcoal-300",
+        filter: {
+            strip: "bg-[#f4f2fa] dark:bg-[#2b2a3d]",
+            icon: "solar:filter-bold-duotone",
+            dot: "bg-[#c3b6ea]",
+        },
+        limit: {
+            strip: "bg-[#f4f2fa] dark:bg-[#2b2a3d]",
+            icon: "solar:sort-vertical-bold-duotone",
+            dot: "bg-[#c3b6ea]",
+        },
+        dedupe: {
+            strip: "bg-[#f4f2fa] dark:bg-[#2b2a3d]",
+            icon: "solar:copy-bold-duotone",
+            dot: "bg-[#c3b6ea]",
+        },
+        view: {
+            strip: "bg-brand-emerald-50 dark:bg-[#28352f]",
+            icon: "solar:eye-bold-duotone",
+            dot: "bg-brand-emerald-400",
         },
         note: {
             strip: "bg-[#fffbe8] dark:bg-[#34302a]",
@@ -87,62 +151,19 @@
         },
     };
 
-    /** Step chips are a fixed size, so edges can be drawn from their centres. */
-    const CHIP = { width: 116, height: 34 };
+    // Same construction as SurahWidget.svelte's `selectClass` — a bordered
+    // pill with a chevron — scaled down to fit a card a few hundred px wide.
+    const dropdownClass =
+        "w-full appearance-none cursor-pointer rounded-lg border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#232634] px-2 py-1 pr-6 text-[0.625rem] text-brand-charcoal-600 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#626880] hover:bg-brand-sand-50 dark:hover:bg-[#363a4f]";
 
-    const steps = $derived(node.steps ?? []);
-    const flowOrder = $derived(orderedSteps(steps));
-
-    /** One edge per consecutive pair, recomputed from live positions. */
-    const edges = $derived(
-        flowOrder.slice(1).map((step, i) => {
-            const from = flowOrder[i];
-            const x1 = from.x + CHIP.width;
-            const y1 = from.y + CHIP.height / 2;
-            const x2 = step.x;
-            const y2 = step.y + CHIP.height / 2;
-            const bend = Math.max(18, Math.abs(x2 - x1) / 2);
-            return { id: `${from.id}-${step.id}`, x1, y1, x2, y2, bend };
-        }),
-    );
-
-    /** Zones: one dashed frame per named group, sized to its members. */
-    const zones = $derived.by(() => {
-        const byGroup = new Map<string, PipelineStep[]>();
-        for (const step of steps) {
-            if (!step.group) continue;
-            byGroup.set(step.group, [...(byGroup.get(step.group) ?? []), step]);
-        }
-        return [...byGroup.entries()].map(([name, members]) => {
-            // The frame leaves room for its own label above the chips, and
-            // never starts off the top of the canvas where it would be clipped.
-            const pad = 12;
-            const x = Math.max(2, Math.min(...members.map((s) => s.x)) - pad);
-            const y = Math.max(2, Math.min(...members.map((s) => s.y)) - pad - 10);
-            const right = Math.max(...members.map((s) => s.x + CHIP.width)) + pad;
-            const bottom = Math.max(...members.map((s) => s.y + CHIP.height)) + pad;
-            return { name, x, y, width: right - x, height: bottom - y };
-        });
-    });
+    const NO_SETTINGS_KIND = new Set(["note", "image", "title"]);
 
     async function reload() {
-        if (node.kind === "title" || node.kind === "note" || node.kind === "image") return;
+        if (NO_SETTINGS_KIND.has(node.kind)) return;
         loading = true;
         error = "";
         try {
-            if (node.kind === "pipeline") {
-                pipeline = await runPipeline(steps);
-            } else if (node.ref && parseRef(node.ref)) {
-                const base = await loadVerses([node.ref]);
-                rows =
-                    node.kind === "tafsir"
-                        ? await attachTafsir(base)
-                        : node.kind === "related"
-                          ? await relatedTo(base, 4)
-                          : base;
-            } else {
-                rows = [];
-            }
+            rows = await transformNode(node, inputRows ?? []);
         } catch (e) {
             error = e instanceof Error ? e.message : String(e);
         } finally {
@@ -150,68 +171,69 @@
         }
     }
 
-    // Reload when the card's own inputs change — its ayah, or the pipeline's
-    // shape. Dragging a step only moves it, so position is deliberately not a
-    // trigger; the order it implies is read when the flow next runs.
+    // Reload whenever what this card is pointed at changes — its own refs or
+    // settings, or (for a wired card) what its upstream neighbour produced.
     $effect(() => {
-        void node.ref;
-        void steps
-            .map((step) => `${step.kind}:${step.refs?.join(",")}:${step.query}:${step.limit}:${step.layout}`)
-            .join("|");
+        void refs.join(",");
+        void node.query;
+        void node.filterField;
+        void node.filterOp;
+        void node.limit;
+        void node.layout;
+        void node.translatorId;
+        void node.otherLanguage;
+        void node.tafsirAuthorId;
+        void inputRows;
         void reload();
     });
-
-    function addStep(kind: PipelineStepKind) {
-        const last = flowOrder.at(-1);
-        onChange({
-            steps: [
-                ...steps,
-                {
-                    id: crypto.randomUUID(),
-                    kind,
-                    x: (last ? last.x + 140 : 16),
-                    y: last ? last.y : 16,
-                    refs: kind === "ayah" ? ["1:1"] : undefined,
-                    limit: kind === "limit" ? 5 : kind === "related" ? 3 : undefined,
-                    layout: kind === "view" ? "list" : undefined,
-                },
-            ],
-        });
-    }
-
-    function updateStep(id: string, patch: Partial<PipelineStep>) {
-        onChange({ steps: steps.map((s) => (s.id === id ? { ...s, ...patch } : s)) });
-    }
-
-    function removeStep(id: string) {
-        onChange({ steps: steps.filter((s) => s.id !== id) });
-        if (editingStep === id) editingStep = null;
-    }
-
-    // ── Dragging a step inside the flow ─────────────────────────────────────
-    let stepDrag: { id: string; startX: number; startY: number; x: number; y: number } | null = null;
-
-    function startStepDrag(event: PointerEvent, step: PipelineStep) {
-        event.preventDefault();
-        event.stopPropagation();
-        stepDrag = { id: step.id, startX: event.clientX, startY: event.clientY, x: step.x, y: step.y };
-        // Capturing keeps the drag alive if the pointer outruns the chip, but a
-        // failed capture must not cancel the drag itself.
-        try {
-            (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
-        } catch {
-            /* pointer already released, or not one the browser tracks */
-        }
-    }
-
-    function moveStep(event: PointerEvent) {
-        if (!stepDrag) return;
-        updateStep(stepDrag.id, {
-            x: Math.max(4, Math.round(stepDrag.x + (event.clientX - stepDrag.startX))),
-            y: Math.max(4, Math.round(stepDrag.y + (event.clientY - stepDrag.startY))),
-        });
-    }
 </script>
+
+{#snippet dropdownChevron()}
+    <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-brand-charcoal-300 dark:text-[#838ba7]">
+        <Icon icon="charm:chevron-down" width="0.625rem" />
+    </span>
+{/snippet}
+
+{#snippet verseCards(list: VerseRow[], layout: "list" | "columns")}
+    <div class={layout === "columns" ? "grid grid-cols-2 gap-2" : "flex flex-col gap-2"}>
+        {#each list as row, i (i)}
+            <div class="rounded-xl border border-brand-sand-200/70 bg-white p-2 dark:border-[#414559] dark:bg-[#232634]">
+                <div class="flex items-center justify-between gap-1">
+                    <VerseRefBadge verseRef={`${row.surah}:${row.ayah}`} size="sm" />
+                    {#if row.fromRef}
+                        <span class="text-[0.5625rem] text-brand-charcoal-300 dark:text-[#626880]">
+                            ← {row.fromRef}
+                        </span>
+                    {/if}
+                </div>
+                <div dir="rtl" class="pb-1 pt-1 font-scheherazade text-base leading-loose text-brand-charcoal-900 dark:text-[#c6d0f5]">
+                    {row.arabic}
+                </div>
+                {#if row.translation}
+                    <p class="text-[0.625rem] italic leading-relaxed text-brand-charcoal-500 dark:text-[#a5adce]">
+                        {row.translation}
+                    </p>
+                {/if}
+                {#if row.tafsir}
+                    <p class="mt-1 line-clamp-4 text-[0.5625rem] leading-relaxed text-brand-charcoal-400 dark:text-[#838ba7]">
+                        {row.tafsir}
+                    </p>
+                {/if}
+            </div>
+        {/each}
+    </div>
+{/snippet}
+
+{#snippet outputHeader()}
+    <div class="mb-1.5 flex items-center gap-1.5">
+        <span class="text-[0.5625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#838ba7]">
+            {$t("workbook.flow.output")}
+        </span>
+        <span class="rounded-full bg-brand-sand-100 px-1.5 text-[0.5625rem] font-semibold text-brand-charcoal-500 dark:bg-[#363a4f] dark:text-[#c6d0f5]">
+            {rows.length}
+        </span>
+    </div>
+{/snippet}
 
 <div
     class="absolute flex flex-col overflow-hidden rounded-xl border border-brand-sand-200/80 bg-white/95 shadow-lg backdrop-blur-md transition-shadow dark:border-[#414559] dark:bg-[#292c3c]/95 dark:shadow-black/40 {selected
@@ -287,279 +309,327 @@
                     {$t("workbook.node.image_empty")}
                 </p>
             {/if}
-        {:else if node.kind === "pipeline"}
-            <!-- Palette -->
-            <div class="flex flex-wrap items-center gap-1" onpointerdown={(e) => e.stopPropagation()}>
-                <span class="mr-0.5 text-[0.5625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#838ba7]">
-                    {$t("workbook.flow.add")}
-                </span>
-                {#each STEP_KINDS as kind (kind)}
-                    <button
-                        onclick={() => addStep(kind)}
-                        title={$t("workbook.add_step", { step: $t(`workbook.step.${kind}`) })}
-                        class="flex cursor-pointer items-center gap-1 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-2 py-0.5 text-[0.5625rem] font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
-                    >
-                        <Icon icon={STEP_META[kind].icon} width="0.6rem" />
-                        {$t(`workbook.step.${kind}`)}
-                    </button>
-                {/each}
-            </div>
-
-            <!-- Flow canvas: zones behind, edges next, chips on top -->
-            <div
-                class="relative mt-2 min-h-[132px] overflow-auto rounded-xl border border-brand-sand-200/80 bg-brand-sand-50/60 p-1 dark:border-[#414559] dark:bg-[#232634]/60"
-                onpointerdown={(e) => e.stopPropagation()}
-                onpointermove={moveStep}
-                onpointerup={() => (stepDrag = null)}
-                onpointerleave={() => (stepDrag = null)}
-                role="presentation"
-            >
-                {#each zones as zone (zone.name)}
-                    <div
-                        class="pointer-events-none absolute rounded-xl border border-dashed border-brand-gold-300/70 bg-brand-gold-50/40 dark:border-[#5a5030] dark:bg-[#34302a]/40"
-                        style:left="{zone.x}px"
-                        style:top="{zone.y}px"
-                        style:width="{zone.width}px"
-                        style:height="{zone.height}px"
-                    >
-                        <span class="absolute left-2 top-0.5 text-[0.5rem] font-semibold uppercase tracking-widest text-brand-gold-500 dark:text-[#e5c890]">
-                            {zone.name}
-                        </span>
-                    </div>
-                {/each}
-
-                <!-- Connectors are derived from the chips' own coordinates, so
-                     they follow a step the moment it is dragged. -->
-                <svg class="pointer-events-none absolute inset-0 h-full w-full overflow-visible">
-                    {#each edges as edge (edge.id)}
-                        <path
-                            d="M {edge.x1} {edge.y1} C {edge.x1 + edge.bend} {edge.y1}, {edge.x2 -
-                                edge.bend} {edge.y2}, {edge.x2} {edge.y2}"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.5"
-                            class="text-brand-sand-300 dark:text-[#51576d]"
-                        />
-                        <circle cx={edge.x2} cy={edge.y2} r="2.5" class="fill-brand-sand-300 dark:fill-[#51576d]" />
-                    {/each}
-                </svg>
-
-                {#each steps as step (step.id)}
-                    <div
-                        class="absolute flex cursor-grab items-center gap-1.5 rounded-lg border border-brand-sand-200 bg-white px-2 shadow-sm active:cursor-grabbing dark:border-[#414559] dark:bg-[#292c3c] {editingStep ===
-                        step.id
-                            ? 'ring-2 ring-brand-gold-300 dark:ring-[#e5c890]/50'
-                            : ''}"
-                        style:left="{step.x}px"
-                        style:top="{step.y}px"
-                        style:width="{CHIP.width}px"
-                        style:height="{CHIP.height}px"
-                        onpointerdown={(e) => startStepDrag(e, step)}
-                        ondblclick={() => (editingStep = editingStep === step.id ? null : step.id)}
-                        role="presentation"
-                    >
-                        <span
-                            class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md {STEP_META[step.kind]
-                                .kind === 'source'
-                                ? 'bg-brand-gold-100 text-brand-gold-600 dark:bg-[#34302a] dark:text-[#e5c890]'
-                                : STEP_META[step.kind].kind === 'enrich'
-                                  ? 'bg-brand-teal-100 text-brand-teal-600 dark:bg-[#29383e] dark:text-[#92cccc]'
-                                  : STEP_META[step.kind].kind === 'shape'
-                                    ? 'bg-[#f0ecfa] text-[#6b5ba8] dark:bg-[#2b2a3d] dark:text-[#c3b6ea]'
-                                    : 'bg-brand-emerald-100 text-brand-emerald-600 dark:bg-[#28352f] dark:text-[#9dd4c8]'}"
+        {:else if node.kind === "filter"}
+            {@const field = node.filterField ?? "text"}
+            {@const op = node.filterOp ?? (field === "text" ? "contains" : "eq")}
+            <div class="flex flex-col gap-1.5" onpointerdown={(e) => e.stopPropagation()} role="presentation">
+                <div class="flex gap-1.5">
+                    <div class="relative flex-1">
+                        <select
+                            value={field}
+                            onchange={(e) => {
+                                const next = e.currentTarget.value as "text" | "surah" | "ayah";
+                                onChange({
+                                    filterField: next,
+                                    filterOp: next === "text" ? "contains" : "eq",
+                                });
+                            }}
+                            class={dropdownClass}
                         >
-                            <Icon icon={STEP_META[step.kind].icon} width="0.65rem" />
-                        </span>
-                        <span class="min-w-0 flex-1 truncate text-[0.625rem] font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">
-                            {$t(`workbook.step.${step.kind}`)}
-                        </span>
-                        <button
-                            onclick={() => (editingStep = editingStep === step.id ? null : step.id)}
-                            onpointerdown={(e) => e.stopPropagation()}
-                            aria-label={$t("workbook.flow.settings")}
-                            class="cursor-pointer text-brand-charcoal-300 hover:text-brand-charcoal-500 dark:text-[#838ba7]"
+                            <option value="text">{$t("workbook.filter.field.text")}</option>
+                            <option value="surah">{$t("workbook.filter.field.surah")}</option>
+                            <option value="ayah">{$t("workbook.filter.field.ayah")}</option>
+                        </select>
+                        {@render dropdownChevron()}
+                    </div>
+                    <div class="relative flex-1">
+                        <select
+                            value={op}
+                            onchange={(e) => onChange({ filterOp: e.currentTarget.value as WorkbookNode["filterOp"] })}
+                            class={dropdownClass}
                         >
-                            <Icon icon="solar:settings-bold-duotone" width="0.6rem" />
-                        </button>
+                            {#if field === "text"}
+                                <option value="contains">{$t("workbook.filter.op.contains")}</option>
+                                <option value="not_contains">{$t("workbook.filter.op.not_contains")}</option>
+                            {:else}
+                                <option value="eq">{$t("workbook.filter.op.eq")}</option>
+                                <option value="neq">{$t("workbook.filter.op.neq")}</option>
+                                <option value="gt">{$t("workbook.filter.op.gt")}</option>
+                                <option value="gte">{$t("workbook.filter.op.gte")}</option>
+                                <option value="lt">{$t("workbook.filter.op.lt")}</option>
+                                <option value="lte">{$t("workbook.filter.op.lte")}</option>
+                            {/if}
+                        </select>
+                        {@render dropdownChevron()}
                     </div>
-                {/each}
-            </div>
-
-            <!-- The selected step's settings, out of the way of the flow -->
-            {#if editingStep}
-                {@const step = steps.find((s) => s.id === editingStep)}
-                {#if step}
-                    <div
-                        class="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-brand-sand-200/80 bg-white px-2.5 py-1.5 dark:border-[#414559] dark:bg-[#232634]"
-                        onpointerdown={(e) => e.stopPropagation()}
-                        role="presentation"
-                    >
-                        <span class="text-[0.5625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#838ba7]">
-                            {$t(`workbook.step.${step.kind}`)}
-                        </span>
-                        {#if step.kind === "ayah"}
-                            <input
-                                value={(step.refs ?? []).join(", ")}
-                                oninput={(e) =>
-                                    updateStep(step.id, {
-                                        refs: e.currentTarget.value
-                                            .split(",")
-                                            .map((r) => r.trim())
-                                            .filter(Boolean),
-                                    })}
-                                placeholder="1:2, 112:1"
-                                class="w-32 rounded-lg border border-brand-sand-200 bg-white px-2 py-0.5 text-[0.625rem] text-brand-charcoal-600 outline-none dark:border-[#414559] dark:bg-[#292c3c] dark:text-[#c6d0f5]"
-                            />
-                        {:else if step.kind === "filter"}
-                            <input
-                                value={step.query ?? ""}
-                                oninput={(e) => updateStep(step.id, { query: e.currentTarget.value })}
-                                placeholder={$t("workbook.flow.contains")}
-                                class="w-32 rounded-lg border border-brand-sand-200 bg-white px-2 py-0.5 text-[0.625rem] text-brand-charcoal-600 outline-none dark:border-[#414559] dark:bg-[#292c3c] dark:text-[#c6d0f5]"
-                            />
-                        {:else if step.kind === "limit" || step.kind === "related"}
-                            <input
-                                type="number"
-                                min="1"
-                                value={step.limit ?? (step.kind === "limit" ? 5 : 3)}
-                                oninput={(e) => updateStep(step.id, { limit: Number(e.currentTarget.value) })}
-                                class="w-16 rounded-lg border border-brand-sand-200 bg-white px-2 py-0.5 text-[0.625rem] text-brand-charcoal-600 outline-none dark:border-[#414559] dark:bg-[#292c3c] dark:text-[#c6d0f5]"
-                            />
-                        {:else if step.kind === "view"}
-                            <select
-                                value={step.layout ?? "list"}
-                                onchange={(e) =>
-                                    updateStep(step.id, {
-                                        layout: e.currentTarget.value as "list" | "columns",
-                                    })}
-                                class="rounded-lg border border-brand-sand-200 bg-white px-2 py-0.5 text-[0.625rem] text-brand-charcoal-600 outline-none dark:border-[#414559] dark:bg-[#292c3c] dark:text-[#c6d0f5]"
-                            >
-                                <option value="list">{$t("workbook.view.list")}</option>
-                                <option value="columns">{$t("workbook.view.columns")}</option>
-                            </select>
-                        {/if}
-                        <input
-                            value={step.group ?? ""}
-                            oninput={(e) =>
-                                updateStep(step.id, { group: e.currentTarget.value || undefined })}
-                            placeholder={$t("workbook.flow.zone")}
-                            class="w-24 rounded-lg border border-brand-sand-200 bg-white px-2 py-0.5 text-[0.625rem] text-brand-charcoal-600 outline-none dark:border-[#414559] dark:bg-[#292c3c] dark:text-[#c6d0f5]"
-                        />
-                        <button
-                            onclick={() => removeStep(step.id)}
-                            class="ml-auto flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[0.5625rem] font-semibold text-brand-charcoal-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-[#838ba7] dark:hover:bg-red-950/30"
-                        >
-                            <Icon icon="solar:trash-bin-trash-bold-duotone" width="0.6rem" />
-                            {$t("workbook.remove_step")}
-                        </button>
-                    </div>
-                {/if}
-            {/if}
-
-            <!-- What the flow produced -->
-            {#if pipeline}
-                <div class="mt-2">
-                    <div class="mb-1.5 flex items-center gap-1.5">
-                        <span class="text-[0.5625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#838ba7]">
-                            {$t("workbook.flow.output")}
-                        </span>
-                        <span class="rounded-full bg-brand-sand-100 px-1.5 text-[0.5625rem] font-semibold text-brand-charcoal-500 dark:bg-[#363a4f] dark:text-[#c6d0f5]">
-                            {pipeline.rows.length}
-                        </span>
-                    </div>
-                    <div
-                        class={pipeline.layout === "columns"
-                            ? "grid grid-cols-2 gap-2"
-                            : "flex flex-col gap-2"}
-                    >
-                        {#each pipeline.rows as row, i (i)}
-                            <div class="rounded-xl border border-brand-sand-200/70 bg-white p-2 dark:border-[#414559] dark:bg-[#232634]">
-                                <div class="flex items-center justify-between gap-1">
-                                    <VerseRefBadge verseRef={`${row.surah}:${row.ayah}`} size="sm" />
-                                    {#if row.fromRef}
-                                        <span class="text-[0.5625rem] text-brand-charcoal-300 dark:text-[#626880]">
-                                            ← {row.fromRef}
-                                        </span>
-                                    {/if}
-                                </div>
-                                <div dir="rtl" class="pb-1 pt-1 font-scheherazade text-base leading-loose text-brand-charcoal-900 dark:text-[#c6d0f5]">
-                                    {row.arabic}
-                                </div>
-                                {#if row.translation}
-                                    <p class="text-[0.625rem] italic leading-relaxed text-brand-charcoal-500 dark:text-[#a5adce]">
-                                        {row.translation}
-                                    </p>
-                                {/if}
-                                {#if row.tafsir}
-                                    <p class="mt-1 line-clamp-4 text-[0.5625rem] leading-relaxed text-brand-charcoal-400 dark:text-[#838ba7]">
-                                        {row.tafsir}
-                                    </p>
-                                {/if}
-                            </div>
-                        {/each}
-                    </div>
-                    <p class="mt-1.5 text-[0.5625rem] text-brand-charcoal-300 dark:text-[#626880]">
-                        {pipeline.trace.join(" · ")}
-                    </p>
                 </div>
-            {/if}
-        {:else}
-            <!-- ayah / translation / tafsir / related all read one verse -->
-            <div class="flex items-center gap-1.5" onpointerdown={(e) => e.stopPropagation()} role="presentation">
                 <input
-                    value={node.ref ?? ""}
-                    oninput={(e) => onChange({ ref: e.currentTarget.value })}
-                    placeholder="2:255"
-                    class="w-20 rounded-lg border border-brand-sand-200 bg-white px-2 py-0.5 text-[0.625rem] text-brand-charcoal-600 outline-none dark:border-[#414559] dark:bg-[#232634] dark:text-[#c6d0f5]"
+                    type={field === "text" ? "text" : "number"}
+                    value={node.query ?? ""}
+                    oninput={(e) => onChange({ query: e.currentTarget.value })}
+                    placeholder={field === "text" ? $t("workbook.flow.contains") : "0"}
+                    class="w-full rounded-lg border border-brand-sand-200 bg-white px-2 py-1 text-[0.6875rem] text-brand-charcoal-600 outline-none focus:border-brand-gold-400 dark:border-[#414559] dark:bg-[#232634] dark:text-[#c6d0f5] dark:focus:border-[#e5c890]"
                 />
-                <VerseRefBadge verseRef={node.ref ?? "1:1"} size="sm" />
+            </div>
+        {:else if node.kind === "limit"}
+            <div class="flex items-center gap-1.5" onpointerdown={(e) => e.stopPropagation()} role="presentation">
+                <span class="text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
+                    {$t("workbook.flow.keep")}
+                </span>
+                <input
+                    type="number"
+                    min="1"
+                    value={node.limit ?? 5}
+                    oninput={(e) => onChange({ limit: Number(e.currentTarget.value) })}
+                    class="w-16 rounded-lg border border-brand-sand-200 bg-white px-2 py-0.5 text-[0.6875rem] text-brand-charcoal-600 outline-none focus:border-brand-gold-400 dark:border-[#414559] dark:bg-[#232634] dark:text-[#c6d0f5] dark:focus:border-[#e5c890]"
+                />
+            </div>
+        {:else if node.kind === "dedupe"}
+            <p class="text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
+                {$t("workbook.node.dedupe_hint")}
+            </p>
+        {:else if node.kind === "view"}
+            <div class="relative w-32" onpointerdown={(e) => e.stopPropagation()} role="presentation">
+                <select
+                    value={node.layout ?? "list"}
+                    onchange={(e) => onChange({ layout: e.currentTarget.value as "list" | "columns" })}
+                    class={dropdownClass}
+                >
+                    <option value="list">{$t("workbook.view.list")}</option>
+                    <option value="columns">{$t("workbook.view.columns")}</option>
+                </select>
+                {@render dropdownChevron()}
             </div>
             {#if error}
                 <p class="mt-1.5 text-[0.625rem] text-red-500 dark:text-red-400">{error}</p>
             {/if}
-            <div class="mt-2 flex flex-col gap-2">
-                {#each rows as row, i (i)}
-                    <div>
-                        {#if node.kind === "related" && row.fromRef}
-                            <VerseRefBadge verseRef={`${row.surah}:${row.ayah}`} size="sm" />
-                        {/if}
-                        {#if node.kind === "ayah" || node.kind === "related"}
-                            <div dir="rtl" class="pb-1 font-scheherazade text-lg leading-loose text-brand-charcoal-900 dark:text-[#c6d0f5]">
-                                {row.arabic}
-                            </div>
-                        {/if}
-                        {#if (node.kind === "translation" || node.kind === "related") && row.translation}
-                            <p class="text-[0.6875rem] leading-relaxed text-brand-charcoal-600 dark:text-[#a5adce]">
-                                {row.translation}
-                            </p>
-                        {:else if node.kind === "translation"}
-                            <p class="text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
-                                {$t("workbook.no_translation")}
-                            </p>
-                        {/if}
-                        {#if node.kind === "tafsir"}
-                            {#if row.tafsir}
-                                <p class="text-[0.6875rem] leading-relaxed text-brand-charcoal-600 dark:text-[#a5adce]">
-                                    {row.tafsir}
-                                </p>
-                            {:else}
-                                <p class="text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
-                                    {$t("workbook.no_tafsir")}
-                                </p>
-                            {/if}
-                        {/if}
-                    </div>
-                {/each}
+            <div class="mt-2">
+                {@render outputHeader()}
+                {@render verseCards(rows, node.layout ?? "list")}
             </div>
+        {:else if node.kind === "title"}
+            <!-- A heading's own big text lives in the header; the body is just
+                 room for an optional note about it, not another ayah picker. -->
+            <textarea
+                value={node.title ?? ""}
+                oninput={(e) => onChange({ title: e.currentTarget.value })}
+                onpointerdown={(e) => e.stopPropagation()}
+                placeholder={$t("workbook.heading.description_placeholder")}
+                class="h-full w-full resize-none bg-transparent text-[0.75rem] leading-relaxed text-brand-charcoal-600 outline-none placeholder:text-brand-charcoal-300 dark:text-[#c6d0f5]"
+            ></textarea>
+        {:else if node.kind === "translation"}
+            <!-- No ayah picker: the verses come from whatever is wired into
+                 the input port (an Ayah card, typically). -->
+            <div onpointerdown={(e) => e.stopPropagation()} role="presentation">
+                <div class="relative">
+                    <select
+                        value={node.translatorId === undefined ? "" : String(node.translatorId)}
+                        onchange={(e) => {
+                            const v = e.currentTarget.value;
+                            onChange({ translatorId: v === "" ? undefined : v === "other" ? "other" : Number(v) });
+                        }}
+                        class={dropdownClass}
+                    >
+                        <option value="">{$t("workbook.translate.reader_default")}</option>
+                        {#each $availableTranslators as tr (tr.id)}
+                            <option value={String(tr.id)}>{tr.name}</option>
+                        {/each}
+                        <option value="other">{$t("workbook.translate.other")}</option>
+                    </select>
+                    {@render dropdownChevron()}
+                </div>
+                {#if node.translatorId === "other"}
+                    <div class="mt-1.5 flex items-center gap-1">
+                        <input
+                            bind:value={localOtherLanguage}
+                            onkeydown={(e) => e.key === "Enter" && applyOtherLanguage()}
+                            placeholder={$t("workbook.translate.other_placeholder")}
+                            class="w-full min-w-0 flex-1 rounded-lg border border-brand-sand-200 bg-white px-2 py-1 text-[0.6875rem] text-brand-charcoal-600 outline-none focus:border-brand-gold-400 dark:border-[#414559] dark:bg-[#232634] dark:text-[#c6d0f5] dark:focus:border-[#e5c890]"
+                        />
+                        <button
+                            onclick={applyOtherLanguage}
+                            title={$t("workbook.translate.apply")}
+                            aria-label={$t("workbook.translate.apply")}
+                            class="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-brand-sand-200 text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 dark:border-[#414559] dark:text-[#838ba7] dark:hover:bg-[#414559]"
+                        >
+                            <Icon icon="solar:check-circle-bold-duotone" width="0.8rem" />
+                        </button>
+                    </div>
+                {/if}
+            </div>
+            {#if error}
+                <p class="mt-1.5 text-[0.625rem] text-red-500 dark:text-red-400">{error}</p>
+            {/if}
+        {:else if node.kind === "tafsir"}
+            <!-- No ayah picker here either — an Ayah card upstream (directly,
+                 or through a Translate card, which passes the verses on
+                 unchanged) is what this reads. -->
+            <div class="relative" onpointerdown={(e) => e.stopPropagation()} role="presentation">
+                <select
+                    value={node.tafsirAuthorId === undefined ? "" : String(node.tafsirAuthorId)}
+                    onchange={(e) => {
+                        const v = e.currentTarget.value;
+                        onChange({ tafsirAuthorId: v === "" ? undefined : Number(v) });
+                    }}
+                    class={dropdownClass}
+                >
+                    <option value="">{$t("workbook.tafsir.reader_default")}</option>
+                    {#each $availableTafsirAuthors as author (author.id)}
+                        <option value={String(author.id)}>{author.name}</option>
+                    {/each}
+                </select>
+                {@render dropdownChevron()}
+            </div>
+            {#if error}
+                <p class="mt-1.5 text-[0.625rem] text-red-500 dark:text-red-400">{error}</p>
+            {/if}
+        {:else}
+            <!-- ayah / related read one or more verses, picked from dropdowns
+                 rather than typed. What they resolve to is never shown here —
+                 wire a View card downstream to see it. -->
+            <div class="flex flex-wrap items-center gap-1.5" onpointerdown={(e) => e.stopPropagation()} role="presentation">
+                <div class="relative w-28">
+                    <select
+                        value={String(pickerSurah)}
+                        onchange={(e) => {
+                            pickerSurah = Number(e.currentTarget.value);
+                            pickerAyah = 1;
+                        }}
+                        class={dropdownClass}
+                    >
+                        {#each $surahLabels as label, i (i)}
+                            <option value={String(i + 1)}>{i + 1}. {label.en}</option>
+                        {/each}
+                    </select>
+                    {@render dropdownChevron()}
+                </div>
+                <div class="relative w-16">
+                    <select
+                        value={String(pickerAyah)}
+                        onchange={(e) => (pickerAyah = Number(e.currentTarget.value))}
+                        class={dropdownClass}
+                    >
+                        {#each Array.from({ length: SURAH_AYAH_COUNTS[pickerSurah] ?? 1 }, (_, i) => i + 1) as ayahNum (ayahNum)}
+                            <option value={String(ayahNum)}>{ayahNum}</option>
+                        {/each}
+                    </select>
+                    {@render dropdownChevron()}
+                </div>
+                <button
+                    onclick={addRef}
+                    title={$t("workbook.verse.add")}
+                    aria-label={$t("workbook.verse.add")}
+                    class="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-brand-sand-200 text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 dark:border-[#414559] dark:text-[#838ba7] dark:hover:bg-[#414559]"
+                >
+                    <Icon icon="solar:add-circle-bold-duotone" width="0.8rem" />
+                </button>
+            </div>
+            {#if refs.length}
+                <div class="mt-1.5 flex flex-wrap items-center gap-1" onpointerdown={(e) => e.stopPropagation()} role="presentation">
+                    {#each refs as ref (ref)}
+                        <span class="inline-flex items-center gap-1 rounded-full border border-brand-sand-200 bg-brand-sand-100 py-0.5 pl-2 pr-1 text-[0.625rem] font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5]">
+                            {ref}
+                            <button
+                                onclick={() => removeRef(ref)}
+                                aria-label={$t("workbook.verse.remove", { ref })}
+                                class="flex h-3.5 w-3.5 cursor-pointer items-center justify-center rounded-full text-brand-charcoal-300 transition-colors hover:text-red-500 dark:text-[#838ba7]"
+                            >
+                                <Icon icon="solar:close-circle-bold-duotone" width="0.6rem" />
+                            </button>
+                        </span>
+                    {/each}
+                </div>
+            {/if}
+            {#if error}
+                <p class="mt-1.5 text-[0.625rem] text-red-500 dark:text-red-400">{error}</p>
+            {/if}
         {/if}
     </div>
 
-    <!-- Resize handle -->
+    <!-- Ports — one input, one output, on every data card so a wire can be
+         started the moment it is on the board. The board owns the wire
+         itself; a port only starts the drag. -->
+    {#if hasPort}
+        <button
+            onpointerdown={(e) => {
+                e.stopPropagation();
+                onPortDragStart(e, "in");
+            }}
+            title={$t("workbook.port.in")}
+            aria-label={$t("workbook.port.in")}
+            class="port-dot -left-[7px] {ACCENT[node.kind].dot}"
+        ></button>
+        <button
+            onpointerdown={(e) => {
+                e.stopPropagation();
+                onPortDragStart(e, "out");
+            }}
+            title={$t("workbook.port.out")}
+            aria-label={$t("workbook.port.out")}
+            class="port-dot -right-[7px] {ACCENT[node.kind].dot}"
+        ></button>
+    {/if}
+
+    <!-- Resize handle — same double-arc corner as FileExplorer's panel. -->
     <button
         onpointerdown={onResizeStart}
         aria-label={$t("workbook.resize")}
-        class="absolute bottom-0 right-0 h-3.5 w-3.5 cursor-nwse-resize bg-transparent"
-    >
-        <span class="absolute bottom-1 right-1 block h-1.5 w-1.5 border-b border-r border-brand-charcoal-300 dark:border-[#626880]"></span>
-    </button>
+        class="resize-handle resize-se"
+    ></button>
 </div>
+
+<style>
+    /* Matches FileExplorer.svelte's resize-handle corner exactly, so every
+       resizable surface in the app reads the same. Only the SE corner is
+       used here — cards resize from one corner, not four edges. */
+    .resize-handle {
+        position: absolute;
+        z-index: 10;
+        background: transparent;
+        cursor: se-resize;
+    }
+    .resize-se {
+        bottom: 0;
+        right: 0;
+        width: 20px;
+        height: 20px;
+    }
+    .resize-se::before {
+        content: "";
+        position: absolute;
+        bottom: 11px;
+        right: 11px;
+        width: 5px;
+        height: 5px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.4);
+        border-bottom-right-radius: 5px;
+        pointer-events: none;
+    }
+    .resize-se::after {
+        content: "";
+        position: absolute;
+        bottom: 7px;
+        right: 7px;
+        width: 9px;
+        height: 9px;
+        border-bottom: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-right: 1.5px solid rgba(130, 130, 130, 0.55);
+        border-bottom-right-radius: 9px;
+        pointer-events: none;
+    }
+
+    /* Input/output ports: a small filled dot straddling the card edge,
+       ringed in the card's own background so it reads as a socket rather
+       than a stray mark. */
+    .port-dot {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 14px;
+        height: 14px;
+        border-radius: 9999px;
+        border: 2px solid white;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+        cursor: crosshair;
+        z-index: 15;
+        transition: transform 0.15s ease;
+    }
+    :global(.dark) .port-dot {
+        border-color: #292c3c;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+    }
+    .port-dot:hover {
+        transform: translateY(-50%) scale(1.3);
+    }
+</style>

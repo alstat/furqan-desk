@@ -1,5 +1,6 @@
 import { supabase } from "$lib/supabase";
 import { readSseText, safeReadJson } from "$lib/stores/ai-text-transform.store";
+import { AI_FEATURE_TAGS } from "$lib/stores/ai-chat.store";
 
 // "Grammar, for this ayah" — a short AI explanation of one ayah's grammatical
 // structure, shown in the Verse Study canvas's Grammar node. Pro-gated by the
@@ -61,6 +62,7 @@ export async function fetchVerseGrammar({
         },
         body: JSON.stringify({
             advanced: false,
+            feature: AI_FEATURE_TAGS.arabicStudyVerseGrammar,
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: `Here is the ayah I am studying:\n\n${context}` },

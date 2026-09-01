@@ -8,24 +8,48 @@ import {
     activeTranslatorId,
     type AyahTafsir,
 } from '$lib/stores/translation.store';
+import { translateVerses as aiTranslateVerses } from '$lib/stores/ai-grammar-topic.store';
+import { AI_FEATURE_TAGS } from '$lib/stores/ai-chat.store';
 
 // A workbook is a board of cards — some of them plain notes, some of them
-// windows onto the Qur'an, and one of them a pipeline that chains the others
-// into a small dataflow. It is the Verse Study canvas generalised: instead of
-// one fixed hub-and-spoke layout around a single ayah, the reader lays out
-// whatever they are working on and saves it as a file.
+// windows onto the Qur'an. Any of the Qur'an/shape/output cards can be wired
+// to another with a single input/output connection and grouped into a
+// pipeline; ungrouped, a card just shows what it is pointed at on its own. It
+// is the Verse Study canvas generalised: instead of one fixed hub-and-spoke
+// layout around a single ayah, the reader lays out whatever they are working
+// on and saves it as a file.
 
 export type WorkbookNodeKind =
     | 'ayah'
     | 'translation'
     | 'tafsir'
     | 'related'
-    | 'pipeline'
+    | 'filter'
+    | 'limit'
+    | 'dedupe'
+    | 'view'
     | 'title'
     | 'note'
     | 'image';
 
-/** The steps a pipeline can run. */
+/** The node kinds that read/shape/show verse rows and so can be wired into a pipeline. */
+export const DATA_NODE_KINDS: WorkbookNodeKind[] = [
+    'ayah',
+    'translation',
+    'tafsir',
+    'related',
+    'filter',
+    'limit',
+    'dedupe',
+    'view',
+];
+
+/**
+ * Pre-generalisation step kind, kept only so `workbookFromSvg` can still read
+ * a `pipeline` node saved by an older build and migrate it into today's
+ * shape (see `migratePipelineNodes` below) — nothing new is ever written in
+ * this shape.
+ */
 export type PipelineStepKind =
     | 'ayah'
     | 'translation'
@@ -36,14 +60,11 @@ export type PipelineStepKind =
     | 'dedupe'
     | 'view';
 
+/** Legacy shape read by `migratePipelineNodes` — see `PipelineStepKind`. */
 export interface PipelineStep {
     id: string;
     kind: PipelineStepKind;
-    /**
-     * Where the step sits on the pipeline's own canvas. Left-to-right position
-     * *is* the running order — what the flow shows is what the flow does, so
-     * there is no hidden ordering to disagree with the picture.
-     */
+    /** Where the step sat on the old pipeline node's own mini-canvas. */
     x: number;
     y: number;
     /** Optional zone label; steps sharing one are drawn inside it together. */
@@ -58,7 +79,12 @@ export interface PipelineStep {
     layout?: 'list' | 'columns';
 }
 
-/** What each step does, for the palette and the flow's own labels. */
+/**
+ * Icon and colour family for each data node kind — `ayah` seeds a chain,
+ * `translation`/`tafsir`/`related` enrich it, `filter`/`limit`/`dedupe` shape
+ * it, `view` ends it. Shared by the toolbar, a card's accent strip, and its
+ * port colour, so a kind reads the same wherever it shows up.
+ */
 export const STEP_META: Record<
     PipelineStepKind,
     { icon: string; kind: 'source' | 'enrich' | 'shape' | 'output' }
@@ -89,12 +115,73 @@ export interface WorkbookNode {
     height: number;
     /** Free-text heading shown on the card. */
     title?: string;
-    /** `ayah`/`translation`/`tafsir`/`related`: the verse it is pointed at. */
+    /**
+     * `ayah`/`translation`/`tafsir`/`related`: the verses it is pointed at,
+     * picked from the surah/ayah dropdowns rather than typed. Read through
+     * `nodeRefs()`, which also covers `ref` below.
+     */
+    refs?: string[];
+    /** Legacy single-verse field from before `refs` — still read by `nodeRefs()`, never written. */
     ref?: string;
     /** `title`/`note`: the text itself. `image`: a data URL. */
     text?: string;
-    /** `pipeline`: its ordered steps. */
+    /** Legacy shape from before a pipeline's steps were board nodes — read once by `migratePipelineNodes`, never written. */
     steps?: PipelineStep[];
+    /** `related`/`limit`: how many rows to keep. */
+    limit?: number;
+    /** `filter`: the comparison value — text to search for, or a number, depending on `filterField`. */
+    query?: string;
+    /** `filter`: which field the comparison reads. Unset means `'text'`. */
+    filterField?: 'text' | 'surah' | 'ayah';
+    /** `filter`: the comparison operator. Unset means `'contains'` (`text`) or `'eq'` (numeric). */
+    filterOp?: 'contains' | 'not_contains' | 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte';
+    /** `view`: how the resolved rows are laid out. */
+    layout?: 'list' | 'columns';
+    /**
+     * `translation`: which bundled translator to read, `'other'` for an
+     * AI-supplied language (see `otherLanguage`), or unset to follow the
+     * reader's own active translator.
+     */
+    translatorId?: number | 'other';
+    /** `translation` when `translatorId === 'other'`: the free-text language name. */
+    otherLanguage?: string;
+    /** `tafsir`: which bundled author to read, or unset to follow the reader's own chosen author. */
+    tafsirAuthorId?: number;
+}
+
+/** A node's verses, whichever field they came from — `refs` if it has any, else the old `ref`. */
+export function nodeRefs(node: WorkbookNode): string[] {
+    if (node.refs?.length) return node.refs;
+    return node.ref ? [node.ref] : [];
+}
+
+/**
+ * Canonical ayah counts per surah (Hafs), 1-based (index 0 is a placeholder).
+ * Mirrors VOTD_SURAH_AYAH_COUNTS in src-tauri/src/commands.rs — static Qur'an
+ * data, so a bundled copy is cheaper than a round trip just to size a dropdown.
+ */
+export const SURAH_AYAH_COUNTS = [
+    0, 7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99,
+    128, 111, 110, 98, 135, 112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30,
+    73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18, 45,
+    60, 49, 62, 55, 78, 96, 29, 22, 24, 13, 14, 11, 11, 18, 12, 12, 30, 52, 52,
+    44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36, 25, 22, 17, 19, 26,
+    30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11, 11, 8, 3, 9, 5, 4, 7, 3, 6, 3,
+    5, 4, 5, 6,
+] as const;
+
+/** A single connection: `from`'s one output feeds `to`'s one input. */
+export interface WorkbookEdge {
+    id: string;
+    from: string;
+    to: string;
+}
+
+/** A set of nodes framed together as one pipeline, purely for the visual boundary. */
+export interface WorkbookGroup {
+    id: string;
+    name?: string;
+    nodeIds: string[];
 }
 
 export interface WorkbookDoc {
@@ -102,10 +189,19 @@ export interface WorkbookDoc {
     title: string;
     nodes: WorkbookNode[];
     viewport: { x: number; y: number; zoom: number };
+    edges: WorkbookEdge[];
+    groups: WorkbookGroup[];
 }
 
 export function emptyWorkbook(title = 'Untitled workbook'): WorkbookDoc {
-    return { version: 1, title, nodes: [], viewport: { x: 0, y: 0, zoom: 1 } };
+    return {
+        version: 1,
+        title,
+        nodes: [],
+        viewport: { x: 0, y: 0, zoom: 1 },
+        edges: [],
+        groups: [],
+    };
 }
 
 const NODE_DEFAULTS: Record<WorkbookNodeKind, { width: number; height: number }> = {
@@ -113,7 +209,10 @@ const NODE_DEFAULTS: Record<WorkbookNodeKind, { width: number; height: number }>
     translation: { width: 320, height: 180 },
     tafsir: { width: 340, height: 220 },
     related: { width: 320, height: 220 },
-    pipeline: { width: 520, height: 360 },
+    filter: { width: 260, height: 140 },
+    limit: { width: 240, height: 120 },
+    dedupe: { width: 220, height: 100 },
+    view: { width: 320, height: 220 },
     title: { width: 320, height: 64 },
     note: { width: 260, height: 140 },
     image: { width: 280, height: 200 },
@@ -128,25 +227,10 @@ export function makeNode(kind: WorkbookNodeKind, x: number, y: number): Workbook
         y,
         width: size.width,
         height: size.height,
-        ref: kind === 'ayah' || kind === 'translation' || kind === 'tafsir' || kind === 'related'
-            ? '1:1'
-            : undefined,
+        refs: kind === 'ayah' || kind === 'related' ? ['1:1'] : undefined,
         text: kind === 'title' ? 'Heading' : kind === 'note' ? '' : undefined,
-        steps:
-            kind === 'pipeline'
-                ? [
-                      {
-                          id: crypto.randomUUID(),
-                          kind: 'ayah',
-                          refs: ['1:2', '112:1'],
-                          x: 16,
-                          y: 24,
-                          group: 'Source',
-                      },
-                      { id: crypto.randomUUID(), kind: 'translation', x: 160, y: 24 },
-                      { id: crypto.randomUUID(), kind: 'view', layout: 'list', x: 304, y: 24 },
-                  ]
-                : undefined,
+        limit: kind === 'limit' ? 5 : kind === 'related' ? 3 : undefined,
+        layout: kind === 'view' ? 'list' : undefined,
     };
 }
 
@@ -168,11 +252,15 @@ export function parseRef(ref: string): { surah: number; ayah: number } | null {
     return { surah: Number(match[1]), ayah: Number(match[2]) };
 }
 
-/** Arabic (and the reader's translation, when one is chosen) for a list of refs. */
-export async function loadVerses(refs: string[]): Promise<VerseRow[]> {
+/**
+ * Arabic (and a translation, when one is available) for a list of refs.
+ * `translatorId` picks a specific bundled translator; left unset, it follows
+ * the reader's own active one.
+ */
+export async function loadVerses(refs: string[], translatorId?: number): Promise<VerseRow[]> {
     const parsed = refs.map(parseRef).filter((r): r is { surah: number; ayah: number } => !!r);
     if (parsed.length === 0) return [];
-    const texts = await fetchVerseTexts(parsed, get(activeTranslatorId) ?? undefined);
+    const texts = await fetchVerseTexts(parsed, translatorId ?? get(activeTranslatorId) ?? undefined);
     return texts.map((verse: VerseText) => ({
         surah: verse.surah,
         ayah: verse.ayah,
@@ -181,16 +269,19 @@ export async function loadVerses(refs: string[]): Promise<VerseRow[]> {
     }));
 }
 
-/** Fills in the tafsir for each row, from the reader's chosen author. */
-export async function attachTafsir(rows: VerseRow[]): Promise<VerseRow[]> {
-    const authorId = get(activeTafsirId);
-    if (authorId == null) return rows.map((row) => ({ ...row, tafsir: null }));
+/**
+ * Fills in the tafsir for each row. `authorId` picks a specific bundled
+ * author; left unset, it follows the reader's own chosen one.
+ */
+export async function attachTafsir(rows: VerseRow[], authorId?: number | null): Promise<VerseRow[]> {
+    const id = authorId ?? get(activeTafsirId);
+    if (id == null) return rows.map((row) => ({ ...row, tafsir: null }));
     const bySurah = new Map<number, AyahTafsir[]>();
     for (const surah of new Set(rows.map((row) => row.surah))) {
         try {
             bySurah.set(
                 surah,
-                await invoke<AyahTafsir[]>('get_surah_tafsir', { surah, authorId }),
+                await invoke<AyahTafsir[]>('get_surah_tafsir', { surah, authorId: id }),
             );
         } catch {
             bySurah.set(surah, []);
@@ -235,98 +326,140 @@ export async function relatedTo(rows: VerseRow[], limit = 3): Promise<VerseRow[]
     return out;
 }
 
-// ── The pipeline ────────────────────────────────────────────────────────────
+// ── The pipeline: what a node shows, wired or standalone ────────────────────
 
-export interface PipelineResult {
-    rows: VerseRow[];
-    layout: 'list' | 'columns';
-    /** One line per step, so a reader can see what the pipeline actually did. */
-    trace: string[];
+/**
+ * What one node contributes, given what flows into it. `input` is empty for
+ * a node with nothing feeding it: `ayah` and `related` fall back to their own
+ * `refs` in that case, since they can stand alone; `translation` and `tafsir`
+ * cannot — a verse's surah/ayah has to come from upstream (an `ayah` card,
+ * directly or by way of a `translation` card, which passes it straight
+ * through) — so they return nothing rather than guess at one. Every other
+ * kind with no input has nothing to shape and returns rows unchanged (empty).
+ */
+export async function transformNode(
+    node: WorkbookNode,
+    input: VerseRow[],
+): Promise<VerseRow[]> {
+    switch (node.kind) {
+        case 'ayah': {
+            if (input.length) return input;
+            return loadVerses(nodeRefs(node));
+        }
+        case 'translation': {
+            // No self-source: a Translate card only ever translates what
+            // flows into it (an Ayah card, typically) — see the module doc.
+            if (!input.length) return [];
+            if (node.translatorId === 'other') {
+                const language = (node.otherLanguage ?? '').trim();
+                if (!language) return input.map((row) => ({ ...row, translation: null }));
+                const byRef = await aiTranslateVerses({
+                    verses: input.map((row) => ({ ref: `${row.surah}:${row.ayah}`, arabic: row.arabic })),
+                    language,
+                    feature: AI_FEATURE_TAGS.workbookTranslate,
+                });
+                return input.map((row) => ({
+                    ...row,
+                    translation: byRef[`${row.surah}:${row.ayah}`] ?? null,
+                }));
+            }
+            const translatorId = typeof node.translatorId === 'number' ? node.translatorId : undefined;
+            const refreshed = await loadVerses(
+                input.map((row) => `${row.surah}:${row.ayah}`),
+                translatorId,
+            );
+            const byRef = new Map(refreshed.map((row) => [`${row.surah}:${row.ayah}`, row.translation]));
+            return input.map((row) => ({
+                ...row,
+                translation: byRef.get(`${row.surah}:${row.ayah}`) ?? null,
+            }));
+        }
+        case 'tafsir': {
+            // No self-source either — an Ayah card upstream (directly, or by
+            // way of a Translate card, which passes surah/ayah straight
+            // through) is what supplies the verses.
+            if (!input.length) return [];
+            return attachTafsir(input, node.tafsirAuthorId);
+        }
+        case 'related': {
+            const rows = input.length ? input : await loadVerses(nodeRefs(node));
+            return relatedTo(rows, node.limit ?? 3);
+        }
+        case 'filter': {
+            const field = node.filterField ?? 'text';
+            const op = node.filterOp ?? (field === 'text' ? 'contains' : 'eq');
+            const raw = (node.query ?? '').trim();
+            if (!raw) return input;
+            if (field === 'text') {
+                const needle = raw.toLowerCase();
+                const matches = (row: VerseRow) =>
+                    [row.arabic, row.translation, row.tafsir]
+                        .filter(Boolean)
+                        .some((text) => String(text).toLowerCase().includes(needle));
+                return input.filter((row) => (op === 'not_contains' ? !matches(row) : matches(row)));
+            }
+            const value = Number(raw);
+            if (Number.isNaN(value)) return input;
+            const compare: Record<string, (a: number) => boolean> = {
+                eq: (a) => a === value,
+                neq: (a) => a !== value,
+                gt: (a) => a > value,
+                gte: (a) => a >= value,
+                lt: (a) => a < value,
+                lte: (a) => a <= value,
+            };
+            const test = compare[op] ?? compare.eq;
+            return input.filter((row) => test(field === 'surah' ? row.surah : row.ayah));
+        }
+        case 'limit':
+            return input.slice(0, Math.max(1, node.limit ?? 5));
+        case 'dedupe': {
+            const seen = new Set<string>();
+            return input.filter((row) => {
+                const key = `${row.surah}:${row.ayah}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        }
+        case 'view':
+            return input;
+        default:
+            return [];
+    }
 }
 
 /**
- * Runs the steps in order, each one transforming the rows the last produced —
- * Alteryx-style. `ayah` seeds, `translation`/`tafsir` enrich, `related` replaces
- * the rows with what they led to, and `view` ends it by choosing the layout.
+ * What every data node on the board currently shows, resolved in one pass:
+ * a node with no incoming edge is its own source (or, for the shape/output
+ * kinds, empty); a node with one is fed the upstream node's own resolved
+ * rows, recursively. Memoised per node id and guarded against a cycle (a
+ * wire loop resolves to empty rows rather than hanging).
  */
-export async function runPipeline(steps: PipelineStep[]): Promise<PipelineResult> {
-    let rows: VerseRow[] = [];
-    let layout: 'list' | 'columns' = 'list';
-    const trace: string[] = [];
+export async function resolveNodeOutputs(doc: WorkbookDoc): Promise<Map<string, VerseRow[]>> {
+    const byId = new Map(doc.nodes.map((n) => [n.id, n]));
+    const incoming = new Map(doc.edges.map((e) => [e.to, e.from]));
+    const resolved = new Map<string, VerseRow[]>();
+    const resolving = new Set<string>();
 
-    for (const step of orderedSteps(steps)) {
-        switch (step.kind) {
-            case 'ayah': {
-                rows = await loadVerses(step.refs ?? []);
-                trace.push(`Ayah → ${rows.length} verse(s)`);
-                break;
-            }
-            case 'translation': {
-                // Translations arrive with the verse text, so a translation step
-                // after `related` only needs to re-read rows that lack one.
-                const missing = rows.some((row) => !row.translation);
-                if (missing) {
-                    const refreshed = await loadVerses(
-                        rows.map((row) => `${row.surah}:${row.ayah}`),
-                    );
-                    const byRef = new Map(
-                        refreshed.map((row) => [`${row.surah}:${row.ayah}`, row.translation]),
-                    );
-                    rows = rows.map((row) => ({
-                        ...row,
-                        translation:
-                            row.translation ?? byRef.get(`${row.surah}:${row.ayah}`) ?? null,
-                    }));
-                }
-                trace.push(`Translation → ${rows.filter((r) => r.translation).length} translated`);
-                break;
-            }
-            case 'tafsir': {
-                rows = await attachTafsir(rows);
-                trace.push(`Tafsir → ${rows.filter((r) => r.tafsir).length} with commentary`);
-                break;
-            }
-            case 'related': {
-                rows = await relatedTo(rows, step.limit ?? 3);
-                trace.push(`Related verses → ${rows.length} verse(s)`);
-                break;
-            }
-            case 'filter': {
-                const needle = (step.query ?? '').trim().toLowerCase();
-                if (needle) {
-                    rows = rows.filter((row) =>
-                        [row.arabic, row.translation, row.tafsir]
-                            .filter(Boolean)
-                            .some((text) => String(text).toLowerCase().includes(needle)),
-                    );
-                }
-                trace.push(`Filter → ${rows.length} row(s)`);
-                break;
-            }
-            case 'limit': {
-                rows = rows.slice(0, Math.max(1, step.limit ?? 5));
-                trace.push(`Limit → ${rows.length} row(s)`);
-                break;
-            }
-            case 'dedupe': {
-                const seen = new Set<string>();
-                rows = rows.filter((row) => {
-                    const key = `${row.surah}:${row.ayah}`;
-                    if (seen.has(key)) return false;
-                    seen.add(key);
-                    return true;
-                });
-                trace.push(`Dedupe → ${rows.length} row(s)`);
-                break;
-            }
-            case 'view': {
-                layout = step.layout ?? 'list';
-                trace.push(`View → ${rows.length} row(s), ${layout}`);
-                break;
-            }
-        }
+    async function resolve(id: string): Promise<VerseRow[]> {
+        const cached = resolved.get(id);
+        if (cached) return cached;
+        const node = byId.get(id);
+        if (!node || resolving.has(id)) return [];
+        resolving.add(id);
+        const upstreamId = incoming.get(id);
+        const input = upstreamId ? await resolve(upstreamId) : [];
+        const rows = await transformNode(node, input);
+        resolving.delete(id);
+        resolved.set(id, rows);
+        return rows;
     }
-    return { rows, layout, trace };
+
+    for (const node of doc.nodes) {
+        if (DATA_NODE_KINDS.includes(node.kind)) await resolve(node.id);
+    }
+    return resolved;
 }
 
 // ── The file: an SVG that is also the document ──────────────────────────────
@@ -363,7 +496,10 @@ const NODE_FILL: Record<WorkbookNodeKind, { fill: string; stroke: string }> = {
     translation: { fill: '#eef6f4', stroke: '#a9cfc6' },
     tafsir: { fill: '#f2f0fa', stroke: '#cfc4e8' },
     related: { fill: '#eef4f7', stroke: '#a8c8d8' },
-    pipeline: { fill: '#f7f5f0', stroke: '#c9c2b4' },
+    filter: { fill: '#f4f2fa', stroke: '#c3b6ea' },
+    limit: { fill: '#f4f2fa', stroke: '#c3b6ea' },
+    dedupe: { fill: '#f4f2fa', stroke: '#c3b6ea' },
+    view: { fill: '#eef7f0', stroke: '#9dd4c8' },
     title: { fill: '#ffffff00', stroke: '#ffffff00' },
     note: { fill: '#fffbe8', stroke: '#e8dca8' },
     image: { fill: '#f4f4f4', stroke: '#dcdcdc' },
@@ -410,31 +546,13 @@ export function workbookToSvg(doc: WorkbookDoc): string {
                     )}</text>`,
                 );
             }
-            const bodyText = node.kind === 'note' ? node.text ?? '' : node.ref ?? '';
+            const bodyText = node.kind === 'note' ? node.text ?? '' : nodeRefs(node).join(', ');
             for (const [i, line] of wrap(bodyText, Math.floor(node.width / 7), 6).entries()) {
                 parts.push(
                     `<text x="${x + 14}" y="${y + 46 + i * 16}" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#6b6560">${escapeXml(
                         line,
                     )}</text>`,
                 );
-            }
-            if (node.kind === 'pipeline') {
-                for (const [i, step] of (node.steps ?? []).entries()) {
-                    const sx = x + 14 + i * 96;
-                    parts.push(
-                        `<rect x="${sx}" y="${y + 58}" width="86" height="30" rx="8" fill="#ffffff" stroke="#c9c2b4"/>` +
-                            `<text x="${sx + 8}" y="${y + 78}" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" fill="#3c3836">${escapeXml(
-                                step.kind,
-                            )}</text>`,
-                    );
-                    if (i > 0) {
-                        parts.push(
-                            `<line x1="${sx - 10}" y1="${y + 73}" x2="${sx}" y2="${
-                                y + 73
-                            }" stroke="#c9c2b4" stroke-width="1.5"/>`,
-                        );
-                    }
-                }
             }
             if (node.kind === 'image' && node.text) {
                 parts.push(
@@ -463,18 +581,75 @@ function defaultTitle(node: WorkbookNode): string {
         case 'ayah':
             return 'Ayah';
         case 'translation':
-            return 'Translation';
+            return 'Translate';
         case 'tafsir':
             return 'Tafsir';
         case 'related':
             return 'Related verses';
-        case 'pipeline':
-            return 'Pipeline';
+        case 'filter':
+            return 'Filter';
+        case 'limit':
+            return 'Limit';
+        case 'dedupe':
+            return 'Dedupe';
+        case 'view':
+            return 'View';
         case 'image':
             return 'Image';
         default:
             return '';
     }
+}
+
+/**
+ * Converts every old `pipeline` node — a container with its own `steps` —
+ * into today's shape: each step becomes a top-level node positioned where it
+ * sat inside the old container, wired to the next by an edge in the old
+ * left-to-right order, and the whole set framed as one group. An old board
+ * still opens with nothing lost; this shape is never written back out.
+ */
+function migratePipelineNodes(doc: WorkbookDoc): WorkbookDoc {
+    type LegacyNode = Omit<WorkbookNode, 'kind'> & { kind: string; steps?: PipelineStep[] };
+    const legacy = (doc.nodes as LegacyNode[]).filter((n) => n.kind === 'pipeline');
+    if (legacy.length === 0) return doc;
+
+    const nodes = doc.nodes.filter((n) => (n as LegacyNode).kind !== 'pipeline');
+    const edges = [...doc.edges];
+    const groups = [...doc.groups];
+
+    for (const old of legacy) {
+        const steps = orderedSteps(old.steps ?? []);
+        const idFor = new Map<string, string>();
+        const newIds: string[] = [];
+        for (const step of steps) {
+            const id = crypto.randomUUID();
+            idFor.set(step.id, id);
+            newIds.push(id);
+            const size = NODE_DEFAULTS[step.kind];
+            nodes.push({
+                id,
+                kind: step.kind,
+                x: old.x + step.x,
+                y: old.y + step.y,
+                width: size.width,
+                height: size.height,
+                refs: step.refs,
+                limit: step.limit,
+                query: step.query,
+                layout: step.layout,
+            });
+        }
+        for (let i = 1; i < steps.length; i++) {
+            edges.push({
+                id: crypto.randomUUID(),
+                from: idFor.get(steps[i - 1].id)!,
+                to: idFor.get(steps[i].id)!,
+            });
+        }
+        if (newIds.length) groups.push({ id: crypto.randomUUID(), name: old.title, nodeIds: newIds });
+    }
+
+    return { ...doc, nodes, edges, groups };
 }
 
 /** Reads a workbook back out of an SVG this app wrote. */
@@ -491,7 +666,9 @@ export function workbookFromSvg(svg: string): WorkbookDoc | null {
             .replace(/&amp;/g, '&');
         const doc = JSON.parse(json) as WorkbookDoc;
         if (!Array.isArray(doc.nodes)) return null;
-        return doc;
+        if (!Array.isArray(doc.edges)) doc.edges = [];
+        if (!Array.isArray(doc.groups)) doc.groups = [];
+        return migratePipelineNodes(doc);
     } catch {
         return null;
     }

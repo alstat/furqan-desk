@@ -106,6 +106,14 @@ export const AI_FEATURE_TAGS = {
     editorQuranBlockPrompt: "editor_quran_block_prompt",
     arabicStudyAsk: "arabic_study_ask",
     arabicStudyGrammarTopic: "arabic_study_grammar_topic",
+    takeHomeMessage: "take_home_message",
+    arabicStudyGlossTranslate: "arabic_study_gloss_translate",
+    arabicStudyVerseGrammar: "arabic_study_verse_grammar",
+    arabicStudyLessonGenerate: "arabic_study_lesson_generate",
+    arabicStudyLessonFollowUp: "arabic_study_lesson_follow_up",
+    arabicStudyLessonSection: "arabic_study_lesson_section",
+    arabicStudyVerseTranslate: "arabic_study_verse_translate",
+    workbookTranslate: "workbook_translate",
 } as const;
 
 /**

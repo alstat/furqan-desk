@@ -6,6 +6,7 @@ import {
     type AiModelClass,
     type SseMeta,
 } from "$lib/stores/ai-text-transform.store";
+import { AI_FEATURE_TAGS } from "$lib/stores/ai-chat.store";
 
 // The intermediate/advanced grammar curriculum: an AI-generated lesson for
 // one named topic (not one specific ayah — see ai-verse-grammar.store.ts for
@@ -204,6 +205,7 @@ export async function fetchGrammarTopic({
             },
             body: JSON.stringify({
                 advanced: useAdvanced,
+                feature: `${AI_FEATURE_TAGS.arabicStudyLessonGenerate}_${level}`,
                 messages: [
                     { role: "system", content: `${SHARED_RULES}\n\n${spec}${languageRule}` },
                     { role: "user", content: userContent },
@@ -381,6 +383,7 @@ export async function askLessonFollowUp({
     lesson,
     history,
     locale,
+    level,
     advanced = false,
     signal,
     onPartial,
@@ -391,6 +394,8 @@ export async function askLessonFollowUp({
     history: FollowUpTurn[];
     /** The wizard header's "Explanation in" language. */
     locale?: string;
+    /** The lesson's proficiency level, so usage can be reported per level. */
+    level: "beginner" | "intermediate" | "advanced";
     advanced?: boolean;
     signal?: AbortSignal;
     onPartial?: (textSoFar: string) => void;
@@ -428,7 +433,11 @@ export async function askLessonFollowUp({
             apikey: ANON_KEY,
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ advanced, messages }),
+        body: JSON.stringify({
+            advanced,
+            feature: `${AI_FEATURE_TAGS.arabicStudyLessonFollowUp}_${level}`,
+            messages,
+        }),
     });
 
     if (res.status === 429) {
@@ -485,6 +494,7 @@ export async function fetchLessonSection({
     brief,
     lesson,
     locale,
+    level,
     advanced = false,
     signal,
     onPartial,
@@ -496,6 +506,8 @@ export async function fetchLessonSection({
     /** The lesson so far, so the section fits rather than repeats. */
     lesson: string;
     locale?: string;
+    /** The lesson's proficiency level, so usage can be reported per level. */
+    level: "beginner" | "intermediate" | "advanced";
     advanced?: boolean;
     signal?: AbortSignal;
     onPartial?: (textSoFar: string) => void;
@@ -521,6 +533,7 @@ export async function fetchLessonSection({
         },
         body: JSON.stringify({
             advanced,
+            feature: `${AI_FEATURE_TAGS.arabicStudyLessonSection}_${level}`,
             messages: [
                 { role: "system", content: systemPrompt },
                 {
@@ -573,25 +586,32 @@ const VERSE_TRANSLATION_PROMPT =
     "being `<number>. <translation>` and nothing else — no commentary, no transliteration, " +
     "no repetition of the Arabic. Translate faithfully and plainly, the way a standard " +
     "published translation reads; where a word is genuinely ambiguous, choose the reading " +
-    "the majority of translations take rather than inventing one.";
+    "the majority of translations take rather than inventing one.\n\n" +
+    "If the named target language is not a real, recognisable human language — gibberish, " +
+    "a random string, or anything you cannot confidently identify as an actual language — " +
+    "reply with exactly the single line `UNKNOWN_LANGUAGE` and nothing else.";
 
 /**
  * Translate verses into a language the app ships no translator for.
  *
- * The bundled `translations` table covers thirty-odd languages; a lesson set to
- * one outside that list would otherwise show its Qur'anic examples untranslated.
- * The caller is responsible for labelling these as AI-produced — they are not
- * a published translation and should not be presented as one.
+ * The bundled `translations` table covers thirty-odd languages; a lesson (or a
+ * Workbook Translate card's "Other" language) set to one outside that list
+ * would otherwise show its Qur'anic examples untranslated. The caller is
+ * responsible for labelling these as AI-produced — they are not a published
+ * translation and should not be presented as one.
  */
 export async function translateVerses({
     verses,
     language,
+    feature,
     advanced = false,
     signal,
 }: {
     verses: { ref: string; arabic: string }[];
     /** Language name as the reader would recognise it. */
     language: string;
+    /** Which AI surface asked, for per-feature usage reporting — see AI_FEATURE_TAGS. */
+    feature: string;
     advanced?: boolean;
     signal?: AbortSignal;
 }): Promise<Record<string, string>> {
@@ -612,15 +632,29 @@ export async function translateVerses({
         },
         body: JSON.stringify({
             advanced,
+            feature,
             messages: [
                 { role: "system", content: VERSE_TRANSLATION_PROMPT },
                 { role: "user", content: `Target language: ${language}\n\n${list}` },
             ],
         }),
     });
-    if (!res.ok || !res.body) return {};
+    if (res.status === 429) {
+        const body = await safeReadJson(res);
+        const err = new Error(typeof body?.error === "string" ? body.error : "Token limit reached.");
+        (err as Error & { status?: number }).status = 429;
+        throw err;
+    }
+    if (!res.ok) {
+        const body = await safeReadJson(res);
+        throw new Error(typeof body?.error === "string" ? body.error : `${res.status} ${res.statusText}`);
+    }
+    if (!res.body) throw new Error("Empty AI response.");
 
     const output = (await readSseText(res.body)).trim();
+    if (/^UNKNOWN_LANGUAGE$/i.test(output)) {
+        throw new Error(`"${language}" doesn't look like a real language.`);
+    }
     const out: Record<string, string> = {};
     for (const line of output.split("\n")) {
         const match = /^\s*(\d+)[.)]\s*(.+?)\s*$/.exec(line);

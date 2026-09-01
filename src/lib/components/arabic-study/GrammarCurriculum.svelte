@@ -384,6 +384,7 @@
                     arabic: example.arabic,
                 })),
                 language: `${LOCALE_NAMES[locale as keyof typeof LOCALE_NAMES] ?? locale} (locale ${locale})`,
+                feature: `${AI_FEATURE_TAGS.arabicStudyVerseTranslate}_${level}`,
                 advanced: get(grammarModel) === "advanced" && get(isPro),
             })
                 .then((rows) => {
@@ -659,6 +660,7 @@
                 // The header's language governs, whatever language the reader
                 // typed their title and brief in.
                 locale: get(grammarLanguage),
+                level,
                 advanced: get(grammarModel) === "advanced" && get(isPro),
                 signal: ac.signal,
                 onPartial: (partial) => {
@@ -739,7 +741,7 @@
                 prompt: question,
                 selectedText: parsed.title || selectedTopic.label,
                 contextPrompt: followUpTurns.length === 0 ? rawContent : "",
-                feature: AI_FEATURE_TAGS.arabicStudyGrammarTopic,
+                feature: `${AI_FEATURE_TAGS.arabicStudyGrammarTopic}_${level}`,
             });
             followUpTurns = [
                 ...followUpTurns,
@@ -764,6 +766,7 @@
                 lesson: rawContent,
                 history,
                 locale: get(grammarLanguage),
+                level,
                 advanced: get(grammarModel) === "advanced" && get(isPro),
                 signal: ac.signal,
                 onPartial: (partial) => {

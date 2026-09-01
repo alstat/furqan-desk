@@ -1,6 +1,7 @@
 import { supabase } from "$lib/supabase";
 import { readSseText, safeReadJson } from "$lib/stores/ai-text-transform.store";
 import { refreshTokenWarning } from "$lib/stores/token-warning.store";
+import { AI_FEATURE_TAGS } from "$lib/stores/ai-chat.store";
 
 // "Take-home message" — a personal-growth reflection generated from the ayahs
 // currently displayed in the Morphology view. Pro/Pro+ only (gated by the
@@ -121,7 +122,7 @@ export async function fetchTakeHomeMessage({
         },
         body: JSON.stringify({
             advanced,
-            feature: "take_home_message",
+            feature: AI_FEATURE_TAGS.takeHomeMessage,
             messages: [
                 { role: "system", content: systemPrompt },
                 {

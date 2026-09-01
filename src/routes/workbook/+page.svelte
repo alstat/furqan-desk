@@ -30,6 +30,17 @@
         { key: "pdf", labelKey: "workbook.export_pdf_full", icon: "solar:file-download-bold-duotone", run: () => board?.exportPdf() },
     ];
 
+    /** Closes this window. Explicit rather than relying only on the native/OS
+     *  chrome, so there is always a working close control in the header. */
+    async function closeWindow() {
+        try {
+            const { getCurrentWindow } = await import("@tauri-apps/api/window");
+            await getCurrentWindow().close();
+        } catch (e) {
+            console.error("window close failed", e);
+        }
+    }
+
     /** Loads a saved board from disk; leaves the current one alone if it can't. */
     async function loadPath(path: string) {
         try {
@@ -68,19 +79,20 @@
     <title>{doc.title || "Workbook"}</title>
 </svelte:head>
 
-<div class="flex h-screen w-screen flex-col overflow-hidden bg-white dark:bg-[#303446]">
+<div class="flex h-full w-full flex-col overflow-hidden bg-white dark:bg-[#303446]">
     <div
         data-tauri-drag-region
         class="flex shrink-0 select-none items-center justify-between gap-2 border-b border-brand-gold-200 bg-brand-gold-100 px-4 py-1.5 dark:border-[#414559] dark:bg-[#292c3c]"
         style:padding-left={isMac ? "5rem" : undefined}
     >
-        <div class="flex items-center gap-2" data-tauri-drag-region>
-            <Icon icon="solar:widget-5-bold-duotone" width="1.1rem" class="text-brand-gold-500" />
-            <span
-                class="py-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-charcoal-500 dark:text-[#838ba7]"
-            >
-                {$t("workbook.title")}
-            </span>
+        <div class="flex min-w-0 items-center gap-2" data-tauri-drag-region>
+            <Icon icon="solar:widget-5-bold-duotone" width="1.1rem" class="shrink-0 text-brand-gold-500" />
+            <input
+                value={doc.title}
+                oninput={(e) => board?.setTitle(e.currentTarget.value)}
+                aria-label={$t("workbook.title")}
+                class="w-48 rounded-lg border border-transparent bg-transparent px-1.5 py-1 text-xs font-semibold tracking-tight text-brand-charcoal-900 outline-none transition-colors hover:border-brand-gold-200 focus:border-brand-gold-400 focus:bg-white dark:text-[#c6d0f5] dark:hover:border-[#414559] dark:focus:bg-[#292c3c]"
+            />
         </div>
 
         <!-- Save and export live in the window header, beside the chrome, in
@@ -98,16 +110,25 @@
                 </button>
             {/each}
             <!-- Windows and Linux run this window undecorated, so the header
-                 supplies the minimise / maximise / close buttons itself. macOS
-                 overlays its own traffic lights instead (see the 5rem inset),
-                 and a second close button beside them is one too many. -->
+                 also supplies the minimise / maximise buttons; macOS overlays
+                 its own traffic lights instead (see the 5rem inset). Close is
+                 explicit either way (see closeWindow), rather than depending
+                 on native chrome alone. -->
             {#if !isMac}
                 <div class="-my-1.5 -mr-2 flex self-stretch">
                     <WindowControls />
                 </div>
+            {:else}
+                <button
+                    onclick={closeWindow}
+                    aria-label={$t("common.close")}
+                    class="cursor-pointer rounded-lg p-1 text-brand-charcoal-300 transition-colors hover:bg-brand-gold-200 dark:text-[#838ba7] dark:hover:bg-[#414559]"
+                >
+                    <Icon icon="solar:close-circle-bold-duotone" width="1rem" />
+                </button>
             {/if}
         </div>
     </div>
 
-    <WorkbookBoard bind:this={board} {doc} onDocChange={(next) => (doc = next)} />
+    <WorkbookBoard bind:this={board} {doc} onDocChange={(next) => (doc = next)} showTitleInToolbar={false} />
 </div>

@@ -1,6 +1,7 @@
 import { writable, get } from "svelte/store";
 import { supabase } from "$lib/supabase";
 import { isPro } from "$lib/stores/auth.store";
+import { AI_FEATURE_TAGS } from "$lib/stores/ai-chat.store";
 
 export type AiTextAction = "paraphrase" | "elaborate" | "shorten" | "prompt";
 export type AiTextTone =
@@ -126,7 +127,7 @@ export async function runAiTextTransform({
             advanced: get(_aiTextDefaultModel) === "advanced" && get(isPro),
             // This function is only ever called from AiSelectionToolbar's
             // Paraphrase/Elaborate/Shorten/Prompt actions.
-            feature: "selection_toolbar",
+            feature: AI_FEATURE_TAGS.selectionToolbar,
             messages: [
                 {
                     role: "system",
