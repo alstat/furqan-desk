@@ -282,6 +282,11 @@
             descKey: "arabicStudy.onboarding.level_advanced_desc",
         },
     ];
+
+    /** The level on screen, for the header's indicator. */
+    const currentLevel = $derived(
+        LEVELS.find((lvl) => lvl.id === $proficiencyLevel),
+    );
 </script>
 
 {#if open}
@@ -302,6 +307,22 @@
                 >
                     {$t("arabicStudy.open")}
                 </span>
+                <!-- Which level this reader is on. The wizard looks much the
+                     same at every level once a lesson is open, and the choice
+                     was made once, possibly weeks ago — so it is stated in the
+                     chrome rather than left to be remembered. -->
+                {#if currentLevel && !changing}
+                    <span
+                        data-tauri-drag-region={standalone ? true : undefined}
+                        title={$t("arabicStudy.level_indicator", {
+                            level: $t(currentLevel.titleKey),
+                        })}
+                        class="flex items-center gap-1 rounded-full border border-brand-gold-300 bg-white/70 px-2 py-0.5 text-[0.5625rem] font-bold uppercase tracking-wide text-brand-gold-600 dark:border-[#5a5030] dark:bg-[#292c3c] dark:text-[#e5c890]"
+                    >
+                        <Icon icon={currentLevel.icon} width="0.7rem" />
+                        {$t(currentLevel.titleKey)}
+                    </span>
+                {/if}
             </div>
             <div class="ml-auto flex min-w-0 items-center gap-1.5">
                 {#if lesson !== null && lesson !== "grammar"}

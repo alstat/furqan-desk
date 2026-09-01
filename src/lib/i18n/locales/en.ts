@@ -1228,6 +1228,7 @@ export const en: Record<string, string> = {
   "arabicStudy.node.ask_ai_hint": "Opens in AI Chat with this ayah as context.",
   "arabicStudy.onboarding.title": "Learn to read the Qur'an — and speak everyday Arabic",
   "arabicStudy.onboarding.subtitle": "We'll tailor every lesson to where you're starting from.",
+  "arabicStudy.level_indicator": "You are studying at the {level} level. Change it from the summary page.",
   "arabicStudy.onboarding.level_beginner": "New to Arabic",
   "arabicStudy.onboarding.level_beginner_desc": "Start from the alphabet — letter shapes, sounds, and how they join.",
   "arabicStudy.onboarding.level_intermediate": "Intermediate",
