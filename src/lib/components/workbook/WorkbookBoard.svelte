@@ -10,6 +10,7 @@
     import Icon from "@iconify/svelte";
     import { t } from "$lib/i18n";
     import WorkbookNodeCard from "./WorkbookNodeCard.svelte";
+    import { bringToFront } from "$lib/stores/window-manager.store";
     import {
         DATA_NODE_KINDS,
         emptyWorkbook,
@@ -33,8 +34,20 @@
          * keeps the toolbar's field as the only place to rename the board.
          */
         showTitleInToolbar?: boolean;
+        /**
+         * Live recomputes on every relevant change; Manual holds still until
+         * the reader presses Run. Bindable so the Workbook window's header
+         * can drive it directly, since that is where the control lives when
+         * this board has a window of its own (see `showTitleInToolbar`).
+         */
+        runMode?: "live" | "manual";
     }
-    let { doc = emptyWorkbook(), onDocChange, showTitleInToolbar = true }: Props = $props();
+    let {
+        doc = emptyWorkbook(),
+        onDocChange,
+        showTitleInToolbar = true,
+        runMode = $bindable("live"),
+    }: Props = $props();
 
     let board = $state<WorkbookDoc>(doc);
     let selectedIds = $state<string[]>([]);
@@ -45,6 +58,47 @@
      */
     let tool = $state<"select" | "hand">("select");
     let panning = $state(false);
+
+    /**
+     * Tool shortcuts: V selects, H pans, and holding Space pans temporarily
+     * then restores whatever tool was active — the same space-to-pan
+     * convention DrawingCanvas.svelte uses, so the two canvases in this app
+     * agree with each other.
+     */
+    let spaceHeld = false;
+    let toolBeforeSpace: "select" | "hand" | null = null;
+
+    function isTypingTarget(target: EventTarget | null): boolean {
+        return (
+            target instanceof HTMLInputElement ||
+            target instanceof HTMLTextAreaElement ||
+            target instanceof HTMLSelectElement ||
+            (target instanceof HTMLElement && target.isContentEditable)
+        );
+    }
+
+    function onToolKeyDown(e: KeyboardEvent) {
+        if (isTypingTarget(e.target)) return;
+        if (e.code === "Space" && !spaceHeld) {
+            spaceHeld = true;
+            toolBeforeSpace = tool;
+            tool = "hand";
+            e.preventDefault();
+            return;
+        }
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        if (e.key === "v" || e.key === "V") tool = "select";
+        else if (e.key === "h" || e.key === "H") tool = "hand";
+    }
+
+    function onToolKeyUp(e: KeyboardEvent) {
+        if (e.code === "Space" && spaceHeld) {
+            spaceHeld = false;
+            if (toolBeforeSpace) tool = toolBeforeSpace;
+            toolBeforeSpace = null;
+        }
+    }
+
     /**
      * The last document this board handed upwards. A parent that stores what
      * `onDocChange` gives it feeds the same object back in as the prop, and
@@ -64,18 +118,54 @@
     let status = $state("");
 
     /** The kinds the toolbar offers, in the order it offers them. */
-    const ADDABLE: { kind: WorkbookNodeKind; icon: string }[] = [
-        { kind: "ayah", icon: "solar:book-2-bold-duotone" },
-        { kind: "translation", icon: "solar:translation-2-bold-duotone" },
-        { kind: "tafsir", icon: "solar:notebook-bold-duotone" },
-        { kind: "related", icon: "solar:link-circle-bold-duotone" },
-        { kind: "filter", icon: "solar:filter-bold-duotone" },
-        { kind: "limit", icon: "solar:sort-vertical-bold-duotone" },
-        { kind: "dedupe", icon: "solar:copy-bold-duotone" },
-        { kind: "view", icon: "solar:eye-bold-duotone" },
-        { kind: "title", icon: "solar:text-square-bold-duotone" },
-        { kind: "note", icon: "solar:notes-bold-duotone" },
-        { kind: "image", icon: "solar:gallery-bold-duotone" },
+    // Grouped by role in the pipeline (mirrors STEP_META's own source →
+    // enrich → shape → output shape, extended with the kinds that fall
+    // outside a wired chain) rather than one flat row of fourteen buttons —
+    // the toolbar reads as "where does what I want live" instead of a
+    // lookup-by-memory list.
+    const ADDABLE_GROUPS: { label: string; items: { kind: WorkbookNodeKind; icon: string }[] }[] = [
+        {
+            label: "workbook.toolbar_group.source",
+            items: [{ kind: "ayah", icon: "solar:book-2-bold-duotone" }],
+        },
+        {
+            label: "workbook.toolbar_group.enrich",
+            items: [
+                { kind: "translation", icon: "solar:translation-2-bold-duotone" },
+                { kind: "tafsir", icon: "solar:notebook-bold-duotone" },
+                { kind: "related", icon: "solar:link-circle-bold-duotone" },
+            ],
+        },
+        {
+            label: "workbook.toolbar_group.shape",
+            items: [
+                { kind: "filter", icon: "solar:filter-bold-duotone" },
+                { kind: "limit", icon: "solar:sort-vertical-bold-duotone" },
+                { kind: "dedupe", icon: "solar:copy-bold-duotone" },
+            ],
+        },
+        {
+            label: "workbook.toolbar_group.code",
+            items: [
+                { kind: "julia", icon: "devicon-plain:julia" },
+                { kind: "lean", icon: "vscode-icons:file-type-light-lean" },
+            ],
+        },
+        {
+            label: "workbook.toolbar_group.output",
+            items: [
+                { kind: "view", icon: "solar:eye-bold-duotone" },
+                { kind: "export", icon: "solar:download-square-bold-duotone" },
+            ],
+        },
+        {
+            label: "workbook.toolbar_group.content",
+            items: [
+                { kind: "title", icon: "solar:text-square-bold-duotone" },
+                { kind: "note", icon: "solar:notes-bold-duotone" },
+                { kind: "image", icon: "solar:gallery-bold-duotone" },
+            ],
+        },
     ];
 
     function commit(next: WorkbookDoc) {
@@ -151,10 +241,20 @@
     // group can be dragged together. `startDrag` and the card's own
     // pointerdown both see the same event as it bubbles, so the update is
     // guarded to run once per gesture.
+    /**
+     * A card's stacking order, same "raise on click" convention as the
+     * floating panels (see ManuscriptViewer.svelte) — the counter is shared
+     * app-wide, so a card clicked here always ends up above every unclicked
+     * one (they stay at the CSS default), and among clicked cards, whichever
+     * was touched most recently wins.
+     */
+    let nodeZ = $state<Record<string, number>>({});
+
     function selectNode(event: PointerEvent, id: string) {
         const marker = event as PointerEvent & { _wbSelectHandled?: boolean };
         if (marker._wbSelectHandled) return;
         marker._wbSelectHandled = true;
+        nodeZ = { ...nodeZ, [id]: bringToFront() };
         const additive = event.shiftKey || event.metaKey || event.ctrlKey;
         if (additive) {
             selectedIds = selectedIds.includes(id)
@@ -194,6 +294,20 @@
         );
         if (targets.size === 0) return;
         commit({ ...board, groups: board.groups.filter((g) => !targets.has(g.id)) });
+    }
+
+    /** Any wire with both ends in the current selection — what "Disconnect" in the floating toolbar removes. */
+    const canDisconnect = $derived(
+        selectedIds.length >= 2 &&
+            board.edges.some((e) => selectedIds.includes(e.from) && selectedIds.includes(e.to)),
+    );
+
+    function disconnectSelected() {
+        if (!canDisconnect) return;
+        commit({
+            ...board,
+            edges: board.edges.filter((e) => !(selectedIds.includes(e.from) && selectedIds.includes(e.to))),
+        });
     }
 
     // ── Dragging, resizing, panning, marquee-selecting ──────────────────────
@@ -370,6 +484,17 @@
                 const to = portDrag.side === "out" ? target.id : portDrag.fromId;
                 const edges = board.edges.filter((e) => e.from !== from && e.to !== to);
                 commit({ ...board, edges: [...edges, { id: crypto.randomUUID(), from, to }] });
+            } else {
+                // Dropped on empty space rather than another node — a plain
+                // click on a port lands here too, since it never moves onto
+                // a target. If this port already had a wire, that removes
+                // it (dragging a connected wire away disconnects it, same
+                // as most node editors); an unwired port dropped on empty
+                // space is just a cancelled drag, same as before.
+                const edges = board.edges.filter((e) =>
+                    portDrag!.side === "out" ? e.from !== portDrag!.fromId : e.to !== portDrag!.fromId,
+                );
+                if (edges.length !== board.edges.length) commit({ ...board, edges });
             }
             portDrag = null;
         }
@@ -469,8 +594,17 @@
 
     let nodeOutputs = $state<Map<string, VerseRow[]>>(new Map());
 
+    let runTick = $state(0);
+    let lastRunTick = 0;
+
+    /** The explicit trigger in Manual mode — recomputes the whole pipeline once. */
+    export function runNow() {
+        runTick += 1;
+    }
+
     // Recomputed whenever a node's own settings change or the wiring changes —
-    // not on drag/resize, which touch only x/y/width/height.
+    // not on drag/resize, which touch only x/y/width/height — but only in
+    // Live mode; in Manual mode this waits for `runTick` from runNow().
     $effect(() => {
         const key =
             board.nodes
@@ -479,6 +613,9 @@
             "::" +
             board.edges.map((e) => `${e.from}>${e.to}`).join(",");
         void key;
+        const tick = runTick;
+        if (runMode === "manual" && tick === lastRunTick) return;
+        lastRunTick = tick;
         void (async () => {
             nodeOutputs = await resolveNodeOutputs(board);
         })();
@@ -656,6 +793,8 @@
     }
 </script>
 
+<svelte:window onkeydown={onToolKeyDown} onkeyup={onToolKeyUp} />
+
 <div class="flex min-h-0 flex-1 flex-col">
     <!-- Toolbar -->
     <div
@@ -669,21 +808,66 @@
             />
             <span class="h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></span>
         {/if}
-        {#each ADDABLE as item (item.kind)}
-            <button
-                onclick={() => addNode(item.kind)}
-                title={$t(`workbook.add.${item.kind}`)}
-                class="flex cursor-pointer items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 py-1 text-xs font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+        {#each ADDABLE_GROUPS as group, gi (group.label)}
+            {#if gi > 0}
+                <span class="h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></span>
+            {/if}
+            <span
+                class="text-[0.5625rem] font-semibold uppercase tracking-wider text-brand-charcoal-300 dark:text-[#626880]"
             >
-                <Icon icon={item.icon} width="0.75rem" />
-                {$t(`workbook.node.${item.kind}`)}
-            </button>
-        {/each}
-        {#if status}
-            <span class="ml-auto text-[0.6875rem] text-brand-charcoal-400 dark:text-[#838ba7]">
-                {status}
+                {$t(group.label)}
             </span>
-        {/if}
+            {#each group.items as item (item.kind)}
+                <button
+                    onclick={() => addNode(item.kind)}
+                    title={$t(`workbook.add.${item.kind}`)}
+                    class="flex cursor-pointer items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 py-1 text-xs font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                >
+                    <Icon icon={item.icon} width="0.75rem" />
+                    {$t(`workbook.node.${item.kind}`)}
+                </button>
+            {/each}
+        {/each}
+        <div class="ml-auto flex items-center gap-2">
+            {#if showTitleInToolbar}
+                <!-- The Workbook window puts this in its title bar instead
+                     (see WorkbookTabStrip's neighbour in +page.svelte); the
+                     Verse Study canvas has no header of its own, so it keeps
+                     this here, same as the title field above. -->
+                <div class="flex items-center gap-1 rounded-full bg-brand-gold-200/50 p-1 dark:bg-[#414559]/50">
+                    {#each [["live", "solar:bolt-bold-duotone"], ["manual", "solar:hand-stars-bold-duotone"]] as const as [mode, icon] (mode)}
+                        <button
+                            onclick={() => (runMode = mode)}
+                            title={$t(`workbook.run_mode.${mode}`)}
+                            aria-pressed={runMode === mode}
+                            class="flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1 text-[0.625rem] font-semibold transition-colors {runMode ===
+                            mode
+                                ? 'bg-white text-brand-charcoal-900 shadow-sm dark:bg-[#51576d] dark:text-[#c6d0f5]'
+                                : 'text-brand-gold-600 hover:text-brand-charcoal-900 dark:text-[#838ba7] dark:hover:text-[#c6d0f5]'}"
+                        >
+                            <Icon {icon} width="0.7rem" />
+                            {$t(`workbook.run_mode.${mode}`)}
+                        </button>
+                    {/each}
+                </div>
+                {#if runMode === "manual"}
+                    <button
+                        onclick={runNow}
+                        title={$t("workbook.run_now")}
+                        aria-label={$t("workbook.run_now")}
+                        class="flex cursor-pointer items-center gap-1 rounded-full bg-brand-gold-500 px-2.5 py-1 text-[0.625rem] font-semibold text-white shadow-sm transition-colors hover:bg-brand-gold-600 dark:bg-[#e5c890] dark:text-[#232634] dark:hover:bg-[#d4b57f]"
+                    >
+                        <Icon icon="solar:play-bold-duotone" width="0.7rem" />
+                        {$t("workbook.run_now")}
+                    </button>
+                {/if}
+            {/if}
+            {#if status}
+                <span class="text-[0.6875rem] text-brand-charcoal-400 dark:text-[#838ba7]">
+                    {status}
+                </span>
+            {/if}
+        </div>
     </div>
 
     <!-- Surface -->
@@ -754,6 +938,9 @@
                     selected={selectedIds.includes(node.id)}
                     hasPort={hasPort(node.id)}
                     inputRows={inputRowsFor(node.id)}
+                    live={runMode === "live"}
+                    runToken={runTick}
+                    zIndex={nodeZ[node.id] ?? 0}
                     onSelect={(event) => selectNode(event, node.id)}
                     onChange={(patch) => updateNode(node.id, patch)}
                     onRemove={() => removeNodeIds([node.id])}
@@ -779,35 +966,35 @@
              document, kept over the canvas where the work is, in the same glass
              panel the recitation player floats in. -->
         <div
-            class="glass-panel pointer-events-auto absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-2xl border border-brand-sand-200/80 bg-white/90 px-1.5 py-1 shadow-md shadow-stone-300/20 backdrop-blur-md dark:border-[#414559] dark:bg-[#292c3c]/95 dark:shadow-black/20"
+            class="glass-panel pointer-events-auto absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-2xl border border-brand-sand-200/80 bg-white/90 px-2 py-1.5 shadow-md shadow-stone-300/20 backdrop-blur-md dark:border-[#414559] dark:bg-[#292c3c]/95 dark:shadow-black/20"
         >
-            {#each [["select", "solar:cursor-bold-duotone"], ["hand", "solar:hand-shake-bold-duotone"]] as const as [mode, icon] (mode)}
+            {#each [["select", "solar:cursor-bold-duotone", "V"], ["hand", "solar:hand-shake-bold-duotone", "H"]] as const as [mode, icon, key] (mode)}
                 <button
                     onclick={() => (tool = mode)}
-                    title={$t(`workbook.tool.${mode}`)}
+                    title="{$t(`workbook.tool.${mode}`)} ({key})"
                     aria-label={$t(`workbook.tool.${mode}`)}
                     aria-pressed={tool === mode}
-                    class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-xl transition-colors {tool ===
+                    class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-colors {tool ===
                     mode
                         ? 'bg-brand-gold-200 text-brand-gold-600 dark:bg-[#414559] dark:text-[#e5c890]'
                         : 'text-brand-charcoal-400 hover:bg-brand-sand-100 dark:text-[#838ba7] dark:hover:bg-[#414559]'}"
                 >
-                    <Icon {icon} width="0.9rem" />
+                    <Icon {icon} width="1.05rem" />
                 </button>
             {/each}
-            <span class="mx-0.5 h-4 w-px bg-brand-sand-200 dark:bg-[#414559]"></span>
+            <span class="mx-0.5 h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></span>
             <button
                 onclick={() => zoomBy(1 / 1.2)}
                 title={$t("workbook.zoom_out")}
                 aria-label={$t("workbook.zoom_out")}
-                class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-xl text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 dark:text-[#838ba7] dark:hover:bg-[#414559]"
+                class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 dark:text-[#838ba7] dark:hover:bg-[#414559]"
             >
-                <Icon icon="solar:minus-circle-bold-duotone" width="0.9rem" />
+                <Icon icon="solar:minus-circle-bold-duotone" width="1.05rem" />
             </button>
             <button
                 onclick={resetView}
                 title={$t("workbook.reset_view")}
-                class="w-12 cursor-pointer rounded-xl text-center text-[0.625rem] font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                class="w-14 cursor-pointer rounded-xl text-center text-[0.6875rem] font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
             >
                 {Math.round(board.viewport.zoom * 100)}%
             </button>
@@ -815,46 +1002,55 @@
                 onclick={() => zoomBy(1.2)}
                 title={$t("workbook.zoom_in")}
                 aria-label={$t("workbook.zoom_in")}
-                class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-xl text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 dark:text-[#838ba7] dark:hover:bg-[#414559]"
+                class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 dark:text-[#838ba7] dark:hover:bg-[#414559]"
             >
-                <Icon icon="solar:add-circle-bold-duotone" width="0.9rem" />
+                <Icon icon="solar:add-circle-bold-duotone" width="1.05rem" />
             </button>
-            <span class="mx-0.5 h-4 w-px bg-brand-sand-200 dark:bg-[#414559]"></span>
+            <span class="mx-0.5 h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></span>
             <button
                 onclick={fitToContent}
                 title={$t("workbook.fit")}
                 aria-label={$t("workbook.fit")}
-                class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-xl text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 dark:text-[#838ba7] dark:hover:bg-[#414559]"
+                class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 dark:text-[#838ba7] dark:hover:bg-[#414559]"
             >
-                <Icon icon="solar:maximize-square-minimalistic-bold-duotone" width="0.9rem" />
+                <Icon icon="solar:maximize-square-minimalistic-bold-duotone" width="1.05rem" />
             </button>
-            <span class="mx-0.5 h-4 w-px bg-brand-sand-200 dark:bg-[#414559]"></span>
+            <span class="mx-0.5 h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></span>
             <button
                 onclick={groupSelected}
                 disabled={!canGroup}
                 title={$t("workbook.group")}
                 aria-label={$t("workbook.group")}
-                class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-xl text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 disabled:cursor-default disabled:opacity-40 dark:text-[#838ba7] dark:hover:bg-[#414559]"
+                class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 disabled:cursor-default disabled:opacity-40 dark:text-[#838ba7] dark:hover:bg-[#414559]"
             >
-                <Icon icon="solar:widget-add-bold-duotone" width="0.9rem" />
+                <Icon icon="solar:widget-add-bold-duotone" width="1.05rem" />
             </button>
             <button
                 onclick={ungroupSelected}
                 disabled={!canUngroup}
                 title={$t("workbook.ungroup")}
                 aria-label={$t("workbook.ungroup")}
-                class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-xl text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 disabled:cursor-default disabled:opacity-40 dark:text-[#838ba7] dark:hover:bg-[#414559]"
+                class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 disabled:cursor-default disabled:opacity-40 dark:text-[#838ba7] dark:hover:bg-[#414559]"
             >
-                <Icon icon="solar:widget-5-bold-duotone" width="0.9rem" />
+                <Icon icon="solar:widget-5-bold-duotone" width="1.05rem" />
+            </button>
+            <button
+                onclick={disconnectSelected}
+                disabled={!canDisconnect}
+                title={$t("workbook.disconnect")}
+                aria-label={$t("workbook.disconnect")}
+                class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 disabled:cursor-default disabled:opacity-40 dark:text-[#838ba7] dark:hover:bg-[#414559]"
+            >
+                <Icon icon="solar:link-broken-bold" width="1.05rem" />
             </button>
             <button
                 onclick={removeSelected}
                 disabled={!selectedIds.length}
                 title={$t("workbook.remove_node")}
                 aria-label={$t("workbook.remove_node")}
-                class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-xl text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 hover:text-red-500 disabled:cursor-default disabled:opacity-40 dark:text-[#838ba7] dark:hover:bg-[#414559]"
+                class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-brand-charcoal-400 transition-colors hover:bg-brand-sand-100 hover:text-red-500 disabled:cursor-default disabled:opacity-40 dark:text-[#838ba7] dark:hover:bg-[#414559]"
             >
-                <Icon icon="solar:trash-bin-trash-bold-duotone" width="0.9rem" />
+                <Icon icon="solar:trash-bin-trash-bold-duotone" width="1.05rem" />
             </button>
         </div>
 

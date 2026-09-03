@@ -14,7 +14,8 @@
     "drawing",
     "arabic-study",
     "arabic-study-home",
-    "workbook"
+    "workbook",
+    "workbook-*"
   ],
   "permissions": [
     "core:default",

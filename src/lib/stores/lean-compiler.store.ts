@@ -120,7 +120,7 @@ export interface LeanRuntime {
     retain(): () => void;
 }
 
-function createLeanRuntime(kernel: string): LeanRuntime {
+export function createLeanRuntime(kernel: string): LeanRuntime {
     const diagnostics = writable<LeanDiagnostic[]>([]);
     const raw = writable('');
     const status = writable<LeanStatus>('idle');

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import '$lib/icons';
-	import { appDarkMode, zenMode, uiFontScale } from '$lib/stores/editor.store';
+	import { appDarkMode, zenMode, uiFontScale, editorTheme, type EditorTheme } from '$lib/stores/editor.store';
 	import AppHeader from '$lib/components/shared/AppHeader.svelte';
 	import OpenTabFileWatcher from '$lib/components/shared/OpenTabFileWatcher.svelte';
 	import JuliaInstallPrompt from '$lib/components/shared/JuliaInstallPrompt.svelte';
@@ -120,6 +120,43 @@
 					// Record it as already broadcast, so receiving does not echo.
 					broadcastTheme = event.payload.dark;
 					appDarkMode.set(event.payload.dark);
+				});
+			} catch {
+				/* not running inside Tauri */
+			}
+		})();
+		return () => stop?.();
+	});
+
+	// Same idea for the code editor's own theme (Editor Toolbar's picker):
+	// CodeMirrorEditor reads `editorTheme` directly, and every window —
+	// including satellite ones like the Workbook, which embeds it in its
+	// Julia/Lean nodes — otherwise only ever sees whatever that store held
+	// at its own page load, since a Tauri window is a separate webview with
+	// its own localStorage-seeded copy of the store.
+	let broadcastEditorTheme: EditorTheme | null = null;
+	$effect(() => {
+		const theme = $editorTheme;
+		if (broadcastEditorTheme === theme) return;
+		broadcastEditorTheme = theme;
+		void (async () => {
+			try {
+				const { emit } = await import('@tauri-apps/api/event');
+				await emit('editor-theme-changed', { theme });
+			} catch {
+				/* not running inside Tauri */
+			}
+		})();
+	});
+
+	onMount(() => {
+		let stop: (() => void) | undefined;
+		void (async () => {
+			try {
+				const { listen } = await import('@tauri-apps/api/event');
+				stop = await listen<{ theme: EditorTheme }>('editor-theme-changed', (event) => {
+					broadcastEditorTheme = event.payload.theme;
+					editorTheme.set(event.payload.theme);
 				});
 			} catch {
 				/* not running inside Tauri */

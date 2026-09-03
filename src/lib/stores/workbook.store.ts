@@ -6,10 +6,13 @@ import { fetchAyahMorphology, findVersesByRootOrLemma } from '$lib/data/arabic-s
 import {
     activeTafsirId,
     activeTranslatorId,
+    availableTafsirAuthors,
+    availableTranslators,
     type AyahTafsir,
 } from '$lib/stores/translation.store';
 import { translateVerses as aiTranslateVerses } from '$lib/stores/ai-grammar-topic.store';
 import { AI_FEATURE_TAGS } from '$lib/stores/ai-chat.store';
+import { runWorkbookJulia, runWorkbookLean } from '$lib/stores/workbook-code-nodes';
 
 // A workbook is a board of cards — some of them plain notes, some of them
 // windows onto the Qur'an. Any of the Qur'an/shape/output cards can be wired
@@ -27,7 +30,10 @@ export type WorkbookNodeKind =
     | 'filter'
     | 'limit'
     | 'dedupe'
+    | 'julia'
+    | 'lean'
     | 'view'
+    | 'export'
     | 'title'
     | 'note'
     | 'image';
@@ -41,7 +47,10 @@ export const DATA_NODE_KINDS: WorkbookNodeKind[] = [
     'filter',
     'limit',
     'dedupe',
+    'julia',
+    'lean',
     'view',
+    'export',
 ];
 
 /**
@@ -113,8 +122,10 @@ export interface WorkbookNode {
     y: number;
     width: number;
     height: number;
-    /** Free-text heading shown on the card. */
+    /** Free-text heading shown on the card. `julia`/`lean`: the node's own name, so the board reads clearly with more than one. */
     title?: string;
+    /** `julia`/`lean`: the reader's own code, run against `rows` (the upstream `VerseRow[]`) with the answer expected in `result`. */
+    code?: string;
     /**
      * `ayah`/`translation`/`tafsir`/`related`: the verses it is pointed at,
      * picked from the surah/ayah dropdowns rather than typed. Read through
@@ -138,21 +149,59 @@ export interface WorkbookNode {
     /** `view`: how the resolved rows are laid out. */
     layout?: 'list' | 'columns';
     /**
-     * `translation`: which bundled translator to read, `'other'` for an
-     * AI-supplied language (see `otherLanguage`), or unset to follow the
-     * reader's own active translator.
+     * `translation`: legacy single-pick fields from before more than one
+     * translator could be compared at once — still read by `nodeTranslators()`
+     * when `translators` is unset, never written by new code. `'other'` was
+     * (and `translators[].id === 'other'` still is) an AI-supplied language,
+     * named in `otherLanguage`/`translators[].language`.
      */
     translatorId?: number | 'other';
-    /** `translation` when `translatorId === 'other'`: the free-text language name. */
     otherLanguage?: string;
-    /** `tafsir`: which bundled author to read, or unset to follow the reader's own chosen author. */
+    /**
+     * `translation`: the translators to read, each a bundled id or `'other'`
+     * for an AI-supplied language (its own `language`, one per entry so more
+     * than one can be compared side by side). Read through `nodeTranslators()`,
+     * which also covers the legacy fields above; empty/unset follows the
+     * reader's own active translator.
+     */
+    translators?: { id?: number | 'other'; language?: string }[];
+    /** `tafsir`: legacy single-author field — still read by `nodeTafsirAuthorIds()`, never written. */
     tafsirAuthorId?: number;
+    /**
+     * `tafsir`: the bundled authors to read, one tafsir per entry so more
+     * than one can be compared side by side; empty/unset follows the
+     * reader's own chosen author.
+     */
+    tafsirAuthorIds?: (number | undefined)[];
 }
 
 /** A node's verses, whichever field they came from — `refs` if it has any, else the old `ref`. */
 export function nodeRefs(node: WorkbookNode): string[] {
     if (node.refs?.length) return node.refs;
     return node.ref ? [node.ref] : [];
+}
+
+/**
+ * A translation node's picks, whichever field they came from — `translators`
+ * if it has any, else the old single `translatorId`/`otherLanguage`, else one
+ * empty pick (unset id — follow the reader's own active translator) so the
+ * card always shows at least one row.
+ */
+export function nodeTranslators(node: WorkbookNode): { id?: number | 'other'; language?: string }[] {
+    if (node.translators?.length) return node.translators;
+    if (node.translatorId !== undefined) return [{ id: node.translatorId, language: node.otherLanguage }];
+    return [{}];
+}
+
+/**
+ * A tafsir node's author picks, whichever field they came from — `tafsirAuthorIds`
+ * if it has any, else the old single `tafsirAuthorId`, else one unset pick so
+ * the card always shows at least one row.
+ */
+export function nodeTafsirAuthorIds(node: WorkbookNode): (number | undefined)[] {
+    if (node.tafsirAuthorIds?.length) return node.tafsirAuthorIds;
+    if (node.tafsirAuthorId !== undefined) return [node.tafsirAuthorId];
+    return [undefined];
 }
 
 /**
@@ -204,18 +253,32 @@ export function emptyWorkbook(title = 'Untitled workbook'): WorkbookDoc {
     };
 }
 
+// One size for every kind, Ayah's own (slightly narrower than it used to
+// be) as the basis — a card wired to another reads as one consistent shape
+// moving through the pipeline, rather than some links being visibly bigger
+// or smaller than others for no reason tied to their content.
+export const NODE_SIZE = { width: 260, height: 150 };
 const NODE_DEFAULTS: Record<WorkbookNodeKind, { width: number; height: number }> = {
-    ayah: { width: 320, height: 180 },
-    translation: { width: 320, height: 180 },
-    tafsir: { width: 340, height: 220 },
-    related: { width: 320, height: 220 },
-    filter: { width: 260, height: 140 },
-    limit: { width: 240, height: 120 },
-    dedupe: { width: 220, height: 100 },
-    view: { width: 320, height: 220 },
-    title: { width: 320, height: 64 },
-    note: { width: 260, height: 140 },
-    image: { width: 280, height: 200 },
+    ayah: NODE_SIZE,
+    translation: NODE_SIZE,
+    tafsir: NODE_SIZE,
+    related: NODE_SIZE,
+    filter: NODE_SIZE,
+    limit: NODE_SIZE,
+    dedupe: NODE_SIZE,
+    julia: NODE_SIZE,
+    lean: NODE_SIZE,
+    view: NODE_SIZE,
+    export: NODE_SIZE,
+    title: NODE_SIZE,
+    note: NODE_SIZE,
+    image: NODE_SIZE,
+};
+
+/** A fresh Julia/Lean node is already a working pass-through until edited. */
+const CODE_PLACEHOLDER: Partial<Record<WorkbookNodeKind, string>> = {
+    julia: 'result = rows',
+    lean: 'def result := rows',
 };
 
 export function makeNode(kind: WorkbookNodeKind, x: number, y: number): WorkbookNode {
@@ -231,6 +294,7 @@ export function makeNode(kind: WorkbookNodeKind, x: number, y: number): Workbook
         text: kind === 'title' ? 'Heading' : kind === 'note' ? '' : undefined,
         limit: kind === 'limit' ? 5 : kind === 'related' ? 3 : undefined,
         layout: kind === 'view' ? 'list' : undefined,
+        code: CODE_PLACEHOLDER[kind],
     };
 }
 
@@ -240,8 +304,14 @@ export interface VerseRow {
     surah: number;
     ayah: number;
     arabic: string;
+    /** The first (or only) translation — always set alongside `translations` for whatever read it. */
     translation?: string | null;
+    /** Set when a translation node has one or more translators picked — one entry per translator, for comparing them side by side. */
+    translations?: { label: string; text: string | null }[];
+    /** The first (or only) tafsir — always set alongside `tafsirs` for whatever read it. */
     tafsir?: string | null;
+    /** Set when a tafsir node has one or more authors picked — one entry per author, for comparing them side by side. */
+    tafsirs?: { label: string; text: string | null }[];
     /** Set when the row was reached from another verse. */
     fromRef?: string;
 }
@@ -349,41 +419,72 @@ export async function transformNode(
         case 'translation': {
             // No self-source: a Translate card only ever translates what
             // flows into it (an Ayah card, typically) — see the module doc.
+            // One or more translators can be picked (the + button in the
+            // card); each becomes one entry in `translations`, so the View
+            // card can show them side by side.
             if (!input.length) return [];
-            if (node.translatorId === 'other') {
-                const language = (node.otherLanguage ?? '').trim();
-                if (!language) return input.map((row) => ({ ...row, translation: null }));
-                const byRef = await aiTranslateVerses({
-                    verses: input.map((row) => ({ ref: `${row.surah}:${row.ayah}`, arabic: row.arabic })),
-                    language,
-                    feature: AI_FEATURE_TAGS.workbookTranslate,
-                });
-                return input.map((row) => ({
-                    ...row,
-                    translation: byRef[`${row.surah}:${row.ayah}`] ?? null,
-                }));
-            }
-            const translatorId = typeof node.translatorId === 'number' ? node.translatorId : undefined;
-            const refreshed = await loadVerses(
-                input.map((row) => `${row.surah}:${row.ayah}`),
-                translatorId,
+            const picks = nodeTranslators(node);
+            const translators = get(availableTranslators);
+            const perPick = await Promise.all(
+                picks.map(async (pick) => {
+                    if (pick.id === 'other') {
+                        const language = (pick.language ?? '').trim();
+                        if (!language) return { label: pick.language || 'Other', byRef: new Map<string, string | null>() };
+                        const byRef = await aiTranslateVerses({
+                            verses: input.map((row) => ({ ref: `${row.surah}:${row.ayah}`, arabic: row.arabic })),
+                            language,
+                            feature: AI_FEATURE_TAGS.workbookTranslate,
+                        });
+                        return { label: language, byRef: new Map(Object.entries(byRef)) };
+                    }
+                    const id = typeof pick.id === 'number' ? pick.id : undefined;
+                    const label =
+                        id !== undefined
+                            ? (translators.find((t) => t.id === id)?.name ?? `#${id}`)
+                            : (translators.find((t) => t.id === get(activeTranslatorId))?.name ?? 'Default');
+                    const refreshed = await loadVerses(input.map((row) => `${row.surah}:${row.ayah}`), id);
+                    const byRef = new Map(refreshed.map((row) => [`${row.surah}:${row.ayah}`, row.translation]));
+                    return { label, byRef };
+                }),
             );
-            const byRef = new Map(refreshed.map((row) => [`${row.surah}:${row.ayah}`, row.translation]));
-            return input.map((row) => ({
-                ...row,
-                translation: byRef.get(`${row.surah}:${row.ayah}`) ?? null,
-            }));
+            return input.map((row) => {
+                const key = `${row.surah}:${row.ayah}`;
+                const translations = perPick.map((p) => ({ label: p.label, text: p.byRef.get(key) ?? null }));
+                return { ...row, translation: translations[0]?.text ?? null, translations };
+            });
         }
         case 'tafsir': {
             // No self-source either — an Ayah card upstream (directly, or by
             // way of a Translate card, which passes surah/ayah straight
-            // through) is what supplies the verses.
+            // through) is what supplies the verses. One or more authors can
+            // be picked (the + button), each an entry in `tafsirs`.
             if (!input.length) return [];
-            return attachTafsir(input, node.tafsirAuthorId);
+            const ids = nodeTafsirAuthorIds(node);
+            const authors = get(availableTafsirAuthors);
+            const perAuthor = await Promise.all(
+                ids.map(async (id) => {
+                    const label =
+                        id !== undefined
+                            ? (authors.find((a) => a.id === id)?.name ?? `#${id}`)
+                            : (authors.find((a) => a.id === get(activeTafsirId))?.name ?? 'Default');
+                    const withTafsir = await attachTafsir(input, id);
+                    const byRef = new Map(withTafsir.map((row) => [`${row.surah}:${row.ayah}`, row.tafsir]));
+                    return { label, byRef };
+                }),
+            );
+            return input.map((row) => {
+                const key = `${row.surah}:${row.ayah}`;
+                const tafsirs = perAuthor.map((a) => ({ label: a.label, text: a.byRef.get(key) ?? null }));
+                return { ...row, tafsir: tafsirs[0]?.text ?? null, tafsirs };
+            });
         }
         case 'related': {
-            const rows = input.length ? input : await loadVerses(nodeRefs(node));
-            return relatedTo(rows, node.limit ?? 3);
+            // No self-source: reads only what is wired in (an Ayah card,
+            // directly or by way of a Translate card) — same reasoning as
+            // translation/tafsir above, so the surah/ayah it works from is
+            // never picked twice in the same chain.
+            if (!input.length) return [];
+            return relatedTo(input, node.limit ?? 3);
         }
         case 'filter': {
             const field = node.filterField ?? 'text';
@@ -393,7 +494,13 @@ export async function transformNode(
             if (field === 'text') {
                 const needle = raw.toLowerCase();
                 const matches = (row: VerseRow) =>
-                    [row.arabic, row.translation, row.tafsir]
+                    [
+                        row.arabic,
+                        row.translation,
+                        row.tafsir,
+                        ...(row.translations?.map((t) => t.text) ?? []),
+                        ...(row.tafsirs?.map((t) => t.text) ?? []),
+                    ]
                         .filter(Boolean)
                         .some((text) => String(text).toLowerCase().includes(needle));
                 return input.filter((row) => (op === 'not_contains' ? !matches(row) : matches(row)));
@@ -422,11 +529,52 @@ export async function transformNode(
                 return true;
             });
         }
+        case 'julia':
+            // No self-source — a processor node only ever acts on what flows
+            // into it. Compatibility with whatever's wired downstream (Filter,
+            // Related, View, ...) is handled entirely inside runWorkbookJulia,
+            // which always hands back real VerseRow[] — nothing past this case
+            // needs to know the rows passed through Julia at all.
+            return input.length ? runWorkbookJulia(node, input) : [];
+        case 'lean':
+            return input.length ? runWorkbookLean(node, input) : [];
         case 'view':
+            return input;
+        case 'export':
+            // A sink, same as `view` — its export buttons read the card's own
+            // already-resolved rows directly rather than reshaping them here.
             return input;
         default:
             return [];
     }
+}
+
+/** Flattens rows to CSV text — Export's "Save as CSV"/"Copy as CSV". Multiple translations/tafsirs join the same way Lean's flattened output does, so the two conventions stay in sync. */
+export function rowsToCsv(rows: VerseRow[]): string {
+    const csvField = (value: string): string =>
+        /[",\n]/.test(value) ? '"' + value.replace(/"/g, '""') + '"' : value;
+    const flatten = (entries: { label: string; text: string | null }[] | undefined, fallback: string | null | undefined): string => {
+        if (entries?.length) {
+            return entries.map((e) => (e.label ? `${e.label}: ${e.text ?? ''}` : (e.text ?? ''))).join(' | ');
+        }
+        return fallback ?? '';
+    };
+    const header = ['Surah', 'Ayah', 'Arabic', 'Translation', 'Tafsir'];
+    const lines = [header.map(csvField).join(',')];
+    for (const row of rows) {
+        lines.push(
+            [
+                String(row.surah),
+                String(row.ayah),
+                row.arabic,
+                flatten(row.translations, row.translation),
+                flatten(row.tafsirs, row.tafsir),
+            ]
+                .map(csvField)
+                .join(','),
+        );
+    }
+    return lines.join('\r\n');
 }
 
 /**
@@ -499,7 +647,10 @@ const NODE_FILL: Record<WorkbookNodeKind, { fill: string; stroke: string }> = {
     filter: { fill: '#f4f2fa', stroke: '#c3b6ea' },
     limit: { fill: '#f4f2fa', stroke: '#c3b6ea' },
     dedupe: { fill: '#f4f2fa', stroke: '#c3b6ea' },
+    julia: { fill: '#f3ecfa', stroke: '#c9a8e0' },
+    lean: { fill: '#e9f1fb', stroke: '#a9c6e8' },
     view: { fill: '#eef7f0', stroke: '#9dd4c8' },
+    export: { fill: '#fdf1e6', stroke: '#e0b98f' },
     title: { fill: '#ffffff00', stroke: '#ffffff00' },
     note: { fill: '#fffbe8', stroke: '#e8dca8' },
     image: { fill: '#f4f4f4', stroke: '#dcdcdc' },
@@ -678,11 +829,40 @@ export function workbookFromSvg(svg: string): WorkbookDoc | null {
 
 const WORKBOOK_WINDOW = 'workbook';
 
-/** Asks an already-open workbook window to load a file. */
-export const WORKBOOK_OPEN_EVENT = 'workbook:open';
+/**
+ * Asks an already-open workbook window to add a tab — blank, or loading a
+ * path — rather than replacing whatever the reader already has open. This is
+ * what turns a second "Create Workbook" into a new tab instead of a second
+ * window.
+ */
+export const WORKBOOK_NEW_TAB_EVENT = 'workbook:new-tab';
 
 /**
- * A workbook gets a window of its own, like the Verse Study canvas.
+ * The pop-out/reattach handshake for dragging a tab between Workbook windows
+ * (see WorkbookTabStrip.svelte, which drives all four of these):
+ *  1. A freshly popped-out window announces itself ready with `tab-ready`,
+ *     carrying the id of the tab it was opened to receive.
+ *  2. The window that popped it out replies with `seed-tab`, carrying that
+ *     tab's document — the only way data reaches a brand new window, since
+ *     `openAppWindow` has no channel for arbitrary init payloads.
+ *  3. While a single-tab window is being dragged by its tab, the dragged
+ *     window polls window positions and tells whichever window it is
+ *     hovering over via `drop-hover`, so that window can show a highlight.
+ *  4. On drop over a target, the dragged window hands over its whole tab
+ *     list with `attach-tabs` and closes itself.
+ * All four are window-scoped (`emitTo`), not the app-global `emit` other
+ * events in this file use — this chatter is only ever meant for one other
+ * specific window, never every open window in the app.
+ */
+export const WORKBOOK_TAB_READY_EVENT = 'workbook:tab-ready';
+export const WORKBOOK_SEED_TAB_EVENT = 'workbook:seed-tab';
+export const WORKBOOK_DROP_HOVER_EVENT = 'workbook:drop-hover';
+export const WORKBOOK_ATTACH_TABS_EVENT = 'workbook:attach-tabs';
+
+/**
+ * A workbook gets a window of its own, like the Verse Study canvas — but
+ * only the first one opened; every "Create Workbook" after that adds a tab
+ * to it instead, which is why this always targets the one fixed label.
  *
  * The file to open rides on the query string for a window that has to be
  * created, and on an event for one that is already up: focusing an existing
@@ -702,7 +882,7 @@ export function openWorkbookWindow(path?: string): Promise<boolean> {
         minWidth: 900,
         minHeight: 620,
         onExisting: async (win) => {
-            if (path) await win.emit(WORKBOOK_OPEN_EVENT, { path });
+            await win.emit(WORKBOOK_NEW_TAB_EVENT, { path });
         },
     });
 }
