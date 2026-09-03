@@ -16,9 +16,30 @@
 // package there would be a reliability regression, not a convenience.
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { writable, type Writable } from 'svelte/store';
 import type { VerseRow, WorkbookNode } from './workbook.store';
 
 const OUTPUT_MARKER = '__WB_OUT__:';
+const PLOT_MARKER = '__AL_CMD__:';
+
+/** One Julia plot, same shape the app's own Julia cells already use — see `julia.rs`'s `__AL_CMD__` sidecar convention. */
+export interface WorkbookJuliaPlot {
+    format: 'png' | 'svg' | 'html' | 'plotly';
+    data?: string;
+    url?: string;
+}
+
+const plotStores = new Map<string, Writable<WorkbookJuliaPlot[]>>();
+
+/** Reactive store of a Julia node's most recent plot output — replaced whole each run (not accumulated), so it always reflects the last thing that actually ran. A `view` card wired to that node reads this to act as a plot viewer. */
+export function workbookJuliaPlots(nodeId: string): Writable<WorkbookJuliaPlot[]> {
+    let store = plotStores.get(nodeId);
+    if (!store) {
+        store = writable([]);
+        plotStores.set(nodeId, store);
+    }
+    return store;
+}
 
 /**
  * The dedicated kernel each Workbook node runs on — one per node, isolated
@@ -218,7 +239,11 @@ function ensureOutputListener(): Promise<unknown> {
     return outputListener;
 }
 
-function runOnJuliaKernel(kernel: string, code: string): Promise<{ text: string; hasError: boolean }> {
+function runOnJuliaKernel(
+    kernel: string,
+    nodeId: string,
+    code: string,
+): Promise<{ text: string; hasError: boolean }> {
     const prior = kernelChains.get(kernel) ?? Promise.resolve();
     const run = prior.catch(() => {}).then(async () => {
         await ensureOutputListener();
@@ -227,11 +252,34 @@ function runOnJuliaKernel(kernel: string, code: string): Promise<{ text: string;
         return new Promise<{ text: string; hasError: boolean }>((resolve, reject) => {
             let text = '';
             let hasError = false;
+            let plots: WorkbookJuliaPlot[] = [];
             sinks.set(kernel, (chunk, isDone, error) => {
-                if (chunk) text += text ? `\n${chunk}` : chunk;
+                if (chunk) {
+                    // Plot sidecar lines (the same `__AL_CMD__:` convention the
+                    // app's own Julia cells use) never belong in the visible
+                    // REPL text — pulled out here, same as julia-notebook.ts.
+                    const rest: string[] = [];
+                    for (const line of chunk.split('\n')) {
+                        if (line.startsWith(PLOT_MARKER)) {
+                            try {
+                                const cmd = JSON.parse(line.slice(PLOT_MARKER.length));
+                                if (cmd.type === 'plot') {
+                                    plots = [...plots, { format: cmd.format, data: cmd.data, url: cmd.url }];
+                                }
+                            } catch {
+                                /* ignore malformed sidecar command */
+                            }
+                        } else {
+                            rest.push(line);
+                        }
+                    }
+                    const displayChunk = rest.join('\n');
+                    if (displayChunk) text += text ? `\n${displayChunk}` : displayChunk;
+                }
                 if (error !== null) hasError = true;
                 if (isDone) {
                     sinks.delete(kernel);
+                    workbookJuliaPlots(nodeId).set(plots);
                     resolve({ text, hasError });
                 }
             });
@@ -246,14 +294,18 @@ function runOnJuliaKernel(kernel: string, code: string): Promise<{ text: string;
 }
 
 export async function runWorkbookJulia(node: WorkbookNode, input: VerseRow[]): Promise<VerseRow[]> {
-    const { text, hasError } = await runOnJuliaKernel(workbookJuliaKernel(node.id), buildJuliaCode(node, input));
+    const { text, hasError } = await runOnJuliaKernel(
+        workbookJuliaKernel(node.id),
+        node.id,
+        buildJuliaCode(node, input),
+    );
     if (hasError) throw new Error(text || 'Julia run failed.');
     return dictsToVerseRows(extractOutput(text));
 }
 
 /** One ad-hoc line for the node's REPL toggle — shares state with whatever the pipeline last ran (`rows`/`result` included), since it's the same kernel. */
 export function runWorkbookJuliaRepl(node: WorkbookNode, code: string): Promise<{ text: string; hasError: boolean }> {
-    return runOnJuliaKernel(workbookJuliaKernel(node.id), code);
+    return runOnJuliaKernel(workbookJuliaKernel(node.id), node.id, code);
 }
 
 // ── Lean ─────────────────────────────────────────────────────────────────────

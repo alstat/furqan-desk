@@ -36,7 +36,7 @@
     import CodeMirrorEditor from "$lib/components/editor/CodeMirrorEditor.svelte";
     import { codeMirrorViewInstance, editorIndentSize } from "$lib/stores/editor.store";
     import { formatLeanSource } from "$lib/utils/leanFormat";
-    import { runWorkbookJuliaRepl, workbookLeanKernel } from "$lib/stores/workbook-code-nodes";
+    import { runWorkbookJuliaRepl, workbookJuliaPlots, workbookLeanKernel } from "$lib/stores/workbook-code-nodes";
     import { createLeanRuntime, type LeanRuntime } from "$lib/stores/lean-compiler.store";
     import LeanInfoviewPane from "$lib/components/editor/LeanInfoviewPane.svelte";
     import { isIncompleteJulia } from "$lib/stores/julia-terminal.store";
@@ -50,6 +50,8 @@
         hasPort: boolean;
         /** The upstream node's resolved rows, or `null` when nothing feeds this card. */
         inputRows: VerseRow[] | null;
+        /** The node directly wired into this one, or `null` — `view` reads its `kind`/`sidePanelOpen` to offer hosting a Julia/Lean node's REPL, infoview, or plots. */
+        upstreamNode: WorkbookNode | null;
         /** Live mode: reload on every relevant change. Manual mode: only on `runToken` bumping. */
         live: boolean;
         /** Bumped by the board's Run button — the Manual-mode trigger. */
@@ -68,6 +70,7 @@
         selected,
         hasPort,
         inputRows,
+        upstreamNode,
         live,
         runToken,
         zIndex,
@@ -187,14 +190,19 @@
     // the SAME per-node kernel as the pipeline itself, so toggling it open
     // lets the reader inspect `rows`/`result` interactively without ever
     // touching JuliaEditor's or JuliaCellComponent's own sessions.
-    let showJuliaRepl = $state(false);
+    //
+    // Kept on the node itself (`sidePanelOpen`), not local state — a wired
+    // `view` card downstream reads it too, to know whether it may host this
+    // same REPL itself (see the `view` branch below): the two are never
+    // both open at once.
     let juliaReplEntries = $state<{ input: string; output: string; hasError: boolean }[]>([]);
     let juliaReplInput = $state("");
     let juliaReplBusy = $state(false);
 
     function toggleJuliaRepl() {
-        showJuliaRepl = !showJuliaRepl;
-        if (showJuliaRepl) ensureRoomForPanel();
+        const next = !node.sidePanelOpen;
+        onChange({ sidePanelOpen: next });
+        if (next) ensureRoomForPanel();
     }
 
     /** Shared by the REPL input and the editor's Mod-Enter — same kernel either way. */
@@ -224,7 +232,7 @@
 
     /** Mod-Enter from the editor: open (and grow for) the REPL so the result is actually visible, same as JuliaEditor.svelte surfacing into its own REPL pane. */
     function runFromEditor(snippet: string) {
-        if (!showJuliaRepl) toggleJuliaRepl();
+        if (!node.sidePanelOpen) toggleJuliaRepl();
         void runJuliaSnippet(snippet);
     }
 
@@ -281,20 +289,21 @@
     // (LeanEditor.svelte's "repl") or `leanCellRuntime` (LeanCellComponent's
     // "cell"). Created lazily so a Lean node that never opens its infoview
     // never starts a kernel beyond what running the pipeline itself needs.
-    let showLeanInfoview = $state(false);
+    // Same `sidePanelOpen` sharing as the Julia REPL above.
     let leanRuntime: LeanRuntime | null = null;
     function ensureLeanRuntime(): LeanRuntime {
         if (!leanRuntime) leanRuntime = createLeanRuntime(workbookLeanKernel(node.id));
         return leanRuntime;
     }
     function toggleLeanInfoview() {
-        showLeanInfoview = !showLeanInfoview;
-        if (showLeanInfoview) ensureRoomForPanel();
+        const next = !node.sidePanelOpen;
+        onChange({ sidePanelOpen: next });
+        if (next) ensureRoomForPanel();
     }
 
     /** Mod-Enter from the editor — same as LeanEditor.svelte: Lean elaborates whole files, not statements, so this compiles the buffer and opens (and grows for) the infoview so the result is visible. */
     function runLeanFromEditor() {
-        if (!showLeanInfoview) toggleLeanInfoview();
+        if (!node.sidePanelOpen) toggleLeanInfoview();
         void ensureLeanRuntime().compile(localCode, true);
     }
 
@@ -307,6 +316,67 @@
             },
         },
     ];
+
+    // ── `view` hosting a wired Julia/Lean node's REPL/infoview/plots ──
+    // A view card wired directly to a Julia or Lean card can show that
+    // node's own tooling in place of its resolved rows — its own REPL log
+    // and Lean runtime, separate instances from the source card's (each
+    // card is its own component), but bound to the exact same kernel, so
+    // switching which side is showing it never loses the underlying
+    // session, only which card's UI happens to be displaying it.
+    let hostedJuliaReplEntries = $state<{ input: string; output: string; hasError: boolean }[]>([]);
+    let hostedJuliaReplInput = $state("");
+    let hostedJuliaReplBusy = $state(false);
+
+    async function runHostedJuliaReplLine() {
+        const target = upstreamNode;
+        const code = hostedJuliaReplInput.trim();
+        if (!code || !target || hostedJuliaReplBusy) return;
+        hostedJuliaReplInput = "";
+        hostedJuliaReplBusy = true;
+        try {
+            const { text, hasError } = await runWorkbookJuliaRepl(target, code);
+            hostedJuliaReplEntries = [...hostedJuliaReplEntries, { input: code, output: text, hasError }];
+        } catch (e) {
+            hostedJuliaReplEntries = [
+                ...hostedJuliaReplEntries,
+                { input: code, output: e instanceof Error ? e.message : String(e), hasError: true },
+            ];
+        } finally {
+            hostedJuliaReplBusy = false;
+        }
+    }
+
+    let hostedLeanRuntime: LeanRuntime | null = null;
+    let hostedLeanRuntimeFor: string | null = null;
+    function ensureHostedLeanRuntime(targetId: string): LeanRuntime {
+        if (!hostedLeanRuntime || hostedLeanRuntimeFor !== targetId) {
+            hostedLeanRuntime = createLeanRuntime(workbookLeanKernel(targetId));
+            hostedLeanRuntimeFor = targetId;
+        }
+        return hostedLeanRuntime;
+    }
+
+    /** `'repl'`/`'infoview'` only make sense while the upstream node isn't already showing that same panel itself; a mode the wiring no longer supports (upstream gone, changed kind, or its own panel opened) resets back to the plain row view. */
+    $effect(() => {
+        if (node.kind !== "view" || !node.viewMode || node.viewMode === "rows") return;
+        const blockedByUpstream =
+            (node.viewMode === "repl" && upstreamNode?.kind === "julia" && upstreamNode.sidePanelOpen) ||
+            (node.viewMode === "infoview" && upstreamNode?.kind === "lean" && upstreamNode.sidePanelOpen);
+        const stillValid =
+            (node.viewMode === "repl" && upstreamNode?.kind === "julia") ||
+            (node.viewMode === "infoview" && upstreamNode?.kind === "lean") ||
+            (node.viewMode === "plots" && upstreamNode?.kind === "julia");
+        if (blockedByUpstream || !stillValid) onChange({ viewMode: "rows" });
+    });
+
+    function setViewMode(mode: NonNullable<WorkbookNode["viewMode"]>) {
+        const next = node.viewMode === mode ? "rows" : mode;
+        onChange({ viewMode: next });
+        if (next !== "rows") ensureRoomForPanel();
+    }
+
+    const juliaPlots = $derived(upstreamNode?.kind === "julia" ? workbookJuliaPlots(upstreamNode.id) : null);
 
     /** The verses an ayah/related card is pointed at. */
     const refs = $derived(nodeRefs(node));
@@ -741,7 +811,7 @@
                         <button
                             onclick={toggleJuliaRepl}
                             title={$t("workbook.node.julia_repl")}
-                            class="flex cursor-pointer items-center gap-1 rounded-full px-1.5 py-0.5 text-[0.5625rem] font-medium transition-colors {showJuliaRepl
+                            class="flex cursor-pointer items-center gap-1 rounded-full px-1.5 py-0.5 text-[0.5625rem] font-medium transition-colors {node.sidePanelOpen
                                 ? 'bg-brand-sand-200 text-brand-charcoal-500 hover:bg-brand-sand-400 dark:bg-[#414559] dark:text-[#838ba7] dark:hover:bg-[#51566a]'
                                 : 'bg-brand-gold-100 text-brand-gold-600 hover:bg-brand-gold-200 dark:bg-[#e5c890]/15 dark:text-brand-gold-400 dark:hover:bg-[#e5c890]/25'}"
                         >
@@ -752,7 +822,7 @@
                         <button
                             onclick={toggleLeanInfoview}
                             title={$t("workbook.node.lean_infoview")}
-                            class="flex cursor-pointer items-center gap-1 rounded-full px-1.5 py-0.5 text-[0.5625rem] font-medium transition-colors {showLeanInfoview
+                            class="flex cursor-pointer items-center gap-1 rounded-full px-1.5 py-0.5 text-[0.5625rem] font-medium transition-colors {node.sidePanelOpen
                                 ? 'bg-brand-sand-200 text-brand-charcoal-500 hover:bg-brand-sand-400 dark:bg-[#414559] dark:text-[#838ba7] dark:hover:bg-[#51566a]'
                                 : 'bg-brand-gold-100 text-brand-gold-600 hover:bg-brand-gold-200 dark:bg-[#e5c890]/15 dark:text-brand-gold-400 dark:hover:bg-[#e5c890]/25'}"
                         >
@@ -771,7 +841,7 @@
                         class="h-full font-mono text-[0.625rem]"
                     />
                 </div>
-                {#if lang === "julia" && showJuliaRepl}
+                {#if lang === "julia" && node.sidePanelOpen}
                     <!-- A REPL of this node's own — not JuliaReplPane, which is
                          hardcoded to the app's single shared "repl" kernel; this
                          one runs on the exact kernel the pipeline itself uses,
@@ -798,7 +868,7 @@
                             class="shrink-0 border-t border-brand-sand-200 bg-white px-1.5 py-1 font-mono text-[0.5625rem] text-brand-charcoal-700 outline-none dark:border-[#414559] dark:bg-[#232634] dark:text-[#c6d0f5]"
                         />
                     </div>
-                {:else if lang === "lean" && showLeanInfoview}
+                {:else if lang === "lean" && node.sidePanelOpen}
                     <!-- Same isolation reasoning: this node's own LeanRuntime,
                          on this node's own kernel, not LeanEditor.svelte's
                          "repl" or LeanCellComponent's "cell". -->
@@ -811,24 +881,137 @@
                 <p class="mt-1.5 text-[0.625rem] text-red-500 dark:text-red-400">{error}</p>
             {/if}
         {:else if node.kind === "view"}
-            <div class="relative w-32" onpointerdown={(e) => e.stopPropagation()} role="presentation">
-                <select
-                    value={node.layout ?? "list"}
-                    onchange={(e) => onChange({ layout: e.currentTarget.value as "list" | "columns" })}
-                    class={dropdownClass}
-                >
-                    <option value="list">{$t("workbook.view.list")}</option>
-                    <option value="columns">{$t("workbook.view.columns")}</option>
-                </select>
-                {@render dropdownChevron()}
+            <div class="flex flex-wrap items-center gap-1.5" onpointerdown={(e) => e.stopPropagation()} role="presentation">
+                <div class="relative w-28">
+                    <select
+                        value={node.layout ?? "list"}
+                        onchange={(e) => onChange({ layout: e.currentTarget.value as "list" | "columns" })}
+                        class={dropdownClass}
+                    >
+                        <option value="list">{$t("workbook.view.list")}</option>
+                        <option value="columns">{$t("workbook.view.columns")}</option>
+                    </select>
+                    {@render dropdownChevron()}
+                </div>
+                {#if upstreamNode?.kind === "julia"}
+                    <!-- Wired to a Julia card: this view can host its REPL
+                         (only while that card isn't already showing it
+                         itself) or its most recent plot output. -->
+                    <button
+                        onclick={() => setViewMode("repl")}
+                        disabled={upstreamNode.sidePanelOpen}
+                        title={upstreamNode.sidePanelOpen
+                            ? $t("workbook.view.hosting_disabled")
+                            : $t("workbook.node.julia_repl")}
+                        class="flex cursor-pointer items-center gap-1 rounded-full px-2 py-1 text-[0.625rem] font-medium transition-colors disabled:cursor-default disabled:opacity-40 {node.viewMode ===
+                        'repl'
+                            ? 'bg-brand-sand-200 text-brand-charcoal-500 hover:bg-brand-sand-400 dark:bg-[#414559] dark:text-[#838ba7] dark:hover:bg-[#51566a]'
+                            : 'bg-brand-gold-100 text-brand-gold-600 hover:bg-brand-gold-200 dark:bg-[#e5c890]/15 dark:text-brand-gold-400 dark:hover:bg-[#e5c890]/25'}"
+                    >
+                        <Icon icon="solar:programming-bold-duotone" width="0.7rem" />
+                        {$t("workbook.node.julia_repl")}
+                    </button>
+                    <button
+                        onclick={() => setViewMode("plots")}
+                        title={$t("workbook.view.julia_plots")}
+                        class="flex cursor-pointer items-center gap-1 rounded-full px-2 py-1 text-[0.625rem] font-medium transition-colors {node.viewMode ===
+                        'plots'
+                            ? 'bg-brand-sand-200 text-brand-charcoal-500 hover:bg-brand-sand-400 dark:bg-[#414559] dark:text-[#838ba7] dark:hover:bg-[#51566a]'
+                            : 'bg-brand-gold-100 text-brand-gold-600 hover:bg-brand-gold-200 dark:bg-[#e5c890]/15 dark:text-brand-gold-400 dark:hover:bg-[#e5c890]/25'}"
+                    >
+                        <Icon icon="solar:chart-2-bold-duotone" width="0.7rem" />
+                        {$t("workbook.view.julia_plots")}
+                    </button>
+                {:else if upstreamNode?.kind === "lean"}
+                    <!-- Wired to a Lean card: this view can host its
+                         infoview, only while that card isn't already
+                         showing it itself. -->
+                    <button
+                        onclick={() => setViewMode("infoview")}
+                        disabled={upstreamNode.sidePanelOpen}
+                        title={upstreamNode.sidePanelOpen
+                            ? $t("workbook.view.hosting_disabled")
+                            : $t("workbook.node.lean_infoview")}
+                        class="flex cursor-pointer items-center gap-1 rounded-full px-2 py-1 text-[0.625rem] font-medium transition-colors disabled:cursor-default disabled:opacity-40 {node.viewMode ===
+                        'infoview'
+                            ? 'bg-brand-sand-200 text-brand-charcoal-500 hover:bg-brand-sand-400 dark:bg-[#414559] dark:text-[#838ba7] dark:hover:bg-[#51566a]'
+                            : 'bg-brand-gold-100 text-brand-gold-600 hover:bg-brand-gold-200 dark:bg-[#e5c890]/15 dark:text-brand-gold-400 dark:hover:bg-[#e5c890]/25'}"
+                    >
+                        <Icon icon="solar:document-text-bold-duotone" width="0.7rem" />
+                        {$t("workbook.node.lean_infoview")}
+                    </button>
+                {/if}
             </div>
             {#if error}
                 <p class="mt-1.5 text-[0.625rem] text-red-500 dark:text-red-400">{error}</p>
             {/if}
-            <div class="mt-2">
-                {@render outputHeader()}
-                {@render verseCards(rows, node.layout ?? "list")}
-            </div>
+            {#if node.viewMode === "repl" && upstreamNode?.kind === "julia" && !upstreamNode.sidePanelOpen}
+                <div
+                    class="mt-2 flex h-40 flex-col overflow-hidden rounded-lg border border-brand-sand-200 dark:border-[#414559]"
+                >
+                    <div class="min-h-0 flex-1 overflow-auto bg-[#0d1117] p-1.5 font-mono text-[0.5625rem] leading-relaxed">
+                        {#each hostedJuliaReplEntries as entry, i (i)}
+                            <div class="text-[#79c0ff]">julia&gt; {entry.input}</div>
+                            {#if entry.output}
+                                <div class="whitespace-pre-wrap {entry.hasError ? 'text-red-400' : 'text-[#c9d1d9]'}">
+                                    {entry.output}
+                                </div>
+                            {/if}
+                        {/each}
+                    </div>
+                    <input
+                        value={hostedJuliaReplInput}
+                        oninput={(e) => (hostedJuliaReplInput = e.currentTarget.value)}
+                        onkeydown={(e) => e.key === "Enter" && runHostedJuliaReplLine()}
+                        disabled={hostedJuliaReplBusy}
+                        placeholder="julia>"
+                        class="shrink-0 border-t border-brand-sand-200 bg-white px-1.5 py-1 font-mono text-[0.5625rem] text-brand-charcoal-700 outline-none dark:border-[#414559] dark:bg-[#232634] dark:text-[#c6d0f5]"
+                    />
+                </div>
+            {:else if node.viewMode === "plots" && upstreamNode?.kind === "julia"}
+                <div class="mt-2 flex flex-col gap-2">
+                    {#if juliaPlots}
+                        {@const plots = $juliaPlots ?? []}
+                        {#if plots.length === 0}
+                            <p class="text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
+                                {$t("workbook.view.no_plots")}
+                            </p>
+                        {:else}
+                            {#each plots as plot, i (i)}
+                                {#if (plot.format === "png" || plot.format === "svg") && plot.data}
+                                    <img
+                                        src="data:image/{plot.format === 'svg' ? 'svg+xml' : 'png'};base64,{plot.data}"
+                                        alt=""
+                                        class="w-full rounded-lg border border-brand-sand-200 dark:border-[#414559]"
+                                    />
+                                {:else if plot.url}
+                                    <a
+                                        href={plot.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        class="text-[0.625rem] text-brand-gold-600 underline dark:text-[#e5c890]"
+                                    >
+                                        {plot.url}
+                                    </a>
+                                {/if}
+                            {/each}
+                        {/if}
+                    {/if}
+                </div>
+            {:else if node.viewMode === "infoview" && upstreamNode?.kind === "lean" && !upstreamNode.sidePanelOpen}
+                <div class="mt-2 h-40 overflow-hidden rounded-lg border border-brand-sand-200 dark:border-[#414559]">
+                    <LeanInfoviewPane
+                        runtime={ensureHostedLeanRuntime(upstreamNode.id)}
+                        getCode={() => upstreamNode?.code ?? ""}
+                        showLiveToggle={false}
+                    />
+                </div>
+            {:else}
+                <div class="mt-2">
+                    {@render outputHeader()}
+                    {@render verseCards(rows, node.layout ?? "list")}
+                </div>
+            {/if}
         {:else if node.kind === "export"}
             <!-- A sink: exports this card's own already-resolved input as
                  CSV (openable in Excel) or copies it for pasting into the

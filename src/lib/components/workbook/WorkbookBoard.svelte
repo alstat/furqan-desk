@@ -20,6 +20,7 @@
         workbookToSvg,
         type VerseRow,
         type WorkbookDoc,
+        type WorkbookNode,
         type WorkbookNodeKind,
     } from "$lib/stores/workbook.store";
 
@@ -100,18 +101,25 @@
     }
 
     /**
-     * The last document this board handed upwards. A parent that stores what
-     * `onDocChange` gives it feeds the same object back in as the prop, and
-     * adopting that would undo edits mid-gesture — so only a document the board
-     * has not seen before replaces what is on screen. That is what makes a file
-     * loaded after mount (a path read from disk, a window told to open one)
-     * actually appear.
+     * A fingerprint of the last document this board handed upwards. A parent
+     * that stores what `onDocChange` gives it feeds the same document back in
+     * as the prop, and adopting that would undo edits mid-gesture — so only a
+     * document the board has not seen before replaces what is on screen. That
+     * is what makes a file loaded after mount (a path read from disk, a
+     * window told to open one) actually appear.
+     *
+     * Compared by content, not by reference: `commit` hands the parent a raw
+     * object, which the parent's own `$state` re-wraps in a proxy distinct
+     * from the one `board = next` makes locally, so `incoming === lastEmitted`
+     * can never be true even for the exact doc this board just emitted.
      */
-    let lastEmitted: WorkbookDoc | null = null;
+    let lastEmitted = "";
 
     $effect(() => {
         const incoming = doc;
-        if (incoming === lastEmitted || incoming === board) return;
+        if (incoming === board) return;
+        const incomingJson = JSON.stringify(incoming);
+        if (incomingJson === lastEmitted) return;
         board = incoming;
     });
     let surface = $state<HTMLElement | null>(null);
@@ -170,7 +178,7 @@
 
     function commit(next: WorkbookDoc) {
         board = next;
-        lastEmitted = next;
+        lastEmitted = JSON.stringify(next);
         onDocChange?.(next);
     }
 
@@ -626,6 +634,12 @@
         return up ? (nodeOutputs.get(up) ?? []) : null;
     }
 
+    /** The node directly wired into this one's input, if any — a `view` card reads this to offer hosting a wired Julia/Lean node's REPL, infoview, or plots. */
+    function upstreamNodeFor(id: string): WorkbookNode | null {
+        const up = upstreamOf(id);
+        return up ? (board.nodes.find((n) => n.id === up) ?? null) : null;
+    }
+
     /** One cubic-bezier per committed wire, from the source's output port to the target's input port. */
     const wires = $derived(
         board.edges
@@ -808,25 +822,27 @@
             />
             <span class="h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></span>
         {/if}
-        {#each ADDABLE_GROUPS as group, gi (group.label)}
-            {#if gi > 0}
-                <span class="h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></span>
-            {/if}
-            <span
-                class="text-[0.5625rem] font-semibold uppercase tracking-wider text-brand-charcoal-300 dark:text-[#626880]"
+        {#each ADDABLE_GROUPS as group (group.label)}
+            <!-- The group reads from the shared boundary around its buttons,
+                 not a text label taking up room in the row — the name is
+                 still there, just as the container's own tooltip. Each
+                 group is one flex item, so wrapping breaks between groups
+                 rather than splitting one mid-way. -->
+            <div
+                title={$t(group.label)}
+                class="flex items-center gap-1 rounded-2xl border border-brand-sand-200 bg-brand-sand-50/70 p-1 dark:border-[#414559] dark:bg-[#232634]/50"
             >
-                {$t(group.label)}
-            </span>
-            {#each group.items as item (item.kind)}
-                <button
-                    onclick={() => addNode(item.kind)}
-                    title={$t(`workbook.add.${item.kind}`)}
-                    class="flex cursor-pointer items-center gap-1.5 rounded-full border border-brand-sand-200 bg-brand-sand-100 px-3 py-1 text-xs font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
-                >
-                    <Icon icon={item.icon} width="0.75rem" />
-                    {$t(`workbook.node.${item.kind}`)}
-                </button>
-            {/each}
+                {#each group.items as item (item.kind)}
+                    <button
+                        onclick={() => addNode(item.kind)}
+                        title={$t(`workbook.add.${item.kind}`)}
+                        class="flex cursor-pointer items-center gap-1.5 rounded-full bg-brand-sand-100 px-2.5 py-1 text-xs font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 dark:bg-[#363a4f] dark:text-[#c6d0f5] dark:hover:bg-[#414559]"
+                    >
+                        <Icon icon={item.icon} width="0.75rem" />
+                        {$t(`workbook.node.${item.kind}`)}
+                    </button>
+                {/each}
+            </div>
         {/each}
         <div class="ml-auto flex items-center gap-2">
             {#if showTitleInToolbar}
@@ -938,6 +954,7 @@
                     selected={selectedIds.includes(node.id)}
                     hasPort={hasPort(node.id)}
                     inputRows={inputRowsFor(node.id)}
+                    upstreamNode={upstreamNodeFor(node.id)}
                     live={runMode === "live"}
                     runToken={runTick}
                     zIndex={nodeZ[node.id] ?? 0}

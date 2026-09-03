@@ -173,6 +173,24 @@ export interface WorkbookNode {
      * reader's own chosen author.
      */
     tafsirAuthorIds?: (number | undefined)[];
+    /**
+     * `julia`/`lean`: whether this node's own REPL/infoview panel is open.
+     * Shared with a wired `view` card downstream — see `view`'s `viewMode`
+     * below — so the same REPL/infoview is never shown in two places at
+     * once: a `view` card may only host it while this is false.
+     */
+    sidePanelOpen?: boolean;
+    /**
+     * `view`: what the card shows in place of its resolved rows when wired
+     * directly to a `julia`/`lean` card — `'repl'` hosts the upstream Julia
+     * node's REPL (only while that node's own `sidePanelOpen` is false),
+     * `'infoview'` the same for a Lean node's infoview, `'plots'` the
+     * upstream Julia node's most recent plot output (available regardless
+     * of its `sidePanelOpen`, since a plot gallery doesn't duplicate
+     * anything the REPL panel itself shows). Unset/`'rows'` is the default,
+     * unrelated to what (if anything) is wired upstream.
+     */
+    viewMode?: 'rows' | 'repl' | 'infoview' | 'plots';
 }
 
 /** A node's verses, whichever field they came from — `refs` if it has any, else the old `ref`. */
