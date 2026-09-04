@@ -5,6 +5,7 @@
      same reasoning as AlphabetLesson/PairingLesson. -->
 <script lang="ts">
     import { untrack } from "svelte";
+    import { fly } from "svelte/transition";
     import { get } from "svelte/store";
     import Icon from "@iconify/svelte";
     import { LOCALE_NAMES, t } from "$lib/i18n";
@@ -35,6 +36,10 @@
         lessonVersions,
         saveTopicVersion,
         type TopicVersion,
+        fetchLessonAnnotations,
+        saveLessonAnnotation,
+        deleteLessonAnnotation,
+        type AnnotationAnchorKind,
     } from "$lib/stores/arabic-study.store";
     import { PREMADE_LESSONS, PREMADE_LOCALE } from "$lib/data/grammar-premade";
     import {
@@ -46,6 +51,18 @@
         type FollowUpTurn,
     } from "$lib/stores/ai-grammar-topic.store";
     import VerseRefBadge from "./VerseRefBadge.svelte";
+    import AnnotationMenu from "./AnnotationMenu.svelte";
+    import FloatingAnnotationCard from "./FloatingAnnotationCard.svelte";
+    import {
+        createAnchorRegistry,
+        linkPath,
+        linkEndpoints,
+        ANNOTATION_CARD_WIDTH,
+        ANNOTATION_GAP,
+        type AnchorRect,
+        type AnnotationDraft,
+    } from "./annotation-layout";
+    import { exportLessonSvg, exportLessonPdf, type ExportBox, type ExportAnnotation } from "./lesson-export";
 
     interface Props {
         level: "beginner" | "intermediate" | "advanced";
@@ -54,6 +71,8 @@
     let { level, onBack }: Props = $props();
 
     const topics = $derived(topicsForLevel(level));
+
+    let sidebarOpen = $state(true);
 
     let selectedId = $state("");
     $effect(() => {
@@ -557,6 +576,12 @@
     let customSections = $state<CustomSection[]>([]);
     let nextSectionId = 0;
 
+    // A new section lands at the bottom of a grid the reader may already have
+    // scrolled past, so the toolbar button alone left them unsure it did
+    // anything — this toast confirms it and points them at where to look.
+    let sectionAddedToast = $state(false);
+    let sectionAddedTimeout: ReturnType<typeof setTimeout> | undefined;
+
     /** Write one section back, remembering the id a new row is given. */
     async function persistSection(id: number) {
         const topic = selectedTopic;
@@ -615,6 +640,316 @@
         );
     });
 
+    // ── Card annotations: comments and AI prompts pinned to a card ──────────
+
+    let lessonAnnotations = $state<AnnotationDraft[]>([]);
+    let nextAnnotationId = 0;
+    const anchors = createAnchorRegistry();
+    let anchorRects = $state<Record<string, AnchorRect>>({});
+    let lessonBodyEl: HTMLDivElement | undefined = $state();
+    let menuState = $state<{
+        x: number;
+        y: number;
+        anchorKind: AnnotationAnchorKind;
+        anchorSectionId: number | null;
+    } | null>(null);
+    let exportMenuOpen = $state(false);
+    let exportBusy = $state(false);
+    let exportError = $state("");
+
+    function measureAnchors() {
+        anchorRects = anchors.measureAll();
+    }
+
+    // Re-measure whenever something that can shift a card's position changes:
+    // the streamed-in lesson, a section expanding, or a note being added.
+    $effect(() => {
+        void parsed;
+        void customSections.map((s) => s.expanded);
+        void lessonAnnotations.length;
+        requestAnimationFrame(measureAnchors);
+    });
+
+    $effect(() => {
+        if (!lessonBodyEl) return;
+        const observer = new ResizeObserver(() => measureAnchors());
+        observer.observe(lessonBodyEl);
+        return () => observer.disconnect();
+    });
+
+    // Load the reader's comments/prompts for whichever topic and language is on show.
+    $effect(() => {
+        const topic = selectedTopic;
+        const locale = $grammarLanguage;
+        if (!topic) {
+            lessonAnnotations = [];
+            return;
+        }
+        void untrack(() =>
+            fetchLessonAnnotations(topic.id, locale)
+                .then((rows) => {
+                    lessonAnnotations = rows.map((row) => ({
+                        id: nextAnnotationId++,
+                        storedId: row.id,
+                        anchorKind: row.anchor_kind,
+                        anchorSectionId: row.anchor_section_id,
+                        kind: row.kind,
+                        title: row.title,
+                        brief: row.brief,
+                        content: row.content,
+                        offsetX: row.offset_x,
+                        offsetY: row.offset_y,
+                        loading: false,
+                        error: "",
+                        controller: null,
+                    }));
+                })
+                .catch(() => {
+                    lessonAnnotations = [];
+                }),
+        );
+    });
+
+    function anchorKey(kind: AnnotationAnchorKind, sectionId: number | null): string {
+        return kind === "section" ? `section:${sectionId}` : kind;
+    }
+
+    function openMenu(event: MouseEvent, anchorKind: AnnotationAnchorKind, anchorSectionId: number | null = null) {
+        event.stopPropagation();
+        const width = 160;
+        const height = 90;
+        menuState = {
+            x: Math.min(event.clientX, window.innerWidth - width - 8),
+            y: Math.min(event.clientY, window.innerHeight - height - 8),
+            anchorKind,
+            anchorSectionId,
+        };
+    }
+
+    /** Opens the Comment/Prompt menu unless the click landed on an interactive
+     *  child (a button, an input, a quiz choice) that should handle it itself. */
+    function handleCardClick(
+        event: MouseEvent,
+        anchorKind: AnnotationAnchorKind,
+        anchorSectionId: number | null = null,
+    ) {
+        const target = event.target as HTMLElement;
+        if (target.closest("button, input, textarea, a, select")) return;
+        openMenu(event, anchorKind, anchorSectionId);
+    }
+
+    function closeMenu() {
+        menuState = null;
+    }
+
+    function addAnnotation(kind: "comment" | "prompt", side: "left" | "right") {
+        if (!menuState) return;
+        const { anchorKind, anchorSectionId } = menuState;
+        const siblings = lessonAnnotations.filter(
+            (a) => a.anchorKind === anchorKind && a.anchorSectionId === anchorSectionId && sideOf(a) === side,
+        );
+        const anchorWidth = anchorRects[anchorKey(anchorKind, anchorSectionId)]?.width ?? 0;
+        const baseOffsetX =
+            side === "left" ? -(anchorWidth + ANNOTATION_CARD_WIDTH + ANNOTATION_GAP) : ANNOTATION_GAP;
+        const id = nextAnnotationId++;
+        lessonAnnotations = [
+            ...lessonAnnotations,
+            {
+                id,
+                anchorKind,
+                anchorSectionId,
+                kind,
+                title: "",
+                brief: "",
+                content: "",
+                offsetX: baseOffsetX,
+                offsetY: siblings.length * 18,
+                loading: false,
+                error: "",
+                controller: null,
+            },
+        ];
+        closeMenu();
+        void persistAnnotation(id);
+    }
+
+    /** Which side of its anchor a card currently sits on — for staggering new
+     *  cards away from existing ones on the same side, not for persistence. */
+    function sideOf(annotation: AnnotationDraft): "left" | "right" {
+        return annotation.offsetX < 0 ? "left" : "right";
+    }
+
+    function updateAnnotation(id: number, patch: Partial<AnnotationDraft>) {
+        lessonAnnotations = lessonAnnotations.map((a) => (a.id === id ? { ...a, ...patch } : a));
+    }
+
+    /** Write one annotation back, remembering the id a new row is given. */
+    async function persistAnnotation(id: number) {
+        const topic = selectedTopic;
+        const annotation = lessonAnnotations.find((a) => a.id === id);
+        if (!topic || !annotation) return;
+        try {
+            const saved = await saveLessonAnnotation({
+                id: annotation.storedId,
+                topicId: topic.id,
+                locale: get(grammarLanguage),
+                anchorKind: annotation.anchorKind,
+                anchorSectionId: annotation.anchorSectionId,
+                kind: annotation.kind,
+                title: annotation.title,
+                brief: annotation.brief,
+                content: annotation.content,
+                offsetX: annotation.offsetX,
+                offsetY: annotation.offsetY,
+            });
+            if (annotation.storedId === undefined) updateAnnotation(id, { storedId: saved.id });
+        } catch {
+            // No database here (browser dev); the note still works for the
+            // session, it just will not survive a restart.
+        }
+    }
+
+    function removeAnnotation(id: number) {
+        const annotation = lessonAnnotations.find((a) => a.id === id);
+        annotation?.controller?.abort();
+        if (annotation?.storedId !== undefined) void deleteLessonAnnotation(annotation.storedId).catch(() => {});
+        lessonAnnotations = lessonAnnotations.filter((a) => a.id !== id);
+    }
+
+    /** Plain-text summary of one card's current content, for scoping a Prompt's
+     *  AI call to "this card" instead of the whole lesson. */
+    function anchorContextText(anchorKind: AnnotationAnchorKind, anchorSectionId: number | null): string {
+        switch (anchorKind) {
+            case "explanation":
+                return parsed.explanation;
+            case "quran":
+                return groundedQuran.map((ex) => `${ex.arabic} — ${ex.translation ?? ex.gloss}`).join("\n");
+            case "everyday":
+                return parsed.everyday.map((ex) => `${ex.word} — ${ex.gloss}`).join("\n");
+            case "exercises":
+                return parsed.exercises.map((ex) => `${ex.sentence} (${ex.answer})`).join("\n");
+            case "section": {
+                const section = customSections.find((s) => s.storedId === anchorSectionId);
+                return section ? `${section.title}\n${section.content || section.brief}` : "";
+            }
+            default:
+                return "";
+        }
+    }
+
+    async function generateAnnotation(id: number) {
+        const annotation = lessonAnnotations.find((a) => a.id === id);
+        const topic = selectedTopic;
+        if (!annotation || !topic || annotation.loading) return;
+        annotation.controller?.abort();
+        const ac = new AbortController();
+        updateAnnotation(id, { loading: true, error: "", content: "", controller: ac });
+        try {
+            const text = await fetchLessonSection({
+                topicTitle: topic.label,
+                sectionTitle: annotation.title.trim() || $t("arabicStudy.grammar.section_untitled"),
+                brief: annotation.brief.trim(),
+                lesson: anchorContextText(annotation.anchorKind, annotation.anchorSectionId),
+                locale: get(grammarLanguage),
+                level,
+                advanced: get(grammarModel) === "advanced" && get(isPro),
+                signal: ac.signal,
+                onPartial: (partial) => {
+                    if (!ac.signal.aborted) updateAnnotation(id, { content: partial });
+                },
+            });
+            if (!ac.signal.aborted) {
+                updateAnnotation(id, { content: text });
+                await persistAnnotation(id);
+            }
+        } catch (e) {
+            if (!ac.signal.aborted) {
+                const failure = quotaFailure(e);
+                updateAnnotation(id, {
+                    error: failure
+                        ? $t(quotaMessageKey(failure), {
+                              detail: failure.message,
+                              time: formatRetryWindow(failure.retryAfterSeconds),
+                          })
+                        : e instanceof Error
+                          ? e.message
+                          : String(e),
+                });
+            }
+        } finally {
+            updateAnnotation(id, { loading: false, controller: null });
+        }
+    }
+
+    /** Screen position for one floating card: its anchor's box plus its own offset. */
+    function annotationPosition(annotation: AnnotationDraft): { left: number; top: number } {
+        const anchor = anchorRects[anchorKey(annotation.anchorKind, annotation.anchorSectionId)];
+        if (!anchor) return { left: annotation.offsetX, top: annotation.offsetY };
+        return { left: anchor.left + anchor.width + annotation.offsetX, top: anchor.top + annotation.offsetY };
+    }
+
+    function buildExportCards(): ExportBox[] {
+        const cards: ExportBox[] = [];
+        const push = (key: string, title: string, body: string) => {
+            const rect = anchorRects[key];
+            if (!rect) return;
+            cards.push({ key, title, body, left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+        };
+        push("explanation", parsed.title || selectedTopic?.label || "", parsed.explanation);
+        push(
+            "quran",
+            $t("arabicStudy.alphabet.from_quran"),
+            groundedQuran.map((ex) => `${ex.arabic} — ${ex.translation ?? ex.gloss}`).join("\n"),
+        );
+        push(
+            "everyday",
+            $t("arabicStudy.alphabet.everyday"),
+            parsed.everyday.map((ex) => `${ex.word} — ${ex.gloss}`).join("\n"),
+        );
+        push("exercises", $t("arabicStudy.grammar.try_it"), parsed.exercises.map((ex) => ex.sentence).join("\n"));
+        for (const section of customSections) {
+            if (section.storedId === undefined) continue;
+            push(`section:${section.storedId}`, section.title, section.content || section.brief);
+        }
+        return cards;
+    }
+
+    function buildExportAnnotations(): ExportAnnotation[] {
+        return lessonAnnotations.map((a) => {
+            const pos = annotationPosition(a);
+            return {
+                key: `annotation:${a.id}`,
+                anchorKey: anchorKey(a.anchorKind, a.anchorSectionId),
+                title: a.title,
+                body: a.kind === "comment" ? a.content : `${a.brief}\n${a.content}`,
+                left: pos.left,
+                top: pos.top,
+                width: 256,
+                height: 120,
+            };
+        });
+    }
+
+    async function runExport(kind: "svg" | "pdf") {
+        exportMenuOpen = false;
+        exportBusy = true;
+        exportError = "";
+        try {
+            const cards = buildExportCards();
+            const exported = buildExportAnnotations();
+            const title = parsed.title || selectedTopic?.label || "lesson";
+            const ok =
+                kind === "svg"
+                    ? await exportLessonSvg(title, cards, exported)
+                    : await exportLessonPdf(title, cards, exported);
+            if (!ok) return;
+        } catch (e) {
+            exportError = e instanceof Error ? e.message : String(e);
+        } finally {
+            exportBusy = false;
+        }
+    }
+
     function addSection() {
         const id = nextSectionId++;
         customSections = [
@@ -631,6 +966,10 @@
             },
         ];
         void persistSection(id);
+
+        sectionAddedToast = true;
+        clearTimeout(sectionAddedTimeout);
+        sectionAddedTimeout = setTimeout(() => (sectionAddedToast = false), 2500);
     }
 
     function removeSection(id: number) {
@@ -805,69 +1144,104 @@
     );
 </script>
 
-<div class="flex min-h-0 flex-1 overflow-hidden bg-white dark:bg-[#303446]">
-    <!-- Topic sidebar -->
+<div class="relative flex min-h-0 flex-1 overflow-hidden bg-white dark:bg-[#303446]">
+    <!-- Topic sidebar — a docked panel when open; just the two buttons,
+         floating with no panel of their own, once it is hidden. -->
     <div
-        class="flex w-56 shrink-0 flex-col border-r border-brand-sand-200 bg-brand-sand-50 dark:border-[#414559] dark:bg-[#232634]"
+        class={sidebarOpen
+            ? "flex w-56 shrink-0 flex-col border-r border-brand-sand-200 bg-brand-sand-50 dark:border-[#414559] dark:bg-[#232634]"
+            : "absolute bottom-3 left-2 z-30 flex items-center gap-1"}
     >
-        <div class="default-scroll flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-4">
-            <h4
-                class="mb-1 text-[0.625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
-            >
-                {$t("arabicStudy.grammar.path")}
-            </h4>
-            {#each topics as tp (tp.id)}
-                {@const done = cachedIds.has(tp.id)}
-                {@const current = tp.id === selectedId}
-                <button
-                    onclick={() => (selectedId = tp.id)}
-                    class="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors {current
-                        ? 'bg-white shadow-sm ring-1 ring-brand-gold-300 dark:bg-[#292c3c] dark:ring-[#e5c890]/40'
-                        : 'hover:bg-white/60 dark:hover:bg-[#292c3c]/60'}"
+        {#if sidebarOpen}
+            <div class="default-scroll flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-4">
+                <h4
+                    class="mb-1 text-[0.625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]"
                 >
-                    <span
-                        class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[0.5625rem] font-bold {done
-                            ? 'bg-brand-emerald-400 text-white'
-                            : current
-                              ? 'bg-brand-gold-400 text-white'
-                              : 'bg-brand-sand-200 text-brand-charcoal-400 dark:bg-[#414559] dark:text-[#838ba7]'}"
+                    {$t("arabicStudy.grammar.path")}
+                </h4>
+                {#each topics as tp (tp.id)}
+                    {@const done = cachedIds.has(tp.id)}
+                    {@const current = tp.id === selectedId}
+                    <button
+                        onclick={() => (selectedId = tp.id)}
+                        class="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors {current
+                            ? 'bg-white shadow-sm ring-1 ring-brand-gold-300 dark:bg-[#292c3c] dark:ring-[#e5c890]/40'
+                            : 'hover:bg-white/60 dark:hover:bg-[#292c3c]/60'}"
                     >
-                        {#if done}
-                            <Icon icon="solar:check-bold" width="0.5rem" />
-                        {:else}
-                            {topics.indexOf(tp) + 1}
-                        {/if}
-                    </span>
-                    <span
-                        class="text-[0.71875rem] font-semibold leading-snug {current
-                            ? 'text-brand-charcoal-900 dark:text-[#c6d0f5]'
-                            : 'text-brand-charcoal-500 dark:text-[#a5adce]'}"
-                    >
-                        {tp.label}
-                    </span>
-                </button>
-            {/each}
-        </div>
+                        <span
+                            class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[0.5625rem] font-bold {done
+                                ? 'bg-brand-emerald-400 text-white'
+                                : current
+                                  ? 'bg-brand-gold-400 text-white'
+                                  : 'bg-brand-sand-200 text-brand-charcoal-400 dark:bg-[#414559] dark:text-[#838ba7]'}"
+                        >
+                            {#if done}
+                                <Icon icon="solar:check-bold" width="0.5rem" />
+                            {:else}
+                                {topics.indexOf(tp) + 1}
+                            {/if}
+                        </span>
+                        <span
+                            class="text-[0.71875rem] font-semibold leading-snug {current
+                                ? 'text-brand-charcoal-900 dark:text-[#c6d0f5]'
+                                : 'text-brand-charcoal-500 dark:text-[#a5adce]'}"
+                        >
+                            {tp.label}
+                        </span>
+                    </button>
+                {/each}
+            </div>
+        {/if}
 
-        <div class="shrink-0 px-4 py-3">
+        <div class="flex shrink-0 items-center gap-1 {sidebarOpen ? 'px-2 py-3' : ''}">
             <button
                 onclick={onBack}
-                class="flex cursor-pointer items-center gap-1.5 text-[0.75rem] font-semibold text-brand-charcoal-400 hover:text-brand-charcoal-600 dark:text-[#838ba7] dark:hover:text-[#c6d0f5]"
+                title={$t("arabicStudy.grammar.back")}
+                aria-label={$t("arabicStudy.grammar.back")}
+                class="flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-brand-charcoal-400 hover:bg-white/60 hover:text-brand-charcoal-600 dark:text-[#838ba7] dark:hover:bg-[#292c3c]/60 dark:hover:text-[#c6d0f5]"
             >
-                <Icon icon="solar:arrow-left-linear" width="0.8rem" />
-                {$t("arabicStudy.grammar.back")}
+                <Icon icon="solar:arrow-left-linear" width="0.9rem" />
+            </button>
+            <button
+                onclick={() => (sidebarOpen = !sidebarOpen)}
+                title={sidebarOpen
+                    ? $t("arabicStudy.grammar.sidebar_hide")
+                    : $t("arabicStudy.grammar.sidebar_show")}
+                aria-label={sidebarOpen
+                    ? $t("arabicStudy.grammar.sidebar_hide")
+                    : $t("arabicStudy.grammar.sidebar_show")}
+                class="flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-brand-charcoal-400 hover:bg-white/60 hover:text-brand-charcoal-600 dark:text-[#838ba7] dark:hover:bg-[#292c3c]/60 dark:hover:text-[#c6d0f5]"
+            >
+                <Icon
+                    icon={sidebarOpen
+                        ? "solar:sidebar-minimalistic-bold-duotone"
+                        : "solar:sidebar-minimalistic-bold"}
+                    width="0.9rem"
+                />
             </button>
         </div>
     </div>
 
     <!-- Lesson -->
     <div class="relative flex min-h-0 flex-1 flex-col">
+        {#if sectionAddedToast}
+            <div class="pointer-events-none absolute inset-x-0 top-3 z-30 flex justify-center">
+                <div
+                    in:fly={{ y: -16, duration: 200 }}
+                    out:fly={{ y: -16, duration: 150 }}
+                    class="flex items-center gap-1.5 rounded-full border border-brand-emerald-300 bg-brand-emerald-50 px-3 py-1.5 text-[0.6875rem] font-semibold text-brand-emerald-600 shadow-lg shadow-stone-300/30 dark:border-[#3d9b86] dark:bg-[#292c3c] dark:text-[#9dd4c8] dark:shadow-black/40"
+                >
+                    <Icon icon="solar:check-circle-bold-duotone" width="0.85rem" />
+                    {$t("arabicStudy.grammar.section_added")}
+                </div>
+            </div>
+        {/if}
         <div
             bind:this={lessonScroll}
             class="default-scroll flex min-h-0 flex-1 flex-col overflow-y-auto"
         >
             <div class="flex flex-1 justify-center px-6 pb-16 pt-6">
-                <div class="flex w-full max-w-2xl flex-col gap-4">
+                <div bind:this={lessonBodyEl} class="relative flex w-full max-w-2xl flex-col gap-4">
                     {#if !$isPro && !rawContent}
                         <div class="flex flex-col items-center gap-2 py-16 text-center">
                             <Icon
@@ -904,7 +1278,9 @@
                         {@const notStarted = !rawContent && !loading}
                         <!-- AI Explanation — always shown, filled in as it streams -->
                         <div
-                            class="rounded-2xl border border-[#e6cf96] bg-linear-to-b from-[#fdf6e6] to-white p-5 dark:border-[#6b5b37] dark:from-[#34302a] dark:to-[#292c3c]"
+                            use:anchors.ref={"explanation"}
+                            onclick={(e) => handleCardClick(e, "explanation")}
+                            class="cursor-pointer rounded-2xl border border-[#e6cf96] bg-linear-to-b from-[#fdf6e6] to-white p-5 shadow-sm shadow-transparent transition-shadow duration-150 hover:shadow-md hover:shadow-stone-300/40 dark:border-[#6b5b37] dark:from-[#34302a] dark:to-[#292c3c] dark:hover:shadow-black/30"
                         >
                             <div class="flex flex-wrap items-center justify-between gap-2">
                                 <!-- The shipped English lessons were written for
@@ -981,14 +1357,57 @@
                                 <Icon icon="solar:add-square-linear" width="0.7rem" />
                                 {$t("arabicStudy.grammar.add_section")}
                             </button>
+                            <div class="relative ml-auto">
+                                <button
+                                    onclick={() => (exportMenuOpen = !exportMenuOpen)}
+                                    disabled={exportBusy}
+                                    class="flex cursor-pointer items-center gap-1 rounded-full border border-brand-sand-200 bg-white px-2 py-0.5 text-[0.625rem] font-semibold text-brand-charcoal-500 transition-colors hover:bg-brand-sand-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#414559] dark:bg-[#292c3c] dark:text-[#c6d0f5] dark:hover:bg-[#363a4f]"
+                                >
+                                    <Icon
+                                        icon={exportBusy ? "svg-spinners:180-ring-with-bg" : "solar:download-minimalistic-linear"}
+                                        width="0.7rem"
+                                    />
+                                    {$t("arabicStudy.grammar.export")}
+                                </button>
+                                {#if exportMenuOpen}
+                                    <div
+                                        role="presentation"
+                                        class="fixed inset-0"
+                                        style="z-index: 40;"
+                                        onclick={() => (exportMenuOpen = false)}
+                                    ></div>
+                                    <div
+                                        class="absolute right-0 top-full mt-1 min-w-32 rounded-xl border border-brand-sand-200 bg-white p-1 shadow-lg dark:border-[#414559] dark:bg-[#292c3c]"
+                                        style="z-index: 50;"
+                                    >
+                                        <button
+                                            onclick={() => runExport("svg")}
+                                            class="flex w-full cursor-pointer items-center rounded-lg px-2 py-1 text-left text-[0.625rem] font-semibold text-brand-charcoal-500 hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#363a4f]"
+                                        >
+                                            {$t("arabicStudy.grammar.export_svg")}
+                                        </button>
+                                        <button
+                                            onclick={() => runExport("pdf")}
+                                            class="flex w-full cursor-pointer items-center rounded-lg px-2 py-1 text-left text-[0.625rem] font-semibold text-brand-charcoal-500 hover:bg-brand-sand-100 dark:text-[#c6d0f5] dark:hover:bg-[#363a4f]"
+                                        >
+                                            {$t("arabicStudy.grammar.export_pdf")}
+                                        </button>
+                                    </div>
+                                {/if}
+                            </div>
                         </div>
+                        {#if exportError}
+                            <p class="text-[0.625rem] text-red-500 dark:text-red-400">{exportError}</p>
+                        {/if}
                         {/if}
 
                     <!-- From the Qur'an / Everyday Arabic — always shown, with
                          the reader's own sections filling the cells below. -->
                         <div class="grid grid-cols-2 gap-3">
                             <div
-                                class="flex-1 rounded-2xl border border-brand-emerald-200 bg-brand-emerald-50 p-3 dark:border-[#414559] dark:bg-[#292c3c]"
+                                use:anchors.ref={"quran"}
+                                onclick={(e) => handleCardClick(e, "quran")}
+                                class="flex-1 cursor-pointer rounded-2xl border border-brand-emerald-200 bg-brand-emerald-50 p-3 shadow-sm shadow-transparent transition-shadow duration-150 hover:shadow-md hover:shadow-stone-300/40 dark:border-[#414559] dark:bg-[#292c3c] dark:hover:shadow-black/30"
                             >
                                 <span
                                     class="rounded-full bg-brand-emerald-100 px-2 py-0.5 text-[0.5625rem] font-bold uppercase tracking-wide text-brand-emerald-600 dark:bg-[#414559] dark:text-[#9dd4c8]"
@@ -1040,7 +1459,9 @@
                                 {/if}
                             </div>
                             <div
-                                class="flex-1 rounded-2xl border border-brand-teal-200 bg-brand-teal-50 p-3 dark:border-[#414559] dark:bg-[#292c3c]"
+                                use:anchors.ref={"everyday"}
+                                onclick={(e) => handleCardClick(e, "everyday")}
+                                class="flex-1 cursor-pointer rounded-2xl border border-brand-teal-200 bg-brand-teal-50 p-3 shadow-sm shadow-transparent transition-shadow duration-150 hover:shadow-md hover:shadow-stone-300/40 dark:border-[#414559] dark:bg-[#292c3c] dark:hover:shadow-black/30"
                             >
                                 <span
                                     class="rounded-full bg-brand-teal-100 px-2 py-0.5 text-[0.5625rem] font-bold uppercase tracking-wide text-brand-teal-600 dark:bg-[#414559] dark:text-[#92cccc]"
@@ -1073,7 +1494,11 @@
                                      "From the Qur'an"; two when widened, so it
                                      runs under both example cards. -->
                                 <div
-                                    class="rounded-2xl border border-[#cfc4e8] bg-[#f5f1fb] p-3 dark:border-[#4e4a6b] dark:bg-[#2b2a3d] {section.expanded
+                                    use:anchors.ref={`section:${section.storedId ?? section.id}`}
+                                    onclick={(e) =>
+                                        section.storedId !== undefined &&
+                                        handleCardClick(e, "section", section.storedId)}
+                                    class="cursor-pointer rounded-2xl border border-[#cfc4e8] bg-[#f5f1fb] p-3 shadow-sm shadow-transparent transition-shadow duration-150 hover:shadow-md hover:shadow-stone-300/40 dark:border-[#4e4a6b] dark:bg-[#2b2a3d] dark:hover:shadow-black/30 {section.expanded
                                         ? 'col-span-2'
                                         : 'col-span-1'}"
                                 >
@@ -1164,7 +1589,9 @@
 
                         <!-- Try It — always shown -->
                         <div
-                            class="rounded-2xl border border-brand-sand-200 bg-white p-4 dark:border-[#414559] dark:bg-[#292c3c]"
+                            use:anchors.ref={"exercises"}
+                            onclick={(e) => handleCardClick(e, "exercises")}
+                            class="cursor-pointer rounded-2xl border border-brand-sand-200 bg-white p-4 shadow-sm shadow-transparent transition-shadow duration-150 hover:shadow-md hover:shadow-stone-300/40 dark:border-[#414559] dark:bg-[#292c3c] dark:hover:shadow-black/30"
                         >
                             <div class="text-[0.625rem] font-bold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#838ba7]">
                                 {$t("arabicStudy.grammar.try_it")}
@@ -1234,6 +1661,48 @@
                                 </div>
                             {/if}
                         </div>
+
+                        <!-- Comment/prompt links, and the floating cards themselves —
+                             absolutely positioned within the relative lesson-body
+                             wrapper so they scroll with the content they annotate. -->
+                        <svg class="pointer-events-none absolute inset-0 z-20 overflow-visible">
+                            {#each lessonAnnotations as annotation (annotation.id)}
+                                {@const anchor = anchorRects[anchorKey(annotation.anchorKind, annotation.anchorSectionId)]}
+                                {#if anchor}
+                                    {@const pos = annotationPosition(annotation)}
+                                    {@const ends = linkEndpoints(anchor, { ...pos, width: ANNOTATION_CARD_WIDTH })}
+                                    <path
+                                        d={linkPath(ends.x1, ends.y1, ends.x2, ends.y2, ends.dir)}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        class="text-brand-gold-400/80 dark:text-[#e5c890]/70"
+                                    />
+                                    <circle
+                                        cx={ends.x2}
+                                        cy={ends.y2}
+                                        r="3"
+                                        fill="currentColor"
+                                        class="text-brand-gold-400/80 dark:text-[#e5c890]/70"
+                                    />
+                                {/if}
+                            {/each}
+                        </svg>
+                        {#each lessonAnnotations as annotation (annotation.id)}
+                            {@const pos = annotationPosition(annotation)}
+                            <FloatingAnnotationCard
+                                {annotation}
+                                left={pos.left}
+                                top={pos.top}
+                                onUpdate={(patch) => updateAnnotation(annotation.id, patch)}
+                                onDragMove={(offsetX, offsetY) =>
+                                    updateAnnotation(annotation.id, { offsetX, offsetY })}
+                                onDragEnd={() => persistAnnotation(annotation.id)}
+                                onPersist={() => persistAnnotation(annotation.id)}
+                                onGenerate={() => generateAnnotation(annotation.id)}
+                                onDelete={() => removeAnnotation(annotation.id)}
+                            />
+                        {/each}
 
                         {#if moreTopics.length && rawContent}
                             <div class="flex flex-wrap items-center gap-2">
@@ -1525,6 +1994,15 @@
         {/if}
     </div>
 </div>
+
+{#if menuState}
+    <AnnotationMenu
+        x={menuState.x}
+        y={menuState.y}
+        onChoose={(kind, side) => addAnnotation(kind, side)}
+        onClose={closeMenu}
+    />
+{/if}
 
 <style>
     .topic-explanation :global(p) {

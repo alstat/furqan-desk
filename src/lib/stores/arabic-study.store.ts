@@ -292,6 +292,62 @@ export function deleteTopicSection(id: number): Promise<void> {
     return invoke<void>('delete_topic_section', { id });
 }
 
+/** Which built-in card, or a reader-added section, an annotation is pinned to. */
+export type AnnotationAnchorKind = 'explanation' | 'quran' | 'everyday' | 'exercises' | 'section';
+
+/** A comment or AI prompt the reader pinned to one card in a lesson. */
+export interface LessonAnnotation {
+    id: number;
+    topic_id: string;
+    locale: string;
+    anchor_kind: AnnotationAnchorKind;
+    anchor_section_id: number | null;
+    kind: 'comment' | 'prompt';
+    title: string;
+    brief: string;
+    content: string;
+    offset_x: number;
+    offset_y: number;
+    updated_at: string;
+}
+
+export function fetchLessonAnnotations(topicId: string, locale: string): Promise<LessonAnnotation[]> {
+    return invoke<LessonAnnotation[]>('get_lesson_annotations', { topicId, locale });
+}
+
+/** Insert (no `id`) or update one annotation; returns the stored row. */
+export function saveLessonAnnotation(annotation: {
+    id?: number;
+    topicId: string;
+    locale: string;
+    anchorKind: AnnotationAnchorKind;
+    anchorSectionId: number | null;
+    kind: 'comment' | 'prompt';
+    title: string;
+    brief: string;
+    content: string;
+    offsetX: number;
+    offsetY: number;
+}): Promise<LessonAnnotation> {
+    return invoke<LessonAnnotation>('save_lesson_annotation', {
+        id: annotation.id ?? null,
+        topicId: annotation.topicId,
+        locale: annotation.locale,
+        anchorKind: annotation.anchorKind,
+        anchorSectionId: annotation.anchorSectionId,
+        kind: annotation.kind,
+        title: annotation.title,
+        brief: annotation.brief,
+        content: annotation.content,
+        offsetX: annotation.offsetX,
+        offsetY: annotation.offsetY,
+    });
+}
+
+export function deleteLessonAnnotation(id: number): Promise<void> {
+    return invoke<void>('delete_lesson_annotation', { id });
+}
+
 export function saveTopicContent(topicId: string, content: string, locale: string): Promise<TopicContent> {
     return invoke<TopicContent>('save_topic_content', { topicId, content, locale });
 }

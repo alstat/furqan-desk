@@ -371,7 +371,28 @@ impl Database {
                 updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
             );
             CREATE INDEX IF NOT EXISTS idx_topic_sections_topic
-                ON arabic_study_topic_sections (topic_id, locale, position);",
+                ON arabic_study_topic_sections (topic_id, locale, position);
+            -- Comments and AI prompts a reader pins to a specific card in a
+            -- lesson (the explanation, an example block, a custom section),
+            -- floating beside it with a remembered position. anchor_kind says
+            -- which built-in card, or 'section' with anchor_section_id
+            -- pointing at arabic_study_topic_sections for a reader-added one.
+            CREATE TABLE IF NOT EXISTS arabic_study_lesson_annotations (
+                id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                topic_id          TEXT NOT NULL,
+                locale            TEXT NOT NULL DEFAULT 'en',
+                anchor_kind       TEXT NOT NULL,
+                anchor_section_id INTEGER,
+                kind              TEXT NOT NULL,
+                title             TEXT NOT NULL DEFAULT '',
+                brief             TEXT NOT NULL DEFAULT '',
+                content           TEXT NOT NULL DEFAULT '',
+                offset_x          REAL NOT NULL DEFAULT 24,
+                offset_y          REAL NOT NULL DEFAULT 0,
+                updated_at        TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE INDEX IF NOT EXISTS idx_lesson_annotations_topic
+                ON arabic_study_lesson_annotations (topic_id, locale, anchor_kind);",
         )?;
         // Idempotent column migration — ignored if column already exists
         conn.execute("ALTER TABLE highlights ADD COLUMN note TEXT", []).ok();
@@ -629,6 +650,35 @@ impl Database {
             Vec::new()
         };
 
+        let arabic_study_lesson_annotations = if has_table("arabic_study_lesson_annotations") {
+            let mut stmt = conn.prepare(
+                "SELECT topic_id, locale, anchor_kind, anchor_section_id, kind, title, brief,
+                        content, offset_x, offset_y, updated_at
+                 FROM arabic_study_lesson_annotations",
+            )?;
+            let rows: Vec<_> = stmt
+                .query_map([], |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, String>(2)?,
+                        row.get::<_, Option<i64>>(3)?,
+                        row.get::<_, String>(4)?,
+                        row.get::<_, String>(5)?,
+                        row.get::<_, String>(6)?,
+                        row.get::<_, String>(7)?,
+                        row.get::<_, f64>(8)?,
+                        row.get::<_, f64>(9)?,
+                        row.get::<_, String>(10)?,
+                    ))
+                })?
+                .filter_map(|r| r.ok())
+                .collect();
+            rows
+        } else {
+            Vec::new()
+        };
+
         let arabic_study_topic_versions = if has_table("arabic_study_topic_versions") {
             let mut stmt = conn.prepare(
                 "SELECT topic_id, locale, content, source, created_at
@@ -682,6 +732,7 @@ impl Database {
             arabic_study_letter_progress,
             arabic_study_topic_content,
             arabic_study_topic_sections,
+            arabic_study_lesson_annotations,
             arabic_study_topic_versions,
             arabic_study_activity,
             app_meta,
@@ -766,6 +817,24 @@ impl Database {
         }
         {
             let mut stmt = conn.prepare(
+                "INSERT INTO arabic_study_lesson_annotations
+                 (topic_id, locale, anchor_kind, anchor_section_id, kind, title, brief, content,
+                  offset_x, offset_y, updated_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            )?;
+            for (
+                topic_id, locale, anchor_kind, anchor_section_id, kind, title, brief, content,
+                offset_x, offset_y, updated_at,
+            ) in &data.arabic_study_lesson_annotations
+            {
+                stmt.execute(rusqlite::params![
+                    topic_id, locale, anchor_kind, anchor_section_id, kind, title, brief, content,
+                    offset_x, offset_y, updated_at
+                ])?;
+            }
+        }
+        {
+            let mut stmt = conn.prepare(
                 "INSERT INTO arabic_study_topic_versions
                  (topic_id, locale, content, source, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
             )?;
@@ -807,6 +876,20 @@ struct UserData {
     arabic_study_letter_progress: Vec<(String, Option<String>, i64, Option<String>)>,
     arabic_study_topic_content: Vec<(String, String, String, String)>,
     arabic_study_topic_sections: Vec<(String, String, i64, String, String, String, i64, String)>,
+    #[allow(clippy::type_complexity)]
+    arabic_study_lesson_annotations: Vec<(
+        String,
+        String,
+        String,
+        Option<i64>,
+        String,
+        String,
+        String,
+        String,
+        f64,
+        f64,
+        String,
+    )>,
     arabic_study_topic_versions: Vec<(String, String, String, String, String)>,
     arabic_study_activity: Vec<(String, String, i64, String, String)>,
     app_meta: Vec<(String, String)>,

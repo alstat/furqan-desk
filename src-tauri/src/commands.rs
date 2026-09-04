@@ -2279,6 +2279,142 @@ pub fn delete_topic_section(db: State<Database>, id: i64) -> Result<(), String> 
     Ok(())
 }
 
+// ── Lesson card annotations (comments and prompts) ───────────────────────────
+
+#[derive(Serialize)]
+pub struct LessonAnnotation {
+    pub id: i64,
+    pub topic_id: String,
+    pub locale: String,
+    pub anchor_kind: String,
+    pub anchor_section_id: Option<i64>,
+    pub kind: String,
+    pub title: String,
+    pub brief: String,
+    pub content: String,
+    pub offset_x: f64,
+    pub offset_y: f64,
+    pub updated_at: String,
+}
+
+fn lesson_annotation_row(r: &rusqlite::Row) -> rusqlite::Result<LessonAnnotation> {
+    Ok(LessonAnnotation {
+        id: r.get(0)?,
+        topic_id: r.get(1)?,
+        locale: r.get(2)?,
+        anchor_kind: r.get(3)?,
+        anchor_section_id: r.get(4)?,
+        kind: r.get(5)?,
+        title: r.get(6)?,
+        brief: r.get(7)?,
+        content: r.get(8)?,
+        offset_x: r.get(9)?,
+        offset_y: r.get(10)?,
+        updated_at: r.get(11)?,
+    })
+}
+
+/// The reader's comments and AI prompts pinned to cards in one topic's
+/// lesson, in the language they were written in.
+#[tauri::command]
+pub fn get_lesson_annotations(
+    db: State<Database>,
+    topic_id: String,
+    locale: String,
+) -> Result<Vec<LessonAnnotation>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, topic_id, locale, anchor_kind, anchor_section_id, kind, title, brief,
+                    content, offset_x, offset_y, updated_at
+             FROM arabic_study_lesson_annotations
+             WHERE topic_id = ?1 AND locale = ?2
+             ORDER BY id",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![topic_id, locale], |r| lesson_annotation_row(r))
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+/// Insert an annotation (`id` omitted) or update one in place. Returns the
+/// stored row so the caller learns the id a new one was given.
+#[tauri::command]
+#[allow(clippy::too_many_arguments)]
+pub fn save_lesson_annotation(
+    db: State<Database>,
+    id: Option<i64>,
+    topic_id: String,
+    locale: String,
+    anchor_kind: String,
+    anchor_section_id: Option<i64>,
+    kind: String,
+    title: String,
+    brief: String,
+    content: String,
+    offset_x: f64,
+    offset_y: f64,
+) -> Result<LessonAnnotation, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let row_id = match id {
+        Some(existing) => {
+            conn.execute(
+                "UPDATE arabic_study_lesson_annotations
+                 SET title = ?2, brief = ?3, content = ?4, offset_x = ?5, offset_y = ?6,
+                     updated_at = datetime('now')
+                 WHERE id = ?1",
+                rusqlite::params![existing, title, brief, content, offset_x, offset_y],
+            )
+            .map_err(|e| e.to_string())?;
+            existing
+        }
+        None => {
+            conn.execute(
+                "INSERT INTO arabic_study_lesson_annotations
+                 (topic_id, locale, anchor_kind, anchor_section_id, kind, title, brief, content,
+                  offset_x, offset_y, updated_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, datetime('now'))",
+                rusqlite::params![
+                    topic_id,
+                    locale,
+                    anchor_kind,
+                    anchor_section_id,
+                    kind,
+                    title,
+                    brief,
+                    content,
+                    offset_x,
+                    offset_y
+                ],
+            )
+            .map_err(|e| e.to_string())?;
+            conn.last_insert_rowid()
+        }
+    };
+    conn.query_row(
+        "SELECT id, topic_id, locale, anchor_kind, anchor_section_id, kind, title, brief,
+                content, offset_x, offset_y, updated_at
+         FROM arabic_study_lesson_annotations WHERE id = ?1",
+        [row_id],
+        |r| lesson_annotation_row(r),
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn delete_lesson_annotation(db: State<Database>, id: i64) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    conn.execute(
+        "DELETE FROM arabic_study_lesson_annotations WHERE id = ?1",
+        [id],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 // ── Highlight commands ───────────────────────────────────────────────────────
 
 #[tauri::command]

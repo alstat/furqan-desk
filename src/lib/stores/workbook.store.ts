@@ -899,7 +899,7 @@ export async function resolveNodeOutputs(doc: WorkbookDoc): Promise<Map<string, 
 
 const METADATA_ID = 'ayahlab-workbook';
 
-const escapeXml = (text: string) =>
+export const escapeXml = (text: string) =>
     text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
