@@ -15,13 +15,15 @@
         DATA_NODE_KINDS,
         emptyWorkbook,
         makeNode,
+        pipelineNodeKey,
         resolveNodeOutputs,
         workbookFromSvg,
         workbookToSvg,
-        type VerseRow,
+        SOURCE_NODE_KINDS,
         type WorkbookDoc,
         type WorkbookNode,
         type WorkbookNodeKind,
+        type WorkbookRow,
     } from "$lib/stores/workbook.store";
 
     interface Props {
@@ -134,7 +136,10 @@
     const ADDABLE_GROUPS: { label: string; items: { kind: WorkbookNodeKind; icon: string }[] }[] = [
         {
             label: "workbook.toolbar_group.source",
-            items: [{ kind: "ayah", icon: "solar:book-2-bold-duotone" }],
+            items: [
+                { kind: "ayah", icon: "solar:book-2-bold-duotone" },
+                { kind: "data", icon: "solar:database-bold-duotone" },
+            ],
         },
         {
             label: "workbook.toolbar_group.enrich",
@@ -487,23 +492,38 @@
         }
         if (portDrag) {
             const target = nodeAt(event.clientX, event.clientY, portDrag.fromId);
-            if (target) {
+            const to = target ? (portDrag.side === "out" ? target.id : portDrag.fromId) : null;
+            const toKind = to ? board.nodes.find((n) => n.id === to)?.kind : undefined;
+            // `ayah`/`data` are always a source, never a target — dropping a
+            // wire onto one (whichever end actually lands there) is treated
+            // the same as missing the card entirely, below.
+            const validTarget = target && to && toKind && !SOURCE_NODE_KINDS.includes(toKind);
+            if (validTarget && target && to) {
                 const from = portDrag.side === "out" ? portDrag.fromId : target.id;
-                const to = portDrag.side === "out" ? target.id : portDrag.fromId;
-                const edges = board.edges.filter((e) => e.from !== from && e.to !== to);
+                // A node's output can fan out to several downstream nodes at
+                // once (e.g. a Julia card feeding both a REPL `view` and a
+                // separate plot `view`), so only the target's own incoming
+                // edge is replaced here — any other outgoing edge the source
+                // already had is left alone. An input still takes at most
+                // one edge, so `e.to !== to` is enough to also dedupe an
+                // exact from/to repeat.
+                const edges = board.edges.filter((e) => e.to !== to);
                 commit({ ...board, edges: [...edges, { id: crypto.randomUUID(), from, to }] });
-            } else {
+            } else if (portDrag.side === "in") {
                 // Dropped on empty space rather than another node — a plain
                 // click on a port lands here too, since it never moves onto
-                // a target. If this port already had a wire, that removes
-                // it (dragging a connected wire away disconnects it, same
-                // as most node editors); an unwired port dropped on empty
-                // space is just a cancelled drag, same as before.
-                const edges = board.edges.filter((e) =>
-                    portDrag!.side === "out" ? e.from !== portDrag!.fromId : e.to !== portDrag!.fromId,
-                );
+                // a target. An input has at most one incoming edge, so this
+                // unambiguously disconnects it (dragging a connected wire
+                // away disconnects it, same as most node editors); an
+                // unwired port dropped on empty space is just a cancelled
+                // drag, same as before.
+                const edges = board.edges.filter((e) => e.to !== portDrag!.fromId);
                 if (edges.length !== board.edges.length) commit({ ...board, edges });
             }
+            // An output port dropped on empty space is just a cancelled drag
+            // now that one output can have several edges — there would be no
+            // way to tell which of them the reader meant to remove. Select
+            // both ends and press Delete to remove one specific wire.
             portDrag = null;
         }
         drag = null;
@@ -590,46 +610,59 @@
 
     // ── Pipeline: ports, wires, groups, and what flows through them ─────────
 
-    /** Every data card always carries ports — wiring doesn't require grouping first. */
+    /** Every data card always carries an output port — wiring doesn't require grouping first. */
     function hasPort(id: string): boolean {
         const node = board.nodes.find((n) => n.id === id);
         return !!node && DATA_NODE_KINDS.includes(node.kind);
+    }
+
+    /** `ayah`/`data` are always a source, never a target — see `SOURCE_NODE_KINDS` — so neither gets an input port at all. */
+    function hasInPort(id: string): boolean {
+        const node = board.nodes.find((n) => n.id === id);
+        return !!node && DATA_NODE_KINDS.includes(node.kind) && !SOURCE_NODE_KINDS.includes(node.kind);
     }
 
     function upstreamOf(id: string): string | undefined {
         return board.edges.find((e) => e.to === id)?.from;
     }
 
-    let nodeOutputs = $state<Map<string, VerseRow[]>>(new Map());
+    let nodeOutputs = $state<Map<string, WorkbookRow[]>>(new Map());
 
     let runTick = $state(0);
     let lastRunTick = 0;
+    let lastPipelineKey = "";
 
     /** The explicit trigger in Manual mode — recomputes the whole pipeline once. */
     export function runNow() {
         runTick += 1;
     }
 
-    // Recomputed whenever a node's own settings change or the wiring changes —
-    // not on drag/resize, which touch only x/y/width/height — but only in
-    // Live mode; in Manual mode this waits for `runTick` from runNow().
+    // Recomputed whenever a node's own settings change or the wiring changes
+    // — not on drag/resize/panel toggles, which every `commit()` still
+    // touches (it always replaces the moved/patched node's own object, so a
+    // naive read of `board.nodes`/`board.edges` here would re-run on those
+    // too) but `pipelineNodeKey` excludes, so the `key === lastPipelineKey`
+    // check below skips the recompute itself — only in Live mode; in Manual
+    // mode this instead waits for `runTick` from runNow().
     $effect(() => {
         const key =
-            board.nodes
-                .map((n) => `${n.id}:${n.kind}:${(n.refs ?? []).join(",")}:${n.limit}:${n.query}:${n.layout}`)
-                .join("|") +
-            "::" +
-            board.edges.map((e) => `${e.from}>${e.to}`).join(",");
-        void key;
+            board.nodes.map(pipelineNodeKey).join("|") + "::" + board.edges.map((e) => `${e.from}>${e.to}`).join(",");
         const tick = runTick;
-        if (runMode === "manual" && tick === lastRunTick) return;
-        lastRunTick = tick;
+        if (runMode === "manual") {
+            if (tick === lastRunTick) return;
+            lastRunTick = tick;
+            lastPipelineKey = key;
+        } else {
+            if (key === lastPipelineKey) return;
+            lastPipelineKey = key;
+            lastRunTick = tick;
+        }
         void (async () => {
             nodeOutputs = await resolveNodeOutputs(board);
         })();
     });
 
-    function inputRowsFor(id: string): VerseRow[] | null {
+    function inputRowsFor(id: string): WorkbookRow[] | null {
         const up = upstreamOf(id);
         return up ? (nodeOutputs.get(up) ?? []) : null;
     }
@@ -638,6 +671,18 @@
     function upstreamNodeFor(id: string): WorkbookNode | null {
         const up = upstreamOf(id);
         return up ? (board.nodes.find((n) => n.id === up) ?? null) : null;
+    }
+
+    /** Whether some downstream `view` card wired directly to this Julia/Lean node is currently hosting its REPL/infoview — so that node's own card knows not to force its own panel open (and evict that hosting) on Mod-Enter. */
+    function hostedByView(id: string): boolean {
+        const source = board.nodes.find((n) => n.id === id);
+        if (!source || (source.kind !== "julia" && source.kind !== "lean")) return false;
+        return board.edges.some((e) => {
+            if (e.from !== id) return false;
+            const target = board.nodes.find((n) => n.id === e.to);
+            if (!target || target.kind !== "view") return false;
+            return source.kind === "julia" ? target.viewMode === "repl" : target.viewMode === "infoview";
+        });
     }
 
     /** One cubic-bezier per committed wire, from the source's output port to the target's input port. */
@@ -953,8 +998,10 @@
                     {node}
                     selected={selectedIds.includes(node.id)}
                     hasPort={hasPort(node.id)}
+                    hasInPort={hasInPort(node.id)}
                     inputRows={inputRowsFor(node.id)}
                     upstreamNode={upstreamNodeFor(node.id)}
+                    hostedByView={hostedByView(node.id)}
                     live={runMode === "live"}
                     runToken={runTick}
                     zIndex={nodeZ[node.id] ?? 0}

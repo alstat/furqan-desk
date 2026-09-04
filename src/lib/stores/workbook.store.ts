@@ -24,6 +24,7 @@ import { runWorkbookJulia, runWorkbookLean } from '$lib/stores/workbook-code-nod
 
 export type WorkbookNodeKind =
     | 'ayah'
+    | 'data'
     | 'translation'
     | 'tafsir'
     | 'related'
@@ -38,9 +39,10 @@ export type WorkbookNodeKind =
     | 'note'
     | 'image';
 
-/** The node kinds that read/shape/show verse rows and so can be wired into a pipeline. */
+/** The node kinds that read/shape/show rows (verse or table) and so can be wired into a pipeline. */
 export const DATA_NODE_KINDS: WorkbookNodeKind[] = [
     'ayah',
+    'data',
     'translation',
     'tafsir',
     'related',
@@ -52,6 +54,15 @@ export const DATA_NODE_KINDS: WorkbookNodeKind[] = [
     'view',
     'export',
 ];
+
+/**
+ * The node kinds that are their own source — `ayah` reads its own picked
+ * verses, `data` its own uploaded file — rather than shaping whatever is
+ * wired in. Neither ever takes an incoming edge, so neither gets an input
+ * port (see `hasInPort` in WorkbookBoard.svelte) and a wire drag can never
+ * land on one as a target (see `endGesture`'s `to`-kind check there).
+ */
+export const SOURCE_NODE_KINDS: WorkbookNodeKind[] = ['ayah', 'data'];
 
 /**
  * Pre-generalisation step kind, kept only so `workbookFromSvg` can still read
@@ -142,8 +153,14 @@ export interface WorkbookNode {
     limit?: number;
     /** `filter`: the comparison value — text to search for, or a number, depending on `filterField`. */
     query?: string;
-    /** `filter`: which field the comparison reads. Unset means `'text'`. */
-    filterField?: 'text' | 'surah' | 'ayah';
+    /**
+     * `filter`, against a `VerseRow` input: which field the comparison
+     * reads — `'text'`, `'surah'`, or `'ayah'`; unset means `'text'`.
+     * Against a `TableRow` input (wired to a `data` node, directly or
+     * through other shape nodes): an arbitrary column name from that
+     * table; unset means its first column.
+     */
+    filterField?: string;
     /** `filter`: the comparison operator. Unset means `'contains'` (`text`) or `'eq'` (numeric). */
     filterOp?: 'contains' | 'not_contains' | 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte';
     /** `view`: how the resolved rows are laid out. */
@@ -191,6 +208,56 @@ export interface WorkbookNode {
      * unrelated to what (if anything) is wired upstream.
      */
     viewMode?: 'rows' | 'repl' | 'infoview' | 'plots';
+    /**
+     * `data`: absolute path to the standalone `.sqlite` file the reader's
+     * uploaded CSV/XLSX was imported into — one file per node, named by
+     * this node's own id (see `import_data_file`/`read_data_table` in
+     * `data_import.rs`). Unset until the reader picks a file. A `julia`
+     * node anywhere downstream (even through Filter/Limit/Dedupe) is handed
+     * this same path, so a reader with SQLite.jl/DataFrames.jl installed
+     * can query the file directly instead of working only from `rows`.
+     */
+    dataSourcePath?: string;
+    /** `data`: the file name as picked, for display — `dataSourcePath`'s own basename is this node's id, not fit to show. */
+    dataFileName?: string;
+    /** `data`: column metadata cached at import time, so the card can show a summary without a round trip to `read_data_table`. */
+    dataColumns?: { name: string; type: string }[];
+    /** `data`: row count cached the same way, for the same reason. */
+    dataRowCount?: number;
+}
+
+// Fields `transformNode` never reads for any node kind — pure geometry
+// (dragging/resizing a card), its free-text `title`, or UI-only state
+// (`sidePanelOpen`/`viewMode` toggling a REPL/infoview panel, `layout`
+// switching a `view` card's own list/columns rendering). A recompute gate
+// keyed on every *other* field, via `pipelineNodeKey` below, means moving a
+// card around the board (or opening its REPL) never re-triggers Julia/Lean
+// or any other transform — only an edit that could actually change what
+// `transformNode` produces does.
+const PIPELINE_IRRELEVANT_NODE_FIELDS = [
+    'x',
+    'y',
+    'width',
+    'height',
+    'title',
+    'sidePanelOpen',
+    'viewMode',
+    'layout',
+    'text',
+    'steps',
+] as const;
+
+/**
+ * A string that changes if and only if some field `transformNode` actually
+ * reads for this node changes — see `PIPELINE_IRRELEVANT_NODE_FIELDS`. Used
+ * to gate Live-mode recomputes (both the board's own `resolveNodeOutputs`
+ * pass and each card's own local `reload()`) on real edits rather than on
+ * every commit to the board, geometry and panel toggles included.
+ */
+export function pipelineNodeKey(node: WorkbookNode): string {
+    const copy: Record<string, unknown> = { ...node };
+    for (const field of PIPELINE_IRRELEVANT_NODE_FIELDS) delete copy[field];
+    return JSON.stringify(copy);
 }
 
 /** A node's verses, whichever field they came from — `refs` if it has any, else the old `ref`. */
@@ -237,7 +304,7 @@ export const SURAH_AYAH_COUNTS = [
     5, 4, 5, 6,
 ] as const;
 
-/** A single connection: `from`'s one output feeds `to`'s one input. */
+/** A single connection: `from`'s output feeds `to`'s one input. A node's output can feed several edges (fan-out to more than one downstream node); a node's input takes at most one — see the port-drag handling in WorkbookBoard.svelte. */
 export interface WorkbookEdge {
     id: string;
     from: string;
@@ -278,6 +345,7 @@ export function emptyWorkbook(title = 'Untitled workbook'): WorkbookDoc {
 export const NODE_SIZE = { width: 260, height: 150 };
 const NODE_DEFAULTS: Record<WorkbookNodeKind, { width: number; height: number }> = {
     ayah: NODE_SIZE,
+    data: NODE_SIZE,
     translation: NODE_SIZE,
     tafsir: NODE_SIZE,
     related: NODE_SIZE,
@@ -332,6 +400,26 @@ export interface VerseRow {
     tafsirs?: { label: string; text: string | null }[];
     /** Set when the row was reached from another verse. */
     fromRef?: string;
+}
+
+/** One row of a `data` node's imported CSV/XLSX table, or of a Julia node's output when it isn't Qur'an-shaped. */
+export interface TableRow {
+    /** Discriminates against `VerseRow` — always `true`, never absent. */
+    table: true;
+    /** Column name → cell value, straight from the imported file/SQLite row. */
+    cells: Record<string, string | number | null>;
+}
+
+/**
+ * Every row shape a card in a pipeline can carry — a Qur'an verse, or one
+ * row of an uploaded `data` node's table. Filter/Limit/Dedupe/View branch on
+ * `isTableRow` to handle both; Translate/Tafsir/Related only make sense for
+ * `VerseRow` and drop anything else that reaches them (see `transformNode`).
+ */
+export type WorkbookRow = VerseRow | TableRow;
+
+export function isTableRow(row: WorkbookRow): row is TableRow {
+    return (row as TableRow).table === true;
 }
 
 export function parseRef(ref: string): { surah: number; ayah: number } | null {
@@ -414,6 +502,62 @@ export async function relatedTo(rows: VerseRow[], limit = 3): Promise<VerseRow[]
     return out;
 }
 
+// ── Reading an uploaded file for a `data` node ──────────────────────────────
+
+export interface DataColumnMeta {
+    name: string;
+    type: string;
+}
+
+/** What `import_data_file` (data_import.rs) hands back once the file's own sqlite copy is written. */
+interface DataImportResultRaw {
+    sqlite_path: string;
+    table_name: string;
+    columns: DataColumnMeta[];
+    row_count: number;
+}
+
+/** What `read_data_table` hands back — the same file, read whole. */
+interface DataTableRaw {
+    columns: DataColumnMeta[];
+    rows: (string | number | null)[][];
+}
+
+/**
+ * Imports a CSV/XLSX/TSV/ODS file the reader picked into a `.sqlite` file
+ * dedicated to this node (see `data_import.rs`), replacing whatever it
+ * imported before. The node fields this fills in (`dataSourcePath` etc.) are
+ * committed by the caller, same as any other `onChange`.
+ */
+export async function importDataFile(
+    nodeId: string,
+    path: string,
+): Promise<{ dataSourcePath: string; dataColumns: DataColumnMeta[]; dataRowCount: number }> {
+    const result = await invoke<DataImportResultRaw>('import_data_file', { nodeId, path });
+    return {
+        dataSourcePath: result.sqlite_path,
+        dataColumns: result.columns,
+        dataRowCount: result.row_count,
+    };
+}
+
+/** A `data` node's own imported table, read back from its `.sqlite` file as `TableRow[]` for the pipeline. */
+async function loadDataTable(node: WorkbookNode): Promise<TableRow[]> {
+    if (!node.dataSourcePath) return [];
+    try {
+        const table = await invoke<DataTableRaw>('read_data_table', { sqlitePath: node.dataSourcePath });
+        return table.rows.map((cells) => ({
+            table: true as const,
+            cells: Object.fromEntries(table.columns.map((col, i) => [col.name, cells[i] ?? null])),
+        }));
+    } catch {
+        // A missing/moved/corrupt file (the board was reopened on another
+        // machine, or the reader deleted the source) — same "nothing to
+        // show" fallback as an `ayah` node whose refs don't resolve.
+        return [];
+    }
+}
+
 // ── The pipeline: what a node shows, wired or standalone ────────────────────
 
 /**
@@ -427,20 +571,38 @@ export async function relatedTo(rows: VerseRow[], limit = 3): Promise<VerseRow[]
  */
 export async function transformNode(
     node: WorkbookNode,
-    input: VerseRow[],
-): Promise<VerseRow[]> {
+    input: WorkbookRow[],
+    /**
+     * The nearest upstream `data` node's `.sqlite` path, if any — resolved
+     * by `resolveNodeOutputs` by walking the wiring, not derivable from
+     * `input` alone (Filter/Limit/Dedupe hops in between don't carry it).
+     * Only `julia` reads this.
+     */
+    sqlitePath?: string,
+): Promise<WorkbookRow[]> {
     switch (node.kind) {
         case 'ayah': {
             if (input.length) return input;
             return loadVerses(nodeRefs(node));
         }
+        case 'data': {
+            // Self-sourcing, same as `ayah` — its own upload, not something
+            // wired in. A node wired into a `data` card (unusual, but not
+            // forbidden) is passed through unchanged instead.
+            if (input.length) return input;
+            return loadDataTable(node);
+        }
         case 'translation': {
             // No self-source: a Translate card only ever translates what
             // flows into it (an Ayah card, typically) — see the module doc.
+            // Only makes sense for verse rows — a `data` node's table rows
+            // reaching here (wired in by mistake) have no surah/ayah to
+            // translate, so they're dropped rather than guessed at.
+            const rows = input.filter((row): row is VerseRow => !isTableRow(row));
+            if (!rows.length) return [];
             // One or more translators can be picked (the + button in the
             // card); each becomes one entry in `translations`, so the View
             // card can show them side by side.
-            if (!input.length) return [];
             const picks = nodeTranslators(node);
             const translators = get(availableTranslators);
             const perPick = await Promise.all(
@@ -449,7 +611,7 @@ export async function transformNode(
                         const language = (pick.language ?? '').trim();
                         if (!language) return { label: pick.language || 'Other', byRef: new Map<string, string | null>() };
                         const byRef = await aiTranslateVerses({
-                            verses: input.map((row) => ({ ref: `${row.surah}:${row.ayah}`, arabic: row.arabic })),
+                            verses: rows.map((row) => ({ ref: `${row.surah}:${row.ayah}`, arabic: row.arabic })),
                             language,
                             feature: AI_FEATURE_TAGS.workbookTranslate,
                         });
@@ -460,12 +622,12 @@ export async function transformNode(
                         id !== undefined
                             ? (translators.find((t) => t.id === id)?.name ?? `#${id}`)
                             : (translators.find((t) => t.id === get(activeTranslatorId))?.name ?? 'Default');
-                    const refreshed = await loadVerses(input.map((row) => `${row.surah}:${row.ayah}`), id);
+                    const refreshed = await loadVerses(rows.map((row) => `${row.surah}:${row.ayah}`), id);
                     const byRef = new Map(refreshed.map((row) => [`${row.surah}:${row.ayah}`, row.translation]));
                     return { label, byRef };
                 }),
             );
-            return input.map((row) => {
+            return rows.map((row) => {
                 const key = `${row.surah}:${row.ayah}`;
                 const translations = perPick.map((p) => ({ label: p.label, text: p.byRef.get(key) ?? null }));
                 return { ...row, translation: translations[0]?.text ?? null, translations };
@@ -474,9 +636,12 @@ export async function transformNode(
         case 'tafsir': {
             // No self-source either — an Ayah card upstream (directly, or by
             // way of a Translate card, which passes surah/ayah straight
-            // through) is what supplies the verses. One or more authors can
-            // be picked (the + button), each an entry in `tafsirs`.
-            if (!input.length) return [];
+            // through) is what supplies the verses. Same table-row drop as
+            // `translation` above, for the same reason.
+            const rows = input.filter((row): row is VerseRow => !isTableRow(row));
+            if (!rows.length) return [];
+            // One or more authors can be picked (the + button), each an
+            // entry in `tafsirs`.
             const ids = nodeTafsirAuthorIds(node);
             const authors = get(availableTafsirAuthors);
             const perAuthor = await Promise.all(
@@ -485,12 +650,12 @@ export async function transformNode(
                         id !== undefined
                             ? (authors.find((a) => a.id === id)?.name ?? `#${id}`)
                             : (authors.find((a) => a.id === get(activeTafsirId))?.name ?? 'Default');
-                    const withTafsir = await attachTafsir(input, id);
+                    const withTafsir = await attachTafsir(rows, id);
                     const byRef = new Map(withTafsir.map((row) => [`${row.surah}:${row.ayah}`, row.tafsir]));
                     return { label, byRef };
                 }),
             );
-            return input.map((row) => {
+            return rows.map((row) => {
                 const key = `${row.surah}:${row.ayah}`;
                 const tafsirs = perAuthor.map((a) => ({ label: a.label, text: a.byRef.get(key) ?? null }));
                 return { ...row, tafsir: tafsirs[0]?.text ?? null, tafsirs };
@@ -498,17 +663,69 @@ export async function transformNode(
         }
         case 'related': {
             // No self-source: reads only what is wired in (an Ayah card,
-            // directly or by way of a Translate card) — same reasoning as
-            // translation/tafsir above, so the surah/ayah it works from is
-            // never picked twice in the same chain.
-            if (!input.length) return [];
-            return relatedTo(input, node.limit ?? 3);
+            // directly or by way of a Translate card) — same table-row drop
+            // as translation/tafsir above.
+            const rows = input.filter((row): row is VerseRow => !isTableRow(row));
+            if (!rows.length) return [];
+            return relatedTo(rows, node.limit ?? 3);
         }
         case 'filter': {
-            const field = node.filterField ?? 'text';
-            const op = node.filterOp ?? (field === 'text' ? 'contains' : 'eq');
+            const op = node.filterOp ?? 'contains';
             const raw = (node.query ?? '').trim();
             if (!raw) return input;
+            // A `data` node's table rows: `filterField` is an arbitrary
+            // column name (its first column if unset). Numeric-looking
+            // columns compare numerically (so gt/gte/lt/lte mean something);
+            // anything else falls back to string comparison — contains/
+            // not_contains do a case-insensitive substring match, the rest
+            // compare lexicographically.
+            if (input.length && isTableRow(input[0])) {
+                const rows = input as TableRow[];
+                const column = node.filterField || Object.keys(rows[0]?.cells ?? {})[0];
+                if (!column) return input;
+                const value = Number(raw);
+                const numericQuery = raw !== '' && !Number.isNaN(value);
+                const needle = raw.toLowerCase();
+                const compareNum: Record<string, (a: number) => boolean> = {
+                    eq: (a) => a === value,
+                    neq: (a) => a !== value,
+                    gt: (a) => a > value,
+                    gte: (a) => a >= value,
+                    lt: (a) => a < value,
+                    lte: (a) => a <= value,
+                };
+                return rows.filter((row) => {
+                    const cell = row.cells[column];
+                    // Numeric comparison only for the ordering/equality
+                    // operators, and only once both sides actually parse as
+                    // numbers — contains/not_contains always fall through to
+                    // a substring match, numeric cell or not.
+                    if (numericQuery && typeof cell === 'number' && op in compareNum) {
+                        return compareNum[op](cell);
+                    }
+                    const text = cell == null ? '' : String(cell).toLowerCase();
+                    switch (op) {
+                        case 'not_contains':
+                            return !text.includes(needle);
+                        case 'eq':
+                            return text === needle;
+                        case 'neq':
+                            return text !== needle;
+                        case 'gt':
+                            return text > needle;
+                        case 'gte':
+                            return text >= needle;
+                        case 'lt':
+                            return text < needle;
+                        case 'lte':
+                            return text <= needle;
+                        default:
+                            return text.includes(needle);
+                    }
+                });
+            }
+            const field = node.filterField ?? 'text';
+            const rows = input as VerseRow[];
             if (field === 'text') {
                 const needle = raw.toLowerCase();
                 const matches = (row: VerseRow) =>
@@ -521,7 +738,7 @@ export async function transformNode(
                     ]
                         .filter(Boolean)
                         .some((text) => String(text).toLowerCase().includes(needle));
-                return input.filter((row) => (op === 'not_contains' ? !matches(row) : matches(row)));
+                return rows.filter((row) => (op === 'not_contains' ? !matches(row) : matches(row)));
             }
             const value = Number(raw);
             if (Number.isNaN(value)) return input;
@@ -534,14 +751,19 @@ export async function transformNode(
                 lte: (a) => a <= value,
             };
             const test = compare[op] ?? compare.eq;
-            return input.filter((row) => test(field === 'surah' ? row.surah : row.ayah));
+            return rows.filter((row) => test(field === 'surah' ? row.surah : row.ayah));
         }
         case 'limit':
+            // Kind-agnostic — works the same whether `input` is verse or
+            // table rows.
             return input.slice(0, Math.max(1, node.limit ?? 5));
         case 'dedupe': {
+            // A `data` node's table rows have no natural ref to key on, so
+            // the whole row (every cell) has to match for two to count as
+            // duplicates.
             const seen = new Set<string>();
             return input.filter((row) => {
-                const key = `${row.surah}:${row.ayah}`;
+                const key = isTableRow(row) ? JSON.stringify(row.cells) : `${row.surah}:${row.ayah}`;
                 if (seen.has(key)) return false;
                 seen.add(key);
                 return true;
@@ -549,13 +771,20 @@ export async function transformNode(
         }
         case 'julia':
             // No self-source — a processor node only ever acts on what flows
-            // into it. Compatibility with whatever's wired downstream (Filter,
-            // Related, View, ...) is handled entirely inside runWorkbookJulia,
-            // which always hands back real VerseRow[] — nothing past this case
-            // needs to know the rows passed through Julia at all.
-            return input.length ? runWorkbookJulia(node, input) : [];
-        case 'lean':
-            return input.length ? runWorkbookLean(node, input) : [];
+            // into it. Compatibility with whatever's wired downstream
+            // (Filter, View, ...) is handled entirely inside
+            // runWorkbookJulia. `sqlitePath` reaches Julia code even when
+            // `input` is empty (e.g. every row got filtered out but the
+            // reader's own code still wants to query the file directly).
+            return input.length || sqlitePath ? runWorkbookJulia(node, input, sqlitePath) : [];
+        case 'lean': {
+            // Lean has no practical way to run SQL without a package that
+            // isn't part of a stock install (see workbook-code-nodes.ts), so
+            // it only ever works from verse rows, same as
+            // translation/tafsir/related above — no `sqlitePath` threading.
+            const rows = input.filter((row): row is VerseRow => !isTableRow(row));
+            return rows.length ? runWorkbookLean(node, rows) : [];
+        }
         case 'view':
             return input;
         case 'export':
@@ -568,9 +797,30 @@ export async function transformNode(
 }
 
 /** Flattens rows to CSV text — Export's "Save as CSV"/"Copy as CSV". Multiple translations/tafsirs join the same way Lean's flattened output does, so the two conventions stay in sync. */
-export function rowsToCsv(rows: VerseRow[]): string {
+export function rowsToCsv(rows: WorkbookRow[]): string {
     const csvField = (value: string): string =>
         /[",\n]/.test(value) ? '"' + value.replace(/"/g, '""') + '"' : value;
+    if (rows.length && isTableRow(rows[0])) {
+        // A `data` node's own columns as the header, in first-seen order —
+        // later rows missing a column (a ragged CSV) just leave it blank.
+        const tableRows = rows as TableRow[];
+        const columns: string[] = [];
+        const seen = new Set<string>();
+        for (const row of tableRows) {
+            for (const key of Object.keys(row.cells)) {
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    columns.push(key);
+                }
+            }
+        }
+        const lines = [columns.map(csvField).join(',')];
+        for (const row of tableRows) {
+            lines.push(columns.map((col) => csvField(row.cells[col] == null ? '' : String(row.cells[col]))).join(','));
+        }
+        return lines.join('\r\n');
+    }
+    const verseRows = rows as VerseRow[];
     const flatten = (entries: { label: string; text: string | null }[] | undefined, fallback: string | null | undefined): string => {
         if (entries?.length) {
             return entries.map((e) => (e.label ? `${e.label}: ${e.text ?? ''}` : (e.text ?? ''))).join(' | ');
@@ -579,7 +829,7 @@ export function rowsToCsv(rows: VerseRow[]): string {
     };
     const header = ['Surah', 'Ayah', 'Arabic', 'Translation', 'Tafsir'];
     const lines = [header.map(csvField).join(',')];
-    for (const row of rows) {
+    for (const row of verseRows) {
         lines.push(
             [
                 String(row.surah),
@@ -602,13 +852,29 @@ export function rowsToCsv(rows: VerseRow[]): string {
  * rows, recursively. Memoised per node id and guarded against a cycle (a
  * wire loop resolves to empty rows rather than hanging).
  */
-export async function resolveNodeOutputs(doc: WorkbookDoc): Promise<Map<string, VerseRow[]>> {
+export async function resolveNodeOutputs(doc: WorkbookDoc): Promise<Map<string, WorkbookRow[]>> {
     const byId = new Map(doc.nodes.map((n) => [n.id, n]));
     const incoming = new Map(doc.edges.map((e) => [e.to, e.from]));
-    const resolved = new Map<string, VerseRow[]>();
+    const resolved = new Map<string, WorkbookRow[]>();
     const resolving = new Set<string>();
 
-    async function resolve(id: string): Promise<VerseRow[]> {
+    /**
+     * The nearest `data` node reachable by walking straight up the wiring
+     * from `id` — through as many Filter/Limit/Dedupe/etc. hops as it takes
+     * — so a `julia` node gets a real SQL-queryable file even when it isn't
+     * wired directly to the `data` node itself. `seen` guards a wire loop.
+     */
+    function nearestDataSqlitePath(id: string, seen: Set<string> = new Set()): string | undefined {
+        if (seen.has(id)) return undefined;
+        seen.add(id);
+        const node = byId.get(id);
+        if (!node) return undefined;
+        if (node.kind === 'data') return node.dataSourcePath;
+        const upstreamId = incoming.get(id);
+        return upstreamId ? nearestDataSqlitePath(upstreamId, seen) : undefined;
+    }
+
+    async function resolve(id: string): Promise<WorkbookRow[]> {
         const cached = resolved.get(id);
         if (cached) return cached;
         const node = byId.get(id);
@@ -616,7 +882,8 @@ export async function resolveNodeOutputs(doc: WorkbookDoc): Promise<Map<string, 
         resolving.add(id);
         const upstreamId = incoming.get(id);
         const input = upstreamId ? await resolve(upstreamId) : [];
-        const rows = await transformNode(node, input);
+        const sqlitePath = node.kind === 'julia' ? nearestDataSqlitePath(id) : undefined;
+        const rows = await transformNode(node, input, sqlitePath);
         resolving.delete(id);
         resolved.set(id, rows);
         return rows;
@@ -659,6 +926,7 @@ function wrap(text: string, chars: number, max: number): string[] {
 
 const NODE_FILL: Record<WorkbookNodeKind, { fill: string; stroke: string }> = {
     ayah: { fill: '#fdf6e6', stroke: '#e6cf96' },
+    data: { fill: '#e8f6f6', stroke: '#a0d4d4' },
     translation: { fill: '#eef6f4', stroke: '#a9cfc6' },
     tafsir: { fill: '#f2f0fa', stroke: '#cfc4e8' },
     related: { fill: '#eef4f7', stroke: '#a8c8d8' },
@@ -715,7 +983,12 @@ export function workbookToSvg(doc: WorkbookDoc): string {
                     )}</text>`,
                 );
             }
-            const bodyText = node.kind === 'note' ? node.text ?? '' : nodeRefs(node).join(', ');
+            const bodyText =
+                node.kind === 'note'
+                    ? (node.text ?? '')
+                    : node.kind === 'data'
+                      ? (node.dataFileName ?? '')
+                      : nodeRefs(node).join(', ');
             for (const [i, line] of wrap(bodyText, Math.floor(node.width / 7), 6).entries()) {
                 parts.push(
                     `<text x="${x + 14}" y="${y + 46 + i * 16}" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#6b6560">${escapeXml(
@@ -749,6 +1022,8 @@ function defaultTitle(node: WorkbookNode): string {
     switch (node.kind) {
         case 'ayah':
             return 'Ayah';
+        case 'data':
+            return 'Data';
         case 'translation':
             return 'Translate';
         case 'tafsir':

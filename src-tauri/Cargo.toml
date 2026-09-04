@@ -57,6 +57,8 @@ fontdb    = "0.23"
 portable-pty = "0.8"
 spellbook = "0.4.2"
 sys-locale = "0.3.2"
+csv = "1.4.0"
+calamine = "0.36.1"
 
 # On Linux/Windows a deep link launches a fresh process; single-instance (with
 # the deep-link feature) forwards the URL to the already-running app instead.

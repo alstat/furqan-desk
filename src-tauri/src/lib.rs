@@ -1,5 +1,6 @@
 mod buckwalter;
 mod commands;
+mod data_import;
 mod db;
 #[cfg(any(unix, windows))]
 mod git;
@@ -399,6 +400,8 @@ pub fn run() {
             git::git_status,
             #[cfg(any(unix, windows))]
             git::git_ignored,
+            data_import::import_data_file,
+            data_import::read_data_table,
         ])
         .on_menu_event(|app, event| {
             // Forward File-menu clicks to the frontend, which runs the same

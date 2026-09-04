@@ -1,9 +1,11 @@
 // Julia and Lean "processor" nodes for the Workbook — each runs the reader's
 // own code against the upstream rows and hands whatever it produces back to
-// the pipeline as ordinary `VerseRow[]`, so Filter/Related/View downstream
-// never need to know a Qur'an row passed through code execution. That
-// adapter lives entirely in this file: `dictsToVerseRows` is the one place
-// "whatever Julia/Lean printed" becomes "a row workbook.store.ts understands".
+// the pipeline as `WorkbookRow[]` (a Qur'an verse or a `data` node's table
+// row), so Filter/Dedupe/View downstream never need to know a row passed
+// through code execution. That adapter lives entirely in this file:
+// `dictsToWorkbookRows` (Julia) and `dictsToVerseRows` (Lean, verse-only —
+// see below) are the one place "whatever the code printed" becomes "a row
+// workbook.store.ts understands".
 //
 // Both languages get the same input variable, `rows`, and are expected to
 // leave their answer in `result` — a fixed convention rather than any kind
@@ -13,11 +15,18 @@
 // the app's own `__AL_CMD__` sidecar convention in julia.rs hand-builds its
 // JSON with plain Julia `Base`, and this follows the same idea — a reader's
 // Julia/Lean install is outside this app's control, so requiring one more
-// package there would be a reliability regression, not a convenience.
+// package there would be a reliability regression, not a convenience. A
+// Julia node wired (even indirectly, through Filter/Limit/Dedupe) to a
+// `data` node also gets that node's `.sqlite` file path in `sqlite_path` —
+// real SQL access for a reader who has SQLite.jl/DataFrames.jl installed,
+// entirely opt-in: code that never references the variable behaves exactly
+// as before. Lean has no realistic way to load a SQLite file without a
+// package outside a stock install, so it doesn't get this — Lean nodes stay
+// verse-only, same as before this file learned about table rows at all.
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { writable, type Writable } from 'svelte/store';
-import type { VerseRow, WorkbookNode } from './workbook.store';
+import { isTableRow, type TableRow, type VerseRow, type WorkbookNode, type WorkbookRow } from './workbook.store';
 
 const OUTPUT_MARKER = '__WB_OUT__:';
 const PLOT_MARKER = '__AL_CMD__:';
@@ -37,6 +46,31 @@ export function workbookJuliaPlots(nodeId: string): Writable<WorkbookJuliaPlot[]
     if (!store) {
         store = writable([]);
         plotStores.set(nodeId, store);
+    }
+    return store;
+}
+
+export interface WorkbookReplEntry {
+    input: string;
+    output: string;
+    hasError: boolean;
+}
+
+const replLogStores = new Map<string, Writable<WorkbookReplEntry[]>>();
+
+/**
+ * Reactive log of a Julia node's REPL history, keyed by node id rather than
+ * owned by any one card — a node's own card and a `view` card hosting its
+ * REPL are separate component instances (see WorkbookNodeCard.svelte), but
+ * both read/write this same store, so whichever one is currently visible
+ * always shows every line run against that node's kernel, not just the
+ * lines run from that particular card's own input box.
+ */
+export function workbookJuliaReplLog(nodeId: string): Writable<WorkbookReplEntry[]> {
+    let store = replLogStores.get(nodeId);
+    if (!store) {
+        store = writable([]);
+        replLogStores.set(nodeId, store);
     }
     return store;
 }
@@ -97,13 +131,37 @@ function dictToVerseRow(value: unknown): VerseRow | null {
     };
 }
 
-/** Every Julia/Lean node's output goes through this — the one and only place a code result becomes real rows. */
-export function dictsToVerseRows(value: unknown): VerseRow[] {
+/** Lean's own output — see `runWorkbookLean` — is scoped to verse rows only (no SQL/table support there, per the module doc), so anything that doesn't parse as one is dropped rather than kept in some other shape. */
+function dictsToVerseRows(value: unknown): VerseRow[] {
     if (!Array.isArray(value)) return [];
     const out: VerseRow[] = [];
     for (const item of value) {
         const row = dictToVerseRow(item);
         if (row) out.push(row);
+    }
+    return out;
+}
+
+/** A JSON object with no valid `surah`/`ayah` becomes a generic table row instead of being dropped — a Julia node fed a `data` node's `TableRow[]` (or its own SQL query results) naturally answers back in this shape. */
+function dictToTableRow(value: Record<string, unknown>): TableRow {
+    const cells: Record<string, string | number | null> = {};
+    for (const [k, v] of Object.entries(value)) {
+        cells[k] = v == null ? null : typeof v === 'number' || typeof v === 'string' ? v : JSON.stringify(v);
+    }
+    return { table: true, cells };
+}
+
+/** Julia's own output goes through this — the one and only place a code result becomes real rows, verse or table. */
+function dictsToWorkbookRows(value: unknown): WorkbookRow[] {
+    if (!Array.isArray(value)) return [];
+    const out: WorkbookRow[] = [];
+    for (const item of value) {
+        const verseRow = dictToVerseRow(item);
+        if (verseRow) {
+            out.push(verseRow);
+        } else if (item && typeof item === 'object') {
+            out.push(dictToTableRow(item as Record<string, unknown>));
+        }
     }
     return out;
 }
@@ -162,6 +220,11 @@ function rowToPlainObject(row: VerseRow): Record<string, unknown> {
     };
 }
 
+/** A `TableRow`'s own `cells` are already the plain-object shape Julia wants — an arbitrary column-name → value `Dict`, no Qur'an-specific fields to add. */
+function workbookRowToPlainObject(row: WorkbookRow): Record<string, unknown> {
+    return isTableRow(row) ? row.cells : rowToPlainObject(row);
+}
+
 // Base-only: a Julia-value → JSON-text serializer. No JSON *parser* is ever
 // needed on the Julia side — `rows` below is emitted as a real Julia
 // `Dict`/`Vector` literal, which Julia's own parser reads like any other
@@ -207,11 +270,16 @@ function __wb_to_json(x)
 end
 `;
 
-function buildJuliaCode(node: WorkbookNode, input: VerseRow[]): string {
-    const rowsLiteral = '[' + input.map((r) => juliaValueLiteral(rowToPlainObject(r))).join(',') + ']';
+function buildJuliaCode(node: WorkbookNode, input: WorkbookRow[], sqlitePath?: string): string {
+    const rowsLiteral = '[' + input.map((r) => juliaValueLiteral(workbookRowToPlainObject(r))).join(',') + ']';
+    // Always defined, `nothing` when there's no `data` node upstream, so
+    // code can safely check `if sqlite_path !== nothing` without a reader
+    // needing to know whether this run happens to have one.
+    const sqlitePathLiteral = sqlitePath ? juliaValueLiteral(sqlitePath) : 'nothing';
     return [
         JULIA_HARNESS,
         `rows = ${rowsLiteral}`,
+        `sqlite_path = ${sqlitePathLiteral}`,
         'result = rows',
         node.code ?? '',
         `println(stdout, "${OUTPUT_MARKER}" * __wb_to_json(result))`,
@@ -293,14 +361,18 @@ function runOnJuliaKernel(
     return run;
 }
 
-export async function runWorkbookJulia(node: WorkbookNode, input: VerseRow[]): Promise<VerseRow[]> {
+export async function runWorkbookJulia(
+    node: WorkbookNode,
+    input: WorkbookRow[],
+    sqlitePath?: string,
+): Promise<WorkbookRow[]> {
     const { text, hasError } = await runOnJuliaKernel(
         workbookJuliaKernel(node.id),
         node.id,
-        buildJuliaCode(node, input),
+        buildJuliaCode(node, input, sqlitePath),
     );
     if (hasError) throw new Error(text || 'Julia run failed.');
-    return dictsToVerseRows(extractOutput(text));
+    return dictsToWorkbookRows(extractOutput(text));
 }
 
 /** One ad-hoc line for the node's REPL toggle — shares state with whatever the pipeline last ran (`rows`/`result` included), since it's the same kernel. */

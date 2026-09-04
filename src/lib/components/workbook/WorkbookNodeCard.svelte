@@ -22,21 +22,31 @@
         ensureTafsirAuthors,
     } from "$lib/stores/translation.store";
     import {
+        importDataFile,
+        isTableRow,
         nodeRefs,
         nodeTranslators,
         nodeTafsirAuthorIds,
+        pipelineNodeKey,
         rowsToCsv,
         NODE_SIZE,
         SURAH_AYAH_COUNTS,
         transformNode,
+        type TableRow,
         type VerseRow,
         type WorkbookNode,
+        type WorkbookRow,
     } from "$lib/stores/workbook.store";
     import { copyToClipboard } from "$lib/utils/clipboard";
     import CodeMirrorEditor from "$lib/components/editor/CodeMirrorEditor.svelte";
     import { codeMirrorViewInstance, editorIndentSize } from "$lib/stores/editor.store";
     import { formatLeanSource } from "$lib/utils/leanFormat";
-    import { runWorkbookJuliaRepl, workbookJuliaPlots, workbookLeanKernel } from "$lib/stores/workbook-code-nodes";
+    import {
+        runWorkbookJuliaRepl,
+        workbookJuliaPlots,
+        workbookJuliaReplLog,
+        workbookLeanKernel,
+    } from "$lib/stores/workbook-code-nodes";
     import { createLeanRuntime, type LeanRuntime } from "$lib/stores/lean-compiler.store";
     import LeanInfoviewPane from "$lib/components/editor/LeanInfoviewPane.svelte";
     import { isIncompleteJulia } from "$lib/stores/julia-terminal.store";
@@ -46,12 +56,16 @@
     interface Props {
         node: WorkbookNode;
         selected: boolean;
-        /** True for every data kind — it always carries input/output ports. */
+        /** True for every data kind — it always carries an output port. */
         hasPort: boolean;
+        /** True for every data kind except `ayah`/`data` — those are always a source, never a target, so neither gets an input port. */
+        hasInPort: boolean;
         /** The upstream node's resolved rows, or `null` when nothing feeds this card. */
-        inputRows: VerseRow[] | null;
+        inputRows: WorkbookRow[] | null;
         /** The node directly wired into this one, or `null` — `view` reads its `kind`/`sidePanelOpen` to offer hosting a Julia/Lean node's REPL, infoview, or plots. */
         upstreamNode: WorkbookNode | null;
+        /** True when a downstream `view` card is currently hosting this node's own REPL/infoview — Mod-Enter then leaves this card's own panel closed instead of popping it open and evicting that `view` card's hosting. */
+        hostedByView: boolean;
         /** Live mode: reload on every relevant change. Manual mode: only on `runToken` bumping. */
         live: boolean;
         /** Bumped by the board's Run button — the Manual-mode trigger. */
@@ -69,8 +83,10 @@
         node,
         selected,
         hasPort,
+        hasInPort,
         inputRows,
         upstreamNode,
+        hostedByView,
         live,
         runToken,
         zIndex,
@@ -82,10 +98,11 @@
         onPortDragStart,
     }: Props = $props();
 
-    let rows = $state<VerseRow[]>([]);
+    let rows = $state<WorkbookRow[]>([]);
     let loading = $state(false);
     let error = $state("");
     let exportStatus = $state("");
+    let dataImportBusy = $state(false);
 
     /** Export: writes this card's own resolved rows to a CSV file. */
     async function saveRowsAsCsv() {
@@ -111,6 +128,31 @@
         const text = format === "csv" ? rowsToCsv(rows) : JSON.stringify(rows, null, 2);
         const ok = await copyToClipboard(text);
         exportStatus = ok ? $t("workbook.export.copied") : $t("workbook.export.copy_failed");
+    }
+
+    /** `data`: picks a local CSV/XLSX file and imports it into this node's own `.sqlite` file — see `importDataFile`/`data_import.rs`. Replaces whatever this node imported before. */
+    async function pickDataFile() {
+        if (dataImportBusy) return;
+        dataImportBusy = true;
+        error = "";
+        try {
+            const { open } = await import("@tauri-apps/plugin-dialog");
+            const path = await open({
+                filters: [{ name: "Data", extensions: ["csv", "tsv", "xlsx", "xls", "xlsm", "ods"] }],
+            });
+            if (typeof path !== "string") return;
+            const result = await importDataFile(node.id, path);
+            onChange({
+                dataSourcePath: result.dataSourcePath,
+                dataFileName: path.split(/[\\/]/).pop() ?? path,
+                dataColumns: result.dataColumns,
+                dataRowCount: result.dataRowCount,
+            });
+        } catch (e) {
+            error = e instanceof Error ? e.message : String(e);
+        } finally {
+            dataImportBusy = false;
+        }
     }
 
     onMount(() => {
@@ -195,7 +237,11 @@
     // `view` card downstream reads it too, to know whether it may host this
     // same REPL itself (see the `view` branch below): the two are never
     // both open at once.
-    let juliaReplEntries = $state<{ input: string; output: string; hasError: boolean }[]>([]);
+    // Keyed by node id, not owned by this card — see `workbookJuliaReplLog`.
+    // A `view` card hosting this same node reads/writes the exact same log,
+    // so output lands somewhere visible regardless of which card is
+    // currently showing it.
+    const juliaReplLog = workbookJuliaReplLog(node.id);
     let juliaReplInput = $state("");
     let juliaReplBusy = $state(false);
 
@@ -212,12 +258,12 @@
         juliaReplBusy = true;
         try {
             const { text, hasError } = await runWorkbookJuliaRepl(node, trimmed);
-            juliaReplEntries = [...juliaReplEntries, { input: trimmed, output: text, hasError }];
+            juliaReplLog.update((entries) => [...entries, { input: trimmed, output: text, hasError }]);
         } catch (e) {
-            juliaReplEntries = [
-                ...juliaReplEntries,
+            juliaReplLog.update((entries) => [
+                ...entries,
                 { input: trimmed, output: e instanceof Error ? e.message : String(e), hasError: true },
-            ];
+            ]);
         } finally {
             juliaReplBusy = false;
         }
@@ -230,9 +276,18 @@
         await runJuliaSnippet(code);
     }
 
-    /** Mod-Enter from the editor: open (and grow for) the REPL so the result is actually visible, same as JuliaEditor.svelte surfacing into its own REPL pane. */
+    /**
+     * Mod-Enter from the editor: open (and grow for) this card's own REPL so
+     * the result is actually visible, same as JuliaEditor.svelte surfacing
+     * into its own REPL pane — but only when no `view` card is already
+     * hosting it. Forcing this card's panel open in that case would both
+     * evict the `view` card's hosting (its own effect resets `viewMode` back
+     * to `"rows"` the moment `sidePanelOpen` flips true) and, since that
+     * flip commits a board-wide change, trigger a redundant pipeline rerun
+     * racing this same ad-hoc snippet on the same kernel.
+     */
     function runFromEditor(snippet: string) {
-        if (!node.sidePanelOpen) toggleJuliaRepl();
+        if (!hostedByView && !node.sidePanelOpen) toggleJuliaRepl();
         void runJuliaSnippet(snippet);
     }
 
@@ -324,24 +379,26 @@
     // card is its own component), but bound to the exact same kernel, so
     // switching which side is showing it never loses the underlying
     // session, only which card's UI happens to be displaying it.
-    let hostedJuliaReplEntries = $state<{ input: string; output: string; hasError: boolean }[]>([]);
+    /** Same shared, node-id-keyed log the source Julia card itself reads/writes — see `juliaReplLog` above. */
+    const hostedJuliaReplLog = $derived(upstreamNode?.kind === "julia" ? workbookJuliaReplLog(upstreamNode.id) : null);
     let hostedJuliaReplInput = $state("");
     let hostedJuliaReplBusy = $state(false);
 
     async function runHostedJuliaReplLine() {
         const target = upstreamNode;
+        const log = hostedJuliaReplLog;
         const code = hostedJuliaReplInput.trim();
-        if (!code || !target || hostedJuliaReplBusy) return;
+        if (!code || !target || !log || hostedJuliaReplBusy) return;
         hostedJuliaReplInput = "";
         hostedJuliaReplBusy = true;
         try {
             const { text, hasError } = await runWorkbookJuliaRepl(target, code);
-            hostedJuliaReplEntries = [...hostedJuliaReplEntries, { input: code, output: text, hasError }];
+            log.update((entries) => [...entries, { input: code, output: text, hasError }]);
         } catch (e) {
-            hostedJuliaReplEntries = [
-                ...hostedJuliaReplEntries,
+            log.update((entries) => [
+                ...entries,
                 { input: code, output: e instanceof Error ? e.message : String(e), hasError: true },
-            ];
+            ]);
         } finally {
             hostedJuliaReplBusy = false;
         }
@@ -429,6 +486,11 @@
             strip: "bg-brand-gold-50 dark:bg-[#34302a]",
             icon: "solar:book-2-bold-duotone",
             dot: "bg-brand-gold-400",
+        },
+        data: {
+            strip: "bg-[#e8f6f6] dark:bg-[#213636]",
+            icon: "solar:database-bold-duotone",
+            dot: "bg-[#7ec6c6]",
         },
         translation: {
             strip: "bg-brand-teal-50 dark:bg-[#29383e]",
@@ -518,26 +580,29 @@
     }
 
     let lastRunToken = 0;
+    let lastPipelineKey = "";
 
     // Reload whenever what this card is pointed at changes — its own refs or
     // settings, or (for a wired card) what its upstream neighbour produced —
     // but only in Live mode; in Manual mode this waits for the board's
     // `runToken` to bump (the reader pressing Run), same as the board's own
-    // pipeline recompute.
+    // pipeline recompute. Gated on `pipelineNodeKey` (plus `inputRows`
+    // itself) rather than just reading these fields, since `node` is a new
+    // object on every board commit — including drags/resizes elsewhere on
+    // the board and this card's own REPL/infoview panel toggling — and a
+    // plain read of `node.code` etc. would re-run on all of those too.
     $effect(() => {
-        void refs.join(",");
-        void node.query;
-        void node.filterField;
-        void node.filterOp;
-        void node.limit;
-        void node.layout;
-        void node.translators;
-        void node.tafsirAuthorIds;
-        void node.code;
-        void inputRows;
+        const key = pipelineNodeKey(node) + "::" + JSON.stringify(inputRows);
         const token = runToken;
-        if (!live && token === lastRunToken) return;
-        lastRunToken = token;
+        if (live) {
+            if (key === lastPipelineKey) return;
+            lastPipelineKey = key;
+            lastRunToken = token;
+        } else {
+            if (token === lastRunToken) return;
+            lastRunToken = token;
+            lastPipelineKey = key;
+        }
         void reload();
     });
 </script>
@@ -594,6 +659,36 @@
     </div>
 {/snippet}
 
+{#snippet dataGrid(list: TableRow[])}
+    {@const columns = Object.keys(list[0]?.cells ?? {})}
+    <div class="overflow-auto rounded-xl border border-brand-sand-200/70 dark:border-[#414559]">
+        <table class="w-full border-collapse text-[0.625rem]">
+            <thead>
+                <tr class="bg-brand-sand-50 dark:bg-[#232634]">
+                    {#each columns as col (col)}
+                        <th
+                            class="whitespace-nowrap border-b border-brand-sand-200 px-2 py-1 text-left font-semibold text-brand-charcoal-500 dark:border-[#414559] dark:text-[#c6d0f5]"
+                        >
+                            {col}
+                        </th>
+                    {/each}
+                </tr>
+            </thead>
+            <tbody>
+                {#each list as row, i (i)}
+                    <tr class="odd:bg-white even:bg-brand-sand-50/60 dark:odd:bg-[#232634] dark:even:bg-[#2b2e40]">
+                        {#each columns as col (col)}
+                            <td class="whitespace-nowrap px-2 py-1 text-brand-charcoal-600 dark:text-[#a5adce]">
+                                {row.cells[col] ?? ""}
+                            </td>
+                        {/each}
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+    </div>
+{/snippet}
+
 {#snippet outputHeader()}
     <div class="mb-1.5 flex items-center gap-1.5">
         <span class="text-[0.5625rem] font-semibold uppercase tracking-widest text-brand-charcoal-300 dark:text-[#838ba7]">
@@ -609,7 +704,6 @@
     class="absolute flex flex-col overflow-hidden rounded-xl border border-brand-sand-200/80 bg-white/95 shadow-lg backdrop-blur-md transition-shadow dark:border-[#414559] dark:bg-[#292c3c]/95 dark:shadow-black/40 {selected
         ? 'ring-2 ring-brand-gold-400 dark:ring-[#e5c890]'
         : ''} {node.kind === 'title' ? 'border-transparent bg-transparent shadow-none backdrop-blur-none dark:bg-transparent' : ''}"
-    class:node-running={loading}
     style:left="{node.x}px"
     style:top="{node.y}px"
     style:width="{node.width}px"
@@ -620,6 +714,9 @@
     onpointerdown={onSelect}
     onwheel={(e) => e.stopPropagation()}
 >
+    {#if loading}
+        <span class="node-runborder" aria-hidden="true"></span>
+    {/if}
     <!-- Header strip doubles as the drag handle -->
     <div
         class="flex shrink-0 cursor-grab items-center gap-1.5 border-b border-brand-sand-200/70 px-3 py-1.5 active:cursor-grabbing dark:border-[#414559] {ACCENT[
@@ -850,7 +947,7 @@
                         class="flex h-32 shrink-0 flex-col overflow-hidden rounded-lg border border-brand-sand-200 dark:border-[#414559]"
                     >
                         <div class="min-h-0 flex-1 overflow-auto bg-[#0d1117] p-1.5 font-mono text-[0.5625rem] leading-relaxed">
-                            {#each juliaReplEntries as entry, i (i)}
+                            {#each $juliaReplLog as entry, i (i)}
                                 <div class="text-[#79c0ff]">julia&gt; {entry.input}</div>
                                 {#if entry.output}
                                     <div class="whitespace-pre-wrap {entry.hasError ? 'text-red-400' : 'text-[#c9d1d9]'}">
@@ -945,12 +1042,13 @@
             {#if error}
                 <p class="mt-1.5 text-[0.625rem] text-red-500 dark:text-red-400">{error}</p>
             {/if}
-            {#if node.viewMode === "repl" && upstreamNode?.kind === "julia" && !upstreamNode.sidePanelOpen}
+            {#if node.viewMode === "repl" && upstreamNode?.kind === "julia" && !upstreamNode.sidePanelOpen && hostedJuliaReplLog}
+                {@const replEntries = $hostedJuliaReplLog}
                 <div
                     class="mt-2 flex h-40 flex-col overflow-hidden rounded-lg border border-brand-sand-200 dark:border-[#414559]"
                 >
                     <div class="min-h-0 flex-1 overflow-auto bg-[#0d1117] p-1.5 font-mono text-[0.5625rem] leading-relaxed">
-                        {#each hostedJuliaReplEntries as entry, i (i)}
+                        {#each replEntries as entry, i (i)}
                             <div class="text-[#79c0ff]">julia&gt; {entry.input}</div>
                             {#if entry.output}
                                 <div class="whitespace-pre-wrap {entry.hasError ? 'text-red-400' : 'text-[#c9d1d9]'}">
@@ -1009,7 +1107,11 @@
             {:else}
                 <div class="mt-2">
                     {@render outputHeader()}
-                    {@render verseCards(rows, node.layout ?? "list")}
+                    {#if rows.length && isTableRow(rows[0])}
+                        {@render dataGrid(rows as TableRow[])}
+                    {:else}
+                        {@render verseCards(rows as VerseRow[], node.layout ?? "list")}
+                    {/if}
                 </div>
             {/if}
         {:else if node.kind === "export"}
@@ -1180,6 +1282,52 @@
             <p class="mt-1.5 text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
                 {$t("workbook.node.related_hint")}
             </p>
+        {:else if node.kind === "data"}
+            <div class="flex flex-col gap-2" onpointerdown={(e) => e.stopPropagation()} role="presentation">
+                <button
+                    onclick={pickDataFile}
+                    disabled={dataImportBusy}
+                    class="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-brand-sand-300 px-2 py-1.5 text-[0.6875rem] font-medium text-brand-charcoal-500 transition-colors hover:bg-brand-sand-50 disabled:cursor-default disabled:opacity-60 dark:border-[#414559] dark:text-[#c6d0f5] dark:hover:bg-[#363a4f]"
+                >
+                    <Icon
+                        icon={dataImportBusy ? "svg-spinners:180-ring-with-bg" : "solar:upload-square-bold-duotone"}
+                        width="0.8rem"
+                    />
+                    {node.dataSourcePath ? $t("workbook.node.data_replace") : $t("workbook.node.data_upload")}
+                </button>
+                {#if node.dataFileName}
+                    <div class="flex flex-col gap-1 rounded-lg bg-brand-sand-50 p-2 dark:bg-[#232634]">
+                        <p
+                            class="truncate text-[0.6875rem] font-medium text-brand-charcoal-600 dark:text-[#c6d0f5]"
+                            title={node.dataFileName}
+                        >
+                            {node.dataFileName}
+                        </p>
+                        <p class="text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
+                            {$t("workbook.node.data_summary", {
+                                rows: String(node.dataRowCount ?? 0),
+                                columns: String(node.dataColumns?.length ?? 0),
+                            })}
+                        </p>
+                        {#if node.dataColumns?.length}
+                            <div class="flex flex-wrap gap-1">
+                                {#each node.dataColumns as col (col.name)}
+                                    <span
+                                        title={col.type}
+                                        class="rounded-full bg-white px-1.5 py-0.5 text-[0.5625rem] text-brand-charcoal-500 dark:bg-[#363a4f] dark:text-[#c6d0f5]"
+                                    >
+                                        {col.name}
+                                    </span>
+                                {/each}
+                            </div>
+                        {/if}
+                    </div>
+                {:else}
+                    <p class="text-[0.625rem] text-brand-charcoal-400 dark:text-[#838ba7]">
+                        {$t("workbook.node.data_empty")}
+                    </p>
+                {/if}
+            </div>
         {:else}
             <!-- ayah reads one or more verses, picked from dropdowns rather
                  than typed. What it resolves to is never shown here — wire a
@@ -1243,19 +1391,23 @@
         {/if}
     </div>
 
-    <!-- Ports — one input, one output, on every data card so a wire can be
-         started the moment it is on the board. The board owns the wire
-         itself; a port only starts the drag. -->
+    <!-- Ports — an input and an output on every data card so a wire can be
+         started the moment it is on the board, except `ayah`/`data`: always
+         a source, never a target, so no input port to start (or land) a
+         wire on. The board owns the wire itself; a port only starts the
+         drag. -->
     {#if hasPort}
-        <button
-            onpointerdown={(e) => {
-                e.stopPropagation();
-                onPortDragStart(e, "in");
-            }}
-            title={$t("workbook.port.in")}
-            aria-label={$t("workbook.port.in")}
-            class="port-dot -left-[7px] {ACCENT[node.kind].dot}"
-        ></button>
+        {#if hasInPort}
+            <button
+                onpointerdown={(e) => {
+                    e.stopPropagation();
+                    onPortDragStart(e, "in");
+                }}
+                title={$t("workbook.port.in")}
+                aria-label={$t("workbook.port.in")}
+                class="port-dot -left-[7px] {ACCENT[node.kind].dot}"
+            ></button>
+        {/if}
         <button
             onpointerdown={(e) => {
                 e.stopPropagation();
@@ -1278,30 +1430,64 @@
 <style>
     /* Which node is actively recomputing — lit for as long as `loading` is
        true, whether that came from Live mode's own reactive reload or a
-       Manual Run. A pulsing ring rather than the small header spinner alone,
-       so it reads at a glance across a board full of cards. */
-    .node-running {
-        animation: node-pulse 1.1s ease-in-out infinite;
+       Manual Run. Same travelling conic-gradient ring as the prompt input's
+       `.prompt-runborder` in AiSelectionToolbar.svelte: a rotating angle
+       custom property drives a conic-gradient, masked down to just the
+       padding-box ring around the card, so the colour appears to travel
+       around the rounded rectangle border. */
+    @property --runborder-angle {
+        syntax: "<angle>";
+        inherits: false;
+        initial-value: 0deg;
     }
-    @keyframes node-pulse {
-        0%,
-        100% {
-            box-shadow: 0 0 0 2px rgba(212, 165, 74, 0.55);
-        }
-        50% {
-            box-shadow: 0 0 0 5px rgba(212, 165, 74, 0.05);
+
+    .node-runborder {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1.5px;
+        pointer-events: none;
+        background: conic-gradient(
+            from var(--runborder-angle),
+            transparent 0deg,
+            var(--color-brand-gold-400) 60deg,
+            var(--color-brand-gold-500) 90deg,
+            var(--color-brand-gold-400) 120deg,
+            transparent 180deg,
+            transparent 360deg
+        );
+        -webkit-mask:
+            linear-gradient(#000 0 0) content-box,
+            linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask:
+            linear-gradient(#000 0 0) content-box,
+            linear-gradient(#000 0 0);
+        mask-composite: exclude;
+        animation: node-runborder-spin 1.4s linear infinite;
+    }
+
+    :global(.dark) .node-runborder {
+        background: conic-gradient(
+            from var(--runborder-angle),
+            transparent 0deg,
+            #8caaee 60deg,
+            #e5c890 90deg,
+            #8caaee 120deg,
+            transparent 180deg,
+            transparent 360deg
+        );
+    }
+
+    @keyframes node-runborder-spin {
+        to {
+            --runborder-angle: 360deg;
         }
     }
-    :global(.dark) .node-running {
-        animation-name: node-pulse-dark;
-    }
-    @keyframes node-pulse-dark {
-        0%,
-        100% {
-            box-shadow: 0 0 0 2px rgba(229, 200, 144, 0.6);
-        }
-        50% {
-            box-shadow: 0 0 0 5px rgba(229, 200, 144, 0.05);
+
+    @media (prefers-reduced-motion: reduce) {
+        .node-runborder {
+            animation: none;
         }
     }
 
