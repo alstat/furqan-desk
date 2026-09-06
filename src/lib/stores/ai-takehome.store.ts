@@ -1,5 +1,6 @@
 import { supabase } from "$lib/supabase";
 import { readSseText, safeReadJson } from "$lib/stores/ai-text-transform.store";
+import { refreshTokenWarning } from "$lib/stores/token-warning.store";
 
 // "Take-home message" — a personal-growth reflection generated from the ayahs
 // currently displayed in the Morphology view. Pro/Pro+ only (gated by the
@@ -153,6 +154,9 @@ export async function fetchTakeHomeMessage({
     if (!res.body) throw new Error("Empty AI response.");
 
     const output = await readSseText(res.body, onPartial);
+    // The take-home message spends the Advanced budget, which is the smaller of
+    // the two; re-check it as soon as the reply lands.
+    void refreshTokenWarning();
     const result = output.trim();
     if (!result) throw new Error("AI returned an empty response.");
     return result;

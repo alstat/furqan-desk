@@ -1,7 +1,8 @@
 // Supabase Edge Function: chat-completion
 // Verifies the caller's JWT, requires app_metadata.is_pro === true, picks a
 // model class (standard vs. advanced) from the request, enforces the
-// corresponding daily/weekly/monthly token quota, then proxies to OpenAI Chat
+// corresponding weekly token quota (with a monthly backstop), then proxies to
+// OpenAI Chat
 // Completions and streams the response back. Records token usage on completion
 // (or estimates on abort) using the service role.
 //
@@ -49,6 +50,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
+// The two rolling quota windows, in seconds. These must match the windows the
+// token_usage_windows_for RPC aggregates over.
+const SEC_WEEK = 7 * 24 * 3600;
+const SEC_MONTH = 30 * 24 * 3600;
+
 const corsHeaders: Record<string, string> = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers":
@@ -86,31 +92,56 @@ interface WindowUsage {
     oldestMs: number | null;
 }
 
-async function getUsageSince(
+interface UsageWindowRow {
+    pool: string;
+    window_seconds: number;
+    used: number | string;
+    oldest_at: string | null;
+}
+
+/**
+ * Both rolling windows for one user and model class, summed in Postgres.
+ *
+ * This used to be two queries that each pulled every matching token_usage row
+ * and added them up here — a read that grew with the account's history, on the
+ * path of every message. The RPC returns four small rows instead; we keep the
+ * pair for the class being charged.
+ *
+ * It is SECURITY DEFINER and granted to service_role alone, so it works with
+ * the admin client (where auth.uid() is null) and is unreachable from the app.
+ *
+ * Note it counts rows with a NULL model_class as standard, which the previous
+ * `.eq("model_class", ...)` filter excluded. Those are pre-split rows and the
+ * tokens were really spent, so this now agrees with what the account dialog
+ * has always shown.
+ */
+async function getUsageWindows(
     admin: ReturnType<typeof createClient>,
     userId: string,
-    seconds: number,
     modelClass: ModelClass,
-): Promise<WindowUsage> {
-    const since = new Date(Date.now() - seconds * 1000).toISOString();
-    const { data, error } = await admin
-        .from("token_usage")
-        .select("total_tokens, created_at")
-        .eq("user_id", userId)
-        .eq("model_class", modelClass)
-        .gte("created_at", since);
+): Promise<{ weekly: WindowUsage; monthly: WindowUsage }> {
+    const { data, error } = await admin.rpc("token_usage_windows_for", {
+        p_user_id: userId,
+    });
     if (error) throw new Error(`usage query failed: ${error.message}`);
-    let used = 0;
-    let oldestMs: number | null = null;
-    for (const r of (data ?? []) as {
-        total_tokens: number;
-        created_at: string;
-    }[]) {
-        used += r.total_tokens ?? 0;
-        const ts = new Date(r.created_at).getTime();
-        if (oldestMs === null || ts < oldestMs) oldestMs = ts;
+
+    const empty = (): WindowUsage => ({ used: 0, oldestMs: null });
+    const windows = { weekly: empty(), monthly: empty() };
+    for (const row of (data ?? []) as UsageWindowRow[]) {
+        if (row.pool !== modelClass) continue;
+        const key =
+            row.window_seconds === SEC_WEEK
+                ? "weekly"
+                : row.window_seconds === SEC_MONTH
+                  ? "monthly"
+                  : null;
+        if (!key) continue;
+        windows[key] = {
+            used: Number(row.used) || 0,
+            oldestMs: row.oldest_at ? new Date(row.oldest_at).getTime() : null,
+        };
     }
-    return { used, oldestMs };
+    return windows;
 }
 
 /** Seconds until the oldest counted tokens age out of a rolling window. */
@@ -224,7 +255,7 @@ Deno.serve(async (req) => {
     const { data: limitsRow, error: limitsErr } = await admin
         .from("tier_limits")
         .select(
-            "daily_tokens, weekly_tokens, monthly_tokens, advanced_daily_tokens, advanced_weekly_tokens, advanced_monthly_tokens",
+            "weekly_tokens, monthly_tokens, advanced_weekly_tokens, advanced_monthly_tokens",
         )
         .eq("tier", tier)
         .maybeSingle();
@@ -235,10 +266,10 @@ Deno.serve(async (req) => {
         return jsonError(500, `No tier_limits row for tier="${tier}"`);
     }
 
-    const dailyCap =
-        modelClass === "advanced"
-            ? limitsRow.advanced_daily_tokens
-            : limitsRow.daily_tokens;
+    // The weekly window is the quota users actually budget against: a rolling
+    // 7 days, so a heavy session borrows from the days around it instead of
+    // locking the feature out until midnight. Monthly stays purely as a cost
+    // backstop and is not surfaced as a limit users are asked to manage.
     const weeklyCap =
         modelClass === "advanced"
             ? limitsRow.advanced_weekly_tokens
@@ -249,30 +280,23 @@ Deno.serve(async (req) => {
             : limitsRow.monthly_tokens;
 
     try {
-        const [daily, weekly, monthly] = await Promise.all([
-            getUsageSince(admin, user.id, 24 * 3600, modelClass),
-            getUsageSince(admin, user.id, 7 * 24 * 3600, modelClass),
-            getUsageSince(admin, user.id, 30 * 24 * 3600, modelClass),
-        ]);
-        if (daily.used >= dailyCap) {
-            return jsonError(429, "Daily token limit reached", {
-                scope: "daily",
-                model_class: modelClass,
-                retry_after_seconds: secondsUntilFree(daily, 24 * 3600),
-            });
-        }
+        const { weekly, monthly } = await getUsageWindows(
+            admin,
+            user.id,
+            modelClass,
+        );
         if (weekly.used >= weeklyCap) {
             return jsonError(429, "Weekly token limit reached", {
                 scope: "weekly",
                 model_class: modelClass,
-                retry_after_seconds: secondsUntilFree(weekly, 7 * 24 * 3600),
+                retry_after_seconds: secondsUntilFree(weekly, SEC_WEEK),
             });
         }
         if (monthly.used >= monthlyCap) {
             return jsonError(429, "Monthly token limit reached", {
                 scope: "monthly",
                 model_class: modelClass,
-                retry_after_seconds: secondsUntilFree(monthly, 30 * 24 * 3600),
+                retry_after_seconds: secondsUntilFree(monthly, SEC_MONTH),
             });
         }
     } catch (e) {

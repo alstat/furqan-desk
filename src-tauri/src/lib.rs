@@ -109,6 +109,31 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_deep_link::init())
         .setup(|app| {
+            // Nothing registers the ayahlab:// scheme on Windows or Linux until
+            // the app is installed: the NSIS installer writes the registry key,
+            // and the .desktop file covers Linux. A dev build, a portable copy,
+            // or an install whose association got clobbered therefore has no
+            // handler at all, so the OAuth callback dead-ends on the website's
+            // "Returning you to AyahLab" page and the app sits on its spinner
+            // forever. Registering at runtime (HKCU on Windows, an entry under
+            // the data dir on Linux) closes that gap; it is idempotent, so it
+            // costs nothing when the installer already did the job.
+            //
+            // macOS is absent because Info.plist carries the scheme even in a
+            // dev build, and MSIX is unreachable from here either way -- a
+            // packaged app's registry writes are virtualised into the package,
+            // so the Store build declares the protocol in AppxManifest.xml
+            // instead (see src-tauri/msix/AppxManifest.xml).
+            #[cfg(any(target_os = "windows", target_os = "linux"))]
+            {
+                use tauri_plugin_deep_link::DeepLinkExt;
+                if let Err(e) = app.deep_link().register_all() {
+                    // Not fatal: an installed build already has the
+                    // association, and everything but sign-in works without it.
+                    eprintln!("deep-link scheme registration failed: {e}");
+                }
+            }
+
             let resource_dir = app.path().resource_dir()
                 .expect("Failed to resolve resource directory");
             let app_data_dir = app.path().app_data_dir()

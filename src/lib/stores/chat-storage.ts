@@ -17,11 +17,11 @@ export interface PersistedMessage {
 
 export interface TierLimits {
     tier: string;
-    daily_tokens: number;
+    /** The quota users budget against: a rolling 7-day window. */
     weekly_tokens: number;
+    /** Cost backstop only — not surfaced as a limit users manage. */
     monthly_tokens: number;
     storage_bytes: number;
-    advanced_daily_tokens: number;
     advanced_weekly_tokens: number;
     advanced_monthly_tokens: number;
 }
@@ -34,7 +34,6 @@ export interface UsageWindow {
 }
 
 export interface UsageByClass {
-    daily: UsageWindow;
     weekly: UsageWindow;
     monthly: UsageWindow;
 }
@@ -48,60 +47,62 @@ const SEC_DAY = 24 * 3600;
 const SEC_WEEK = 7 * SEC_DAY;
 const SEC_MONTH = 30 * SEC_DAY;
 
-export async function getTokenUsageStats(
-    userId: string,
-): Promise<TokenUsageStats> {
-    const since = new Date(Date.now() - SEC_MONTH * 1000).toISOString();
-    const { data, error } = await supabase
-        .from("token_usage")
-        .select("total_tokens, created_at, model_class")
-        .eq("user_id", userId)
-        .gte("created_at", since)
-        .order("created_at", { ascending: true });
+/** One (pool, window) total as returned by the token_usage_windows RPC. */
+interface UsageWindowRow {
+    pool: "standard" | "advanced";
+    window_seconds: number;
+    used: number | string;
+    oldest_at: string | null;
+}
+
+/**
+ * Weekly and monthly token usage for the signed-in user, per model class.
+ *
+ * Postgres does the summing — see the token_usage_windows migration. This used
+ * to pull every row from the last 30 days and add them up here, which is a read
+ * that grows with usage and, since the weekly budget warning polls, now repeats
+ * rather than happening once when the account dialog opens.
+ *
+ * The RPC scopes itself to the caller via auth.uid(), so there is no user id to
+ * pass: it always describes whoever is signed in.
+ */
+export async function getTokenUsageStats(): Promise<TokenUsageStats> {
+    const { data, error } = await supabase.rpc("token_usage_windows");
     if (error) throw error;
 
     const now = Date.now();
-    const rows = (data ?? []) as {
-        total_tokens: number;
-        created_at: string;
-        model_class: "standard" | "advanced" | null;
-    }[];
-
-    const aggregate = (
-        modelClass: "standard" | "advanced",
-        windowSec: number,
-    ): UsageWindow => {
-        const cutoff = now - windowSec * 1000;
-        let used = 0;
-        let oldestTs: number | null = null;
-        for (const r of rows) {
-            // Treat legacy rows (null model_class) as standard.
-            const cls = r.model_class ?? "standard";
-            if (cls !== modelClass) continue;
-            const ts = new Date(r.created_at).getTime();
-            if (ts < cutoff) continue;
-            used += r.total_tokens ?? 0;
-            if (oldestTs === null || ts < oldestTs) oldestTs = ts;
-        }
-        const resetInSeconds =
-            oldestTs === null
-                ? null
-                : Math.max(0, Math.floor((oldestTs + windowSec * 1000 - now) / 1000));
-        return { used, resetInSeconds };
+    const empty = (): UsageWindow => ({ used: 0, resetInSeconds: null });
+    const stats: TokenUsageStats = {
+        standard: { weekly: empty(), monthly: empty() },
+        advanced: { weekly: empty(), monthly: empty() },
     };
 
-    return {
-        standard: {
-            daily: aggregate("standard", SEC_DAY),
-            weekly: aggregate("standard", SEC_WEEK),
-            monthly: aggregate("standard", SEC_MONTH),
-        },
-        advanced: {
-            daily: aggregate("advanced", SEC_DAY),
-            weekly: aggregate("advanced", SEC_WEEK),
-            monthly: aggregate("advanced", SEC_MONTH),
-        },
-    };
+    for (const row of (data ?? []) as UsageWindowRow[]) {
+        const window =
+            row.window_seconds === SEC_WEEK
+                ? "weekly"
+                : row.window_seconds === SEC_MONTH
+                  ? "monthly"
+                  : null;
+        if (!window || !stats[row.pool]) continue;
+
+        // Rolling windows free tokens gradually: this is when the oldest spend
+        // still being counted ages out, not a fixed reset date.
+        const oldestMs = row.oldest_at ? new Date(row.oldest_at).getTime() : null;
+        stats[row.pool][window] = {
+            used: Number(row.used) || 0,
+            resetInSeconds:
+                oldestMs === null
+                    ? null
+                    : Math.max(
+                          0,
+                          Math.floor(
+                              (oldestMs + row.window_seconds * 1000 - now) / 1000,
+                          ),
+                      ),
+        };
+    }
+    return stats;
 }
 
 const TITLE_MAX_LEN = 60;

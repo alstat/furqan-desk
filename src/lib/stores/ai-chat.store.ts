@@ -15,6 +15,7 @@ import {
     type ChatSummary,
     type TierLimits,
 } from "$lib/stores/chat-storage";
+import { refreshTokenWarning } from "$lib/stores/token-warning.store";
 
 export interface ChatMessage {
     id?: string;
@@ -23,7 +24,7 @@ export interface ChatMessage {
 }
 
 export interface QuotaBlock {
-    scope: "daily" | "weekly" | "monthly" | "storage";
+    scope: "weekly" | "monthly" | "storage";
     modelClass?: "standard" | "advanced";
     retryAfterSeconds?: number;
     message: string;
@@ -274,7 +275,7 @@ export async function sendMessage(prompt: string): Promise<void> {
             const scope =
                 typeof body?.scope === "string"
                     ? (body.scope as QuotaBlock["scope"])
-                    : "daily";
+                    : "weekly";
             const modelClass =
                 body?.model_class === "advanced" ||
                 body?.model_class === "standard"
@@ -366,6 +367,10 @@ export async function sendMessage(prompt: string): Promise<void> {
         }
 
         await refreshChats(userId);
+        // The reply just moved the weekly budget; re-check now rather than
+        // waiting out the toast's poll, so the warning lands while the user is
+        // still looking at what spent it.
+        void refreshTokenWarning();
         if (isNewChat) {
             // Already in chats list now via refresh.
         }

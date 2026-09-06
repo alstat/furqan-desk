@@ -14,6 +14,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import AiChatDialog from "$lib/components/shared/AiChatDialog.svelte";
+    import TokenUsageToast from "$lib/components/shared/TokenUsageToast.svelte";
     import {
         pendingSelectionQuestion,
         takePendingSelectionQuestion,
@@ -51,3 +52,7 @@
 </svelte:head>
 
 <AiChatDialog open={true} standalone={true} onClose={closeWindow} />
+
+<!-- The chat window is where the budget is actually spent, so it carries the
+     same warning. Its corner is empty, so it takes the top slot. -->
+<TokenUsageToast positionClass="top-6 right-2.5" />

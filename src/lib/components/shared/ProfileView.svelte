@@ -41,6 +41,10 @@
     // Token-usage sections. Every Pro account gets an Advanced section: Pro+
     // uses the Advanced model across the app, while plain Pro reaches it only
     // through the Take-Home Message — the highlighted note says so.
+    //
+    // Only the weekly window is shown. It is the one quota that gates the
+    // feature, and a rolling 7 days is long enough that a heavy session no
+    // longer costs the user the rest of their day.
     let usageSections = $derived.by(() => {
         if (!usage || !limits) return [];
         const sections: {
@@ -54,9 +58,7 @@
                 sub: $t("account.usage.section_standard_sub"),
                 note: null,
                 rows: [
-                    { label: $t("account.usage.daily"), used: usage.standard.daily.used, cap: limits.daily_tokens, reset: usage.standard.daily.resetInSeconds },
                     { label: $t("account.usage.weekly"), used: usage.standard.weekly.used, cap: limits.weekly_tokens, reset: usage.standard.weekly.resetInSeconds },
-                    { label: $t("account.usage.monthly"), used: usage.standard.monthly.used, cap: limits.monthly_tokens, reset: usage.standard.monthly.resetInSeconds },
                 ],
             },
         ];
@@ -65,9 +67,7 @@
             sub: $t("account.usage.section_advanced_sub"),
             note: isProPlus ? null : $t("account.usage.advanced_takehome_note"),
             rows: [
-                { label: $t("account.usage.daily"), used: usage.advanced.daily.used, cap: limits.advanced_daily_tokens, reset: usage.advanced.daily.resetInSeconds },
                 { label: $t("account.usage.weekly"), used: usage.advanced.weekly.used, cap: limits.advanced_weekly_tokens, reset: usage.advanced.weekly.resetInSeconds },
-                { label: $t("account.usage.monthly"), used: usage.advanced.monthly.used, cap: limits.advanced_monthly_tokens, reset: usage.advanced.monthly.resetInSeconds },
             ],
         });
         return sections;
@@ -83,10 +83,9 @@
             limits = null;
             return;
         }
-        const userId = $authUser.id;
         const tier =
             ($authUser.app_metadata?.tier as string | undefined) ?? "pro";
-        void refreshUsage(userId, tier);
+        void refreshUsage(tier);
 
         if (tickHandle === null) {
             tickHandle = setInterval(() => (tick += 1), 30_000);
@@ -111,11 +110,11 @@
         }
     });
 
-    async function refreshUsage(userId: string, tier: string) {
+    async function refreshUsage(tier: string) {
         loadingUsage = true;
         try {
             const [u, l] = await Promise.all([
-                getTokenUsageStats(userId),
+                getTokenUsageStats(),
                 getTierLimits(tier),
             ]);
             usage = u;
@@ -128,8 +127,7 @@
     }
 
     async function handleManualRefresh() {
-        const userId = $authUser?.id;
-        if (!userId) return;
+        if (!$authUser?.id) return;
         // Reissue the token first so a tier change made on the website is
         // reflected here; fall back to the store's tier if the refresh fails
         // (e.g. offline) so usage still reloads.
@@ -138,7 +136,7 @@
             (data.user?.app_metadata?.tier as string | undefined) ??
             ($authUser?.app_metadata?.tier as string | undefined) ??
             "pro";
-        await refreshUsage(userId, tier);
+        await refreshUsage(tier);
     }
 
     async function handleSignOut() {

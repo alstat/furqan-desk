@@ -55,6 +55,27 @@
           Square310x310Logo="Assets\Square310x310Logo.png">
         </uap:DefaultTile>
       </uap:VisualElements>
+
+      <!--
+        Google sign-in returns through ayahlab://auth-callback. A packaged app
+        cannot register that the way the NSIS build does: an MSIX app's registry
+        writes are virtualised into the package, so tauri-plugin-deep-link's
+        runtime registration silently has no effect here. Windows only routes
+        the scheme to a packaged app if the manifest declares it, and without
+        this block the browser's "Returning you to AyahLab" page has nothing to
+        hand the URL to, and the app just sits on its sign-in spinner.
+
+        EntryPoint is Windows.FullTrustApplication, so activation arrives as a
+        command-line argument, which is exactly what the single-instance plugin
+        (built with its deep-link feature) forwards to the running app.
+      -->
+      <Extensions>
+        <uap:Extension Category="windows.protocol">
+          <uap:Protocol Name="ayahlab">
+            <uap:DisplayName>AyahLab</uap:DisplayName>
+          </uap:Protocol>
+        </uap:Extension>
+      </Extensions>
     </Application>
   </Applications>
 

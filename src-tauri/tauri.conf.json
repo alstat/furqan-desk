@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "AyahLab",
-  "version": "2.0.15",
+  "version": "2.0.16",
   "identifier": "AyahLabDev.AyahLab",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "AyahLab (v2.0.15)",
+        "title": "AyahLab (v2.0.16)",
         "width": 1380,
         "height": 800,
         "minWidth": 1250,
