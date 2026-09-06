@@ -1,6 +1,6 @@
 {
   "name": "ayahlab",
-  "version": "2.0.17",
+  "version": "2.0.18",
   "description": "",
   "type": "module",
   "packageManager": "pnpm@11.21.0",
@@ -18,6 +18,8 @@
     "tauri:android": "tauri android",
     "msix:assets": "node scripts/generate-msix-assets.mjs",
     "msix": "node scripts/build-msix.mjs",
+    "msix:config": "node scripts/ensure-msix-config.mjs",
+    "msix:store": "node scripts/ensure-msix-config.mjs && node scripts/tauri-runner.mjs desktop",
     "icon:ico": "node scripts/generate-ico.mjs",
     "icons:subset": "node scripts/generate-icon-subset.mjs",
     "build:dmg": "mkdir -p src-tauri/target/release/bundle/dmg && hdiutil create -volname AyahLab -srcfolder src-tauri/target/release/bundle/macos/AyahLab.app -ov -format UDZO src-tauri/target/release/bundle/dmg/AyahLab_0.1.0_aarch64.dmg",
