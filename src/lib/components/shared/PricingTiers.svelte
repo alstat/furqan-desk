@@ -18,7 +18,12 @@
             const { data, error: sessionErr } = await supabase.auth.getSession();
             if (sessionErr || !data.session) throw new Error("No active session");
 
-            const base = (import.meta.env.VITE_AYAHLAB_WEBSITE_URL as string | undefined) ?? "https://ayahlab.com";
+            // Gated on DEV so a stray local .env value (e.g. localhost) can
+            // never leak into a built package — see supabase.ts for the same
+            // pattern applied to the OAuth callback URL.
+            const base = import.meta.env.DEV
+                ? ((import.meta.env.VITE_AYAHLAB_WEBSITE_URL as string | undefined) ?? "https://ayahlab.com")
+                : "https://ayahlab.com";
             const params = new URLSearchParams({
                 access_token: data.session.access_token,
                 refresh_token: data.session.refresh_token,

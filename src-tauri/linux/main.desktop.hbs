@@ -1,0 +1,19 @@
+{{!-- Same as Tauri's built-in desktop-file template (freedesktop/main.desktop)
+except Exec carries %u. Without it, activating the ayahlab:// scheme (e.g. the
+OAuth deep-link callback) launches this app with no arguments — the desktop
+environment has nowhere to put the URL — so the callback is silently dropped
+and sign-in never completes. See DebConfig/RpmConfig's `desktopTemplate`. --}}
+[Desktop Entry]
+Categories={{categories}}
+{{#if comment}}
+Comment={{comment}}
+{{/if}}
+Exec={{exec}} %u
+StartupWMClass={{exec}}
+Icon={{icon}}
+Name={{name}}
+Terminal=false
+Type=Application
+{{#if mime_type}}
+MimeType={{mime_type}}
+{{/if}}

@@ -12,5 +12,15 @@
         "transparent": true
       }
     ]
+  },
+  "bundle": {
+    "linux": {
+      "deb": {
+        "desktopTemplate": "linux/main.desktop.hbs"
+      },
+      "rpm": {
+        "desktopTemplate": "linux/main.desktop.hbs"
+      }
+    }
   }
 }

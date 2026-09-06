@@ -34,7 +34,7 @@ Exec=ayahlab %U
 Icon=ayahlab
 Type=Application
 Categories=Education;Office;
-MimeType=application/x-lexical;
+MimeType=application/x-lexical;x-scheme-handler/ayahlab;
 StartupNotify=true
 DESKTOP
 }
