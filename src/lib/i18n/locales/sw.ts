@@ -926,6 +926,8 @@ export const sw: Record<string, string> = {
     "auth.continue_with_google": "Endelea na Google",
     "auth.or": "au",
     "auth.error_google_signin": "Imeshindwa kuanzisha kuingia kwa Google.",
+    "auth.error_oauth_exchange": "Umeingia kwa Google, lakini kipindi hakikuweza kukamilika: {message}",
+    "auth.error_oauth_timeout": "Kuingia kwa Google hakukurudi AyahLab. Ikiwa kulikamilika kwenye kivinjari, usakinishaji huu hauwezi kufungua viungo vya ayahlab:// — ingia kwa barua pepe yako badala yake.",
     "billing.tier.free.price": "$0 / milele",
     "billing.tier.free.tagline": "Programu kamili, kwenye kifaa chako. AI pekee ndiyo Pro.",
     "billing.tier.free.feature1": "Vipengele vyote vya programu vimejumuishwa — hakuna kilichofungwa",

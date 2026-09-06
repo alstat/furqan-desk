@@ -979,6 +979,8 @@ export const tk: Record<string, string> = {
     "auth.continue_with_google": "Google bilen dowam etmek",
     "auth.or": "ýa-da",
     "auth.error_google_signin": "Google girişini başlap bolmady.",
+    "auth.error_oauth_exchange": "Google bilen girdiňiz, ýöne sessiýany tamamlap bolmady: {message}",
+    "auth.error_oauth_timeout": "Google bilen giriş AyahLab-a gaýdyp gelmedi. Eger ol brauzerde tamamlanan bolsa, bu gurnama ayahlab:// salgylaryny açyp bilenok — munuň ýerine e-poçtaňyz bilen giriň.",
     "billing.tier.free.price": "$0 / hemişelik",
     "billing.tier.free.tagline": "Doly programma siziň enjamyňyzda. Diňe AI Pro.",
     "billing.tier.free.feature1": "Programmanyň ähli aýratynlyklary goşulan — hiç zat gulplanmadyk",

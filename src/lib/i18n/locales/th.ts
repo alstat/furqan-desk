@@ -979,6 +979,8 @@ export const th: Record<string, string> = {
     "auth.continue_with_google": "ดำเนินการต่อด้วย Google",
     "auth.or": "หรือ",
     "auth.error_google_signin": "ไม่สามารถเริ่มการลงชื่อเข้าใช้ด้วย Google",
+    "auth.error_oauth_exchange": "ลงชื่อเข้าใช้ด้วย Google แล้ว แต่ไม่สามารถสร้างเซสชันได้: {message}",
+    "auth.error_oauth_timeout": "การลงชื่อเข้าใช้ Google ไม่ได้กลับมาที่ AyahLab หากเสร็จสิ้นในเบราว์เซอร์แล้ว แสดงว่าการติดตั้งนี้เปิดลิงก์ ayahlab:// ไม่ได้ — โปรดลงชื่อเข้าใช้ด้วยอีเมลแทน",
     "billing.tier.free.price": "$0 / ตลอดไป",
     "billing.tier.free.tagline": "แอปครบครันบนอุปกรณ์ของคุณ มีเพียง AI ที่เป็น Pro",
     "billing.tier.free.feature1": "รวมทุกฟีเจอร์ของแอป — ไม่มีการล็อก",

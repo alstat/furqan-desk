@@ -909,6 +909,8 @@ export const id: Record<string, string> = {
   "auth.continue_with_google": "Lanjutkan dengan Google",
   "auth.or": "atau",
   "auth.error_google_signin": "Tidak dapat memulai masuk dengan Google.",
+  "auth.error_oauth_exchange": "Masuk dengan Google berhasil, tetapi sesi tidak dapat diselesaikan: {message}",
+  "auth.error_oauth_timeout": "Proses masuk Google tidak kembali ke AyahLab. Jika selesai di peramban, instalasi ini tidak dapat membuka tautan ayahlab:// — masuk dengan email Anda saja.",
   "billing.tier.free.price": "$0 / selamanya",
   "billing.tier.free.tagline": "Aplikasi lengkap, di perangkat Anda. Hanya AI yang Pro.",
   "billing.tier.free.feature1": "Semua fitur aplikasi disertakan — tidak ada yang dikunci",

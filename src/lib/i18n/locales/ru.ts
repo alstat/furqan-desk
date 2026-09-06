@@ -909,6 +909,8 @@ export const ru: Record<string, string> = {
   "auth.continue_with_google": "Продолжить с Google",
   "auth.or": "или",
   "auth.error_google_signin": "Не удалось начать вход через Google.",
+  "auth.error_oauth_exchange": "Вход через Google выполнен, но сессию завершить не удалось: {message}",
+  "auth.error_oauth_timeout": "Вход через Google не вернулся в AyahLab. Если он завершился в браузере, эта установка не может открывать ссылки ayahlab:// — войдите по электронной почте.",
   "billing.tier.free.price": "0 $ / навсегда",
   "billing.tier.free.tagline": "Полное приложение на вашем устройстве. Только ИИ — это Pro.",
   "billing.tier.free.feature1": "Все функции приложения включены — ничего не заблокировано",

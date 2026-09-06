@@ -909,6 +909,8 @@ export const ar: Record<string, string> = {
   "auth.continue_with_google": "المتابعة باستخدام Google",
   "auth.or": "أو",
   "auth.error_google_signin": "تعذّر بدء تسجيل الدخول عبر Google.",
+  "auth.error_oauth_exchange": "تم تسجيل الدخول عبر Google، لكن تعذّر إكمال الجلسة: {message}",
+  "auth.error_oauth_timeout": "لم تعد عملية تسجيل الدخول عبر Google إلى AyahLab. إذا اكتملت في المتصفح، فهذا التثبيت لا يستطيع فتح روابط ayahlab://‎ — سجّل الدخول ببريدك الإلكتروني بدلاً من ذلك.",
   "billing.tier.free.price": "٠ $ / للأبد",
   "billing.tier.free.tagline": "التطبيق الكامل على جهازك. الذكاء الاصطناعي فقط هو Pro.",
   "billing.tier.free.feature1": "جميع ميزات التطبيق مضمّنة — لا شيء مقفل",

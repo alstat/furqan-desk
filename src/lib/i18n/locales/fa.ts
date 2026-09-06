@@ -909,6 +909,8 @@ export const fa: Record<string, string> = {
   "auth.continue_with_google": "ادامه با Google",
   "auth.or": "یا",
   "auth.error_google_signin": "شروع ورود با Google ممکن نشد.",
+  "auth.error_oauth_exchange": "با Google وارد شدید، اما جلسه کامل نشد: {message}",
+  "auth.error_oauth_timeout": "ورود با Google به AyahLab بازنگشت. اگر در مرورگر کامل شد، این نسخه نصب‌شده نمی‌تواند پیوندهای ayahlab:// را باز کند — به‌جای آن با ایمیل وارد شوید.",
   "billing.tier.free.price": "۰ $ / همیشه",
   "billing.tier.free.tagline": "برنامهٔ کامل، روی دستگاه شما. فقط هوش مصنوعی Pro است.",
   "billing.tier.free.feature1": "همهٔ امکانات برنامه گنجانده شده — هیچ‌چیز قفل نیست",

@@ -926,6 +926,8 @@ export const pa: Record<string, string> = {
     "auth.continue_with_google": "Google ਨਾਲ ਜਾਰੀ ਰੱਖੋ",
     "auth.or": "ਜਾਂ",
     "auth.error_google_signin": "Google ਸਾਈਨ-ਇਨ ਸ਼ੁਰੂ ਨਹੀਂ ਹੋ ਸਕਿਆ।",
+    "auth.error_oauth_exchange": "Google ਨਾਲ ਸਾਈਨ ਇਨ ਹੋ ਗਿਆ, ਪਰ ਸੈਸ਼ਨ ਪੂਰਾ ਨਹੀਂ ਹੋ ਸਕਿਆ: {message}",
+    "auth.error_oauth_timeout": "Google ਸਾਈਨ-ਇਨ AyahLab 'ਤੇ ਵਾਪਸ ਨਹੀਂ ਆਇਆ। ਜੇ ਇਹ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਪੂਰਾ ਹੋ ਗਿਆ ਸੀ, ਤਾਂ ਇਹ ਇੰਸਟਾਲ ayahlab:// ਲਿੰਕ ਨਹੀਂ ਖੋਲ੍ਹ ਸਕਦਾ — ਇਸ ਦੀ ਬਜਾਏ ਆਪਣੇ ਈਮੇਲ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ।",
     "billing.tier.free.price": "$0 / ਹਮੇਸ਼ਾ ਲਈ",
     "billing.tier.free.tagline": "ਪੂਰੀ ਐਪ, ਤੁਹਾਡੇ ਡਿਵਾਈਸ 'ਤੇ। ਸਿਰਫ਼ AI Pro ਹੈ।",
     "billing.tier.free.feature1": "ਸਾਰੀਆਂ ਐਪ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਸ਼ਾਮਲ — ਕੁਝ ਵੀ ਲਾਕ ਨਹੀਂ",

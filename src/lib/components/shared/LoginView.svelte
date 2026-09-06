@@ -1,5 +1,7 @@
 <script lang="ts">
+    import { onDestroy } from "svelte";
     import { supabase, OAUTH_REDIRECT_URL } from "$lib/supabase";
+    import { oauthError } from "$lib/stores/auth.store";
     import { openUrl } from "@tauri-apps/plugin-opener";
     import { t } from "$lib/i18n";
     import Icon from "@iconify/svelte";
@@ -14,6 +16,39 @@
 
     const inputClass =
         "w-full rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446] px-3 py-2 text-[0.75rem] text-brand-charcoal-500 dark:text-[#c6d0f5] placeholder-brand-charcoal-200 dark:placeholder-[#626880] outline-none focus:border-brand-gold-400 focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 transition-colors";
+
+    // The Google round trip reports nothing back on its own. It ends one of
+    // three ways, and only the first used to be visible:
+    //
+    //   * the session arrives          -> onAuthStateChange swaps this view out
+    //   * the exchange fails           -> oauthError, handled below
+    //   * the deep link never arrives  -> nothing at all happens, which is what
+    //     an install that cannot open ayahlab:// links looks like
+    //
+    // The last case is why this needs a deadline: without one the spinner runs
+    // forever and the user has no way to tell a broken install from a slow one.
+    const OAUTH_TIMEOUT_MS = 120_000;
+    let oauthTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function stopOauthWait() {
+        if (oauthTimer !== null) {
+            clearTimeout(oauthTimer);
+            oauthTimer = null;
+        }
+    }
+
+    onDestroy(stopOauthWait);
+
+    // Surface a failed code exchange, which happens over in the deep-link
+    // handler and has no other route back to this view.
+    $effect(() => {
+        const message = $oauthError;
+        if (!message) return;
+        stopOauthWait();
+        loading = false;
+        error = $t("auth.error_oauth_exchange", { message });
+        oauthError.set(null);
+    });
 
     function clearMessages() {
         error = "";
@@ -37,6 +72,8 @@
 
     async function handleGoogleSignIn() {
         clearMessages();
+        oauthError.set(null);
+        stopOauthWait();
         loading = true;
         // Ask Supabase for the Google authorization URL but skip its own
         // redirect — in a desktop app we open it in the system browser and let
@@ -61,7 +98,14 @@
             return;
         }
         // Leave `loading` on: the session arrives asynchronously via the
-        // deep-link callback and onAuthStateChange swaps this view out.
+        // deep-link callback and onAuthStateChange swaps this view out. The
+        // deadline only fires if that never happens.
+        oauthTimer = setTimeout(() => {
+            oauthTimer = null;
+            if (!loading) return;
+            loading = false;
+            error = $t("auth.error_oauth_timeout");
+        }, OAUTH_TIMEOUT_MS);
     }
 
     async function handleForgotPassword() {

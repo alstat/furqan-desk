@@ -988,6 +988,8 @@ export const tl: Record<string, string> = {
     "auth.continue_with_google": "Magpatuloy gamit ang Google",
     "auth.or": "o",
     "auth.error_google_signin": "Hindi masimulan ang pag-sign in sa Google.",
+    "auth.error_oauth_exchange": "Nakapag-sign in sa Google, ngunit hindi makumpleto ang session: {message}",
+    "auth.error_oauth_timeout": "Hindi bumalik sa AyahLab ang Google sign-in. Kung natapos ito sa browser, hindi kayang buksan ng install na ito ang mga ayahlab:// link — mag-sign in na lang gamit ang email.",
     "billing.tier.free.price": "$0 / habambuhay",
     "billing.tier.free.tagline": "Ang kumpletong app, sa iyong device. AI lang ang Pro.",
     "billing.tier.free.feature1": "Kasama ang lahat ng tampok ng app — walang naka-lock",

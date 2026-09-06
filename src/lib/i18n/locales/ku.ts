@@ -926,6 +926,8 @@ export const ku: Record<string, string> = {
     "auth.continue_with_google": "بەردەوامبوون بە Google",
     "auth.or": "یان",
     "auth.error_google_signin": "نەتوانرا چوونەژوورەوەی Google دەستپێبکات.",
+    "auth.error_oauth_exchange": "Bi Google hate têketin, lê danişîn nehat temamkirin: {message}",
+    "auth.error_oauth_timeout": "Têketina Google venegeriya AyahLab. Ger di gerokê de qediya be, ev sazkirin nikare girêdanên ayahlab:// veke — li şûna wê bi e-peyama xwe têkeve.",
     "billing.tier.free.price": "٠ $ / هەتاهەتایە",
     "billing.tier.free.tagline": "ئەپی تەواو، لەسەر ئامێرەکەت. تەنها AI Pro یە.",
     "billing.tier.free.feature1": "هەموو تایبەتمەندییەکانی ئەپ لەخۆدەگرێت — هیچ شتێک داخراو نییە",

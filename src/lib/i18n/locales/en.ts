@@ -1082,6 +1082,8 @@ export const en: Record<string, string> = {
   "auth.continue_with_google": "Continue with Google",
   "auth.or": "or",
   "auth.error_google_signin": "Could not start Google sign-in.",
+  "auth.error_oauth_exchange": "Signed in with Google, but the session could not be completed: {message}",
+  "auth.error_oauth_timeout": "Google sign-in never returned to AyahLab. If it finished in your browser, this install cannot open ayahlab:// links — sign in with your email instead.",
   "auth.error_email_password_required": "Email and password are required.",
   "auth.error_email_required": "Enter your email address first.",
   "auth.signup_confirm_email": "Check your email to confirm your account.",

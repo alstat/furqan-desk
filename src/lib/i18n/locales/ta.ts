@@ -926,6 +926,8 @@ export const ta: Record<string, string> = {
     "auth.continue_with_google": "Google மூலம் தொடரவும்",
     "auth.or": "அல்லது",
     "auth.error_google_signin": "Google உள்நுழைவைத் தொடங்க முடியவில்லை.",
+    "auth.error_oauth_exchange": "Google மூலம் உள்நுழைந்தீர்கள், ஆனால் அமர்வை நிறைவு செய்ய முடியவில்லை: {message}",
+    "auth.error_oauth_timeout": "Google உள்நுழைவு AyahLab-க்குத் திரும்பவில்லை. உலாவியில் அது நிறைவடைந்திருந்தால், இந்த நிறுவல் ayahlab:// இணைப்புகளைத் திறக்க முடியாது — அதற்குப் பதிலாக மின்னஞ்சலில் உள்நுழையவும்.",
     "billing.tier.free.price": "$0 / எப்போதும்",
     "billing.tier.free.tagline": "முழுமையான பயன்பாடு, உங்கள் சாதனத்தில். AI மட்டுமே Pro.",
     "billing.tier.free.feature1": "அனைத்து பயன்பாட்டு அம்சங்களும் உள்ளடக்கம் — எதுவும் பூட்டப்படவில்லை",

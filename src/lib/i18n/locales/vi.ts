@@ -979,6 +979,8 @@ export const vi: Record<string, string> = {
     "auth.continue_with_google": "Tiếp tục với Google",
     "auth.or": "hoặc",
     "auth.error_google_signin": "Không thể bắt đầu đăng nhập Google.",
+    "auth.error_oauth_exchange": "Đã đăng nhập bằng Google, nhưng không thể hoàn tất phiên: {message}",
+    "auth.error_oauth_timeout": "Đăng nhập Google không quay lại AyahLab. Nếu nó đã hoàn tất trong trình duyệt, bản cài đặt này không mở được liên kết ayahlab:// — hãy đăng nhập bằng email.",
     "billing.tier.free.price": "0 $ / mãi mãi",
     "billing.tier.free.tagline": "Ứng dụng đầy đủ, trên thiết bị của bạn. Chỉ AI là Pro.",
     "billing.tier.free.feature1": "Bao gồm mọi tính năng — không khóa gì cả",

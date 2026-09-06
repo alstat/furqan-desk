@@ -2,6 +2,17 @@ import { writable, derived } from "svelte/store";
 import type { Session, User } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase } from "$lib/supabase";
 
+/**
+ * Set when an OAuth callback arrives but the session exchange fails.
+ *
+ * The Google flow has no completion signal of its own: LoginView starts the
+ * browser round trip and leaves its spinner running until onAuthStateChange
+ * swaps the view out. So a failed exchange used to be completely invisible --
+ * the deep link arrived, the exchange threw, and the spinner simply never
+ * stopped, which looks identical to a deep link that never arrived at all.
+ */
+export const oauthError = writable<string | null>(null);
+
 export const authSession = writable<Session | null>(null);
 export const authUser = writable<User | null>(null);
 export const authLoading = writable(true);

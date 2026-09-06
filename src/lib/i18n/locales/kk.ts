@@ -979,6 +979,8 @@ export const kk: Record<string, string> = {
     "auth.continue_with_google": "Google арқылы жалғастыру",
     "auth.or": "немесе",
     "auth.error_google_signin": "Google-ге кіруді бастау мүмкін болмады.",
+    "auth.error_oauth_exchange": "Google арқылы кірдіңіз, бірақ сеансты аяқтау мүмкін болмады: {message}",
+    "auth.error_oauth_timeout": "Google арқылы кіру AyahLab-қа қайтпады. Егер ол браузерде аяқталса, бұл орнатылым ayahlab:// сілтемелерін аша алмайды — оның орнына электрондық поштаңызбен кіріңіз.",
     "billing.tier.free.price": "$0 / мәңгілік",
     "billing.tier.free.tagline": "Толық қолданба сіздің құрылғыңызда. Тек AI ғана Pro.",
     "billing.tier.free.feature1": "Қолданбаның барлық мүмкіндіктері қосылған — ештеңе бұғатталмаған",

@@ -909,6 +909,8 @@ export const tr: Record<string, string> = {
   "auth.continue_with_google": "Google ile devam et",
   "auth.or": "veya",
   "auth.error_google_signin": "Google oturum açma başlatılamadı.",
+  "auth.error_oauth_exchange": "Google ile giriş yapıldı ancak oturum tamamlanamadı: {message}",
+  "auth.error_oauth_timeout": "Google girişi AyahLab'a dönmedi. Tarayıcıda tamamlandıysa bu kurulum ayahlab:// bağlantılarını açamıyor demektir — bunun yerine e-postanızla giriş yapın.",
   "billing.tier.free.price": "0 $ / sonsuza dek",
   "billing.tier.free.tagline": "Cihazınızda eksiksiz uygulama. Yalnızca yapay zekâ Pro'dur.",
   "billing.tier.free.feature1": "Tüm uygulama özellikleri dahil — hiçbir şey kilitli değil",

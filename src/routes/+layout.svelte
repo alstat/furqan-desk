@@ -15,6 +15,7 @@
 	import { tabs } from '$lib/stores/tabs.store';
 	import { t as i18n } from '$lib/i18n';
 	import { supabase, isSupabaseConfigured } from '$lib/supabase';
+	import { oauthError } from '$lib/stores/auth.store';
 	import { openFile, openFolder, saveFile, saveAs } from '$lib/actions/fileActions';
 	import {
 		CSD_SHADOW_MARGIN_PX,
@@ -64,7 +65,12 @@
 			const code = parsed.searchParams.get('code');
 			if (!code) continue;
 			const { error } = await supabase.auth.exchangeCodeForSession(code);
-			if (error) console.error('OAuth code exchange failed', error);
+			if (error) {
+				console.error('OAuth code exchange failed', error);
+				// Release the sign-in spinner: a release build has no console,
+				// so without this the failure has no visible symptom at all.
+				oauthError.set(error.message);
+			}
 			return;
 		}
 	}

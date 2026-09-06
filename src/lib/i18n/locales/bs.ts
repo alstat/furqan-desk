@@ -926,6 +926,8 @@ export const bs: Record<string, string> = {
     "auth.continue_with_google": "Nastavi s Googleom",
     "auth.or": "ili",
     "auth.error_google_signin": "Nije moguće pokrenuti Google prijavu.",
+    "auth.error_oauth_exchange": "Prijava putem Googlea je uspjela, ali sesija nije mogla biti dovršena: {message}",
+    "auth.error_oauth_timeout": "Google prijava se nije vratila u AyahLab. Ako je završena u pregledniku, ova instalacija ne može otvoriti ayahlab:// veze — prijavite se e-poštom.",
     "billing.tier.free.price": "0 $ / zauvijek",
     "billing.tier.free.tagline": "Potpuna aplikacija, na vašem uređaju. Samo je AI Pro.",
     "billing.tier.free.feature1": "Uključene sve funkcije aplikacije — ništa nije zaključano",

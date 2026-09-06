@@ -926,6 +926,8 @@ export const sq: Record<string, string> = {
     "auth.continue_with_google": "Vazhdo me Google",
     "auth.or": "ose",
     "auth.error_google_signin": "Nuk u nis dot hyrja me Google.",
+    "auth.error_oauth_exchange": "U identifikuat me Google, por sesioni nuk u përfundua dot: {message}",
+    "auth.error_oauth_timeout": "Identifikimi me Google nuk u kthye te AyahLab. Nëse përfundoi në shfletues, ky instalim nuk i hap dot lidhjet ayahlab:// — hyni me email-in tuaj.",
     "billing.tier.free.price": "0 $ / përgjithmonë",
     "billing.tier.free.tagline": "Aplikacioni i plotë, në pajisjen tënde. Vetëm AI është Pro.",
     "billing.tier.free.feature1": "Të gjitha veçoritë e aplikacionit përfshihen — asgjë e kyçur",

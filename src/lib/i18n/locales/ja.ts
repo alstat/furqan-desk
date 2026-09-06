@@ -984,6 +984,8 @@ export const ja: Record<string, string> = {
     "auth.continue_with_google": "Google で続行",
     "auth.or": "または",
     "auth.error_google_signin": "Google サインインを開始できませんでした。",
+    "auth.error_oauth_exchange": "Google でサインインしましたが、セッションを完了できませんでした: {message}",
+    "auth.error_oauth_timeout": "Google サインインが AyahLab に戻りませんでした。ブラウザ側で完了していた場合、このインストールは ayahlab:// リンクを開けません。メールでサインインしてください。",
     "billing.tier.free.price": "$0 / 永久",
     "billing.tier.free.tagline": "完全なアプリをあなたのデバイスで。Pro は AI のみ。",
     "billing.tier.free.feature1": "すべてのアプリ機能を収録 — ロックなし",

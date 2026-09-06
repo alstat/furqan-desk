@@ -986,6 +986,8 @@ export const de: Record<string, string> = {
     "auth.continue_with_google": "Mit Google fortfahren",
     "auth.or": "oder",
     "auth.error_google_signin": "Google-Anmeldung konnte nicht gestartet werden.",
+    "auth.error_oauth_exchange": "Mit Google angemeldet, aber die Sitzung konnte nicht abgeschlossen werden: {message}",
+    "auth.error_oauth_timeout": "Die Google-Anmeldung kam nicht zu AyahLab zurück. Falls sie im Browser abgeschlossen wurde, kann diese Installation keine ayahlab://-Links öffnen — melde dich stattdessen mit deiner E-Mail an.",
     "billing.tier.free.price": "0 $ / für immer",
     "billing.tier.free.tagline": "Die komplette App auf deinem Gerät. Nur KI ist Pro.",
     "billing.tier.free.feature1": "Alle App-Funktionen enthalten — nichts gesperrt",

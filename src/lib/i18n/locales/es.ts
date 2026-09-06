@@ -987,6 +987,8 @@ export const es: Record<string, string> = {
     "auth.continue_with_google": "Continuar con Google",
     "auth.or": "o",
     "auth.error_google_signin": "No se pudo iniciar sesión con Google.",
+    "auth.error_oauth_exchange": "Se inició sesión con Google, pero no se pudo completar la sesión: {message}",
+    "auth.error_oauth_timeout": "El inicio de sesión de Google no volvió a AyahLab. Si terminó en el navegador, esta instalación no puede abrir enlaces ayahlab:// — inicia sesión con tu correo.",
     "billing.tier.free.price": "0 $ / para siempre",
     "billing.tier.free.tagline": "La aplicación completa, en tu dispositivo. Solo la IA es Pro.",
     "billing.tier.free.feature1": "Todas las funciones incluidas — nada bloqueado",

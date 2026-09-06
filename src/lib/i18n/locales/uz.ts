@@ -979,6 +979,8 @@ export const uz: Record<string, string> = {
     "auth.continue_with_google": "Google bilan davom etish",
     "auth.or": "yoki",
     "auth.error_google_signin": "Google'ga kirishni boshlab bo'lmadi.",
+    "auth.error_oauth_exchange": "Google orqali kirdingiz, lekin seansni yakunlab bo'lmadi: {message}",
+    "auth.error_oauth_timeout": "Google orqali kirish AyahLab'ga qaytmadi. Agar u brauzerda yakunlangan bo'lsa, bu o'rnatma ayahlab:// havolalarini ocha olmaydi — buning o'rniga e-pochtangiz bilan kiring.",
     "billing.tier.free.price": "$0 / abadiy",
     "billing.tier.free.tagline": "To'liq ilova sizning qurilmangizda. Faqat AI Pro hisoblanadi.",
     "billing.tier.free.feature1": "Ilovaning barcha imkoniyatlari kiritilgan — hech narsa qulflanmagan",

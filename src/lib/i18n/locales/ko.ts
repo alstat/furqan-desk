@@ -909,6 +909,8 @@ export const ko: Record<string, string> = {
   "auth.continue_with_google": "Google로 계속하기",
   "auth.or": "또는",
   "auth.error_google_signin": "Google 로그인을 시작할 수 없습니다.",
+  "auth.error_oauth_exchange": "Google로 로그인했지만 세션을 완료하지 못했습니다: {message}",
+  "auth.error_oauth_timeout": "Google 로그인이 AyahLab으로 돌아오지 않았습니다. 브라우저에서 완료되었다면 이 설치본은 ayahlab:// 링크를 열 수 없습니다 — 대신 이메일로 로그인하세요.",
   "billing.tier.free.price": "$0 / 영구",
   "billing.tier.free.tagline": "온전한 앱을 당신의 기기에서. AI만 Pro입니다.",
   "billing.tier.free.feature1": "모든 앱 기능 포함 — 잠긴 기능 없음",

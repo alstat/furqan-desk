@@ -979,6 +979,8 @@ export const my: Record<string, string> = {
     "auth.continue_with_google": "Google ဖြင့် ဆက်လုပ်ရန်",
     "auth.or": "သို့မဟုတ်",
     "auth.error_google_signin": "Google ဝင်ရောက်ခြင်းကို စတင်၍မရပါ။",
+    "auth.error_oauth_exchange": "Google ဖြင့် အကောင့်ဝင်ပြီးပါပြီ၊ သို့သော် session ကို မပြီးမြောက်နိုင်ပါ: {message}",
+    "auth.error_oauth_timeout": "Google အကောင့်ဝင်ခြင်းသည် AyahLab သို့ ပြန်မရောက်ပါ။ ဘရောက်ဇာတွင် ပြီးဆုံးခဲ့ပါက ဤတပ်ဆင်မှုသည် ayahlab:// လင့်ခ်များကို ဖွင့်၍မရပါ — အီးမေးလ်ဖြင့် ဝင်ပါ။",
     "billing.tier.free.price": "$0 / အမြဲတမ်း",
     "billing.tier.free.tagline": "ပြည့်စုံသော အက်ပ်ကို သင့်စက်ပစ္စည်းပေါ်တွင်။ AI သာ Pro ဖြစ်သည်။",
     "billing.tier.free.feature1": "အက်ပ်၏ လုပ်ဆောင်ချက်အားလုံး ပါဝင်သည် — ဘာမှ မပိတ်ထားပါ",

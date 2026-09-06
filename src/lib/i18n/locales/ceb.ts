@@ -979,6 +979,8 @@ export const ceb: Record<string, string> = {
     "auth.continue_with_google": "Padayon gamit ang Google",
     "auth.or": "o",
     "auth.error_google_signin": "Dili masugdan ang pag-sign in sa Google.",
+    "auth.error_oauth_exchange": "Nakasulod pinaagi sa Google, apan wala mahuman ang sesyon: {message}",
+    "auth.error_oauth_timeout": "Wala mibalik sa AyahLab ang Google sign-in. Kung nahuman kini sa browser, dili maablihan niini nga install ang mga ayahlab:// nga link — pagsulod na lang gamit ang imong email.",
     "billing.tier.free.price": "$0 / hangtod sa kahangtoran",
     "billing.tier.free.tagline": "Ang kompleto nga app, sa imong device. AI ra ang Pro.",
     "billing.tier.free.feature1": "Apil ang tanang bahin sa app — walay naka-lock",

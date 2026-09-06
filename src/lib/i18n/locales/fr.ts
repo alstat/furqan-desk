@@ -909,6 +909,8 @@ export const fr: Record<string, string> = {
   "auth.continue_with_google": "Continuer avec Google",
   "auth.or": "ou",
   "auth.error_google_signin": "Impossible de lancer la connexion Google.",
+  "auth.error_oauth_exchange": "Connexion Google effectuée, mais la session n'a pas pu être finalisée : {message}",
+  "auth.error_oauth_timeout": "La connexion Google n'est jamais revenue vers AyahLab. Si elle s'est terminée dans le navigateur, cette installation ne peut pas ouvrir les liens ayahlab:// — connectez-vous plutôt avec votre e-mail.",
   "billing.tier.free.price": "0 $ / à vie",
   "billing.tier.free.tagline": "L'application complète, sur votre appareil. Seule l'IA est Pro.",
   "billing.tier.free.feature1": "Toutes les fonctionnalités incluses — rien de verrouillé",

@@ -909,6 +909,8 @@ export const zh: Record<string, string> = {
   "auth.continue_with_google": "使用 Google 继续",
   "auth.or": "或",
   "auth.error_google_signin": "无法启动 Google 登录。",
+  "auth.error_oauth_exchange": "已通过 Google 登录，但会话未能完成：{message}",
+  "auth.error_oauth_timeout": "Google 登录没有返回 AyahLab。如果它已在浏览器中完成，说明此安装无法打开 ayahlab:// 链接 — 请改用邮箱登录。",
   "billing.tier.free.price": "$0 / 永久",
   "billing.tier.free.tagline": "完整应用，尽在你的设备。仅 AI 为 Pro。",
   "billing.tier.free.feature1": "包含全部应用功能 — 毫无锁定",

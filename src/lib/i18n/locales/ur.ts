@@ -909,6 +909,8 @@ export const ur: Record<string, string> = {
   "auth.continue_with_google": "Google کے ساتھ جاری رکھیں",
   "auth.or": "یا",
   "auth.error_google_signin": "Google سائن اِن شروع نہیں ہو سکا۔",
+  "auth.error_oauth_exchange": "Google سے سائن ان ہو گیا، لیکن سیشن مکمل نہ ہو سکا: {message}",
+  "auth.error_oauth_timeout": "Google سائن ان AyahLab پر واپس نہیں آیا۔ اگر یہ براؤزر میں مکمل ہو گیا تھا، تو یہ انسٹال ayahlab:// لنکس نہیں کھول سکتا — اس کے بجائے اپنے ای میل سے سائن ان کریں۔",
   "billing.tier.free.price": "۰ $ / ہمیشہ کے لیے",
   "billing.tier.free.tagline": "مکمل ایپ، آپ کے آلے پر۔ صرف AI Pro ہے۔",
   "billing.tier.free.feature1": "ایپ کی تمام خصوصیات شامل — کچھ بھی مقفل نہیں",

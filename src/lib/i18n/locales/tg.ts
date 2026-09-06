@@ -979,6 +979,8 @@ export const tg: Record<string, string> = {
     "auth.continue_with_google": "Идома бо Google",
     "auth.or": "ё",
     "auth.error_google_signin": "Воридшавӣ ба Google оғоз нашуд.",
+    "auth.error_oauth_exchange": "Тавассути Google ворид шудед, аммо ҷаласаро анҷом додан нашуд: {message}",
+    "auth.error_oauth_timeout": "Вуруд тавассути Google ба AyahLab барнагашт. Агар он дар браузер анҷом ёфта бошад, ин насб пайвандҳои ayahlab:// -ро кушода наметавонад — ба ҷои он бо почтаи электронии худ ворид шавед.",
     "billing.tier.free.price": "$0 / то абад",
     "billing.tier.free.tagline": "Барномаи пурра дар дастгоҳи шумо. Танҳо AI Pro аст.",
     "billing.tier.free.feature1": "Ҳамаи имкониятҳои барнома дохил карда шудаанд — ҳеҷ чиз қулф нашудааст",

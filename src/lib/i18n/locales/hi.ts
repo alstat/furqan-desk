@@ -983,6 +983,8 @@ export const hi: Record<string, string> = {
     "auth.continue_with_google": "Google के साथ जारी रखें",
     "auth.or": "या",
     "auth.error_google_signin": "Google साइन-इन शुरू नहीं हो सका।",
+    "auth.error_oauth_exchange": "Google से साइन इन हो गया, लेकिन सत्र पूरा नहीं हो सका: {message}",
+    "auth.error_oauth_timeout": "Google साइन-इन AyahLab पर वापस नहीं आया। यदि यह ब्राउज़र में पूरा हो गया था, तो यह इंस्टॉल ayahlab:// लिंक नहीं खोल सकता — इसके बजाय ईमेल से साइन इन करें।",
     "billing.tier.free.price": "$0 / हमेशा के लिए",
     "billing.tier.free.tagline": "पूरा ऐप, आपके डिवाइस पर। केवल AI Pro है।",
     "billing.tier.free.feature1": "सभी ऐप सुविधाएँ शामिल — कुछ भी लॉक नहीं",
