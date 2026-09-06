@@ -742,12 +742,6 @@
 			</span>
 			<div class="flex items-center gap-2">
 				<button
-					onclick={close}
-					class="cursor-pointer rounded-full px-4 py-1.5 text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5] hover:bg-brand-sand-200 dark:hover:bg-[#414559] transition-colors"
-				>
-					Cancel
-				</button>
-				<button
 					onclick={confirmInsert}
 					class="cursor-pointer flex items-center gap-1.5 rounded-full bg-brand-gold-400 px-5 py-1.5 text-[0.6875rem] font-semibold text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 hover:bg-brand-gold-600 active:bg-brand-gold-600/90 transition-colors"
 				>
