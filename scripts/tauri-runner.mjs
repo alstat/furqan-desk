@@ -2,6 +2,7 @@ import { spawnSync } from 'child_process';
 import { readFileSync, rmSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
+import { fileURLToPath } from 'url';
 
 const args = process.argv.slice(2); // e.g. ['dev', '--tablet', 'ipad']
 const tabletIdx = args.indexOf('--tablet');
@@ -25,6 +26,23 @@ if (tabletIdx !== -1) {
   if (process.platform === 'darwin') {
     cmd = ['tauri', 'build', '--target', 'universal-apple-darwin', '--bundles', 'app', ...restArgs];
   } else if (process.platform === 'win32') {
+    // The Store MSIX is packaged by tauri-windows-bundle, which looks for the
+    // freshly built exe in `src-tauri/target/<triple>/release` -- its
+    // resolveCargoTargetDir() reads CARGO_TARGET_DIR and otherwise assumes
+    // `<srcTauriDir>/target`, with no notion of a cargo workspace.
+    //
+    // This repo IS a workspace (the root Cargo.toml lists src-tauri and
+    // gen-db), so cargo writes to `<root>/target` instead. The bundler was
+    // therefore compiling a correct binary and then packaging whatever stale
+    // copy still sat in src-tauri/target, wrapped in a freshly stamped
+    // AppxManifest: v2.0.18, .19 and .20 all shipped the byte-identical v2.0.17
+    // exe. Because Tauri embeds frontendDist INTO that binary, the whole UI --
+    // not just the version string getVersion() reports -- stayed frozen at
+    // 2.0.17 while the Store correctly listed 2.0.20 as installed.
+    //
+    // macOS and Linux never hit this: they go through the Tauri CLI, which
+    // resolves the workspace target dir itself.
+    process.env.CARGO_TARGET_DIR ||= fileURLToPath(new URL('../target', import.meta.url));
     cmd = ['tauri-windows-bundle', 'build', '--runner', 'pnpm', ...restArgs];
   } else {
     console.error(`No desktop build configured for platform "${process.platform}".`);
