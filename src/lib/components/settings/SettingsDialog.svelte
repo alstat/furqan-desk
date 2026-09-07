@@ -48,7 +48,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     import { animationsEnabled } from '$lib/stores/animations.store';
     import { locale, LOCALE_NAMES, t, type Locale } from '$lib/i18n';
     import { aiTextDefaultModel } from '$lib/stores/ai-text-transform.store';
-    import { isPro, isProPlus } from '$lib/stores/auth.store';
+    import { isPro } from '$lib/stores/auth.store';
 
     interface Props {
         open: boolean;
@@ -59,10 +59,10 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
 
     let showShortcuts = $state(false);
 
-    // The Advanced AI model is Pro+ only. Pro accounts are Standard-only, so the
-    // effective model is forced to 'standard' (even if a stale 'advanced' value
-    // is persisted) and the Advanced buttons below are disabled for them.
-    let effTextModel = $derived($isProPlus ? $aiTextDefaultModel : 'standard');
+    // The Advanced AI model is available to every Pro account. Free accounts
+    // never see this section at all, so the effective model only needs to
+    // fall back to 'standard' when $isPro is false.
+    let effTextModel = $derived($isPro ? $aiTextDefaultModel : 'standard');
 
     // Mirror the dialog's open state into the store so the background
     // install/update toast can hide itself while Settings is showing progress.
@@ -434,11 +434,22 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 </div>
             </div>
 
-            <!-- AI Tools (Pro/Pro+ only — these features are unavailable on
-                 free accounts, so their settings are hidden there too) -->
-            {#if $isPro}
+            </div>
+        </section>
+
+        <!-- ═══════════════ GROUP: AI Tools (Pro/Pro+ only — these features
+             are unavailable on free accounts, so the whole group is hidden
+             there too) ═══════════════ -->
+        {#if $isPro}
+        <section class="py-3 border-t border-slate-100 dark:border-[#414559]">
+            <div class="flex items-center gap-2 pb-2.5 mb-3 border-b border-brand-gold-200/60 dark:border-[#414559]">
+                <Icon icon="solar:magic-stick-3-bold-duotone" class="text-brand-gold-400" width="1rem" />
+                <h3 class={groupTitle}>{$t('settings.ai_tools')}</h3>
+            </div>
+            <div class="space-y-4">
+
+            <!-- Default selection model -->
             <div>
-                <p class={sectionLabel}>{$t('settings.ai_tools')}</p>
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <span class={rowLabel}>{$t('settings.ai_tools.default_selection_model')}</span>
@@ -458,9 +469,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                         </button>
                         <button
                             onclick={() => aiTextDefaultModel.set('advanced')}
-                            disabled={!$isProPlus}
-                            title={!$isProPlus ? 'Pro+' : ''}
-                            class={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+                            class={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors
                                 ${effTextModel === 'advanced'
                                     ? 'bg-brand-gold-400 text-gray-100 dark:text-gray-700 hover:dark:text-gray-100 border-brand-gold-400'
                                     : 'cursor-pointer border-brand-sand-200 bg-brand-sand-100 hover:bg-brand-sand-200 dark:border-[#414559] dark:bg-[#363a4f] dark:hover:bg-[#414559] text-brand-charcoal-500 dark:text-[#c6d0f5]'}`}
@@ -470,10 +479,10 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                     </div>
                 </div>
             </div>
-            {/if}
 
             </div>
         </section>
+        {/if}
 
         <!-- ═══════════════ GROUP: Environments ═══════════════ -->
         <section class="py-3 border-t border-slate-100 dark:border-[#414559]">

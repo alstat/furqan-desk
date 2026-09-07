@@ -1,7 +1,7 @@
 import { writable, get } from "svelte/store";
 import { openAppWindow } from "$lib/utils/appWindow";
 import { supabase } from "$lib/supabase";
-import { isProPlus } from "$lib/stores/auth.store";
+import { isPro } from "$lib/stores/auth.store";
 import {
     listChats,
     loadChat as loadChatMessages,
@@ -261,8 +261,8 @@ export async function sendMessage(prompt: string): Promise<void> {
             },
             body: JSON.stringify({
                 messages: history,
-                // Advanced model is Pro+ only; Pro accounts always use Standard.
-                advanced: get(useAdvanced) && get(isProPlus),
+                // Advanced model is available to every Pro account.
+                advanced: get(useAdvanced) && get(isPro),
             }),
             signal: abortController.signal,
         });

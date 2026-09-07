@@ -1,6 +1,6 @@
 import { writable, get } from "svelte/store";
 import { supabase } from "$lib/supabase";
-import { isProPlus } from "$lib/stores/auth.store";
+import { isPro } from "$lib/stores/auth.store";
 
 export type AiTextAction = "paraphrase" | "elaborate" | "shorten" | "prompt";
 export type AiTextTone =
@@ -122,8 +122,8 @@ export async function runAiTextTransform({
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            // Advanced model is Pro+ only; Pro accounts always use Standard.
-            advanced: get(_aiTextDefaultModel) === "advanced" && get(isProPlus),
+            // Advanced model is available to every Pro account.
+            advanced: get(_aiTextDefaultModel) === "advanced" && get(isPro),
             messages: [
                 {
                     role: "system",

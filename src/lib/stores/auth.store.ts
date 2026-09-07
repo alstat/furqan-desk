@@ -21,7 +21,8 @@ export const isPro = derived(authUser, ($u) => $u?.app_metadata?.is_pro === true
 
 // The top paid tier. The tier string lives in the JWT's app_metadata
 // ("pro" | "pro_plus"); isPro covers both paid tiers, isProPlus narrows to the
-// top one. Only Pro+ may use the Advanced AI model — Pro is Standard-only.
+// top one. Both tiers may use the Advanced AI model — isProPlus is only for
+// distinguishing quota/model config and the Pro+ badge, not feature access.
 export const isProPlus = derived(
     authUser,
     ($u) =>

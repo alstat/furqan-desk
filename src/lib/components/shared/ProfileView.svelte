@@ -38,9 +38,9 @@
     let limits = $state<TierLimits | null>(null);
     let loadingUsage = $state(false);
 
-    // Token-usage sections. Every Pro account gets an Advanced section: Pro+
-    // uses the Advanced model across the app, while plain Pro reaches it only
-    // through the Take-Home Message — the highlighted note says so.
+    // Token-usage sections. Every Pro account gets an Advanced section — both
+    // tiers use the Advanced model across the app, Pro+ just gets its own
+    // (larger) quota and model config.
     //
     // Only the weekly window is shown. It is the one quota that gates the
     // feature, and a rolling 7 days is long enough that a heavy session no
@@ -65,7 +65,7 @@
         sections.push({
             heading: $t("account.usage.section_advanced"),
             sub: $t("account.usage.section_advanced_sub"),
-            note: isProPlus ? null : $t("account.usage.advanced_takehome_note"),
+            note: null,
             rows: [
                 { label: $t("account.usage.weekly"), used: usage.advanced.weekly.used, cap: limits.advanced_weekly_tokens, reset: usage.advanced.weekly.resetInSeconds },
             ],

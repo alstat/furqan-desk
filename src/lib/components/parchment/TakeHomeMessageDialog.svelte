@@ -55,6 +55,11 @@
     let error = $state("");
     let quotaExceeded = $state(false);
     let sourceLabel = $state("");
+    // Model used for generation, switchable from the dropdown on the
+    // Generate button. Defaults to Advanced (the Take-Home Message's
+    // historical default for Pro and Pro+ alike).
+    let useAdvanced = $state(true);
+    let modelMenuOpen = $state(false);
     // Signature of the ayahs the cached `result` was generated for, so we can
     // tell when the displayed ayahs have since changed.
     let savedSig = $state("");
@@ -376,9 +381,7 @@
             const text = await fetchTakeHomeMessage({
                 context: ctx.body,
                 locale: get(locale),
-                // The Take-Home Message always runs on the Advanced model —
-                // for Pro and Pro+ alike (elsewhere Advanced stays Pro+ only).
-                advanced: true,
+                advanced: useAdvanced,
                 signal: ac.signal,
                 onPartial: (partial) => {
                     if (!ac.signal.aborted) result = partial;
@@ -577,6 +580,7 @@
             exportedPath = "";
             confirmClear = false;
             disarmDelete();
+            modelMenuOpen = false;
         }
     });
 
@@ -757,15 +761,6 @@
                 </div>
             </div>
             <div class="flex shrink-0 items-center gap-1.5">
-                <!-- The Take-Home Message always runs on the Advanced model
-                     (Pro and Pro+ alike) — static badge, no toggle. -->
-                <span
-                    class="flex h-7 items-center gap-1 rounded-lg border border-brand-gold-400 bg-brand-gold-100 px-2.5 text-[0.625rem] font-semibold text-brand-gold-600 dark:bg-[#e5c890]/30 dark:text-[#e5c890]"
-                    title={$t("account.usage.advanced_takehome_note")}
-                >
-                    <Icon icon="solar:bolt-bold-duotone" width="0.65rem" />
-                    {$t("ai_chat.model_advanced")}
-                </span>
                 <button
                     onclick={onClose}
                     aria-label={$t("common.close")}
@@ -1102,22 +1097,100 @@
                                     : $t("verse_of_day.copy_entry")}
                             </button>
                         </div>
-                        <button
-                            onclick={generate}
-                            disabled={loading}
-                            class="flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-brand-gold-400 px-3.5 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
-                        >
-                            {#if result && !isStale}
-                                <Icon icon="solar:refresh-bold" width="0.8rem" />
-                                {$t("takehome.regenerate")}
-                            {:else}
+                        <div class="relative flex shrink-0 items-stretch">
+                            <button
+                                onclick={generate}
+                                disabled={loading}
+                                class="flex h-8 cursor-pointer items-center gap-1.5 rounded-l-full border-r border-brand-gold-600/30 bg-brand-gold-400 pl-3.5 pr-3 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-black/20 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
+                            >
+                                {#if result && !isStale}
+                                    <Icon icon="solar:refresh-bold" width="0.8rem" />
+                                    {$t("takehome.regenerate")}
+                                {:else}
+                                    <Icon
+                                        icon="solar:magic-stick-3-bold-duotone"
+                                        width="0.85rem"
+                                    />
+                                    {$t("takehome.generate")}
+                                {/if}
+                            </button>
+                            <button
+                                onclick={() => (modelMenuOpen = !modelMenuOpen)}
+                                disabled={loading}
+                                aria-label={useAdvanced
+                                    ? $t("ai_chat.model_advanced")
+                                    : $t("ai_chat.model_standard")}
+                                title={useAdvanced
+                                    ? $t("ai_chat.model_advanced")
+                                    : $t("ai_chat.model_standard")}
+                                class="flex h-8 cursor-pointer items-center gap-1 rounded-r-full bg-brand-gold-400 pl-2 pr-2.5 text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
+                            >
                                 <Icon
-                                    icon="solar:magic-stick-3-bold-duotone"
-                                    width="0.85rem"
+                                    icon={useAdvanced
+                                        ? "solar:bolt-bold-duotone"
+                                        : "solar:bolt-linear"}
+                                    width="0.75rem"
                                 />
-                                {$t("takehome.generate")}
+                                <Icon
+                                    icon="solar:alt-arrow-down-bold"
+                                    width="0.6rem"
+                                    class={modelMenuOpen ? "rotate-180" : ""}
+                                />
+                            </button>
+
+                            {#if modelMenuOpen}
+                                <!-- svelte-ignore a11y_no_redundant_roles -->
+                                <button
+                                    type="button"
+                                    tabindex="-1"
+                                    aria-label={$t("common.close")}
+                                    class="fixed inset-0 z-10 cursor-default"
+                                    onclick={() => (modelMenuOpen = false)}
+                                ></button>
+                                <div
+                                    class="absolute bottom-full right-0 z-20 mb-1.5 w-36 overflow-hidden rounded-xl border border-brand-sand-200 bg-white py-1 shadow-lg dark:border-[#414559] dark:bg-[#303446]"
+                                >
+                                    <button
+                                        onclick={() => {
+                                            useAdvanced = true;
+                                            modelMenuOpen = false;
+                                        }}
+                                        class="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-[0.6875rem] font-semibold transition-colors hover:bg-brand-sand-100 dark:hover:bg-[#414559] {useAdvanced
+                                            ? 'text-brand-gold-600 dark:text-[#e5c890]'
+                                            : 'text-brand-charcoal-500 dark:text-[#c6d0f5]'}"
+                                    >
+                                        <Icon icon="solar:bolt-bold-duotone" width="0.75rem" />
+                                        {$t("ai_chat.model_advanced")}
+                                        {#if useAdvanced}
+                                            <Icon
+                                                icon="solar:check-circle-bold"
+                                                width="0.75rem"
+                                                class="ml-auto"
+                                            />
+                                        {/if}
+                                    </button>
+                                    <button
+                                        onclick={() => {
+                                            useAdvanced = false;
+                                            modelMenuOpen = false;
+                                        }}
+                                        class="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-[0.6875rem] font-semibold transition-colors hover:bg-brand-sand-100 dark:hover:bg-[#414559] {!useAdvanced
+                                            ? 'text-brand-gold-600 dark:text-[#e5c890]'
+                                            : 'text-brand-charcoal-500 dark:text-[#c6d0f5]'}"
+                                    >
+                                        <Icon icon="solar:bolt-linear" width="0.75rem" />
+                                        {$t("ai_chat.model_standard")}
+                                        {#if !useAdvanced}
+                                            <Icon
+                                                icon="solar:check-circle-bold"
+                                                width="0.75rem"
+                                                class="ml-auto"
+                                            />
+                                        {/if}
+                                    </button>
+                                </div>
                             {/if}
-                        </button>
+                        </div>
                     </div>
                     <p class="text-[0.625rem] text-brand-charcoal-300 dark:text-[#626880]">
                         {$t("takehome.disclaimer")}
