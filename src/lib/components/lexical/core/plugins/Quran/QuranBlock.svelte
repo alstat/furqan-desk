@@ -5,7 +5,7 @@
     import { pendingJumpAyah } from "$lib/stores/bookmarks.store";
     import { requestPlayBlock } from "$lib/stores/recitation.store";
     import { manuscriptsEnabled, openManuscriptViewer } from "$lib/stores/manuscripts.store";
-    import { isPro } from "$lib/stores/auth.store";
+    import { canUseAi } from "$lib/stores/auth.store";
     import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
     import { t } from "$lib/i18n";
     import { getEditor } from "$lexical/core/composerContext.js";
@@ -300,7 +300,7 @@
                             dir="ltr"
                             class="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover/ayah-num:opacity-100 transition-opacity z-20 flex items-center gap-0.5"
                             contenteditable="false"
-                            >{#if $isPro}<button
+                            >{#if $canUseAi}<button
                                     type="button"
                                     onmousedown={(e) => e.preventDefault()}
                                     onclick={(e) => openAiPromptForAyah(e, v.surah, v.ayah, v.arabic)}

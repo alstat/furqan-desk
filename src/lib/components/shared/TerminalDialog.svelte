@@ -11,7 +11,7 @@
     import { t } from "$lib/i18n";
     import { appDarkMode } from "$lib/stores/editor.store";
     import { bumpGitRefresh } from "$lib/stores/git.store";
-    import { isPro } from "$lib/stores/auth.store";
+    import { canUseAi } from "$lib/stores/auth.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import WindowControls from "./WindowControls.svelte";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
@@ -349,7 +349,7 @@
     }
 
     function updateTerminalAiSelection(e: PointerEvent) {
-        if (!$isPro || !activeId) {
+        if (!$canUseAi || !activeId) {
             terminalAiSelection = null;
             return;
         }
@@ -1149,7 +1149,7 @@
         >
     </div>
 
-    {#if $isPro && terminalAiSelection}
+    {#if $canUseAi && terminalAiSelection}
         <AiSelectionToolbar
             selectedText={terminalAiSelection.text}
             x={terminalAiSelection.x}

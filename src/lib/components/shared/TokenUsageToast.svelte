@@ -1,5 +1,9 @@
 <!--
-  Weekly AI-token budget warning.
+  AI-token budget warning.
+
+  The window it reports is whichever one the account's tier actually budgets
+  against — a rolling day on Free, a rolling week on the paid tiers — so the
+  wording is picked from warning.window rather than being fixed to "weekly".
 
   Mirrors NewBlogToast: same card, same corner, dismissed by the same close
   button. What differs is that dismissal is durable — the crossed threshold is
@@ -35,6 +39,8 @@
     // At the cap the feature is blocked rather than merely close to it, so the
     // final threshold gets its own wording and a red frame.
     let atCap = $derived(warning !== null && warning.threshold >= 100);
+    // "daily" / "weekly" selects the wording; the store decides which applies.
+    let win = $derived(warning?.window ?? "weekly");
 
     onMount(() => {
         const first = setTimeout(() => void refreshTokenWarning(), FIRST_CHECK_MS);
@@ -94,17 +100,17 @@
                 class="text-xs font-semibold text-brand-charcoal-700 dark:text-[#c6d0f5]"
             >
                 {atCap
-                    ? $t("token_warning.title_reached")
-                    : $t("token_warning.title")}
+                    ? $t(`token_warning.${win}.title_reached`)
+                    : $t(`token_warning.${win}.title`)}
             </p>
             <p
                 class="text-[0.6875rem] text-brand-charcoal-400 dark:text-[#838ba7] mt-0.5"
             >
                 {atCap
-                    ? $t("token_warning.message_reached", {
+                    ? $t(`token_warning.${win}.message_reached`, {
                           pool: $t(`token_warning.pool.${warning.pool}`),
                       })
-                    : $t("token_warning.message", {
+                    : $t(`token_warning.${win}.message`, {
                           pct: warning.pct,
                           pool: $t(`token_warning.pool.${warning.pool}`),
                       })}
@@ -118,7 +124,7 @@
                 })}
             </p>
             <!-- The rolling window means relief is gradual: this is when the
-                 oldest spend ages out, not a fixed weekly reset date. -->
+                 oldest spend ages out, not a fixed reset date. -->
             {#if warning.resetInSeconds !== null}
                 <p
                     class="text-[0.6875rem] text-brand-charcoal-300 dark:text-[#626880]"

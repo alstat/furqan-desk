@@ -21,7 +21,7 @@
     } from "@lexical/rich-text";
     import { getEditor } from "$lexical/core/composerContext.js";
     import { getStyleProperty, setStyleProperty } from "$lexical/core/blockStyle";
-    import { isPro } from "$lib/stores/auth.store";
+    import { canUseAi } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
 
     const editor = getEditor();
@@ -42,7 +42,7 @@
     }
 
     function readSelection() {
-        if (!$isPro) {
+        if (!$canUseAi) {
             aiSelection = null;
             return;
         }
@@ -208,7 +208,7 @@
     });
 </script>
 
-{#if $isPro && aiSelection}
+{#if $canUseAi && aiSelection}
     <AiSelectionToolbar
         selectedText={aiSelection.text}
         x={aiSelection.x}

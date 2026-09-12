@@ -18,7 +18,7 @@
     import WindowControls from "./WindowControls.svelte";
     import LoadingDots from "./LoadingDots.svelte";
     import type { TafsirSnapshot } from "$lib/stores/reader-windows.store";
-    import { isPro } from "$lib/stores/auth.store";
+    import { canUseAi } from "$lib/stores/auth.store";
     import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
     import { getSurahNameTashkeel } from "$lib/data/surah-names-tashkeel";
     import {
@@ -878,7 +878,7 @@
                                         >
                                             {entry.ayah}
                                         </span>
-                                        {#if $isPro}
+                                        {#if $canUseAi}
                                             <button
                                                 onclick={(e) =>
                                                     openAiPromptForTafsir(

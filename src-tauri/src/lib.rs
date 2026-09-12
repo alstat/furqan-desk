@@ -188,6 +188,10 @@ pub fn run() {
                 cancel: Arc::new(AtomicBool::new(false)),
             });
             app.manage(commands::HttpClient::new());
+            // Holds the AI chat's encryption key for the life of the process,
+            // so every window shares one unlock instead of each webview
+            // prompting for the passphrase on its own.
+            app.manage(commands::ChatKeyState::new());
 
             // --- Native application menu --------------------------------
             // macOS only. There the menu lives in the global menu bar, and the
@@ -305,6 +309,9 @@ pub fn run() {
             commands::check_new_blog_post,
             commands::mark_blog_post_seen,
             commands::get_manuscript_cache_size,
+            commands::get_chat_key,
+            commands::set_chat_key,
+            commands::clear_chat_key,
             commands::get_reciters,
             commands::get_recitation_ayah,
             commands::get_downloaded_surahs,

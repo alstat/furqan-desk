@@ -58,7 +58,7 @@
     import { locale, t } from '$lib/i18n';
     import { get } from 'svelte/store';
     import { openUrl } from '@tauri-apps/plugin-opener';
-    import { isPro } from '$lib/stores/auth.store';
+    import { canUseAi } from '$lib/stores/auth.store';
     import { askAiAboutSelection } from '$lib/stores/ai-chat.store';
     import { copyToClipboard } from '$lib/utils/clipboard';
 
@@ -436,7 +436,7 @@
                     <Icon icon="solar:pen-new-square-bold-duotone" width="14" />
                 </button>
             {/if}
-            {#if $isPro}
+            {#if $canUseAi}
                 <button
                     onclick={toggleAiPrompt}
                     aria-label={$t('morphology.ai_ask_word')}

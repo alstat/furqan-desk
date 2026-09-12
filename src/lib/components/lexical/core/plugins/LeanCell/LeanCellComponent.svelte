@@ -65,7 +65,7 @@
     } from "../../nodeSelectionStore.js";
     import { appDarkMode, editorIndentSize } from "$lib/stores/editor.store";
     import { formatLeanSource } from "$lib/utils/leanFormat";
-    import { isPro } from "$lib/stores/auth.store";
+    import { canUseAi } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
     import { t } from "$lib/i18n";
 
@@ -160,7 +160,7 @@
     // selection, mirroring CodeMirrorEditor. Clears when there's no usable
     // selection, the user isn't pro, or the editor lost focus.
     function updateAiSelection() {
-        if (!view || !$isPro) {
+        if (!view || !$canUseAi) {
             aiSelection = null;
             return;
         }
@@ -1032,7 +1032,7 @@
         </div>
     {/if}
 
-    {#if $isPro && aiSelection}
+    {#if $canUseAi && aiSelection}
         <AiSelectionToolbar
             selectedText={aiSelection.text}
             x={aiSelection.x}

@@ -1,10 +1,18 @@
 // Supabase Edge Function: chat-completion
-// Verifies the caller's JWT, requires app_metadata.is_pro === true, picks a
-// model class (standard vs. advanced) from the request, enforces the
-// corresponding weekly token quota (with a monthly backstop), then proxies to
-// OpenAI Chat
-// Completions and streams the response back. Records token usage on completion
-// (or estimates on abort) using the service role.
+// Verifies the caller's JWT, resolves the account's tier, picks a model class
+// (standard vs. advanced) from the request, enforces that tier's token quota,
+// then proxies to OpenAI Chat Completions and streams the response back.
+// Records token usage on completion (or estimates on abort) using the service
+// role.
+//
+// Every signed-in account may call this — Free included. Free is not gated out
+// of the AI; it is held to a small DAILY allowance instead, which lives in
+// tier_limits.daily_tokens. The paid tiers leave that column NULL and budget
+// against the rolling weekly window, with the monthly one as a cost backstop.
+//
+// Tiers: "free" | "starter" | "pro" | "pro_plus". Starter is a paid tier with
+// no Advanced allowance, so — like Free — an advanced=true request from it is
+// served with the standard model rather than refused.
 //
 // Required secrets (Supabase Dashboard → Project Settings → Edge Functions → Secrets):
 //   OPENAI_API_KEY              — your OpenAI key
@@ -18,6 +26,12 @@
 //                                 Falls back to OPENAI_MODEL_STANDARD if not set.
 //   OPENAI_MODEL_ADVANCED_PROPLUS — advanced-class model for Pro+ (tier="pro_plus").
 //                                 Falls back to OPENAI_MODEL_ADVANCED if not set.
+//   OPENAI_MODEL_STANDARD_STARTER — standard-class model for Starter (tier="starter").
+//                                 Falls back to OPENAI_MODEL_STANDARD if not set.
+//   OPENAI_MODEL_STANDARD_FREE  — standard-class model for Free accounts. Falls back
+//                                 to OPENAI_MODEL_STANDARD if not set. Point this at
+//                                 a cheaper model than the paid tiers get if the free
+//                                 daily allowance needs to cost less per token.
 //   OPENAI_MAX_COMPLETION_TOKENS — hard ceiling on output tokens per response.
 //                                 Defaults to 4000. Bounds worst-case output cost
 //                                 per request and prevents runaway essays. Set
@@ -50,10 +64,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
-// The two rolling quota windows, in seconds. These must match the windows the
+// The rolling quota windows, in seconds. These must match the windows the
 // token_usage_windows_for RPC aggregates over.
-const SEC_WEEK = 7 * 24 * 3600;
-const SEC_MONTH = 30 * 24 * 3600;
+const SEC_DAY = 24 * 3600;
+const SEC_WEEK = 7 * SEC_DAY;
+const SEC_MONTH = 30 * SEC_DAY;
+
+/** Every tier that has a tier_limits row. Anything else is not a tier. */
+const KNOWN_TIERS = new Set(["free", "starter", "pro", "pro_plus"]);
+
+/** Tiers whose accounts may spend the Advanced model's quota. */
+const ADVANCED_TIERS = new Set(["pro", "pro_plus"]);
 
 const corsHeaders: Record<string, string> = {
     "Access-Control-Allow-Origin": "*",
@@ -100,12 +121,12 @@ interface UsageWindowRow {
 }
 
 /**
- * Both rolling windows for one user and model class, summed in Postgres.
+ * Every rolling window for one user and model class, summed in Postgres.
  *
  * This used to be two queries that each pulled every matching token_usage row
  * and added them up here — a read that grew with the account's history, on the
- * path of every message. The RPC returns four small rows instead; we keep the
- * pair for the class being charged.
+ * path of every message. The RPC returns a handful of small rows instead; we
+ * keep the ones for the class being charged.
  *
  * It is SECURITY DEFINER and granted to service_role alone, so it works with
  * the admin client (where auth.uid() is null) and is unreachable from the app.
@@ -119,22 +140,24 @@ async function getUsageWindows(
     admin: ReturnType<typeof createClient>,
     userId: string,
     modelClass: ModelClass,
-): Promise<{ weekly: WindowUsage; monthly: WindowUsage }> {
+): Promise<{ daily: WindowUsage; weekly: WindowUsage; monthly: WindowUsage }> {
     const { data, error } = await admin.rpc("token_usage_windows_for", {
         p_user_id: userId,
     });
     if (error) throw new Error(`usage query failed: ${error.message}`);
 
     const empty = (): WindowUsage => ({ used: 0, oldestMs: null });
-    const windows = { weekly: empty(), monthly: empty() };
+    const windows = { daily: empty(), weekly: empty(), monthly: empty() };
     for (const row of (data ?? []) as UsageWindowRow[]) {
         if (row.pool !== modelClass) continue;
         const key =
-            row.window_seconds === SEC_WEEK
-                ? "weekly"
-                : row.window_seconds === SEC_MONTH
-                  ? "monthly"
-                  : null;
+            row.window_seconds === SEC_DAY
+                ? "daily"
+                : row.window_seconds === SEC_WEEK
+                  ? "weekly"
+                  : row.window_seconds === SEC_MONTH
+                    ? "monthly"
+                    : null;
         if (!key) continue;
         windows[key] = {
             used: Number(row.used) || 0,
@@ -205,12 +228,23 @@ Deno.serve(async (req) => {
         return jsonError(401, "Invalid or expired token");
     }
 
-    const isPro = user.app_metadata?.is_pro === true;
-    if (!isPro) {
-        return jsonError(403, "AI Chat is a Pro feature");
-    }
-
-    const tier = (user.app_metadata?.tier as string | undefined) ?? "pro";
+    // No Pro gate: Free accounts reach the model too, held to the daily
+    // allowance on their tier_limits row. The tier string is the only thing
+    // that decides what they get.
+    //
+    // Normalised the same way the app's auth store does it, and for the same
+    // two reasons: a token issued before Starter existed carries is_pro with
+    // no tier field, and that used to mean Pro — so it still does; and a tier
+    // string nobody here recognises must not become a lookup for a
+    // tier_limits row that cannot exist, which would fail the request outright
+    // rather than degrading to the free allowance.
+    const rawTier = user.app_metadata?.tier;
+    const tier =
+        typeof rawTier === "string" && KNOWN_TIERS.has(rawTier)
+            ? rawTier
+            : user.app_metadata?.is_pro === true
+              ? "pro"
+              : "free";
 
     let body: RequestBody;
     try {
@@ -223,7 +257,16 @@ Deno.serve(async (req) => {
         return jsonError(400, "messages must be a non-empty array");
     }
 
-    const modelClass: ModelClass = body.advanced === true ? "advanced" : "standard";
+    // Free and Starter have no Advanced allowance. The app hides the toggle
+    // for them, so a request asking for it is a stale client rather than a
+    // user decision — serve the standard model instead of failing the call.
+    // Erroring here would also be misleading: their advanced caps are 0, so
+    // the quota check below would report a "limit reached" they can never
+    // clear by waiting.
+    const modelClass: ModelClass =
+        body.advanced === true && ADVANCED_TIERS.has(tier)
+            ? "advanced"
+            : "standard";
 
     // Resolve the model id. Backwards compatible with legacy OPENAI_MODEL.
     const standardModel =
@@ -233,29 +276,32 @@ Deno.serve(async (req) => {
     const advancedModel =
         Deno.env.get("OPENAI_MODEL_ADVANCED") ?? standardModel;
 
-    // Pro+ uses its own models (a different model, not more usage). Each falls
-    // back to the corresponding Pro model when its secret isn't set, so Pro+
-    // never breaks if only one of the two is configured.
-    const isProPlus = tier === "pro_plus";
-    const standardModelProPlus =
-        Deno.env.get("OPENAI_MODEL_STANDARD_PROPLUS") ?? standardModel;
+    // Per-tier standard models. Each falls back to the shared standard model
+    // when its own secret isn't set, so no tier breaks just because only some
+    // of the overrides are configured. Only Pro+ overrides the advanced model
+    // — Pro uses the shared one, and Free/Starter never reach that branch.
+    const standardModelFor: Record<string, string> = {
+        free: Deno.env.get("OPENAI_MODEL_STANDARD_FREE") ?? standardModel,
+        starter: Deno.env.get("OPENAI_MODEL_STANDARD_STARTER") ?? standardModel,
+        pro: standardModel,
+        pro_plus: Deno.env.get("OPENAI_MODEL_STANDARD_PROPLUS") ?? standardModel,
+    };
     const advancedModelProPlus =
         Deno.env.get("OPENAI_MODEL_ADVANCED_PROPLUS") ?? advancedModel;
 
     const model =
         modelClass === "advanced"
-            ? isProPlus
+            ? tier === "pro_plus"
                 ? advancedModelProPlus
                 : advancedModel
-            : isProPlus
-              ? standardModelProPlus
-              : standardModel;
+            : (standardModelFor[tier] ?? standardModel);
 
     // Quota check — separate columns per model class.
     const { data: limitsRow, error: limitsErr } = await admin
         .from("tier_limits")
         .select(
-            "weekly_tokens, monthly_tokens, advanced_weekly_tokens, advanced_monthly_tokens",
+            "weekly_tokens, monthly_tokens, advanced_weekly_tokens, " +
+                "advanced_monthly_tokens, daily_tokens, advanced_daily_tokens",
         )
         .eq("tier", tier)
         .maybeSingle();
@@ -266,29 +312,54 @@ Deno.serve(async (req) => {
         return jsonError(500, `No tier_limits row for tier="${tier}"`);
     }
 
-    // The weekly window is the quota users actually budget against: a rolling
-    // 7 days, so a heavy session borrows from the days around it instead of
-    // locking the feature out until midnight. Monthly stays purely as a cost
-    // backstop and is not surfaced as a limit users are asked to manage.
-    const weeklyCap =
-        modelClass === "advanced"
-            ? limitsRow.advanced_weekly_tokens
-            : limitsRow.weekly_tokens;
-    const monthlyCap =
-        modelClass === "advanced"
-            ? limitsRow.advanced_monthly_tokens
-            : limitsRow.monthly_tokens;
+    // The weekly window is the quota paid users actually budget against: a
+    // rolling 7 days, so a heavy session borrows from the days around it
+    // instead of locking the feature out until midnight. Monthly stays purely
+    // as a cost backstop and is not surfaced as a limit users are asked to
+    // manage.
+    //
+    // The daily window is the Free tier's allowance and applies only where the
+    // tier row sets a positive one — 0 means the tier has no daily ceiling,
+    // which is every paid tier. (That sentinel differs from the weekly and
+    // monthly caps, where 0 closes the pool; see the tier_limits migration.)
+    // It is checked first so a Free account that has spent today's tokens is
+    // told it gets more tomorrow, rather than being handed the weekly figure
+    // it will never actually reach.
+    const cap = (advanced: unknown, standard: unknown): number =>
+        Number(modelClass === "advanced" ? advanced : standard) || 0;
+
+    const weeklyCap = cap(
+        limitsRow.advanced_weekly_tokens,
+        limitsRow.weekly_tokens,
+    );
+    const monthlyCap = cap(
+        limitsRow.advanced_monthly_tokens,
+        limitsRow.monthly_tokens,
+    );
+    const dailyCap = cap(
+        limitsRow.advanced_daily_tokens,
+        limitsRow.daily_tokens,
+    );
 
     try {
-        const { weekly, monthly } = await getUsageWindows(
+        const { daily, weekly, monthly } = await getUsageWindows(
             admin,
             user.id,
             modelClass,
         );
+        if (dailyCap > 0 && daily.used >= dailyCap) {
+            return jsonError(429, "Daily token limit reached", {
+                scope: "daily",
+                model_class: modelClass,
+                tier,
+                retry_after_seconds: secondsUntilFree(daily, SEC_DAY),
+            });
+        }
         if (weekly.used >= weeklyCap) {
             return jsonError(429, "Weekly token limit reached", {
                 scope: "weekly",
                 model_class: modelClass,
+                tier,
                 retry_after_seconds: secondsUntilFree(weekly, SEC_WEEK),
             });
         }
@@ -296,6 +367,7 @@ Deno.serve(async (req) => {
             return jsonError(429, "Monthly token limit reached", {
                 scope: "monthly",
                 model_class: modelClass,
+                tier,
                 retry_after_seconds: secondsUntilFree(monthly, SEC_MONTH),
             });
         }

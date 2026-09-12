@@ -15,7 +15,7 @@
     import { t } from "$lib/i18n";
     import { get } from "svelte/store";
     import { icons } from "$lib/data/toolbar/toolbar";
-    import { isPro } from "$lib/stores/auth.store";
+    import { canUseAi } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
 
     const editor = getEditor();
@@ -51,7 +51,7 @@
     // a non-empty selection. Textareas don't expose per-character coordinates,
     // so the textarea itself is the anchor.
     function updateAiSelection() {
-        if (!$isPro || !textareaEl) {
+        if (!$canUseAi || !textareaEl) {
             aiSelection = null;
             return;
         }
@@ -292,7 +292,7 @@
             </div>
         </div>
 
-        {#if $isPro && aiSelection}
+        {#if $canUseAi && aiSelection}
             <AiSelectionToolbar
                 selectedText={aiSelection.text}
                 x={aiSelection.x}

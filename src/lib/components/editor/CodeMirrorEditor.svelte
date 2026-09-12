@@ -73,7 +73,7 @@
         codeMirrorHistoryByTab,
         pendingEditorJump,
     } from "$lib/stores/editor.store";
-    import { isPro } from "$lib/stores/auth.store";
+    import { canUseAi } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
     import SpellSuggestionMenu from "./SpellSuggestionMenu.svelte";
     import {
@@ -1476,7 +1476,7 @@
     }
 
     function updateAiSelection() {
-        if (!aiSelectionTools || !view || !$isPro) {
+        if (!aiSelectionTools || !view || !$canUseAi) {
             aiSelection = null;
             return;
         }
@@ -1982,7 +1982,7 @@
     style="--cm-font-size: {$cmFontSize}px"
 ></div>
 
-{#if aiSelectionTools && $isPro && aiSelection}
+{#if aiSelectionTools && $canUseAi && aiSelection}
     <AiSelectionToolbar
         selectedText={aiSelection.text}
         x={aiSelection.x}

@@ -1,7 +1,7 @@
 import { writable, get } from "svelte/store";
 import { openAppWindow } from "$lib/utils/appWindow";
 import { supabase } from "$lib/supabase";
-import { isPro } from "$lib/stores/auth.store";
+import { canUseAdvancedAi } from "$lib/stores/auth.store";
 import {
     listChats,
     loadChat as loadChatMessages,
@@ -24,7 +24,7 @@ export interface ChatMessage {
 }
 
 export interface QuotaBlock {
-    scope: "weekly" | "monthly" | "storage";
+    scope: "daily" | "weekly" | "monthly" | "storage";
     modelClass?: "standard" | "advanced";
     retryAfterSeconds?: number;
     message: string;
@@ -209,9 +209,12 @@ export async function sendMessage(prompt: string): Promise<void> {
         return;
     }
 
-    // Storage cap pre-check.
+    // Storage cap pre-check. A cap of 0 (or a missing one) means "no limit
+    // recorded", the same reading the account panel gives it — not a tier that
+    // may store nothing. Enforcing it literally would refuse the first message
+    // an account ever sent, since `0 >= 0` holds before anything is stored.
     const lim = get(limits);
-    if (lim) {
+    if (lim && lim.storage_bytes > 0) {
         const used = get(storageBytes);
         if (used >= lim.storage_bytes) {
             quotaBlock.set({
@@ -261,8 +264,9 @@ export async function sendMessage(prompt: string): Promise<void> {
             },
             body: JSON.stringify({
                 messages: history,
-                // Advanced model is available to every Pro account.
-                advanced: get(useAdvanced) && get(isPro),
+                // Advanced is Pro/Pro+ only — Free and Starter have no
+                // Advanced quota, so never ask for it on their behalf.
+                advanced: get(useAdvanced) && get(canUseAdvancedAi),
             }),
             signal: abortController.signal,
         });

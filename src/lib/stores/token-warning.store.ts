@@ -1,11 +1,13 @@
 /**
- * Weekly token-budget warnings.
+ * AI token-budget warnings.
  *
- * The AI quota is a rolling 7-day window, which is long enough that a user can
- * spend most of it in one sitting without losing the feature for the rest of
- * the day. The trade-off is that nothing stops them from doing that unawares,
- * so this store watches the weekly window and raises a toast as consumption
- * crosses each threshold.
+ * Which window is watched depends on the tier. The paid tiers budget against a
+ * rolling 7 days, which is long enough that a user can spend most of it in one
+ * sitting without losing the feature for the rest of the day; Free accounts
+ * have a rolling 24h allowance instead. Either way the trade-off is the same —
+ * nothing stops a user spending it unawares — so this store watches whichever
+ * window actually binds and raises a toast as consumption crosses each
+ * threshold.
  *
  * The contract the toast relies on: a threshold fires *once*. Dismissing it
  * records the crossed threshold, and nothing shows again until a higher one is
@@ -17,16 +19,21 @@
 
 import { writable, get } from "svelte/store";
 import { browser } from "$app/environment";
-import { authUser, isPro } from "$lib/stores/auth.store";
+import { authUser, userTier, canUseAdvancedAi } from "$lib/stores/auth.store";
 import { getTokenUsageStats, getTierLimits } from "$lib/stores/chat-storage";
 
-/** Ascending. 100 is the point at which the weekly cap blocks further use. */
+/** Ascending. 100 is the point at which the cap blocks further use. */
 export const WEEKLY_THRESHOLDS = [50, 75, 90, 100] as const;
 
 export type TokenPool = "standard" | "advanced";
 
+/** The rolling window a warning is about — see the module comment. */
+export type TokenWindow = "daily" | "weekly";
+
 export interface TokenWarning {
     pool: TokenPool;
+    /** Which window's cap this is measured against. */
+    window: TokenWindow;
     /** The threshold that was crossed — what the acknowledgement is keyed to. */
     threshold: number;
     /** Actual consumption, which sits at or above `threshold`. */
@@ -88,21 +95,21 @@ function pctOf(used: number, cap: number): number {
 let inFlight: Promise<void> | null = null;
 
 /**
- * Re-read weekly usage and raise a warning if a new threshold has been crossed.
- * Safe to call often — concurrent calls share one round-trip, and a call that
- * finds nothing new leaves the warning on screen alone unless the window has
- * slid back past it.
+ * Re-read usage and raise a warning if a new threshold has been crossed. Safe
+ * to call often — concurrent calls share one round-trip, and a call that finds
+ * nothing new leaves the warning on screen alone unless the window has slid
+ * back past it.
  */
 export async function refreshTokenWarning(): Promise<void> {
     if (inFlight) return inFlight;
     inFlight = (async () => {
         try {
             const user = get(authUser);
-            if (!get(isPro) || !user?.id) {
+            if (!user?.id) {
                 tokenWarning.set(null);
                 return;
             }
-            const tier = (user.app_metadata?.tier as string | undefined) ?? "pro";
+            const tier = get(userTier);
             const [usage, limits] = await Promise.all([
                 getTokenUsageStats(),
                 getTierLimits(tier),
@@ -114,20 +121,35 @@ export async function refreshTokenWarning(): Promise<void> {
             let next: TokenWarning | null = null;
             const crossedNow: Record<TokenPool, number> = { standard: 0, advanced: 0 };
 
-            const pools: { pool: TokenPool; used: number; cap: number; reset: number | null }[] = [
-                {
-                    pool: "standard",
-                    used: usage.standard.weekly.used,
-                    cap: limits.weekly_tokens,
-                    reset: usage.standard.weekly.resetInSeconds,
-                },
-                {
-                    pool: "advanced",
-                    used: usage.advanced.weekly.used,
-                    cap: limits.advanced_weekly_tokens,
-                    reset: usage.advanced.weekly.resetInSeconds,
-                },
-            ];
+            // A tier with a daily ceiling is warned about that one: it is the
+            // cap that will actually stop them, and its weekly figure is set
+            // high enough that it can never bind first. Everyone else budgets
+            // weekly.
+            const window: TokenWindow =
+                limits.daily_tokens > 0 ? "daily" : "weekly";
+            const capFor = (pool: TokenPool): number => {
+                if (pool === "advanced") {
+                    return window === "daily"
+                        ? limits.advanced_daily_tokens
+                        : limits.advanced_weekly_tokens;
+                }
+                return window === "daily"
+                    ? limits.daily_tokens
+                    : limits.weekly_tokens;
+            };
+
+            // Starter and Free have no Advanced allowance, so there is no
+            // second pool to warn them about — and warning on a cap of 0 would
+            // fire at 100% the moment they signed in.
+            const poolNames: TokenPool[] = get(canUseAdvancedAi)
+                ? ["standard", "advanced"]
+                : ["standard"];
+            const pools = poolNames.map((pool) => ({
+                pool,
+                used: usage[pool][window].used,
+                cap: capFor(pool),
+                reset: usage[pool][window].resetInSeconds,
+            }));
 
             for (const { pool, used, cap, reset } of pools) {
                 const pct = pctOf(used, cap);
@@ -151,7 +173,15 @@ export async function refreshTokenWarning(): Promise<void> {
                     crossed > next.threshold ||
                     (crossed === next.threshold && pct > next.pct)
                 ) {
-                    next = { pool, threshold: crossed, pct, used, cap, resetInSeconds: reset };
+                    next = {
+                        pool,
+                        window,
+                        threshold: crossed,
+                        pct,
+                        used,
+                        cap,
+                        resetInSeconds: reset,
+                    };
                 }
             }
 

@@ -39,7 +39,7 @@
         multiSurahWordByWordMap,
     } from "$lib/stores/translation.store";
     import { openFolderPath, tabs } from "$lib/stores/tabs.store";
-    import { isPro } from "$lib/stores/auth.store";
+    import { canUseAi } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
     import { t } from "$lib/i18n";
 
@@ -78,7 +78,7 @@
     }
 
     function updateReplAiSelection() {
-        if (!$isPro || !replOutputEl) {
+        if (!$canUseAi || !replOutputEl) {
             replAiSelection = null;
             return;
         }
@@ -1473,7 +1473,7 @@
             </div>
     </div>
 
-    {#if $isPro && replAiSelection}
+    {#if $canUseAi && replAiSelection}
         <AiSelectionToolbar
             selectedText={replAiSelection.text}
             x={replAiSelection.x}

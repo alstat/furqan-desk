@@ -2,7 +2,13 @@
     import { onDestroy, onMount } from "svelte";
     import Icon from "@iconify/svelte";
     import { supabase } from "$lib/supabase";
-    import { authUser, isPro } from "$lib/stores/auth.store";
+    import {
+        authUser,
+        isPro,
+        isProPlus,
+        userTier,
+        canUseAdvancedAi,
+    } from "$lib/stores/auth.store";
     import { t } from "$lib/i18n";
     import { openUrl } from "@tauri-apps/plugin-opener";
     import PricingTiers from "./PricingTiers.svelte";
@@ -18,13 +24,6 @@
     );
     let email = $derived($authUser?.email ?? "");
 
-    // The tier string lives in the JWT's app_metadata ("pro" | "pro_plus").
-    // isPro covers both paid tiers; isProPlus narrows to the top tier so the
-    // badge can render a distinct Pro+ style.
-    let isProPlus = $derived(
-        $isPro && $authUser?.app_metadata?.tier === "pro_plus",
-    );
-
     let initials = $derived(
         displayName
             .split(" ")
@@ -38,15 +37,25 @@
     let limits = $state<TierLimits | null>(null);
     let loadingUsage = $state(false);
 
-    // Token-usage sections. Every Pro account gets an Advanced section — both
-    // tiers use the Advanced model across the app, Pro+ just gets its own
-    // (larger) quota and model config.
-    //
-    // Only the weekly window is shown. It is the one quota that gates the
-    // feature, and a rolling 7 days is long enough that a heavy session no
-    // longer costs the user the rest of their day.
+    // Which rolling window this account budgets against. Free has a daily
+    // allowance; the paid tiers leave daily_tokens null and manage a rolling
+    // 7 days, which is long enough that a heavy session no longer costs them
+    // the rest of their day. Only the binding window is shown — the monthly
+    // backstop is a cost control, not a limit users are asked to manage.
+    let budgetWindow = $derived(
+        limits && limits.daily_tokens > 0
+            ? ("daily" as const)
+            : ("weekly" as const),
+    );
+
+    // Token-usage sections. The Advanced section only appears for the tiers
+    // that have an Advanced allowance to spend — Free and Starter are
+    // Standard-only, so showing them a 0 / 0 bar would just read as broken.
     let usageSections = $derived.by(() => {
         if (!usage || !limits) return [];
+        const win = budgetWindow;
+        const rowLabelKey =
+            win === "daily" ? "account.usage.daily" : "account.usage.weekly";
         const sections: {
             heading: string;
             sub: string;
@@ -58,18 +67,36 @@
                 sub: $t("account.usage.section_standard_sub"),
                 note: null,
                 rows: [
-                    { label: $t("account.usage.weekly"), used: usage.standard.weekly.used, cap: limits.weekly_tokens, reset: usage.standard.weekly.resetInSeconds },
+                    {
+                        label: $t(rowLabelKey),
+                        used: usage.standard[win].used,
+                        cap:
+                            win === "daily"
+                                ? limits.daily_tokens
+                                : limits.weekly_tokens,
+                        reset: usage.standard[win].resetInSeconds,
+                    },
                 ],
             },
         ];
-        sections.push({
-            heading: $t("account.usage.section_advanced"),
-            sub: $t("account.usage.section_advanced_sub"),
-            note: null,
-            rows: [
-                { label: $t("account.usage.weekly"), used: usage.advanced.weekly.used, cap: limits.advanced_weekly_tokens, reset: usage.advanced.weekly.resetInSeconds },
-            ],
-        });
+        if ($canUseAdvancedAi) {
+            sections.push({
+                heading: $t("account.usage.section_advanced"),
+                sub: $t("account.usage.section_advanced_sub"),
+                note: null,
+                rows: [
+                    {
+                        label: $t(rowLabelKey),
+                        used: usage.advanced[win].used,
+                        cap:
+                            win === "daily"
+                                ? limits.advanced_daily_tokens
+                                : limits.advanced_weekly_tokens,
+                        reset: usage.advanced[win].resetInSeconds,
+                    },
+                ],
+            });
+        }
         return sections;
     });
     // Tick increments every 30s so the relative countdowns recompute without
@@ -78,14 +105,14 @@
     let tickHandle: ReturnType<typeof setInterval> | null = null;
 
     $effect(() => {
-        if (!$isPro || !$authUser?.id) {
+        // Every signed-in account has a quota worth showing now, Free included
+        // — its daily allowance is the whole reason to look at this panel.
+        if (!$authUser?.id) {
             usage = null;
             limits = null;
             return;
         }
-        const tier =
-            ($authUser.app_metadata?.tier as string | undefined) ?? "pro";
-        void refreshUsage(tier);
+        void refreshUsage($userTier);
 
         if (tickHandle === null) {
             tickHandle = setInterval(() => (tick += 1), 30_000);
@@ -134,8 +161,7 @@
         const { data } = await supabase.auth.refreshSession();
         const tier =
             (data.user?.app_metadata?.tier as string | undefined) ??
-            ($authUser?.app_metadata?.tier as string | undefined) ??
-            "pro";
+            $userTier;
         await refreshUsage(tier);
     }
 
@@ -206,7 +232,7 @@
         </div>
         {#if $isPro}
             <div class="ml-auto flex shrink-0 items-center gap-2">
-                {#if isProPlus}
+                {#if $isProPlus}
                     <span
                         class="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-linear-to-r from-amber-500 via-brand-gold-500 to-amber-600 px-3 py-1 text-[0.6875rem] font-extrabold uppercase tracking-wide text-gray-100 shadow-sm shadow-amber-500/35 ring-1 ring-inset ring-white/20 dark:border-black/20 dark:from-[#f0d9a8] dark:via-[#e5c890] dark:to-[#d4b57f] dark:text-[#292c3c] dark:shadow-black/30 dark:ring-black/10"
                     >
@@ -221,7 +247,7 @@
                             icon="solar:crown-star-bold-duotone"
                             width="0.85rem"
                         />
-                        {$t("billing.tier.pro.name")}
+                        {$t(`billing.tier.${$userTier}.name`)}
                     </span>
                 {/if}
                 <button onclick={handleManage} class={actionBtn}>
@@ -241,7 +267,7 @@
         {/if}
     </div>
 
-    {#if $isPro}
+    {#if $authUser}
         <div class="border-t border-brand-sand-200 dark:border-[#414559]"></div>
 
         <!-- Token usage panel -->
@@ -363,7 +389,12 @@
                 {/each}
             {/if}
         </div>
-    {:else}
+    {/if}
+
+    <!-- Somewhere left to go: a Pro+ subscriber is shown nothing to buy, so
+         the cards are hidden rather than rendering a wall of "current plan". -->
+    {#if !$isProPlus}
+        <div class="border-t border-brand-sand-200 dark:border-[#414559]"></div>
         <PricingTiers />
     {/if}
 

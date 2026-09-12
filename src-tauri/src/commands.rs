@@ -9,6 +9,81 @@ use std::sync::{
 use tauri::{AppHandle, Emitter, Manager, State};
 use tokio::sync::Semaphore;
 
+// ── Chat encryption key vault ─────────────────────────────────────────────────
+/// The AI chat's encryption key, held for the lifetime of the process.
+///
+/// The key is derived from a passphrase the user types, and the chat's history
+/// is end-to-end encrypted with it — so where it is cached decides how often
+/// they are asked for the passphrase again.
+///
+/// It used to live in `sessionStorage`. That is scoped to one webview, and the
+/// AI chat opens in an OS window of its own, so the chat window always started
+/// with an empty cache and asked for the passphrase every single time it was
+/// opened — even though the app had already been unlocked.
+///
+/// Here instead: one copy, in the Rust process, readable by every window. That
+/// gives the behaviour the passphrase prompt implies — unlock once per app
+/// launch — while keeping the property that makes it safe to hold at all: it is
+/// only ever in memory, never written to disk, so quitting the app genuinely
+/// discards it. `localStorage` would have solved the window-sharing problem and
+/// broken that one.
+pub struct ChatKeyState {
+    inner: Mutex<Option<CachedChatKey>>,
+}
+
+#[derive(Clone, Serialize)]
+pub struct CachedChatKey {
+    /// Base64 of the raw AES key, as exported by the web crypto layer.
+    pub key: String,
+    pub salt: String,
+    /// Whose key this is. A cached key is never handed to a different account,
+    /// so signing out and back in as someone else cannot reach it.
+    #[serde(skip)]
+    pub user_id: String,
+}
+
+impl ChatKeyState {
+    pub fn new() -> Self {
+        Self {
+            inner: Mutex::new(None),
+        }
+    }
+}
+
+impl Default for ChatKeyState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// The cached key for `user_id`, or None when nothing is cached for them.
+#[tauri::command]
+pub fn get_chat_key(state: State<ChatKeyState>, user_id: String) -> Option<CachedChatKey> {
+    let guard = state.inner.lock().ok()?;
+    guard
+        .as_ref()
+        .filter(|cached| cached.user_id == user_id)
+        .cloned()
+}
+
+#[tauri::command]
+pub fn set_chat_key(state: State<ChatKeyState>, key: String, salt: String, user_id: String) {
+    if let Ok(mut guard) = state.inner.lock() {
+        *guard = Some(CachedChatKey {
+            key,
+            salt,
+            user_id,
+        });
+    }
+}
+
+#[tauri::command]
+pub fn clear_chat_key(state: State<ChatKeyState>) {
+    if let Ok(mut guard) = state.inner.lock() {
+        *guard = None;
+    }
+}
+
 // ── Download state ────────────────────────────────────────────────────────────
 pub struct DownloadState {
     pub cancel: Arc<AtomicBool>,

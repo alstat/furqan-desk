@@ -48,7 +48,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     import { animationsEnabled } from '$lib/stores/animations.store';
     import { locale, LOCALE_NAMES, t, type Locale } from '$lib/i18n';
     import { aiTextDefaultModel } from '$lib/stores/ai-text-transform.store';
-    import { isPro } from '$lib/stores/auth.store';
+    import { authUser, canUseAdvancedAi } from '$lib/stores/auth.store';
 
     interface Props {
         open: boolean;
@@ -59,10 +59,10 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
 
     let showShortcuts = $state(false);
 
-    // The Advanced AI model is available to every Pro account. Free accounts
-    // never see this section at all, so the effective model only needs to
-    // fall back to 'standard' when $isPro is false.
-    let effTextModel = $derived($isPro ? $aiTextDefaultModel : 'standard');
+    // The Advanced AI model is Pro/Pro+ only. Free and Starter accounts never
+    // see this section at all, so the effective model only needs to fall back
+    // to 'standard' when they are not eligible.
+    let effTextModel = $derived($canUseAdvancedAi ? $aiTextDefaultModel : 'standard');
 
     // Mirror the dialog's open state into the store so the background
     // install/update toast can hide itself while Settings is showing progress.
@@ -437,10 +437,11 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
             </div>
         </section>
 
-        <!-- ═══════════════ GROUP: AI Tools (Pro/Pro+ only — these features
-             are unavailable on free accounts, so the whole group is hidden
-             there too) ═══════════════ -->
-        {#if $isPro}
+        <!-- ═══════════════ GROUP: AI Tools (Pro/Pro+ only — the one setting
+             in here picks between the Standard and Advanced models, and Free
+             and Starter accounts have no Advanced allowance to pick, so the
+             whole group is hidden for them) ═══════════════ -->
+        {#if $canUseAdvancedAi}
         <section class="py-3 border-t border-slate-100 dark:border-[#414559]">
             <div class="flex items-center gap-2 pb-2.5 mb-3 border-b border-brand-gold-200/60 dark:border-[#414559]">
                 <Icon icon="solar:magic-stick-3-bold-duotone" class="text-brand-gold-400" width="1rem" />
@@ -874,7 +875,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 <div class="flex items-start gap-2 rounded-lg bg-brand-sand-50 dark:bg-[#292c3c] border border-brand-sand-100 dark:border-[#414559] px-3 py-2.5">
                     <Icon icon="solar:shield-check-bold-duotone" class="text-brand-gold-400 shrink-0 mt-0.5" width="0.9rem" />
                     <p class="text-xs text-brand-charcoal-500 dark:text-[#838ba7] leading-relaxed">
-                        {$isPro ? $t('settings.privacy.text_pro') : $t('settings.privacy.text')}
+                        {$authUser ? $t('settings.privacy.text_account') : $t('settings.privacy.text')}
                     </p>
                 </div>
             </div>

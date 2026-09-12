@@ -24,7 +24,7 @@
         refreshLimits,
     } from "$lib/stores/ai-chat.store";
     import { keyState, loadKeyState, lock } from "$lib/stores/chat-key.store";
-    import { authUser, isPro } from "$lib/stores/auth.store";
+    import { authUser, userTier, canUseAdvancedAi } from "$lib/stores/auth.store";
     import { renderMarkdown } from "$lib/utils/markdown";
     import { copyToClipboard } from "$lib/utils/clipboard";
     import "katex/dist/katex.min.css";
@@ -258,8 +258,7 @@
         if ($keyState !== "unlocked") return;
         const userId = $authUser?.id;
         if (!userId) return;
-        const tier =
-            ($authUser?.app_metadata?.tier as string | undefined) ?? "pro";
+        const tier = $userTier;
         (async () => {
             await refreshLimits(tier);
             await refreshChats(userId);
@@ -670,9 +669,10 @@
                         class="flex-none bg-brand-sand-50 dark:bg-[#232634] border-t border-brand-sand-200 dark:border-[#414559] px-3 pt-2 pb-3 flex flex-col gap-2"
                         style:height="{inputH}px"
                     >
-                        <!-- Model class toggle — the Advanced model is available
-                             to every Pro account. -->
-                        {#if $isPro}
+                        <!-- Model class toggle — Pro and Pro+ only. Free and
+                             Starter have no Advanced allowance, so there is
+                             nothing for them to switch to. -->
+                        {#if $canUseAdvancedAi}
                         <div class="shrink-0 flex items-center gap-2">
                             <button
                                 onclick={() => ($useAdvanced = !$useAdvanced)}

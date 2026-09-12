@@ -3,9 +3,10 @@ import { readSseText, safeReadJson } from "$lib/stores/ai-text-transform.store";
 import { refreshTokenWarning } from "$lib/stores/token-warning.store";
 
 // "Take-home message" — a personal-growth reflection generated from the ayahs
-// currently displayed in the Morphology view. Pro/Pro+ only (gated by the
-// caller via `isPro`). Streams a structured markdown answer with a fixed set
-// of sections so the dialog can render it as it arrives.
+// currently displayed in the Morphology view. Open to every signed-in account
+// (gated by the caller via `canUseAi`); Free spends its daily allowance on it
+// like any other AI call. Streams a structured markdown answer with a fixed
+// set of sections so the dialog can render it as it arrives.
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-completion`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;

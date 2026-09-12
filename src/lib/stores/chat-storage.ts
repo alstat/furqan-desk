@@ -17,13 +17,25 @@ export interface PersistedMessage {
 
 export interface TierLimits {
     tier: string;
-    /** The quota users budget against: a rolling 7-day window. */
+    /** The quota paid users budget against: a rolling 7-day window. */
     weekly_tokens: number;
     /** Cost backstop only — not surfaced as a limit users manage. */
     monthly_tokens: number;
     storage_bytes: number;
     advanced_weekly_tokens: number;
     advanced_monthly_tokens: number;
+    /**
+     * The Free tier's allowance: a rolling 24h window. 0 on every tier that
+     * has no daily ceiling — which is all the paid ones, since they budget
+     * weekly instead. Where it is positive, it is the cap that actually binds.
+     *
+     * Note the sentinel differs from the weekly/monthly caps, where 0 means a
+     * closed pool rather than an absent limit: a tier with no daily cap still
+     * has a real weekly one, so the two cases have to be distinguishable here
+     * and must not be there.
+     */
+    daily_tokens: number;
+    advanced_daily_tokens: number;
 }
 
 export interface UsageWindow {
@@ -34,6 +46,7 @@ export interface UsageWindow {
 }
 
 export interface UsageByClass {
+    daily: UsageWindow;
     weekly: UsageWindow;
     monthly: UsageWindow;
 }
@@ -56,7 +69,8 @@ interface UsageWindowRow {
 }
 
 /**
- * Weekly and monthly token usage for the signed-in user, per model class.
+ * Daily, weekly and monthly token usage for the signed-in user, per model
+ * class.
  *
  * Postgres does the summing — see the token_usage_windows migration. This used
  * to pull every row from the last 30 days and add them up here, which is a read
@@ -72,18 +86,25 @@ export async function getTokenUsageStats(): Promise<TokenUsageStats> {
 
     const now = Date.now();
     const empty = (): UsageWindow => ({ used: 0, resetInSeconds: null });
+    const emptyClass = (): UsageByClass => ({
+        daily: empty(),
+        weekly: empty(),
+        monthly: empty(),
+    });
     const stats: TokenUsageStats = {
-        standard: { weekly: empty(), monthly: empty() },
-        advanced: { weekly: empty(), monthly: empty() },
+        standard: emptyClass(),
+        advanced: emptyClass(),
     };
 
     for (const row of (data ?? []) as UsageWindowRow[]) {
         const window =
-            row.window_seconds === SEC_WEEK
-                ? "weekly"
-                : row.window_seconds === SEC_MONTH
-                  ? "monthly"
-                  : null;
+            row.window_seconds === SEC_DAY
+                ? "daily"
+                : row.window_seconds === SEC_WEEK
+                  ? "weekly"
+                  : row.window_seconds === SEC_MONTH
+                    ? "monthly"
+                    : null;
         if (!window || !stats[row.pool]) continue;
 
         // Rolling windows free tokens gradually: this is when the oldest spend

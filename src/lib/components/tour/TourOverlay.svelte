@@ -34,7 +34,7 @@
             targetId: "tour-takehome-button",
             title: "Take-Home Message",
             description:
-                "The lightbulb on the reader's right edge turns the ayahs on screen into a personal-growth reflection: key lessons, practical steps, reflection prompts, daily-life applications, and a short take-home message — each point citing the ayahs it draws on. A Pro feature — sign in to unlock it.",
+                "The lightbulb on the reader's right edge turns the ayahs on screen into a personal-growth reflection: key lessons, practical steps, reflection prompts, daily-life applications, and a short take-home message — each point citing the ayahs it draws on. Sign in to use it — free accounts get a daily AI allowance.",
             position: "left" as const,
         },
         {
@@ -69,7 +69,7 @@
             targetId: "tour-ai-button",
             title: "AI Assistant",
             description:
-                "Chat with a Quran-aware AI assistant for tafsir, translation, and research questions — switch between Standard and Advanced models. The same intelligence powers the inline tools in your notes and the reader. A Pro feature — sign in to unlock it.",
+                "Chat with a Quran-aware AI assistant for tafsir, translation, and research questions. The same intelligence powers the inline tools in your notes and the reader. Sign in to use it — free accounts get a daily AI allowance, and Pro adds the Advanced model.",
             position: "left" as const,
         },
         {

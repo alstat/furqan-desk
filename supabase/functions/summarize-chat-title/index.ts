@@ -92,9 +92,11 @@ Deno.serve(async (req) => {
     } = await userClient.auth.getUser();
     if (userError || !user) return jsonError(401, "Invalid or expired token");
 
-    if (user.app_metadata?.is_pro !== true) {
-        return jsonError(403, "AI Chat is a Pro feature");
-    }
+    // No tier check: the AI chat is open to every signed-in account now, Free
+    // included, and titling a chat the user is already allowed to have costs a
+    // couple of dozen tokens on a nano model. The quota that matters is
+    // enforced in chat-completion, which is what produced the chat in the
+    // first place.
 
     let body: RequestBody;
     try {

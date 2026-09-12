@@ -9,7 +9,7 @@
     import { headerBottom } from '$lib/stores/header.store';
     import DialogPanelHeader from "$lib/components/shared/DialogPanelHeader.svelte";
     import { t } from "$lib/i18n";
-    import { isPro } from "$lib/stores/auth.store";
+    import { canUseAi } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
 
     const activeEditor = getActiveEditor();
@@ -37,7 +37,7 @@
     // a non-empty selection. Textareas don't expose per-character coordinates,
     // so the textarea itself is the anchor.
     function updateAiSelection() {
-        if (!$isPro || !textareaEl) {
+        if (!$canUseAi || !textareaEl) {
             aiSelection = null;
             return;
         }
@@ -251,7 +251,7 @@
             </button>
         </div>
 
-        {#if $isPro && aiSelection}
+        {#if $canUseAi && aiSelection}
             <AiSelectionToolbar
                 selectedText={aiSelection.text}
                 x={aiSelection.x}

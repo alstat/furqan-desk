@@ -13,7 +13,7 @@
     import { untrack } from "svelte";
     import { fly } from "svelte/transition";
     import { get } from "svelte/store";
-    import { isPro } from "$lib/stores/auth.store";
+    import { canUseAi, canUseAdvancedAi } from "$lib/stores/auth.store";
     import { PANEL_GAP } from "$lib/utils/anchoredPanel";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import { renderMarkdown } from "$lib/utils/markdown";
@@ -57,8 +57,18 @@
     let sourceLabel = $state("");
     // Model used for generation, switchable from the dropdown on the
     // Generate button. Defaults to Advanced (the Take-Home Message's
-    // historical default for Pro and Pro+ alike).
-    let useAdvanced = $state(true);
+    // historical default) wherever Advanced exists — Free and Starter have no
+    // Advanced allowance, so they generate on Standard and never see the
+    // dropdown. $derived would fight the dropdown, so the eligibility is read
+    // once here and the request below clamps it too.
+    let useAdvanced = $state(false);
+    // Whether the exhausted quota was the Advanced one, which is the only case
+    // where "switch to Standard" is advice the reader can act on — Free and
+    // Starter are already there.
+    let quotaOnAdvanced = $derived(quotaExceeded && useAdvanced && $canUseAdvancedAi);
+    $effect(() => {
+        useAdvanced = $canUseAdvancedAi;
+    });
     let modelMenuOpen = $state(false);
     // Signature of the ayahs the cached `result` was generated for, so we can
     // tell when the displayed ayahs have since changed.
@@ -381,7 +391,7 @@
             const text = await fetchTakeHomeMessage({
                 context: ctx.body,
                 locale: get(locale),
-                advanced: useAdvanced,
+                advanced: useAdvanced && $canUseAdvancedAi,
                 signal: ac.signal,
                 onPartial: (partial) => {
                     if (!ac.signal.aborted) result = partial;
@@ -876,8 +886,9 @@
                         </span>
                     {/if}
                 </div>
-            {:else if !$isPro}
-                <!-- Pro upsell -->
+            {:else if !$canUseAi}
+                <!-- Sign-in wall: the AI itself is open to every account, but
+                     the quota is per-account, so there has to be one. -->
                 <div class="flex flex-col items-center gap-3 py-8 text-center">
                     <div
                         class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-gold-100 dark:bg-[#414559]"
@@ -891,12 +902,12 @@
                     <p
                         class="text-sm font-semibold text-brand-charcoal-900 dark:text-[#c6d0f5]"
                     >
-                        {$t("takehome.pro_title")}
+                        {$t("takehome.signin_title")}
                     </p>
                     <p
                         class="max-w-xs text-xs leading-relaxed text-brand-charcoal-400 dark:text-[#838ba7]"
                     >
-                        {$t("takehome.pro_desc")}
+                        {$t("takehome.signin_desc")}
                     </p>
                 </div>
             {:else if error || quotaExceeded}
@@ -916,8 +927,10 @@
                             : 'text-red-500 dark:text-red-400'}"
                     >
                         {quotaExceeded
-                            ? $t("takehome.quota_advanced")
-                            : error || $t("takehome.quota_advanced")}
+                            ? quotaOnAdvanced
+                                ? $t("takehome.quota_advanced")
+                                : $t("takehome.quota_standard")
+                            : error || $t("takehome.quota_standard")}
                     </p>
                     <div class="flex items-center gap-2">
                         <button
@@ -1027,7 +1040,7 @@
         </div>
 
         <!-- Footer -->
-        {#if $isPro}
+        {#if $canUseAi}
             {#if view === "history"}
                 <div
                     class="flex shrink-0 items-center justify-between gap-2 border-t border-brand-sand-200 px-5 py-3 dark:border-[#414559]"
@@ -1101,7 +1114,9 @@
                             <button
                                 onclick={generate}
                                 disabled={loading}
-                                class="flex h-8 cursor-pointer items-center gap-1.5 rounded-l-full border-r border-brand-gold-600/30 bg-brand-gold-400 pl-3.5 pr-3 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-black/20 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100"
+                                class="flex h-8 cursor-pointer items-center gap-1.5 bg-brand-gold-400 pl-3.5 text-[0.6875rem] font-semibold text-gray-100 transition-colors hover:bg-brand-gold-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-gold-500 dark:text-gray-800 dark:hover:bg-brand-gold-400 dark:hover:text-gray-100 {$canUseAdvancedAi
+                                    ? 'rounded-l-full border-r border-brand-gold-600/30 pr-3 dark:border-black/20'
+                                    : 'rounded-full pr-3.5'}"
                             >
                                 {#if result && !isStale}
                                     <Icon icon="solar:refresh-bold" width="0.8rem" />
@@ -1114,6 +1129,7 @@
                                     {$t("takehome.generate")}
                                 {/if}
                             </button>
+                            {#if $canUseAdvancedAi}
                             <button
                                 onclick={() => (modelMenuOpen = !modelMenuOpen)}
                                 disabled={loading}
@@ -1189,6 +1205,7 @@
                                         {/if}
                                     </button>
                                 </div>
+                            {/if}
                             {/if}
                         </div>
                     </div>

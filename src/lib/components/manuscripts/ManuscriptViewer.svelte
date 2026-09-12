@@ -8,7 +8,7 @@
     import { writeHtml } from "@tauri-apps/plugin-clipboard-manager";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import WindowControls from "$lib/components/shared/WindowControls.svelte";
-    import { isPro } from "$lib/stores/auth.store";
+    import { canUseAi } from "$lib/stores/auth.store";
     import { askAiAboutSelection } from "$lib/stores/ai-chat.store";
     import { t } from "$lib/i18n";
 
@@ -1410,7 +1410,7 @@
                             {$t("manuscript.reference_prompt")}
                         </span>
                     {/if}
-                    {#if $isPro && selectedManuscript && $manuscriptAyah}
+                    {#if $canUseAi && selectedManuscript && $manuscriptAyah}
                         <button
                             type="button"
                             onclick={openAiPrompt}

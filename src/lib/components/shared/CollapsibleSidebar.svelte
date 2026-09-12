@@ -38,7 +38,7 @@
     import { actionBtnStyle } from "$lib/data/toolbar/toolbar";
     import { t } from "$lib/i18n";
     import { zenMode, appDarkMode } from "$lib/stores/editor.store";
-    import { authUser, isPro } from "$lib/stores/auth.store";
+    import { authUser } from "$lib/stores/auth.store";
     import { aiChatDialogOpen, openAiChat } from "$lib/stores/ai-chat.store";
     import { openUrl } from "@tauri-apps/plugin-opener";
 
@@ -50,7 +50,10 @@
     let referencesBtnEl = $state<HTMLButtonElement | null>(null);
 
     function handleAiClick() {
-        if (!$authUser || !$isPro) {
+        // Signing in is the whole requirement — Free accounts get the chat on
+        // a daily token allowance, so the account panel is only for the users
+        // who have no account at all.
+        if (!$authUser) {
             accountOpen = true;
             return;
         }

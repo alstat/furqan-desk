@@ -197,19 +197,19 @@
         </p>
     {/if}
 
-    <!-- Pro callout -->
+    <!-- AI callout: the AI is what an account unlocks, and Free gets it -->
     <div
         class="rounded-2xl border border-brand-gold-200 dark:border-[#c4a26e]/40 bg-brand-gold-50 dark:bg-[#e5c890]/20 px-4 py-3 flex flex-col gap-1"
     >
         <p
             class="text-[0.6875rem] font-semibold text-brand-gold-600 dark:text-brand-gold-400"
         >
-            {$t("auth.pro_callout_title")}
+            {$t("auth.ai_callout_title")}
         </p>
         <p
             class="text-[0.6875rem] text-brand-charcoal-400 dark:text-[#8087a2] leading-relaxed"
         >
-            {$t("auth.pro_callout_desc")}
+            {$t("auth.ai_callout_desc")}
         </p>
     </div>
 </div>

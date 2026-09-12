@@ -22,7 +22,7 @@
     import Icon from "@iconify/svelte";
     import { icons } from "$lib/data/toolbar/toolbar";
     import { t } from "$lib/i18n";
-    import { isPro } from "$lib/stores/auth.store";
+    import { canUseAi } from "$lib/stores/auth.store";
     import AiSelectionToolbar from "$lib/components/shared/AiSelectionToolbar.svelte";
 
     interface Props {
@@ -87,7 +87,7 @@
     // a non-empty selection. Textareas don't expose per-character coordinates,
     // so the editor card itself is the anchor.
     function updateAiSelection() {
-        if (!$isPro || !textareaEl) {
+        if (!$canUseAi || !textareaEl) {
             aiSelection = null;
             return;
         }
@@ -537,7 +537,7 @@
             ></span>
         </span>
     </span>
-    {#if $isPro && aiSelection}
+    {#if $canUseAi && aiSelection}
         <AiSelectionToolbar
             selectedText={aiSelection.text}
             x={aiSelection.x}

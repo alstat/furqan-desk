@@ -1,15 +1,16 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
-    import { authUser, isPro } from "$lib/stores/auth.store";
+    import { authUser, userTier, PAID_TIERS, type Tier } from "$lib/stores/auth.store";
     import { supabase } from "$lib/supabase";
     import { t } from "$lib/i18n";
     import { openUrl } from "@tauri-apps/plugin-opener";
 
-    type PaidPlan = "pro" | "pro_plus";
+    type PaidPlan = (typeof PAID_TIERS)[number];
+
     let busy = $state<PaidPlan | null>(null);
     let error = $state("");
 
-    async function handleUpgrade(plan: PaidPlan = "pro") {
+    async function handleUpgrade(plan: PaidPlan) {
         error = "";
         const user = $authUser;
         if (!user) return;
@@ -28,7 +29,8 @@
                 access_token: data.session.access_token,
                 refresh_token: data.session.refresh_token,
             });
-            const query = plan === "pro_plus" ? "?plan=pro_plus" : "";
+            // "pro" is the website's default, so only the others need naming.
+            const query = plan === "pro" ? "" : `?plan=${plan}`;
             await openUrl(`${base}/upgrade${query}#${params.toString()}`);
         } catch (e) {
             console.error(e);
@@ -41,6 +43,8 @@
     const cardBase =
         "flex flex-col gap-2.5 rounded-2xl border px-4 py-3";
     const cardFree = "border-brand-sand-200 dark:border-[#414559] bg-white dark:bg-[#303446]";
+    const cardStarter =
+        "border-brand-gold-200 dark:border-[#c4a26e]/40 bg-brand-gold-50/60 dark:bg-[#e5c890]/10";
     const cardPro =
         "border-brand-gold-300 dark:border-[#c4a26e]/60 bg-brand-gold-50 dark:bg-[#e5c890]/20";
     const cardProPlus =
@@ -59,6 +63,35 @@
         "rounded-full border border-brand-sand-200 dark:border-[#414559] px-2 py-0.5 text-[0.5625rem] font-semibold uppercase tracking-wide text-brand-charcoal-300 dark:text-[#626880]";
     const proBadge =
         "rounded-full bg-brand-gold-400 px-2 py-0.5 text-[0.5625rem] font-bold uppercase tracking-wide text-gray-100";
+
+    /**
+     * Cheapest first, which is both the reading order and the ranking: a plan
+     * is offered as an upgrade only when it sits above the one in hand, so a
+     * Starter subscriber is shown Pro and Pro+ but not the tier they already
+     * pay for, and a Pro+ subscriber is shown nothing to buy.
+     */
+    const ORDER: Tier[] = ["free", "starter", "pro", "pro_plus"];
+
+    interface PlanCard {
+        id: Tier;
+        card: string;
+        /** Feature bullets, by i18n key suffix. */
+        features: number[];
+        crown?: boolean;
+    }
+
+    const PLANS: PlanCard[] = [
+        { id: "free", card: cardFree, features: [1, 2, 3, 4, 5, 6] },
+        { id: "starter", card: cardStarter, features: [1, 2, 3, 4] },
+        { id: "pro", card: cardPro, features: [1, 2, 3, 4, 5] },
+        { id: "pro_plus", card: cardProPlus, features: [1, 2, 3], crown: true },
+    ];
+
+    let currentRank = $derived(Math.max(0, ORDER.indexOf($userTier)));
+
+    function isUpgrade(id: Tier): boolean {
+        return id !== "free" && ORDER.indexOf(id) > currentRank;
+    }
 </script>
 
 <div class="flex flex-col gap-3">
@@ -66,91 +99,57 @@
         {$t("billing.heading")}
     </p>
 
-    <!-- Free -->
-    <div class="{cardBase} {cardFree}">
-        <div class="flex items-center gap-2">
-            <span class="text-[0.75rem] font-semibold text-brand-charcoal-600 dark:text-[#c6d0f5]">
-                {$t("billing.tier.free.name")}
-            </span>
-            <span class="text-[0.6875rem] font-semibold text-brand-charcoal-400 dark:text-[#8087a2]">
-                · {$t("billing.tier.free.price")}
-            </span>
-            {#if !$isPro}
-                <span class="ml-auto {currentBadge}">{$t("billing.current_plan")}</span>
+    {#each PLANS as plan (plan.id)}
+        <div class="{cardBase} {plan.card}">
+            <div class="flex items-center gap-2">
+                {#if plan.crown}
+                    <Icon icon="solar:crown-star-bold-duotone" width="0.95rem" class="text-brand-gold-500 dark:text-brand-gold-400 shrink-0" />
+                {/if}
+                <span
+                    class="text-[0.75rem] font-semibold {plan.id === 'free'
+                        ? 'text-brand-charcoal-600 dark:text-[#c6d0f5]'
+                        : 'text-brand-gold-600 dark:text-brand-gold-400'}"
+                >
+                    {$t(`billing.tier.${plan.id}.name`)}
+                </span>
+                <span
+                    class="text-[0.6875rem] font-semibold {plan.id === 'free'
+                        ? 'text-brand-charcoal-400 dark:text-[#8087a2]'
+                        : 'text-brand-charcoal-500 dark:text-[#c6d0f5]'}"
+                >
+                    · {$t(`billing.tier.${plan.id}.price`)}
+                </span>
+                {#if $userTier === plan.id}
+                    <span class="ml-auto {plan.id === 'free' ? currentBadge : proBadge}">
+                        {$t("billing.current_plan")}
+                    </span>
+                {/if}
+            </div>
+            <p class="text-[0.6875rem] text-brand-charcoal-400 dark:text-[#8087a2]">
+                {$t(`billing.tier.${plan.id}.tagline`)}
+            </p>
+            <ul class="flex flex-col gap-1">
+                {#each plan.features as n (n)}
+                    <li class={featureRow}>
+                        <Icon icon="solar:check-circle-bold-duotone" width="0.9rem" class={checkIcon} />
+                        {$t(`billing.tier.${plan.id}.feature${n}`)}
+                    </li>
+                {/each}
+            </ul>
+            {#if isUpgrade(plan.id)}
+                <button
+                    onclick={() => handleUpgrade(plan.id as PaidPlan)}
+                    disabled={busy !== null}
+                    class={ctaPrimary}
+                >
+                    {#if busy === plan.id}
+                        <Icon icon="svg-spinners:ring-resize" width="0.85rem" />
+                    {/if}
+                    {$t("billing.upgrade")}
+                </button>
             {/if}
         </div>
-        <p class="text-[0.6875rem] text-brand-charcoal-400 dark:text-[#8087a2]">
-            {$t("billing.tier.free.tagline")}
-        </p>
-        <ul class="flex flex-col gap-1">
-            <li class={featureRow}><Icon icon="solar:check-circle-bold-duotone" width="0.9rem" class={checkIcon} />{$t("billing.tier.free.feature1")}</li>
-            <li class={featureRow}><Icon icon="solar:check-circle-bold-duotone" width="0.9rem" class={checkIcon} />{$t("billing.tier.free.feature2")}</li>
-            <li class={featureRow}><Icon icon="solar:check-circle-bold-duotone" width="0.9rem" class={checkIcon} />{$t("billing.tier.free.feature3")}</li>
-            <li class={featureRow}><Icon icon="solar:check-circle-bold-duotone" width="0.9rem" class={checkIcon} />{$t("billing.tier.free.feature4")}</li>
-            <li class={featureRow}><Icon icon="solar:check-circle-bold-duotone" width="0.9rem" class={checkIcon} />{$t("billing.tier.free.feature5")}</li>
-        </ul>
-    </div>
-
-    <!-- Pro -->
-    <div class="{cardBase} {cardPro}">
-        <div class="flex items-center gap-2">
-            <span class="text-[0.75rem] font-semibold text-brand-gold-600 dark:text-brand-gold-400">
-                {$t("billing.tier.pro.name")}
-            </span>
-            <span class="text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">
-                · {$t("billing.tier.pro.price")}
-            </span>
-            {#if $isPro}
-                <span class="ml-auto {proBadge}">{$t("billing.current_plan")}</span>
-            {/if}
-        </div>
-        <p class="text-[0.6875rem] text-brand-charcoal-400 dark:text-[#8087a2]">
-            {$t("billing.tier.pro.tagline")}
-        </p>
-        <ul class="flex flex-col gap-1">
-            <li class={featureRow}><Icon icon="solar:check-circle-bold-duotone" width="0.9rem" class={checkIcon} />{$t("billing.tier.pro.feature1")}</li>
-            <li class={featureRow}><Icon icon="solar:check-circle-bold-duotone" width="0.9rem" class={checkIcon} />{$t("billing.tier.pro.feature2")}</li>
-            <li class={featureRow}><Icon icon="solar:check-circle-bold-duotone" width="0.9rem" class={checkIcon} />{$t("billing.tier.pro.feature3")}</li>
-            <li class={featureRow}><Icon icon="solar:check-circle-bold-duotone" width="0.9rem" class={checkIcon} />{$t("billing.tier.pro.feature4")}</li>
-        </ul>
-        {#if !$isPro}
-            <button onclick={() => handleUpgrade("pro")} disabled={busy !== null} class={ctaPrimary}>
-                {#if busy === "pro"}
-                    <Icon icon="svg-spinners:ring-resize" width="0.85rem" />
-                {/if}
-                {$t("billing.upgrade")}
-            </button>
-        {/if}
-    </div>
-
-    <!-- Pro+ -->
-    <div class="{cardBase} {cardProPlus}">
-        <div class="flex items-center gap-2">
-            <Icon icon="solar:crown-star-bold-duotone" width="0.95rem" class="text-brand-gold-500 dark:text-brand-gold-400 shrink-0" />
-            <span class="text-[0.75rem] font-semibold text-brand-gold-600 dark:text-brand-gold-400">
-                {$t("billing.tier.pro_plus.name")}
-            </span>
-            <span class="text-[0.6875rem] font-semibold text-brand-charcoal-500 dark:text-[#c6d0f5]">
-                · {$t("billing.tier.pro_plus.price")}
-            </span>
-        </div>
-        <p class="text-[0.6875rem] text-brand-charcoal-400 dark:text-[#8087a2]">
-            {$t("billing.tier.pro_plus.tagline")}
-        </p>
-        <ul class="flex flex-col gap-1">
-            <li class={featureRow}><Icon icon="solar:check-circle-bold-duotone" width="0.9rem" class={checkIcon} />{$t("billing.tier.pro_plus.feature1")}</li>
-            <li class={featureRow}><Icon icon="solar:check-circle-bold-duotone" width="0.9rem" class={checkIcon} />{$t("billing.tier.pro_plus.feature2")}</li>
-            <li class={featureRow}><Icon icon="solar:check-circle-bold-duotone" width="0.9rem" class={checkIcon} />{$t("billing.tier.pro_plus.feature3")}</li>
-        </ul>
-        {#if !$isPro}
-            <button onclick={() => handleUpgrade("pro_plus")} disabled={busy !== null} class={ctaPrimary}>
-                {#if busy === "pro_plus"}
-                    <Icon icon="svg-spinners:ring-resize" width="0.85rem" />
-                {/if}
-                {$t("billing.upgrade")}
-            </button>
-        {/if}
-    </div>
+    {/each}
 
     {#if error}
         <p class="text-[0.6875rem] text-red-500 dark:text-red-400 text-center">{error}</p>
