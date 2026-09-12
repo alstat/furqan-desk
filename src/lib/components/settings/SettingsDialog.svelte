@@ -49,6 +49,7 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     import { locale, LOCALE_NAMES, t, type Locale } from '$lib/i18n';
     import { aiTextDefaultModel } from '$lib/stores/ai-text-transform.store';
     import { isPro } from '$lib/stores/auth.store';
+    import { logicPipelineEnabled } from '$lib/stores/logic/flag';
 
     interface Props {
         open: boolean;
@@ -760,6 +761,51 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         </section>
 
         <!-- ═══════════════ GROUP: App & Support ═══════════════ -->
+        <section class="py-3 border-t border-slate-100 dark:border-[#414559]">
+            <div class="flex items-center gap-2 pb-2.5 mb-3 border-b border-brand-gold-200/60 dark:border-[#414559]">
+                <Icon icon="solar:test-tube-bold-duotone" class="text-brand-gold-400" width="1rem" />
+                <h3 class={groupTitle}>{$t('settings.group.experimental')}</h3>
+            </div>
+            <div class="space-y-4">
+
+            <!-- Lean Logic Pipeline -->
+            <div>
+                <p class={sectionLabel}>{$t('settings.logic_pipeline')}</p>
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <span class={rowLabel}>{$t('settings.logic_pipeline.label')}</span>
+                        <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mt-0.5">
+                            {$t('settings.logic_pipeline.desc')}
+                        </p>
+                    </div>
+                    <div class="relative shrink-0">
+                        <select
+                            value={$logicPipelineEnabled ? 'on' : 'off'}
+                            disabled={logicPipelineEnabled.forced()}
+                            onchange={(e) => logicPipelineEnabled.set(e.currentTarget.value === 'on')}
+                            class="appearance-none cursor-pointer rounded-xl border border-brand-sand-200 dark:border-[#414559] bg-brand-sand-50/80 dark:bg-[#292c3c] px-3 py-1.5 pr-8 text-xs text-brand-charcoal-500 dark:text-[#c6d0f5] transition-all focus:border-brand-gold-400 dark:focus:border-[#e5c890] focus:outline-none focus:ring-2 focus:ring-brand-gold-100 dark:focus:ring-[#e5c890]/20 hover:border-brand-sand-400 dark:hover:border-[#626880] hover:bg-brand-sand-100 dark:hover:bg-[#363a4f] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <option value="off">{$t('settings.logic_pipeline.off')}</option>
+                            <option value="on">{$t('settings.logic_pipeline.on')}</option>
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-brand-charcoal-300">
+                            <Icon icon="charm:chevron-down" width="0.75rem" />
+                        </span>
+                    </div>
+                </div>
+                <!-- Said plainly rather than left to be discovered: an existing
+                     proof keeps working when this is off; only the toolbar for
+                     making new ones goes away. -->
+                <p class="text-xs text-brand-charcoal-300 dark:text-[#838ba7] mt-1.5">
+                    {logicPipelineEnabled.forced()
+                        ? $t('settings.logic_pipeline.forced')
+                        : $t('settings.logic_pipeline.note')}
+                </p>
+            </div>
+
+            </div>
+        </section>
+
         <section class="py-3 border-t border-slate-100 dark:border-[#414559]">
             <div class="flex items-center gap-2 pb-2.5 mb-3 border-b border-brand-gold-200/60 dark:border-[#414559]">
                 <Icon icon="solar:info-circle-bold-duotone" class="text-brand-gold-400" width="1rem" />

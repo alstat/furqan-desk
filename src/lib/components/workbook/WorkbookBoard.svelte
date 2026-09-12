@@ -13,6 +13,7 @@
     import { bringToFront } from "$lib/stores/window-manager.store";
     import {
         DATA_NODE_KINDS,
+        LOGIC_NODE_SIZE,
         emptyWorkbook,
         makeNode,
         pipelineNodeKey,
@@ -25,6 +26,25 @@
         type WorkbookNodeKind,
         type WorkbookRow,
     } from "$lib/stores/workbook.store";
+    import TheoryEditorDialog from "./logic/TheoryEditorDialog.svelte";
+    import GeneratedLeanDialog from "./logic/GeneratedLeanDialog.svelte";
+    import {
+        canConnect,
+        derivePorts,
+        isLogicNode,
+        type LogicPort,
+        type LogicRole,
+    } from "$lib/stores/logic/graph";
+    import { childGoalEdge, planChildGoals } from "$lib/stores/logic/authoring";
+    import {
+        activeTheory as pickActiveTheory,
+        analyseBoard,
+        mergeOutcome,
+        verifyProof,
+        type BoardLogicState,
+    } from "$lib/stores/logic/verify";
+    import type { LogicTheory } from "$lib/stores/logic/theory";
+    import { logicPipelineEnabled, logicToolbarVisibleFor } from "$lib/stores/logic/flag";
 
     interface Props {
         doc?: WorkbookDoc;
@@ -89,6 +109,17 @@
             e.preventDefault();
             return;
         }
+        // Delete removes the selection. `isTypingTarget` above already bailed
+        // out for an editor or form field, so a Backspace inside a proposition
+        // box still edits text rather than deleting the card being edited —
+        // the guard the toolbar-only button never needed.
+        if (e.key === "Delete" || e.key === "Backspace") {
+            if (selectedIds.length) {
+                e.preventDefault();
+                removeSelected();
+            }
+            return;
+        }
         if (e.ctrlKey || e.metaKey || e.altKey) return;
         if (e.key === "v" || e.key === "V") tool = "select";
         else if (e.key === "h" || e.key === "H") tool = "hand";
@@ -133,7 +164,12 @@
     // outside a wired chain) rather than one flat row of fourteen buttons —
     // the toolbar reads as "where does what I want live" instead of a
     // lookup-by-memory list.
-    const ADDABLE_GROUPS: { label: string; items: { kind: WorkbookNodeKind; icon: string }[] }[] = [
+    const ADDABLE_GROUPS: {
+        label: string;
+        items: { kind: WorkbookNodeKind; icon: string }[];
+        /** The Logic section adds one kind (`logic`) in several roles, rather than several kinds. */
+        logicRoles?: { role: LogicRole; icon: string }[];
+    }[] = [
         {
             label: "workbook.toolbar_group.source",
             items: [
@@ -170,6 +206,19 @@
                 { kind: "view", icon: "solar:eye-bold-duotone" },
                 { kind: "export", icon: "solar:download-square-bold-duotone" },
             ],
+        },
+        {
+            label: "workbook.toolbar_group.logic",
+            logicRoles: [
+                { role: "theory-root", icon: "solar:library-bold-duotone" },
+                { role: "proof-root", icon: "solar:flag-bold-duotone" },
+                { role: "goal", icon: "solar:target-bold-duotone" },
+                { role: "rule", icon: "solar:transmission-bold-duotone" },
+                { role: "premise", icon: "solar:hand-shake-bold-duotone" },
+                { role: "imported-theorem", icon: "solar:import-bold-duotone" },
+                { role: "evidence", icon: "solar:book-bookmark-bold-duotone" },
+            ],
+            items: [],
         },
         {
             label: "workbook.toolbar_group.content",
@@ -217,15 +266,38 @@
      * stepped down and right of the last so a run of clicks leaves a readable
      * cascade instead of a single stack.
      */
+    /** Adds a proof card. Same placement cascade as `addNode`, one kind, many roles. */
+    function addLogicNode(role: LogicRole) {
+        const node = makeNode("logic", ...nextNodeXY(), role);
+        // A theory root seeds itself from whatever Theory the board already
+        // has, so a second proof on the same board pins the same revision
+        // rather than silently starting from nothing.
+        if (role === "theory-root" && activeTheory) {
+            node.logic = {
+                ...node.logic!,
+                theoryId: activeTheory.id,
+                theoryRevision: activeTheory.revision,
+                theoryHash: activeTheory.contentHash,
+            };
+        }
+        commit({ ...board, nodes: [...board.nodes, node] });
+        selectedIds = [node.id];
+    }
+
     let cascade = 0;
-    function addNode(kind: WorkbookNodeKind) {
+    /** Where the next added card lands — centred-ish, cascading so a run of adds doesn't stack. */
+    function nextNodeXY(): [number, number] {
         const rect = surface?.getBoundingClientRect();
         const offset = (cascade++ % 6) * 28;
         const x =
             (-board.viewport.x + (rect ? rect.width / 2 : 400)) / board.viewport.zoom - 220 + offset;
         const y =
             (-board.viewport.y + (rect ? rect.height / 3 : 240)) / board.viewport.zoom - 60 + offset;
-        const node = makeNode(kind, Math.round(x), Math.round(y));
+        return [Math.round(x), Math.round(y)];
+    }
+
+    function addNode(kind: WorkbookNodeKind) {
+        const node = makeNode(kind, ...nextNodeXY());
         commit({ ...board, nodes: [...board.nodes, node] });
         selectedIds = [node.id];
         if (kind === "image") void pickImage(node.id);
@@ -338,7 +410,9 @@
         rectTop: number;
     } | null>(null);
     /** A connection being dragged from one port to another; `x`/`y` are the live pointer, in board space. */
-    let portDrag = $state<{ fromId: string; side: "in" | "out"; x: number; y: number } | null>(null);
+    let portDrag = $state<{ fromId: string; side: "in" | "out"; portId: string; x: number; y: number } | null>(
+        null,
+    );
 
     function screenToWorld(clientX: number, clientY: number): { x: number; y: number } {
         const rect = surface?.getBoundingClientRect();
@@ -422,9 +496,9 @@
         };
     }
 
-    function startPortDrag(event: PointerEvent, nodeId: string, side: "in" | "out") {
+    function startPortDrag(event: PointerEvent, nodeId: string, side: "in" | "out", portId: string) {
         const world = screenToWorld(event.clientX, event.clientY);
-        portDrag = { fromId: nodeId, side, x: world.x, y: world.y };
+        portDrag = { fromId: nodeId, side, portId, x: world.x, y: world.y };
     }
 
     function onPointerMove(event: PointerEvent) {
@@ -463,6 +537,20 @@
     }
 
     /** Which node (if any) a drop at this client point lands on — the source node excluded. */
+    /** The port a card implicitly offers when nothing more specific was hit. */
+    function defaultPort(node: WorkbookNode, side: "in" | "out"): string {
+        if (!isLogicNode(node)) return side;
+        const ports = logicPortsOf(node).filter((p) => p.direction === side);
+        return ports[0]?.id ?? side;
+    }
+
+    /** An edge's role, from what it connects — data wiring keeps saying `data`. */
+    function edgeRoleFor(from: WorkbookNode, to: WorkbookNode, toPort: string) {
+        if (!isLogicNode(from) && !isLogicNode(to)) return "data" as const;
+        const port = logicPortsOf(to).find((p) => p.id === toPort);
+        return port?.role ?? ("reference" as const);
+    }
+
     function nodeAt(clientX: number, clientY: number, excludeId: string) {
         const world = screenToWorld(clientX, clientY);
         return board.nodes.find(
@@ -491,7 +579,13 @@
             marquee = null;
         }
         if (portDrag) {
-            const target = nodeAt(event.clientX, event.clientY, portDrag.fromId);
+            // A port under the pointer wins over the card under the pointer:
+            // a rule card with four inputs needs the exact one that was hit.
+            const hit = portAt(event.clientX, event.clientY);
+            const target =
+                hit && hit.nodeId !== portDrag.fromId
+                    ? board.nodes.find((n) => n.id === hit.nodeId) ?? null
+                    : nodeAt(event.clientX, event.clientY, portDrag.fromId);
             const to = target ? (portDrag.side === "out" ? target.id : portDrag.fromId) : null;
             const toKind = to ? board.nodes.find((n) => n.id === to)?.kind : undefined;
             // `ayah`/`data` are always a source, never a target — dropping a
@@ -500,15 +594,55 @@
             const validTarget = target && to && toKind && !SOURCE_NODE_KINDS.includes(toKind);
             if (validTarget && target && to) {
                 const from = portDrag.side === "out" ? portDrag.fromId : target.id;
-                // A node's output can fan out to several downstream nodes at
-                // once (e.g. a Julia card feeding both a REPL `view` and a
-                // separate plot `view`), so only the target's own incoming
-                // edge is replaced here — any other outgoing edge the source
-                // already had is left alone. An input still takes at most
-                // one edge, so `e.to !== to` is enough to also dedupe an
-                // exact from/to repeat.
-                const edges = board.edges.filter((e) => e.to !== to);
-                commit({ ...board, edges: [...edges, { id: crypto.randomUUID(), from, to }] });
+                const fromNode = board.nodes.find((n) => n.id === from)!;
+                const toNode = board.nodes.find((n) => n.id === to)!;
+                // Which port each end landed on. The dragged end always knows
+                // its own; the other is whatever was hit, falling back to the
+                // implicit `in`/`out` a data card has always had.
+                const fromPort =
+                    portDrag.side === "out"
+                        ? portDrag.portId
+                        : (hit && hit.nodeId === from ? hit.portId : defaultPort(fromNode, "out"));
+                const toPort =
+                    portDrag.side === "in"
+                        ? portDrag.portId
+                        : (hit && hit.nodeId === to ? hit.portId : defaultPort(toNode, "in"));
+
+                // Rejected rather than coerced: a mismatched drop leaves the
+                // graph exactly as it was and says why. This is what stops an
+                // ayah card satisfying a logical premise — it may only ever
+                // reach a premise's evidence port.
+                const check = canConnect(fromNode, fromPort, toNode, toPort, logicAnalysis.ctx);
+                if (!check.ok) {
+                    status = check.reason;
+                    portDrag = null;
+                    drag = null;
+                    resize = null;
+                    pan = null;
+                    panning = false;
+                    return;
+                }
+
+                // An output still fans out to as many downstream cards as it
+                // likes; what is replaced is the one edge already on *this
+                // target port*. That is the whole change from version 1's
+                // "one edge per target node" — a four-premise rule now has
+                // four separately replaceable inputs.
+                const edges = board.edges.filter((e) => !(e.to === to && (e.toPort ?? "in") === toPort));
+                commit({
+                    ...board,
+                    edges: [
+                        ...edges,
+                        {
+                            id: crypto.randomUUID(),
+                            from,
+                            to,
+                            fromPort,
+                            toPort,
+                            role: edgeRoleFor(fromNode, toNode, toPort),
+                        },
+                    ],
+                });
             } else if (portDrag.side === "in") {
                 // Dropped on empty space rather than another node — a plain
                 // click on a port lands here too, since it never moves onto
@@ -517,7 +651,9 @@
                 // away disconnects it, same as most node editors); an
                 // unwired port dropped on empty space is just a cancelled
                 // drag, same as before.
-                const edges = board.edges.filter((e) => e.to !== portDrag!.fromId);
+                const edges = board.edges.filter(
+                    (e) => !(e.to === portDrag!.fromId && (e.toPort ?? "in") === portDrag!.portId),
+                );
                 if (edges.length !== board.edges.length) commit({ ...board, edges });
             }
             // An output port dropped on empty space is just a cancelled drag
@@ -626,6 +762,202 @@
         return board.edges.find((e) => e.to === id)?.from;
     }
 
+    // ── The logic dialect ───────────────────────────────────────────────────
+    //
+    // A proof shares this board, this document and this SVG file with the data
+    // pipeline, and nothing else. It never enters `resolveNodeOutputs` or
+    // `transformNode`: those assume one unnamed upstream value producing rows,
+    // and a proof has named premises, several simultaneous obligations, binders
+    // and scopes. So the two evaluators run side by side over the same nodes.
+
+    /**
+     * Whether the Logic section of the toolbar is offered.
+     *
+     * The flag gates authoring, not rendering: a board that already contains
+     * proof cards keeps its toolbar regardless, so turning the flag off can
+     * never leave a saved proof on screen that its author is unable to edit.
+     * Everything else about a logic card — drawing it, wiring it, checking it
+     * — is unconditional for exactly that reason.
+     */
+    const logicToolbarVisible = $derived(
+        logicToolbarVisibleFor($logicPipelineEnabled, board.nodes),
+    );
+
+    /** The Theory revision this board's proofs are checked against. */
+    const activeTheory = $derived<LogicTheory | null>(pickActiveTheory(board.logic));
+
+    /** Structural analysis — cheap, runs on every edit, fills the cards in before Lean answers. */
+    const logicAnalysis = $derived<BoardLogicState>(
+        analyseBoard(board.nodes, board.edges, activeTheory),
+    );
+
+    /** Lean's answers, merged over the structural pass. Keyed by proof root. */
+    let logicResults = $state<BoardLogicState | null>(null);
+    let logicChecking = $state(false);
+    let theoryDialogOpen = $state(false);
+    let leanDialogOpen = $state(false);
+
+    /** What each card shows: Lean's verdict when we have one, else the structural read. */
+    const logicView = $derived<BoardLogicState>(logicResults ?? logicAnalysis);
+
+    /** Lean's per-proof answers, in the shape the source viewer wants. */
+    const diagnosticsByRoot = $derived(
+        new Map([...logicView.outcomes].map(([root, o]) => [root, o.diagnostics])),
+    );
+    const trustByRoot = $derived(
+        new Map([...logicView.outcomes].map(([root, o]) => [root, o.trust])),
+    );
+
+    function logicPortsOf(node: WorkbookNode): LogicPort[] {
+        if (!isLogicNode(node)) return [];
+        return derivePorts(node, logicAnalysis.ctx);
+    }
+
+    /**
+     * A port's centre in board space. Stacked inputs on a rule card mirror the
+     * card's own `top: 28 + i*20` layout, so a wire lands on the dot it points
+     * at rather than near it.
+     */
+    function portPoint(node: WorkbookNode, portId: string, side: "in" | "out"): { x: number; y: number } {
+        const x = side === "out" ? node.x + node.width : node.x;
+        if (!isLogicNode(node)) return { x, y: node.y + node.height / 2 };
+        const ports = logicPortsOf(node);
+        const ins = ports.filter((p) => p.direction === "in");
+        const idx = ins.findIndex((p) => p.id === portId);
+        if (side === "in" && ins.length > 1 && idx >= 0) return { x, y: node.y + 28 + idx * 20 };
+        return { x, y: node.y + node.height / 2 };
+    }
+
+    /**
+     * The port under the pointer, if any.
+     *
+     * Read off the DOM rather than computed, so hit-testing matches exactly
+     * what the user sees — and so dropping between two of a rule's four ports
+     * misses cleanly instead of snapping to whichever was nearest.
+     */
+    function portAt(clientX: number, clientY: number): { nodeId: string; portId: string } | null {
+        const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
+        const port = el?.closest<HTMLElement>("[data-port-id]");
+        const nodeId = port?.dataset.nodeId;
+        const portId = port?.dataset.portId;
+        return nodeId && portId ? { nodeId, portId } : null;
+    }
+
+    /** Verifies one proof and folds the answer into what the cards show. */
+    async function runLogic(final: boolean) {
+        const analysis = logicAnalysis;
+        if (!analysis.components.length) return;
+        logicChecking = true;
+        try {
+            let merged = analysis;
+            for (const component of analysis.components) {
+                const { outcome } = await verifyProof(component, analysis.ctx, { final });
+                merged = mergeOutcome(merged, outcome);
+            }
+            logicResults = merged;
+        } catch (e) {
+            status = e instanceof Error ? e.message : String(e);
+        } finally {
+            logicChecking = false;
+        }
+    }
+
+    // Re-checks only when something semantic changed. `logicComponentKey`
+    // excludes geometry, titles, selection and visual groups for exactly the
+    // reason `pipelineNodeKey` does: dragging a proof around the board must
+    // never spend a Lean compile.
+    let lastLogicKey = "";
+    $effect(() => {
+        const key = logicAnalysis.components
+            .map((c) => c.rootId + ":" + logicComponentKeyFor(c))
+            .join("|");
+        if (key === lastLogicKey) return;
+        lastLogicKey = key;
+        if (!key) {
+            logicResults = null;
+            return;
+        }
+        if (runMode === "live") void runLogic(false);
+    });
+
+    function logicComponentKeyFor(component: { rootId: string; nodeIds: string[] }): string {
+        return component.nodeIds
+            .map((id) => {
+                const logic = board.nodes.find((n) => n.id === id)?.logic;
+                return logic
+                    ? [logic.role, logic.source, logic.rule, logic.referenceName, logic.witness, logic.declarationId, logic.leanOverride].join("~")
+                    : id;
+            })
+            .join(";") +
+            "||" +
+            board.edges
+                .filter((e) => component.nodeIds.includes(e.to))
+                .map((e) => `${e.from}:${e.fromPort ?? "out"}>${e.to}:${e.toPort ?? "in"}`)
+                .sort()
+                .join(",") +
+            "||" +
+            (activeTheory ? activeTheory.contentHash : "none");
+    }
+
+    /**
+     * Creates the goal cards for a rule's still-unsatisfied obligations, and
+     * wires each to the port it belongs to.
+     *
+     * This is the pipeline's primary form of guidance and the one place the
+     * app writes propositions the user did not type — so it is worth being
+     * precise about what it is and is not doing. Every proposition here came
+     * out of `decompose`, which applied *the rule the user selected* to *the
+     * goal they already approved*. Nothing is searched for, nothing is
+     * assumed, and each new card is an open goal: it proves nothing until the
+     * user puts something behind it.
+     *
+     * Deliberately a button rather than a side effect of choosing a rule.
+     * Browsing the rule dropdown would otherwise spawn and orphan cards on
+     * every keystroke, and a destructive surprise is a bad way to learn what
+     * a rule does. It only ever fills empty ports, so pressing it twice is
+     * harmless and it can never disturb work already wired up.
+     */
+    function createChildGoals(ruleNodeId: string) {
+        const ruleNode = board.nodes.find((n) => n.id === ruleNodeId);
+        if (!ruleNode) return;
+        const plan = planChildGoals(ruleNode, logicAnalysis.ctx, board.nodes, LOGIC_NODE_SIZE);
+        if (!plan.goals.length) return;
+
+        const created: WorkbookNode[] = [];
+        const edges = [...board.edges];
+        for (const goal of plan.goals) {
+            const node = makeNode("logic", goal.x, goal.y, "goal");
+            node.logic = { ...node.logic!, source: goal.source };
+            created.push(node);
+            edges.push(childGoalEdge(node.id, ruleNodeId, goal.portId));
+        }
+        commit({ ...board, nodes: [...board.nodes, ...created], edges });
+        selectedIds = created.map((n) => n.id);
+    }
+
+    /** Stores a published Theory revision on the document and re-pins every theory root. */
+    function publishTheory(next: LogicTheory) {
+        const theories = [...(board.logic?.theories ?? []).filter((t) => t.id !== next.id), next];
+        const nodes = board.nodes.map((n) =>
+            n.kind === "logic" && n.logic?.role === "theory-root"
+                ? {
+                      ...n,
+                      logic: {
+                          ...n.logic,
+                          theoryId: next.id,
+                          theoryRevision: next.revision,
+                          theoryHash: next.contentHash,
+                      },
+                  }
+                : n,
+        );
+        commit({
+            ...board,
+            nodes,
+            logic: { ...(board.logic ?? { theories: [] }), theories, activeTheoryId: next.id },
+        });
+    }
+
     let nodeOutputs = $state<Map<string, WorkbookRow[]>>(new Map());
 
     let runTick = $state(0);
@@ -692,12 +1024,12 @@
                 const from = board.nodes.find((n) => n.id === edge.from);
                 const to = board.nodes.find((n) => n.id === edge.to);
                 if (!from || !to) return null;
-                const x1 = from.x + from.width;
-                const y1 = from.y + from.height / 2;
-                const x2 = to.x;
-                const y2 = to.y + to.height / 2;
-                const bend = Math.max(24, Math.abs(x2 - x1) / 2);
-                return { id: edge.id, x1, y1, x2, y2, bend };
+                const a = portPoint(from, edge.fromPort ?? "out", "out");
+                const b = portPoint(to, edge.toPort ?? "in", "in");
+                const bend = Math.max(24, Math.abs(b.x - a.x) / 2);
+                // Provenance reads differently from entailment on purpose: a
+                // citation supports a premise, it does not derive it.
+                return { id: edge.id, x1: a.x, y1: a.y, x2: b.x, y2: b.y, bend, provenance: edge.role === "provenance" };
             })
             .filter((w): w is NonNullable<typeof w> => !!w),
     );
@@ -707,10 +1039,9 @@
         if (!portDrag) return null;
         const node = board.nodes.find((n) => n.id === portDrag!.fromId);
         if (!node) return null;
-        const x1 = portDrag.side === "out" ? node.x + node.width : node.x;
-        const y1 = node.y + node.height / 2;
-        const bend = Math.max(24, Math.abs(portDrag.x - x1) / 2);
-        return { x1, y1, x2: portDrag.x, y2: portDrag.y, bend };
+        const start = portPoint(node, portDrag.portId, portDrag.side);
+        const bend = Math.max(24, Math.abs(portDrag.x - start.x) / 2);
+        return { x1: start.x, y1: start.y, x2: portDrag.x, y2: portDrag.y, bend };
     });
 
     /** One padded frame per group, sized to its members, drawn behind the cards. */
@@ -867,7 +1198,7 @@
             />
             <span class="h-5 w-px bg-brand-sand-200 dark:bg-[#414559]"></span>
         {/if}
-        {#each ADDABLE_GROUPS as group (group.label)}
+        {#each ADDABLE_GROUPS.filter((g) => !g.logicRoles || logicToolbarVisible) as group (group.label)}
             <!-- The group reads from the shared boundary around its buttons,
                  not a text label taking up room in the row — the name is
                  still there, just as the container's own tooltip. Each
@@ -885,6 +1216,18 @@
                     >
                         <Icon icon={item.icon} width="0.75rem" />
                         {$t(`workbook.node.${item.kind}`)}
+                    </button>
+                {/each}
+                <!-- The Logic section adds one kind in several roles, so it
+                     lists roles where the other groups list kinds. -->
+                {#each group.logicRoles ?? [] as item (item.role)}
+                    <button
+                        onclick={() => addLogicNode(item.role)}
+                        title={$t(`logic.add.${item.role}`)}
+                        class="flex cursor-pointer items-center gap-1.5 rounded-full bg-[#e8eef8] px-2.5 py-1 text-xs font-semibold text-[#4a6592] transition-colors hover:bg-[#dae4f3] dark:bg-[#363a4f] dark:text-[#8caaee] dark:hover:bg-[#414559]"
+                    >
+                        <Icon icon={item.icon} width="0.75rem" />
+                        {$t(`logic.node.${item.role}`)}
                     </button>
                 {/each}
             </div>
@@ -911,6 +1254,34 @@
                         </button>
                     {/each}
                 </div>
+                <!-- Verify is deliberately its own action, not folded into Run.
+                     A live check is feedback while editing; only a fresh batch
+                     compile may be treated as a verdict, so the button that
+                     produces one is separate and explicit. -->
+                {#if logicAnalysis.components.length}
+                    <button
+                        onclick={() => void runLogic(true)}
+                        disabled={logicChecking}
+                        title={$t("logic.verify_hint")}
+                        class="flex cursor-pointer items-center gap-1 rounded-full bg-[#4a6592] px-2.5 py-1 text-[0.625rem] font-semibold text-white shadow-sm transition-colors hover:bg-[#3c5479] disabled:opacity-50 dark:bg-[#8caaee] dark:text-[#232634]"
+                    >
+                        <Icon
+                            icon={logicChecking
+                                ? "solar:refresh-bold-duotone"
+                                : "solar:verified-check-bold-duotone"}
+                            width="0.7rem"
+                        />
+                        {$t("logic.verify")}
+                    </button>
+                    <button
+                        onclick={() => (leanDialogOpen = true)}
+                        title={$t("logic.source.hint")}
+                        aria-label={$t("logic.source.title")}
+                        class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-brand-sand-100 text-brand-charcoal-500 transition-colors hover:bg-brand-sand-200 dark:bg-[#414559] dark:text-[#c6d0f5] dark:hover:bg-[#51576d]"
+                    >
+                        <Icon icon="solar:code-square-bold-duotone" width="0.8rem" />
+                    </button>
+                {/if}
                 {#if runMode === "manual"}
                     <button
                         onclick={runNow}
@@ -976,9 +1347,19 @@
                         fill="none"
                         stroke="currentColor"
                         stroke-width="2"
-                        class="text-brand-gold-400/80 dark:text-[#e5c890]/70"
+                        stroke-dasharray={wire.provenance ? "4 4" : undefined}
+                        class={wire.provenance
+                            ? "text-sky-400/80 dark:text-sky-300/70"
+                            : "text-brand-gold-400/80 dark:text-[#e5c890]/70"}
                     />
-                    <circle cx={wire.x2} cy={wire.y2} r="3" class="fill-brand-gold-400/80 dark:fill-[#e5c890]/70" />
+                    <circle
+                        cx={wire.x2}
+                        cy={wire.y2}
+                        r="3"
+                        class={wire.provenance
+                            ? "fill-sky-400/80 dark:fill-sky-300/70"
+                            : "fill-brand-gold-400/80 dark:fill-[#e5c890]/70"}
+                    />
                 {/each}
                 {#if wireDraft}
                     <path
@@ -1010,7 +1391,17 @@
                     onRemove={() => removeNodeIds([node.id])}
                     onDragStart={(event) => startDrag(event, node.id)}
                     onResizeStart={(event) => startResize(event, node.id)}
-                    onPortDragStart={(event, side) => startPortDrag(event, node.id, side)}
+                    onPortDragStart={(event, side, portId) =>
+                        startPortDrag(event, node.id, side, portId)}
+                    logicPorts={logicPortsOf(node)}
+                    logicCtx={logicAnalysis.ctx}
+                    logicTheory={activeTheory}
+                    logicStatus={logicChecking && isLogicNode(node)
+                        ? "checking"
+                        : (logicView.statuses.get(node.id) ?? null)}
+                    logicMessages={logicView.messages.get(node.id) ?? []}
+                    onEditTheory={() => (theoryDialogOpen = true)}
+                    onCreateGoals={() => createChildGoals(node.id)}
                 />
             {/each}
         </div>
@@ -1126,6 +1517,27 @@
             </p>
         {/if}
     </div>
+
+<TheoryEditorDialog
+    open={theoryDialogOpen}
+    theory={activeTheory}
+    onClose={() => (theoryDialogOpen = false)}
+    onPublish={publishTheory}
+/>
+
+<GeneratedLeanDialog
+    open={leanDialogOpen}
+    components={logicAnalysis.components}
+    ctx={logicAnalysis.ctx}
+    theory={activeTheory}
+    {diagnosticsByRoot}
+    {trustByRoot}
+    onClose={() => (leanDialogOpen = false)}
+    onSelectNode={(id) => {
+        selectedIds = [id];
+        leanDialogOpen = false;
+    }}
+/>
 </div>
 
 <style>

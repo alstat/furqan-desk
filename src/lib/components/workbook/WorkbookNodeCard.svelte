@@ -38,6 +38,10 @@
         type WorkbookRow,
     } from "$lib/stores/workbook.store";
     import { copyToClipboard } from "$lib/utils/clipboard";
+    import LogicNodeCard from "./logic/LogicNodeCard.svelte";
+    import type { LogicContext, LogicPort } from "$lib/stores/logic/graph";
+    import type { NodeStatus } from "$lib/stores/logic/status";
+    import type { LogicTheory } from "$lib/stores/logic/theory";
     import CodeMirrorEditor from "$lib/components/editor/CodeMirrorEditor.svelte";
     import { codeMirrorViewInstance, editorIndentSize } from "$lib/stores/editor.store";
     import { formatLeanSource } from "$lib/utils/leanFormat";
@@ -77,7 +81,17 @@
         onSelect: (event: PointerEvent) => void;
         onDragStart: (event: PointerEvent) => void;
         onResizeStart: (event: PointerEvent) => void;
-        onPortDragStart: (event: PointerEvent, side: "in" | "out") => void;
+        /** `portId` names the exact port for a logic card; data cards always pass the implicit `in`/`out`. */
+        onPortDragStart: (event: PointerEvent, side: "in" | "out", portId: string) => void;
+        /** `logic` only: the derived ports, the shared context, and what Lean said. */
+        logicPorts?: LogicPort[];
+        logicCtx?: LogicContext | null;
+        logicTheory?: LogicTheory | null;
+        logicStatus?: NodeStatus | null;
+        logicMessages?: string[];
+        onEditTheory?: () => void;
+        /** `logic` rule cards: creates the goal cards for this rule's unfilled obligations. */
+        onCreateGoals?: () => void;
     }
     let {
         node,
@@ -96,6 +110,13 @@
         onDragStart,
         onResizeStart,
         onPortDragStart,
+        logicPorts = [],
+        logicCtx = null,
+        logicTheory = null,
+        logicStatus = null,
+        logicMessages = [],
+        onEditTheory = () => {},
+        onCreateGoals = () => {},
     }: Props = $props();
 
     let rows = $state<WorkbookRow[]>([]);
@@ -487,6 +508,11 @@
             icon: "solar:book-2-bold-duotone",
             dot: "bg-brand-gold-400",
         },
+        logic: {
+            strip: "bg-[#eef2fa] dark:bg-[#2a2f3e]",
+            icon: "solar:diagram-up-bold-duotone",
+            dot: "bg-[#8aa4d0]",
+        },
         data: {
             strip: "bg-[#e8f6f6] dark:bg-[#213636]",
             icon: "solar:database-bold-duotone",
@@ -765,7 +791,20 @@
 
     <!-- Body -->
     <div class="default-scroll min-h-0 flex-1 overflow-auto p-3">
-        {#if node.kind === "note"}
+        {#if node.kind === "logic" && logicCtx}
+            <!-- Everything a proof card is lives in LogicNodeCard; this file
+                 keeps owning the frame, the ports and the drag handles. -->
+            <LogicNodeCard
+                {node}
+                ctx={logicCtx}
+                theory={logicTheory}
+                status={logicStatus}
+                messages={logicMessages}
+                {onChange}
+                onEditTheory={onEditTheory}
+                {onCreateGoals}
+            />
+        {:else if node.kind === "note"}
             <textarea
                 value={node.text ?? ""}
                 oninput={(e) => onChange({ text: e.currentTarget.value })}
@@ -1396,13 +1435,42 @@
          a source, never a target, so no input port to start (or land) a
          wire on. The board owns the wire itself; a port only starts the
          drag. -->
-    {#if hasPort}
+    {#if node.kind === "logic"}
+        <!-- A proof card's ports are derived, not fixed: a rule that creates
+             four obligations shows four separately wireable inputs, and they
+             re-shape the moment the rule changes. Each carries its own
+             `data-port-id` so the board can hit-test the exact port a wire was
+             dropped on and explain a mismatch instead of silently ignoring it. -->
+        {#each logicPorts as port, i (port.id)}
+            {@const ins = logicPorts.filter((p) => p.direction === "in")}
+            {@const idx = ins.indexOf(port)}
+            <button
+                onpointerdown={(e) => {
+                    e.stopPropagation();
+                    onPortDragStart(e, port.direction, port.id);
+                }}
+                data-node-id={node.id}
+                data-port-id={port.id}
+                title={port.label}
+                aria-label={port.label}
+                class="port-dot {port.direction === 'in' ? '-left-[7px]' : '-right-[7px]'} {port.role ===
+                'provenance'
+                    ? 'bg-sky-400'
+                    : ACCENT[node.kind].dot}"
+                style={port.direction === "in" && ins.length > 1
+                    ? `top: ${28 + idx * 20}px`
+                    : undefined}
+            ></button>
+        {/each}
+    {:else if hasPort}
         {#if hasInPort}
             <button
                 onpointerdown={(e) => {
                     e.stopPropagation();
-                    onPortDragStart(e, "in");
+                    onPortDragStart(e, "in", "in");
                 }}
+                data-node-id={node.id}
+                data-port-id="in"
                 title={$t("workbook.port.in")}
                 aria-label={$t("workbook.port.in")}
                 class="port-dot -left-[7px] {ACCENT[node.kind].dot}"
@@ -1411,8 +1479,10 @@
         <button
             onpointerdown={(e) => {
                 e.stopPropagation();
-                onPortDragStart(e, "out");
+                onPortDragStart(e, "out", "out");
             }}
+            data-node-id={node.id}
+            data-port-id="out"
             title={$t("workbook.port.out")}
             aria-label={$t("workbook.port.out")}
             class="port-dot -right-[7px] {ACCENT[node.kind].dot}"

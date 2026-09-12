@@ -13,6 +13,8 @@ import {
 import { translateVerses as aiTranslateVerses } from '$lib/stores/ai-grammar-topic.store';
 import { AI_FEATURE_TAGS } from '$lib/stores/ai-chat.store';
 import { runWorkbookJulia, runWorkbookLean } from '$lib/stores/workbook-code-nodes';
+import type { LogicEdgeRole, LogicNodePayload, LogicRole } from '$lib/stores/logic/graph';
+import type { LogicTheory } from '$lib/stores/logic/theory';
 
 // A workbook is a board of cards — some of them plain notes, some of them
 // windows onto the Qur'an. Any of the Qur'an/shape/output cards can be wired
@@ -37,7 +39,13 @@ export type WorkbookNodeKind =
     | 'export'
     | 'title'
     | 'note'
-    | 'image';
+    | 'image'
+    // The Lean Logic Pipeline's single node kind. Everything a proof is made
+    // of — theory roots, goals, premises, rule applications, evidence — is
+    // this one kind with a `logic.role` discriminant, deliberately kept out of
+    // `DATA_NODE_KINDS` so a proof card can never be dragged into the row
+    // pipeline or handed to `transformNode`.
+    | 'logic';
 
 /** The node kinds that read/shape/show rows (verse or table) and so can be wired into a pipeline. */
 export const DATA_NODE_KINDS: WorkbookNodeKind[] = [
@@ -224,6 +232,13 @@ export interface WorkbookNode {
     dataColumns?: { name: string; type: string }[];
     /** `data`: row count cached the same way, for the same reason. */
     dataRowCount?: number;
+    /**
+     * `logic`: the proof-graph payload — role, proposition, chosen rule and so
+     * on. Ports are *not* stored here: they are derived from the role, the
+     * selected rule and the goal the card feeds (see `derivePorts`), so the
+     * board can never drift out of step with the logic.
+     */
+    logic?: LogicNodePayload;
 }
 
 // Fields `transformNode` never reads for any node kind — pure geometry
@@ -309,6 +324,17 @@ export interface WorkbookEdge {
     id: string;
     from: string;
     to: string;
+    /**
+     * Named ports, added with the logic dialect. Absent on every edge written
+     * by a version-1 build, which is read as `out` → `in` with role `data` —
+     * see `migrateEdges`. Data cards still have exactly one unnamed input, so
+     * nothing about their behaviour changes; a logic rule card derives one
+     * port per obligation, which is what lets a four-premise rule have four
+     * separately replaceable incoming connections.
+     */
+    fromPort?: string;
+    toPort?: string;
+    role?: LogicEdgeRole;
 }
 
 /** A set of nodes framed together as one pipeline, purely for the visual boundary. */
@@ -318,18 +344,40 @@ export interface WorkbookGroup {
     nodeIds: string[];
 }
 
+/**
+ * The Theory library and proof selection a board carries. Kept on the document
+ * (and so inside the exported SVG) rather than in app-level storage, so a
+ * workbook file remains self-contained: someone opening it gets the exact
+ * Theory revision the proof was checked against, not whatever their own copy
+ * of that Theory has since become.
+ */
+export interface WorkbookLogicState {
+    /** Published, immutable Theory revisions. */
+    theories: LogicTheory[];
+    activeTheoryId?: string;
+    selectedProofRootId?: string;
+}
+
 export interface WorkbookDoc {
-    version: 1;
+    /**
+     * 1 predates the logic dialect. 2 adds named edge ports and `logic` state;
+     * a version-1 document is migrated on load (see `migrateEdges`) and written
+     * back as 2, while the reader still accepts 1 indefinitely.
+     */
+    version: 1 | 2;
     title: string;
     nodes: WorkbookNode[];
     viewport: { x: number; y: number; zoom: number };
     edges: WorkbookEdge[];
     groups: WorkbookGroup[];
+    logic?: WorkbookLogicState;
 }
+
+export const WORKBOOK_SCHEMA_VERSION = 2 as const;
 
 export function emptyWorkbook(title = 'Untitled workbook'): WorkbookDoc {
     return {
-        version: 1,
+        version: WORKBOOK_SCHEMA_VERSION,
         title,
         nodes: [],
         viewport: { x: 0, y: 0, zoom: 1 },
@@ -343,6 +391,8 @@ export function emptyWorkbook(title = 'Untitled workbook'): WorkbookDoc {
 // moving through the pipeline, rather than some links being visibly bigger
 // or smaller than others for no reason tied to their content.
 export const NODE_SIZE = { width: 260, height: 150 };
+/** Proof cards carry a proposition plus its plain-language reading, so they start taller than a data card. */
+export const LOGIC_NODE_SIZE = { width: 300, height: 176 };
 const NODE_DEFAULTS: Record<WorkbookNodeKind, { width: number; height: number }> = {
     ayah: NODE_SIZE,
     data: NODE_SIZE,
@@ -359,6 +409,7 @@ const NODE_DEFAULTS: Record<WorkbookNodeKind, { width: number; height: number }>
     title: NODE_SIZE,
     note: NODE_SIZE,
     image: NODE_SIZE,
+    logic: LOGIC_NODE_SIZE,
 };
 
 /** A fresh Julia/Lean node is already a working pass-through until edited. */
@@ -367,7 +418,13 @@ const CODE_PLACEHOLDER: Partial<Record<WorkbookNodeKind, string>> = {
     lean: 'def result := rows',
 };
 
-export function makeNode(kind: WorkbookNodeKind, x: number, y: number): WorkbookNode {
+export function makeNode(
+    kind: WorkbookNodeKind,
+    x: number,
+    y: number,
+    /** `logic` only: which kind of proof card this is. Ignored for every other kind. */
+    logicRole: LogicRole = 'goal',
+): WorkbookNode {
     const size = NODE_DEFAULTS[kind];
     return {
         id: crypto.randomUUID(),
@@ -381,7 +438,32 @@ export function makeNode(kind: WorkbookNodeKind, x: number, y: number): Workbook
         limit: kind === 'limit' ? 5 : kind === 'related' ? 3 : undefined,
         layout: kind === 'view' ? 'list' : undefined,
         code: CODE_PLACEHOLDER[kind],
+        logic: kind === 'logic' ? { role: logicRole, plainLanguage: '', source: '' } : undefined,
     };
+}
+
+/** The default heading for a proof card, by role. */
+function logicRoleTitle(node: WorkbookNode): string {
+    switch (node.logic?.role) {
+        case 'theory-root':
+            return 'Theory';
+        case 'proof-root':
+            return 'Conclusion';
+        case 'goal':
+            return 'Goal';
+        case 'premise':
+            return 'Premise';
+        case 'rule':
+            return 'Rule';
+        case 'evidence':
+            return 'Evidence';
+        case 'imported-theorem':
+            return 'Imported theorem';
+        case 'custom-lean':
+            return 'Custom Lean';
+        default:
+            return 'Logic';
+    }
 }
 
 // ── Reading the Qur'an for a node ───────────────────────────────────────────
@@ -940,6 +1022,7 @@ const NODE_FILL: Record<WorkbookNodeKind, { fill: string; stroke: string }> = {
     title: { fill: '#ffffff00', stroke: '#ffffff00' },
     note: { fill: '#fffbe8', stroke: '#e8dca8' },
     image: { fill: '#f4f4f4', stroke: '#dcdcdc' },
+    logic: { fill: '#f0f4fb', stroke: '#b3c4e0' },
 };
 
 /**
@@ -988,7 +1071,12 @@ export function workbookToSvg(doc: WorkbookDoc): string {
                     ? (node.text ?? '')
                     : node.kind === 'data'
                       ? (node.dataFileName ?? '')
-                      : nodeRefs(node).join(', ');
+                      : node.kind === 'logic'
+                        // The exported SVG is also the saved file, so a proof
+                        // has to be readable in it: show the plain-language
+                        // reading if the author wrote one, else the formal text.
+                        ? (node.logic?.plainLanguage?.trim() || node.logic?.source || '')
+                        : nodeRefs(node).join(', ');
             for (const [i, line] of wrap(bodyText, Math.floor(node.width / 7), 6).entries()) {
                 parts.push(
                     `<text x="${x + 14}" y="${y + 46 + i * 16}" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#6b6560">${escapeXml(
@@ -1040,6 +1128,8 @@ function defaultTitle(node: WorkbookNode): string {
             return 'View';
         case 'image':
             return 'Image';
+        case 'logic':
+            return logicRoleTitle(node);
         default:
             return '';
     }
@@ -1096,6 +1186,38 @@ function migratePipelineNodes(doc: WorkbookDoc): WorkbookDoc {
     return { ...doc, nodes, edges, groups };
 }
 
+/**
+ * Brings a version-1 document up to version 2.
+ *
+ * Purely additive: every node, edge, group and viewport survives untouched.
+ * A version-1 edge had node ids only, which meant "this node's single output
+ * feeds that node's single input" — so it is read as exactly that, `out` →
+ * `in` with role `data`. Nothing about how the row pipeline resolves is
+ * changed by this; the ports are recorded so the one connection model can
+ * describe both dialects.
+ */
+function migrateToV2(doc: WorkbookDoc): WorkbookDoc {
+    if (doc.version === WORKBOOK_SCHEMA_VERSION) {
+        // Already v2, but a hand-edited or partially-written file may still be
+        // missing port fields; fill them in the same way.
+        return { ...doc, edges: migrateEdges(doc.edges) };
+    }
+    return {
+        ...doc,
+        version: WORKBOOK_SCHEMA_VERSION,
+        edges: migrateEdges(doc.edges),
+        logic: doc.logic ?? undefined,
+    };
+}
+
+function migrateEdges(edges: WorkbookEdge[]): WorkbookEdge[] {
+    return edges.map((edge) =>
+        edge.fromPort && edge.toPort
+            ? edge
+            : { ...edge, fromPort: edge.fromPort ?? 'out', toPort: edge.toPort ?? 'in', role: edge.role ?? 'data' },
+    );
+}
+
 /** Reads a workbook back out of an SVG this app wrote. */
 export function workbookFromSvg(svg: string): WorkbookDoc | null {
     const match = new RegExp(
@@ -1112,7 +1234,7 @@ export function workbookFromSvg(svg: string): WorkbookDoc | null {
         if (!Array.isArray(doc.nodes)) return null;
         if (!Array.isArray(doc.edges)) doc.edges = [];
         if (!Array.isArray(doc.groups)) doc.groups = [];
-        return migratePipelineNodes(doc);
+        return migrateToV2(migratePipelineNodes(doc));
     } catch {
         return null;
     }
