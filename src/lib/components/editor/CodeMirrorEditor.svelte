@@ -62,6 +62,14 @@
     // Lean 4 shares the same arrangement: one language definition used by both
     // the file editor and the Lexical editor's Lean code cells.
     import { leanLanguage, leanCommentData } from "$lib/codemirror/lean";
+    // Every other file type — .rs, .py, .c, .yaml … — is highlighted from the
+    // shared extension→grammar table, so the app opens any flat file the way
+    // VS Code and Zed do rather than falling back to unstyled text.
+    import {
+        languageExtension,
+        isCodeLanguage,
+        PLAIN_TEXT,
+    } from "$lib/codemirror/languages";
     import {
         editorTheme,
         editorIndentSize,
@@ -222,6 +230,9 @@
     const ayuLightHighlight = HighlightStyle.define([
         { tag: tags.comment, color: "#abb0b6", fontStyle: "italic" },
         { tag: tags.keyword, color: "#fa8d3e", fontWeight: "600" },
+        { tag: tags.special(tags.keyword), color: "#4cbf99", fontWeight: "600" },
+        { tag: tags.macroName, color: "#399ee6", fontWeight: "600" },
+        { tag: tags.invalid, color: "#c92a2a", textDecoration: "underline wavy" },
         { tag: tags.controlKeyword, color: "#fa8d3e", fontWeight: "600" },
         { tag: tags.definitionKeyword, color: "#fa8d3e", fontWeight: "600" },
         { tag: tags.moduleKeyword, color: "#fa8d3e", fontWeight: "600" },
@@ -382,6 +393,9 @@
     const ayuMirageHighlight = HighlightStyle.define([
         { tag: tags.comment, color: "#5c6773", fontStyle: "italic" },
         { tag: tags.keyword, color: "#ffa759", fontWeight: "600" },
+        { tag: tags.special(tags.keyword), color: "#95e6cb", fontWeight: "600" },
+        { tag: tags.macroName, color: "#5ccfe6", fontWeight: "600" },
+        { tag: tags.invalid, color: "#ff6b6b", textDecoration: "underline wavy" },
         { tag: tags.controlKeyword, color: "#ffa759", fontWeight: "600" },
         { tag: tags.definitionKeyword, color: "#ffa759", fontWeight: "600" },
         { tag: tags.moduleKeyword, color: "#ffa759", fontWeight: "600" },
@@ -580,6 +594,9 @@
         return HighlightStyle.define([
             { tag: tags.comment, color: p.comment, fontStyle: "italic" },
             { tag: tags.keyword, color: p.keyword, fontWeight: "600" },
+            { tag: tags.special(tags.keyword), color: p.special, fontWeight: "600" },
+            { tag: tags.macroName, color: p.meta, fontWeight: "600" },
+            { tag: tags.invalid, color: p.dark ? "#ff6b6b" : "#c92a2a", textDecoration: "underline wavy" },
             { tag: tags.controlKeyword, color: p.keyword, fontWeight: "600" },
             {
                 tag: tags.definitionKeyword,
@@ -1068,7 +1085,17 @@
         if (lang === "julia") return [juliaLanguage, juliaCommentData];
         if (lang === "lean") return [leanLanguage, leanCommentData];
         if (lang === "typst") return [typstLanguage, typstCommentData];
-        return [];
+        // `text` is the tab type, not a grammar: a plain tab that never
+        // resolved a language keeps the old unstyled behaviour.
+        if (lang === "text" || lang === PLAIN_TEXT) return [];
+        return languageExtension(lang);
+    }
+
+    // Prose languages spell-check every word; code languages (Julia, Lean, and
+    // anything from the registry that isn't markup) only comments and strings.
+    function getSpellMode(lang: string): "code" | "prose" {
+        if (lang === "julia" || lang === "lean") return "code";
+        return isCodeLanguage(lang) ? "code" : "prose";
     }
 
     // ── Code folding ──────────────────────────────────────────────────────────
@@ -1082,17 +1109,41 @@
         return i;
     }
 
+    /**
+     * How far a fold range may look ahead, in lines.
+     *
+     * Without a bound this walks to the end of the document whenever nothing
+     * below the line ever dedents — the whole body of a large JSON or Python
+     * file, say. That matters more than it sounds: the fold gutter asks whether
+     * *every visible line* is foldable, and re-asks on each viewport or
+     * document change, so an unbounded scan makes one render cost
+     * O(lines × document). Stopping early can only under-report the end of a
+     * very deep fold, which is invisible next to the cost of not stopping.
+     */
+    const MAX_FOLD_SCAN = 2000;
+
     const indentFoldService = foldService.of((state, lineStart) => {
         const line = state.doc.lineAt(lineStart);
         if (line.text.trim() === "") return null;
+        if (line.number >= state.doc.lines) return null;
+
+        // Sequential iteration rather than `doc.line(n)` per step: each of
+        // those is a fresh O(log n) descent through the rope, where the
+        // iterator just walks it.
+        const last = Math.min(state.doc.lines, line.number + MAX_FOLD_SCAN);
+        const iter = state.doc.iterLines(line.number + 1, last + 1);
+        let pos = line.to;
         const baseIndent = leadingIndent(line.text);
         let end = line.to;
         let foundDeeper = false;
-        for (let n = line.number + 1; n <= state.doc.lines; n++) {
-            const nl = state.doc.line(n);
-            if (nl.text.trim() === "") continue; // bridge blank lines
-            if (leadingIndent(nl.text) > baseIndent) {
-                end = nl.to;
+
+        for (const text of iter) {
+            // `pos` tracks the end of the line just read: the newline before
+            // it, plus its own length.
+            pos += 1 + text.length;
+            if (text.trim() === "") continue; // bridge blank lines
+            if (leadingIndent(text) > baseIndent) {
+                end = pos;
                 foundDeeper = true;
             } else {
                 break;
@@ -1374,7 +1425,9 @@
         onchange,
     }: {
         value?: string;
-        language: "julia" | "lean" | "typst" | "text";
+        /** `julia` / `lean` / `typst` use this app's own grammars; anything
+         *  else is a language id from `$lib/codemirror/languages`. */
+        language: string;
         extraKeymap?: KeyBinding[];
         extensions?: Extension[];
         class?: string;
@@ -1398,6 +1451,12 @@
     // normal path for every keystroke — the sync effect can skip stringifying
     // the whole document just to discover it already matches.
     let lastEmitted: string | null = null;
+
+    // Last values pushed to the two *global* history stores. `setTabHistory`
+    // already dedups the per-tab map; these were the writes still firing on
+    // every transaction.
+    let lastGlobalCanUndo: boolean | null = null;
+    let lastGlobalCanRedo: boolean | null = null;
 
     let aiSelection = $state<{
         from: number;
@@ -1749,7 +1808,13 @@
                     ...defaultKeymap,
                 ]),
                 themeComp.of(getThemeExt($editorTheme)),
-                langComp.of(getLangExt(language)),
+                langComp.of([
+                    getLangExt(language),
+                    spellcheckExtension(
+                        getSpellMode(language),
+                        (info) => (spellContext = info),
+                    ),
+                ]),
                 ...(language === "julia"
                     ? [juliaGoToDefinition, defLinkField]
                     : []),
@@ -1760,14 +1825,6 @@
                 // bars render at the very left edge, before the line numbers.
                 Prec.high(gitDiffGutter()),
                 gitDiffOverviewRuler(),
-                // Spell checking: prose languages check everything; code
-                // languages (Julia, Lean) restrict to comments and strings.
-                spellcheckExtension(
-                    language === "julia" || language === "lean"
-                        ? "code"
-                        : "prose",
-                    (info) => (spellContext = info),
-                ),
                 ...extraExtensions,
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged && !suppressOnChange) {
@@ -1782,12 +1839,26 @@
                     ) {
                         updateAiSelection();
                     }
-                    const canUndo = undoDepth(update.state) > 0;
-                    const canRedo = redoDepth(update.state) > 0;
-                    codeMirrorCanUndo.set(canUndo);
-                    codeMirrorCanRedo.set(canRedo);
-                    if (ownerTabId) {
-                        setTabHistory(ownerTabId, { canUndo, canRedo });
+
+                    // Only the history can change these, so a selection or
+                    // viewport update — by far the most frequent kind — needs
+                    // no work at all. Publishing unchanged values woke every
+                    // subscriber on each cursor move.
+                    if (update.docChanged || update.transactions.length > 0) {
+                        const canUndo = undoDepth(update.state) > 0;
+                        const canRedo = redoDepth(update.state) > 0;
+                        if (
+                            canUndo !== lastGlobalCanUndo ||
+                            canRedo !== lastGlobalCanRedo
+                        ) {
+                            lastGlobalCanUndo = canUndo;
+                            lastGlobalCanRedo = canRedo;
+                            codeMirrorCanUndo.set(canUndo);
+                            codeMirrorCanRedo.set(canRedo);
+                        }
+                        if (ownerTabId) {
+                            setTabHistory(ownerTabId, { canUndo, canRedo });
+                        }
                     }
                 }),
             ],
@@ -1896,6 +1967,32 @@
         const theme = $editorTheme;
         if (!view) return;
         view.dispatch({ effects: themeComp.reconfigure(getThemeExt(theme)) });
+    });
+
+    // Sync grammar changes. The host re-points one mounted editor at another
+    // file instead of remounting it, so a `.rs` tab replaced by a `.py` tab
+    // arrives here as a prop change and has to swap its grammar — and with it
+    // the spell-check mode, which rides in the same compartment.
+    let lastLanguage: string | null = null;
+    $effect(() => {
+        const lang = language;
+        if (!view) return;
+        if (lastLanguage === null) {
+            // First run after mount: the view was built with this grammar.
+            lastLanguage = lang;
+            return;
+        }
+        if (lang === lastLanguage) return;
+        lastLanguage = lang;
+        view.dispatch({
+            effects: langComp.reconfigure([
+                getLangExt(lang),
+                spellcheckExtension(
+                    getSpellMode(lang),
+                    (info) => (spellContext = info),
+                ),
+            ]),
+        });
     });
 
     // Sync line-wrap changes

@@ -84,6 +84,9 @@ export const juliaSupport = [juliaLanguage, juliaCommentData];
 export const juliaLightHighlight = HighlightStyle.define([
     { tag: tags.comment, color: "#abb0b6", fontStyle: "italic" },
     { tag: tags.keyword, color: "#fa8d3e", fontWeight: "600" },
+    { tag: tags.special(tags.keyword), color: "#4cbf99", fontWeight: "600" },
+    { tag: tags.macroName, color: "#399ee6", fontWeight: "600" },
+    { tag: tags.invalid, color: "#c92a2a", textDecoration: "underline wavy" },
     { tag: tags.controlKeyword, color: "#fa8d3e", fontWeight: "600" },
     { tag: tags.definitionKeyword, color: "#fa8d3e", fontWeight: "600" },
     { tag: tags.moduleKeyword, color: "#fa8d3e", fontWeight: "600" },
@@ -116,6 +119,9 @@ export const juliaLightHighlight = HighlightStyle.define([
 export const juliaDarkHighlight = HighlightStyle.define([
     { tag: tags.comment, color: "#5c6773", fontStyle: "italic" },
     { tag: tags.keyword, color: "#ffa759", fontWeight: "600" },
+    { tag: tags.special(tags.keyword), color: "#95e6cb", fontWeight: "600" },
+    { tag: tags.macroName, color: "#5ccfe6", fontWeight: "600" },
+    { tag: tags.invalid, color: "#ff6b6b", textDecoration: "underline wavy" },
     { tag: tags.controlKeyword, color: "#ffa759", fontWeight: "600" },
     { tag: tags.definitionKeyword, color: "#ffa759", fontWeight: "600" },
     { tag: tags.moduleKeyword, color: "#ffa759", fontWeight: "600" },

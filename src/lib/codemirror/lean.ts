@@ -1,54 +1,39 @@
 /**
- * Shared Lean 4 language support for CodeMirror.
- *
- * `@codemirror/legacy-modes` ships no Lean mode, so this is a hand-written
- * stream tokenizer. It covers what actually matters for reading Lean source:
- * nestable block comments (`/- … -/`), doc comments, string interpolation
- * (`s!"…"`), attributes (`@[simp]`), and the split between declaration
- * keywords, term-level keywords and tactic names — a Lean proof is mostly
- * tactic invocations, so colouring tactics like ordinary identifiers makes
- * proofs unreadable.
- *
- * Both the file editor (CodeMirrorEditor.svelte) and the Lexical editor's
- * Lean code cells build on this, so they highlight identically.
+ * Shared, incremental Lean 4 highlighting for file editors and notebook cells.
+ * This is lexical highlighting, not an elaborator/LSP: user-defined syntax and
+ * the types of local names cannot be inferred here. Keep state limited to the
+ * constructs that can span lines, so editing doesn't require a whole-file scan.
  */
-import {
-    StreamLanguage,
-    type StreamParser,
-    type StringStream,
-} from '@codemirror/language';
+import { StreamLanguage, type StreamParser, type StringStream } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 
-// Declarations — the "outline" of a file. Each one introduces a name.
 const DECLARATION_KEYWORDS = new Set([
     'def', 'theorem', 'lemma', 'instance', 'structure', 'class', 'inductive',
     'coinductive', 'abbrev', 'axiom', 'opaque', 'macro', 'macro_rules',
     'syntax', 'notation', 'elab', 'elab_rules', 'infix', 'infixl', 'infixr',
-    'prefix', 'postfix', 'declare_syntax_cat', 'initialize',
+    'prefix', 'postfix', 'declare_syntax_cat', 'initialize', 'builtin_initialize',
 ]);
-
-// Declaration-adjacent keywords that do *not* introduce a name of their own.
+// Syntax/notation declarations do not necessarily introduce an identifier.
+const NAMED_DECLARATIONS = new Set([
+    'def', 'theorem', 'lemma', 'instance', 'structure', 'class', 'inductive',
+    'coinductive', 'abbrev', 'axiom', 'opaque', 'declare_syntax_cat',
+]);
 const DECLARATION_MODIFIERS = new Set([
     'example', 'partial', 'unsafe', 'noncomputable', 'mutual', 'private',
-    'protected', 'local', 'scoped', 'public', 'meta',
+    'protected', 'local', 'scoped', 'public', 'meta', 'nonrec',
 ]);
-
 const MODULE_KEYWORDS = new Set([
-    'import', 'open', 'namespace', 'section', 'end', 'export', 'variable',
-    'variables', 'universe', 'universes', 'attribute', 'set_option',
-    'deriving', 'extends', 'where',
+    'import', 'prelude', 'open', 'namespace', 'section', 'end', 'export',
+    'variable', 'variables', 'universe', 'universes', 'attribute', 'set_option',
+    'deriving', 'extends', 'where', 'include', 'omit',
 ]);
-
-// Term-level and control-flow keywords.
 const CONTROL_KEYWORDS = new Set([
     'if', 'then', 'else', 'match', 'with', 'fun', 'do', 'let', 'have', 'show',
     'from', 'suffices', 'calc', 'by', 'at', 'in', 'return', 'for', 'while',
     'unless', 'try', 'catch', 'finally', 'break', 'continue', 'this',
-    'forall', 'λ',
+    'forall', 'λ', 'termination_by', 'termination_by?', 'decreasing_by',
+    'decreasing_trivial', 'using', 'only', 'case', 'next',
 ]);
-
-// Tactic names. Not exhaustive — Lean tactics are user-extensible — but this
-// covers the core set plus the Mathlib tactics a reader meets constantly.
 const TACTIC_KEYWORDS = new Set([
     'intro', 'intros', 'exact', 'apply', 'refine', 'rfl', 'simp', 'simpa',
     'simp_all', 'rw', 'rewrite', 'nth_rewrite', 'induction', 'cases', 'rcases',
@@ -59,269 +44,211 @@ const TACTIC_KEYWORDS = new Set([
     'field_simp', 'aesop', 'tauto', 'positivity', 'gcongr', 'specialize',
     'revert', 'clear', 'rename', 'rename_i', 'change', 'convert', 'conv',
     'unfold', 'delta', 'split', 'split_ifs', 'first', 'repeat', 'all_goals',
-    'any_goals', 'focus', 'skip', 'guard_hyp', 'guard_target',
-    'infer_instance', 'trans', 'symm',
+    'any_goals', 'focus', 'skip', 'guard_hyp', 'guard_target', 'infer_instance',
+    'trans', 'symm', 'classical', 'by_cases', 'by_contra', 'contrapose',
+    'push', 'pull', 'rw_mod_cast', 'exact_mod_cast', 'apply_mod_cast',
+    'ac_rfl', 'dsimp', 'erw', 'rwa', 'squeeze_simp', 'simp_rw', 'simp_arith',
+    'ext1', 'assumption_mod_cast', 'interval_cases', 'fin_cases',
+    'norm_num1', 'linear_combination',
+    'abel', 'abel_nf', 'group', 'module', 'fun_prop', 'continuity',
+    'measurability', 'filter_upwards', 'exact_type', 'solve', 'solve_by_elim',
+    'apply_rules', 'repeat\'', 'done', 'stop', 'trace_state',
 ]);
-
-// Sorts. Everything else uppercase is picked up by the type-name convention.
 const SORT_KEYWORDS = new Set(['Type', 'Prop', 'Sort']);
+const HOLE_KEYWORDS = new Set(['sorry', 'sorryAx', 'admit']);
 
-const BOOL_LITERALS = new Set(['true', 'false']);
+// Match whole Unicode code points (including supplementary-plane math letters),
+// combining marks and Lean's subscript/superscript and prime suffixes. Escaped
+// identifiers such as «a name with spaces» may also occur in qualified names.
+const SEGMENT = String.raw`(?:«[^»\r\n]*»|[\p{L}\p{Nl}_][\p{L}\p{Nl}\p{N}\p{M}_'!?]*)`;
+const IDENTIFIER = new RegExp(`^${SEGMENT}(?:\\.${SEGMENT})*`, 'u');
+const NAME_LITERAL = new RegExp('^`{1,2}' + SEGMENT + '(?:\\.' + SEGMENT + ')*', 'u');
+const PLACEHOLDER = new RegExp('^\\?(?:' + SEGMENT + ')?', 'u');
 
-// `sorry` admits a goal without proving it. Tagging it `invalid` makes an
-// unfinished proof visually obvious — the same signal the VS Code extension
-// gives, and the reason Lean itself emits a warning for it.
-const HOLE_KEYWORDS = new Set(['sorry', 'sorryAx', 'admit', 'stop']);
-
-// Commands that print into the infoview rather than defining anything. These
-// produce the `#eval` / `#check` output the infoview panel shows, so they get
-// their own colour to tie the editor to that panel.
-const HASH_COMMANDS = new Set([
-    '#eval', '#check', '#print', '#reduce', '#exit', '#help', '#align',
-    '#check_failure', '#guard', '#guard_msgs', '#synth', '#where', '#lint',
-]);
-
-/**
- * Identifier characters. Lean is unicode-heavy: Greek letters, blackboard
- * bold (ℕ, ℝ), subscripts and the `'`/`!`/`?` suffixes are all legal in names.
- */
-const IDENT_CHAR =
-    /[\w'!?\u00C0-\u024F\u0370-\u03FF\u1D00-\u1DBF\u2070-\u209F\u2100-\u214F\u1E00-\u1EFF]/;
-const IDENT_START =
-    /[A-Za-z_\u00C0-\u024F\u0370-\u03FF\u1D00-\u1DBF\u2100-\u214F\u1E00-\u1EFF]/;
-
+interface StringContext {
+    /** null means escaped string; a number means r#…# raw string. */
+    rawHashes: number | null;
+    interpolated: boolean;
+    inExpression: boolean;
+    braceDepth: number;
+}
 interface LeanState {
-    /** Nesting depth of `/- … -/`; Lean block comments nest, unlike C's. */
     commentDepth: number;
-    /** Inside a `"…"` string that has not been closed on this line. */
-    inString: boolean;
-    /** Set by a declaration keyword so the name it introduces is tagged as a
-     *  definition rather than a plain identifier. */
+    docComment: boolean;
+    strings: StringContext[];
+    attributeDepth: number;
     expectDefName: boolean;
 }
 
-const leanParser: StreamParser<LeanState> = {
+function comment(stream: StringStream, state: LeanState): string {
+    while (!stream.eol()) {
+        if (stream.match('/-')) state.commentDepth++;
+        else if (stream.match('-/')) {
+            if (--state.commentDepth === 0) break;
+        } else stream.next();
+    }
+    return state.docComment ? 'docComment' : 'comment';
+}
+
+function stringToken(stream: StringStream, state: LeanState, context: StringContext): string {
+    const end = '"' + '#'.repeat(context.rawHashes ?? 0);
+    if (context.rawHashes === null && stream.match(/^\\(?:u[0-9a-fA-F]{4}|x[0-9a-fA-F]{2}|.)/)) {
+        return 'escape';
+    }
+    if (context.interpolated && stream.peek() === '{' && !stream.match('{{', false)) {
+        stream.next();
+        context.inExpression = true;
+        context.braceDepth = 0;
+        return 'leanInterpolation';
+    }
+    while (!stream.eol()) {
+        if (stream.match(end)) {
+            state.strings.pop();
+            break;
+        }
+        if (context.rawHashes === null && stream.peek() === '\\') {
+            // Leave the escape for its own token. A trailing backslash must
+            // still advance the stream, even in an incomplete string.
+            if (stream.pos > stream.start) break;
+            stream.next();
+            break;
+        }
+        if (context.interpolated && stream.peek() === '{') {
+            if (stream.match('{{')) continue;
+            break;
+        }
+        stream.next();
+    }
+    return 'string';
+}
+
+export const leanParser: StreamParser<LeanState> = {
     name: 'lean',
+    startState: () => ({
+        commentDepth: 0, docComment: false, strings: [],
+        attributeDepth: 0, expectDefName: false,
+    }),
+    // CodeMirror copies parser checkpoints while editing. Nested interpolation
+    // contexts must not be shared with an older checkpoint.
+    copyState: state => ({ ...state, strings: state.strings.map(context => ({ ...context })) }),
 
-    startState(): LeanState {
-        return { commentDepth: 0, inString: false, expectDefName: false };
-    },
-
-    token(stream: StringStream, state: LeanState): string | null {
-        // ── Block comment continuing from a previous line ────────────────────
-        if (state.commentDepth > 0) {
-            while (!stream.eol()) {
-                if (stream.match('/-')) {
-                    state.commentDepth++;
-                    continue;
-                }
-                if (stream.match('-/')) {
-                    state.commentDepth--;
-                    if (state.commentDepth === 0) return 'comment';
-                    continue;
-                }
-                stream.next();
-            }
-            return 'comment';
-        }
-
-        // ── Unterminated string continuing from a previous line ──────────────
-        if (state.inString) {
-            while (!stream.eol()) {
-                const ch = stream.next()!;
-                if (ch === '\\') {
-                    stream.next();
-                } else if (ch === '"') {
-                    state.inString = false;
-                    return 'string';
-                }
-            }
-            return 'string';
-        }
-
+    token(stream, state) {
+        if (state.commentDepth) return comment(stream, state);
+        const context = state.strings[state.strings.length - 1];
+        if (context && !context.inExpression) return stringToken(stream, state, context);
         if (stream.eatSpace()) return null;
 
-        // The "next identifier names a declaration" flag is only ever true for
-        // the single token that follows the keyword — clear it up front so a
-        // stray `:` or `(` can't leave it armed for the rest of the file.
+        // Comments are trivia: `def /- explanation -/ foo` still defines foo.
+        if (stream.match('/-')) {
+            state.commentDepth = 1;
+            state.docComment = stream.peek() === '-' || stream.peek() === '!';
+            return comment(stream, state);
+        }
+        if (stream.match('--')) { stream.skipToEnd(); return 'comment'; }
+
         const namingDeclaration = state.expectDefName;
         state.expectDefName = false;
 
-        // ── Comments ─────────────────────────────────────────────────────────
-        if (stream.match('/-')) {
-            // `/-- … -/` is a doc comment; it shares the nesting counter.
-            state.commentDepth = 1;
-            while (!stream.eol()) {
-                if (stream.match('/-')) {
-                    state.commentDepth++;
-                    continue;
-                }
-                if (stream.match('-/')) {
-                    state.commentDepth--;
-                    if (state.commentDepth === 0) break;
-                    continue;
-                }
+        if (context?.inExpression) {
+            if (stream.peek() === '}') {
                 stream.next();
+                if (context.braceDepth === 0) {
+                    context.inExpression = false;
+                    return 'leanInterpolation';
+                }
+                context.braceDepth--;
+                return 'bracket';
             }
-            return 'comment';
-        }
-        if (stream.match('--')) {
-            stream.skipToEnd();
-            return 'comment';
+            if (stream.peek() === '{') { stream.next(); context.braceDepth++; return 'bracket'; }
         }
 
-        // ── Attributes: `@[simp, norm_cast]` ─────────────────────────────────
-        if (stream.match('@[')) {
-            let depth = 1;
-            while (!stream.eol() && depth > 0) {
-                const ch = stream.next()!;
-                if (ch === '[') depth++;
-                else if (ch === ']') depth--;
-            }
-            return 'meta';
+        if (stream.match('@[')) { state.attributeDepth++; return 'meta'; }
+        if (state.attributeDepth && stream.peek() === '[') {
+            stream.next(); state.attributeDepth++; return 'meta';
+        }
+        if (state.attributeDepth && stream.peek() === ']') {
+            stream.next(); state.attributeDepth--; return 'meta';
         }
 
-        // ── `#eval` / `#check` and friends ───────────────────────────────────
-        if (stream.peek() === '#') {
-            const start = stream.pos;
-            stream.next();
-            while (!stream.eol() && IDENT_CHAR.test(stream.peek()!)) stream.next();
-            const word = stream.string.slice(start, stream.pos);
-            return HASH_COMMANDS.has(word) ? 'leanCommand' : 'meta';
+        // Raw strings ignore backslashes and quotes not followed by the right
+        // hash delimiter. Interpolation expressions re-enter the code tokenizer.
+        const raw = stream.match(/^r(#+)?"/);
+        if (Array.isArray(raw)) {
+            state.strings.push({ rawHashes: (raw[1] ?? '').length, interpolated: false, inExpression: false, braceDepth: 0 });
+            return 'string';
         }
-
-        // ── Interpolated-string prefixes: `s!"…"`, `m!"…"`, `f!"…"` ──────────
-        if (stream.match(/^[a-z]!(?=")/)) {
+        if (stream.match(/^[sSmMfF]!"/)) {
+            state.strings.push({ rawHashes: null, interpolated: true, inExpression: false, braceDepth: 0 });
             return 'leanInterp';
         }
-
-        // ── Strings and char literals ────────────────────────────────────────
-        if (stream.peek() === '"') {
-            stream.next();
-            state.inString = true;
-            while (!stream.eol()) {
-                const ch = stream.next()!;
-                if (ch === '\\') {
-                    stream.next();
-                } else if (ch === '"') {
-                    state.inString = false;
-                    break;
-                }
-            }
+        if (stream.match('"')) {
+            state.strings.push({ rawHashes: null, interpolated: false, inExpression: false, braceDepth: 0 });
             return 'string';
         }
-        if (stream.match(/^'(?:\\.|[^'\\])'/)) {
-            return 'string';
-        }
+        if (stream.match(/^'(?:\\(?:u[0-9a-fA-F]{4}|x[0-9a-fA-F]{2}|.)|[^'\\\r\n])'/u)) return 'string';
+        if (stream.match(NAME_LITERAL)) return 'atom';
+        if (stream.match(/^#[\p{L}_][\p{L}\p{N}_']*/u)) return 'leanCommand';
+        if (stream.match(PLACEHOLDER)) return 'leanHole';
+        if (stream.match(/^0[xX][0-9a-fA-F_]+/) || stream.match(/^0[bB][01_]+/) ||
+            stream.match(/^\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d[\d_]*)?/)) return 'number';
 
-        // ── Numbers ──────────────────────────────────────────────────────────
-        if (stream.match(/^0[xX][0-9a-fA-F_]+/) || stream.match(/^0[bB][01_]+/)) {
-            return 'number';
-        }
-        if (stream.match(/^\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?/)) {
-            return 'number';
-        }
-
-        // ── Identifiers and keywords ─────────────────────────────────────────
-        if (IDENT_START.test(stream.peek() ?? '')) {
-            const start = stream.pos;
-            while (!stream.eol() && IDENT_CHAR.test(stream.peek()!)) stream.next();
-            // Dotted names (`Nat.succ`, `List.map`) are a single token.
-            while (
-                stream.peek() === '.' &&
-                IDENT_START.test(stream.string[stream.pos + 1] ?? '')
-            ) {
-                stream.next();
-                while (!stream.eol() && IDENT_CHAR.test(stream.peek()!)) stream.next();
-            }
-            const word = stream.string.slice(start, stream.pos);
-
-            if (
-                namingDeclaration &&
-                !DECLARATION_KEYWORDS.has(word) &&
-                !DECLARATION_MODIFIERS.has(word) &&
-                !MODULE_KEYWORDS.has(word)
-            ) {
-                return 'leanDefName';
-            }
-
-            if (HOLE_KEYWORDS.has(word)) return 'invalid';
+        const identifier = stream.match(IDENTIFIER);
+        if (Array.isArray(identifier)) {
+            const word = identifier[0];
+            if (state.attributeDepth) return 'attributeName';
+            if (namingDeclaration && !DECLARATION_KEYWORDS.has(word) &&
+                !DECLARATION_MODIFIERS.has(word) && !MODULE_KEYWORDS.has(word)) return 'leanDefName';
             if (DECLARATION_KEYWORDS.has(word)) {
-                state.expectDefName = true;
+                state.expectDefName = NAMED_DECLARATIONS.has(word);
                 return 'definitionKeyword';
             }
             if (DECLARATION_MODIFIERS.has(word)) return 'definitionKeyword';
             if (MODULE_KEYWORDS.has(word)) return 'moduleKeyword';
             if (CONTROL_KEYWORDS.has(word)) return 'controlKeyword';
+            if (HOLE_KEYWORDS.has(word)) return 'invalid';
             if (SORT_KEYWORDS.has(word)) return 'type';
-            if (BOOL_LITERALS.has(word)) return 'bool';
-            if (TACTIC_KEYWORDS.has(word)) return 'leanTactic';
-
-            // Uppercase-initial names are types/namespaces by Lean convention.
-            const lastSegment = word.split('.').pop() ?? word;
-            if (/^[A-Z\u0391-\u03A9\u2100-\u214F]/.test(lastSegment)) return 'type';
-            // A lowercase name applied directly to `(` reads as a function call.
-            if (stream.peek() === '(') return 'leanFunctionCall';
+            if (word === 'true' || word === 'false') return 'bool';
+            // Include core/Mathlib suggestion and aggressive variants: simp?,
+            // simp!, exact?, aesop?, etc., without splitting the suffix off.
+            if (TACTIC_KEYWORDS.has(word) || TACTIC_KEYWORDS.has(word.replace(/[!?]+$/, ''))) return 'leanTactic';
+            const lastSegment = word.slice(word.lastIndexOf('.') + 1);
+            if (/^[\p{Lu}\p{Lt}ℕℤℚℝℂ]/u.test(lastSegment)) return 'type';
+            // Qualified lowercase names and parenthesized applications are a
+            // useful lexical hint, not a claim about the elaborated type.
+            if (word.includes('.') || stream.match(/^\s*\(/, false)) return 'leanFunctionCall';
             return 'variableName';
         }
 
-        // ── Unicode math / logic operators ───────────────────────────────────
-        if (stream.match(/^[→←↔↦⇒⇔∘∙×⊕⊗∧∨¬≤≥≠≡∈∉⊆⊂∪∩∑∏√∫±∀∃λ]/)) {
-            return 'operator';
-        }
-        if (stream.match(/^[⟨⟩⟦⟧‹›«»]/)) {
-            return 'bracket';
-        }
-
-        // ── ASCII operators and punctuation ──────────────────────────────────
-        if (
-            stream.match(
-                /^(?:<\||\|>|:=|=>|->|<->|<-|\.\.\.|\.\.|::|\|\||&&|==|!=|<=|>=|\+\+|>>=|<\$>)/,
-            )
-        ) {
-            return 'operator';
-        }
-        if (stream.match(/^[+\-*/%^<>=|&!~$:]/)) {
-            return 'operator';
-        }
-        if (stream.match(/^[()[\]{}]/)) {
-            return 'bracket';
-        }
-        if (stream.match(/^[,;.]/)) {
-            return 'punctuation';
-        }
-
+        if (stream.match(/^[∀∃]/u)) return 'controlKeyword';
+        if (stream.match(/^[⟨⟩⟦⟧‹›«»()[\]{}]/u)) return 'bracket';
+        if (stream.match(/^(?:<;>|<\|>|<->|:=|=>|->|<-|\.\.\.|\.\.|::|\|\||&&|==|!=|<=|>=|\+\+|>>=|<\$>|<\*>)/)) return 'operator';
+        // Consume other operators one code point at a time so an adjacent
+        // comment opener (x+/- note -/y) isn't swallowed into an operator run.
+        if (stream.match(/^[\p{Sm}→←↔↦⇒⇔∘∙∧∨¬∈∉⊆⊂∪∩∑∏√∫±·•⊢↑↓↥↧+\-*/%^<>=|&!~$:@\\]/u)) return 'operator';
+        if (stream.match(/^[,;.`]/)) return 'punctuation';
         stream.next();
         return null;
     },
-
-    // Maps this parser's custom token names onto highlight tags. The standard
-    // names ('comment', 'string', 'number', …) are resolved by CodeMirror.
     tokenTable: {
         leanTactic: tags.special(tags.keyword),
         leanCommand: tags.macroName,
         leanInterp: tags.special(tags.string),
+        leanInterpolation: tags.special(tags.string),
+        leanHole: tags.invalid,
         leanFunctionCall: tags.function(tags.variableName),
         leanDefName: tags.definition(tags.variableName),
     },
-
-    languageData: {
-        commentTokens: { line: '--', block: { open: '/-', close: '-/' } },
-    },
+    languageData: { commentTokens: { line: '--', block: { open: '/-', close: '-/' } } },
 };
 
 export const leanLanguage = StreamLanguage.define(leanParser);
-
 export const leanCommentData = leanLanguage.data.of({
     commentTokens: { line: '--', block: { open: '/-', close: '-/' } },
 });
-
-/** Lean language extension bundle (language + comment metadata). */
 export const leanSupport = [leanLanguage, leanCommentData];
 
-// The Ayu light/dark highlight styles are palette definitions keyed by generic
-// Lezer tags rather than Julia-specific rules, and Lean's tokens resolve to
-// those same tags — so both languages share one source of truth for colours.
+// Cell colours share the generic tag palettes with Julia; file editors use the
+// selected app theme. Neither needs a separate hard-coded Lean colour scheme.
 export {
     juliaLightHighlight as leanLightHighlight,
     juliaDarkHighlight as leanDarkHighlight,
