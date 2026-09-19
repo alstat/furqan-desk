@@ -1346,4 +1346,5 @@ export const pt: Record<string, string> = {
   "typst_dark_hint.open_settings": "Abrir configurações",
   "typst_dark_hint.never": "Não lembrar novamente",
   "typst_dark_hint.dismiss": "Fechar",
+    "script_repl.resize_input": "Arraste para redimensionar a entrada · Duplo clique para redefinir",
 };

@@ -1339,4 +1339,5 @@ export const tk: Record<string, string> = {
   "typst_dark_hint.open_settings": "Sazlamalary aç",
   "typst_dark_hint.never": "Gaýtadan ýatlatma",
   "typst_dark_hint.dismiss": "Ýap",
+    "script_repl.resize_input": "Girişiň ölçegini üýtgetmek üçin süýşüriň · Dikeltmek üçin iki gezek basyň",
 };

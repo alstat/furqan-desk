@@ -1266,4 +1266,5 @@ export const fa: Record<string, string> = {
   "typst_dark_hint.open_settings": "باز کردن تنظیمات",
   "typst_dark_hint.never": "دیگر یادآوری نکن",
   "typst_dark_hint.dismiss": "بستن",
+  "script_repl.resize_input": "برای تغییر اندازهٔ ورودی بکشید · برای بازنشانی دوبار کلیک کنید",
 };

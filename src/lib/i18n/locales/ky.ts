@@ -1339,4 +1339,5 @@ export const ky: Record<string, string> = {
   "typst_dark_hint.open_settings": "Орнотууларды ачуу",
   "typst_dark_hint.never": "Мындан ары эскертпе",
   "typst_dark_hint.dismiss": "Жабуу",
+    "script_repl.resize_input": "Киргизүү талаасынын өлчөмүн өзгөртүү үчүн сүйрөңүз · Кайра коюу үчүн кош чертиңиз",
 };

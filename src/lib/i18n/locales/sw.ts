@@ -1286,4 +1286,5 @@ export const sw: Record<string, string> = {
   "typst_dark_hint.open_settings": "Fungua Mipangilio",
   "typst_dark_hint.never": "Usinikumbushe tena",
   "typst_dark_hint.dismiss": "Funga",
+    "script_repl.resize_input": "Buruta kubadilisha ukubwa wa eneo la kuandika · Bofya mara mbili kurudisha",
 };

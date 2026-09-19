@@ -1266,4 +1266,5 @@ export const ru: Record<string, string> = {
   "typst_dark_hint.open_settings": "Открыть настройки",
   "typst_dark_hint.never": "Больше не напоминать",
   "typst_dark_hint.dismiss": "Закрыть",
+  "script_repl.resize_input": "Потяните, чтобы изменить размер поля ввода · Двойной щелчок сбрасывает",
 };

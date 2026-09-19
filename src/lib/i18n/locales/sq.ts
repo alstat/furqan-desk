@@ -1286,4 +1286,5 @@ export const sq: Record<string, string> = {
   "typst_dark_hint.open_settings": "Hap cilësimet",
   "typst_dark_hint.never": "Mos më kujto më",
   "typst_dark_hint.dismiss": "Mbyll",
+    "script_repl.resize_input": "Tërhiqni për të ripërmasuar hyrjen · Klikim i dyfishtë për ta rikthyer",
 };

@@ -1342,4 +1342,5 @@ export const ms: Record<string, string> = {
   "typst_dark_hint.open_settings": "Buka Tetapan",
   "typst_dark_hint.never": "Jangan ingatkan saya lagi",
   "typst_dark_hint.dismiss": "Tutup",
+    "script_repl.resize_input": "Seret untuk mengubah saiz input · Klik dua kali untuk menetapkan semula",
 };

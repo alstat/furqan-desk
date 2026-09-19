@@ -1344,4 +1344,5 @@ export const ja: Record<string, string> = {
   "typst_dark_hint.open_settings": "設定を開く",
   "typst_dark_hint.never": "今後表示しない",
   "typst_dark_hint.dismiss": "閉じる",
+    "script_repl.resize_input": "ドラッグで入力欄のサイズを変更 · ダブルクリックでリセット",
 };

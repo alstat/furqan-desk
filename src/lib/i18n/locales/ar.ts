@@ -1266,4 +1266,5 @@ export const ar: Record<string, string> = {
   "typst_dark_hint.open_settings": "فتح الإعدادات",
   "typst_dark_hint.never": "لا تذكّرني مرة أخرى",
   "typst_dark_hint.dismiss": "إغلاق",
+  "script_repl.resize_input": "اسحب لتغيير حجم الإدخال · انقر نقرًا مزدوجًا لإعادة الضبط",
 };

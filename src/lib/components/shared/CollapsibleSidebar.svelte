@@ -19,6 +19,7 @@
     } from "$lib/stores/editor.store";
     import { activeTab, activeTabId } from "$lib/stores/tabs.store";
     import { crossGroups } from "$lib/stores/julia-terminal.store";
+    import { isScriptLanguage } from "$lib/languages/scriptLanguages";
     import DonationDialog from "./DonationDialog.svelte";
     import UserAccountDialog from "./UserAccountDialog.svelte";
     import AiChatDialog from "./AiChatDialog.svelte";
@@ -75,6 +76,7 @@
             ) ||
             $activeTab?.type === "julia" ||
             $activeTab?.type === "lean" ||
+            isScriptLanguage($activeTab?.type) ||
             $activeTab?.type === "typst",
     );
 

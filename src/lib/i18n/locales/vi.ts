@@ -1339,4 +1339,5 @@ export const vi: Record<string, string> = {
   "typst_dark_hint.open_settings": "Mở cài đặt",
   "typst_dark_hint.never": "Đừng nhắc lại",
   "typst_dark_hint.dismiss": "Đóng",
+    "script_repl.resize_input": "Kéo để đổi kích thước ô nhập · Nhấp đúp để đặt lại",
 };

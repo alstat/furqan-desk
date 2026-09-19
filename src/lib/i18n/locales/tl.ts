@@ -1348,4 +1348,5 @@ export const tl: Record<string, string> = {
   "typst_dark_hint.open_settings": "Buksan ang Mga Setting",
   "typst_dark_hint.never": "Huwag nang ipaalala",
   "typst_dark_hint.dismiss": "Isara",
+    "script_repl.resize_input": "I-drag para baguhin ang laki ng input · I-double-click para i-reset",
 };

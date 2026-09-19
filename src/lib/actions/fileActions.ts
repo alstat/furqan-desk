@@ -4,6 +4,10 @@
 // one place ensures the menu and the buttons behave identically.
 
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
+import {
+    isScriptLanguage,
+    scriptLanguageFor,
+} from "$lib/languages/scriptLanguages";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { serializedDocumentFromEditorState } from "@lexical/file";
 import { get } from "svelte/store";
@@ -84,15 +88,18 @@ export async function saveFile(tabId?: string | null): Promise<void> {
         }
         await writeTextFile(path, json);
         markTabSaved(tab.id, path);
-    } else if (tab.type === "julia" || tab.type === "lean") {
+    } else if (isScriptLanguage(tab.type) || tab.type === "lean") {
         const isLean = tab.type === "lean";
+        // Julia, R and Python each save with their own extension; the registry
+        // is where that lives, so a new language needs no branch here.
+        const script = scriptLanguageFor(tab.type);
         let path = tab.path;
         if (!path) {
             path = await saveDialog({
-                defaultPath: `${tab.name}.${isLean ? "lean" : "jl"}`,
+                defaultPath: `${tab.name}.${isLean ? "lean" : script!.defaultExtension}`,
                 filters: isLean
                     ? [{ name: "Lean 4", extensions: ["lean"] }]
-                    : [{ name: "Julia", extensions: ["jl"] }],
+                    : [{ name: script!.label, extensions: script!.extensions }],
             });
             if (!path) return;
         }
@@ -140,14 +147,15 @@ export async function saveAs(tabId?: string | null): Promise<void> {
         if (!path) return;
         await writeTextFile(path, JSON.stringify(doc, null, 2));
         markTabSaved(tab.id, path);
-    } else if (tab.type === "julia" || tab.type === "lean") {
+    } else if (isScriptLanguage(tab.type) || tab.type === "lean") {
         const isLean = tab.type === "lean";
+        const script = scriptLanguageFor(tab.type);
         const path = await saveDialog({
             title: "Save As",
-            defaultPath: `${tab.name}.${isLean ? "lean" : "jl"}`,
+            defaultPath: `${tab.name}.${isLean ? "lean" : script!.defaultExtension}`,
             filters: isLean
                 ? [{ name: "Lean 4", extensions: ["lean"] }]
-                : [{ name: "Julia", extensions: ["jl"] }],
+                : [{ name: script!.label, extensions: script!.extensions }],
         });
         if (!path) return;
         await writeTextFile(path, tab.content);

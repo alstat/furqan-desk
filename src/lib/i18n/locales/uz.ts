@@ -1339,4 +1339,5 @@ export const uz: Record<string, string> = {
   "typst_dark_hint.open_settings": "Sozlamalarni ochish",
   "typst_dark_hint.never": "Boshqa eslatilmasin",
   "typst_dark_hint.dismiss": "Yopish",
+    "script_repl.resize_input": "Kirish maydoni o'lchamini o'zgartirish uchun torting · Tiklash uchun ikki marta bosing",
 };

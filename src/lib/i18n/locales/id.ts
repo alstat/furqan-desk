@@ -1266,4 +1266,5 @@ export const id: Record<string, string> = {
   "typst_dark_hint.open_settings": "Buka Pengaturan",
   "typst_dark_hint.never": "Jangan ingatkan lagi",
   "typst_dark_hint.dismiss": "Tutup",
+  "script_repl.resize_input": "Seret untuk mengubah ukuran input · Klik dua kali untuk mengatur ulang",
 };
