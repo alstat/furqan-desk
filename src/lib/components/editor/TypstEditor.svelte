@@ -37,6 +37,7 @@
         codeMirrorViewInstance,
     } from "$lib/stores/editor.store";
     import { hideSurahPage } from "$lib/stores/quran.svelte";
+    import { languageIdForFile } from "$lib/codemirror/languages";
     import { flashingTabId } from "$lib/stores/julia-terminal.store";
     import {
         tabs,
@@ -75,6 +76,15 @@
         tabId ? ($tabs.find((t) => t.id === tabId) ?? null) : $activeTab,
     );
     let editorScrollKey = $derived(effectiveTab?.path ?? effectiveTab?.id ?? null);
+
+    // `.typ` keeps the Typst grammar; every other tab this component backs is a
+    // plain flat file whose grammar comes from its name, VS Code-style. An
+    // unsaved or unrecognised file falls through to unstyled text.
+    let editorLanguage = $derived(
+        effectiveTab?.type === "typst"
+            ? "typst"
+            : languageIdForFile(effectiveTab?.path ?? effectiveTab?.name),
+    );
 
     // In a Typst split, several editors are mounted at once but they share one
     // global compile pipeline + preview. Only the editor whose tab is active
@@ -812,7 +822,7 @@
         {/if}
         <CodeMirrorEditor
             value={effectiveTab?.content ?? ""}
-            language="typst"
+            language={editorLanguage}
             extensions={[typstCompletionExtension]}
             {lineWrap}
             aiSelectionTools={true}

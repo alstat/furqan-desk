@@ -368,27 +368,43 @@ export const REPL_INPUT_MAX_HEIGHT = 400;
 export const REPL_INPUT_PADDING = 12;
 
 /**
- * Where a Julia REPL is mounted. The embedded one under an editor opens at a
- * single line the way it always has; the one filling the right-hand column has
- * the room for a proper multi-line prompt. Each slot remembers its own height.
+ * Where a REPL is mounted. The embedded one under an editor opens at a single
+ * line the way it always has; the one filling the right-hand column has the
+ * room for a proper multi-line prompt. Each slot remembers its own height.
+ *
+ * R and Python share the `script-` slots rather than taking one each: only one
+ * of them is on screen at a time, and the height is about how much of the
+ * column the prompt should take, not about which interpreter is behind it.
  */
-export type ReplInputSlot = "embedded" | "panel";
+export type ReplInputSlot =
+  | "embedded"
+  | "panel"
+  | "script-embedded"
+  | "script-panel";
 
 export const REPL_INPUT_DEFAULT_LINES: Record<ReplInputSlot, number> = {
   embedded: 1,
   panel: 7,
+  "script-embedded": 1,
+  "script-panel": 7,
 };
+
+const REPL_INPUT_SLOTS = Object.keys(
+  REPL_INPUT_DEFAULT_LINES,
+) as ReplInputSlot[];
 
 /** null = follow the slot's line-count default. */
 type ReplInputHeights = Record<ReplInputSlot, number | null>;
 
 function loadReplInputHeights(): ReplInputHeights {
-  const heights: ReplInputHeights = { embedded: null, panel: null };
+  const heights = Object.fromEntries(
+    REPL_INPUT_SLOTS.map(slot => [slot, null]),
+  ) as ReplInputHeights;
   try {
     const raw = localStorage.getItem("repl-input-heights");
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<Record<ReplInputSlot, unknown>>;
-      for (const slot of ["embedded", "panel"] as const) {
+      for (const slot of REPL_INPUT_SLOTS) {
         const n = parsed[slot];
         if (
           typeof n === "number" &&

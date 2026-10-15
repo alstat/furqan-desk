@@ -1266,4 +1266,5 @@ export const zh: Record<string, string> = {
   "typst_dark_hint.open_settings": "打开设置",
   "typst_dark_hint.never": "不再提醒",
   "typst_dark_hint.dismiss": "关闭",
+  "script_repl.resize_input": "拖动可调整输入框大小 · 双击可重置",
 };

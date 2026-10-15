@@ -1286,4 +1286,5 @@ export const bs: Record<string, string> = {
   "typst_dark_hint.open_settings": "Otvori postavke",
   "typst_dark_hint.never": "Ne podsjećaj me više",
   "typst_dark_hint.dismiss": "Zatvori",
+    "script_repl.resize_input": "Povucite za promjenu veličine unosa · Dvoklik za vraćanje",
 };

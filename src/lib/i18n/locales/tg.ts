@@ -1339,4 +1339,5 @@ export const tg: Record<string, string> = {
   "typst_dark_hint.open_settings": "Кушодани танзимот",
   "typst_dark_hint.never": "Дигар хотиррасон накунед",
   "typst_dark_hint.dismiss": "Пӯшидан",
+    "script_repl.resize_input": "Барои тағйири андозаи вуруд кашед · Барои барқарорсозӣ дубора зер кунед",
 };

@@ -1266,4 +1266,5 @@ export const fr: Record<string, string> = {
   "typst_dark_hint.open_settings": "Ouvrir les paramètres",
   "typst_dark_hint.never": "Ne plus me le rappeler",
   "typst_dark_hint.dismiss": "Fermer",
+  "script_repl.resize_input": "Faites glisser pour redimensionner la saisie · Double-cliquez pour réinitialiser",
 };

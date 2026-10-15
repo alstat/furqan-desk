@@ -1339,4 +1339,5 @@ export const kk: Record<string, string> = {
   "typst_dark_hint.open_settings": "Параметрлерді ашу",
   "typst_dark_hint.never": "Бұдан былай еске салмау",
   "typst_dark_hint.dismiss": "Жабу",
+    "script_repl.resize_input": "Енгізу өрісінің өлшемін өзгерту үшін сүйреңіз · Қалпына келтіру үшін қос шертіңіз",
 };

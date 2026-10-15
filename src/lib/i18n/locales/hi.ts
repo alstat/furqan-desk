@@ -1343,4 +1343,5 @@ export const hi: Record<string, string> = {
   "typst_dark_hint.open_settings": "सेटिंग्स खोलें",
   "typst_dark_hint.never": "फिर याद न दिलाएँ",
   "typst_dark_hint.dismiss": "बंद करें",
+    "script_repl.resize_input": "इनपुट का आकार बदलने के लिए खींचें · रीसेट करने के लिए डबल-क्लिक करें",
 };

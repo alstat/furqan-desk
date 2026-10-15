@@ -1266,4 +1266,5 @@ export const ko: Record<string, string> = {
   "typst_dark_hint.open_settings": "설정 열기",
   "typst_dark_hint.never": "다시 알리지 않기",
   "typst_dark_hint.dismiss": "닫기",
+  "script_repl.resize_input": "드래그하여 입력창 크기 조절 · 더블클릭하면 초기화",
 };

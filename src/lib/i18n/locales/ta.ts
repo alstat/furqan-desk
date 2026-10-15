@@ -1286,4 +1286,5 @@ export const ta: Record<string, string> = {
   "typst_dark_hint.open_settings": "அமைப்புகளைத் திற",
   "typst_dark_hint.never": "இனி நினைவூட்ட வேண்டாம்",
   "typst_dark_hint.dismiss": "மூடு",
+    "script_repl.resize_input": "உள்ளீட்டின் அளவை மாற்ற இழுக்கவும் · மீட்டமைக்க இருமுறை சொடுக்கவும்",
 };

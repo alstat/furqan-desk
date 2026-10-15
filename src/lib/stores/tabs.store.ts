@@ -1,9 +1,10 @@
 import { writable, derived, get } from 'svelte/store';
+import { scriptLanguageForFile } from '$lib/languages/scriptLanguages';
 import { rename, exists } from '@tauri-apps/plugin-fs';
 import { invoke } from '@tauri-apps/api/core';
 import { lexicalToTypst } from '$lib/functions/utils/typstConverters';
 
-export type TabType = 'typst' | 'lexical' | 'text' | 'julia' | 'lean';
+export type TabType = 'typst' | 'lexical' | 'text' | 'julia' | 'lean' | 'r' | 'python';
 
 export interface EditorTab {
 	id: string;
@@ -194,8 +195,11 @@ export function detectType(path: string): TabType {
 	const ext = path.split('.').pop()?.toLowerCase() ?? '';
 	if (ext === 'typ') return 'typst';
 	if (ext === 'lexical' || ext === 'json') return 'lexical';
-	if (ext === 'jl') return 'julia';
 	if (ext === 'lean') return 'lean';
+	// Julia, R and Python all come from the one registry, so adding a language
+	// or an extension is a change in that file rather than a branch here.
+	const script = scriptLanguageForFile(path);
+	if (script) return script;
 	return 'text';
 }
 

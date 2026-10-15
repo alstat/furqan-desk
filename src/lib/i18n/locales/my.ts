@@ -1339,4 +1339,5 @@ export const my: Record<string, string> = {
   "typst_dark_hint.open_settings": "ဆက်တင်များ ဖွင့်ရန်",
   "typst_dark_hint.never": "နောက်ထပ် မသတိပေးပါနှင့်",
   "typst_dark_hint.dismiss": "ပိတ်ရန်",
+    "script_repl.resize_input": "ထည့်သွင်းကွက်အရွယ်အစား ပြောင်းရန် ဆွဲပါ · ပြန်လည်သတ်မှတ်ရန် နှစ်ချက်နှိပ်ပါ",
 };

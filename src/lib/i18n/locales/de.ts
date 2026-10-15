@@ -1346,4 +1346,5 @@ export const de: Record<string, string> = {
   "typst_dark_hint.open_settings": "Einstellungen öffnen",
   "typst_dark_hint.never": "Nicht mehr erinnern",
   "typst_dark_hint.dismiss": "Schließen",
+    "script_repl.resize_input": "Ziehen ändert die Größe der Eingabe · Doppelklick setzt sie zurück",
 };

@@ -1339,4 +1339,5 @@ export const th: Record<string, string> = {
   "typst_dark_hint.open_settings": "เปิดการตั้งค่า",
   "typst_dark_hint.never": "ไม่ต้องเตือนอีก",
   "typst_dark_hint.dismiss": "ปิด",
+    "script_repl.resize_input": "ลากเพื่อปรับขนาดช่องป้อน · ดับเบิลคลิกเพื่อรีเซ็ต",
 };

@@ -1266,4 +1266,5 @@ export const ur: Record<string, string> = {
   "typst_dark_hint.open_settings": "ترتیبات کھولیں",
   "typst_dark_hint.never": "دوبارہ یاد نہ دلائیں",
   "typst_dark_hint.dismiss": "بند کریں",
+  "script_repl.resize_input": "ان پٹ کا سائز بدلنے کے لیے کھینچیں · ری سیٹ کرنے کے لیے ڈبل کلک کریں",
 };

@@ -1345,4 +1345,5 @@ export const bn: Record<string, string> = {
   "typst_dark_hint.open_settings": "সেটিংস খুলুন",
   "typst_dark_hint.never": "আর মনে করিয়ে দেবেন না",
   "typst_dark_hint.dismiss": "বন্ধ করুন",
+    "script_repl.resize_input": "ইনপুটের আকার বদলাতে টেনে আনুন · রিসেট করতে ডাবল-ক্লিক করুন",
 };

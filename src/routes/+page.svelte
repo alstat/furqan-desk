@@ -3,6 +3,14 @@
     import { invoke } from "@tauri-apps/api/core";
     import Parchment from "$lib/components/parchment/Parchment.svelte";
     import JuliaReplPane from "$lib/components/editor/JuliaReplPane.svelte";
+    import ScriptEditor from "$lib/components/editor/ScriptEditor.svelte";
+    import ScriptReplPane from "$lib/components/editor/ScriptReplPane.svelte";
+    import ScriptInstallPrompt from "$lib/components/shared/ScriptInstallPrompt.svelte";
+    import { settingsOpen, closeSettings } from "$lib/stores/settings.store";
+    import {
+        isScriptLanguage,
+        type ScriptLanguageId,
+    } from "$lib/languages/scriptLanguages";
     import TypstPreview from "$lib/components/editor/TypstPreview.svelte";
     import TypstEditor from "$lib/components/editor/TypstEditor.svelte";
     import RichTextEditor from "$lib/components/editor/EditorComposer.svelte";
@@ -88,14 +96,17 @@
     let height: number = $state(
         typeof window !== "undefined" ? window.innerHeight : 600,
     );
-    let showSettings = $state(false);
+    // The dialog's open flag lives in a store rather than here, because the
+    // R and Python REPL panes open it too — at the section that points the app
+    // at an interpreter — and they are nowhere near this component.
+    let showSettings = $derived($settingsOpen);
     let isLoading = $state(true);
 
     // Cmd+, (macOS) / Ctrl+, (Win/Linux) opens Settings — standard convention.
     function handleGlobalKeydown(e: KeyboardEvent) {
         if ((e.metaKey || e.ctrlKey) && e.key === "," ) {
             e.preventDefault();
-            showSettings = true;
+            settingsOpen.set(true);
         }
     }
 
@@ -183,6 +194,19 @@
     // sidebar then, because the left panel belongs to the partner editor).
     let leanInfoviewMode = $derived(
         $hideSurahPage() && $activeTab?.type === "lean" && !activeCrossGroup,
+    );
+
+    // R / Python side-panel mode: the active tab is one of those, and its REPL
+    // takes the right-hand column exactly as Julia's does. Excluded in a cross
+    // pair, where that column belongs to the partner editor and the REPL stays
+    // docked under its own editor instead.
+    let scriptReplMode = $derived(
+        $hideSurahPage() &&
+            isScriptLanguage($activeTab?.type) &&
+            !activeCrossGroup,
+    );
+    let scriptReplLanguage = $derived(
+        scriptReplMode ? ($activeTab!.type as ScriptLanguageId) : null,
     );
 
     // Lean group whose member is the active tab — drives the third editor that
@@ -329,6 +353,9 @@
                         tabId={partnerTabId}
                         hideRepl={false}
                     />
+                {:else if isScriptLanguage(partnerTab?.type)}
+                    <!-- Partner=R/Python: left = editor with its embedded REPL -->
+                    <ScriptEditor tabId={partnerTabId} hideRepl={false} />
                 {:else if partnerTab?.type === "lean"}
                     <!-- Partner=Lean: left = LeanEditor with embedded infoview -->
                     <LeanEditor
@@ -374,6 +401,28 @@
                     class="mb-5 w-full flex-1 flex flex-col min-h-0 overflow-hidden"
                 >
                     <JuliaReplPane />
+                </div>
+            </div>
+        {:else if scriptReplMode && scriptReplLanguage}
+            <!-- R / Python REPL on the right (or left in RTL layout), shared by
+                 every file of that language — the same arrangement as Julia's. -->
+            <div
+                class="relative z-1 flex flex-col items-center
+                        flex-1 min-w-0
+                        {$zenMode
+                    ? ''
+                    : 'border-x border-stone-200 dark:border-[#414559] bg-white dark:bg-[#1c1c1c]'}"
+            >
+                <div
+                    class="mb-5 w-full flex-1 flex flex-col min-h-0 overflow-hidden"
+                >
+                    <!-- Keyed on the language: this one column serves both, and
+                         a pane handed a new language has to start again from
+                         that language's own session and transcript rather than
+                         carry the other's over. -->
+                    {#key scriptReplLanguage}
+                        <ScriptReplPane language={scriptReplLanguage} />
+                    {/key}
                 </div>
             </div>
         {:else if leanInfoviewMode}
@@ -466,7 +515,7 @@
                 <SukunPeekToggle />
             </div>
         {/if}
-        {#if (juliaReplMode || leanInfoviewMode || typstMode) && $isSidebar}
+        {#if (juliaReplMode || leanInfoviewMode || typstMode || scriptReplMode) && $isSidebar}
             <SplitDivider />
         {/if}
         <Sidebar />
@@ -474,13 +523,14 @@
 </div>
 <UpDownMargin />
 <SurahWidget />
-<EditorToolbar onOpenSettings={() => (showSettings = true)} />
+<EditorToolbar onOpenSettings={() => settingsOpen.set(true)} />
 <TourOverlay />
 <AnimationChoiceDialog />
 <QuickOpen />
+<ScriptInstallPrompt />
 <SettingsDialog
     open={showSettings}
-    onClose={() => (showSettings = false)}
+    onClose={closeSettings}
 />
 <VerseOfDayDialog
     open={$verseOfDayDialogOpen}
@@ -503,5 +553,5 @@
 <UpdateToast />
 <NewBlogToast />
 <TokenUsageToast />
-<TypstDarkModeToast onOpenSettings={() => (showSettings = true)} />
+<TypstDarkModeToast onOpenSettings={() => settingsOpen.set(true)} />
 <JuliaPlotViewer />

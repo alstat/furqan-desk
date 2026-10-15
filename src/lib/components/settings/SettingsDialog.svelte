@@ -16,7 +16,23 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     } from '$lib/stores/editor.store';
     import { openCustomFontDialog } from '$lib/stores/custom-font-dialog.store';
     import { restartTour } from '$lib/stores/tour.store';
+    import { tick } from 'svelte';
     import { invoke } from '@tauri-apps/api/core';
+    import {
+        SCRIPT_LANGUAGES,
+        SCRIPT_LANGUAGE_LIST,
+        type ScriptLanguageId,
+    } from '$lib/languages/scriptLanguages';
+    import {
+        detectScriptLanguage,
+        scriptBinaries,
+    } from '$lib/stores/script-install.store';
+    import { settingsScrollTarget } from '$lib/stores/settings.store';
+    import {
+        HEADER_PILL,
+        HEADER_PILL_IDLE,
+        HEADER_PILL_ACCENT,
+    } from '$lib/styles/editorChrome';
     import { morphGlassEffect } from '$lib/stores/morphology.store';
     import { onMount } from 'svelte';
     import {
@@ -81,6 +97,85 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
     }
 
     const groupTitle = 'text-[0.8125rem] font-bold tracking-tight text-brand-charcoal-900 dark:text-[#c6d0f5]';
+
+    /** The path typed into each language's box, before it is saved. */
+    let scriptPaths = $state<Record<string, string>>({});
+    let scriptErrors = $state<Record<string, string>>({});
+
+    // Load what is stored, and what is currently detected, when the dialog opens.
+    $effect(() => {
+        if (!open) return;
+        for (const lang of SCRIPT_LANGUAGE_LIST) {
+            if (lang.id === 'julia') continue;
+            void detectScriptLanguage(lang.id);
+            void invoke<string>('get_script_path', { language: lang.id })
+                .then((stored) => {
+                    if (scriptPaths[lang.id] === undefined) {
+                        scriptPaths[lang.id] = stored;
+                    }
+                })
+                .catch(() => {});
+        }
+    });
+
+    // Jump to a section when something opened the dialog at one.
+    $effect(() => {
+        const target = $settingsScrollTarget;
+        if (!open || !target) return;
+        void tick().then(() => {
+            document
+                .querySelector(`[data-settings-section="${target}"]`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            settingsScrollTarget.set(null);
+        });
+    });
+
+    async function redetect(id: ScriptLanguageId) {
+        scriptErrors[id] = '';
+        // Clearing the stored override is what "auto-detect" means: with one
+        // set, detection would keep returning it however the system changes.
+        try {
+            await invoke('set_script_path', {
+                language: id,
+                path: '',
+                versionArg: SCRIPT_LANGUAGES[id].versionArg,
+            });
+            scriptPaths[id] = '';
+        } catch {
+            /* nothing stored */
+        }
+        const found = await detectScriptLanguage(id, true);
+        if (!found) {
+            scriptErrors[id] = $t('settings.script.not_found_hint', {
+                language: SCRIPT_LANGUAGES[id].label,
+            });
+        }
+    }
+
+    async function browseFor(id: ScriptLanguageId) {
+        try {
+            const { open: openDialog } = await import('@tauri-apps/plugin-dialog');
+            const picked = await openDialog({ multiple: false, directory: false });
+            if (typeof picked === 'string') scriptPaths[id] = picked;
+        } catch {
+            /* not inside Tauri */
+        }
+    }
+
+    async function saveScriptPath(id: ScriptLanguageId) {
+        scriptErrors[id] = '';
+        try {
+            await invoke('set_script_path', {
+                language: id,
+                path: scriptPaths[id] ?? '',
+                versionArg: SCRIPT_LANGUAGES[id].versionArg,
+            });
+            await detectScriptLanguage(id, true);
+        } catch (e) {
+            scriptErrors[id] = String(e);
+        }
+    }
+
     const sectionLabel = 'text-xs font-semibold uppercase tracking-wide text-brand-charcoal-300 mb-2';
     const rowLabel = 'text-xs text-slate-600 dark:text-[#c6d0f5]';
     const actionBtn =
@@ -486,7 +581,10 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
         {/if}
 
         <!-- ═══════════════ GROUP: Environments ═══════════════ -->
-        <section class="py-3 border-t border-slate-100 dark:border-[#414559]">
+        <section
+            class="py-3 border-t border-slate-100 dark:border-[#414559]"
+            data-settings-section="languages"
+        >
             <div class="flex items-center gap-2 pb-2.5 mb-3 border-b border-brand-gold-200/60 dark:border-[#414559]">
                 <Icon icon="solar:code-square-bold-duotone" class="text-brand-gold-400" width="1rem" />
                 <h3 class={groupTitle}>{$t('settings.group.environments')}</h3>
@@ -725,6 +823,70 @@ import Dialog from '$lib/components/shared/Dialog.svelte';
                 </button>
                 </div>
             </div>
+
+            <!-- R and Python.
+                 Unlike Julia and Lean there is no install button: these come
+                 from the system's own package manager, and a copy fetched here
+                 would be the wrong interpreter — it would not see the user's
+                 virtualenv, conda environment or CRAN library. What the app can
+                 usefully offer is which one to use, since a machine commonly
+                 has several. -->
+            {#each SCRIPT_LANGUAGE_LIST.filter((l) => l.id !== "julia") as lang (lang.id)}
+                <div>
+                    <p class={sectionLabel}>{lang.label}</p>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class={rowLabel}>
+                            {$t('settings.script.detected')}
+                            {#if $scriptBinaries[lang.id]}
+                                <span class="ml-1 font-mono text-brand-charcoal-500 dark:text-[#c6d0f5]"
+                                    >{$scriptBinaries[lang.id]?.version}</span
+                                >
+                            {:else}
+                                <span class="ml-1 text-brand-charcoal-300 dark:text-[#838ba7]"
+                                    >{$t('settings.script.not_found')}</span
+                                >
+                            {/if}
+                        </span>
+                        <button
+                            onclick={() => void redetect(lang.id)}
+                            class="{HEADER_PILL} {HEADER_PILL_IDLE}"
+                        >
+                            {$t('settings.script.autodetect')}
+                        </button>
+                    </div>
+
+                    <p class="mb-1.5 text-[0.6875rem] text-brand-charcoal-300 dark:text-[#838ba7]">
+                        {$t('settings.script.path_hint', { language: lang.label })}
+                    </p>
+                    <div class="flex items-center gap-1.5">
+                        <input
+                            value={scriptPaths[lang.id] ?? ''}
+                            oninput={(e) => (scriptPaths[lang.id] = e.currentTarget.value)}
+                            placeholder={$scriptBinaries[lang.id]?.path ?? $t('settings.script.path_placeholder')}
+                            spellcheck="false"
+                            class="min-w-0 flex-1 rounded-md border border-brand-sand-200 bg-white px-2 py-1 font-mono text-[0.6875rem]
+                                   text-brand-charcoal-700 outline-none dark:border-[#414559] dark:bg-[#292c3c] dark:text-[#c6d0f5]"
+                        />
+                        <button
+                            onclick={() => void browseFor(lang.id)}
+                            class="{HEADER_PILL} {HEADER_PILL_IDLE}"
+                        >
+                            {$t('settings.script.browse')}
+                        </button>
+                        <button
+                            onclick={() => void saveScriptPath(lang.id)}
+                            class="{HEADER_PILL} {HEADER_PILL_ACCENT}"
+                        >
+                            {$t('common.save')}
+                        </button>
+                    </div>
+                    {#if scriptErrors[lang.id]}
+                        <p class="mt-1.5 text-[0.6875rem] text-red-500 dark:text-red-400">
+                            {scriptErrors[lang.id]}
+                        </p>
+                    {/if}
+                </div>
+            {/each}
 
             </div>
         </section>

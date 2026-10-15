@@ -11,6 +11,7 @@
     import { t } from "$lib/i18n";
     import { appDarkMode } from "$lib/stores/editor.store";
     import { bumpGitRefresh } from "$lib/stores/git.store";
+    import { terminalGitRefresh } from "$lib/utils/terminalGitRefresh";
     import { canUseAi } from "$lib/stores/auth.store";
     import { bringToFront } from "$lib/stores/window-manager.store";
     import WindowControls from "./WindowControls.svelte";
@@ -114,6 +115,7 @@
         term: Terminal;
         fit: FitAddon;
         onDataDispose: () => void;
+        gitRefresh: ReturnType<typeof terminalGitRefresh>;
         attached: boolean;
     };
     const bundles = new Map<string, Bundle>();
@@ -254,7 +256,9 @@
             /* ignore */
         }
 
+        const gitRefresh = terminalGitRefresh(() => bumpGitRefresh(0));
         const onData = term.onData((data) => {
+            gitRefresh.input(data);
             invoke("pty_write", { id, dataB64: strToB64(data) }).catch(
                 () => {},
             );
@@ -264,6 +268,7 @@
             term,
             fit,
             onDataDispose: () => onData.dispose(),
+            gitRefresh,
             attached: true,
         });
 
@@ -298,6 +303,7 @@
         const b = bundles.get(id);
         if (!b) return;
         b.onDataDispose();
+        b.gitRefresh.dispose();
         b.term.dispose();
         bundles.delete(id);
     }
@@ -332,6 +338,7 @@
         if (exited[id]) return;
         // Send ^C (ETX, 0x03). With a real PTY the line discipline turns this
         // into SIGINT for the foreground process group automatically.
+        bundles.get(id)?.gitRefresh.input("\x03");
         try {
             await invoke("pty_write", {
                 id,
@@ -595,15 +602,17 @@
                 const b = bundles.get(id);
                 if (!b) return;
                 b.term.write(b64ToBytes(data_b64));
-                // A command finished producing output — its side effects may
-                // include a git commit/push/checkout, so nudge the git views to
-                // re-read. Debounced: only fires once output settles.
-                bumpGitRefresh();
+                // Whatever just ran may have been a git commit/push/checkout,
+                // so nudge the git views to re-read. Echoed keystrokes must not
+                // trigger repository scans while a command is still being
+                // typed, so only submitted commands arm a refresh.
+                b.gitRefresh.output();
             }),
             listen<{ id: string }>("pty-exit", (event) => {
                 const { id } = event.payload;
                 if (!(id in exited)) return;
                 exited[id] = true;
+                bundles.get(id)?.gitRefresh.output();
             }),
         ]);
     }

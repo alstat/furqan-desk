@@ -6,6 +6,8 @@
     import RichTextEditor from "$lib/components/editor/EditorComposer.svelte";
     import TypstEditor from "$lib/components/editor/TypstEditor.svelte";
     import JuliaEditor from "$lib/components/editor/JuliaEditor.svelte";
+    import ScriptEditor from "$lib/components/editor/ScriptEditor.svelte";
+    import { isScriptLanguage } from "$lib/languages/scriptLanguages";
     import LeanEditor from "$lib/components/editor/LeanEditor.svelte";
     import FileExplorer from "$lib/components/shared/FileExplorer.svelte";
     import GlobalSearch from "$lib/components/shared/GlobalSearch.svelte";
@@ -419,6 +421,13 @@
                         tabId={$activeTabId !== hostTabId ? hostTabId : null}
                         hideInfoview={false}
                     />
+                {:else if isScriptLanguage(hostTab?.type)}
+                    <!-- host=R/Python: REPL stays embedded below the editor,
+                         as with Julia — the left panel belongs to the partner. -->
+                    <ScriptEditor
+                        tabId={$activeTabId !== hostTabId ? hostTabId : null}
+                        hideRepl={false}
+                    />
                 {:else if hostTab?.type === "typst" || hostTab?.type === "text"}
                     <!-- inCrossHost=true: shows inline preview instead of side-by-side preview -->
                     <TypstEditor
@@ -503,6 +512,11 @@
                     <!-- Normal mode: editor + embedded REPL panel at the bottom -->
                     <JuliaEditor />
                 {/if}
+            {:else if isScriptLanguage($activeTab?.type)}
+                <!-- R / Python: the editor alone. Its REPL is the right-hand
+                     column (see `scriptReplMode` in +page.svelte), the way
+                     Julia's is — so this must not mount a second one. -->
+                <ScriptEditor hideRepl={true} />
             {:else if $activeTab?.type === "lean"}
                 {@const activeLeanGroup = $leanGroups.find(
                     (g) =>

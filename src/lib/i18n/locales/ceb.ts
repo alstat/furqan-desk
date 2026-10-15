@@ -1339,4 +1339,5 @@ export const ceb: Record<string, string> = {
   "typst_dark_hint.open_settings": "Ablihi ang Mga Setting",
   "typst_dark_hint.never": "Ayaw na ko pahinumdumi",
   "typst_dark_hint.dismiss": "Isira",
+    "script_repl.resize_input": "I-drag aron usbon ang gidak-on sa input · I-double-click aron i-reset",
 };

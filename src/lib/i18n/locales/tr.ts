@@ -1266,4 +1266,5 @@ export const tr: Record<string, string> = {
   "typst_dark_hint.open_settings": "Ayarları aç",
   "typst_dark_hint.never": "Bir daha hatırlatma",
   "typst_dark_hint.dismiss": "Kapat",
+  "script_repl.resize_input": "Girişi yeniden boyutlandırmak için sürükleyin · Sıfırlamak için çift tıklayın",
 };

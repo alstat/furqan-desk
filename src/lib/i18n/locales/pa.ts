@@ -1286,4 +1286,5 @@ export const pa: Record<string, string> = {
   "typst_dark_hint.open_settings": "ਸੈਟਿੰਗਾਂ ਖੋਲ੍ਹੋ",
   "typst_dark_hint.never": "ਮੁੜ ਯਾਦ ਨਾ ਕਰਾਓ",
   "typst_dark_hint.dismiss": "ਬੰਦ ਕਰੋ",
+    "script_repl.resize_input": "ਇਨਪੁੱਟ ਦਾ ਆਕਾਰ ਬਦਲਣ ਲਈ ਖਿੱਚੋ · ਰੀਸੈੱਟ ਕਰਨ ਲਈ ਡਬਲ-ਕਲਿੱਕ ਕਰੋ",
 };

@@ -1286,4 +1286,5 @@ export const ku: Record<string, string> = {
   "typst_dark_hint.open_settings": "کردنەوەی ڕێکخستنەکان",
   "typst_dark_hint.never": "جارێکی تر بیرم مەخەرەوە",
   "typst_dark_hint.dismiss": "داخستن",
+    "script_repl.resize_input": "Ji bo guhertina mezinahiya têketinê bikişîne · Ji bo vegerandinê du caran bitikîne",
 };

@@ -9,6 +9,8 @@ mod lean_lsp;
 #[cfg(any(unix, windows))]
 mod pty;
 mod references;
+mod script_lang;
+mod script_repl;
 mod spellcheck;
 mod startup;
 mod terminal;
@@ -188,6 +190,7 @@ pub fn run() {
                 cancel: Arc::new(AtomicBool::new(false)),
             });
             app.manage(commands::HttpClient::new());
+            app.manage(script_repl::ScriptReplState::new());
             // Holds the AI chat's encryption key for the life of the process,
             // so every window shares one unlock instead of each webview
             // prompting for the passphrase on its own.
@@ -269,6 +272,14 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             software_compositing,
+            script_lang::find_script_binary,
+            script_lang::get_script_path,
+            script_lang::set_script_path,
+            script_repl::start_script_repl,
+            script_repl::script_repl_write,
+            script_repl::script_repl_interrupt,
+            script_repl::script_repl_kill,
+            script_repl::read_plot_file,
             commands::greet,
             commands::get_surah_labels,
             commands::get_surah,

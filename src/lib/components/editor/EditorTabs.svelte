@@ -856,7 +856,11 @@
                             ? "devicon-plain:julia"
                             : tab.type === "lean"
                               ? "vscode-icons:file-type-light-lean"
-                              : "solar:file-bold-duotone"}
+                              : tab.type === "r"
+                                ? "simple-icons:r"
+                                : tab.type === "python"
+                                  ? "simple-icons:python"
+                                  : "solar:file-bold-duotone"}
                     width="0.75rem"
                     class="shrink-0 opacity-60"
                 />
@@ -1073,7 +1077,11 @@
                               ? "at-icons:cursor-text"
                               : partner.type === "lean"
                                 ? "vscode-icons:file-type-light-lean"
-                                : "devicon-plain:julia"}
+                                : partner.type === "r"
+                                  ? "simple-icons:r"
+                                  : partner.type === "python"
+                                    ? "simple-icons:python"
+                                    : "devicon-plain:julia"}
                         width="0.75rem"
                         class="shrink-0"
                     />
@@ -1104,7 +1112,11 @@
                             ? "simple-icons:typst"
                             : candidate.type === "julia"
                               ? "devicon-plain:julia"
-                              : "at-icons:cursor-text"}
+                              : candidate.type === "r"
+                                ? "simple-icons:r"
+                                : candidate.type === "python"
+                                  ? "simple-icons:python"
+                                  : "at-icons:cursor-text"}
                         width="0.75rem"
                         class="shrink-0"
                     />
