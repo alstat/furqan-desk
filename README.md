@@ -289,7 +289,9 @@ them.
    gh release download data --pattern quran_static.db --dir src-tauri/data
    ```
 
-3. **Configure environment variables (optional).**
+3. **Configure environment variables (optional).** You can skip this step:
+   the app runs without a `.env` file. It is only needed for sign-in and the
+   AI features.
 
    ```sh
    cp .env.example .env
@@ -297,8 +299,7 @@ them.
 
    | Variable | Needed for |
    | --- | --- |
-   | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Sign-in and the AI assistant. Without them, the rest of the app still works. |
-   | `VITE_AYAHLAB_WEBSITE_URL` | Pointing the sign-in and upgrade flow at a locally served website. Only read in dev mode. |
+   | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Sign-in and the AI features, using your own Supabase project. Without them, the rest of the app still works. |
 
    Never commit `.env`; it is gitignored.
 

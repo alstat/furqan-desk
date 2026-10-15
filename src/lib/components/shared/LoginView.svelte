@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
-    import { supabase, OAUTH_REDIRECT_URL } from "$lib/supabase";
+    import { supabase, isSupabaseConfigured, OAUTH_REDIRECT_URL } from "$lib/supabase";
     import { oauthError } from "$lib/stores/auth.store";
     import { openUrl } from "@tauri-apps/plugin-opener";
     import { t } from "$lib/i18n";
@@ -55,8 +55,17 @@
         successMsg = "";
     }
 
+    // Without a .env the client is a stub that throws on first use, which
+    // would leave `loading` stuck on. Say why instead.
+    function requireConfig(): boolean {
+        if (isSupabaseConfigured) return true;
+        error = $t("auth.error_not_configured");
+        return false;
+    }
+
     async function handleSignIn() {
         clearMessages();
+        if (!requireConfig()) return;
         if (!signinEmail || !signinPassword) {
             error = $t("auth.error_email_password_required");
             return;
@@ -72,6 +81,7 @@
 
     async function handleGoogleSignIn() {
         clearMessages();
+        if (!requireConfig()) return;
         oauthError.set(null);
         stopOauthWait();
         loading = true;
@@ -110,6 +120,7 @@
 
     async function handleForgotPassword() {
         clearMessages();
+        if (!requireConfig()) return;
         if (!signinEmail) {
             error = $t("auth.error_email_required");
             return;
