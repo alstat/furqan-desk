@@ -1,3 +1,5 @@
+<img src="src-tauri/icons/icon.png" alt="AyahLab logo" width="96" align="right">
+
 # AyahLab
 
 A desktop workbench for studying the Qur'an. AyahLab puts the Arabic text,
