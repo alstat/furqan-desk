@@ -29,6 +29,7 @@ AyahLab runs on macOS, Windows and Linux.
 - [Tests and checks](#tests-and-checks)
 - [Contributing and reporting issues](#contributing-and-reporting-issues)
 - [Data sources and credits](#data-sources-and-credits)
+- [License](#license)
 
 ## Features
 
@@ -413,3 +414,10 @@ AyahLab builds on the work of others:
 - **Translations, tafsir, word-by-word translations, transliteration and
   recitations** belong to their respective translators, authors, publishers
   and reciters, and remain under their own terms.
+
+## License
+
+AyahLab's source code is released under the [MIT License](LICENSE).
+
+The MIT License does not cover the third-party data listed above, which is
+bundled with the app and stays under its own license and terms of use.
