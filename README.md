@@ -43,7 +43,9 @@ AyahLab runs on macOS, Windows and Linux.
   transliteration.
 - Tafsir, including Ibn Kathir and al-Tabari, in its own window.
 - Ayah-by-ayah recitation from several reciters, downloadable for offline use.
-- Manuscript viewer for historical Qur'an manuscripts.
+- Manuscript viewer for historical Qur'an manuscripts, loaded on demand from
+  [Corpus Coranicum](https://corpuscoranicum.de) (see the
+  [note on manuscripts](#a-note-on-the-manuscript-viewer)).
 - Verse of the day, take-home messages, and verse postcards you can export as
   images.
 
@@ -414,6 +416,33 @@ AyahLab builds on the work of others:
 - **Translations, tafsir, word-by-word translations, transliteration and
   recitations** belong to their respective translators, authors, publishers
   and reciters, and remain under their own terms.
+- **Manuscripts**: images and metadata come from
+  [Corpus Coranicum](https://corpuscoranicum.de) (Berlin-Brandenburg Academy of
+  Sciences and Humanities). They are not bundled with the app and remain under
+  Corpus Coranicum's own terms.
+
+### A note on the manuscript viewer
+
+> [!WARNING]
+> AyahLab has no agreement with Corpus Coranicum. The author asked Corpus
+> Coranicum for API access for viewing their manuscripts but has not received
+> a reply.
+
+Until that changes, the manuscript viewer is built to behave like a web browser
+visiting corpuscoranicum.de, and nothing more:
+
+- It only fetches the manuscripts for the verse you open, when you open it.
+- It does not offer bulk downloads, and it does not prefetch or mirror
+  manuscripts in the background. You can save a single folio you are looking
+  at, one at a time.
+- It limits how many requests it sends at once, and keeps what it has already
+  fetched (folio images on disk, verse lists and metadata in memory) so that
+  reopening a verse does not ask the server again.
+
+This is to respect Corpus Coranicum's website and to avoid putting extra load
+on their servers. Please don't change the app to download manuscripts in bulk.
+If Corpus Coranicum replies or publishes terms for this kind of use, the
+viewer will be updated to follow them.
 
 ## License
 
