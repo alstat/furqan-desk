@@ -19,9 +19,7 @@
             const { data, error: sessionErr } = await supabase.auth.getSession();
             if (sessionErr || !data.session) throw new Error("No active session");
 
-            // Gated on DEV so a stray local .env value (e.g. localhost) can
-            // never leak into a built package — see supabase.ts for the same
-            // pattern applied to the OAuth callback URL.
+            // The override is read only in dev builds; see supabase.ts.
             const base = import.meta.env.DEV
                 ? ((import.meta.env.VITE_AYAHLAB_WEBSITE_URL as string | undefined) ?? "https://ayahlab.com")
                 : "https://ayahlab.com";

@@ -1082,6 +1082,7 @@ export const en: Record<string, string> = {
   "auth.continue_with_google": "Continue with Google",
   "auth.or": "or",
   "auth.error_google_signin": "Could not start Google sign-in.",
+  "auth.error_not_configured": "Sign-in is not available in this build. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env to enable sign-in and the AI features.",
   "auth.error_oauth_exchange": "Signed in with Google, but the session could not be completed: {message}",
   "auth.error_oauth_timeout": "Google sign-in never returned to AyahLab. If it finished in your browser, this install cannot open ayahlab:// links — sign in with your email instead.",
   "auth.error_email_password_required": "Email and password are required.",
